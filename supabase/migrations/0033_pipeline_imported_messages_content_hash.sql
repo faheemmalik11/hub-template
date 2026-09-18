@@ -1,0 +1,17 @@
+-- 0023_imported_messages_content_hash — detect a Drive file edited in place after it was already
+-- imported.
+--
+-- THE GAP: imported_messages dedups on (gmail_message_id, attachment_id) — for Drive, (file id,
+-- filename). That key never changes if someone replaces the content of an existing Drive file
+-- (same id, same name, new bytes): the pipeline would silently never re-read it, forever, with no
+-- destination/move folder needed to trigger this (it happens regardless of whether moving is
+-- configured at all).
+--
+-- content_hash stores the Drive file's md5Checksum (metadata, no extra API call) at the moment a
+-- (message_id, attachment_id) is recorded. Nullable and additive only: every existing row (all of
+-- Gmail, all uploads, all pre-migration Drive rows) gets NULL, which the pipeline treats as "nothing
+-- to compare against" — i.e. exactly today's behaviour, an already-imported hit is always skipped.
+-- Only pipeline/ingest_drive.py populates this going forward. Gmail messages/attachments are
+-- immutable once delivered (nothing to detect) and uploads are one row per upload (no in-place-edit
+-- path exists), so neither path needs this column populated.
+alter table imported_messages add column if not exists content_hash text;

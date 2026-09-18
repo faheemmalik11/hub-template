@@ -1,0 +1,375 @@
+@import "tailwindcss" source(none);
+@source "../src";
+@source "../node_modules/@hub-kit/core/dist";
+@source "../../hub-kit/src/**/*.{ts,tsx}";
+@import "tw-animate-css";
+
+@custom-variant dark (&:is(.dark *));
+
+/* Hide the scrollbar while keeping the element scrollable (e.g. the nav that scrolls
+   within itself so a long header never makes the whole page scroll sideways). */
+@utility scrollbar-none {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+  &::-webkit-scrollbar {
+    display: none;
+  }
+}
+
+/*
+ * Stäy Design System
+ *
+ * Brand: white surfaces + the warm beige from the client's logo on staey.de.
+ * The logo's charcoal (--brand-ink) is the text tone only, never a background.
+ * Display = Cormorant Garamond (Serif). Body/UI = Hanken Grotesk.
+ * Farben in oklch (Lovable-Konvention). Light-first; .dark bleibt definiert,
+ * wird aktuell nicht aktiv genutzt.
+ *
+ * --ui-scale: globaler Größenregler (skaliert die rem-Basis), gesetzt per JS.
+ */
+
+@theme inline {
+  --font-sans: "Hanken Grotesk", ui-sans-serif, system-ui, sans-serif;
+  --font-serif: "Cormorant Garamond", ui-serif, Georgia, serif;
+
+  --radius-sm: calc(var(--radius) - 4px);
+  --radius-md: calc(var(--radius) - 2px);
+  --radius-lg: var(--radius);
+  --radius-xl: calc(var(--radius) + 4px);
+  --radius-2xl: calc(var(--radius) + 8px);
+  --radius-3xl: calc(var(--radius) + 12px);
+  --radius-4xl: calc(var(--radius) + 16px);
+
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --color-card: var(--card);
+  --color-card-foreground: var(--card-foreground);
+  --color-popover: var(--popover);
+  --color-popover-foreground: var(--popover-foreground);
+  --color-primary: var(--primary);
+  --color-primary-foreground: var(--primary-foreground);
+  --color-secondary: var(--secondary);
+  --color-secondary-foreground: var(--secondary-foreground);
+  --color-muted: var(--muted);
+  --color-muted-foreground: var(--muted-foreground);
+  --color-accent: var(--accent);
+  --color-accent-foreground: var(--accent-foreground);
+  --color-destructive: var(--destructive);
+  --color-destructive-foreground: var(--destructive-foreground);
+  --color-border: var(--border);
+  --color-input: var(--input);
+  --color-header: var(--header);
+  --color-switch-off: var(--switch-off);
+  --color-placeholder: var(--placeholder);
+  --color-ring: var(--ring);
+  --color-ring-offset-background: var(--background);
+
+  /* Brand ramp exposed as utilities: bg-brand, text-brand, text-brand-ink, … */
+  --color-brand: var(--brand);
+  --color-brand-hover: var(--brand-hover);
+  --color-brand-dark: var(--brand-dark);
+  --color-brand-soft: var(--brand-soft);
+  --color-brand-tint: var(--brand-tint);
+  --color-brand-wash: var(--brand-wash);
+  --color-brand-ink: var(--brand-ink);
+
+  --color-chart-1: var(--chart-1);
+  --color-chart-2: var(--chart-2);
+  --color-chart-3: var(--chart-3);
+  --color-chart-4: var(--chart-4);
+  --color-chart-5: var(--chart-5);
+
+  /* Status ramp: bg-success, text-warning, bg-danger-soft, … */
+  --color-success: var(--success);
+  --color-success-soft: var(--success-soft);
+  --color-warning: var(--warning);
+  --color-warning-soft: var(--warning-soft);
+  --color-danger: var(--danger);
+  --color-danger-soft: var(--danger-soft);
+  --color-sidebar: var(--sidebar);
+  --color-sidebar-foreground: var(--sidebar-foreground);
+  --color-sidebar-primary: var(--sidebar-primary);
+  --color-sidebar-primary-foreground: var(--sidebar-primary-foreground);
+  --color-sidebar-accent: var(--sidebar-accent);
+  --color-sidebar-accent-foreground: var(--sidebar-accent-foreground);
+  --color-sidebar-border: var(--sidebar-border);
+  --color-sidebar-ring: var(--sidebar-ring);
+
+  /* Collapsible open/close, used by the sidebar nav groups, the Administration group and the
+     zoom control. These were referenced as animate-collapsible-up / -down long before they
+     existed, so every one of those sections snapped open with no transition at all. Radix
+     publishes the measured height as --radix-collapsible-content-height; that is what makes a
+     height animation possible without hard-coding a size. */
+  --animate-collapsible-down: collapsible-down 200ms ease-out;
+  --animate-collapsible-up: collapsible-up 200ms ease-out;
+
+  @keyframes collapsible-down {
+    from {
+      height: 0;
+    }
+    to {
+      height: var(--radix-collapsible-content-height);
+    }
+  }
+
+  @keyframes collapsible-up {
+    from {
+      height: var(--radix-collapsible-content-height);
+    }
+    to {
+      height: 0;
+    }
+  }
+}
+
+:root {
+  --radius: 0.5rem;
+
+  /* Brand ramp, taken from the client's own logo on staey.de: the umlaut dots are
+     #D2B8A4 and the wordmark is #333335. Single source of the brand colors, so
+     primary, ring, accent, charts and sidebar all derive from these.
+     Hue 59.7 comes from #D2B8A4; the whole ramp shares it so the steps stay in family. */
+  --brand: oklch(0.8 0.041 59.7); /* #D2B8A4 exact, logo beige */
+  --brand-hover: #98603d; /* primary brown: buttons, toggles, active states */
+  --brand-dark: #8f5e3a; /* button hover, active tab text, login panel */
+  --brand-soft: oklch(0.7 0.045 59.7);
+  --brand-tint: #f7efe8; /* accent light background */
+  --brand-wash: #fbf9f9; /* page background */
+  --shell-wash: var(--brand-wash);
+  --header: #fafaf8; /* top bar, one step off the page */
+  --brand-ink: oklch(0.322 0.004 286.2); /* #333335 exact, logo charcoal */
+
+  --background: #fbf9f9;
+  --foreground: #24211f;
+  --card: #ffffff;
+  --card-foreground: #24211f;
+  --popover: #ffffff;
+  --popover-foreground: #24211f;
+
+  --primary: var(--brand-hover);
+  --primary-foreground: #ffffff;
+  --secondary: var(--brand-wash);
+  --secondary-foreground: #6f6964;
+  --muted: #eee9e4;
+  --muted-foreground: #6f6964;
+  --accent: var(--brand-tint);
+  --accent-foreground: #24211f;
+  --destructive: #c64b4b;
+  --destructive-foreground: #ffffff;
+  --border: #e8e2dc;
+  --input: #e3ddd7;
+  --switch-off: #ddd7d1;
+  --placeholder: #a39c96;
+  --ring: var(--brand-hover);
+
+  --success: #16845b;
+  --success-soft: #edf8f3;
+  --warning: #b7791f;
+  --warning-soft: #fdf4e6;
+  --danger: #c64b4b;
+  --danger-soft: #fbeeee;
+
+  --chart-1: var(--brand-hover);
+  --chart-2: oklch(0.55 0.035 250);
+  --chart-3: oklch(0.68 0.03 250);
+  --chart-4: oklch(0.79 0.022 250);
+  --chart-5: oklch(0.87 0.015 250);
+
+  --sidebar: #f8f4f1;
+  --sidebar-foreground: #24211f;
+  --sidebar-primary: var(--brand-hover);
+  --sidebar-primary-foreground: #ffffff;
+  --sidebar-accent: #efe6e0;
+  --sidebar-accent-foreground: #24211f;
+  --sidebar-border: #ebe4de;
+  --sidebar-ring: var(--brand-hover);
+}
+
+.dark {
+  --background: oklch(0.22 0.02 255);
+  --foreground: oklch(0.985 0.003 247.858);
+  --card: oklch(0.26 0.022 256);
+  --card-foreground: oklch(0.985 0.003 247.858);
+  --popover: oklch(0.26 0.022 256);
+  --popover-foreground: oklch(0.985 0.003 247.858);
+  --primary: oklch(0.72 0.05 196);
+  --primary-foreground: oklch(0.22 0.02 255);
+  --secondary: oklch(0.3 0.025 255);
+  --secondary-foreground: oklch(0.985 0.003 247.858);
+  --muted: oklch(0.3 0.025 255);
+  --muted-foreground: oklch(0.72 0.02 250);
+  --accent: oklch(0.32 0.03 240);
+  --accent-foreground: oklch(0.985 0.003 247.858);
+  --destructive: oklch(0.704 0.191 22.216);
+  --destructive-foreground: oklch(0.985 0 0);
+  --border: oklch(1 0 0 / 12%);
+  --input: oklch(1 0 0 / 15%);
+  --ring: oklch(0.72 0.05 196);
+  --sidebar: oklch(0.24 0.022 256);
+  --sidebar-foreground: oklch(0.985 0.003 247.858);
+  --sidebar-primary: oklch(0.72 0.05 196);
+  --sidebar-primary-foreground: oklch(0.22 0.02 255);
+  --sidebar-accent: oklch(0.32 0.03 240);
+  --sidebar-accent-foreground: oklch(0.985 0.003 247.858);
+  --sidebar-border: oklch(1 0 0 / 12%);
+  --sidebar-ring: oklch(0.72 0.05 196);
+}
+
+html {
+  /* Globaler Größenregler: skaliert die gesamte rem-basierte UI */
+  font-size: calc(100% * var(--ui-scale, 1));
+  /* Reserves the scrollbar's gutter permanently, whether or not a scrollbar is actually drawn
+     there. This is what makes the body[data-scroll-locked] override below possible without a
+     visible layout shift -- see that rule's own comment. */
+  scrollbar-gutter: stable;
+}
+
+@layer base {
+  * {
+    border-color: var(--color-border);
+  }
+
+  /* Horizontal clipping lives here rather than on a wrapper div: on `body` the viewport
+     remains the scrollport, so position:sticky keeps working. On an intermediate element it
+     silently makes that element the scrollport and every sticky inside it stops sticking. */
+  body {
+    overflow-x: hidden;
+  }
+
+  /* SLIM, THEMED SCROLLBARS EVERYWHERE.
+     The browser default is a ~15px light-grey slab, and it showed up differently on every scroll
+     container in the product. Making it global rather than opt-in is the point: a class has to be
+     remembered on each new list or table, and the ones that forget are exactly the ones that look
+     wrong.
+
+     This is the Firefox/standards half. WebKit needs its own pseudo-elements, and those cannot
+     live in here — Tailwind v4 discards them from inside `@layer base` — so they sit at the bottom
+     of this file instead. Colours come from the border token, so light and dark are handled by the
+     tokens rather than by a second set of rules.
+
+     `scrollbar-none` still wins: it is an @utility, and Tailwind emits utilities after base — so
+     the nav strips that deliberately hide their bar keep doing so. */
+  * {
+    scrollbar-width: thin;
+    scrollbar-color: var(--color-border) transparent;
+  }
+
+  body {
+    background-color: var(--color-background);
+    color: var(--color-foreground);
+    font-family: var(--font-sans);
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    font-feature-settings: "ss01", "cv01";
+  }
+
+  h1,
+  h2,
+  h3,
+  .font-display {
+    font-family: var(--font-sans);
+    font-weight: 700;
+    letter-spacing: -0.02em;
+  }
+
+  /* Tailwind v4 dropped Preflight's `cursor: pointer` on buttons. Restored here rather than as a
+     class on each control: every plain <button> in the app lost it at once, and a class only fixes
+     the ones somebody remembers. */
+  button:not(:disabled),
+  [role="button"]:not(:disabled),
+  summary:not(:disabled) {
+    cursor: pointer;
+  }
+
+  button:disabled,
+  [role="button"][aria-disabled="true"] {
+    cursor: not-allowed;
+  }
+}
+
+/* Feiner Tracking-Stil für die Wortmarke / Eyebrows */
+.tracking-brand {
+  letter-spacing: 0.22em;
+}
+
+/*
+ * Radix overlays (Select, DropdownMenu, Dialog, Sheet, …) use react-remove-scroll, which on open
+ * sets `body[data-scroll-locked] { overflow: hidden; margin-right: <scrollbarWidth> !important }`.
+ * The margin is what used to shift our centered layout sideways -- `scrollbar-gutter: stable` on
+ * `html` above reserves that space permanently now, so hiding the scrollbar never moves anything
+ * and the margin compensation is just redundant. This used to instead keep the page's own
+ * scrollbar visible (but inert) behind every overlay to sidestep the shift, which read as two
+ * scrollbars on screen at once (one real, one dead) whenever an overlay's own content scrolled.
+ * Letting Radix hide it here means only the overlay's scrollbar shows while one is open, same as
+ * everywhere else on the web. Higher specificity than Radix's rule (html + body + attribute) so
+ * this wins over the runtime-injected !important style. One place, fixes every overlay.
+ */
+html body[data-scroll-locked] {
+  margin-right: 0 !important;
+  padding-right: 0 !important;
+}
+
+/* The WebKit half of the slim scrollbars, deliberately OUTSIDE `@layer base`.
+   Tailwind v4 parses the contents of `@layer base` and drops `*::-webkit-scrollbar*` rules on the
+   floor — verified live: with these inside the layer, `* { scrollbar-width: thin }` reached the
+   browser and not one of the four pseudo-element rules did, so Firefox got slim bars and Chrome
+   kept the ~15px default slab. Top-level they survive untouched.
+
+   Being unlayered they also outrank anything Tailwind emits, which is fine here: `scrollbar-none`
+   hides its bar with `display: none`, a different property, so it still wins where it is used. */
+*::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+*::-webkit-scrollbar-track {
+  background: transparent;
+}
+*::-webkit-scrollbar-thumb {
+  background-color: var(--color-border);
+  border-radius: 9999px;
+  /* A little inset, so the thumb reads as floating in the gutter rather than filling it. */
+  border: 2px solid transparent;
+  background-clip: content-box;
+}
+*::-webkit-scrollbar-thumb:hover {
+  background-color: color-mix(in oklab, var(--color-muted-foreground) 55%, transparent);
+}
+*::-webkit-scrollbar-corner {
+  background: transparent;
+}
+
+/* The tour ring is drawn outside the element; the sidebar nav sits at the viewport edge. */
+[data-tour="shell-nav"] {
+  transition: margin-left 220ms ease;
+}
+[data-tour-open] [data-tour="shell-nav"] {
+  margin-left: 11px;
+}
+
+/* Radix modals set pointer-events: none on <body>, which froze the BugHerd widget whenever a
+   drawer or dialog was open: visible, on top, but not clickable or draggable, only blocking the
+   buttons under it. Restoring pointer events on its hosts (the same pattern toast libraries use)
+   keeps feedback usable over open modals, and lets it be dragged aside if it covers a button. */
+#bugherd_embed_communication_frame,
+bugherd-sidebar {
+  pointer-events: auto !important;
+}
+
+/* Saved folders show as chips before their names have loaded. The sheet is a package component
+   whose chip label is a plain string, so the placeholder is dressed as a skeleton here instead. */
+@keyframes chip-skeleton {
+  0%,
+  100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.5;
+  }
+}
+[data-folders-loading] .bg-muted > .truncate {
+  min-width: 4.5rem;
+  border-radius: 0.25rem;
+  background-color: var(--color-border);
+  color: transparent;
+  animation: chip-skeleton 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+}

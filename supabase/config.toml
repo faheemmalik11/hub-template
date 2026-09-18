@@ -1,0 +1,9 @@
+# Project ref is read from the environment (SUPABASE_PROJECT_ID in .env), never hard-coded —
+# so dev/prod is chosen by env, not baked into the repo. Supabase CLI resolves env(...) at runtime.
+project_id = "env(SUPABASE_PROJECT_ID)"
+
+# BANKSapi redirects the customer's BROWSER here after the REG/Protect webform, with no
+# JWT attached, so this one function must accept unauthenticated requests. It only ever
+# updates a bank_connections row we created ourselves in bank-connect.
+[functions.bank-callback]
+verify_jwt = false

@@ -1,0 +1,7 @@
+[
+  {
+    "trigger": "test_failing_payment",
+    "outcome": "failed",
+    "reason": "Mock: simulated BANKSapi payment failure (mirrors the sandbox demo webform login `test_failing_payment` documented in docs/BANKSAPI_SANDBOX_ONBOARDING.md)"
+  }
+]

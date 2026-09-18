@@ -1,0 +1,3 @@
+# Stäy — internes Werkzeug, nicht für Suchmaschinen/Bots bestimmt.
+User-agent: *
+Disallow: /

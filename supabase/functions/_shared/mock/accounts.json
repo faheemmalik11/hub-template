@@ -1,0 +1,26 @@
+[
+  {
+    "produktId": "mock-product-giro-1",
+    "kontoName": "Geschäftskonto",
+    "iban": "DE02120300000000202051",
+    "bic": "BYLADEM1001",
+    "inhaber": "Stäy GmbH",
+    "produktTyp": "GIROKONTO",
+    "waehrung": "EUR",
+    "saldo": 48250.17,
+    "saldoDatum": "2026-08-04",
+    "eigenesKonto": true
+  },
+  {
+    "produktId": "mock-product-card-1",
+    "kontoName": "Firmenkreditkarte",
+    "iban": "DE02500105170137075030",
+    "bic": "INGDDEFFXXX",
+    "inhaber": "Stäy GmbH",
+    "produktTyp": "KREDITKARTE",
+    "waehrung": "EUR",
+    "saldo": -1284.55,
+    "saldoDatum": "2026-08-04",
+    "eigenesKonto": true
+  }
+]

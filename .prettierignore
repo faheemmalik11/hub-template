@@ -1,0 +1,12 @@
+node_modules
+dist
+.output
+.vinxi
+pnpm-lock.yaml
+package-lock.json
+bun.lock
+routeTree.gen.ts
+
+# Claude Code's local state. Gitignored, so CI never checks it out, but it makes a
+# local `prettier --check .` fail on a file that is not part of the project.
+.claude

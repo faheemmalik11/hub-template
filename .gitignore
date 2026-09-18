@@ -1,0 +1,101 @@
+# Logs
+logs
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+lerna-debug.log*
+
+node_modules
+dist
+dist-ssr
+.output
+.vinxi
+.tanstack/**
+.nitro
+*.local
+
+# Wrangler / Cloudflare
+.wrangler/
+.dev.vars
+
+# Editor directories and files
+.vscode/*
+!.vscode/extensions.json
+.idea
+.DS_Store
+*.suo
+*.ntvs*
+*.njsproj
+*.sln
+*.sw?
+
+# Binaeres Bun-Lockfile (Repo nutzt Text-bun.lock)
+bun.lockb
+
+# Local secrets
+.env
+.env.*
+*.env
+banksapi-sandbox.env
+zugangsdaten.txt
+LIES_MICH.txt
+client-token.json
+user-token.json
+
+# Supabase local (Edge Function env holds real BANKSapi secrets; CLI temp dirs)
+supabase/functions/.env
+supabase/.temp/
+supabase/.branches/
+
+!.env.example
+
+receipt-classification-and-payment-logic.md.pdf
+
+# Large data dump (BANKSapi providers export) — must not be committed
+providers.json
+# Local, sensitive: downloaded invoice originals (real documents) — never commit
+downloaded_invoices/
+# Local eval artifacts (real invoice values / point-in-time notes) — keep out of git
+handover/pipeline/eval/last_predictions.json
+handover/pipeline/eval/readout.md
+handover/pipeline/eval/context.md
+# Repo uses bun.lock — competing lockfiles are noise and drift apart
+yarn.lock
+pnpm-lock.yaml
+
+# Generated router tree — recreated by the TanStack router plugin on every dev/build
+src/routeTree.gen.ts
+
+# Client project messages and our replies — confidential, stays local
+communication/
+
+# Local DB exports (real transaction data) — never commit
+supabase/_backup/
+
+# Python (pipeline_new/ runs on cron; caches are build artefacts)
+__pycache__/
+*.py[cod]
+.pytest_cache/
+.venv/
+venv/
+
+# Playwright end-to-end tests. Kept local on purpose: they run against the REAL Supabase project
+# and need credentials, so they are a developer's own setup rather than something CI can run.
+# Ignoring them (instead of leaving them untracked) keeps `git status` quiet and stops them
+# blocking a branch switch.
+playwright.config.ts
+e2e/
+
+# Playwright output and local test credentials. e2e/.auth/user.json holds a live Supabase access
+# and refresh token, so it must never be committed.
+test-results/
+playwright-report/
+e2e/.auth/
+e2e/.report/
+.env.test*
+.playwright-mcp
+
+# Copied from node_modules/pdfjs-dist by scripts/copy-pdfjs-wasm.mjs
+public/pdfjs/

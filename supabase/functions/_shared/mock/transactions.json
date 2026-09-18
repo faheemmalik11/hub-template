@@ -1,0 +1,65 @@
+[
+  {
+    "produktId": "mock-product-giro-1",
+    "hash": "mock-tx-0001",
+    "betrag": -1190.0,
+    "waehrung": "EUR",
+    "buchungsdatum": "2026-08-04",
+    "wertstellungsdatum": "2026-08-04",
+    "verwendungszweck": "Rechnung RE-2026-0815 Pfalzwerke AG",
+    "buchungstext": "SEPA-Ueberweisung",
+    "gegenkontoInhaber": "Pfalzwerke AG",
+    "gegenkontoIban": "DE29545201940000123456",
+    "gegenkontoBic": "MALADE51LUH"
+  },
+  {
+    "produktId": "mock-product-giro-1",
+    "hash": "mock-tx-0002",
+    "betrag": -487.2,
+    "waehrung": "EUR",
+    "buchungsdatum": "2026-08-03",
+    "wertstellungsdatum": "2026-08-03",
+    "verwendungszweck": "Nebenkosten Objekt MA-OMS 07/2026",
+    "buchungstext": "Lastschrift",
+    "gegenkontoInhaber": "Stadtwerke Mannheim",
+    "gegenkontoIban": "DE12670500000012345678",
+    "gegenkontoBic": "MANSDE66XXX"
+  },
+  {
+    "produktId": "mock-product-giro-1",
+    "hash": "mock-tx-0003",
+    "betrag": 2400.0,
+    "waehrung": "EUR",
+    "buchungsdatum": "2026-08-01",
+    "wertstellungsdatum": "2026-08-01",
+    "verwendungszweck": "Miete 08/2026 Hinterstrasse 20-22",
+    "buchungstext": "SEPA-Gutschrift",
+    "gegenkontoInhaber": "Mieter Lambsheim",
+    "gegenkontoIban": "DE75512108001245126199",
+    "gegenkontoBic": "SOLADEST600"
+  },
+  {
+    "produktId": "mock-product-card-1",
+    "hash": "mock-tx-0004",
+    "betrag": -264.63,
+    "buchungsdatum": "2026-08-02",
+    "wertstellungsdatum": "2026-08-04",
+    "verwendungszweck": "BAUHAUS Frankenthal",
+    "buchungstext": "Kartenzahlung",
+    "gegenkontoInhaber": "BAUHAUS AG",
+    "gegenkontoIban": null,
+    "gegenkontoBic": null
+  },
+  {
+    "produktId": "mock-product-card-1",
+    "hash": "mock-tx-0005",
+    "betrag": -33.1,
+    "buchungsdatum": null,
+    "wertstellungsdatum": "2026-08-05",
+    "verwendungszweck": null,
+    "buchungstext": "Kartenzahlung",
+    "gegenkontoInhaber": null,
+    "gegenkontoIban": null,
+    "gegenkontoBic": null
+  }
+]

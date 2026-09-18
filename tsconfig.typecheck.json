@@ -1,0 +1,106 @@
+// TYPECHECK-ONLY CONFIG. Run it with: npm run typecheck
+//
+// It exists solely to pin the React types. hub-kit is typechecked from its own source (see the
+// @hub-kit/core/* paths in tsconfig.json) and carries its own node_modules copy of @types/react
+// beside this app's. Two copies of the React types in one program make otherwise identical props
+// mutually unassignable, and the errors surface inside hub-kit's own files.
+//
+// The pin CANNOT live in tsconfig.json. vite-tsconfig-paths applies that file's paths at RUNTIME
+// as well, so mapping "react" to the types package makes vite resolve the real React import to
+// @types/react, which exports no ".". Every dev server dies on load with a vite-resolve error.
+// That plugin only ever reads files named tsconfig.json or jsconfig.json, so this one is invisible
+// to it and the pin stays type-only.
+//
+// "paths" is REPLACED by extends, never merged, so the whole map is repeated below. Any change to
+// the paths in tsconfig.json must be mirrored here.
+{
+  "extends": "./tsconfig.json",
+  "compilerOptions": {
+    "paths": {
+      "@/*": [
+        "./src/*"
+      ],
+      "react": [
+        "./node_modules/@types/react"
+      ],
+      "react/*": [
+        "./node_modules/@types/react/*"
+      ],
+      "react-dom": [
+        "./node_modules/@types/react-dom"
+      ],
+      "lucide-react": [
+        "./node_modules/lucide-react"
+      ],
+      "@hub-kit/core/ui": [
+        "../hub-kit/src/ui/index.ts"
+      ],
+      "@hub-kit/core/pages": [
+        "../hub-kit/src/pages/index.ts"
+      ],
+      "@hub-kit/core/pages/document-sources": [
+        "../hub-kit/src/pages/document-sources/index.ts"
+      ],
+      "@hub-kit/core/pages/document-sources/tanstack": [
+        "../hub-kit/src/pages/document-sources/tanstack-router.ts"
+      ],
+      "@hub-kit/core/adapters": [
+        "../hub-kit/src/adapters/index.ts"
+      ],
+      "@hub-kit/core/i18n": [
+        "../hub-kit/src/i18n/index.ts"
+      ],
+      "@hub-kit/core/lib": [
+        "../hub-kit/src/lib/index.ts"
+      ],
+      "@hub-kit/core/notifications": [
+        "../hub-kit/src/components/notifications/index.ts"
+      ],
+      "@hub-kit/core/invoice-queue": [
+        "../hub-kit/src/components/invoice-queue/index.ts"
+      ],
+      "@hub-kit/core/feedback": [
+        "../hub-kit/src/components/feedback/index.ts"
+      ],
+      "@hub-kit/core/access": [
+        "../hub-kit/src/components/access/index.ts"
+      ],
+      "@hub-kit/core/dashboard": [
+        "../hub-kit/src/components/dashboard/index.ts"
+      ],
+      "@hub-kit/core/data-table": [
+        "../hub-kit/src/components/data-table/index.ts"
+      ],
+      "@hub-kit/core/checklist": [
+        "../hub-kit/src/components/checklist/index.ts"
+      ],
+      "@hub-kit/core/checklist/tanstack": [
+        "../hub-kit/src/components/checklist/tanstack-link.tsx"
+      ],
+      "@hub-kit/core/approval-rules": [
+        "../hub-kit/src/pages/approval-rules/index.ts"
+      ],
+      "@hub-kit/core/assignment-rules": [
+        "../hub-kit/src/pages/assignment-rules/index.ts"
+      ],
+      "@hub-kit/core/shell": [
+        "../hub-kit/src/components/shell/index.ts"
+      ],
+      "@hub-kit/core/tour": [
+        "../hub-kit/src/components/tour/index.ts"
+      ],
+      "@hub-kit/core/ai-search-sql": [
+        "../hub-kit/src/lib/ai-search-sql/index.ts"
+      ],
+      "@hub-kit/core/ai-search-sql/ui": [
+        "../hub-kit/src/components/ai-search-sql/index.ts"
+      ],
+      "@hub-kit/core/ai-search/ui": [
+        "../hub-kit/src/components/ai-search/index.ts"
+      ],
+      "@hub-kit/core/filters": [
+        "../hub-kit/src/components/filters/index.ts"
+      ]
+    }
+  }
+}
