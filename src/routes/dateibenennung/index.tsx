@@ -20,16 +20,16 @@ import { ErrorState } from "@/components/belege/query-states";
 import { useFilenameSettings, useUpdateFilenameSettings } from "@/lib/data/queries";
 import { buildSuggestedFilename } from "@/lib/filename";
 import { useAuth } from "@/lib/auth";
-import { PERMISSIONS } from "@/lib/permissions";
+import { PERMISSIONS } from "@/config/permissions";
 import { useTranslation } from "@/lib/i18n";
 import type { Beleg, FilenameDescriptionSource, FilenameSettings } from "@/lib/data/types";
-import { pageTitle } from "@/lib/brand";
+import { pageTitle } from "@/config/brand";
 import { fehlerText, formatDateTime } from "@/lib/data/format";
 
 /**
- * The USt-Kennzeichen controls are hidden (Saskia, Stäy meeting 09.09.2026, 30:16).
+ * The USt-Kennzeichen controls are hidden (Saskia, a client meeting 09.09.2026, 30:16).
  *
- * She did not know what the field was for, and for Stäy the answer never varies: at Stäy there is
+ * She did not know what the field was for, and for this client the answer never varies: here there is
  * always VAT, at the other companies never, so the choice only ever produced a decision nobody was
  * equipped to make. The COLUMNS and the filename logic stay -- other real-estate clients do want
  * the suffix -- so re-enabling this is one boolean, not a migration back.
@@ -48,7 +48,7 @@ export const Route = createFileRoute("/dateibenennung/")({
 function DateibenennungGuard() {
   const { ready, can } = useAuth();
   if (!ready) return null;
-  if (!can(PERMISSIONS.pageDateibenennung)) return <KeinZugriff />;
+  if (!can(PERMISSIONS.pageFileNaming)) return <KeinZugriff />;
   return <DateibenennungPage />;
 }
 
@@ -63,7 +63,7 @@ const PREVIEW_BELEG = {
   amount_gross: 4850,
   property_code: "P-01",
   vat_rate: 19,
-  vat_treatment: "steuerpflichtig",
+  vat_treatment: "taxable",
 } as unknown as Beleg;
 
 // The exact set buildSuggestedFilename strips from the joined name (filename.ts's UNSAFE_CHARS).
@@ -111,7 +111,7 @@ function DateibenennungPage() {
         ) : q.isLoading || !q.data ? (
           <Skeleton className="h-96 w-full" />
         ) : (
-          <SettingsForm settings={q.data} canEdit={can(PERMISSIONS.pageDateibenennung)} />
+          <SettingsForm settings={q.data} canEdit={can(PERMISSIONS.pageFileNaming)} />
         )}
       </div>
     </div>
@@ -128,7 +128,7 @@ function SettingsForm({ settings, canEdit }: { settings: FilenameSettings; canEd
   const [includeAmount, setIncludeAmount] = useState(settings.include_amount);
   const [includeProperty, setIncludeProperty] = useState(settings.include_property);
   const [descriptionSource, setDescriptionSource] = useState(settings.description_source);
-  const [transliterateUmlauts, setTransliterateUmlauts] = useState(settings.transliterate_umlauts);
+  const [transliterateUmlauts, setTransliterateUmlauts] = useState(settings.transliterate_accents);
 
   // Re-sync local state whenever the server row changes underneath us (e.g. another admin saved).
   useEffect(() => {
@@ -138,7 +138,7 @@ function SettingsForm({ settings, canEdit }: { settings: FilenameSettings; canEd
     setIncludeAmount(settings.include_amount);
     setIncludeProperty(settings.include_property);
     setDescriptionSource(settings.description_source);
-    setTransliterateUmlauts(settings.transliterate_umlauts);
+    setTransliterateUmlauts(settings.transliterate_accents);
   }, [settings]);
 
   const previews = useMemo(() => {
@@ -150,7 +150,7 @@ function SettingsForm({ settings, canEdit }: { settings: FilenameSettings; canEd
       include_amount: includeAmount,
       include_property: includeProperty,
       description_source: descriptionSource,
-      transliterate_umlauts: transliterateUmlauts,
+      transliterate_accents: transliterateUmlauts,
     };
     // #6: three shapes, not one — the settings' effect on incomplete data was invisible.
     return [
@@ -177,7 +177,7 @@ function SettingsForm({ settings, canEdit }: { settings: FilenameSettings; canEd
     include_amount: true,
     include_property: true,
     description_source: "service_description" as FilenameDescriptionSource,
-    transliterate_umlauts: true,
+    transliterate_accents: true,
   };
   const abweichtVomStandard =
     settings.separator !== STANDARD.separator ||
@@ -186,7 +186,7 @@ function SettingsForm({ settings, canEdit }: { settings: FilenameSettings; canEd
     settings.include_amount !== STANDARD.include_amount ||
     settings.include_property !== STANDARD.include_property ||
     settings.description_source !== STANDARD.description_source ||
-    settings.transliterate_umlauts !== STANDARD.transliterate_umlauts;
+    settings.transliterate_accents !== STANDARD.transliterate_accents;
 
   function aufStandardSetzen() {
     setSeparator(STANDARD.separator);
@@ -195,7 +195,7 @@ function SettingsForm({ settings, canEdit }: { settings: FilenameSettings; canEd
     setIncludeAmount(STANDARD.include_amount);
     setIncludeProperty(STANDARD.include_property);
     setDescriptionSource(STANDARD.description_source);
-    setTransliterateUmlauts(STANDARD.transliterate_umlauts);
+    setTransliterateUmlauts(STANDARD.transliterate_accents);
   }
 
   // #1/#9: both free-text fields feed straight into a filename, and buildSuggestedFilename strips
@@ -217,7 +217,7 @@ function SettingsForm({ settings, canEdit }: { settings: FilenameSettings; canEd
     includeAmount !== settings.include_amount ||
     includeProperty !== settings.include_property ||
     descriptionSource !== settings.description_source ||
-    transliterateUmlauts !== settings.transliterate_umlauts;
+    transliterateUmlauts !== settings.transliterate_accents;
 
   // #4: leaving the page threw the edits away silently. The `dirty` flag already existed for the
   // save button; nothing ever used it to protect the work.
@@ -240,7 +240,7 @@ function SettingsForm({ settings, canEdit }: { settings: FilenameSettings; canEd
         include_amount: includeAmount,
         include_property: includeProperty,
         description_source: descriptionSource,
-        transliterate_umlauts: transliterateUmlauts,
+        transliterate_accents: transliterateUmlauts,
       },
       {
         onSuccess: () => toast.success(t("dateibenennung.toast.saved")),

@@ -1,6 +1,6 @@
 import { useEffect } from "react";
 
-import { findTourTarget, useTour } from "@hub-kit/core/tour";
+import { findTourTarget, useTour } from "@/kit/components/tour";
 
 export function TourOpenFlag() {
   const tour = useTour();

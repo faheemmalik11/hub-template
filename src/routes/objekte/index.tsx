@@ -6,7 +6,7 @@ import { ObjekteListe, validatePropertiesSearch } from "@/features/properties";
 import type { PropertiesConfig, PropertiesSearch } from "@/features/properties";
 import { useSetPropertyCompanies } from "@/lib/data/queries";
 import { useAuth } from "@/lib/auth";
-import { pageTitle } from "@/lib/brand";
+import { pageTitle } from "@/config/brand";
 
 export const Route = createFileRoute("/objekte/")({
   // `?neu=<code>` deep-links here from elsewhere (e.g. an invoice whose extracted property isn't in
@@ -18,7 +18,7 @@ export const Route = createFileRoute("/objekte/")({
 });
 
 /**
- * The Stäy wiring for the shared Objekte list.
+ * The this client wiring for the shared Objekte list.
  *
  * Everything the screen itself does lives in `features/properties/`, which is byte-identical across
  * the Hubs. This file is only the route: the search param, the document title, the navigation
@@ -44,7 +44,7 @@ function ObjektePage() {
       verwerfeNeuParam: () => navigate({ to: "/objekte", search: {}, replace: true }),
       oeffneGesellschaft: (id) => navigate({ to: "/gesellschaften/$id", params: { id } }),
       // Archiving is supported; the review date and the ownership type are not columns here, and
-      // drive_folder_id is a Dropbox path for the pipeline rather than a link anybody opens. See
+      // filing_folder is a Dropbox path for the pipeline rather than a link anybody opens. See
       // the capability table in features/properties/PORTING.md.
       stammdatenPruefung: false,
       archivierung: true,

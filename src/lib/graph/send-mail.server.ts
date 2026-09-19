@@ -2,7 +2,7 @@
 //
 // Replaces the previous Gmail transport (src/lib/google/), which could never have worked here:
 // it authenticated a Google service account with domain-wide delegation over the sender's
-// domain, and staey.de is a Microsoft 365 tenant (MX -> staey-de.mail.protection.outlook.com),
+// domain, and the client's own domain may be a Microsoft 365 tenant (check its MX record),
 // not a Google Workspace one. See docs/DATEV_HANDOVER.md.
 //
 // Graph's sendMail accepts two body shapes. This uses the MIME one - Content-Type: text/plain

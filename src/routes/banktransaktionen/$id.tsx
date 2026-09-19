@@ -10,7 +10,7 @@ import { Separator } from "@/components/ui/separator";
 import { cn } from "@/lib/utils";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import { useAuth } from "@/lib/auth";
-import { PERMISSIONS } from "@/lib/permissions";
+import { PERMISSIONS } from "@/config/permissions";
 import { CloseRemainderButton } from "@/components/bank/close-remainder";
 import {
   useBankAccounts,
@@ -42,7 +42,7 @@ import { TransactionDocuments } from "@/components/bank/transaction-documents";
 import { NotifySomeone, PingNotice } from "@/components/belege/ping-button";
 import { ErrorState } from "@/components/belege/query-states";
 import { useTranslation } from "@/lib/i18n";
-import { pageTitle } from "@/lib/brand";
+import { pageTitle } from "@/config/brand";
 
 export const Route = createFileRoute("/banktransaktionen/$id")({
   head: () => ({ meta: [{ title: pageTitle("Transaktion") }] }),
@@ -64,18 +64,18 @@ function TransaktionDetailPage() {
   // badge and the suggestions panel can never disagree about whether something is pending.
   const matchesQ = useTransactionMatches(id);
   const hasSuggestedMatch = (matchesQ.data ?? []).some(
-    (m) => m.status === "kandidat" || m.status === "auto",
+    (m) => m.status === "candidate" || m.status === "auto",
   );
 
   // WHAT IS LEFT ON THE PAYMENT. Coverage is summed from the links, never from the transaction
   // amount: a collective payment splits across several invoices and each link carries its own
   // share (migration 0024).
   const { can } = useAuth();
-  const darfZahlen = can(PERMISSIONS.invoicesPay);
+  const darfZahlen = can(PERMISSIONS.paymentsWrite);
   const closeRemainder = useCloseTransactionRemainder();
   const reopenRemainder = useReopenTransactionRemainder();
   const zugeordnet = (matchesQ.data ?? [])
-    .filter((m) => m.status === "bestaetigt")
+    .filter((m) => m.status === "confirmed")
     .reduce((sum, m) => sum + Math.abs(m.amount_matched ?? 0), 0);
   const gesamt = txn ? Math.abs(txn.amount) : 0;
   const rest = Math.max(gesamt - zugeordnet, 0);
@@ -140,7 +140,7 @@ function TransaktionDetailPage() {
         <TransactionTypeBadge type={txn.transaction_type} />
         <RichtungBadge richtung={txn.direction} />
         {/* Same reading as the list: an undecided match (kandidat/auto) leaves matching_status at
-            'offen', so without this the header said "Offen" on a transaction that in fact has a
+            'open', so without this the header said "Offen" on a transaction that in fact has a
             suggestion waiting right below it on this very screen. */}
         <TxnMatchingBadge status={txn.matching_status} hasSuggested={hasSuggestedMatch} />
         {/* The actions that address the whole transaction sit in the header, not inside a panel.
@@ -160,7 +160,7 @@ function TransaktionDetailPage() {
       <PingNotice kind="transaction" id={txn.id} />
 
       {/* Why this transaction is hidden, and who decided it — a rule or a person. */}
-      {txn.matching_status === "ignoriert" && txn.no_receipt_reason && (
+      {txn.matching_status === "ignored" && txn.no_receipt_reason && (
         <p className="mt-3 text-sm text-muted-foreground">
           {t("noReceipt.detail.grund", {
             grund: t(`oposWhitelist.category.${txn.no_receipt_reason}`),

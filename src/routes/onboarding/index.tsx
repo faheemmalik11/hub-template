@@ -1,7 +1,7 @@
 import { createFileRoute } from "@tanstack/react-router";
 
-import { ChecklistSteps, ChecklistSummaryCard } from "@hub-kit/core/checklist";
-import { TanStackChecklistLink } from "@hub-kit/core/checklist/tanstack";
+import { ChecklistSteps, ChecklistSummaryCard } from "@/kit/components/checklist";
+import { TanStackChecklistLink } from "@/kit/components/checklist/tanstack-link";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useAuth } from "@/lib/auth";
 import {
@@ -11,7 +11,7 @@ import {
 } from "@/lib/checklist-config";
 import { useSetupChecklist } from "@/lib/data/use-setup-checklist";
 import { useTranslation } from "@/lib/i18n";
-import { pageTitle } from "@/lib/brand";
+import { pageTitle } from "@/config/brand";
 
 export const Route = createFileRoute("/onboarding/")({
   head: () => ({ meta: [{ title: pageTitle("Onboarding") }] }),

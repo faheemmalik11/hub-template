@@ -1,6 +1,6 @@
 import { Upload } from "lucide-react";
 
-import { DropboxIcon, MicrosoftIcon } from "@hub-kit/core/pages";
+import { DropboxIcon, MicrosoftIcon } from "@/kit/pages";
 
 import type {
   DocumentSource,
@@ -10,7 +10,7 @@ import type {
   SourceFieldValue,
   SourceRun,
   SourceRunRequest,
-} from "@hub-kit/core/adapters";
+} from "@/kit/adapters";
 
 import { formatDateTime } from "@/lib/data/format";
 import {
@@ -35,7 +35,7 @@ import {
 } from "@/lib/data/types";
 import { namesOf, viewOf, type SourceView } from "@/lib/data/channel-sources";
 import { useAuth } from "@/lib/auth";
-import { PERMISSIONS } from "@/lib/permissions";
+import { PERMISSIONS } from "@/config/permissions";
 import { useTranslation } from "@/lib/i18n";
 import { useMemo, useState } from "react";
 
@@ -480,7 +480,7 @@ export function useDocumentSourcesAdapter(): DocumentSourcesAdapter {
         void folderRowsQuery.refetch();
       },
     }),
-    useCanEdit: () => can(PERMISSIONS.postfachSettings),
+    useCanEdit: () => can(PERMISSIONS.settingsManage),
     /**
      * Save one card, spread across the two tables that hold it.
      *
@@ -553,7 +553,7 @@ export function useDocumentSourcesAdapter(): DocumentSourcesAdapter {
     // this user may change the settings. Without either there is no button at all, rather than a
     // button whose press the pipeline would quietly ignore.
     askForARun:
-      runNowEnabled.data && can(PERMISSIONS.postfachSettings)
+      runNowEnabled.data && can(PERMISSIONS.settingsManage)
         ? async (sourceId, folders) => {
             const channel = PIPELINE_CHANNEL[sourceId as CardId];
             if (!channel) return;

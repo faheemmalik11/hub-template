@@ -15,7 +15,7 @@ import { UIScaleProvider } from "@/lib/ui-scale";
 import { I18nProvider, useTranslation } from "@/lib/i18n";
 import { AuthProvider } from "@/lib/auth";
 import { AuthGate } from "@/components/layout/auth-gate";
-import { BRAND, pageTitle } from "@/lib/brand";
+import { BRAND, pageTitle } from "@/config/brand";
 
 function NotFoundComponent() {
   const { t } = useTranslation();

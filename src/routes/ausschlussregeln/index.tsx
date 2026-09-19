@@ -60,14 +60,14 @@ import {
   SortableColumnHeader,
   TablePagination,
   useTableView,
-} from "@hub-kit/core/data-table";
-import type { FilterField } from "@hub-kit/core/data-table";
+} from "@/kit/components/data-table";
+import type { FilterField } from "@/kit/components/data-table";
 
 import { cn } from "@/lib/utils";
 import { useTranslation } from "@/lib/i18n";
 import type { Exclusion, ExclusionScope } from "@/lib/data/types";
 import type { ExclusionImpact } from "@/lib/data/queries";
-import { pageTitle } from "@/lib/brand";
+import { pageTitle } from "@/config/brand";
 import { fehlerText } from "@/lib/data/format";
 
 export const Route = createFileRoute("/ausschlussregeln/")({
@@ -431,7 +431,7 @@ function ImpactPreview({
         ? t("ausschlussregeln.vorschau.keine", { gesamt: grundgesamtheit })
         : t("ausschlussregeln.vorschau.treffer", {
             anzahl: treffer,
-            gesamt: grundgesamtheit,
+            total: grundgesamtheit,
             prozent: anteil.toFixed(anteil < 10 ? 1 : 0),
           })}
     </p>

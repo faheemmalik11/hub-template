@@ -3,7 +3,7 @@
 // - German ("de") is the DEFAULT and the server-render language, so SSR output is
 //   deterministic. The client re-syncs to the saved locale after hydration.
 // - English ("en") is selectable in the UI in every environment (no localhost gate).
-// - The selected locale is persisted in localStorage under `staey.locale`.
+// - The selected locale is persisted in localStorage under `hub.locale`.
 // - Reusable for the whole app later; for now only the invoice module consumes the keys.
 //
 // DB values, DB column/enum values, OCR/PDF content, and persisted audit text are NEVER
@@ -23,7 +23,7 @@ export type Locale = (typeof LOCALES)[number];
 /** The flag names the language faster than two letters do. */
 export const FLAGS: Record<Locale, string> = { de: "🇩🇪", en: "🇬🇧" };
 export const DEFAULT_LOCALE: Locale = "de";
-export const LOCALE_STORAGE_KEY = "staey.locale";
+export const LOCALE_STORAGE_KEY = "hub.locale";
 
 function isLocale(value: unknown): value is Locale {
   return value === "de" || value === "en";

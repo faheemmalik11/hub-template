@@ -1,5 +1,5 @@
 import { ForbiddenError } from "./errors";
-import { TABLE } from "@/lib/data/tables";
+import { TABLE } from "@/config/tables";
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 type Db = any;

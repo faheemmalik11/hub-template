@@ -6,10 +6,10 @@ import {
   type QueryColumnSpec,
   type SqlGenerationConfig,
   type WorkflowStepSpec,
-} from "@hub-kit/core/ai-search-sql";
+} from "@/kit/lib/ai-search-sql";
 
 import { AppError } from "./errors";
-import { TABLE } from "@/lib/data/tables";
+import { TABLE } from "@/config/tables";
 import { tenantCredential } from "@/lib/postfach/channel-credentials.server";
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -23,26 +23,26 @@ function requireOpenAiKey(): Promise<string> {
 }
 
 const workflowSteps: WorkflowStepSpec[] = [
-  { value: "eingegangen", meaning: "received, not yet in the approval process" },
+  { value: "received", meaning: "received, not yet in the approval process" },
   {
-    value: "in_pruefung",
+    value: "in_review",
     meaning: "in review (review stage, NOT an approval stage), assistant is checking it",
   },
   {
-    value: "rueckfrage",
+    value: "query",
     meaning:
       'returned with a query during review (NOT an approval stage). The word "query" or "Rückfrage" alone names EXACTLY this one step, precisely, never several steps at once',
   },
-  { value: "freigegeben_assistenz", meaning: "approved by the assistant (an approval stage)" },
+  { value: "approved_first", meaning: "approved by the assistant (an approval stage)" },
   {
-    value: "freigegeben_vorgesetzter",
+    value: "approved_final",
     meaning: "approved by the supervisor, awaiting payment (an approval stage)",
   },
-  { value: "bezahlt", meaning: "paid" },
-  { value: "uebergeben_datev", meaning: "handed to DATEV" },
-  { value: "abgeschlossen", meaning: "completed" },
-  { value: "abgelehnt", meaning: "rejected" },
-  { value: "nicht_relevant", meaning: "marked not relevant" },
+  { value: "paid", meaning: "paid" },
+  { value: "handed_over", meaning: "handed to DATEV" },
+  { value: "closed", meaning: "completed" },
+  { value: "rejected", meaning: "rejected" },
+  { value: "not_relevant", meaning: "marked not relevant" },
 ];
 
 export async function buildIntentClassifierConfig(): Promise<IntentClassifierConfig> {
@@ -108,7 +108,7 @@ const queryColumns: QueryColumnSpec[] = [
     name: "status",
     type: "text",
     description: "extraction status",
-    values: ["erkannt", "zu_pruefen"],
+    values: ["recognised", "needs_review"],
   },
   {
     name: "workflow_status",
@@ -122,13 +122,13 @@ const queryColumns: QueryColumnSpec[] = [
     name: "document_type",
     type: "text",
     description: "document kind",
-    values: ["rechnung", "gutschrift", "sonstiges"],
+    values: ["rechnung", "credit_note", "sonstiges"],
   },
   {
     name: "traffic_light",
     type: "text",
     description: "recognition traffic light",
-    values: ["gruen", "gelb", "rot"],
+    values: ["green", "yellow", "red"],
   },
   {
     name: "review_problem_count",
@@ -174,7 +174,7 @@ const queryColumns: QueryColumnSpec[] = [
     description: "settlement timestamp; NULL means unpaid; use only IS NULL / IS NOT NULL",
   },
   {
-    name: "datev_handed_over_at",
+    name: "handed_over_at",
     type: "date",
     description: "DATEV handover timestamp; use only IS NULL / IS NOT NULL",
   },
@@ -216,7 +216,7 @@ const entityMappings: EntityMappingSpec[] = [
   },
   {
     entity: "entities.reviewState",
-    rule: "'needed' -> (review_problem_count > 0 OR (review_unchecked = true AND status = 'zu_pruefen')); 'clear' -> review_problem_count = 0 AND NOT (review_unchecked = true AND status = 'zu_pruefen'). Never use review_score for this.",
+    rule: "'needed' -> (review_problem_count > 0 OR (review_unchecked = true AND status = 'needs_review')); 'clear' -> review_problem_count = 0 AND NOT (review_unchecked = true AND status = 'needs_review'). Never use review_score for this.",
   },
   {
     entity: "entities.bankMatch",
@@ -225,11 +225,11 @@ const entityMappings: EntityMappingSpec[] = [
   { entity: "entities.unassignedCompany", rule: "true -> company_code IS NULL." },
   {
     entity: "entities.datevHandover",
-    rule: "'done' -> datev_handed_over_at IS NOT NULL; 'pending' -> datev_handed_over_at IS NULL.",
+    rule: "'done' -> handed_over_at IS NOT NULL; 'pending' -> handed_over_at IS NULL.",
   },
   {
     entity: "entities.trafficLight",
-    rule: "a color -> traffic_light = 'gruen'/'gelb'/'rot'; 'flagged' -> traffic_light IN ('gelb', 'rot').",
+    rule: "a color -> traffic_light = 'green'/'yellow'/'red'; 'flagged' -> traffic_light IN ('yellow', 'red').",
   },
   { entity: "entities.documentType", rule: "use the document_type column with its known values." },
   {

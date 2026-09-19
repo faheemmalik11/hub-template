@@ -10,9 +10,9 @@
 // converting naked e-invoice XML to a ZUGFeRD-style PDF first. Manual trigger only (a button
 // click), no cron.
 //
-// Marks an invoice "handed over" (datev_handed_over_at) ONLY after Graph confirms the send for its
+// Marks an invoice "handed over" (handed_over_at) ONLY after Graph confirms the send for its
 // batch — a failed send never gets marked. The DB trigger from migration 0038 advances
-// workflow_status to 'uebergeben_datev' on its own once that column is set; this function never
+// workflow_status to 'handed_over' on its own once that column is set; this function never
 // writes workflow_status directly.
 import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
@@ -27,8 +27,8 @@ import {
   datevBlockReason,
   resolveDatevMime,
 } from "@/lib/datev/attachment-rules";
-import { BRAND } from "@/lib/brand";
-import { TABLE } from "@/lib/data/tables";
+import { BRAND } from "@/config/brand";
+import { TABLE } from "@/config/tables";
 
 const MAX_ITEMS_PER_BATCH = 50;
 // Two separate caps apply and the SMALLER one binds: DATEV accepts 20MB per email, but Microsoft
@@ -311,7 +311,7 @@ export const triggerDatevHandover = createServerFn({ method: "POST" })
     const db = supabaseAdmin as Db;
 
     const { data: route, error: routeError } = await db
-      .from(TABLE.datevRoutes)
+      .from(TABLE.handoverRoutes)
       .select("address, is_enabled")
       .eq("company_id", companyId)
       .eq("direction", direction)
@@ -334,24 +334,24 @@ export const triggerDatevHandover = createServerFn({ method: "POST" })
     //
     // ELIGIBILITY IS THE SAME RULE BOTH WAYS: not yet handed over, not deleted. Incoming adds
     // `workflow_status = 'bezahlt'`; an outgoing invoice has no equivalent workflow column
-    // (`voucher_status` mirrors LexOffice and means something else), so issuance is the whole test.
+    // (`status` mirrors LexOffice and means something else), so issuance is the whole test.
     let eligible: ReadyInvoice[];
     if (direction === "outgoing") {
       const { data, error } = await db
         .from(TABLE.outgoingInvoices)
         .select(
-          `id, voucher_number, voucher_date, amount_net, amount_gross, currency, ${TABLE.customers}(name)`,
+          `id, invoice_number, invoice_date, amount_net, amount_gross, currency, ${TABLE.customers}(name)`,
         )
         .eq("company_id", companyId)
-        .is("datev_handed_over_at", null)
+        .is("handed_over_at", null)
         .is("deleted_at", null)
-        .order("voucher_date", { ascending: true });
+        .order("invoice_date", { ascending: true });
       if (error) throw new AppError(errorMessage(error), 500, "DB_ERROR");
       eligible = (data ?? []).map(
         (r: {
           id: string;
-          voucher_number: string | null;
-          voucher_date: string | null;
+          invoice_number: string | null;
+          invoice_date: string | null;
           amount_net: number | null;
           amount_gross: number | null;
           currency: string | null;
@@ -360,8 +360,8 @@ export const triggerDatevHandover = createServerFn({ method: "POST" })
           id: r.id,
           // The counterparty on an outgoing invoice is the customer it was billed to.
           issuer: r.customers?.name ?? null,
-          invoice_number: r.voucher_number,
-          document_date: r.voucher_date,
+          invoice_number: r.invoice_number,
+          document_date: r.invoice_date,
           amount_net: r.amount_net,
           // Not stored per invoice on the outgoing side; only used by the XML wrapper, which an
           // outgoing PDF never reaches.
@@ -378,8 +378,8 @@ export const triggerDatevHandover = createServerFn({ method: "POST" })
           "id, issuer, invoice_number, document_date, amount_net, vat_amount, amount_gross, currency, intake_channel",
         )
         .eq("company_id", companyId)
-        .eq("workflow_status", "bezahlt")
-        .is("datev_handed_over_at", null)
+        .eq("workflow_status", "paid")
+        .is("handed_over_at", null)
         .is("deleted_at", null)
         .order("document_date", { ascending: true });
       if (error) throw new AppError(errorMessage(error), 500, "DB_ERROR");
@@ -387,7 +387,7 @@ export const triggerDatevHandover = createServerFn({ method: "POST" })
     }
 
     // Intersect rather than trust: `invoiceIds` narrows the eligible set and can never widen it.
-    // Anything the operator unticked simply never gets `datev_handed_over_at`, so it stays eligible
+    // Anything the operator unticked simply never gets `handed_over_at`, so it stays eligible
     // and comes back in the next send, which is the whole point of being able to exclude one.
     const auswahl = invoiceIds ? new Set(invoiceIds) : null;
     const readyInvoices: ReadyInvoice[] = auswahl
@@ -462,7 +462,7 @@ export const triggerDatevHandover = createServerFn({ method: "POST" })
         for (let attempt = 1; attempt <= 3; attempt++) {
           try {
             const { data: batchRow, error: batchError } = await db
-              .from(TABLE.datevHandoverBatches)
+              .from(TABLE.handoverBatches)
               .insert({
                 id: batchId,
                 company_id: companyId,
@@ -478,8 +478,8 @@ export const triggerDatevHandover = createServerFn({ method: "POST" })
             const { error: updateError } = await db
               .from(direction === "outgoing" ? TABLE.outgoingInvoices : TABLE.documents)
               .update({
-                datev_handed_over_at: new Date().toISOString(),
-                datev_batch_id: batchRow.id,
+                handed_over_at: new Date().toISOString(),
+                handover_batch_id: batchRow.id,
               })
               .in(
                 "id",
@@ -497,7 +497,7 @@ export const triggerDatevHandover = createServerFn({ method: "POST" })
 
         if (recordError) {
           const message = `EMAIL WAS SENT but recording it failed after 3 attempts — these ${chunk.length} invoice(s) must be reconciled manually, do NOT resend: ${errorMessage(recordError)}`;
-          await db.from(TABLE.datevHandoverBatches).insert({
+          await db.from(TABLE.handoverBatches).insert({
             id: batchId,
             company_id: companyId,
             direction,
@@ -521,7 +521,7 @@ export const triggerDatevHandover = createServerFn({ method: "POST" })
         // invoices in this chunk stay "ready" and can be retried on the next manual trigger. This
         // branch is only reached for failures before sendGraphMimeMessage succeeds; a post-send
         // bookkeeping failure is handled separately above with its own, more careful message.
-        await db.from(TABLE.datevHandoverBatches).insert({
+        await db.from(TABLE.handoverBatches).insert({
           id: batchId,
           company_id: companyId,
           direction,

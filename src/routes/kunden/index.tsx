@@ -45,7 +45,7 @@ import { ListToolbar } from "@/components/records/list-toolbar";
 import { TablePagination } from "@/components/data-table/table-pagination";
 import { useTableView } from "@/lib/use-table-view";
 import { useTranslation } from "@/lib/i18n";
-import { pageTitle } from "@/lib/brand";
+import { pageTitle } from "@/config/brand";
 
 /** "Any company", the neutral value of the company filter. */
 const ALLE = "__alle";

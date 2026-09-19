@@ -52,7 +52,7 @@ export function bookingDateFor(b: BwaBeleg, basisByCode: Map<string, BookingBasi
   return b.paid_at ? b.paid_at.slice(0, 10) : null;
 }
 
-// Revenue mirror of bookingDateFor: invoice/service date for accrual companies (voucher_date is the
+// Revenue mirror of bookingDateFor: invoice/service date for accrual companies (invoice_date is the
 // outgoing equivalent of document_date), the confirmed bank match's date for payment-date companies.
 // Outgoing invoices have no paid_at-equivalent field, so the match's own confirmed_at is used as the
 // closest available proxy for "when we recognized the payment" (disclosed simplification).
@@ -64,13 +64,13 @@ export function outgoingBookingDateFor(
 ): string | null {
   const code = companyCodeById.get(oi.company_id) ?? null;
   const basis = bookingBasisForCode(code, basisByCode);
-  if (basis === "invoice_date") return oi.voucher_date ?? null;
+  if (basis === "invoice_date") return oi.invoice_date ?? null;
   const confirmedAt = confirmedAtByInvoice.get(oi.id);
   return confirmedAt ? confirmedAt.slice(0, 10) : null;
 }
 
 // The COARSE category code a category (coarse or fine) rolls up to — what BWA_SKELETON's
-// categoryCodes actually key on (fine tags share their parent's bwa_line, not their own code).
+// categoryCodes actually key on (fine tags share their parent's report_line, not their own code).
 export function coarseCategoryCode(
   categoryId: string | null,
   categoriesById: Map<string, BwaCategory>,
@@ -406,7 +406,7 @@ export function useBwaScope(filter: BwaScopeFilter): BwaScopeResult {
           coveredAmount(
             oi.amount_gross,
             outgoingMatchedByInvoice.get(oi.id) ?? 0,
-            oi.voucher_status === "paidoff",
+            oi.status === "paidoff",
           ),
         )
       ) {
@@ -446,11 +446,11 @@ export function useBwaScope(filter: BwaScopeFilter): BwaScopeResult {
       items.push({
         outgoingInvoiceId: oi.id,
         lexofficeVoucherId: oi.lexoffice_voucher_id,
-        lexofficeStatus: oi.voucher_status,
+        lexofficeStatus: oi.status,
         amount:
           basis === "gross" ? (oi.amount_gross ?? 0) : (oi.amount_net ?? oi.amount_gross ?? 0),
         categoryId: null,
-        label: oi.customers?.name ?? oi.voucher_number ?? "—",
+        label: oi.customers?.name ?? oi.invoice_number ?? "—",
         date,
       });
     }

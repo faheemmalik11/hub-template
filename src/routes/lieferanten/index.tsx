@@ -71,7 +71,7 @@ import type { BankAccountDraft } from "@/components/suppliers/bank-account-draft
 import type { MergeSuggestion } from "@/components/suppliers/types";
 import { useTableView } from "@/lib/use-table-view";
 import { useTranslation } from "@/lib/i18n";
-import { pageTitle } from "@/lib/brand";
+import { pageTitle } from "@/config/brand";
 import type { Lieferant, SupplierBankAccount, SupplierDuplicateGroup } from "@/lib/data/types";
 
 export const Route = createFileRoute("/lieferanten/")({
@@ -119,7 +119,7 @@ function LieferantenPage() {
     [summenQ.data],
   );
 
-  // The invoice frequency (v_supplier_invoice_totals.avg_tage, still carried by `summen`) is no
+  // The invoice frequency (v_supplier_invoice_totals.avg_days_between, still carried by `summen`) is no
   // longer a column here. Most suppliers have one invoice or none, so the column was mostly
   // "zu wenig Daten", noise in every row to serve the few that had a number. It stays where it
   // can be read in context, on the supplier detail page, which computes its own.

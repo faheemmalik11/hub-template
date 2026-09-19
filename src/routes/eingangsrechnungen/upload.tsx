@@ -26,7 +26,7 @@ import {
 } from "@/features/file-upload/config";
 import { uploadToStorage } from "@/features/file-upload/upload";
 import { useTranslation } from "@/lib/i18n";
-import { pageTitle } from "@/lib/brand";
+import { pageTitle } from "@/config/brand";
 import { fehlerText } from "@/lib/data/format";
 
 export const Route = createFileRoute("/eingangsrechnungen/upload")({

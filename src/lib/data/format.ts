@@ -563,57 +563,57 @@ export function istUstRelevant(ustSatz: number | null | undefined): boolean {
   return (ustSatz ?? 0) > 0;
 }
 
-// ---- Konfidenz-Ampel ----
-export type Ampel = "gruen" | "gelb" | "rot" | "keine";
+// ---- Konfidenz-TrafficLight ----
+export type TrafficLight = "green" | "yellow" | "red" | "none";
 
 // grün ≥ 0.95 · gelb 0.8–0.95 · rot < 0.8 (Vorgabe Stufe 1).
-export function konfidenzAmpel(score: number | null | undefined): Ampel {
-  if (score == null) return "keine";
-  if (score >= 0.95) return "gruen";
-  if (score >= 0.8) return "gelb";
-  return "rot";
+export function konfidenzAmpel(score: number | null | undefined): TrafficLight {
+  if (score == null) return "none";
+  if (score >= 0.95) return "green";
+  if (score >= 0.8) return "yellow";
+  return "red";
 }
 
-export const AMPEL_STYLES: Record<Ampel, string> = {
-  gruen: "bg-emerald-500",
-  gelb: "bg-amber-400",
-  rot: "bg-red-500",
-  keine: "bg-muted-foreground/30",
+export const AMPEL_STYLES: Record<TrafficLight, string> = {
+  green: "bg-emerald-500",
+  yellow: "bg-amber-400",
+  red: "bg-red-500",
+  none: "bg-muted-foreground/30",
 };
 // Confidence label text: i18n key `belege.konfidenz.<ampel>` (see KonfidenzDot).
 
 // ---- Recognition traffic light (DB column belege.traffic_light, from the pipeline A2/A6) ----
 // Pill styling for the server-computed traffic light. The solid dot inside the pill uses
 // AMPEL_STYLES above; these are the tinted pill backgrounds. Label via `belege.ampel.<value>`.
-export const AMPEL_META: Record<Ampel, { cls: string }> = {
-  gruen: { cls: "bg-emerald-100 text-emerald-800 border-transparent" },
-  gelb: { cls: "bg-amber-100 text-amber-800 border-transparent" },
-  rot: { cls: "bg-red-100 text-red-800 border-transparent" },
-  keine: { cls: "bg-muted text-muted-foreground border-transparent" },
+export const AMPEL_META: Record<TrafficLight, { cls: string }> = {
+  green: { cls: "bg-emerald-100 text-emerald-800 border-transparent" },
+  yellow: { cls: "bg-amber-100 text-amber-800 border-transparent" },
+  red: { cls: "bg-red-100 text-red-800 border-transparent" },
+  none: { cls: "bg-muted text-muted-foreground border-transparent" },
 };
 
-// Map the raw DB value straight through (no client scoring). Unknown/absent -> "keine".
-export function ampelFromValue(value: string | null | undefined): Ampel {
-  return value === "gruen" || value === "gelb" || value === "rot" ? value : "keine";
+// Map the raw DB value straight through (no client scoring). Unknown/absent -> "none".
+export function ampelFromValue(value: string | null | undefined): TrafficLight {
+  return value === "green" || value === "yellow" || value === "red" ? value : "none";
 }
 
 // ---- Status (styling only; label text via i18n key `belege.status.<value>`) ----
 export const STATUS_META: Record<string, { cls: string }> = {
-  erkannt: { cls: "bg-brand-tint text-brand-dark border-transparent" },
-  zu_pruefen: { cls: "bg-amber-100 text-amber-800 border-transparent" },
+  recognised: { cls: "bg-brand-tint text-brand-dark border-transparent" },
+  needs_review: { cls: "bg-amber-100 text-amber-800 border-transparent" },
 };
 
 // ---- Field provenance (migration 0025; label text via i18n key `belege.quelle.<value>`) ----
 // Deliberately ranked by authority rather than by field: a human decision is the strongest and
 // gets the strongest colour, a rule is settled but automatic, and the AI is a suggestion. The
 // same three colours are reused wherever a source is shown so the ranking reads without a legend.
-export type FieldSourceKey = FieldSource | "keine";
+export type FieldSourceKey = FieldSource | "none";
 
 export const QUELLE_META: Record<FieldSourceKey, { cls: string }> = {
   human: { cls: "bg-emerald-100 text-emerald-800 border-transparent" },
   rule: { cls: "bg-sky-100 text-sky-800 border-transparent" },
   ai: { cls: "bg-violet-100 text-violet-800 border-transparent" },
-  keine: { cls: "bg-muted text-muted-foreground border-transparent" },
+  none: { cls: "bg-muted text-muted-foreground border-transparent" },
 };
 
 // A missing source is NOT "unknown provenance" in practice: the ingestion pipeline writes
@@ -623,7 +623,7 @@ export function fieldSourceKey(
   value: string | null | undefined,
   hasValue: boolean,
 ): FieldSourceKey {
-  if (!hasValue) return "keine";
+  if (!hasValue) return "none";
   if (value === "human" || value === "rule") return value;
   return "ai";
 }
@@ -632,7 +632,7 @@ export function fieldSourceKey(
 // Non-invoice types are visually distinct so Mahnung/Angebot/Kontoauszug stand out
 // from real payable invoices in the queue. Label text via i18n key `belege.belegart.<value>`.
 // ONE SPELLING PER DOCUMENT TYPE, resolved here. The pipeline writes lowercase German
-// ("rechnung", "mahnung", "gutschrift", …) while this file was keyed on the capitalized
+// ("rechnung", "mahnung", "credit_note", …) while this file was keyed on the capitalized
 // "Eingangsrechnung" the UI expected, so nothing ever matched: every ordinary invoice counted as an
 // exception, and the badge fell back to printing the raw column value. That is how a tag reading
 // "rechnungen" ended up on every row of an English screen.
@@ -643,8 +643,8 @@ const BELEGART_ALIASES: Record<string, string> = {
   invoices: "rechnung",
   erechnung: "rechnung",
   "e-rechnung": "rechnung",
-  gutschriften: "gutschrift",
-  credit_note: "gutschrift",
+  gutschriften: "credit_note",
+  credit_note: "credit_note",
   mahnungen: "mahnung",
   dunning: "mahnung",
   angebote: "angebot",
@@ -799,17 +799,17 @@ export function computeInvoiceFrequency(belege: Beleg[]): { avgDays: number | nu
 export type ZahlungGrundId =
   | "lastschrift"
   | "lastschrift_ausstehend"
-  | "bezahlt"
-  | "offen"
-  | "abgeglichen"
-  | "teilweise"
-  | "nicht_abgeglichen"
+  | "paid"
+  | "open"
+  | "reconciled"
+  | "partial"
+  | "not_reconciled"
   | "datev_bereit"
   | "datev_offen";
 
 export function zahlungGruende(
   beleg: Pick<Beleg, "payment_method" | "paid_at" | "workflow_status" | "amount_gross">,
-  // 'vorgeschlagen' falls through to the same lines as 'offen' below: a suggestion nobody has
+  // 'suggested' falls through to the same lines as 'open' below: a suggestion nobody has
   // confirmed has not reconciled anything yet, whatever the header badge calls it.
   abgleich: AbgleichStatus,
 ): ZahlungGrundId[] {
@@ -821,18 +821,18 @@ export function zahlungGruende(
   // manual-transfer invoice that isn't paid is a genuine open item.
   if (beleg.paid_at) {
     if (isLs) g.push("lastschrift");
-    g.push("bezahlt");
+    g.push("paid");
   } else if (isLs) {
     g.push("lastschrift_ausstehend");
   } else {
-    g.push("offen");
+    g.push("open");
   }
   g.push(
-    abgleich === "abgeglichen"
-      ? "abgeglichen"
-      : abgleich === "teilweise"
-        ? "teilweise"
-        : "nicht_abgeglichen",
+    abgleich === "reconciled"
+      ? "reconciled"
+      : abgleich === "partial"
+        ? "partial"
+        : "not_reconciled",
   );
   g.push(istDatevBereit(beleg.workflow_status) ? "datev_bereit" : "datev_offen");
   return g;
@@ -842,7 +842,7 @@ export function zahlungGruende(
 // be visible on the receipt"). Extracted so both zahlungGruende (detail page) and the Kanban
 // board card can show the same signal without duplicating the two-value check.
 export function istDatevBereit(workflowStatus: string | null | undefined): boolean {
-  return workflowStatus === "uebergeben_datev" || workflowStatus === "abgeschlossen";
+  return workflowStatus === "handed_over" || workflowStatus === "closed";
 }
 
 // Review-priority score: higher = needs attention sooner. Counts deterministic issues
@@ -851,33 +851,33 @@ export function istDatevBereit(workflowStatus: string | null | undefined): boole
 // ---- Workflow-Status (Freigabe-Kette, Stufe 2) ----
 // Styling only; label text via i18n key `belege.workflow.<value>`.
 export const WORKFLOW_META: Record<string, { cls: string }> = {
-  eingegangen: { cls: "bg-muted text-muted-foreground border-transparent" },
-  in_pruefung: { cls: "bg-amber-100 text-amber-800 border-transparent" },
-  rueckfrage: { cls: "bg-orange-100 text-orange-800 border-transparent" },
-  freigegeben_assistenz: { cls: "bg-sky-100 text-sky-800 border-transparent" },
-  freigegeben_vorgesetzter: { cls: "bg-violet-100 text-violet-800 border-transparent" },
+  received: { cls: "bg-muted text-muted-foreground border-transparent" },
+  in_review: { cls: "bg-amber-100 text-amber-800 border-transparent" },
+  query: { cls: "bg-orange-100 text-orange-800 border-transparent" },
+  approved_first: { cls: "bg-sky-100 text-sky-800 border-transparent" },
+  approved_final: { cls: "bg-violet-100 text-violet-800 border-transparent" },
   bezahlt: { cls: "bg-teal-100 text-teal-800 border-transparent" },
-  uebergeben_datev: { cls: "bg-emerald-100 text-emerald-800 border-transparent" },
-  abgeschlossen: { cls: "bg-emerald-600 text-white border-transparent" },
+  handed_over: { cls: "bg-emerald-100 text-emerald-800 border-transparent" },
+  closed: { cls: "bg-emerald-600 text-white border-transparent" },
   // Two side paths off the main chain (Appendix A6, migration 0025). Falling back to the
   // `eingegangen` default here (as WorkflowBadge did before these two existed) painted a
   // rejected invoice the same neutral grey as a brand-new one — the one status that most needs
   // to read as final/destructive looked the least urgent of all of them.
-  abgelehnt: { cls: "bg-red-100 text-red-800 border-transparent" },
-  nicht_relevant: { cls: "bg-sky-100 text-sky-800 border-transparent" },
+  rejected: { cls: "bg-red-100 text-red-800 border-transparent" },
+  not_relevant: { cls: "bg-sky-100 text-sky-800 border-transparent" },
 };
 
 // These must match the DB `workflow_status` CHECK constraint exactly — writing a value
 // not in the constraint would fail. Keep in sync with supabase/migrations/0002/0036.
 export const WORKFLOW_REIHENFOLGE = [
-  "eingegangen",
-  "in_pruefung",
-  "rueckfrage",
-  "freigegeben_assistenz",
-  "freigegeben_vorgesetzter",
-  "bezahlt",
-  "uebergeben_datev",
-  "abgeschlossen",
+  "received",
+  "in_review",
+  "query",
+  "approved_first",
+  "approved_final",
+  "paid",
+  "handed_over",
+  "closed",
 ] as const;
 
 // German-only workflow label for PERSISTED audit/history text (beleg_verlauf). Always German
@@ -902,17 +902,17 @@ export function approvalActionLabelDe(id: ApprovalActionId): string {
 export interface ApprovalAction {
   id: ApprovalActionId;
   nextStatus: WorkflowStatus;
-  // invoice_history `type` for this action, distinct from the plain 'statuswechsel' the older
+  // invoice_history `type` for this action, distinct from the plain 'status_change' the older
   // free-click stepper still writes.
   typ:
-    | "freigabe_pruefung"
-    | "freigabe_final"
-    | "rueckfrage"
-    | "ablehnung"
-    | "bereits_freigegeben"
-    | "uebersprungen"
-    | "abgeschlossen"
-    | "zahlung_fehlgeschlagen";
+    | "approval_first"
+    | "approval_final"
+    | "query"
+    | "rejection"
+    | "already_approved"
+    | "skipped"
+    | "closed"
+    | "payment_failed";
   requiresComment: boolean;
 }
 
@@ -920,25 +920,25 @@ export interface ApprovalAction {
 // finished" apart from "it is somebody else's move", and nextLegalActions() returns an empty
 // list for both.
 export const APPROVAL_TERMINAL_STATUSES: WorkflowStatus[] = [
-  "uebergeben_datev",
-  "abgeschlossen",
-  "abgelehnt",
-  "nicht_relevant",
+  "handed_over",
+  "closed",
+  "rejected",
+  "not_relevant",
 ];
 
 // The approval phase proper — where a query/reject/skip/already-approved still makes sense.
 // Once actually paid ('bezahlt'), the corrective action is specifically "payment failed" or the
 // manual correction tool, not a query/reject on an already-approved item (migration 0036).
-// 'freigegeben_vorgesetzter' IS the "awaiting payment" state — nothing else to click there; the
+// 'approved_final' IS the "awaiting payment" state — nothing else to click there; the
 // DB trigger advances straight to 'bezahlt' the moment paid_at is confirmed, regardless of how.
 // Exported for useInvoicesAssignedToMe (queries.ts), which needs the same "still in the approval
 // phase" test to tell an open assignment from a record of who once handled a finished invoice.
 export const APPROVAL_PHASE_STATUSES: WorkflowStatus[] = [
-  "eingegangen",
-  "in_pruefung",
-  "rueckfrage",
-  "freigegeben_assistenz",
-  "freigegeben_vorgesetzter",
+  "received",
+  "in_review",
+  "query",
+  "approved_first",
+  "approved_final",
 ];
 
 // Which approval actions are legal right now, given the current status, the resolved chain for
@@ -970,18 +970,18 @@ export function nextLegalActions(
   },
 ): ApprovalAction[] {
   if (!me || !capabilities.canApprove) return [];
-  const s = (status ?? "eingegangen") as WorkflowStatus;
-  // 'uebergeben_datev' stays in APPROVAL_TERMINAL_STATUSES -- there is genuinely nothing left to
+  const s = (status ?? "received") as WorkflowStatus;
+  // 'handed_over' stays in APPROVAL_TERMINAL_STATUSES -- there is genuinely nothing left to
   // APPROVE there, and the "chain is finished" message still has to read that way for anyone who
   // cannot close the invoice. It is not the end of the invoice's life though: a supervisor still
   // marks it complete, so it is excluded from the guard and handled near the bottom.
-  if (APPROVAL_TERMINAL_STATUSES.includes(s) && s !== "uebergeben_datev") return [];
+  if (APPROVAL_TERMINAL_STATUSES.includes(s) && s !== "handed_over") return [];
 
   // An invoice with a rule may only be acted on by the people that rule names. Until now the rule
   // decided nothing about WHO could act -- any approver could approve any invoice, which made the
   // rules a routing hint rather than an authority.
   //
-  // No rule resolved is deliberately NOT a refusal. Every rule on Stäy is scoped to a supplier,
+  // No rule resolved is deliberately NOT a refusal. Every rule on this client is scoped to a supplier,
   // company or property and there is no catch-all, so most invoices match none; refusing there
   // would leave them approvable by nobody. Role decides in that case, as before.
   //
@@ -996,44 +996,44 @@ export function nextLegalActions(
 
   // WHO approves decides what the approval means. This used to read only the rule's step 2:
   // with no second approver configured, an approval by ANYONE -- an assistant included -- landed
-  // directly on 'freigegeben_vorgesetzter'. That is the state "Jetzt bezahlen" unlocks, so an
+  // directly on 'approved_final'. That is the state "Jetzt bezahlen" unlocks, so an
   // assistant could put an invoice into the payable state with no supervisor ever involved. Every
-  // approval rule on Stäy leaves step 2 empty, so this was not an edge case: it was every
+  // approval rule on this client leaves step 2 empty, so this was not an edge case: it was every
   // approval. An assistant's approval is an assistant's approval; only a manager's is final.
   const approveNextStatus: WorkflowStatus = capabilities.canFinalApprove
-    ? "freigegeben_vorgesetzter"
-    : "freigegeben_assistenz";
+    ? "approved_final"
+    : "approved_first";
   const actions: ApprovalAction[] = [];
 
-  if (s === "eingegangen") {
+  if (s === "received") {
     // A freshly arrived document is taken into review first, rather than approved out of the inbox
-    // in one click. 'in_pruefung' existed in the chain but nothing ever moved anything into it,
-    // because the check-and-approve step below accepted 'eingegangen' directly.
+    // in one click. 'in_review' existed in the chain but nothing ever moved anything into it,
+    // because the check-and-approve step below accepted 'received' directly.
     actions.push({
       id: "send_for_review",
-      nextStatus: "in_pruefung",
-      typ: "freigabe_pruefung",
+      nextStatus: "in_review",
+      typ: "approval_first",
       requiresComment: false,
     });
-  } else if ((s === "in_pruefung" || s === "rueckfrage") && (!rule || istStep1 || istZugewiesen)) {
-    // The check-and-approve step. Rework-and-resubmit from 'rueckfrage' re-enters here too
+  } else if ((s === "in_review" || s === "query") && (!rule || istStep1 || istZugewiesen)) {
+    // The check-and-approve step. Rework-and-resubmit from 'query' re-enters here too
     // (v1 simplification: always the check step, not a reconstruction of exactly which stage
     // raised the query — the briefing's "query loop can go around any number of times" still
     // holds either way).
     actions.push({
       id: "approve",
       nextStatus: approveNextStatus,
-      typ: "freigabe_pruefung",
+      typ: "approval_first",
       requiresComment: false,
     });
   } else if (
-    s === "freigegeben_assistenz" &&
+    s === "approved_first" &&
     (rule && !istZugewiesen ? istStep2 : capabilities.canFinalApprove)
   ) {
     actions.push({
       id: "final_approve",
-      nextStatus: "freigegeben_vorgesetzter",
-      typ: "freigabe_final",
+      nextStatus: "approved_final",
+      typ: "approval_final",
       requiresComment: false,
     });
   }
@@ -1041,35 +1041,35 @@ export function nextLegalActions(
   if (APPROVAL_PHASE_STATUSES.includes(s)) {
     actions.push({
       id: "return_with_query",
-      nextStatus: "rueckfrage",
-      typ: "rueckfrage",
+      nextStatus: "query",
+      typ: "query",
       requiresComment: true,
     });
 
     actions.push({
       id: "reject",
-      nextStatus: "abgelehnt",
-      typ: "ablehnung",
+      nextStatus: "rejected",
+      typ: "rejection",
       requiresComment: true,
     });
 
     // 'mark_already_approved' and 'skip_step' used to sit here, both manager-only and both landing
-    // on 'freigegeben_vorgesetzter'. They were removed once the workflow bar became the navigation:
+    // on 'approved_final'. They were removed once the workflow bar became the navigation:
     // all three did the same thing to the invoice and differed only in the history line they wrote,
     // so a manager now approves by clicking the step circle. The two `typ` values they used
-    // ('bereits_freigegeben', 'uebersprungen') stay in the union and in APPROVAL_VERLAUF_TYPES,
+    // ('already_approved', 'skipped') stay in the union and in APPROVAL_VERLAUF_TYPES,
     // because rows written before the removal still have to render in the Freigabe-Verlauf.
   }
 
   // Closing off an invoice that has gone to DATEV. Manager-only, and until now there was no route
-  // to 'abgeschlossen' at all except the manual status correction on the Workflow tab -- which is
+  // to 'closed' at all except the manual status correction on the Workflow tab -- which is
   // there to fix a wrong status, not to perform a normal step. Handing over to DATEV and then
   // closing the invoice IS a normal step, so it gets a real action and a clickable circle.
-  if (s === "uebergeben_datev" && capabilities.canFinalApprove) {
+  if (s === "handed_over" && capabilities.canFinalApprove) {
     actions.push({
       id: "complete",
-      nextStatus: "abgeschlossen",
-      typ: "abgeschlossen",
+      nextStatus: "closed",
+      typ: "closed",
       requiresComment: false,
     });
   }
@@ -1077,7 +1077,7 @@ export function nextLegalActions(
   // 'payment_failed' used to sit here, offered at 'bezahlt' to either role. Nobody marks a payment
   // failed by hand: 'bezahlt' is stamped by a DB trigger off a confirmed bank match or the manual
   // paid checkbox, so undoing it is a correction, and corrections have their own control on the
-  // Workflow tab. The 'zahlung_fehlgeschlagen' history type stays in the union and in
+  // Workflow tab. The 'payment_failed' history type stays in the union and in
   // APPROVAL_VERLAUF_TYPES: rows written before this, and any the payment provider writes itself,
   // still have to render.
 
@@ -1088,7 +1088,7 @@ export function nextLegalActions(
 // case — a manager questioning the assistant's check), unless the person raising the query IS
 // that step-1 approver, in which case it addresses step 2 instead. Null when neither applies
 // (no resolved chain, or a single-step chain where the actor is that one step) — the receipt
-// still moves to 'rueckfrage' either way, it just has no specific "returned to me" addressee.
+// still moves to 'query' either way, it just has no specific "returned to me" addressee.
 export function approvalQueryTarget(
   rule: Pick<ApprovalRule, "step_1_user_id" | "step_2_user_id"> | null,
   me: Pick<ChainPerson, "id"> | null,
@@ -1098,7 +1098,7 @@ export function approvalQueryTarget(
   return rule.step_2_user_id ?? null;
 }
 
-// German-only before→after label for PERSISTED assignment history (beleg_verlauf, typ "zuordnung").
+// German-only before→after label for PERSISTED assignment history (beleg_verlauf, typ "booking").
 // Always German regardless of UI language, matching workflowLabelDe. Empty sides render as "—".
 // `feld` is a fixed German dimension label ("Gesellschaft" | "Objekt").
 export function zuordnungLabelDe(
@@ -1284,10 +1284,10 @@ export function txnQuelleLabel(source: string | null | undefined): string {
 
 // Match status of a beleg↔transaction link.
 export const MATCH_STATUS_META: Record<string, { label: string; cls: string }> = {
-  kandidat: { label: "Vorschlag", cls: "bg-amber-100 text-amber-800 border-transparent" },
+  candidate: { label: "Vorschlag", cls: "bg-amber-100 text-amber-800 border-transparent" },
   auto: { label: "Auto-Abgleich", cls: "bg-sky-100 text-sky-800 border-transparent" },
-  bestaetigt: { label: "Bestätigt", cls: "bg-emerald-100 text-emerald-800 border-transparent" },
-  abgelehnt: { label: "Abgelehnt", cls: "bg-muted text-muted-foreground border-transparent" },
+  confirmed: { label: "Bestätigt", cls: "bg-emerald-100 text-emerald-800 border-transparent" },
+  rejected: { label: "Abgelehnt", cls: "bg-muted text-muted-foreground border-transparent" },
 };
 
 export function matchStatusLabel(status: string | null | undefined): string {
@@ -1297,13 +1297,13 @@ export function matchStatusLabel(status: string | null | undefined): string {
 
 // Transaction reconciliation state (matching_status column).
 export const TXN_MATCHING_STATUS_META: Record<string, { label: string; cls: string }> = {
-  offen: { label: "Offen", cls: "bg-muted text-muted-foreground border-transparent" },
-  vorschlag: {
+  open: { label: "Offen", cls: "bg-muted text-muted-foreground border-transparent" },
+  suggestion: {
     label: "Vorschlag prüfen",
     cls: "bg-amber-100 text-amber-800 border-transparent",
   },
-  zugeordnet: { label: "Zugeordnet", cls: "bg-emerald-100 text-emerald-800 border-transparent" },
-  ignoriert: { label: "Ignoriert", cls: "bg-muted text-muted-foreground border-transparent" },
+  matched: { label: "Zugeordnet", cls: "bg-emerald-100 text-emerald-800 border-transparent" },
+  ignored: { label: "Ignoriert", cls: "bg-muted text-muted-foreground border-transparent" },
 };
 
 export function txnMatchingLabel(status: string | null | undefined): string {
@@ -1312,24 +1312,24 @@ export function txnMatchingLabel(status: string | null | undefined): string {
 }
 
 // Derived per-beleg reconciliation summary (computed from confirmed matches).
-export const ABGLEICH_META: Record<string, { label: string; cls: string }> = {
-  offen: { label: "Nicht abgeglichen", cls: "bg-muted text-muted-foreground border-transparent" },
+export const RECONCILIATION_META: Record<string, { label: string; cls: string }> = {
+  open: { label: "Nicht abgeglichen", cls: "bg-muted text-muted-foreground border-transparent" },
   // A match is waiting to be confirmed. Its own state, because "nothing matched yet" and "a
   // transaction is sitting there waiting for you to say yes" call for opposite responses, and the
   // header used to show both as the same grey "Nicht abgeglichen".
   // Amber, because that is what a pending suggestion wears in the invoice TABLE (BankMatchBadge).
   // The detail page had it in sky and the list in amber, so the same invoice changed colour on the
   // way from the row to the page that row opens -- and colour is the whole point of these chips.
-  vorgeschlagen: {
+  suggested: {
     label: "Vorschlag offen",
     cls: "bg-amber-100 text-amber-800 border-transparent",
   },
-  // Sky, vacated by 'vorgeschlagen' above. Partial coverage exists only here (the table's badge
+  // Sky, vacated by 'suggested' above. Partial coverage exists only here (the table's badge
   // reports match PRESENCE, so it has no partial state to clash with), and it must stay
   // distinguishable from the suggestion state -- two amber chips reading "Vorschlag offen" and
   // "Teilweise" would make the colour carry no information at all.
-  teilweise: { label: "Teilweise", cls: "bg-sky-100 text-sky-800 border-transparent" },
-  abgeglichen: { label: "Abgeglichen", cls: "bg-emerald-100 text-emerald-800 border-transparent" },
+  partial: { label: "Teilweise", cls: "bg-sky-100 text-sky-800 border-transparent" },
+  reconciled: { label: "Abgeglichen", cls: "bg-emerald-100 text-emerald-800 border-transparent" },
 };
 
 // brutto = beleg gross amount; matchedSum = sum of confirmed matched transaction amounts.
@@ -1364,9 +1364,9 @@ export function isFullyCovered(brutto: number | null | undefined, matchedSum: nu
 // How much of an invoice counts as "covered" for open-item / Cost Analysis purposes: the real
 // bank-matched sum, OR the full gross amount when it's already considered paid outside of
 // matching — a human explicitly marked it paid (invoices.paid_source='manual') or an outgoing
-// invoice's own status says so (voucher_status='paidoff') — because some payments (cash, a
+// invoice's own status says so (status='paidoff') — because some payments (cash, a
 // channel with no bank feed) never produce a matchable transaction at all. Bank-matched coverage
-// already implies paid_at/voucher_status agree, so this never UNDER-counts an already-covered
+// already implies paid_at/status agree, so this never UNDER-counts an already-covered
 // invoice; it only closes the gap for one that will never get a real match.
 export function coveredAmount(
   amountGross: number | null | undefined,
@@ -1561,7 +1561,7 @@ export function tageSeit(datum: string | null | undefined, heute = heuteLokal())
   return Math.round((jetzt - dann) / 86_400_000);
 }
 
-export type AbgleichStatus = "offen" | "vorgeschlagen" | "teilweise" | "abgeglichen";
+export type AbgleichStatus = "open" | "suggested" | "partial" | "reconciled";
 
 /**
  * Where this invoice stands against the bank.
@@ -1577,19 +1577,19 @@ export function abgleichStatus(
   hatVorschlag = false,
   restAbgeschrieben = false,
 ): AbgleichStatus {
-  if (matchedSum <= 0) return hatVorschlag ? "vorgeschlagen" : "offen";
-  if (isFullyCovered(brutto, matchedSum)) return "abgeglichen";
+  if (matchedSum <= 0) return hatVorschlag ? "suggested" : "open";
+  if (isFullyCovered(brutto, matchedSum)) return "reconciled";
   // A remainder somebody wrote off is not a gap that is still being worked on. Without this the
   // invoice reads "Teilweise ... 92,86 EUR offen" for good, next to a workflow that says paid and
   // a card that says the rest is written off. It needs a confirmed allocation to say this: an
   // invoice paid by hand with no bank match behind it has nothing to be reconciled against.
-  if (restAbgeschrieben) return "abgeglichen";
-  return "teilweise";
+  if (restAbgeschrieben) return "reconciled";
+  return "partial";
 }
 
 /** A link that is neither confirmed nor rejected: it is waiting on a person. */
 export function istOffenerVorschlag(status: string | null | undefined): boolean {
-  return status === "kandidat" || status === "auto";
+  return status === "candidate" || status === "auto";
 }
 
 // Human labels for bank_sync_logs events.

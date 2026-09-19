@@ -1,6 +1,6 @@
 import { useMemo } from "react";
 
-import type { ApprovalRulesLabels } from "@hub-kit/core/approval-rules";
+import type { ApprovalRulesLabels } from "@/kit/pages/approval-rules";
 
 import { useTranslation } from "@/lib/i18n";
 

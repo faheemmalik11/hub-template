@@ -1,6 +1,6 @@
 import { useMemo } from "react";
 
-import { HintTooltip } from "@hub-kit/core/data-table";
+import { HintTooltip } from "@/kit/components/data-table";
 
 import { Checkbox } from "@/components/ui/checkbox";
 import { cn } from "@/lib/utils";

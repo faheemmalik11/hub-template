@@ -27,24 +27,24 @@ const TILE = "border border-border";
 const TILE_LABEL = "text-muted-foreground";
 
 const STAGES: { key: string; statuses: string[]; tileCls: string; labelCls: string }[] = [
-  { key: "eingegangen", statuses: ["eingegangen"], tileCls: TILE, labelCls: TILE_LABEL },
+  { key: "received", statuses: ["received"], tileCls: TILE, labelCls: TILE_LABEL },
   {
     key: "inPruefung",
     // Rückfrage is a held document, not a separate place in the chain: it is in review with a
     // question outstanding, so it counts where a person would look for it.
-    statuses: ["in_pruefung", "rueckfrage"],
+    statuses: ["in_review", "query"],
     tileCls: TILE,
     labelCls: TILE_LABEL,
   },
   {
     key: "freigegeben",
-    statuses: ["freigegeben_assistenz", "freigegeben_stufe2", "freigegeben_vorgesetzter"],
+    statuses: ["approved_first", "freigegeben_stufe2", "approved_final"],
     tileCls: TILE,
     labelCls: TILE_LABEL,
   },
-  { key: "bezahlt", statuses: ["bezahlt"], tileCls: TILE, labelCls: TILE_LABEL },
-  { key: "datev", statuses: ["uebergeben_datev"], tileCls: TILE, labelCls: TILE_LABEL },
-  { key: "abgeschlossen", statuses: ["abgeschlossen"], tileCls: TILE, labelCls: TILE_LABEL },
+  { key: "paid", statuses: ["paid"], tileCls: TILE, labelCls: TILE_LABEL },
+  { key: "datev", statuses: ["handed_over"], tileCls: TILE, labelCls: TILE_LABEL },
+  { key: "closed", statuses: ["closed"], tileCls: TILE, labelCls: TILE_LABEL },
 ];
 
 export function PipelineStages() {

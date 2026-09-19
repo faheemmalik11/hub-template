@@ -2,7 +2,7 @@
  * THE REPO-SPECIFIC HALF OF THE INVOICE DETAIL PAGE.
  *
  * Everything in src/features/invoice-detail/ except this file is meant to be byte-identical
- * across the hubs (Staeyhub, Immonetz, ...). Porting the page to another repo is: copy the
+ * across the hubs (this Hub, Immonetz, ...). Porting the page to another repo is: copy the
  * folder, then rewrite THIS file for that repo's chain — see PORTING.md. If you find yourself
  * editing another file in this folder for one repo only, the thing you are changing probably
  * belongs in here as config instead.
@@ -11,7 +11,7 @@ import type { ApprovalActionId } from "@/lib/data/format";
 import type { WorkflowStatus } from "@/lib/data/types";
 
 // Only the plain chain steps get a circle on the workflow bar. `skip_step` and
-// `mark_already_approved` used to land on 'freigegeben_vorgesetzter' as well and were kept out of
+// `mark_already_approved` used to land on 'approved_final' as well and were kept out of
 // the bar for that reason; they are gone now (see nextLegalActions), so a manager approves by
 // clicking the step itself. 'complete' is here too: closing off a DATEV-handed invoice is a step
 // a person takes, so it gets a circle like the approvals do.
@@ -25,35 +25,35 @@ export const CHAIN_ACTION_IDS: ApprovalActionId[] = [
 // 'bezahlt' and everything after it are stamped by DB triggers (migrations 0036/0038) when a
 // payment or a DATEV handover is confirmed, never by a person picking the step. Those circles
 // stay inert, and nothing draws an arrow at them. Named rather than "everything from 'bezahlt'
-// onwards": 'abgeschlossen' sits in that tail and is NOT trigger-driven.
-export const AUTO_STUFEN: WorkflowStatus[] = ["bezahlt", "uebergeben_datev"];
+// onwards": 'closed' sits in that tail and is NOT trigger-driven.
+export const AUTO_STUFEN: WorkflowStatus[] = ["paid", "handed_over"];
 
-// Manual correction targets (see runCorrection above): every status except 'nicht_relevant',
+// Manual correction targets (see runCorrection above): every status except 'not_relevant',
 // which has its own dedicated flow (useSetNotRelevant/useClearNotRelevant) that also touches the
 // mailbox return flags — setting the raw column here directly would desync those.
 export const CORRECTABLE_STATUSES: WorkflowStatus[] = [
-  "eingegangen",
-  "in_pruefung",
-  "rueckfrage",
-  "freigegeben_assistenz",
-  "freigegeben_vorgesetzter",
-  "bezahlt",
-  "uebergeben_datev",
-  "abgeschlossen",
-  "abgelehnt",
+  "received",
+  "in_review",
+  "query",
+  "approved_first",
+  "approved_final",
+  "paid",
+  "handed_over",
+  "closed",
+  "rejected",
 ];
 
 // The approval-workflow invoice_history types (migration 0035) live in their own section on the
 // Freigabe tab, not mixed into the general Verlauf tab — kept as one list so both places filter
 // on exactly the same set.
 export const APPROVAL_VERLAUF_TYPES = [
-  "freigabe_pruefung",
-  "freigabe_final",
-  "rueckfrage",
-  "ablehnung",
-  "bereits_freigegeben",
-  "uebersprungen",
-  "korrektur",
+  "approval_first",
+  "approval_final",
+  "query",
+  "rejection",
+  "already_approved",
+  "skipped",
+  "correction",
   // Unlinking a bank match walks the invoice back out of Bezahlt. It belongs in the workflow
   // timeline because the status really did move, but it is NOT "manually corrected": nobody
   // touched the status, a payment was removed and the status followed.
@@ -61,10 +61,10 @@ export const APPROVAL_VERLAUF_TYPES = [
   // A confirmed bank match. The reconciliation is a step in the invoice's life even when it
   // does not move the status, so the chip belongs on the same timeline as the rest of it.
   "zuordnung_bestaetigt",
-  "bezahlt",
-  "zahlung_fehlgeschlagen",
-  "uebergeben_datev",
-  "abgeschlossen",
+  "paid",
+  "payment_failed",
+  "handed_over",
+  "closed",
 ];
 
 /**
@@ -91,16 +91,16 @@ export const LEGACY_ACTION_IDS: ApprovalActionId[] = [
 
 /** Where each action lands. Only for legacy rows; live ones carry `nach` from the action itself. */
 export const AKTION_ZIELSTATUS: Partial<Record<ApprovalActionId, string>> = {
-  send_for_review: "in_pruefung",
-  approve: "freigegeben_assistenz",
-  final_approve: "freigegeben_vorgesetzter",
-  return_with_query: "rueckfrage",
-  reject: "abgelehnt",
-  complete: "abgeschlossen",
+  send_for_review: "in_review",
+  approve: "approved_first",
+  final_approve: "approved_final",
+  return_with_query: "query",
+  reject: "rejected",
+  complete: "closed",
 };
 
 // The workflow bar's "done" palette. The default across the hubs is Immonetz's brand green,
-// oklch(0.55 0.052 196), spelled out literally here because Staeyhub's own brand is a warm brown.
+// oklch(0.55 0.052 196), spelled out literally here because this Hub's own brand is a warm brown.
 // Immonetz itself writes plain `brand` classes in its copy (its brand IS this green, and the
 // token tracks any future rebrand); every other repo carries the literal value so the bar reads
 // identically across the product family.

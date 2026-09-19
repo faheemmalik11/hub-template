@@ -3,10 +3,10 @@
  *
  * Nobody picks a number. A reviewer picks a property or Gemeinkosten, and the number follows from
  * that plus the company. It has to be both, because the tax adviser's workbook numbers the same
- * building differently per company: Ludwigshafen is 6 for Stäy and 101 for Impuls. That is why the
- * number lives on the property/company link (`property_companies.cost_center_number`) and not on
+ * building differently per company: Ludwigshafen is 6 for this client and 101 for Impuls. That is why the
+ * number lives on the property/company link (`property_companies.cost_centre_number`) and not on
  * the property, and why the overhead counterpart lives on the company
- * (`companies.overhead_cost_center`).
+ * (`companies.overhead_cost_centre`).
  *
  * See docs/COST_CENTRES.md.
  */
@@ -41,9 +41,9 @@ export interface KostenstelleEingabe {
 }
 
 interface KostenstelleStammdaten {
-  gesellschaften: { id: string; code: string; overhead_cost_center: number | null }[];
+  gesellschaften: { id: string; code: string; overhead_cost_centre: number | null }[];
   objekte: { id: string; code: string }[];
-  links: { property_id: string; company_id: string; cost_center_number: number | null }[];
+  links: { property_id: string; company_id: string; cost_centre_number: number | null }[];
 }
 
 /**
@@ -60,7 +60,7 @@ export function resolveKostenstelle(
 
   if (eingabe.gemeinkosten) {
     return {
-      nummer: firma.overhead_cost_center ?? null,
+      nummer: firma.overhead_cost_centre ?? null,
       gemeinkosten: true,
       gesellschaftId: firma.id,
       verknuepft: true,
@@ -72,7 +72,7 @@ export function resolveKostenstelle(
 
   const link = stammdaten.links.find((l) => l.property_id === propId && l.company_id === firma.id);
   return {
-    nummer: link?.cost_center_number ?? null,
+    nummer: link?.cost_centre_number ?? null,
     gemeinkosten: false,
     gesellschaftId: firma.id,
     verknuepft: !!link,

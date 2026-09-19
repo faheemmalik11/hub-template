@@ -43,7 +43,7 @@ import { OutgoingStatusBadge } from "@/components/belege/badges";
 import { ErrorState } from "@/components/belege/query-states";
 import { EditCustomerDialog } from "@/components/kunden/edit-customer-dialog";
 import { useTranslation } from "@/lib/i18n";
-import { pageTitle } from "@/lib/brand";
+import { pageTitle } from "@/config/brand";
 
 export const Route = createFileRoute("/kunden/$id")({
   head: () => ({ meta: [{ title: pageTitle("Kunde") }] }),
@@ -72,7 +72,7 @@ function KundeDetailPage() {
   // Every document stays in the table below -- a cancellation is still something you want to see.
   // The headline figure, though, is money, so it only counts what zaehltAlsUmsatz() allows. When
   // something is left out we say so, rather than letting the count silently disagree with the rows.
-  const gezaehlteRechnungen = rechnungen.filter((r) => zaehltAlsUmsatz(r.voucher_status));
+  const gezaehlteRechnungen = rechnungen.filter((r) => zaehltAlsUmsatz(r.status));
   const summe = gezaehlteRechnungen.reduce((s, r) => s + (r.amount_gross ?? 0), 0);
   const nichtGezaehlt = rechnungen.length - gezaehlteRechnungen.length;
 
@@ -299,16 +299,16 @@ function KundeDetailPage() {
                 {rechnungen.map((r) => (
                   <TableRow key={r.id}>
                     <TableCell className="font-medium text-foreground">
-                      {r.voucher_number ?? t("kunden.detail.entwurf")}
+                      {r.invoice_number ?? t("kunden.detail.entwurf")}
                     </TableCell>
                     <TableCell className="text-sm text-muted-foreground tabular-nums">
-                      {formatDate(r.voucher_date)}
+                      {formatDate(r.invoice_date)}
                     </TableCell>
                     <TableCell className="text-right font-medium tabular-nums">
                       {formatEUR(r.amount_gross)}
                     </TableCell>
                     <TableCell>
-                      <OutgoingStatusBadge status={r.voucher_status} dueDate={r.due_date} />
+                      <OutgoingStatusBadge status={r.status} dueDate={r.due_date} />
                     </TableCell>
                   </TableRow>
                 ))}

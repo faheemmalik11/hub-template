@@ -1,6 +1,6 @@
 import { useAuth } from "@/lib/auth";
 import { useTranslation } from "@/lib/i18n";
-import { PERMISSIONS } from "@/lib/permissions";
+import { PERMISSIONS } from "@/config/permissions";
 
 /**
  * May the signed-in account move an invoice's payment state?
@@ -17,6 +17,6 @@ import { PERMISSIONS } from "@/lib/permissions";
 export function usePaymentRight(): { mayPay: boolean; reason: string | undefined } {
   const { can } = useAuth();
   const { t } = useTranslation();
-  const mayPay = can(PERMISSIONS.invoicesPay);
+  const mayPay = can(PERMISSIONS.paymentsWrite);
   return { mayPay, reason: mayPay ? undefined : t("bank.matches.keineZahlBerechtigung") };
 }

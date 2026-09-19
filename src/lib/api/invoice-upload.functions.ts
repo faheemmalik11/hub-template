@@ -13,7 +13,7 @@ import { z } from "zod";
 
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 import { AppError } from "./errors";
-import { TABLE } from "@/lib/data/tables";
+import { TABLE } from "@/config/tables";
 
 const FileSchema = z.object({
   invoiceId: z.string().uuid(),
@@ -76,8 +76,8 @@ export const createUploadedInvoices = createServerFn({ method: "POST" })
         document_type: "rechnung",
         intake_channel: "upload",
         source: "upload",
-        status: "zu_pruefen",
-        workflow_status: "eingegangen",
+        status: "needs_review",
+        workflow_status: "received",
         issuer: f.filename,
         uploaded_for_transaction_id: data.forTransactionId ?? null,
       });
@@ -115,7 +115,7 @@ export const createUploadedInvoices = createServerFn({ method: "POST" })
 
       await db.from(TABLE.documentHistory).insert({
         document_id: f.invoiceId,
-        type: "aenderung",
+        type: "change",
         // Persisted audit text stays German. Says where it came from, because an invoice that
         // will attach itself to a payment on its own should say so before it happens.
         text: data.forTransactionId

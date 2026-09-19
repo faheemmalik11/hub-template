@@ -60,7 +60,7 @@ import { ErrorState, TableSkeleton } from "@/components/belege/query-states";
 import { fehlerText, formatEUR, parseDecimalInput } from "@/lib/data/format";
 import { useTranslation } from "@/lib/i18n";
 import type { BwaCategory, ManualBooking, Objekt } from "@/lib/data/types";
-import { pageTitle } from "@/lib/brand";
+import { pageTitle } from "@/config/brand";
 
 export const Route = createFileRoute("/manuelle-buchungen/")({
   head: () => ({ meta: [{ title: pageTitle("Manuelle Buchungen") }] }),
@@ -106,7 +106,7 @@ function useManualCategoryOptions(categories: BwaCategory[]): ComboboxOption[] {
         // built for "the P&L item with no receipt and no transaction" refusing to record the
         // commonest example of one. Catch-all and non-P&L rows stay excluded: they are not BWA lines
         // a manual item could belong to.
-        .filter((c) => c.is_active && !c.is_catchall && !c.is_nicht_guv)
+        .filter((c) => c.is_active && !c.is_catchall && !c.excluded_from_profit_and_loss)
         .map((c) => {
           const parent = c.parent_id ? byId.get(c.parent_id) : null;
           const label = parent ? `${parent.name} › ${c.name}` : c.name;

@@ -1,6 +1,6 @@
 import { useMemo } from "react";
 
-import type { AssignmentRulesLabels } from "@hub-kit/core/assignment-rules";
+import type { AssignmentRulesLabels } from "@/kit/pages/assignment-rules";
 
 import { useTranslation } from "@/lib/i18n";
 

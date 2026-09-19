@@ -2,7 +2,7 @@ import { FLAGS, useLocale, useTranslation, LOCALES, type Locale } from "@/lib/i1
 import { cn } from "@/lib/utils";
 
 // Small, unobtrusive DE / EN segmented control for the header. Works in every environment;
-// German stays the default. The choice is persisted in localStorage (staey.locale).
+// German stays the default. The choice is persisted in localStorage (hub.locale).
 export function LanguageSwitch({ className }: { className?: string }) {
   const { locale, setLocale } = useLocale();
   const { t } = useTranslation();

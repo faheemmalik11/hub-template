@@ -53,15 +53,15 @@ import {
 import { ErrorState, TableSkeleton } from "@/components/belege/query-states";
 import { PAGE_SIZES, TablePagination } from "@/components/data-table/table-pagination";
 import { useAuth } from "@/lib/auth";
-import { PERMISSIONS } from "@/lib/permissions";
+import { PERMISSIONS } from "@/config/permissions";
 import { usePurgeRecord, useRestoreRecord, useTrash, useTrashTables } from "@/lib/data/queries";
 import { fehlerText, formatDateTime } from "@/lib/data/format";
 import type { TrashRecord } from "@/lib/data/types";
 import { useTranslation } from "@/lib/i18n";
 import { useMemo, useState } from "react";
 
-import { pageTitle } from "@/lib/brand";
-import { TABLE } from "@/lib/data/tables";
+import { pageTitle } from "@/config/brand";
+import { TABLE } from "@/config/tables";
 
 export const Route = createFileRoute("/papierkorb/")({
   head: () => ({ meta: [{ title: pageTitle("Papierkorb") }] }),
@@ -78,7 +78,7 @@ export const Route = createFileRoute("/papierkorb/")({
 function PapierkorbGuard() {
   const { ready, can } = useAuth();
   if (!ready) return <PapierkorbSkeleton />;
-  if (!can(PERMISSIONS.pagePapierkorb)) return <KeinZugriff />;
+  if (!can(PERMISSIONS.pageTrash)) return <KeinZugriff />;
   return <PapierkorbPage />;
 }
 

@@ -11,7 +11,7 @@
 // queue that nobody ever needs to approve, which is worse than an honest blank.
 
 export type TransactionType =
-  "ueberweisung" | "lastschrift" | "kreditkarte" | "kartenzahlung" | "gutschrift" | "unbekannt";
+  "ueberweisung" | "lastschrift" | "kreditkarte" | "kartenzahlung" | "credit_note" | "unbekannt";
 
 // Fold umlauts and collapse punctuation to single spaces, so "SEPA-Überweisung" and
 // "SEPA UEBERWEISUNG" both reduce to "sepa ueberweisung".
@@ -106,7 +106,7 @@ const TRANSFER_PARTS = [
 const TRANSFER_WORDS = ["sepa ct", "lohn", "gehalt", "sammler"] as const;
 
 const CREDIT_PARTS = [
-  "gutschrift",
+  "credit_note",
   "zinsen",
   "erstattung",
   "rueckzahlung",
@@ -137,7 +137,7 @@ function classifyText(text: string): TransactionType | null {
   }
   if (hasPart(text, DEBIT_PARTS)) return "lastschrift";
   if (hasPart(text, TRANSFER_PARTS) || hasWord(text, TRANSFER_WORDS)) return "ueberweisung";
-  if (hasPart(text, CREDIT_PARTS)) return "gutschrift";
+  if (hasPart(text, CREDIT_PARTS)) return "credit_note";
   return null;
 }
 
@@ -159,7 +159,7 @@ export function classifyTransactionType(input: ClassifyInput): TransactionType {
   // A movement ON a card account is one individual card purchase, never the collective debit.
   if (isCardAccount(input.productType)) {
     if (fromText === "kreditkarte") return "kreditkarte";
-    return (input.amount ?? 0) > 0 ? "gutschrift" : "kartenzahlung";
+    return (input.amount ?? 0) > 0 ? "credit_note" : "kartenzahlung";
   }
 
   return fromText ?? "unbekannt";

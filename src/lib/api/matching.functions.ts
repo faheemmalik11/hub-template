@@ -9,7 +9,7 @@ import type {
   MatchDirection,
   MatchTransaction,
 } from "@/lib/matching/score";
-import { TABLE } from "@/lib/data/tables";
+import { TABLE } from "@/config/tables";
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 type Db = any;
@@ -21,7 +21,7 @@ const UPSERT_CHUNK = 500;
 const INVOICE_COLUMNS =
   "id, amount_gross, document_date, due_date, invoice_number, customer_number, issuer, suppliers(iban)";
 const OUTGOING_COLUMNS =
-  "id, amount_gross, voucher_date, due_date, voucher_number, customers(name, customer_number)";
+  "id, amount_gross, invoice_date, due_date, invoice_number, customers(name, customer_number)";
 const TRANSACTION_COLUMNS =
   "id, amount, booking_date, payment_reference, counterparty_iban, counterparty_holder";
 
@@ -36,7 +36,7 @@ export interface MatchingDirectionResult {
   transactions: number;
   proposed: number;
   auto: number;
-  kandidat: number;
+  candidate: number;
 }
 
 function errorMessage(e: unknown): string {
@@ -110,9 +110,9 @@ function toOutgoingBeleg(row: Record<string, unknown>): MatchBeleg {
   return {
     id: row.id as string,
     amount_gross: (row.amount_gross as number | null) ?? null,
-    document_date: (row.voucher_date as string | null) ?? null,
+    document_date: (row.invoice_date as string | null) ?? null,
     due_date: (row.due_date as string | null) ?? null,
-    invoice_number: (row.voucher_number as string | null) ?? null,
+    invoice_number: (row.invoice_number as string | null) ?? null,
     customer_number: customer?.customer_number ?? null,
     issuer: customer?.name ?? null,
     supplier_iban: null,
@@ -133,7 +133,7 @@ function loadBelege(db: Db, direction: MatchDirection, companyId: string | null 
 
   return fetchAllRows<Record<string, unknown>>((from, to) =>
     scopedToCompany(
-      db.from(TABLE.outgoingInvoices).select(OUTGOING_COLUMNS).eq("voucher_status", "open"),
+      db.from(TABLE.outgoingInvoices).select(OUTGOING_COLUMNS).eq("status", "open"),
       companyId,
     )
       .order("id")
@@ -146,7 +146,7 @@ function loadTransactions(db: Db, direction: MatchDirection, companyId: string |
     const base = db
       .from(TABLE.bankTransactions)
       .select(TRANSACTION_COLUMNS)
-      .eq("matching_status", "offen");
+      .eq("matching_status", "open");
     const directed = direction === "incoming" ? base.lt("amount", 0) : base.gt("amount", 0);
     return scopedToCompany(directed, companyId).order("id").range(from, to);
   });
@@ -159,7 +159,7 @@ async function persistCandidates(
 ): Promise<void> {
   const table =
     direction === "incoming"
-      ? TABLE.invoiceTransactionMatches
+      ? TABLE.documentTransactionMatches
       : TABLE.outgoingInvoiceTransactionMatches;
   const invoiceKey = direction === "incoming" ? "document_id" : "outgoing_invoice_id";
 
@@ -202,7 +202,7 @@ async function matchDirection(
     transactions: transactions.length,
     proposed: candidates.length,
     auto: candidates.filter((c) => c.status === "auto").length,
-    kandidat: candidates.filter((c) => c.status === "kandidat").length,
+    candidate: candidates.filter((c) => c.status === "candidate").length,
   };
 }
 

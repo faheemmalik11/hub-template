@@ -145,11 +145,11 @@ export interface InvoiceFilters {
   issuerLike: string | null;
   dateFrom: string | null;
   dateTo: string | null;
-  status: "erkannt" | "zu_pruefen" | null;
+  status: "recognised" | "needs_review" | null;
   // 'open' | 'paid' | 'overdue' (migration 20260812160000) -- payment status, distinct from
   // `status` above (extraction/review status). Kept separate so "what's still unpaid" is answered
   // from the real paid_at/due_date columns instead of falling through to semantic ranking, which
-  // used to answer from whatever invoice TEXT happened to look similar to "unpaid"/"offen".
+  // used to answer from whatever invoice TEXT happened to look similar to "unpaid"/"open".
   paymentState: "open" | "paid" | "overdue" | null;
   amountMin: number | null;
   amountMax: number | null;
@@ -226,7 +226,7 @@ function intentSchema(grounding: Grounding) {
           amountMax: { type: ["number", "null"] },
           dateFrom: { type: ["string", "null"], description: "YYYY-MM-DD" },
           dateTo: { type: ["string", "null"], description: "YYYY-MM-DD" },
-          status: { type: ["string", "null"], enum: ["erkannt", "zu_pruefen", null] },
+          status: { type: ["string", "null"], enum: ["recognised", "needs_review", null] },
           // Restated on the field itself, not only in the instructions: a schema description sits
           // next to the value the model is filling in and survives prompt dilution, which is how
           // this exact rule got lost on the sibling eiffler hub (see the instructions' opening).
@@ -329,7 +329,7 @@ filters: use ONLY the exact codes/names listed below, or null if the question do
 - costCategory candidates: ${grounding.categoryList}
   Some candidates are near-synonym pairs describing OPPOSITE directions (e.g. "Zinserträge"
   [interest income] vs. "Zinsaufwand" [interest expense], "Mieteinnahmen" vs. "Mietaufwand") —
-  match the direction the question actually implies: "bezahlt"/"Kosten"/"Aufwand" → the expense
+  match the direction the question actually implies: "paid"/"Kosten"/"Aufwand" → the expense
   side, "erhalten"/"Einnahmen"/"Ertrag" → the income side. These invoices are overwhelmingly
   expenses (Eingangsrechnungen), so on a plain "what did we pay for X" question with no income
   wording, prefer the expense-side category if both exist.
@@ -351,14 +351,14 @@ filters: use ONLY the exact codes/names listed below, or null if the question do
     "between 1.000 and 5.000 €"  == "zwischen 1.000 und 5.000 €"      → amountMin=1000, amountMax=5000
   null when the question names no per-invoice threshold at all.
 - dateFrom/dateTo: YYYY-MM-DD, or null.
-- status: 'erkannt' or 'zu_pruefen' only if explicitly asked about extraction status, else null.
+- status: 'recognised' or 'needs_review' only if explicitly asked about extraction status, else null.
 - paymentState: whether the question is about SETTLEMENT (money that actually left the account) or
   about what was invoiced. This is about PAYMENT status, never about extraction/review status
   (that's the separate 'status' field above).
   * 'paid' — the question asks what WE PAID / how much we have paid. Any pay verb counts, with or
-    without an "already": "bezahlt", "gezahlt", "beglichen", "paid", "settled". This includes the
+    without an "already": "paid", "gezahlt", "beglichen", "paid", "settled". This includes the
     plain forms "How much have we paid E.ON?" and "Wie viel haben wir für E.ON bezahlt?".
-  * 'open' — asks what is still unpaid/outstanding: "offen", "noch nicht bezahlt", "unbezahlt",
+  * 'open' — asks what is still unpaid/outstanding: "open", "noch nicht bezahlt", "unbezahlt",
     "unpaid", "outstanding", "still owed".
   * 'overdue' — explicitly asks about lateness: "überfällig", "past due", "in Verzug" (unpaid AND
     past its due date). Never infer it just because an invoice is old or has no due date on file.
@@ -371,7 +371,7 @@ filters: use ONLY the exact codes/names listed below, or null if the question do
   The SAME question must give the SAME value in German and English — the language a question
   happens to be asked in is never a signal. This was a real, reported bug: the two wordings of the
   first pair below used to disagree, so the same question answered 0 EUR in English and a full
-  spend total, narrated as "bezahlt", in German. Worked pairs, both directions:
+  spend total, narrated as "paid", in German. Worked pairs, both directions:
     "How much have we paid E.ON?"         == "Wie viel haben wir für E.ON bezahlt?"      → paid
     "How much did we spend on E.ON?"      == "Wie viel haben wir für E.ON ausgegeben?"   → null
     "How much did STAY spend in total?"   == "Wie viel hat STAY insgesamt ausgegeben?"   → null
@@ -500,7 +500,7 @@ async function extractIntent(
       // different year.
       dateFrom: f.dateFrom || period?.from || null,
       dateTo: f.dateTo || period?.to || null,
-      status: f.status === "erkannt" || f.status === "zu_pruefen" ? f.status : null,
+      status: f.status === "recognised" || f.status === "needs_review" ? f.status : null,
       paymentState:
         f.paymentState === "open" || f.paymentState === "paid" || f.paymentState === "overdue"
           ? f.paymentState
@@ -559,7 +559,7 @@ export interface InvoiceMatch {
   // model credibly connect the two.
   serviceDescription: string | null;
   // Real settlement status of this row (paid_at is not null, migration 20260813210000), sent to the
-  // synthesis prompt so a list-shaped answer can't call an unpaid invoice "bezahlt"/"paid" -- the
+  // synthesis prompt so a list-shaped answer can't call an unpaid invoice "paid"/"paid" -- the
   // table rendered under the answer shows each row's payment status, and the two must never
   // disagree.
   isPaid: boolean;
@@ -579,7 +579,7 @@ export interface RetrievalResult {
     // (migration 20260813210000, same single scan as the totals above). Context, never the answer:
     // on "wie viel haben wir für X bezahlt" (paymentState='paid', total 0) it is what lets the
     // answer add "N Rechnungen über X € sind noch offen" instead of a bare, useless zero; on a
-    // plain invoiced-volume question it is what stops the model calling that total "bezahlt" when
+    // plain invoiced-volume question it is what stops the model calling that total "paid" when
     // nothing is settled -- the failure this whole change came from.
     allPaidCount: number;
     allPaidGross: number;
@@ -610,7 +610,7 @@ export interface RetrievalResult {
   semantic: boolean;
   // Only for a LIST question that filtered on payment state and found nothing: the same filters
   // WITHOUT the payment filter, split into settled and outstanding. "Zeig mir die bezahlten
-  // X-Rechnungen" would otherwise answer a bare "keine" while unpaid ones sit right there -- true,
+  // X-Rechnungen" would otherwise answer a bare "none" while unpaid ones sit right there -- true,
   // but markedly less useful than the aggregate path's equivalent answer, and the German and
   // English answers to the same question ended up differing in usefulness purely because one ran
   // as a sum and the other as a list. One extra RPC, only on this specific dead end.

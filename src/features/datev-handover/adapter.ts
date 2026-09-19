@@ -4,7 +4,7 @@
  * Everything else under `features/datev-handover/` is meant to be copied, not adapted — the same
  * arrangement `features/cost-analysis/adapter.ts` and `features/invoice-detail/PORTING.md` already
  * describe, and for the same reason. The DATEV screen shipped as four independent copies (Immonetz,
- * Stäy, Mayestate, Eiffler's accounting module) and they had already drifted: one grew a bounce
+ * this client, Mayestate, Eiffler's accounting module) and they had already drifted: one grew a bounce
  * banner, one a branded `pageTitle()`, one a bespoke status pill while still importing the shared
  * one and never using it. Each divergence was a reasonable local decision; together they mean every
  * fix has to be made and reviewed four times.

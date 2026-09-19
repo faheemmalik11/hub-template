@@ -87,9 +87,9 @@ export function usePossibleInvoiceMatches(txn: {
           const beleg: MatchBeleg = {
             id: oi.id,
             amount_gross: oi.amount_gross,
-            document_date: oi.voucher_date,
+            document_date: oi.invoice_date,
             due_date: oi.due_date,
-            invoice_number: oi.voucher_number,
+            invoice_number: oi.invoice_number,
             customer_number: oi.customers?.customer_number ?? null,
             issuer: oi.customers?.name ?? null,
             // Not available on this row -- see the module comment on use-possible-matches.ts for
@@ -101,7 +101,7 @@ export function usePossibleInvoiceMatches(txn: {
             id: oi.id,
             type: "outgoing",
             label: oi.customers?.name ?? "—",
-            nr: oi.voucher_number,
+            nr: oi.invoice_number,
             amount: oi.amount_gross,
             score,
             reasons: reasons as MatchReasons,

@@ -63,13 +63,13 @@ const STATUS_CHIP: Record<string, string> = {
 
 export function ConnectionGroupRow({
   gruppe,
-  offen,
+  open,
   onToggle,
   colSpan,
   darfTrennen,
 }: {
   gruppe: KontoGruppe;
-  offen: boolean;
+  open: boolean;
   onToggle: () => void;
   colSpan: number;
   /** Whether to offer Trennen. Same right as switching a single account off. */
@@ -90,7 +90,7 @@ export function ConnectionGroupRow({
             <ChevronRight
               className={cn(
                 "mt-1 size-4 shrink-0 text-muted-foreground transition-transform",
-                offen && "rotate-90",
+                open && "rotate-90",
               )}
             />
             <div className="min-w-0">

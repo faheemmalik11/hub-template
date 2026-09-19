@@ -38,9 +38,9 @@ import { downloadCsv } from "@/lib/data/bwa-export";
 import { ErrorState, TableSkeleton } from "@/components/belege/query-states";
 import { TablePagination } from "@/components/data-table/table-pagination";
 import { useAuth } from "@/lib/auth";
-import { PERMISSIONS } from "@/lib/permissions";
+import { PERMISSIONS } from "@/config/permissions";
 import { useTranslation } from "@/lib/i18n";
-import { pageTitle } from "@/lib/brand";
+import { pageTitle } from "@/config/brand";
 import type { VerarbeitungsLog } from "@/lib/data/types";
 
 export const Route = createFileRoute("/protokoll/")({
@@ -57,7 +57,7 @@ export const Route = createFileRoute("/protokoll/")({
 function ProtokollGuard() {
   const { ready, can } = useAuth();
   if (!ready) return null;
-  if (!can(PERMISSIONS.pageProtokoll)) return <KeinZugriff variant="manager" />;
+  if (!can(PERMISSIONS.pageActivityLog)) return <KeinZugriff variant="manager" />;
   return <ProtokollPage />;
 }
 
@@ -84,17 +84,17 @@ function zeitraumBounds(z: Zeitraum): { von: string | null; bis: string | null }
 
 // Farbe je Verarbeitungs-Status.
 const STATUS_STYLE: Record<string, string> = {
-  erkannt: "bg-brand-tint text-brand-dark",
-  zu_pruefen: "bg-amber-100 text-amber-800",
+  recognised: "bg-brand-tint text-brand-dark",
+  needs_review: "bg-amber-100 text-amber-800",
   fehler: "bg-red-100 text-red-800",
   duplikat: "bg-muted text-muted-foreground",
   kein_beleg_anhang: "bg-muted text-muted-foreground",
   ausgeschlossen: "bg-slate-200 text-slate-700",
-  aufgeteilt: "bg-sky-100 text-sky-800",
+  split: "bg-sky-100 text-sky-800",
   storage_nachgeholt: "bg-muted text-muted-foreground",
   // Not an error, but the mail was never read either, so it has to be re-run. Orange rather
   // than a neutral grey: a skipped receipt that looks harmless is one nobody goes back for.
-  uebersprungen: "bg-orange-100 text-orange-800",
+  skipped: "bg-orange-100 text-orange-800",
 };
 
 function ProtokollPage() {

@@ -5,65 +5,65 @@
 import type { AppRole } from "@/lib/auth";
 import type { DatevBlockReason } from "@/lib/datev/attachment-rules";
 
-// Extraction status. The DB column has NO CHECK constraint (only DEFAULT 'erkannt'),
-// but in practice only 'erkannt' | 'zu_pruefen' are written. The UI filters on these two.
-export type BelegStatus = "erkannt" | "zu_pruefen";
+// Extraction status. The DB column has NO CHECK constraint (only DEFAULT 'recognised'),
+// but in practice only 'recognised' | 'needs_review' are written. The UI filters on these two.
+export type BelegStatus = "recognised" | "needs_review";
 
 // Workflow status (approval chain) — separate `workflow_status` column, independent of the
 // extraction `status`. Values per the DB CHECK (migrations 0002/0025/0035/0036). `paid_at` (+
 // confirmed bank match) is still the source of truth for "is this actually paid" — 'bezahlt' is
 // DERIVED from it by a DB trigger (migration 0036), not written directly by the front-end.
 export type WorkflowStatus =
-  | "eingegangen"
-  | "in_pruefung"
-  | "rueckfrage"
-  | "freigegeben_assistenz"
-  | "freigegeben_vorgesetzter"
-  // Payment lifecycle (migration 0036). 'freigegeben_vorgesetzter' IS the "awaiting payment"
+  | "received"
+  | "in_review"
+  | "query"
+  | "approved_first"
+  | "approved_final"
+  // Payment lifecycle (migration 0036). 'approved_final' IS the "awaiting payment"
   // state — no separate "released for payment" stage. 'bezahlt' is set by a DB trigger the
   // moment paid_at is confirmed (bank match, auto-suggested or manually created — same
   // mechanism — or the manual "paid" checkbox), never written directly by the front-end.
-  | "bezahlt"
-  | "uebergeben_datev"
-  | "abgeschlossen"
+  | "paid"
+  | "handed_over"
+  | "closed"
   // Two side paths off the main chain (Appendix A6), added by migration 0025. `abgelehnt` is
   // final and archived; `nicht_relevant` means "this is not a receipt" and hands the mail back.
-  | "abgelehnt"
-  | "nicht_relevant";
+  | "rejected"
+  | "not_relevant";
 
 // Verlauf-/Notiz-Eintrag (Tabelle beleg_verlauf) — kombiniert Notiz + Audit.
-// "zuordnung" = company/property (Gesellschaft/Objekt) assignment change; also used for bank matches.
-// "regel" = a rule applied a value (written by apply_assignment_rules, migration 0025).
-// "nicht_relevant" / "archiviert" = review decisions that take the receipt out of processing.
+// "booking" = company/property (Gesellschaft/Objekt) assignment change; also used for bank matches.
+// "rule" = a rule applied a value (written by apply_assignment_rules, migration 0025).
+// "not_relevant" / "archived" = review decisions that take the receipt out of processing.
 export type VerlaufTyp =
-  | "notiz"
-  | "statuswechsel"
-  | "aenderung"
-  | "zuweisung"
-  | "zuordnung"
-  | "loeschung"
-  | "regel"
-  | "nicht_relevant"
-  | "archiviert"
+  | "note"
+  | "status_change"
+  | "change"
+  | "assigned"
+  | "booking"
+  | "deletion"
+  | "rule"
+  | "not_relevant"
+  | "archived"
   // Approval workflow (Briefing Screen 6, migration 0035). One of these per approve/return/
   // reject/skip action.
-  | "freigabe_pruefung"
-  | "rueckfrage"
-  | "freigabe_final"
-  | "ablehnung"
-  | "bereits_freigegeben"
-  | "uebersprungen"
+  | "approval_first"
+  | "query"
+  | "approval_final"
+  | "rejection"
+  | "already_approved"
+  | "skipped"
   // Manual override outside the gated actions — fixes an accidental click by setting
   // workflow_status directly to any status, bypassing the normal chain.
-  | "korrektur"
+  | "correction"
   // Payment lifecycle (migration 0036). 'bezahlt' is written by the DB trigger itself, stating
-  // how the invoice was paid (reads invoices.paid_source); 'zahlung_fehlgeschlagen' is the
+  // how the invoice was paid (reads invoices.paid_source); 'payment_failed' is the
   // human "payment failed, back to open" action.
-  | "bezahlt"
-  | "zahlung_fehlgeschlagen"
+  | "paid"
+  | "payment_failed"
   // DATEV handover (Briefing Screen 9, migration 0038). Written by the DB trigger itself the
-  // moment datev_handed_over_at is set, the same shape as 'bezahlt' above.
-  | "uebergeben_datev";
+  // moment handed_over_at is set, the same shape as 'bezahlt' above.
+  | "handed_over";
 
 export interface BelegVerlauf {
   id: number;
@@ -151,13 +151,13 @@ export interface Gesellschaft {
   // predates this column — always present on the live row, just not guaranteed by the stub type.
   booking_basis: "invoice_date" | "payment_date" | null;
   /** The company's "Gemeinkosten" cost centre from the tax adviser's workbook (migration 0077). */
-  overhead_cost_center: number | null;
+  overhead_cost_centre: number | null;
   // Area of responsibility for approval routing (migration 0087) -- NULL if not yet assigned.
   // See ApprovalArea and docs/APPROVAL_ROUTING.md.
   area: ApprovalArea | null;
   // Dropbox folder this company's documents are filed into (migration 20260831170000). NULL means
   // not configured; the pipeline files nothing on a guess.
-  drive_folder_id: string | null;
+  filing_folder: string | null;
   // Soft delete (archive). The columns have existed on `companies` for a long time; nothing read or
   // wrote them until the archive action was added. Never a hard delete: companies.code is referenced
   // by string from invoices.company_code and entity_aliases.entity_code.
@@ -200,10 +200,10 @@ export interface PropertyCompany {
    * The cost-centre number from the tax adviser's workbook (migration 20260911250000).
    *
    * On the PAIRING, because the same building is numbered differently in each company's books:
-   * Ludwigshafen is 6 for Stäy and 101 for Impuls. Null where the workbook has no number for that
+   * Ludwigshafen is 6 for this client and 101 for Impuls. Null where the workbook has no number for that
    * pairing, which includes every link a person made by hand.
    */
-  cost_center_number: number | null;
+  cost_centre_number: number | null;
   created_at: string;
   updated_at: string;
   /** Soft delete: a past link explains how earlier receipts were booked (migration 0083). */
@@ -251,7 +251,7 @@ export interface FilenameSettings {
   include_amount: boolean;
   include_property: boolean;
   description_source: FilenameDescriptionSource;
-  transliterate_umlauts: boolean;
+  transliterate_accents: boolean;
   updated_at: string;
   updated_by: string | null;
 }
@@ -259,7 +259,7 @@ export interface FilenameSettings {
 // ---- OPOS whitelist (opos_whitelist_rules; pipeline migration 0018) ----
 // Transactions that can never have a receipt — salaries, tax prepayments, private withdrawals,
 // rebookings, loan installments (Briefing Screen 10). A matching rule parks the transaction in
-// matching_status='ignoriert' so it drops out of the open-items list and out of matching.
+// matching_status='ignored' so it drops out of the open-items list and out of matching.
 
 // Which transaction field a rule's term is matched against.
 export type OposWhitelistScope = "reference" | "counterparty" | "iban" | "booking_text" | "any";
@@ -454,7 +454,7 @@ export interface Beleg {
   /**
    * "Gemeinkosten": this invoice belongs to the company, not to a property (migration
    * 20260911250000). Mutually exclusive with property_id, and distinct from both being empty,
-   * which means nobody has decided yet. Resolves to the company's overhead_cost_center.
+   * which means nobody has decided yet. Resolves to the company's overhead_cost_centre.
    */
   is_overhead: boolean;
   cost_category: string | null;
@@ -469,7 +469,7 @@ export interface Beleg {
   status: string | null;
   // Erkennungs-Ampel aus der Pipeline (Briefing A2/A6): server-berechnetes, gedeckeltes
   // Vertrauens-Ampellicht. Getrennt von workflow_status und von der client-seitigen
-  // Feld-Konfidenz (konfidenzAmpel). 'gruen' | 'gelb' | 'rot'; null = noch nicht bewertet.
+  // Feld-Konfidenz (konfidenzAmpel). 'green' | 'yellow' | 'red'; null = noch nicht bewertet.
   traffic_light: string | null;
   confidence_score: number | null;
   already_paid: boolean | null;
@@ -510,10 +510,10 @@ export interface Beleg {
   // and withdrawn again if coverage drops; 'manual' or null = a human set it, never auto-cleared.
   paid_source: "bank_match" | "manual" | null;
   // "Handed over to DATEV" — its own checkbox (Briefing Appendix A6), not just a status.
-  // workflow_status='uebergeben_datev' is DERIVED from this by a DB trigger (migration 0038),
+  // workflow_status='handed_over' is DERIVED from this by a DB trigger (migration 0038),
   // never written directly by the front-end, mirroring how paid_at drives 'bezahlt'.
-  datev_handed_over_at: string | null;
-  datev_batch_id: string | null;
+  handed_over_at: string | null;
+  handover_batch_id: string | null;
   updated_at: string | null;
   deleted_at: string | null;
   deleted_by: string | null;
@@ -595,13 +595,13 @@ export interface Beleg {
  *   privat_bezahlt  already_paid: settled from a private account, so no company bank movement
  *                   can ever match it
  */
-export type OpenItemBlocker = "kein_betrag" | "gutschrift" | "privat_bezahlt";
+export type OpenItemBlocker = "no_amount" | "credit_note" | "paid_privately";
 
 /**
  * One row of `v_open_items`, narrowed to what Offene Posten actually renders.
  *
  * DELIBERATELY NOT `Beleg`. This screen used to read useBelege(), which is `select *` over the
- * whole invoices table: 5.7 MB for 418 rows on the Stäy Hub, of which 5.2 MB is the embedding
+ * whole invoices table: 5.7 MB for 418 rows on the this Hub, of which 5.2 MB is the embedding
  * vector, the fts tsvector, the extracted JSONB and ocr_fulltext, none of which this screen looks
  * at. The columns below are the complete set it does look at, plus the three the view adds.
  */
@@ -658,13 +658,13 @@ export const RULE_TARGETS: readonly RuleTarget[] = ["cost_category", "vat_rate"]
 // overhead receipt with no resolvable business line, or a business line whose own VAT treatment is
 // 'gemischt') — values outside this type despite what it promises. Never forward a receipt's
 // vat_treatment into a new rule without checking it against VAT_TREATMENTS first.
-export type VatTreatment = "steuerpflichtig" | "steuerfrei" | "reverse_charge" | "kleinunternehmer";
+export type VatTreatment = "taxable" | "exempt" | "reverse_charge" | "small_business";
 
 export const VAT_TREATMENTS: readonly VatTreatment[] = [
-  "steuerpflichtig",
-  "steuerfrei",
+  "taxable",
+  "exempt",
   "reverse_charge",
-  "kleinunternehmer",
+  "small_business",
 ];
 
 // Tax special cases that change the deductible amount (Briefing Screens 4 & 5; migration 0031).
@@ -685,11 +685,11 @@ export const VAT_SPECIAL_CASES: readonly VatSpecialCase[] = [
 // is it immediately deductible as a repair/maintenance expense), separate from VatSpecialCase
 // above (which is about VAT deductibility). Briefing: "cannot be squeezed into the category —
 // needs its own flag." Migration 0055.
-export type IncomeTaxTreatment = "herstellungsaufwand" | "erhaltungsaufwand";
+export type IncomeTaxTreatment = "capital_expense" | "maintenance_expense";
 
 export const INCOME_TAX_TREATMENTS: readonly IncomeTaxTreatment[] = [
-  "herstellungsaufwand",
-  "erhaltungsaufwand",
+  "capital_expense",
+  "maintenance_expense",
 ];
 
 // A multi-level assignment rule (table `assignment_rules`). Any combination of the three scope
@@ -776,15 +776,15 @@ export interface BwaCategory {
   name: string;
   name_en: string;
   parent_id: string | null;
-  bwa_block: "einnahmen" | "wareneinsatz" | "kosten" | "neutral" | "steuern" | "sonderfall";
-  bwa_line: string;
-  // Which tab the category belongs to (migration 0076). Kept separate from bwa_block, whose six
+  report_block: "einnahmen" | "wareneinsatz" | "kosten" | "neutral" | "steuern" | "sonderfall";
+  report_line: string;
+  // Which tab the category belongs to (migration 0076). Kept separate from report_block, whose six
   // values do not split cleanly into the client's two tabs.
-  direction: "eingang" | "ausgang";
+  direction: "incoming" | "outgoing";
   // Manual order within one level (siblings under the same parent). Ties fall back to name.
   sort_order: number;
   // "Belongs in no evaluation line": actively excluded from the P&L once the bank is connected.
-  is_nicht_guv: boolean;
+  excluded_from_profit_and_loss: boolean;
   // "Nicht zugeordnet": the catch-all a receipt waits in until a human resolves it.
   is_catchall: boolean;
   is_active: boolean;
@@ -872,7 +872,7 @@ export interface Approver {
   role: "assistant" | "manager";
   deputy_name: string | null;
   escalation_days: number | null;
-  payment_handler: "boss" | "account_holder" | null;
+  pays: "boss" | "account_holder" | null;
   // The one area this approver signs off for (role='manager' only). Mutually exclusive with
   // covers_all_areas.
   area: ApprovalArea | null;
@@ -1090,11 +1090,11 @@ export interface RuleSuggestion {
   total_receipts: number;
 }
 
-// Mail and Drive intake configuration (Briefing Screen 1; migration 0026, reworked for Stäy's
+// Mail and Drive intake configuration (Briefing Screen 1; migration 0026, reworked for this client's
 // actual providers in 0091).
 //
-// One row per provider. `microsoft` (Graph, accounting@staey.de) only ever uses the mail_*
-// columns; `dropbox` (the StaeyBelege app folder) only ever uses the drive_* columns — Stäy's
+// One row per provider. `microsoft` (Graph, the accounting mailbox) only ever uses the mail_*
+// columns; `dropbox` (the this clientBelege app folder) only ever uses the drive_* columns — this client's
 // mailbox and filing channels run on two different providers (the pipeline's WIRING:
 // MAILBOX_PROVIDER=graph, DRIVE_PROVIDER=dropbox), unlike Google which served both from one row.
 // Gmail/Google Drive are not used anywhere in this stack.
@@ -1178,7 +1178,7 @@ export interface ChannelFolder {
   position: number;
 }
 
-// ---- Server-side list pagination (view v_invoices_list/v_invoices_review + RPCs, migration 0042) ----
+// ---- Server-side list pagination (views v_documents_list/v_documents_review plus RPCs) ----
 
 export type BelegSortKey =
   | "steller"
@@ -1195,7 +1195,7 @@ export type BelegSortKey =
 export interface BelegListeRow extends Beleg {
   issuer_sort: string | null; // coalesce(supplier.name, issuer) — display + sort
   review_score: number | null; // server-computed review priority (mirrors pruefScore)
-  // Bank-reconciliation flags (migration 20260813170000). Undecided ('kandidat' or 'auto') counts
+  // Bank-reconciliation flags (migration 20260813170000). Undecided ('candidate' or 'auto') counts
   // as SUGGESTED, not confirmed -- the matcher writes 'auto' without asking, so a human still has
   // to look. Both false means no bank transaction is linked at all.
   has_suggested_bank_match: boolean;
@@ -1217,19 +1217,19 @@ export interface BelegeListeParams {
   zahlung?: string;
   // Approval-chain stage (workflow_status, migration 0035/0036) — a separate axis from `status`
   // (AI review) and `zahlung` (paid or not): a receipt can be fully recognized and unpaid while
-  // sitting at any step from "eingegangen" through "abgeschlossen".
+  // sitting at any step from "received" through "closed".
   workflow?: string;
-  // Whether the invoice has been handed over to DATEV yet (datev_handed_over_at) — a separate
-  // axis from `zahlung`/`status`, mirroring how workflow_status='uebergeben_datev' is itself
+  // Whether the invoice has been handed over to DATEV yet (handed_over_at) — a separate
+  // axis from `zahlung`/`status`, mirroring how workflow_status='handed_over' is itself
   // derived from this column (migration 0038), not the other way around.
   datev?: string;
-  // Recognition traffic light (traffic_light column): 'gruen' | 'gelb' | 'rot'. Separate axis from
+  // Recognition traffic light (traffic_light column): 'green' | 'yellow' | 'red'. Separate axis from
   // `status`, and the reason yellow receipts were unreachable before: the AI flags them for a
-  // human nod but the pipeline still leaves status='erkannt', so no status filter ever showed them.
+  // human nod but the pipeline still leaves status='recognised', so no status filter ever showed them.
   ampel?: string;
   // Whether a bank transaction has been reconciled against this invoice, and whether that match is
-  // still open. 'vorschlag' = a suggestion (status kandidat or auto) nobody has decided on yet,
-  // 'zugeordnet' = confirmed. Its own axis, separate from `zahlung`: an invoice can be marked paid
+  // still open. 'suggestion' = a suggestion (status kandidat or auto) nobody has decided on yet,
+  // 'matched' = confirmed. Its own axis, separate from `zahlung`: an invoice can be marked paid
   // with no bank match at all, and can have a suggestion while still unpaid.
   bankMatch?: string;
   paymentType?: string;
@@ -1265,8 +1265,8 @@ export interface BelegeSeite {
 
 export interface BelegeKpis {
   total: number;
-  erkannt: number;
-  zu_pruefen: number;
+  recognised: number;
+  needs_review: number;
   volumen: number;
   /**
    * Gross sum of the rows in view that are NOT paid yet. What is still going out the door.
@@ -1275,7 +1275,7 @@ export interface BelegeKpis {
    * return the column. The tile is then left out entirely: a 0 beside a non-zero volume reads as a
    * real figure, and nothing on screen would say it is not one.
    */
-  offen: number | null;
+  open: number | null;
   /**
    * True when the counts were taken WITHOUT the AI-search / ampel / archiv filters, because the
    * database has not run migration 20260815160000 yet and its invoices_kpis takes no parameter for
@@ -1365,16 +1365,16 @@ export interface PipelineHealth {
 // bank-sync Edge Function; the front-end only reads these + writes matches.
 
 export type BankConnectionStatus = "pending" | "active" | "error" | "expired";
-export type TransactionMatchingStatus = "offen" | "zugeordnet" | "ignoriert";
+export type TransactionMatchingStatus = "open" | "matched" | "ignored";
 export type TransactionRichtung = "eingehend" | "ausgehend";
-export type MatchStatus = "kandidat" | "auto" | "bestaetigt" | "abgelehnt";
+export type MatchStatus = "candidate" | "auto" | "confirmed" | "rejected";
 // Derived per-beleg reconciliation summary (computed from matches — NOT stored on belege).
-export type AbgleichStatus = "offen" | "teilweise" | "abgeglichen";
+export type AbgleichStatus = "open" | "partial" | "reconciled";
 
 export interface BankConnection {
   id: string;
-  banksapi_access_id: string | null;
-  banksapi_user: string | null;
+  provider_access_ref: string | null;
+  provider_user: string | null;
   provider_id: string | null;
   provider_name: string | null;
   bank_name: string | null;
@@ -1404,8 +1404,8 @@ export interface BankAccount {
   id: string;
   connection_id: string | null; // null = entered by hand, no BANKSapi connection (20260901100000)
   company_id: string | null; // owning company (FK gesellschaften.id); transactions inherit it (0016/0017)
-  banksapi_product_id: string | null;
-  banksapi_provider_id: string | null; // BANKSapi provider uuid for the connect step (0016)
+  provider_account_ref: string | null;
+  provider_ref: string | null; // BANKSapi provider uuid for the connect step (0016)
   provider_id: string | null; // FK bank_providers.id (0028); null = no linked provider
   connect_route: "banksapi" | "ebics_or_manual" | null; // trigger-derived from provider_id (0028)
   account_name: string | null;
@@ -1458,9 +1458,9 @@ export interface PaymentOrder {
   payment_reference: string | null;
   status: PaymentOrderStatus;
   status_reason: string | null;
-  banksapi_access_id: string | null;
-  banksapi_product_id: string | null;
-  banksapi_payment_id: string | null;
+  provider_access_ref: string | null;
+  provider_account_ref: string | null;
+  provider_payment_ref: string | null;
   is_sandbox: boolean;
   idempotency_key: string;
   // Fraud signal (a supplier IBAN changed within the lookback window at trigger time -- see
@@ -1485,14 +1485,14 @@ export interface PaymentOrder {
 // needs the lighter check. Mirrors TransactionType in
 // supabase/functions/_shared/transaction-type.ts. Keep the two in step.
 export type TransactionType =
-  "ueberweisung" | "lastschrift" | "kreditkarte" | "kartenzahlung" | "gutschrift" | "unbekannt";
+  "ueberweisung" | "lastschrift" | "kreditkarte" | "kartenzahlung" | "credit_note" | "unbekannt";
 
 export const TRANSACTION_TYPES: readonly TransactionType[] = [
   "ueberweisung",
   "lastschrift",
   "kreditkarte",
   "kartenzahlung",
-  "gutschrift",
+  "credit_note",
   "unbekannt",
 ];
 
@@ -1501,7 +1501,7 @@ export interface BankTransaction {
   account_id: string;
   company_id?: string | null;
   connection_id: string;
-  banksapi_hash: string;
+  provider_hash: string;
   source: string | null; // provenance of the row (migration 0073): 'banksapi' | 'pleo' | ...
   amount: number; // signed: negative = money out, positive = in
   currency: string | null;
@@ -1526,7 +1526,7 @@ export interface BankTransaction {
   /**
    * Set when somebody declared the payment spent even though part of it is unallocated
    * (migration 20260910190000). sync_transaction_matching_status reads it, otherwise the remainder
-   * would recompute the status back to 'offen' on the next write.
+   * would recompute the status back to 'open' on the next write.
    */
   fully_used_at: string | null;
   fully_used_by: string | null;
@@ -1542,7 +1542,7 @@ export interface BankTransaction {
   raw_data: Record<string, unknown> | null;
   imported_at: string;
   created_at: string;
-  // OPOS whitelist provenance (migration 0018). Set together with matching_status='ignoriert'.
+  // OPOS whitelist provenance (migration 0018). Set together with matching_status='ignored'.
   // whitelist_rule_id null while hidden = a HUMAN decided it; rules never touch those.
   no_receipt_reason: OposCategory | null;
   whitelist_rule_id: string | null;
@@ -1555,7 +1555,7 @@ export interface BankTransaction {
   category_id: string | null;
   category_source: "rule" | "human" | null;
   // Attached by useBankTransactionsPage, not a column: an undecided match (kandidat/auto)
-  // exists for this transaction. matching_status stays 'offen' while a suggestion is pending.
+  // exists for this transaction. matching_status stays 'open' while a suggestion is pending.
   has_suggested_match?: boolean;
   /**
    * A document hangs off the transaction itself (invoice_files.transaction_id, migration 0074):
@@ -1660,7 +1660,7 @@ export interface BankSyncLog {
 
 // ---- Outgoing invoices & customers (Briefing Screen 15; migration 0052) ----
 // Originally a LexOffice-backed mirror; LexOffice was removed entirely (migration 0086) — no
-// real Stäy company ever had an account. 'app' = created directly in the Hub (e.g. /kunden),
+// real this client company ever had an account. 'app' = created directly in the Hub (e.g. /kunden),
 // 'upload' = created alongside an uploaded outgoing invoice
 // (src/lib/api/outgoing-invoice-upload.functions.ts, migration 0085).
 export type CustomerSource = "app" | "upload";
@@ -1689,7 +1689,7 @@ export interface Customer {
 }
 
 // "Überfällig" (overdue) is not a stored status; it's derived on the client from
-// `voucher_status === "open" && due_date < today` (see format.ts).
+// `status === "open" && due_date < today` (see format.ts).
 export type OutgoingVoucherStatus = "draft" | "open" | "paidoff" | "voided";
 
 export interface OutgoingInvoiceLineItem {
@@ -1707,9 +1707,9 @@ export interface OutgoingInvoice {
   id: string;
   company_id: string;
   customer_id: string;
-  voucher_number: string | null;
-  voucher_status: OutgoingVoucherStatus;
-  voucher_date: string | null;
+  invoice_number: string | null;
+  status: OutgoingVoucherStatus;
+  invoice_date: string | null;
   due_date: string | null;
   amount_net: number | null;
   amount_gross: number | null;
@@ -1720,11 +1720,11 @@ export interface OutgoingInvoice {
   // Always "upload" (migration 0086) — LexOffice removed entirely, so there is no other way an
   // outgoing invoice enters this table.
   source: "upload";
-  // Who last set voucher_status: 'auto' (a confirmed bank match) or 'manual'
+  // Who last set status: 'auto' (a confirmed bank match) or 'manual'
   // (set_uploaded_outgoing_invoice_status, migration 0085).
   status_source: "auto" | "manual" | null;
-  dunning_level: number | null;
-  dunning_due_date: string | null;
+  reminder_level: number | null;
+  reminder_due_date: string | null;
   created_by: string | null;
   created_at: string;
   updated_at: string;

@@ -17,7 +17,7 @@ import { formatEUR } from "@/lib/data/format";
 import { cn } from "@/lib/utils";
 import { useTranslation } from "@/lib/i18n";
 import { LEER } from "@/components/zuordnung/regel-zeile";
-import { pageTitle } from "@/lib/brand";
+import { pageTitle } from "@/config/brand";
 
 /**
  * The recommended reserve, with its sign given a meaning.

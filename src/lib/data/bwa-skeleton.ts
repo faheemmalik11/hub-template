@@ -3,7 +3,7 @@
 // especially the two subtotals (Gross Profit, Operating Gross Profit), since he compares Gross
 // Profit specifically against his real DATEV BWA.
 //
-// Keyed by bwa_categories.code (migration 0030), the stable stored identifier — not bwa_line,
+// Keyed by bwa_categories.code (migration 0030), the stable stored identifier — not report_line,
 // which is a free-text label that could be renamed without this structure needing to change.
 //
 // Pure, no I/O. The caller (src/routes/auswertungen/index.tsx) is responsible for everything that
@@ -27,7 +27,7 @@ export interface BwaSkeletonRow {
 
 // bwa_categories.code values that never appear in BWA_SKELETON below and must not silently vanish:
 //   UNASSIGNED (is_catchall)  -> routed to unassignedAmount
-//   NOT_PNL    (is_nicht_guv) -> routed to excludedNotPnlAmount
+//   NOT_PNL    (excluded_from_profit_and_loss) -> routed to excludedNotPnlAmount
 // Both are asserted absent from every skeleton row by the dev-time check right below the array, so
 // a future edit to BWA_SKELETON can't accidentally fold either into a real P&L line.
 const SPECIAL_CASE_CODES = ["UNASSIGNED", "NOT_PNL"] as const;
@@ -196,7 +196,7 @@ export function computeBwaSkeleton(items: BwaLineInput[]): BwaSkeletonComputed {
 }
 
 // The COARSE category code a category (coarse or fine) rolls up to — what BWA_SKELETON's
-// categoryCodes actually key on (fine tags share their parent's bwa_line, not their own code).
+// categoryCodes actually key on (fine tags share their parent's report_line, not their own code).
 // Shared by every caller that turns a beleg/manual-booking category_id into a BwaLineInput
 // categoryCode (src/routes/auswertungen/index.tsx and the dashboard's Gross Profit summary),
 // so the coarse/fine rollup rule can't drift between the two.

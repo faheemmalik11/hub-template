@@ -1,4 +1,4 @@
-import { TABLE } from "@/lib/data/tables";
+import { TABLE } from "@/config/tables";
 // Shared by every server function that writes a company-scoped row (bank_accounts,
 // bank_manual_import, ...) via the service-role client. Extracted out of
 // bank-manual-import.functions.ts once a second file (bank-accounts.functions.ts) needed the same

@@ -24,7 +24,7 @@ import { useTranslation } from "@/lib/i18n";
 import { tabSearch, useTabParam } from "@/lib/use-tab-param";
 import { NeueRegelDialog } from "@/components/zuordnung/neue-regel-dialog";
 import { LEER, RegelKarte, RegelZeile } from "@/components/zuordnung/regel-zeile";
-import { pageTitle } from "@/lib/brand";
+import { pageTitle } from "@/config/brand";
 
 /**
  * The recommended reserve, with its sign given a meaning.
@@ -188,14 +188,14 @@ function UstRegelnPage() {
                   </TableHeader>
                   <TableBody>
                     {scopedRules.map((r) => (
-                      <RegelZeile key={r.id} regel={r} />
+                      <RegelZeile key={r.id} rule={r} />
                     ))}
                   </TableBody>
                 </Table>
               </div>
               <div className="space-y-3 sm:hidden">
                 {scopedRules.map((r) => (
-                  <RegelKarte key={r.id} regel={r} />
+                  <RegelKarte key={r.id} rule={r} />
                 ))}
               </div>
             </>

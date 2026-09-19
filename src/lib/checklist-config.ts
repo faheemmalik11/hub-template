@@ -1,6 +1,6 @@
 import type { BankConnection, DatevRoute, Gesellschaft, Objekt } from "@/lib/data/types";
 import type { SourceView } from "@/lib/data/channel-sources";
-import { PERMISSIONS, type PermissionKey } from "@/lib/permissions";
+import { PERMISSIONS, type PermissionKey } from "@/config/permissions";
 
 export type SetupStepKey = "mailbox" | "bank" | "companies" | "properties" | "datev";
 export type SetupStepState = "done" | "open" | "problem";
@@ -51,7 +51,7 @@ const MAILBOX_FOKUS: Record<string, { hash: string; fokus: string }> = {
 export const CHECKLIST_STEPS: ChecklistStepConfig[] = [
   {
     key: "mailbox",
-    editPermission: PERMISSIONS.postfachSettings,
+    editPermission: PERMISSIONS.settingsManage,
     visible: (d) => !d.errors.mailbox,
     evaluate: (d) => {
       const active = Boolean(d.mail?.is_active || d.drive?.is_active);
@@ -78,7 +78,7 @@ export const CHECKLIST_STEPS: ChecklistStepConfig[] = [
   },
   {
     key: "bank",
-    visible: (d) => d.can(PERMISSIONS.pageBankverbindungen) && !d.errors.bank,
+    visible: (d) => d.can(PERMISSIONS.pageBankConnections) && !d.errors.bank,
     evaluate: (d) => {
       const staleBefore = d.now - STALE_LIMIT_MS;
       const live = d.bankConnections.filter((c) => !c.disconnected_at);

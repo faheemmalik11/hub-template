@@ -5,7 +5,7 @@ import { z } from "zod";
  *
  * One definition, so every screen that creates a customer asks for the same things. Today that is
  * the new-customer dialog on the Kunden screen (`src/routes/kunden/index.tsx`), which passes
- * `adressePflicht: false`: Stäy keeps its customers locally and no external system demands an
+ * `adressePflicht: false`: this client keeps its customers locally and no external system demands an
  * address there.
  *
  * `adressePflicht: true` is for a caller that hands the customer to LexOffice, which refuses to

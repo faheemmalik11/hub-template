@@ -24,7 +24,7 @@ const PING_KEY_PREFIX = "ping:id:";
 const PING_SENT_PREFIX = "ping:sent:";
 const PING_HISTORY = 5;
 // One key per assigned receipt, so the bell can link each to its own document. All of them share
-// the single "zuweisung" toggle on /benachrichtigungen.
+// the single "assigned" toggle on /benachrichtigungen.
 const ASSIGNED_KEY_PREFIX = "zuweisung:id:";
 
 /**
@@ -88,20 +88,20 @@ export function useNotificationItems(): {
         link: { to: "/eingangsrechnungen" },
       },
       {
-        key: "rueckfrage",
+        key: "query",
         label: t("einstellungen.event.rueckfrage"),
         message: t("notifications.msg.rueckfrage", { count: returned }),
         count: returned,
         tone: "warn",
-        link: { to: "/eingangsrechnungen", search: { workflow: "rueckfrage" } },
+        link: { to: "/eingangsrechnungen", search: { workflow: "query" } },
       },
       {
-        key: "abgelehnt",
+        key: "rejected",
         label: t("einstellungen.event.abgelehnt"),
         message: t("notifications.msg.abgelehnt", { count: rejected }),
         count: rejected,
         tone: "danger",
-        link: { to: "/eingangsrechnungen", search: { workflow: "abgelehnt" } },
+        link: { to: "/eingangsrechnungen", search: { workflow: "rejected" } },
       },
       {
         key: "zuPruefen",
@@ -109,7 +109,7 @@ export function useNotificationItems(): {
         message: t("notifications.msg.zuPruefen", { count: counts?.zuPruefen ?? 0 }),
         count: counts?.zuPruefen ?? 0,
         tone: "warn",
-        link: { to: "/eingangsrechnungen", search: { status: "zu_pruefen" } },
+        link: { to: "/eingangsrechnungen", search: { status: "needs_review" } },
       },
       {
         key: "faellig",
@@ -120,12 +120,12 @@ export function useNotificationItems(): {
         link: { to: "/offene-posten", search: { typ: "incoming", due: "ueberfaellig" } },
       },
       {
-        key: "vorschlaege",
+        key: "suggestions",
         label: t("einstellungen.event.vorschlaege"),
-        message: t("notifications.msg.vorschlaege", { count: bankQ.data?.vorschlag ?? 0 }),
-        count: bankQ.data?.vorschlag ?? 0,
+        message: t("notifications.msg.vorschlaege", { count: bankQ.data?.suggestion ?? 0 }),
+        count: bankQ.data?.suggestion ?? 0,
         tone: "warn",
-        link: { to: "/banktransaktionen", search: { matching: "vorschlag" } },
+        link: { to: "/banktransaktionen", search: { matching: "suggestion" } },
       },
       {
         key: "fehler",
@@ -214,7 +214,7 @@ export function useNotificationItems(): {
     }
     return all.filter((i) => {
       const toggle = i.key.startsWith(ASSIGNED_KEY_PREFIX)
-        ? "zuweisung"
+        ? "assigned"
         : i.key.startsWith(PING_KEY_PREFIX) || i.key.startsWith(PING_SENT_PREFIX)
           ? "ping"
           : i.key;
@@ -243,7 +243,7 @@ export function useNotificationItems(): {
           source: t("notifications.source.intake"),
           action: t("notifications.action.view"),
         };
-      if (key === "rueckfrage" || key === "abgelehnt" || key === "zuPruefen")
+      if (key === "query" || key === "rejected" || key === "zuPruefen")
         return {
           source: t("notifications.source.review"),
           action: t("notifications.action.review"),
@@ -253,7 +253,7 @@ export function useNotificationItems(): {
           source: t("notifications.source.invoices"),
           action: t("notifications.action.review"),
         };
-      if (key === "vorschlaege")
+      if (key === "suggestions")
         return {
           source: t("notifications.source.bankMatching"),
           action: t("notifications.action.reviewMatches"),

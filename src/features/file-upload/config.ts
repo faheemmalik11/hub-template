@@ -1,12 +1,12 @@
+import { BUCKET } from "@/config/buckets";
+
 export const UPLOAD_LIMIT_BYTES = 100 * 1024 * 1024;
 
-// Where the browser uploads to. `incoming` moved from "belege-files" to "documents" on
-// 16.09.2026, so a receipt uploaded here lands beside the ones the pipeline writes instead of in
-// a bucket of its own. The insert policy in migration 20260916140000 permits both while the old
-// bucket still exists. See docs/TABLE_NAMING_MIGRATION.md.
+// Where the browser uploads to. The names themselves live in src/config/buckets.ts, so a bucket is
+// spelled once for the whole app.
 export const BUCKETS = {
-  incoming: "documents",
-  outgoing: "outgoing-invoice-files",
+  incoming: BUCKET.documents,
+  outgoing: BUCKET.outgoingInvoices,
 } as const;
 
 export type UploadBucket = (typeof BUCKETS)[keyof typeof BUCKETS];

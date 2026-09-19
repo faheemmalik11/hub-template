@@ -27,7 +27,7 @@ const DEFAULT_MODEL = "scribe_v2";
 // defensively so an oddly-named company/category/supplier can't 400 the whole request — this
 // check is NOT optional/cosmetic: the API rejects the ENTIRE keyterms list (400, the whole
 // transcription request fails) if even ONE term violates a limit, so a single long property name
-// breaks voice search completely, not just that one term. Confirmed live: two staeyhub property
+// breaks voice search completely, not just that one term. Confirmed live: two this Hub property
 // names ("Ludwigshafen, Edigheimer Str. 92a+b / Kurt-Schumacher-Str. 96-100",
 // "Neustadt a.d. Weinstraße, Wittelsbacher Str. 61") exceed 5 words and 400'd every single
 // request until the word-count check below was added — the character-length/disallowed-char

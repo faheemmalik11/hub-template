@@ -63,7 +63,7 @@ export function usePossibleMatches(beleg: {
   const { von, bis } = windowBounds(beleg.dueDate ?? beleg.documentDate);
   const q = useOpenBankTransactionsInfinite(
     {
-      matchingStatus: "offen",
+      matchingStatus: "open",
       // Same convention ManualSearch/TransactionMatches already use: an incoming invoice is
       // settled by an outgoing (debit) bank movement, an outgoing invoice by an incoming
       // (credit) one.

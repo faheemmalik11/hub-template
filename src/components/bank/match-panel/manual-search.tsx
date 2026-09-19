@@ -139,7 +139,7 @@ function TransactionSearchList({
   // manual search exists to reach.
   const q = useOpenBankTransactionsInfinite({
     search: debouncedSearch,
-    matchingStatus: "offen",
+    matchingStatus: "open",
     richtung,
     bookingDateVon: hasQuery ? undefined : von,
     bookingDateBis: hasQuery ? undefined : bis,
@@ -361,7 +361,7 @@ function InvoiceSearchList({
         side: "outgoing",
         invoiceId: oi.id,
         invoiceLabel: oi.customers?.name ?? "—",
-        invoiceNr: oi.voucher_number,
+        invoiceNr: oi.invoice_number,
         invoiceGross: oi.amount_gross,
         transactionId,
         transactionLabel,
@@ -425,7 +425,7 @@ function InvoiceSearchList({
                     {oi.customers?.name ?? "—"}
                   </div>
                   <div className="text-xs text-muted-foreground">
-                    {oi.voucher_number ?? "—"} · {formatEUR(oi.amount_gross)}
+                    {oi.invoice_number ?? "—"} · {formatEUR(oi.amount_gross)}
                   </div>
                 </div>
                 <Button

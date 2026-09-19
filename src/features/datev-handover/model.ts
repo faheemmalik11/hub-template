@@ -138,7 +138,7 @@ export function fleetSummary(rows: CompanyRow[]) {
   };
 }
 
-export const STATUS_FILTERS = ["alle", "eingerichtet", "offen", "bereit", "gesendet"] as const;
+export const STATUS_FILTERS = ["alle", "eingerichtet", "open", "bereit", "gesendet"] as const;
 export type StatusFilter = (typeof STATUS_FILTERS)[number];
 
 /**
@@ -157,7 +157,7 @@ export function filterRows(rows: CompanyRow[], q: string, status: StatusFilter):
     switch (status) {
       case "eingerichtet":
         return r.setup !== "missing";
-      case "offen":
+      case "open":
         return r.setup === "missing";
       case "bereit":
         return r.ready.length > 0;

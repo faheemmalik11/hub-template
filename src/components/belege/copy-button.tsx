@@ -1,4 +1,4 @@
-import { CopyButton as KitCopyButton } from "@hub-kit/core/ui";
+import { CopyButton as KitCopyButton } from "@/kit/ui";
 
 import { useTranslation } from "@/lib/i18n";
 

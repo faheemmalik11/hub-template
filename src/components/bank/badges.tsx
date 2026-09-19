@@ -3,7 +3,7 @@ import { Badge } from "@/components/ui/badge";
 import { cn } from "@/lib/utils";
 import { useTranslation } from "@/lib/i18n";
 import {
-  ABGLEICH_META,
+  RECONCILIATION_META,
   type AbgleichStatus,
   MATCH_STATUS_META,
   RICHTUNG_META,
@@ -131,7 +131,7 @@ export function TxnMatchingBadge({
   className,
 }: {
   status: string | null | undefined;
-  // A transaction carrying an open match suggestion is still matching_status='offen' -- the
+  // A transaction carrying an open match suggestion is still matching_status='open' -- the
   // suggestion lives in invoice_transaction_matches, not on the transaction row. Showing plain
   // "Offen" hid the one state that actually needs a person to look at it.
   hasSuggested?: boolean;
@@ -140,7 +140,7 @@ export function TxnMatchingBadge({
   const { t } = useTranslation();
   // Only an OPEN transaction can read as "suggested": once it is zugeordnet or ignoriert the
   // decision has been made, and a leftover candidate must not re-open it visually.
-  const effective = hasSuggested && (!status || status === "offen") ? "vorschlag" : status;
+  const effective = hasSuggested && (!status || status === "open") ? "suggestion" : status;
   const meta = effective ? TXN_MATCHING_STATUS_META[effective] : undefined;
   const label = effective ? t(`bank.txnMatching.${effective}`, { defaultValue: effective }) : "—";
   return (
@@ -165,7 +165,7 @@ export function AbgleichBadge({
   className?: string;
 }) {
   const { t } = useTranslation();
-  const meta = ABGLEICH_META[status];
+  const meta = RECONCILIATION_META[status];
   // variant="outline", like every other meta-coloured badge here. The default variant carries
   // `hover:bg-primary/80`, and tailwind-merge does not drop it against `meta.cls` -- a hover key
   // never conflicts with a plain `bg-`. So hovering flipped the pill to solid primary while the

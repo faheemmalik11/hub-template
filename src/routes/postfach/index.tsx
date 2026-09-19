@@ -1,14 +1,14 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useEffect } from "react";
 
-import { DocumentSourcesPage } from "@hub-kit/core/pages";
-import type { DocumentSourcesLabels } from "@hub-kit/core/pages";
-import { useTanstackDocumentSourcesRouter } from "@hub-kit/core/pages/document-sources/tanstack";
+import { DocumentSourcesPage } from "@/kit/pages";
+import type { DocumentSourcesLabels } from "@/kit/pages";
+import { useTanstackDocumentSourcesRouter } from "@/kit/pages/document-sources/tanstack-router";
 
 import { useDocumentSourcesAdapter } from "@/hub/adapters/document-sources";
 import { useFilingFolders, useMailboxFolders } from "@/lib/data/queries";
 import { useTranslation } from "@/lib/i18n";
-import { pageTitle } from "@/lib/brand";
+import { pageTitle } from "@/config/brand";
 
 export const Route = createFileRoute("/postfach/")({
   head: () => ({ meta: [{ title: pageTitle("Postfach & Ablage") }] }),

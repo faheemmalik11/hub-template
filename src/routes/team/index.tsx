@@ -62,7 +62,7 @@ import { useAuth } from "@/lib/auth";
 import { PermissionChecklist } from "@/components/access/permission-checklist";
 import { PermissionMatrix } from "@/components/access/permission-matrix";
 import type { AccessPermission, AccessRole } from "@/components/access/types";
-import { PERMISSIONS } from "@/lib/permissions";
+import { PERMISSIONS } from "@/config/permissions";
 import {
   useCreateEmployee,
   useEmployees,
@@ -84,7 +84,7 @@ import {
 } from "@/lib/data/queries";
 import type { ApprovalArea, Employee } from "@/lib/data/types";
 import { useTranslation } from "@/lib/i18n";
-import { BRAND, pageTitle } from "@/lib/brand";
+import { BRAND, pageTitle } from "@/config/brand";
 import { fehlerText } from "@/lib/data/format";
 
 export const Route = createFileRoute("/team/")({

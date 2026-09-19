@@ -27,7 +27,7 @@ import {
 } from "@/lib/data/queries";
 import { fehlerText, formatEUR, parseDecimalInput } from "@/lib/data/format";
 import { useTranslation } from "@/lib/i18n";
-import { pageTitle } from "@/lib/brand";
+import { pageTitle } from "@/config/brand";
 import {
   OUTGOING_INVOICE_UPLOAD_MIME,
   type OutgoingInvoiceUploadMime,
@@ -328,7 +328,7 @@ function HochladenPage() {
       {
         onSuccess: (row) => {
           toast.success(t("ausgangsrechnungen.hochladen.toast.erstellt"));
-          setCreatedNumber(row.voucher_number ?? form.voucherNumber);
+          setCreatedNumber(row.invoice_number ?? form.voucherNumber);
           setPhase("success");
         },
         onError: (e) =>

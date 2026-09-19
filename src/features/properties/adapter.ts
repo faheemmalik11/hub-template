@@ -122,9 +122,9 @@ export {
 // ---------------------------------------------------------------------------
 // Capabilities this Hub does not have.
 //
-// Stäy's `properties` has no `reviewed_at` and no `ownership_type`, so `stammdatenPruefung` and
+// this client's `properties` has no `reviewed_at` and no `ownership_type`, so `stammdatenPruefung` and
 // `eigentum` are false in the route's config and none of the controls behind them are rendered.
-// `driveOrdner` is off too, for a different reason: the column here is `drive_folder_id`, a Dropbox
+// `driveOrdner` is off too, for a different reason: the column here is `filing_folder`, a Dropbox
 // path used by the pipeline for filing, not a link anybody opens.
 //
 // Archiving IS supported: deleted_at / deleted_by / delete_reason are on the table and `properties`
@@ -142,7 +142,7 @@ export function needsMasterDataReview(_reviewedAt: string | null | undefined): b
 // ---------------------------------------------------------------------------
 // The relation both screens are really about: which companies a property belongs to.
 //
-// Stäy assigns a property straight to companies (`property_companies`, migration 0083), several at
+// this client assigns a property straight to companies (`property_companies`, migration 0083), several at
 // once being normal rather than an error. There are no business lines in between, so every
 // assignment's `bereich` is null and the detail page renders the company alone.
 // ---------------------------------------------------------------------------
@@ -165,9 +165,9 @@ export function useObjektGesellschaften(): ObjektGesellschaftenIndex {
         id: link.id,
         gesellschaft: g ? { id: g.id, code: g.code, name: g.name } : null,
         bereich: null,
-        // Null, not undefined: Stäy numbers its cost centres, so a pairing without a number is a
+        // Null, not undefined: this client numbers its cost centres, so a pairing without a number is a
         // gap to show rather than a Hub that has no such concept.
-        kostenstelle: link.cost_center_number ?? null,
+        kostenstelle: link.cost_centre_number ?? null,
       });
       zuordnungenByProperty.set(link.property_id, zuordnungen);
 

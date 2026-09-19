@@ -16,10 +16,10 @@ import {
   orderRules,
   parseDecimal,
   pickWinner,
-} from "@hub-kit/core/approval-rules";
-import type { TesterQuery } from "@hub-kit/core/approval-rules";
-import type { ApprovalRuleDraft, ApprovalRuleView } from "@hub-kit/core/adapters";
-import { HintTooltip } from "@hub-kit/core/data-table";
+} from "@/kit/pages/approval-rules";
+import type { TesterQuery } from "@/kit/pages/approval-rules";
+import type { ApprovalRuleDraft, ApprovalRuleView } from "@/kit/adapters";
+import { HintTooltip } from "@/kit/components/data-table";
 
 import { KeinZugriff } from "@/components/layout/kein-zugriff";
 import { Button } from "@/components/ui/button";
@@ -30,10 +30,10 @@ import { ErrorState, TableSkeleton } from "@/components/belege/query-states";
 import { useApprovalRulesAdapter } from "@/hub/adapters/approval-rules";
 import { useApprovalRulesLabels } from "@/hub/adapters/approval-rules-labels";
 import { useAuth } from "@/lib/auth";
-import { PERMISSIONS } from "@/lib/permissions";
+import { PERMISSIONS } from "@/config/permissions";
 import { useTranslation } from "@/lib/i18n";
 import { tabSearch } from "@/lib/use-tab-param";
-import { pageTitle } from "@/lib/brand";
+import { pageTitle } from "@/config/brand";
 import { fehlerText, formatDate, formatDateTime, formatEUR } from "@/lib/data/format";
 
 export const Route = createFileRoute("/freigabe-regeln/")({
@@ -45,7 +45,7 @@ export const Route = createFileRoute("/freigabe-regeln/")({
 function FreigabeRegelnGuard() {
   const { ready, can } = useAuth();
   if (!ready) return null;
-  if (!can(PERMISSIONS.pageFreigabeRegeln)) return <KeinZugriff />;
+  if (!can(PERMISSIONS.pageApprovalRules)) return <KeinZugriff />;
   return <FreigabeRegelnRoute />;
 }
 

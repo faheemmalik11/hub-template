@@ -1,7 +1,7 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useMemo } from "react";
 
-import { BRAND, pageTitle } from "@/lib/brand";
+import { BRAND, pageTitle } from "@/config/brand";
 import { overviewPeriodRange } from "@/lib/data/format";
 import { DashboardAlertStrip } from "@/components/home/dashboard-alert-strip";
 import { DashboardPanel } from "@/components/dashboard/panel";

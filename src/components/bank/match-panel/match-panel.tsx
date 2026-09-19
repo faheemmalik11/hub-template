@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import { ChevronLeft, Info, Search } from "lucide-react";
 
-import { HintTooltip } from "@hub-kit/core/data-table";
+import { HintTooltip } from "@/kit/components/data-table";
 
 import { Button } from "@/components/ui/button";
 import {
@@ -154,7 +154,7 @@ export function MatchPanel({
       ? ((isOutgoingInvoice ? outgoingInvoiceMatchesQ.data : incomingInvoiceMatchesQ.data) ?? [])
       : [];
   const bezahltSumme = invoiceMatchRows
-    .filter((m) => m.status === "bestaetigt")
+    .filter((m) => m.status === "confirmed")
     .reduce((sum, m) => sum + Math.abs(m.amount_matched ?? 0), 0);
   const teilzahlung =
     display?.kind === "invoice" &&

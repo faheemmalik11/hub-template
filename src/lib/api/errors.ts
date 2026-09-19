@@ -1,6 +1,6 @@
 // Typed errors for backend endpoints (server routes and server functions). Every new endpoint
 // throws one of these instead of a bare Error, so the caller can branch on `code` rather than
-// parsing a message string. See the staey-backend-api skill for the full convention.
+// parsing a message string. See the backend-api skill for the full convention.
 
 export class AppError extends Error {
   constructor(

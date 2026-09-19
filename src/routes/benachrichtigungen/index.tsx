@@ -1,5 +1,5 @@
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
-import { pageTitle } from "@/lib/brand";
+import { BRAND, pageTitle } from "@/config/brand";
 import { useEffect, useMemo, useState } from "react";
 import {
   BellRing,
@@ -20,7 +20,7 @@ import {
   NotificationRow,
   NotificationSection,
   type NotificationTone,
-} from "@hub-kit/core/notifications";
+} from "@/kit/components/notifications";
 import { PeriodPicker, useStoredPeriod } from "@/components/home/period-picker";
 import { overviewPeriodRange } from "@/components/dashboard/periods";
 import type { NotificationItem } from "@/components/notifications/types";
@@ -46,7 +46,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { Switch } from "@/components/ui/switch";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useAuth } from "@/lib/auth";
-import { PERMISSIONS } from "@/lib/permissions";
+import { PERMISSIONS } from "@/config/permissions";
 import { fehlerText, formatDateTime } from "@/lib/data/format";
 import {
   useNotificationChannels,
@@ -281,14 +281,14 @@ function MeldungenTab() {
 
 // The digest offers only the figures a morning summary can carry; "new since your last look"
 // and pings are moments, not daily states, so they stay bell-only.
-const DIGEST_EVENTS = ["faellig", "zuPruefen", "vorschlaege", "fehler", "personen"] as const;
+const DIGEST_EVENTS = ["faellig", "zuPruefen", "suggestions", "fehler", "personen"] as const;
 
 const BELL_GROUPS = [
-  { key: "zugewiesen", events: ["zuweisung", "rueckfrage", "abgelehnt", "ping"] },
-  { key: "dokumente", events: ["neu", "zuPruefen", "faellig", "vorschlaege", "fehler"] },
+  { key: "zugewiesen", events: ["assigned", "query", "rejected", "ping"] },
+  { key: "dokumente", events: ["neu", "zuPruefen", "faellig", "suggestions", "fehler"] },
 ] as const;
 
-const SLACK_EVENTS = ["zuweisung", "rueckfrage", "abgelehnt", "ping"] as const;
+const SLACK_EVENTS = ["assigned", "query", "rejected", "ping"] as const;
 
 function formatTime(hh: number, mm: number, locale: string): string {
   const pad = (n: number) => String(n).padStart(2, "0");
@@ -311,11 +311,11 @@ function buildTimeOptions(locale: string): { value: string; label: string }[] {
 }
 
 const SLACK_MANIFEST = `display_information:
-  name: Stäy Hub
-  description: Benachrichtigungen aus dem Stäy Hub
+  name: ${BRAND.productName}
+  description: Benachrichtigungen aus dem ${BRAND.productName}
 features:
   bot_user:
-    display_name: StaeyHub
+    display_name: ${BRAND.name}
     always_online: true
 oauth_config:
   scopes:
@@ -366,7 +366,7 @@ function CardSkeleton({ rows }: { rows: number }) {
 function EinstellungenTab() {
   const { t } = useTranslation();
   const { appUserId, can } = useAuth();
-  const darfKanaele = can(PERMISSIONS.notificationsSettings);
+  const darfKanaele = can(PERMISSIONS.settingsManage);
   const settingsQ = useNotificationSettings(appUserId);
   const saveSettings = useSaveNotificationSettings(appUserId);
   const saveBell = useSaveNotificationSettings(appUserId);

@@ -3,7 +3,7 @@ import { ShieldCheck } from "lucide-react";
 
 import { Logo } from "@/components/brand/logo";
 import { Card } from "@/components/ui/card";
-import { BRAND, brandVars } from "@/lib/brand";
+import { BRAND, brandVars } from "@/config/brand";
 import { useTranslation } from "@/lib/i18n";
 
 export const Route = createFileRoute("/demo")({

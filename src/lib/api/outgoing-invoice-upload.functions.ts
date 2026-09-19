@@ -1,3 +1,4 @@
+import { BUCKET } from "@/config/buckets";
 // Server function that commits an uploaded outgoing invoice (the confirm step after
 // extractOutgoingInvoiceFields — see that file's header for the full picture). Writes go through
 // the service-role client so the invoice row, its file record, and an inline new-customer row (if
@@ -14,9 +15,9 @@ import { z } from "zod";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 import { AppError, ValidationError } from "./errors";
 import { OUTGOING_INVOICE_UPLOAD_MIME } from "./outgoing-invoice-shared";
-import { TABLE } from "@/lib/data/tables";
+import { TABLE } from "@/config/tables";
 
-const STORAGE_BUCKET = "outgoing-invoice-files";
+const STORAGE_BUCKET = BUCKET.outgoingInvoices;
 
 const NewCustomerSchema = z.object({
   name: z.string().min(1),
@@ -132,9 +133,9 @@ export const createUploadedOutgoingInvoice = createServerFn({ method: "POST" })
       company_id: data.companyId,
       customer_id: customerId,
       source: "upload",
-      voucher_status: "open",
-      voucher_number: data.voucherNumber,
-      voucher_date: data.voucherDate,
+      status: "open",
+      invoice_number: data.voucherNumber,
+      invoice_date: data.voucherDate,
       due_date: data.dueDate ?? null,
       amount_net: data.amountNet ?? null,
       amount_gross: data.amountGross,
@@ -170,7 +171,7 @@ export const createUploadedOutgoingInvoice = createServerFn({ method: "POST" })
     await db.from(TABLE.changeHistory).insert({
       table_name: "outgoing_invoices",
       record_id: invoiceId,
-      type: "aenderung",
+      type: "change",
       text: "Per Upload erfasst (KI-Extraktion)",
       actor,
     });

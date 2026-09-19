@@ -18,6 +18,20 @@ below still describes how the code works, because the code is that Hub's code.
 - `planning/07-hub-template.md` records what was stripped out of the clone and what a new client
   still needs: its own Supabase project and `.env`, its own brand and locale, its own catalogue seed.
 
+### Code explains itself. Comments are the exception (HARD RULE)
+
+Name things so the code reads without help: `unpaidInvoiceCount`, `hasConfirmedBankAccount`,
+`documentsAwaitingApproval`. If a reader needs a comment to follow what a block does, the block
+needs a better name or to be a named function, not a sentence above it.
+
+- **Do not write comments.** Not headers, not section banners, not restating the next line.
+- **One line, only when the code genuinely cannot say it**: a non-obvious constraint from outside
+  the code, a deliberate deviation, an ordering that looks wrong but is required. Never two lines.
+- Reasoning that a reader will want later belongs in `planning/` or the commit message, where it
+  can be corrected. A comment rots in place and is then trusted.
+
+The same rule in SQL: a table, column or function named for what it holds needs no explanation.
+
 ### The three rules of this repository
 
 1. **Never delete a screen to suit one client.** Switch it off in their catalogue. A screen removed

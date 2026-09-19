@@ -48,7 +48,7 @@ import { EmptyState, ErrorState, TableSkeleton } from "@/components/belege/query
 import { useTranslation } from "@/lib/i18n";
 import type { BwaCategory } from "@/lib/data/types";
 import { LEER } from "@/components/zuordnung/regel-zeile";
-import { pageTitle } from "@/lib/brand";
+import { pageTitle } from "@/config/brand";
 import { fehlerText } from "@/lib/data/format";
 
 export const Route = createFileRoute("/kategorien/")({
@@ -465,7 +465,7 @@ function NeueKategorieDialog({
   // way simply has no distinct translation, and mirrors the German name into that column.
   const [name, setName] = useState("");
   const [note, setNote] = useState("");
-  const [direction, setDirection] = useState<BwaCategory["direction"]>("ausgang");
+  const [direction, setDirection] = useState<BwaCategory["direction"]>("outgoing");
   const create = useCreateBwaCategory();
 
   const coarseOptions: ComboboxOption[] = useMemo(
@@ -482,7 +482,7 @@ function NeueKategorieDialog({
     setParentId(presetParentId ?? LEER);
     setName("");
     setNote("");
-    setDirection("ausgang");
+    setDirection("outgoing");
   }
 
   function speichern() {
@@ -490,14 +490,15 @@ function NeueKategorieDialog({
     // top-level category takes the block its income/cost choice implies. The client's
     // specification has no BWA concept at all, and whether BWA survives at all is still open with
     // them — so the columns stay populated and valid, without a bookkeeper ever seeing them.
-    const derivedBlock: BwaCategory["bwa_block"] = direction === "eingang" ? "einnahmen" : "kosten";
+    const derivedBlock: BwaCategory["report_block"] =
+      direction === "incoming" ? "einnahmen" : "kosten";
     const input: BwaCategoryInput = {
       code: codeFromName(name, takenCodes),
       name: name.trim(),
       name_en: name.trim(),
       parent_id: parentId === LEER ? null : parentId,
-      bwa_block: parent ? parent.bwa_block : derivedBlock,
-      bwa_line: parent ? parent.bwa_line : codeFromName(name, takenCodes).toLowerCase(),
+      report_block: parent ? parent.report_block : derivedBlock,
+      report_line: parent ? parent.report_line : codeFromName(name, takenCodes).toLowerCase(),
       direction: parent ? parent.direction : direction,
       note: note.trim() === "" ? null : note.trim(),
     };
@@ -573,8 +574,8 @@ function NeueKategorieDialog({
                 value={direction}
                 onValueChange={(v) => setDirection(v as BwaCategory["direction"])}
                 options={[
-                  { value: "ausgang", label: t("kategorien.block.kosten") },
-                  { value: "eingang", label: t("kategorien.block.einnahmen") },
+                  { value: "outgoing", label: t("kategorien.block.kosten") },
+                  { value: "incoming", label: t("kategorien.block.einnahmen") },
                 ]}
               />
             </div>

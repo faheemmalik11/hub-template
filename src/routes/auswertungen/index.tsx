@@ -1,9 +1,9 @@
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
 
 import { KeinZugriff } from "@/components/layout/kein-zugriff";
-import { pageTitle } from "@/lib/brand";
+import { pageTitle } from "@/config/brand";
 import { useAuth } from "@/lib/auth";
-import { PERMISSIONS } from "@/lib/permissions";
+import { PERMISSIONS } from "@/config/permissions";
 import {
   Kostenanalyse,
   validateCostAnalysisSearch,
@@ -12,7 +12,7 @@ import {
 } from "@/features/cost-analysis";
 
 /**
- * Staeyhub's Cost Analysis.
+ * this Hub's Cost Analysis.
  *
  * The screen itself lives in `features/cost-analysis/`, byte-identical with the other Hubs. What
  * belongs to THIS repository is here: the page title and the routes a receipt opens into. See that
@@ -35,7 +35,7 @@ export const Route = createFileRoute("/auswertungen/")({
 function AuswertungenGuard() {
   const { ready, can } = useAuth();
   if (!ready) return null;
-  if (!can(PERMISSIONS.pageAuswertungen)) return <KeinZugriff variant="manager" />;
+  if (!can(PERMISSIONS.pageReports)) return <KeinZugriff variant="manager" />;
   return <AuswertungenSeite />;
 }
 

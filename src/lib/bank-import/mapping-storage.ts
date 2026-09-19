@@ -1,6 +1,6 @@
 import type { ColumnMapping } from "./types";
 
-const STORAGE_PREFIX = "staey.bank-import.mapping.";
+const STORAGE_PREFIX = "hub.bank-import.mapping.";
 
 /** Non-cryptographic fingerprint of a header row, stable across row/column order. */
 function fingerprint(headers: string[]): string {

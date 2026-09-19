@@ -131,7 +131,8 @@ import type {
 } from "./types";
 import { OPEN_ITEM_COLUMNS } from "./types";
 import type { AppRole } from "@/lib/auth";
-import { TABLE } from "@/lib/data/tables";
+import { TABLE } from "@/config/tables";
+import { EDGE_FUNCTION } from "@/config/edge-functions";
 
 const STALE = 60_000;
 
@@ -395,7 +396,7 @@ export function useBelegeFuerGesellschaftSeiten(
         .is("deleted_at", null)
         .is("archived_at", null)
         .is("not_relevant_at", null)
-        .neq("status", "aufgeteilt")
+        .neq("status", "split")
         .or(gesellschaftBelegFilter(companyId, companyCode));
       if (von) query = query.gte("document_date", von);
       if (bis) query = query.lte("document_date", bis);
@@ -434,7 +435,7 @@ export function useGesellschaftBelegAggregat(
             .is("deleted_at", null)
             .is("archived_at", null)
             .is("not_relevant_at", null)
-            .neq("status", "aufgeteilt")
+            .neq("status", "split")
             .or(gesellschaftBelegFilter(companyId, companyCode))
             // Same reason as the paged query: fetchAllRows issues parallel ranges, so without a
             // unique tie-breaker rows can repeat and go missing across a page boundary.
@@ -460,22 +461,22 @@ export function useLieferantBelegSummen() {
       Map<string, { summe: number; anzahl: number; avgTage: number | null }>
     > => {
       const { data, error } = await sb
-        .from(TABLE.vSupplierInvoiceTotals)
-        .select("supplier_id, beleg_anzahl, beleg_summe, avg_tage");
+        .from(TABLE.vSupplierDocumentTotals)
+        .select("supplier_id, document_count, document_total, avg_days_between");
       if (error) throw error;
       const map = new Map<string, { summe: number; anzahl: number; avgTage: number | null }>();
       for (const r of (data ?? []) as {
         supplier_id: string;
-        beleg_anzahl: number;
-        beleg_summe: number | string;
-        avg_tage: number | null;
+        document_count: number;
+        document_total: number | string;
+        avg_days_between: number | null;
       }[]) {
         map.set(r.supplier_id, {
-          summe: Number(r.beleg_summe ?? 0),
-          anzahl: Number(r.beleg_anzahl ?? 0),
+          summe: Number(r.document_total ?? 0),
+          anzahl: Number(r.document_count ?? 0),
           // Same rule as computeInvoiceFrequency(): null when there are fewer than two dated
           // invoices, which the view already encodes.
-          avgTage: r.avg_tage == null ? null : Number(r.avg_tage),
+          avgTage: r.avg_days_between == null ? null : Number(r.avg_days_between),
         });
       }
       return map;
@@ -535,7 +536,7 @@ export function useBelegeFuerObjektSeiten(
         .is("deleted_at", null)
         .is("archived_at", null)
         .is("not_relevant_at", null)
-        .neq("status", "aufgeteilt")
+        .neq("status", "split")
         .or(objektBelegFilter(propertyId, propertyCode));
       if (von) query = query.gte("document_date", von);
       if (bis) query = query.lte("document_date", bis);
@@ -574,7 +575,7 @@ export function useObjektBelegAggregat(
             .is("deleted_at", null)
             .is("archived_at", null)
             .is("not_relevant_at", null)
-            .neq("status", "aufgeteilt")
+            .neq("status", "split")
             .or(objektBelegFilter(propertyId, propertyCode))
             // Same reason as the paged query: fetchAllRows issues parallel ranges, so without a
             // unique tie-breaker rows can repeat and go missing across a page boundary.
@@ -595,18 +596,18 @@ export function useObjektBelegSummen() {
     staleTime: STALE,
     queryFn: async (): Promise<Map<string, { summe: number; anzahl: number }>> => {
       const { data, error } = await sb
-        .from(TABLE.vPropertyInvoiceTotals)
-        .select("property_id, beleg_anzahl, beleg_summe");
+        .from(TABLE.vPropertyDocumentTotals)
+        .select("property_id, document_count, document_total");
       if (error) throw error;
       const map = new Map<string, { summe: number; anzahl: number }>();
       for (const r of (data ?? []) as {
         property_id: string;
-        beleg_anzahl: number;
-        beleg_summe: number | string;
+        document_count: number;
+        document_total: number | string;
       }[]) {
         map.set(r.property_id, {
-          summe: Number(r.beleg_summe ?? 0),
-          anzahl: Number(r.beleg_anzahl ?? 0),
+          summe: Number(r.document_total ?? 0),
+          anzahl: Number(r.document_count ?? 0),
         });
       }
       return map;
@@ -628,19 +629,19 @@ export function useKundeRechnungSummen() {
     > => {
       const { data, error } = await sb
         .from(TABLE.vCustomerInvoiceTotals)
-        .select("customer_id, rechnung_anzahl, rechnung_summe, ueberfaellig_anzahl");
+        .select("customer_id, invoice_count, invoice_total, overdue_count");
       if (error) throw error;
       const map = new Map<string, { summe: number; anzahl: number; ueberfaellig: number }>();
       for (const r of (data ?? []) as {
         customer_id: string;
-        rechnung_anzahl: number;
-        rechnung_summe: number | string;
-        ueberfaellig_anzahl: number;
+        invoice_count: number;
+        invoice_total: number | string;
+        overdue_count: number;
       }[]) {
         map.set(r.customer_id, {
-          summe: Number(r.rechnung_summe ?? 0),
-          anzahl: Number(r.rechnung_anzahl ?? 0),
-          ueberfaellig: Number(r.ueberfaellig_anzahl ?? 0),
+          summe: Number(r.invoice_total ?? 0),
+          anzahl: Number(r.invoice_count ?? 0),
+          ueberfaellig: Number(r.overdue_count ?? 0),
         });
       }
       return map;
@@ -654,18 +655,18 @@ export function useGesellschaftBelegSummen() {
     staleTime: STALE,
     queryFn: async (): Promise<Map<string, { summe: number; anzahl: number }>> => {
       const { data, error } = await sb
-        .from(TABLE.vCompanyInvoiceTotals)
-        .select("company_id, beleg_anzahl, beleg_summe");
+        .from(TABLE.vCompanyDocumentTotals)
+        .select("company_id, document_count, document_total");
       if (error) throw error;
       const map = new Map<string, { summe: number; anzahl: number }>();
       for (const row of (data ?? []) as {
         company_id: string;
-        beleg_anzahl: number;
-        beleg_summe: number | string;
+        document_count: number;
+        document_total: number | string;
       }[]) {
         map.set(row.company_id, {
-          summe: Number(row.beleg_summe ?? 0),
-          anzahl: Number(row.beleg_anzahl ?? 0),
+          summe: Number(row.document_total ?? 0),
+          anzahl: Number(row.document_count ?? 0),
         });
       }
       return map;
@@ -827,7 +828,7 @@ export function useSavePropertyCompanyLink() {
         if (!input.nummerGeaendert) return;
         const { data, error } = await sb
           .from(TABLE.propertyCompanies)
-          .update({ cost_center_number: input.nummer, updated_at: now })
+          .update({ cost_centre_number: input.nummer, updated_at: now })
           .eq("id", input.linkId)
           .select("id");
         if (error) throw zuordnungFehler(error);
@@ -842,7 +843,7 @@ export function useSavePropertyCompanyLink() {
         company_id: input.companyId,
         // Only sent when set: a non-admin adds the company without a number, and the trigger
         // refuses a number arriving from them.
-        ...(input.nummer != null ? { cost_center_number: input.nummer } : {}),
+        ...(input.nummer != null ? { cost_centre_number: input.nummer } : {}),
       });
       if (insertError) throw zuordnungFehler(insertError);
 
@@ -1094,7 +1095,7 @@ export function useLieferant(id: string) {
  * The open items of the incoming side, decided by Postgres.
  *
  * WHY NOT useBelege(). This is the hook Offene Posten used to read, and it is `select *` over the
- * whole invoices table: 5,735 kB for 418 rows on the Stäy Hub, of which 5,212 kB is the embedding
+ * whole invoices table: 5,735 kB for 418 rows on the this Hub, of which 5,212 kB is the embedding
  * vector, the fts tsvector, the extracted JSONB and ocr_fulltext, none of which that screen
  * renders. It loaded the entire ledger, plus every confirmed match, so the browser could work out
  * one boolean per row.
@@ -1110,7 +1111,7 @@ export function useLieferant(id: string) {
  */
 export function useOffeneBelege() {
   return useQuery({
-    queryKey: ["open_items", "offen"],
+    queryKey: ["open_items", "open"],
     staleTime: STALE,
     queryFn: async (): Promise<OpenItemRow[]> =>
       fetchAllRows<OpenItemRow>((from, to, withCount) =>
@@ -1129,7 +1130,7 @@ export function useOffeneBelege() {
  *
  * Fetched unconditionally rather than behind the screen's "show them" toggle, because the COUNT is
  * always on screen: an exclusion nobody can see is indistinguishable from a bug, which is the same
- * rule this screen already follows for whitelisted transactions. There are 13 such rows on the Stäy
+ * rule this screen already follows for whitelisted transactions. There are 13 such rows on the this client
  * Hub and 0 on Immonetz, so this costs nothing.
  */
 export function useNichtAbgleichbareBelege() {
@@ -1194,7 +1195,7 @@ export function useBelegeByProperty(
             .is("deleted_at", null)
             .is("archived_at", null)
             .is("not_relevant_at", null)
-            .neq("status", "aufgeteilt")
+            .neq("status", "split")
             .or(oder)
             .order("document_date", { ascending: false })
             .range(from, to) as unknown as Promise<{
@@ -1240,7 +1241,7 @@ export type BwaBeleg = Pick<Beleg, (typeof BWA_BELEG_COLUMNS)[number]>;
  * the client at all, on any screen.
  *
  * Same server-side gates as useBelege, deliberately duplicated rather than shared: a container row
- * of a split scan (status='aufgeteilt') is not an invoice, and an archived or not-relevant receipt
+ * of a split scan (status='split') is not an invoice, and an archived or not-relevant receipt
  * has been handed back. If those diverge, this screen's totals diverge from every other screen's.
  */
 export function useBelegeForBwa() {
@@ -1256,7 +1257,7 @@ export function useBelegeForBwa() {
             .is("deleted_at", null)
             .is("archived_at", null)
             .is("not_relevant_at", null)
-            .neq("status", "aufgeteilt")
+            .neq("status", "split")
             .order("created_at", { ascending: false })
             .range(from, to) as unknown as Promise<{
             data: BwaBeleg[] | null;
@@ -1273,11 +1274,11 @@ export function useBelege(search?: string) {
     queryKey: ["belege", q],
     staleTime: STALE,
     queryFn: async (): Promise<Beleg[]> => {
-      // Container rows of a split multi-receipt scan (status='aufgeteilt', document_type='Sammelscan')
+      // Container rows of a split multi-receipt scan (status='split', document_type='Sammelscan')
       // are NOT invoices — they hold the original of the scan for the audit trail while their children
       // carry the actual data (pipeline migrations 0009/0020). Without this they turn up as extra
       // entries with no issuer, no amount and no date — most visibly in Offene Posten, which reads
-      // this hook. v_invoices_list filters them server-side; this is the same rule for the direct read.
+      // this hook. v_documents_list filters them server-side; this is the same rule for the direct read.
       // fetchAllRows works around the platform's per-request row cap (see its own comment) — this
       // hook is read everywhere as "the whole invoices table", so a silent partial result here would
       // be wrong on the dashboard, Auswertungen, and Offene Posten all at once, not just here.
@@ -1294,7 +1295,7 @@ export function useBelege(search?: string) {
           // item, offer it in the bank-matching picker, and inflate the dashboard and Auswertungen
           // sums that read this hook. Archiving got this exclusion first; not-relevant needs the same.
           .is("not_relevant_at", null)
-          .neq("status", "aufgeteilt");
+          .neq("status", "split");
         if (q) {
           query = query.textSearch("fts", q, { type: "websearch", config: "german" });
         }
@@ -1341,7 +1342,7 @@ async function nachgeprueft<T extends Beleg>(rows: T[]): Promise<T[]> {
   );
 }
 
-// ---- Server-side list pagination (view v_invoices_list/v_invoices_review + RPCs, migration 0042) ----
+// ---- Server-side list pagination (views v_documents_list/v_documents_review plus RPCs) ----
 
 // The columns the list screen actually reads, and nothing else.
 //
@@ -1384,7 +1385,7 @@ const BELEGE_LISTE_SPALTEN = [
   "review_score",
   "paid_at",
   "payment_method",
-  "datev_handed_over_at",
+  "handed_over_at",
   "intake_channel",
   "confidence_score",
   "has_suggested_bank_match",
@@ -1396,11 +1397,11 @@ const BELEGE_LISTE_SPALTEN = [
 
 // Which view a list read should come from.
 //
-// v_invoices_review is v_invoices_list plus three computed columns, and one of them is expensive:
+// v_documents_review is v_documents_list plus three computed columns, and one of them is expensive:
 // migration 20260909150000 hung invoice_review_state() off the view with CROSS JOIN LATERAL, and a
 // lateral lives in the FROM clause, so Postgres runs it per row even for `select id`. Measured on
 // live data, 50 rows and the same 29 columns: 3.7 s from v_invoices_review against 0.83 s from
-// v_invoices_list.
+// v_documents_list.
 //
 // Of those three columns the app reads exactly one, `search_text`, and only when there is a text
 // search. So a read with no `q` takes the cheap view, and the expensive one is paid for only by
@@ -1410,8 +1411,10 @@ const BELEGE_LISTE_SPALTEN = [
 // Migration 20260910120000 makes the review columns prunable, after which both views cost the
 // same for the column list this file asks for. This split is what makes the list fast before that
 // migration is applied, and it stays correct afterwards.
-function listenQuelle(f: BelegeFilter): "v_invoices_list" | "v_invoices_review" {
-  return f.q ? "v_invoices_review" : "v_invoices_list";
+function listenQuelle(
+  f: BelegeFilter,
+): typeof TABLE.vDocumentsList | typeof TABLE.vDocumentsReview {
+  return f.q ? TABLE.vDocumentsReview : TABLE.vDocumentsList;
 }
 
 // Sort key → view column.
@@ -1453,32 +1456,32 @@ function applyBelegeFilter(query: any, f: BelegeFilter) {
   if (f.status) query = query.eq("status", f.status);
   if (f.workflow) query = query.eq("workflow_status", f.workflow);
   if (f.belegart) query = query.eq("document_type", f.belegart);
-  if (f.zahlung === "bezahlt") query = query.not("paid_at", "is", null);
-  else if (f.zahlung === "offen") query = query.is("paid_at", null);
+  if (f.zahlung === "paid") query = query.not("paid_at", "is", null);
+  else if (f.zahlung === "open") query = query.is("paid_at", null);
   if (f.paymentType === "direct_debit") query = query.eq("is_direct_debit", true);
   else if (f.paymentType === "transfer") query = query.eq("is_direct_debit", false);
-  if (f.datev === "uebergeben") query = query.not("datev_handed_over_at", "is", null);
-  else if (f.datev === "offen") query = query.is("datev_handed_over_at", null);
+  if (f.datev === "uebergeben") query = query.not("handed_over_at", "is", null);
+  else if (f.datev === "open") query = query.is("handed_over_at", null);
   // Bank-reconciliation presence -- its own axis, separate from `zahlung`. `zahlung` says whether
   // the invoice is marked paid; this says whether a bank transaction has been matched to it, and
-  // whether that match is still waiting on a human. 'vorschlag' covers status kandidat AND auto:
+  // whether that match is still waiting on a human. 'suggestion' covers status kandidat AND auto:
   // both are undecided, which is the same reading the detail screens use.
-  // The three values are a PARTITION: every invoice falls in exactly one. "vorschlag" therefore
+  // The three values are a PARTITION: every invoice falls in exactly one. "suggestion" therefore
   // excludes rows that already have a confirmed match -- confirming one candidate leaves its
-  // siblings at 'kandidat', so without this an invoice appeared under both "Zuordnung offen" and
+  // siblings at 'candidate', so without this an invoice appeared under both "Zuordnung offen" and
   // "Zugeordnet" and the three filtered counts did not sum to the unfiltered total.
-  if (f.bankMatch === "vorschlag")
+  if (f.bankMatch === "suggestion")
     query = query.eq("has_suggested_bank_match", true).eq("has_confirmed_bank_match", false);
-  else if (f.bankMatch === "zugeordnet") query = query.eq("has_confirmed_bank_match", true);
+  else if (f.bankMatch === "matched") query = query.eq("has_confirmed_bank_match", true);
   // "Not matched" needs BOTH flags false, not just the absence of a confirmed one: an invoice with
   // an open suggestion has no confirmed match either, so checking only that would file it under
   // "nothing to do" when in fact it is the one waiting on a decision.
-  else if (f.bankMatch === "offen")
+  else if (f.bankMatch === "open")
     query = query.eq("has_suggested_bank_match", false).eq("has_confirmed_bank_match", false);
   // Recognition traffic light — an axis of its own, not a `status` value. 'auffaellig' is the
   // review queue the briefing actually describes: yellow ("have it confirmed") and red ("to be
   // checked") are both cases where a human has to look, and they are useless as separate lists.
-  if (f.ampel === "auffaellig") query = query.in("traffic_light", ["gelb", "rot"]);
+  if (f.ampel === "auffaellig") query = query.in("traffic_light", ["yellow", "red"]);
   else if (f.ampel) query = query.eq("traffic_light", f.ampel);
   // Archived receipts (migration 0025) leave the everyday list unless explicitly asked for.
   // The KPI/facet RPCs (invoices_kpis, invoices_facets, migration 0042) apply the same
@@ -1523,7 +1526,7 @@ export function useBelegeListe(params: BelegeListeParams, opts?: { enabled?: boo
       const to = from + params.pageSize - 1;
       // v_invoices_review was the name this app queried from migration 0025 to 0042, when it was
       // still a plain passthrough of v_invoices_list. Migration 20260909150000 gave it real work
-      // to do per row, so the read now picks its view: see listenQuelle above. v_invoices_list
+      // to do per row, so the read now picks its view: see listenQuelle above. v_documents_list
       // itself selects `i.*` and so can never go stale/frozen on a new invoices column.
       let query = sb.from(listenQuelle(params)).select(BELEGE_LISTE_SPALTEN, { count: "exact" });
       query = applyBelegeFilter(query, params);
@@ -1628,8 +1631,8 @@ export function useOpenBelegeInfinite(
     queryFn: async ({ pageParam }): Promise<InfinitePage<BelegListeRow>> => {
       const from = pageParam * pageSize;
       const to = from + pageSize - 1;
-      let query = sb.from(TABLE.vInvoicesList).select(BELEGE_LISTE_SPALTEN, { count: "exact" });
-      query = applyBelegeFilter(query, { zahlung: "offen", von, bis });
+      let query = sb.from(TABLE.vDocumentsList).select(BELEGE_LISTE_SPALTEN, { count: "exact" });
+      query = applyBelegeFilter(query, { zahlung: "open", von, bis });
       const suche = (q ?? "").trim();
       if (suche) {
         const betragFilter = amountQueryFilter(suche);
@@ -1641,7 +1644,7 @@ export function useOpenBelegeInfinite(
           }
         }
       }
-      // THE SAME "open" AS TAB A, not a looser one. `zahlung: "offen"` alone is just
+      // THE SAME "open" AS TAB A, not a looser one. `zahlung: "open"` alone is just
       // `paid_at is null`, so this picker used to offer the three kinds of receipt that can never
       // be settled by a bank movement: no gross amount, a negative gross (a credit note), or
       // already paid privately. Its count then disagreed with the tab it sits next to (418 here
@@ -1681,15 +1684,15 @@ function readKpiRow(data: any): Omit<BelegeKpis, "partial"> {
   const row = Array.isArray(data) ? data[0] : data;
   return {
     total: Number(row?.total ?? 0),
-    erkannt: Number(row?.erkannt ?? 0),
-    zu_pruefen: Number(row?.zu_pruefen ?? 0),
+    recognised: Number(row?.erkannt ?? 0),
+    needs_review: Number(row?.zu_pruefen ?? 0),
     volumen: Number(row?.volumen ?? 0),
     // Only present since migration 20260815210000, and `partial` cannot stand in for its absence:
     // that migration changed the function's RETURN TYPE, not its signature, so PostgREST resolves
     // the call normally and the column is simply missing from the row. null means "this database
     // cannot answer that yet" and the page leaves the tile out, rather than printing a made-up
     // "Noch zu zahlen: 0,00 €" next to a volume that is plainly not zero.
-    offen: row && typeof row === "object" && "offen" in row ? Number(row.offen ?? 0) : null,
+    open: row && typeof row === "object" && "open" in row ? Number(row.offen ?? 0) : null,
   };
 }
 
@@ -1842,7 +1845,7 @@ export function useBelegeKanbanCounts(filter: BelegeFilter, opts?: { enabled?: b
       for (const row of (data ?? []) as { workflow_status: string | null }[]) {
         // Same fallback the board itself uses, so a null status is counted in the column it is
         // actually rendered in rather than vanishing from the totals.
-        const key = row.workflow_status ?? "eingegangen";
+        const key = row.workflow_status ?? "received";
         counts[key] = (counts[key] ?? 0) + 1;
       }
       return counts;
@@ -2234,7 +2237,7 @@ export function useVerarbeitungsLogPage(
  * Paged through fetchAllRows rather than read in one request. The previous version did a bare
  * `select("status")` with no bound, which PostgREST silently truncates at its Max Rows setting — so
  * past that cap the chips quietly described only the newest 1000 rows. That was not hypothetical:
- * measured live on the Stäy database, the list reported 1170 entries via an exact count while the
+ * measured live on the this client database, the list reported 1170 entries via an exact count while the
  * chips summed to exactly 1000. Only `status` is selected, so even a large log is a couple of cheap
  * round trips.
  */
@@ -2489,7 +2492,7 @@ export function useAddNotiz(belegId: string) {
   const qc = useQueryClient();
   return useMutation({
     mutationFn: async (text: string) => {
-      await insertVerlauf(belegId, "notiz", text);
+      await insertVerlauf(belegId, "note", text);
     },
     onSuccess: () => qc.invalidateQueries({ queryKey: ["beleg_verlauf", belegId] }),
   });
@@ -2510,7 +2513,7 @@ export function useSoftDeleteBeleg(belegId: string) {
         })
         .eq("id", belegId);
       if (error) throw error;
-      await insertVerlauf(belegId, "loeschung", grund || "Beleg gelöscht");
+      await insertVerlauf(belegId, "deletion", grund || "Beleg gelöscht");
     },
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ["belege"] });
@@ -2850,7 +2853,7 @@ export function useBelegeBySupplierSeiten(
         .is("deleted_at", null)
         .is("archived_at", null)
         .is("not_relevant_at", null)
-        .neq("status", "aufgeteilt")
+        .neq("status", "split")
         .eq("supplier_id", supplierId);
       if (von) query = query.gte("document_date", von);
       if (bis) query = query.lte("document_date", bis);
@@ -2880,7 +2883,7 @@ export function useLieferantBelegAggregat(supplierId: string) {
             .is("deleted_at", null)
             .is("archived_at", null)
             .is("not_relevant_at", null)
-            .neq("status", "aufgeteilt")
+            .neq("status", "split")
             .eq("supplier_id", supplierId)
             .order("document_date", { ascending: false })
             .order("id", { ascending: true })
@@ -3642,7 +3645,7 @@ export function useUpdateFilenameSettings() {
 // ---- OPOS whitelist rules (opos_whitelist_rules; pipeline migration 0018) ----
 // Transactions that can never have a receipt must be hideable, otherwise the real missing receipt gets
 // lost in the open-items list (Briefing Screen 10). A matching rule parks the transaction in
-// matching_status='ignoriert' — the state the Offene-Posten query and the bank-sync matcher already
+// matching_status='ignored' — the state the Offene-Posten query and the bank-sync matcher already
 // skip. Same shape and same soft-delete behaviour as the exclusion rules above.
 
 // Both invalidations belong together: every write on this screen can change which transactions a
@@ -3679,7 +3682,7 @@ export function useOposWhitelistRules() {
     staleTime: STALE,
     queryFn: async (): Promise<OposWhitelistRule[]> => {
       const { data, error } = await sb
-        .from(TABLE.oposWhitelistRules)
+        .from(TABLE.openItemWhitelistRules)
         .select("*")
         .is("deleted_at", null)
         .order("category", { ascending: true })
@@ -3701,7 +3704,7 @@ export function useCreateOposWhitelistRule() {
     }): Promise<OposWhitelistRule> => {
       const actor = await actorEmail();
       const { data, error } = await sb
-        .from(TABLE.oposWhitelistRules)
+        .from(TABLE.openItemWhitelistRules)
         .insert({
           scope: werte.scope,
           category: werte.category,
@@ -3735,7 +3738,7 @@ export function useUpdateOposWhitelistRule(id: string) {
     ) => {
       const payload: Record<string, unknown> = { ...changes, updated_at: new Date().toISOString() };
       if (typeof payload.term === "string") payload.term = (payload.term as string).trim();
-      const { error } = await sb.from(TABLE.oposWhitelistRules).update(payload).eq("id", id);
+      const { error } = await sb.from(TABLE.openItemWhitelistRules).update(payload).eq("id", id);
       if (error) throw error;
       await logOposRuleChange(id, "geaendert", null, changes);
     },
@@ -3762,7 +3765,7 @@ export function useDeleteOposWhitelistRule() {
       // requirement as well — pflichtGrund is that same rule one step earlier, in a sentence.
       const grund = pflichtGrund(args.reason);
       const { error } = await sb
-        .from(TABLE.oposWhitelistRules)
+        .from(TABLE.openItemWhitelistRules)
         .update({
           deleted_at: new Date().toISOString(),
           deleted_by: actor,
@@ -3935,7 +3938,7 @@ export function useNoReceiptCount() {
       const { count, error } = await sb
         .from(TABLE.bankTransactions)
         .select("id", { count: "exact", head: true })
-        .eq("matching_status", "ignoriert")
+        .eq("matching_status", "ignored")
         .eq("direction", "ausgehend");
       if (error) throw error;
       return count ?? 0;
@@ -4079,7 +4082,9 @@ export function usePleoEmployees(enabled = true) {
     enabled,
     staleTime: 5 * 60_000,
     queryFn: async (): Promise<PleoEmployee[]> => {
-      const { data, error } = await supabase.functions.invoke("pleo-employees", { body: {} });
+      const { data, error } = await supabase.functions.invoke(EDGE_FUNCTION.expenseToolEmployees, {
+        body: {},
+      });
       if (error) {
         // The function answers with a JSON body naming the reason, and a 403 specifically means the
         // API key does not carry the `users:read` scope. supabase-js flattens every non-2xx into
@@ -4178,7 +4183,7 @@ export function useBankAccountPurgePreview(accountId: string, enabled: boolean) 
           if (error) throw error;
           return count ?? 0;
         })(),
-        zaehle(TABLE.invoiceTransactionMatches),
+        zaehle(TABLE.documentTransactionMatches),
         zaehle(TABLE.outgoingInvoiceTransactionMatches),
         // document_files cascades off bank_transactions here (migration 0003) -- unlike the Immonetz
         // Hub, where no such FK exists. Attached receipt files really do go with the movements.
@@ -4258,7 +4263,7 @@ export interface BankTransactionFilter {
    * PostgREST select list, defaulting to every column.
    *
    * Offene Posten passes a narrow one. This hook is the unpaginated variant, so it holds the whole
-   * open scope at once: 2,718 rows and 4,197 kB on the Stäy Hub with `*`, most of it the fts
+   * open scope at once: 2,718 rows and 4,197 kB on the this Hub with `*`, most of it the fts
    * tsvector and columns that screen never renders. Narrowing the request is the only lever it has,
    * since it genuinely needs every row to total and count them.
    */
@@ -4445,16 +4450,16 @@ export function useBankTransactionsPage(
         if (tsq) query = query.or(bankSearchFilter(q, tsq));
       }
 
-      // "vorschlag" is NOT a matching_status value -- the column only holds offen/zugeordnet/
-      // ignoriert, and a transaction carrying an open suggestion is still plain 'offen'. The
+      // "suggestion" is NOT a matching_status value -- the column only holds offen/zugeordnet/
+      // ignoriert, and a transaction carrying an open suggestion is still plain 'open'. The
       // suggestion lives in invoice_transaction_matches, so it is resolved to a transaction-id set
       // first and applied with .in(). Cheap by construction: suggestions are a tiny fraction of the
       // transaction table (11 of 2,760 today), and this avoids rebuilding the list around a view.
-      if (matchingStatus === "vorschlag") {
+      if (matchingStatus === "suggestion") {
         const { data: rows, error: mErr } = await sb
-          .from(TABLE.invoiceTransactionMatches)
+          .from(TABLE.documentTransactionMatches)
           .select("transaction_id")
-          .in("status", ["kandidat", "auto"]);
+          .in("status", ["candidate", "auto"]);
         if (mErr) throw mErr;
         const ids = [
           ...new Set((rows ?? []).map((r: { transaction_id: string }) => r.transaction_id)),
@@ -4498,16 +4503,16 @@ export function useBankTransactionsPage(
       if (error) throw error;
 
       // Attach "a suggestion is pending" per row. matching_status cannot express it -- it stays
-      // 'offen' while a candidate waits -- and the list selects from the base table, so it is
+      // 'open' while a candidate waits -- and the list selects from the base table, so it is
       // looked up for THIS PAGE's ids only (at most `pageSize` values, one small query) rather
       // than by rebuilding the list around a view.
       const pageRows = (data ?? []) as unknown as BankTransaction[];
       let suggestedIds = new Set<string>();
       if (pageRows.length > 0) {
         const { data: sug, error: sErr } = await sb
-          .from(TABLE.invoiceTransactionMatches)
+          .from(TABLE.documentTransactionMatches)
           .select("transaction_id")
-          .in("status", ["kandidat", "auto"])
+          .in("status", ["candidate", "auto"])
           .in(
             "transaction_id",
             pageRows.map((r) => r.id),
@@ -4727,10 +4732,10 @@ export function useBelegMatches(belegId: string) {
     staleTime: STALE,
     queryFn: async (): Promise<BelegTransactionMatch[]> => {
       const { data, error } = await sb
-        .from(TABLE.invoiceTransactionMatches)
+        .from(TABLE.documentTransactionMatches)
         .select(`*, ${TABLE.bankTransactions}(*)`)
         .eq("document_id", belegId)
-        .neq("status", "abgelehnt")
+        .neq("status", "rejected")
         .order("score", { ascending: false });
       if (error) throw error;
       return (data ?? []) as unknown as BelegTransactionMatch[];
@@ -4746,7 +4751,7 @@ export function useTransactionMatches(transactionId: string) {
     staleTime: STALE,
     queryFn: async (): Promise<BelegTransactionMatch[]> => {
       const { data, error } = await sb
-        .from(TABLE.invoiceTransactionMatches)
+        .from(TABLE.documentTransactionMatches)
         .select(`*, ${TABLE.documents}(*)`)
         .eq("transaction_id", transactionId)
         .order("score", { ascending: false });
@@ -4916,12 +4921,12 @@ export function useConfirmedAllocations() {
         amount_matched: number | null;
       }>((from, to, withCount) =>
         sb
-          .from(TABLE.invoiceTransactionMatches)
+          .from(TABLE.documentTransactionMatches)
           .select(
             "document_id, transaction_id, amount_matched",
             withCount ? { count: "exact" } : undefined,
           )
-          .eq("status", "bestaetigt")
+          .eq("status", "confirmed")
           .range(from, to),
       );
       const byInvoice = new Map<string, number>();
@@ -4952,12 +4957,12 @@ export function useConfirmedMatchAccounts() {
         bank_transactions: { account_id: string } | null;
       }>((from, to, withCount) =>
         sb
-          .from(TABLE.invoiceTransactionMatches)
+          .from(TABLE.documentTransactionMatches)
           .select(
             `document_id, ${TABLE.bankTransactions}(account_id)`,
             withCount ? { count: "exact" } : undefined,
           )
-          .eq("status", "bestaetigt")
+          .eq("status", "confirmed")
           .range(from, to),
       );
       const byInvoice = new Map<string, string[]>();
@@ -4986,7 +4991,7 @@ export function useOutgoingInvoiceMatches(outgoingInvoiceId: string) {
         .from(TABLE.outgoingInvoiceTransactionMatches)
         .select(`*, ${TABLE.bankTransactions}(*)`)
         .eq("outgoing_invoice_id", outgoingInvoiceId)
-        .neq("status", "abgelehnt")
+        .neq("status", "rejected")
         .order("score", { ascending: false });
       if (error) throw error;
       return (data ?? []) as unknown as OutgoingInvoiceTransactionMatch[];
@@ -5062,7 +5067,7 @@ export function useConfirmedOutgoingAllocations() {
             "outgoing_invoice_id, transaction_id, amount_matched, confirmed_at",
             withCount ? { count: "exact" } : undefined,
           )
-          .eq("status", "bestaetigt")
+          .eq("status", "confirmed")
           .range(from, to),
       );
       const byInvoice = new Map<string, number>();
@@ -5171,7 +5176,7 @@ async function closeSidesAfterLink(args: {
       // Persisted audit text stays German; the event is what the history renders from.
       await insertVerlauf(
         args.belegId,
-        "aenderung",
+        "change",
         `Als vollständig bezahlt markiert, Restbetrag abgeschrieben${
           args.differenceReason ? `. Grund: ${args.differenceReason}` : ""
         }`,
@@ -5214,9 +5219,9 @@ export function useConfirmMatch() {
       const actor = await actorEmail();
       const now = new Date().toISOString();
       const { error } = await sb
-        .from(TABLE.invoiceTransactionMatches)
+        .from(TABLE.documentTransactionMatches)
         .update({
-          status: "bestaetigt",
+          status: "confirmed",
           difference_reason: args.differenceReason ?? null,
           confirmed_by: actor,
           confirmed_at: now,
@@ -5227,7 +5232,7 @@ export function useConfirmMatch() {
       await insertVerlauf(
         args.belegId,
         // Its own type, like 'zuordnung_getrennt', so the Workflow-Verlauf shows it. Plain
-        // 'zuordnung' is not an approval type, so a confirmed match only ever appeared there when
+        // 'booking' is not an approval type, so a confirmed match only ever appeared there when
         // it happened to cover the invoice in full and the DB trigger added a 'bezahlt' row on top.
         // A partial confirm left the workflow tab silent about a reconciliation that did happen.
         "zuordnung_bestaetigt",
@@ -5268,9 +5273,9 @@ export function useRejectMatch() {
       const actor = await actorEmail();
       const now = new Date().toISOString();
       const { error } = await sb
-        .from(TABLE.invoiceTransactionMatches)
+        .from(TABLE.documentTransactionMatches)
         .update({
-          status: "abgelehnt",
+          status: "rejected",
           rejected_by: actor,
           rejected_at: now,
           reject_reason: args.grund ?? null,
@@ -5278,7 +5283,7 @@ export function useRejectMatch() {
         })
         .eq("id", args.matchId);
       if (error) throw error;
-      await insertVerlauf(args.belegId, "zuordnung", "Transaktions-Zuordnung abgelehnt", {
+      await insertVerlauf(args.belegId, "booking", "Transaktions-Zuordnung abgelehnt", {
         event: "match_rejected",
       });
     },
@@ -5303,7 +5308,7 @@ export function useLinkInvoiceTransaction() {
        * invoice's other candidates once it counts as covered, and `difference_reason` records why
        * the gap was accepted. `closeTransaction` does need a second call -- the transaction's
        * status is derived from allocated amounts by a trigger, so a remainder is recomputed back
-       * to 'offen' unless the row itself is stamped (migration 20260910190000).
+       * to 'open' unless the row itself is stamped (migration 20260910190000).
        */
       closeInvoice?: boolean;
       closeTransaction?: boolean;
@@ -5340,7 +5345,7 @@ export function useLinkInvoiceTransaction() {
  * sits there with no dialog left to reopen.
  *
  * Both sides drop out of the open lists once closed, which is the point. An invoice is open while
- * `paid_at is null`; a transaction is open while `matching_status = 'offen'`.
+ * `paid_at is null`; a transaction is open while `matching_status = 'open'`.
  */
 export function useCloseInvoiceRemainder() {
   const qc = useQueryClient();
@@ -5363,7 +5368,7 @@ export function useCloseInvoiceRemainder() {
       // from, so the row reads in whichever language the reader picked.
       await insertVerlauf(
         args.belegId,
-        "aenderung",
+        "change",
         `Als vollständig bezahlt markiert, Restbetrag abgeschrieben. Grund: ${args.reason}`,
         { event: "remainder_written_off", grund: args.reason, kommentar: args.reason },
       );
@@ -5393,13 +5398,13 @@ export function useReopenInvoiceRemainder() {
         paid_source: null,
         updated_at: new Date().toISOString(),
       };
-      if (beleg?.workflow_status === "bezahlt") patch.workflow_status = "in_pruefung";
+      if (beleg?.workflow_status === "paid") patch.workflow_status = "in_review";
       const { error } = await sb.from(TABLE.documents).update(patch).eq("id", args.belegId);
       if (error) throw error;
       // Persisted audit text stays German; the event is what the history renders from.
       await insertVerlauf(
         args.belegId,
-        "aenderung",
+        "change",
         "Restabschreibung zurückgenommen, Rechnung wieder offen.",
         { event: "remainder_reopened" },
       );
@@ -5490,7 +5495,7 @@ export function useConfirmOutgoingMatch() {
       const { error } = await sb
         .from(TABLE.outgoingInvoiceTransactionMatches)
         .update({
-          status: "bestaetigt",
+          status: "confirmed",
           difference_reason: args.differenceReason ?? null,
           confirmed_by: actor,
           confirmed_at: now,
@@ -5501,7 +5506,7 @@ export function useConfirmOutgoingMatch() {
       await insertChangeHistory(
         "outgoing_invoices",
         args.outgoingInvoiceId,
-        "zuordnung",
+        "booking",
         "Banktransaktion zugeordnet (bestätigt)",
       );
       if (args.closeTransaction && args.transactionId) {
@@ -5520,12 +5525,12 @@ export function useConfirmOutgoingMatch() {
 // Reject an outgoing match: mark it abgelehnt, log to the outgoing invoice.
 // Undo a CONFIRMED match: the pair goes back to being a SUGGESTION, not a rejection.
 //
-// "Trennen" used to reuse the reject mutation, which parked the row in 'abgelehnt'. The panel then
+// "Trennen" used to reuse the reject mutation, which parked the row in 'rejected'. The panel then
 // showed it as rejected with no way to link it again, although the dialog promises both sides go
-// back to being open -- reported from the live app. 'kandidat' is exactly what the matcher writes
+// back to being open -- reported from the live app. 'candidate' is exactly what the matcher writes
 // for a proposal, so the row reappears with its score and its Zuordnen button, and
-// sync_transaction_matching_status flips the transaction back to 'offen' because it counts only
-// 'bestaetigt' rows. The confirmation stamps are cleared with it; the history keeps the record of
+// sync_transaction_matching_status flips the transaction back to 'open' because it counts only
+// 'confirmed' rows. The confirmation stamps are cleared with it; the history keeps the record of
 // what happened.
 export function useUnlinkMatch() {
   const qc = useQueryClient();
@@ -5546,9 +5551,9 @@ export function useUnlinkMatch() {
       handelndAls?: Record<string, unknown>;
     }) => {
       const { error } = await sb
-        .from(TABLE.invoiceTransactionMatches)
+        .from(TABLE.documentTransactionMatches)
         .update({
-          status: "kandidat",
+          status: "candidate",
           confirmed_by: null,
           confirmed_at: null,
           rejected_by: null,
@@ -5571,9 +5576,9 @@ export function useUnlinkMatch() {
           .select("workflow_status, paid_source")
           .eq("id", args.belegId)
           .maybeSingle();
-        if (beleg?.workflow_status === "bezahlt") {
+        if (beleg?.workflow_status === "paid") {
           const patch: Record<string, unknown> = {
-            workflow_status: "in_pruefung",
+            workflow_status: "in_review",
             updated_at: new Date().toISOString(),
           };
           // IS ANYTHING STILL BEHIND THE PAID MARK? This used to withdraw only 'bank_match', on the
@@ -5587,10 +5592,10 @@ export function useUnlinkMatch() {
           // means the paid mark keeps its basis and is untouched. 'banksapi_payment' is a payment
           // that actually left the account and stands on its own whatever the matching says.
           const { count: verbleibende } = await sb
-            .from(TABLE.invoiceTransactionMatches)
+            .from(TABLE.documentTransactionMatches)
             .select("id", { count: "exact", head: true })
             .eq("document_id", args.belegId)
-            .eq("status", "bestaetigt")
+            .eq("status", "confirmed")
             .neq("id", args.matchId);
           if ((verbleibende ?? 0) === 0 && beleg.paid_source !== "banksapi_payment") {
             patch.paid_at = null;
@@ -5606,19 +5611,19 @@ export function useUnlinkMatch() {
       }
 
       // 'zuordnung_getrennt' when the status moved, so this lands in the Workflow-Verlauf (which
-      // renders APPROVAL_VERLAUF_TYPES only) under its own name. Not 'korrektur': that reads as
+      // renders APPROVAL_VERLAUF_TYPES only) under its own name. Not 'correction': that reads as
       // "status manually corrected", and nobody corrected anything -- a payment came off and the
-      // status followed it. Plain 'zuordnung' when nothing moved.
+      // status followed it. Plain 'booking' when nothing moved.
       // Persisted audit text stays German (do not translate).
       await insertVerlauf(
         args.belegId,
-        zurueckgesetzt ? "zuordnung_getrennt" : "zuordnung",
+        zurueckgesetzt ? "zuordnung_getrennt" : "booking",
         grund
           ? `Banktransaktions-Zuordnung getrennt: ${grund}`
           : "Banktransaktions-Zuordnung getrennt",
         {
           event: "match_unlinked",
-          ...(zurueckgesetzt ? { von: "bezahlt", nach: "in_pruefung" } : {}),
+          ...(zurueckgesetzt ? { von: "paid", nach: "in_review" } : {}),
           // Both keys: `kommentar` is what the workflow timeline reads first, `grund` is what the
           // unlink flow has always written and what older rows carry.
           ...(grund ? { grund, kommentar: grund } : {}),
@@ -5638,7 +5643,7 @@ export function useUnlinkOutgoingMatch() {
       const { error } = await sb
         .from(TABLE.outgoingInvoiceTransactionMatches)
         .update({
-          status: "kandidat",
+          status: "candidate",
           confirmed_by: null,
           confirmed_at: null,
           rejected_by: null,
@@ -5652,7 +5657,7 @@ export function useUnlinkOutgoingMatch() {
       await insertChangeHistory(
         "outgoing_invoices",
         args.outgoingInvoiceId,
-        "zuordnung",
+        "booking",
         grund ? `Transaktions-Zuordnung getrennt: ${grund}` : "Transaktions-Zuordnung getrennt",
       );
     },
@@ -5669,7 +5674,7 @@ export function useRejectOutgoingMatch() {
       const { error } = await sb
         .from(TABLE.outgoingInvoiceTransactionMatches)
         .update({
-          status: "abgelehnt",
+          status: "rejected",
           rejected_by: actor,
           rejected_at: now,
           reject_reason: args.grund ?? null,
@@ -5680,7 +5685,7 @@ export function useRejectOutgoingMatch() {
       await insertChangeHistory(
         "outgoing_invoices",
         args.outgoingInvoiceId,
-        "zuordnung",
+        "booking",
         "Transaktions-Zuordnung abgelehnt",
       );
     },
@@ -5722,7 +5727,7 @@ export function useTriggerSync() {
   const qc = useQueryClient();
   return useMutation({
     mutationFn: async (): Promise<Record<string, unknown>> => {
-      const { data, error } = await supabase.functions.invoke("bank-sync", { body: {} });
+      const { data, error } = await supabase.functions.invoke(EDGE_FUNCTION.bankSync, { body: {} });
       if (error) throw error;
       return (data ?? {}) as Record<string, unknown>;
     },
@@ -5832,7 +5837,7 @@ export function useDisconnectBank() {
   const qc = useQueryClient();
   return useMutation({
     mutationFn: async (vars: { connectionId: string }): Promise<DisconnectResult> => {
-      const { data, error } = await supabase.functions.invoke("bank-disconnect", {
+      const { data, error } = await supabase.functions.invoke(EDGE_FUNCTION.bankDisconnect, {
         body: { connectionId: vars.connectionId },
       });
       // The function answers 403/500 with a JSON body naming the reason. supabase-js turns any
@@ -5879,7 +5884,7 @@ export function useStartBankConnect() {
       // maxTransactions=all is hardcoded in the wrapper, so it is not a parameter here.
       body: { callbackUrl?: string; customerIp?: string } = {},
     ): Promise<BankConnectResult> => {
-      const { data, error } = await supabase.functions.invoke("bank-connect", { body });
+      const { data, error } = await supabase.functions.invoke(EDGE_FUNCTION.bankConnect, { body });
       if (error) throw error;
       const result = (data ?? {}) as BankConnectResult & { error?: string };
       // The function returns 200 with an { error } body for configuration problems, so a failure
@@ -5935,7 +5940,9 @@ export function useInitiatePayment() {
       amount?: number;
       callbackUrl?: string;
     }): Promise<{ paymentOrder: PaymentOrder; webformUrl?: string; reused?: boolean }> => {
-      const { data, error } = await supabase.functions.invoke("payment-initiate", { body });
+      const { data, error } = await supabase.functions.invoke(EDGE_FUNCTION.paymentInitiate, {
+        body,
+      });
       if (error) throw error;
       return data as { paymentOrder: PaymentOrder; webformUrl?: string; reused?: boolean };
     },
@@ -5964,7 +5971,7 @@ export function useCancelPaymentOrder() {
       paymentOrderId: string;
       invoiceId: string;
     }): Promise<{ paymentOrder: PaymentOrder }> => {
-      const { data, error } = await supabase.functions.invoke("payment-cancel", {
+      const { data, error } = await supabase.functions.invoke(EDGE_FUNCTION.paymentCancel, {
         body: { paymentOrderId: body.paymentOrderId },
       });
       if (error) throw error;
@@ -6325,8 +6332,8 @@ export type BwaCategoryInput = {
   name: string;
   name_en: string;
   parent_id?: string | null;
-  bwa_block: BwaCategory["bwa_block"];
-  bwa_line: string;
+  report_block: BwaCategory["report_block"];
+  report_line: string;
   direction: BwaCategory["direction"];
   note?: string | null;
 };
@@ -6420,7 +6427,7 @@ export function useBwaAccountMapping(fiscalYear: number, companyId: string | nul
     enabled: !!companyId,
     queryFn: async (): Promise<BwaAccountMapping[]> => {
       const { data, error } = await sb
-        .from(TABLE.bwaAccountMapping)
+        .from(TABLE.categoryAccountMapping)
         .select("*")
         .eq("fiscal_year", fiscalYear)
         .eq("company_id", companyId)
@@ -6447,7 +6454,7 @@ export function useImportBwaAccountMapping() {
       rows: BwaAccountMappingRow[];
     }) => {
       const actor = await actorEmail();
-      const { error } = await sb.from(TABLE.bwaAccountMapping).upsert(
+      const { error } = await sb.from(TABLE.categoryAccountMapping).upsert(
         args.rows.map((r) => ({
           fiscal_year: args.fiscalYear,
           account: r.account,
@@ -6774,7 +6781,7 @@ export class AreaConflictError extends Error {
  * staged until the dialog's own Save. These are independent single values with no cross-field
  * consequence, so staging them would only add a way to lose them by closing the dialog.
  *
- * `payment_handler` is deliberately NOT here. It fed one hint sentence on the invoice screen, it
+ * `pays` is deliberately NOT here. It fed one hint sentence on the invoice screen, it
  * is a property of a company or a rule rather than of a person, and the client asked for it to go;
  * the old value stays on the frozen approvers row. See migration 20260901160000's header.
  */
@@ -6926,7 +6933,7 @@ export function useResolveApprovalRule(invoiceId: string | null) {
  * it, and note it is the half that broke silently whenever somebody was renamed.
  */
 function useInvoicesReturnedByType(
-  historyType: "rueckfrage" | "ablehnung",
+  historyType: "query" | "rejection",
   workflowStatus: WorkflowStatus,
   queryName: string,
   myUserId: string | null,
@@ -6973,16 +6980,10 @@ function useInvoicesReturnedByType(
   });
 }
 
-// Invoices parked in 'rueckfrage' with the query addressed to this person -- the in-app "returned
+// Invoices parked in 'query' with the query addressed to this person -- the in-app "returned
 // to me" notification (no email/push, per the app's recompute-live philosophy).
 export function useInvoicesReturnedToMe(myUserId: string | null, myName: string | null) {
-  return useInvoicesReturnedByType(
-    "rueckfrage",
-    "rueckfrage",
-    "rueckfrage_an_mich",
-    myUserId,
-    myName,
-  );
+  return useInvoicesReturnedByType("query", "query", "query_to_me", myUserId, myName);
 }
 
 /**
@@ -6998,7 +6999,7 @@ export function useInvoicesReturnedToMe(myUserId: string | null, myName: string 
  * those under "waiting on you" would mean the count never drops.
  *
  * `workflow_status` is filtered client-side rather than with `.in()` because the column is
- * nullable and a NULL there means 'eingegangen' everywhere else in this codebase (see
+ * nullable and a NULL there means 'received' everywhere else in this codebase (see
  * nextLegalActions, which defaults it) -- a server-side `.in()` drops NULL rows silently, which
  * would hide exactly the freshest assignments.
  */
@@ -7015,7 +7016,7 @@ export function useInvoicesAssignedToMe(myUserId: string | null) {
         .is("deleted_at", null);
       if (error) throw error;
       return ((data ?? []) as Beleg[]).filter((b) =>
-        APPROVAL_PHASE_STATUSES.includes((b.workflow_status ?? "eingegangen") as WorkflowStatus),
+        APPROVAL_PHASE_STATUSES.includes((b.workflow_status ?? "received") as WorkflowStatus),
       );
     },
   });
@@ -7043,7 +7044,7 @@ export function useInvoicesAssignedToMe(myUserId: string | null) {
  * could not already take. It is break-glass for pushing a stuck receipt through, not a way to
  * borrow a permission.
  */
-const ACTING_AS_CHANGED_EVENT = "staey:acting-as-changed";
+const ACTING_AS_CHANGED_EVENT = "hub:acting-as-changed";
 
 /** The picker's "(nobody)" choice. It has to be a stored VALUE, not an absent key: an empty
  *  override falls through to "me", so the super admin could otherwise never clear the picker. */
@@ -7222,9 +7223,9 @@ export function useVatReserveAll(companyIds: string[], von?: string | null, bis?
 // lives in the external Python pipeline, so this only records the decision. The pipeline stamps
 // mailbox_reset_at once the mail is actually back, which is why the UI reports the return as
 // pending rather than done.
-// Marking "not relevant" overwrites workflow_status with 'nicht_relevant'. Whatever approval stage
+// Marking "not relevant" overwrites workflow_status with 'not_relevant'. Whatever approval stage
 // the receipt was actually at (rueckfrage, freigegeben_vorgesetzter, ...) has to survive that
-// overwrite somewhere, or undoing the mark can only ever restore 'eingegangen' — silently demoting a
+// overwrite somewhere, or undoing the mark can only ever restore 'received' — silently demoting a
 // receipt that had already been approved. Stored in the history entry's `data` rather than a new
 // column: it is exactly the kind of "what was true before this change" fact the audit trail exists
 // for, and it needs no migration.
@@ -7239,7 +7240,7 @@ export function useSetNotRelevant(belegId: string) {
         .eq("id", belegId)
         .maybeSingle();
       if (leseFehler) throw leseFehler;
-      const vorherStatus = vorher?.workflow_status ?? "eingegangen";
+      const vorherStatus = vorher?.workflow_status ?? "received";
 
       const { error } = await sb
         .from(TABLE.documents)
@@ -7247,7 +7248,7 @@ export function useSetNotRelevant(belegId: string) {
           not_relevant_at: new Date().toISOString(),
           not_relevant_by: actor,
           not_relevant_note: grund || null,
-          workflow_status: "nicht_relevant",
+          workflow_status: "not_relevant",
           updated_at: new Date().toISOString(),
         })
         .eq("id", belegId);
@@ -7255,7 +7256,7 @@ export function useSetNotRelevant(belegId: string) {
       // Persisted audit text stays German (do not translate).
       await insertVerlauf(
         belegId,
-        "nicht_relevant",
+        "not_relevant",
         grund ? `Als nicht relevant markiert: ${grund}` : "Als nicht relevant markiert",
         { previous_workflow_status: vorherStatus },
       );
@@ -7270,9 +7271,9 @@ export function useSetNotRelevant(belegId: string) {
 }
 
 // Undo the "not relevant" decision and put the receipt back into the review queue, at the stage it
-// was actually at before — read from the most recent "nicht_relevant" history entry this mutation's
+// was actually at before — read from the most recent "not_relevant" history entry this mutation's
 // counterpart wrote. An older entry from before this field existed has no previous_workflow_status;
-// 'eingegangen' is the fallback there, matching the previous (blunter) behaviour for those only.
+// 'received' is the fallback there, matching the previous (blunter) behaviour for those only.
 // Clears mailbox_reset_at too: the pipeline's handshake refers to a return that is no longer wanted,
 // and leaving a stale timestamp would make a later, real return look already done.
 export function useClearNotRelevant(belegId: string) {
@@ -7283,14 +7284,14 @@ export function useClearNotRelevant(belegId: string) {
         .from(TABLE.documentHistory)
         .select("data")
         .eq("document_id", belegId)
-        .eq("type", "nicht_relevant")
+        .eq("type", "not_relevant")
         .order("created_at", { ascending: false })
         .limit(1)
         .maybeSingle();
       if (leseFehler) throw leseFehler;
       const wiederherstellenStatus =
         (letzte?.data as { previous_workflow_status?: string } | null)?.previous_workflow_status ??
-        "eingegangen";
+        "received";
 
       const { error } = await sb
         .from(TABLE.documents)
@@ -7310,7 +7311,7 @@ export function useClearNotRelevant(belegId: string) {
       // how to render a workflow_status value via workflowLabelDe.
       await insertVerlauf(
         belegId,
-        "nicht_relevant",
+        "not_relevant",
         `Markierung nicht relevant aufgehoben (Status: ${wiederherstellenStatus})`,
       );
     },
@@ -7342,7 +7343,7 @@ export function useArchiveBeleg(belegId: string) {
       if (error) throw error;
       await insertVerlauf(
         belegId,
-        "archiviert",
+        "archived",
         hinweis ? `Archiviert mit Hinweis: ${hinweis}` : "Archiviert",
       );
     },
@@ -7369,7 +7370,7 @@ export function useUnarchiveBeleg(belegId: string) {
         })
         .eq("id", belegId);
       if (error) throw error;
-      await insertVerlauf(belegId, "archiviert", "Aus dem Archiv zurückgeholt");
+      await insertVerlauf(belegId, "archived", "Aus dem Archiv zurückgeholt");
     },
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ["beleg", belegId] });
@@ -7410,7 +7411,7 @@ export function useBulkInvoiceActions() {
     // Persisted audit text stays German (do not translate).
     await insertVerlauf(
       belegId,
-      "archiviert",
+      "archived",
       hinweis ? `Archiviert mit Hinweis: ${hinweis}` : "Archiviert",
     );
   }
@@ -7423,7 +7424,7 @@ export function useBulkInvoiceActions() {
       .eq("id", belegId)
       .maybeSingle();
     if (leseFehler) throw leseFehler;
-    const vorherStatus = vorher?.workflow_status ?? "eingegangen";
+    const vorherStatus = vorher?.workflow_status ?? "received";
 
     const { error } = await sb
       .from(TABLE.documents)
@@ -7431,14 +7432,14 @@ export function useBulkInvoiceActions() {
         not_relevant_at: new Date().toISOString(),
         not_relevant_by: actor,
         not_relevant_note: grund,
-        workflow_status: "nicht_relevant",
+        workflow_status: "not_relevant",
         updated_at: new Date().toISOString(),
       })
       .eq("id", belegId);
     if (error) throw error;
     await insertVerlauf(
       belegId,
-      "nicht_relevant",
+      "not_relevant",
       grund ? `Als nicht relevant markiert: ${grund}` : "Als nicht relevant markiert",
       { previous_workflow_status: vorherStatus },
     );
@@ -7459,7 +7460,7 @@ export function useBulkInvoiceActions() {
       })
       .eq("id", belegId);
     if (error) throw error;
-    await insertVerlauf(belegId, "zuordnung", `Gesellschaft gesetzt: ${gesellschaft.code}`);
+    await insertVerlauf(belegId, "booking", `Gesellschaft gesetzt: ${gesellschaft.code}`);
   }
 
   async function softDelete(belegId: string, grund: string | null) {
@@ -7473,7 +7474,7 @@ export function useBulkInvoiceActions() {
       })
       .eq("id", belegId);
     if (error) throw error;
-    await insertVerlauf(belegId, "loeschung", grund || "Beleg gelöscht");
+    await insertVerlauf(belegId, "deletion", grund || "Beleg gelöscht");
   }
 
   // Every read the list screen makes. Spelled out rather than prefixed: the kanban keys are
@@ -7719,7 +7720,7 @@ export function useDatevRoutes() {
     staleTime: STALE,
     queryFn: async (): Promise<DatevRoute[]> => {
       const { data, error } = await sb
-        .from(TABLE.datevRoutes)
+        .from(TABLE.handoverRoutes)
         .select("id, company_id, direction, is_enabled, note, updated_by, created_at, updated_at")
         .order("company_id");
       if (error) throw error;
@@ -7882,7 +7883,7 @@ export function useUpdateDatevRoute() {
  *
  * WHAT THAT COSTS, stated so nobody has to rediscover it: an invoice marked paid in error is now
  * one click from an irreversible email to the tax advisor, with no bank record required to back the
- * claim that it was paid. `datev_handed_over_at` is still the stop that prevents sending twice.
+ * claim that it was paid. `handed_over_at` is still the stop that prevents sending twice.
  *
  * The send function applies the SAME rule (`triggerDatevHandover`) — these two must never diverge,
  * or the screen promises receipts the send will not deliver.
@@ -7898,8 +7899,8 @@ export function useDatevHandoverStatus() {
       const { data: candidates, error: candidatesError } = await sb
         .from(TABLE.documents)
         .select("id, company_id, issuer, invoice_number, document_date, amount_gross")
-        .eq("workflow_status", "bezahlt")
-        .is("datev_handed_over_at", null)
+        .eq("workflow_status", "paid")
+        .is("handed_over_at", null)
         .is("deleted_at", null)
         .order("document_date", { ascending: true });
       if (candidatesError) throw candidatesError;
@@ -7963,7 +7964,7 @@ export function useDatevHandoverStatus() {
       const { data: done, error: doneError } = await sb
         .from(TABLE.documents)
         .select("company_id")
-        .not("datev_handed_over_at", "is", null)
+        .not("handed_over_at", "is", null)
         .is("deleted_at", null);
       if (doneError) throw doneError;
 
@@ -7990,7 +7991,7 @@ export function useDatevHandoverStatus() {
  * The outgoing invoices a DATEV handover would carry, per company.
  *
  * Same eligibility rule as the incoming side, minus the workflow status: not yet handed over, not
- * deleted. An outgoing invoice has no `workflow_status`; `voucher_status` mirrors LexOffice and
+ * deleted. An outgoing invoice has no `workflow_status`; `status` mirrors LexOffice and
  * means something else entirely, so issuance is the whole test.
  *
  * BLOCKING IS PER INVOICE, exactly as it is for incoming. An outgoing invoice whose file is
@@ -7999,7 +8000,7 @@ export function useDatevHandoverStatus() {
  * fleet-wide observation standing in for a per-row rule; the moment one invoice has a file, that
  * was wrong.
  *
- * NEEDS `supabase db push`. `datev_handed_over_at` and `datev_batch_id` arrive on
+ * NEEDS `supabase db push`. `handed_over_at` and `handover_batch_id` arrive on
  * `outgoing_invoices` with migration `20260901180000_outgoing_datev_handover_columns.sql`. Without
  * it this query's filter has no column to read and the request fails, which is the loud failure of
  * the two available: the alternative is dropping the filter and re-sending everything already sent.
@@ -8027,7 +8028,7 @@ export function useOpenDatevBounces() {
     staleTime: STALE,
     queryFn: async (): Promise<DatevHandoverBatch[]> => {
       const { data, error } = await sb
-        .from(TABLE.datevHandoverBatches)
+        .from(TABLE.handoverBatches)
         .select("*")
         .eq("status", "bounced")
         .is("acknowledged_at", null)
@@ -8063,18 +8064,18 @@ export function useDatevOutgoingCandidates(options?: { enabled?: boolean }) {
       const { data, error } = await sb
         .from(TABLE.outgoingInvoices)
         .select(
-          `id, company_id, voucher_number, voucher_date, amount_gross, ${TABLE.customers}(name)`,
+          `id, company_id, invoice_number, invoice_date, amount_gross, ${TABLE.customers}(name)`,
         )
-        .is("datev_handed_over_at", null)
+        .is("handed_over_at", null)
         .is("deleted_at", null)
-        .order("voucher_date", { ascending: true });
+        .order("invoice_date", { ascending: true });
       if (error) throw error;
 
       type Row = {
         id: string;
         company_id: string;
-        voucher_number: string | null;
-        voucher_date: string | null;
+        invoice_number: string | null;
+        invoice_date: string | null;
         amount_gross: number | null;
         customers: { name: string | null } | null;
       };
@@ -8112,8 +8113,8 @@ export function useDatevOutgoingCandidates(options?: { enabled?: boolean }) {
           id: r.id,
           company_id: r.company_id,
           issuer: r.customers?.name ?? null,
-          invoice_number: r.voucher_number,
-          document_date: r.voucher_date,
+          invoice_number: r.invoice_number,
+          document_date: r.invoice_date,
           amount_gross: r.amount_gross,
           blockReason: datevBlockReason(files.get(r.id) ?? null),
         });
@@ -8168,7 +8169,7 @@ export function useDatevHandoverBatches(
     staleTime: STALE,
     queryFn: async (): Promise<DatevHandoverBatch[]> => {
       let query = sb
-        .from(TABLE.datevHandoverBatches)
+        .from(TABLE.handoverBatches)
         .select("*")
         .order("created_at", { ascending: false })
         .limit(companyId ? 20 : 100);
@@ -8351,7 +8352,7 @@ export function useOutgoingInvoices(filter?: OutgoingInvoiceFilter) {
         if (filter?.companyId) query = query.eq("company_id", filter.companyId);
         if (filter?.customerId) query = query.eq("customer_id", filter.customerId);
         return query
-          .order("voucher_date", { ascending: false })
+          .order("invoice_date", { ascending: false })
           .range(from, to) as unknown as Promise<{
           data: OutgoingInvoice[] | null;
           error: unknown;
@@ -8364,7 +8365,7 @@ export function useOutgoingInvoices(filter?: OutgoingInvoiceFilter) {
 
 export interface OpenOutgoingInvoicesInfiniteFilter {
   q?: string;
-  /** voucher_date range — the outgoing equivalent of document_date. */
+  /** invoice_date range — the outgoing equivalent of document_date. */
   von?: string;
   bis?: string;
   createdAtVon?: string;
@@ -8375,7 +8376,7 @@ export interface OpenOutgoingInvoicesInfiniteFilter {
 }
 
 // Outgoing-invoice counterpart to useOpenBelegeInfinite, for the same Link-Manually picker in its
-// "outgoing" direction (migration 0045). "Open" is voucher_status='open' — set/withdrawn by the
+// "outgoing" direction (migration 0045). "Open" is status='open' — set/withdrawn by the
 // same confirmed-bank-match coverage rule as belege.paid_at (docs/AUSGANGSRECHNUNGEN_UPLOAD.md), so
 // it correctly excludes drafts and voided invoices too, not just fully-matched ones (the client-
 // filtered version this replaces only checked coverage, so a draft could show up as "open" to link).
@@ -8419,7 +8420,7 @@ export function useOpenOutgoingInvoicesInfinite(
       // outgoing_invoices has no fts column (unlike invoices/bank_transactions), and the customer
       // name lives on a joined table PostgREST can't OR against a base-table column in one filter —
       // so a search first resolves matching customer ids, then ORs those in alongside a direct
-      // voucher_number match. One extra round trip, only when the user has actually typed a query.
+      // invoice_number match. One extra round trip, only when the user has actually typed a query.
       let customerIds: string[] | null = null;
       if (search) {
         const { data, error } = await sb
@@ -8434,15 +8435,15 @@ export function useOpenOutgoingInvoicesInfinite(
         .from(TABLE.outgoingInvoices)
         .select(`*, ${TABLE.customers}(*)`, { count: "exact" })
         .is("deleted_at", null)
-        .eq("voucher_status", "open");
+        .eq("status", "open");
       if (search) {
         query =
           customerIds && customerIds.length > 0
-            ? query.or(`voucher_number.ilike.%${search}%,customer_id.in.(${customerIds.join(",")})`)
-            : query.ilike("voucher_number", `%${search}%`);
+            ? query.or(`invoice_number.ilike.%${search}%,customer_id.in.(${customerIds.join(",")})`)
+            : query.ilike("invoice_number", `%${search}%`);
       }
-      if (von) query = query.gte("voucher_date", von);
-      if (bis) query = query.lte("voucher_date", bis);
+      if (von) query = query.gte("invoice_date", von);
+      if (bis) query = query.lte("invoice_date", bis);
       if (createdAtVon) query = query.gte("created_at", createdAtVon);
       // Inclusive of the whole end day — created_at is a timestamptz, a bare date bound would cut
       // off at midnight and silently drop everything from later that same day.
@@ -8456,7 +8457,7 @@ export function useOpenOutgoingInvoicesInfinite(
       } else {
         const column =
           sort === "document_date"
-            ? "voucher_date"
+            ? "invoice_date"
             : sort === "amount"
               ? "amount_gross"
               : "created_at";
@@ -8508,7 +8509,7 @@ export function useSoftDeleteOutgoingInvoice(invoiceId: string) {
       await insertChangeHistory(
         "outgoing_invoices",
         invoiceId,
-        "loeschung",
+        "deletion",
         grund || "Ausgangsrechnung gelöscht",
       );
     },
@@ -9184,7 +9185,7 @@ export function useOverviewInvoices(von?: string | null, bis?: string | null) {
           .is("deleted_at", null)
           .is("archived_at", null)
           .is("not_relevant_at", null)
-          .neq("status", "aufgeteilt");
+          .neq("status", "split");
         if (von) query = query.gte("document_date", von);
         if (bis) query = query.lte("document_date", bis);
         return query.range(from, to);
@@ -9193,11 +9194,11 @@ export function useOverviewInvoices(von?: string | null, bis?: string | null) {
 }
 
 export interface BankMatchingCounts {
-  gesamt: number;
-  offen: number;
-  vorschlag: number;
-  zugeordnet: number;
-  ignoriert: number;
+  total: number;
+  open: number;
+  suggestion: number;
+  matched: number;
+  ignored: number;
 }
 
 export function useBankMatchingCounts() {
@@ -9208,20 +9209,20 @@ export function useBankMatchingCounts() {
       const head = { count: "exact" as const, head: true };
       const [gesamtQ, offenQ, vorschlagQ, zugeordnetQ, ignoriertQ] = await Promise.all([
         sb.from(TABLE.bankTransactions).select("id", head),
-        sb.from(TABLE.bankTransactions).select("id", head).eq("matching_status", "offen"),
+        sb.from(TABLE.bankTransactions).select("id", head).eq("matching_status", "open"),
         sb.from(TABLE.vBankTransactionsList).select("id", head).eq("has_suggested_match", true),
-        sb.from(TABLE.bankTransactions).select("id", head).eq("matching_status", "zugeordnet"),
-        sb.from(TABLE.bankTransactions).select("id", head).eq("matching_status", "ignoriert"),
+        sb.from(TABLE.bankTransactions).select("id", head).eq("matching_status", "matched"),
+        sb.from(TABLE.bankTransactions).select("id", head).eq("matching_status", "ignored"),
       ]);
       for (const q of [gesamtQ, offenQ, vorschlagQ, zugeordnetQ, ignoriertQ]) {
         if (q.error) throw q.error;
       }
       return {
-        gesamt: gesamtQ.count ?? 0,
-        offen: Math.max((offenQ.count ?? 0) - (vorschlagQ.count ?? 0), 0),
-        vorschlag: vorschlagQ.count ?? 0,
-        zugeordnet: zugeordnetQ.count ?? 0,
-        ignoriert: ignoriertQ.count ?? 0,
+        total: gesamtQ.count ?? 0,
+        open: Math.max((offenQ.count ?? 0) - (vorschlagQ.count ?? 0), 0),
+        suggestion: vorschlagQ.count ?? 0,
+        matched: zugeordnetQ.count ?? 0,
+        ignored: ignoriertQ.count ?? 0,
       };
     },
   });
@@ -9270,7 +9271,7 @@ export function useNotificationCounts(appUserId: string | null) {
           .is("deleted_at", null)
           .is("archived_at", null)
           .is("not_relevant_at", null)
-          .neq("status", "aufgeteilt")
+          .neq("status", "split")
           .gt("created_at", seit),
         sb
           .from(TABLE.documents)
@@ -9278,7 +9279,7 @@ export function useNotificationCounts(appUserId: string | null) {
           .is("deleted_at", null)
           .is("archived_at", null)
           .is("not_relevant_at", null)
-          .eq("status", "zu_pruefen"),
+          .eq("status", "needs_review"),
         // Strictly past, mirroring the Offene-Posten screen's overdue rule, so the bell row
         // and the filtered list it links to show the same number.
         sb
@@ -9325,12 +9326,12 @@ export function useMarkNotificationsSeen() {
 // notification_settings.bell_events hides it.
 export const NOTIFICATION_EVENT_TYPES = [
   "neu",
-  "zuweisung",
-  "rueckfrage",
-  "abgelehnt",
+  "assigned",
+  "query",
+  "rejected",
   "zuPruefen",
   "faellig",
-  "vorschlaege",
+  "suggestions",
   "fehler",
   "ping",
 ] as const;
@@ -9517,7 +9518,7 @@ export function useSlackDirectory(enabled: boolean) {
     staleTime: 60_000,
     retry: false,
     queryFn: async (): Promise<SlackDirectory> => {
-      const { data, error } = await supabase.functions.invoke("notify-dispatch", {
+      const { data, error } = await supabase.functions.invoke(EDGE_FUNCTION.notifyDispatch, {
         body: { mode: "directory" },
       });
       if (error) throw error;
@@ -9738,7 +9739,7 @@ export function useTransactionUploads(transactionId: string | null | undefined) 
       const { data, error } = await sb
         .from(TABLE.documents)
         .select(
-          `id, issuer, amount_gross, created_at, extracted, ${TABLE.invoiceTransactionMatches}(status)`,
+          `id, issuer, amount_gross, created_at, extracted, ${TABLE.documentTransactionMatches}(status)`,
         )
         .eq("uploaded_for_transaction_id", transactionId)
         .is("deleted_at", null)
@@ -9747,7 +9748,7 @@ export function useTransactionUploads(transactionId: string | null | undefined) 
       return ((data ?? []) as Record<string, unknown>[])
         .filter((row) => {
           const matches = (row.invoice_transaction_matches ?? []) as { status?: string }[];
-          return !matches.some((m) => m.status === "bestaetigt");
+          return !matches.some((m) => m.status === "confirmed");
         })
         .map((row) => ({
           id: String(row.id),
@@ -9782,7 +9783,7 @@ export function useAcknowledgeNotification() {
 export function useSendTestNotification() {
   return useMutation({
     mutationFn: async (channel: string) => {
-      const { data, error } = await supabase.functions.invoke("notify-dispatch", {
+      const { data, error } = await supabase.functions.invoke(EDGE_FUNCTION.notifyDispatch, {
         body: { mode: "test", channel },
       });
       if (error) throw error;
@@ -9824,5 +9825,5 @@ export function useLastDispatchRun() {
 // Rejected invoices whose rejection is addressed to this person. Same shape as
 // useInvoicesReturnedToMe -- see useInvoicesReturnedByType for how the target is resolved.
 export function useInvoicesRejectedToMe(myUserId: string | null, myName: string | null) {
-  return useInvoicesReturnedByType("ablehnung", "abgelehnt", "abgelehnt_an_mich", myUserId, myName);
+  return useInvoicesReturnedByType("rejection", "rejected", "abgelehnt_an_mich", myUserId, myName);
 }

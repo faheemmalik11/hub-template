@@ -57,13 +57,13 @@ import type { ObjektDaten, ObjektGesellschaft, PropertiesConfig, PropertiesSearc
  * or "everything". Archived properties mixed into the active ones are dimmed rows among all the
  * others, so the list stops being a usable answer to either question.
  */
-type StatusFilter = "aktiv" | "archiviert" | "alle";
+type StatusFilter = "aktiv" | "archived" | "alle";
 const STATUS_DEFAULT: StatusFilter = "aktiv";
 
 /** "Any company" / "any ownership", the neutral value of the two select filters. */
 const ALLE = "__alle";
 
-const UST_STATUS_OPTIONEN = ["steuerpflichtig", "steuerfrei", "gemischt"] as const;
+const UST_STATUS_OPTIONEN = ["taxable", "exempt", "gemischt"] as const;
 const OWNERSHIP_OPTIONEN = ["own", "client"] as const;
 
 export function ObjekteListe({
@@ -134,7 +134,7 @@ export function ObjekteListe({
     return objekte.filter((o) => {
       if (config.archivierung) {
         if (status === "aktiv" && o.deleted_at) return false;
-        if (status === "archiviert" && !o.deleted_at) return false;
+        if (status === "archived" && !o.deleted_at) return false;
       }
       if (nurPruefen && !needsMasterDataReview(o.reviewed_at)) return false;
       if (nurOhneAdresse && o.address?.trim()) return false;
@@ -206,7 +206,7 @@ export function ObjekteListe({
             options: [
               { value: "alle", label: t("objekte.list.filter.statusAlle") },
               { value: "aktiv", label: t("objekte.list.filter.statusAktiv") },
-              { value: "archiviert", label: t("objekte.list.filter.statusArchiviert") },
+              { value: "archived", label: t("objekte.list.filter.statusArchiviert") },
             ],
             onChange: (v: string) => setStatus(v as StatusFilter),
           },

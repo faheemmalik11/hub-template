@@ -21,9 +21,9 @@ import type {
   CategoryOption,
   DimensionKey,
   ScopeOption,
-} from "@hub-kit/core/adapters";
+} from "@/kit/adapters";
 
-export const STAEYHUB_ASSIGNMENT_CONFIG: AssignmentRulesConfig = {
+export const ASSIGNMENT_RULES_CONFIG: AssignmentRulesConfig = {
   dimensions: ["company", "supplier", "property"],
 };
 
@@ -145,7 +145,7 @@ export function useAssignmentRulesAdapter(): AssignmentRulesAdapter {
   );
 
   return {
-    config: STAEYHUB_ASSIGNMENT_CONFIG,
+    config: ASSIGNMENT_RULES_CONFIG,
     rules: {
       data: rules,
       isLoading:

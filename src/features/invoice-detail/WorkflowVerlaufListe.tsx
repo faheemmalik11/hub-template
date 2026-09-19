@@ -61,11 +61,11 @@ export function WorkflowVerlaufListe({
         // own name matches an approver the two are the same person and repeating it is noise.
         const handelndAls = (v.data as { handelnd_als?: string | null } | null)?.handelnd_als;
         const kommentar = verlaufKommentar(v);
-        const schlecht = v.type === "ablehnung" || v.type === "zahlung_fehlgeschlagen";
+        const schlecht = v.type === "rejection" || v.type === "payment_failed";
         // Orange for a question, red for a move that failed, violet for everything else.
         const chipTon = schlecht
           ? "bg-red-100 text-red-800"
-          : v.type === "rueckfrage"
+          : v.type === "query"
             ? "bg-orange-100 text-orange-800"
             : "bg-violet-100 text-violet-800";
         return (
@@ -73,7 +73,7 @@ export function WorkflowVerlaufListe({
             key={v.id}
             // Anchor for the header's query badge/mark: while a query is open, this row
             // is always the newest one, since nothing can happen after it until answered.
-            id={neueste && v.type === "rueckfrage" ? RUECKFRAGE_ANKER : undefined}
+            id={neueste && v.type === "query" ? RUECKFRAGE_ANKER : undefined}
             className="flex gap-2"
           >
             {/* The time gutter, left of the rail: how long the segment below this node lasted --

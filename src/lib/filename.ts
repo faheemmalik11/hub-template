@@ -48,7 +48,7 @@ function formatAmountSegment(amount: number | null): string | null {
 
 // "VAT-relevant" for the _VAT suffix: a positive VAT rate that isn't explicitly tax-exempt.
 function isVatRelevant(beleg: Beleg): boolean {
-  return (beleg.vat_rate ?? 0) > 0 && beleg.vat_treatment !== "steuerfrei";
+  return (beleg.vat_rate ?? 0) > 0 && beleg.vat_treatment !== "exempt";
 }
 
 function descriptionFor(
@@ -95,7 +95,7 @@ export function buildSuggestedFilename(
   if (parts.length === 0) return null;
 
   let name = parts.join(settings.separator);
-  if (settings.transliterate_umlauts) name = transliterate(name);
+  if (settings.transliterate_accents) name = transliterate(name);
   name = sanitizeSegment(name);
 
   // Truncate the NAME, never the extension — a cut-off ".pdf" breaks the download entirely,

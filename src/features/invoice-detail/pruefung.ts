@@ -9,7 +9,7 @@
  * It used to live in `@/lib/data/format`, which is a per-repo file, so every hub carried its own
  * drifting copy of the status allow-list and the check vocabulary.
  */
-import type { ReviewLine } from "@hub-kit/core/ui";
+import type { ReviewLine } from "@/kit/ui";
 import { formatEUR } from "@/lib/data/format";
 import type { Beleg, Validierung } from "@/lib/data/types";
 
@@ -55,7 +55,7 @@ export type PruefGrundId =
   | "empfaenger_fehlt"
   | "iban_mehrere"
   | "konfidenz_unter_schwelle"
-  | "nicht_relevant"
+  | "not_relevant"
   | "gesellschaft_fehlt"
   | "manuell_markiert"
   | "keine_ueberweisung_belegt"
@@ -90,7 +90,7 @@ export interface ReviewCheck {
 
 export const SEVERITY_INFORMATIONAL = "informational";
 // SEVERITY_ACTION_REQUIRED used to live here too. It named the same string the kit's own
-// REVIEW_SEVERITY_ACTION_REQUIRED (@hub-kit/core/ui) now does, and nothing in this file ever
+// REVIEW_SEVERITY_ACTION_REQUIRED (@/kit/ui) now does, and nothing in this file ever
 // compared against its own copy -- only the review card did, and that import now goes
 // straight to the kit.
 
@@ -132,7 +132,7 @@ export const VALIDIERUNG_FELD_GRUND: Record<string, PruefGrundId> = {
   payable_iban_present: "iban_fehlt",
   recipient_present: "empfaenger_fehlt",
   iban_unambiguous: "iban_mehrere",
-  relevance_ok: "nicht_relevant",
+  relevance_ok: "not_relevant",
   assignment_resolved: "gesellschaft_fehlt",
   brutto_vorhanden: "brutto_fehlt",
   steller_vorhanden: "steller_fehlt",
@@ -148,7 +148,7 @@ export const VALIDIERUNG_FELD_GRUND: Record<string, PruefGrundId> = {
 
 export const REVIEW_CHECK_GRUND: Record<string, PruefGrundId> = {
   extraction_confidence: "konfidenz_unter_schwelle",
-  relevance: "nicht_relevant",
+  relevance: "not_relevant",
   document_readable: "nicht_lesbar",
   exclusion: "ausgeschlossen",
   brutto_vorhanden: "brutto_fehlt",
@@ -521,7 +521,7 @@ export function pruefScore(
   beleg: Pick<Beleg, "validation" | "status" | "extracted" | "validation_detail">,
 ): number {
   let score = pruefGruende(beleg).length * 10;
-  if (beleg.status === "zu_pruefen") score += 5;
+  if (beleg.status === "needs_review") score += 5;
   const konf = beleg.extracted?.konfidenz;
   if (konf) {
     const werte = Object.values(konf).filter((n): n is number => typeof n === "number");

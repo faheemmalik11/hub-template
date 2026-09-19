@@ -47,7 +47,7 @@ import { ListToolbar } from "@/components/records/list-toolbar";
 import { useTableView } from "@/lib/use-table-view";
 import { useTranslation } from "@/lib/i18n";
 import { cn } from "@/lib/utils";
-import { pageTitle } from "@/lib/brand";
+import { pageTitle } from "@/config/brand";
 import type { Gesellschaft } from "@/lib/data/types";
 
 export const Route = createFileRoute("/gesellschaften/")({
@@ -64,7 +64,7 @@ export const Route = createFileRoute("/gesellschaften/")({
  * checkbox into three named states makes "show me only what I archived" reachable, which is what
  * someone looking for something to restore actually wants.
  */
-type StatusFilter = "aktiv" | "archiviert" | "alle";
+type StatusFilter = "aktiv" | "archived" | "alle";
 const STATUS_DEFAULT: StatusFilter = "aktiv";
 
 /** The area filter's neutral value. Areas themselves are nullable, hence a third "no area" state. */
@@ -115,17 +115,17 @@ function GesellschaftenPage() {
   // How many companies file nowhere. Without a Dropbox folder the pipeline files nothing for them,
   // and until now that was invisible: no column, no count, no way to work through them.
   const ohneAblageGesamt = useMemo(
-    () => gesellschaften.filter((g) => !g.drive_folder_id?.trim()).length,
+    () => gesellschaften.filter((g) => !g.filing_folder?.trim()).length,
     [gesellschaften],
   );
 
   const gefiltert = useMemo(() => {
     const q = suche.trim().toLowerCase();
     return gesellschaften.filter((g) => {
-      if (status === "archiviert" && !g.deleted_at) return false;
+      if (status === "archived" && !g.deleted_at) return false;
       if (bereich === BEREICH_OHNE && g.area) return false;
       if (bereich !== BEREICH_ALLE && bereich !== BEREICH_OHNE && g.area !== bereich) return false;
-      if (nurOhneAblage && g.drive_folder_id?.trim()) return false;
+      if (nurOhneAblage && g.filing_folder?.trim()) return false;
       return !q || `${g.code} ${g.name}`.toLowerCase().includes(q);
     });
   }, [gesellschaften, suche, status, bereich, nurOhneAblage]);
@@ -179,7 +179,7 @@ function GesellschaftenPage() {
       options: [
         { value: "alle", label: t("gesellschaften.list.filter.statusAlle") },
         { value: "aktiv", label: t("gesellschaften.list.filter.statusAktiv") },
-        { value: "archiviert", label: t("gesellschaften.list.filter.statusArchiviert") },
+        { value: "archived", label: t("gesellschaften.list.filter.statusArchiviert") },
       ],
       onChange: (v) => setStatus(v as StatusFilter),
     },
@@ -243,7 +243,7 @@ function GesellschaftenPage() {
         objekte: objektAnzahl.get(g.id) ?? 0,
         summe: summen.get(g.id)?.summe ?? 0,
         anzahl: summen.get(g.id)?.anzahl ?? 0,
-        archiviert: !!g.deleted_at,
+        archived: !!g.deleted_at,
       })),
     [view.pageRows, summen, objektAnzahl],
   );
@@ -366,10 +366,10 @@ function GesellschaftenPage() {
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {rows.map(({ gesellschaft: g, objekte, summe, anzahl, archiviert }) => (
+                {rows.map(({ gesellschaft: g, objekte, summe, anzahl, archived }) => (
                   <TableRow
                     key={g.id}
-                    className={cn("cursor-pointer", archiviert && "opacity-50")}
+                    className={cn("cursor-pointer", archived && "opacity-50")}
                     onClick={() => navigate({ to: "/gesellschaften/$id", params: { id: g.id } })}
                   >
                     <TableCell className="font-mono font-medium text-foreground">
@@ -377,7 +377,7 @@ function GesellschaftenPage() {
                     </TableCell>
                     <TableCell className="min-w-[220px] whitespace-normal break-words text-foreground">
                       {g.name}
-                      {archiviert && (
+                      {archived && (
                         <span className="ml-2 inline-flex items-center rounded-md bg-muted px-2 py-0.5 font-sans text-xs text-muted-foreground">
                           {t("gesellschaften.list.archiviertBadge")}
                         </span>
@@ -421,12 +421,12 @@ function GesellschaftenPage() {
           </div>
 
           <div className="space-y-3 sm:hidden">
-            {rows.map(({ gesellschaft: g, objekte, summe, anzahl, archiviert }) => (
+            {rows.map(({ gesellschaft: g, objekte, summe, anzahl, archived }) => (
               <div
                 key={g.id}
                 className={cn(
                   "cursor-pointer rounded-xl border border-border bg-card p-4",
-                  archiviert && "opacity-50",
+                  archived && "opacity-50",
                 )}
                 onClick={() => navigate({ to: "/gesellschaften/$id", params: { id: g.id } })}
               >
@@ -451,7 +451,7 @@ function GesellschaftenPage() {
                       {t("gesellschaften.list.objekteCount", { count: objekte })}
                     </span>
                   )}
-                  {archiviert && (
+                  {archived && (
                     <span className="inline-flex items-center rounded-md bg-muted px-2 py-0.5 text-xs text-muted-foreground">
                       {t("gesellschaften.list.archiviertBadge")}
                     </span>

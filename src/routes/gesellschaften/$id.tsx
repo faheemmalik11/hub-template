@@ -91,7 +91,7 @@ import {
 import { useFetchNextSentinel } from "@/lib/use-fetch-next-sentinel";
 import { useTranslation } from "@/lib/i18n";
 import type { Gesellschaft, PropertyCompany } from "@/lib/data/types";
-import { pageTitle } from "@/lib/brand";
+import { pageTitle } from "@/config/brand";
 import { FolderTreePicker } from "@/components/postfach/folder-tree-picker";
 
 export const Route = createFileRoute("/gesellschaften/$id")({
@@ -123,8 +123,8 @@ function gFormFrom(g: Gesellschaft): GForm {
     // The same fallback the Kostenanalyse applies when the column is NULL (use-bwa-scope.ts), so
     // the form opens showing the rule that is actually in force rather than an empty control.
     bookingBasis: g.booking_basis ?? "payment_date",
-    filingFolder: g.drive_folder_id ?? "",
-    gemeinkosten: g.overhead_cost_center != null ? String(g.overhead_cost_center) : "",
+    filingFolder: g.filing_folder ?? "",
+    gemeinkosten: g.overhead_cost_centre != null ? String(g.overhead_cost_centre) : "",
   };
 }
 
@@ -247,7 +247,7 @@ function GesellschaftDetailPage() {
         link,
         linkId: link.id,
         anzahl: links.filter((l) => l.property_id === link.property_id).length,
-        nummer: link.cost_center_number,
+        nummer: link.cost_centre_number,
       });
     }
     return map;
@@ -256,13 +256,13 @@ function GesellschaftDetailPage() {
 
   // The filing folder as a readable path rather than the raw Dropbox id.
   //
-  // drive_folder_id holds a provider id ("id:aBc123…"), which is what the page used to print. That
+  // filing_folder holds a provider id ("id:aBc123…"), which is what the page used to print. That
   // is unreadable, unverifiable and identical in shape for every company, so the one field telling
   // you where this company's documents land said nothing at all. Falls back to the id when the
   // folder list has not loaded or the folder no longer exists, since a stale id is still better
   // than an empty field, and an id that resolves to nothing is itself worth seeing.
   const ablagePfad = useMemo(() => {
-    const folderId = gesellschaftQ.data?.drive_folder_id;
+    const folderId = gesellschaftQ.data?.filing_folder;
     if (!folderId) return null;
     const byId = new Map((ablageFoldersQ.data ?? []).map((f) => [f.id, f]));
     const teile: string[] = [];
@@ -276,7 +276,7 @@ function GesellschaftDetailPage() {
       current = current.parentId ? byId.get(current.parentId) : undefined;
     }
     return teile.length > 0 ? teile.join(" / ") : folderId;
-  }, [gesellschaftQ.data?.drive_folder_id, ablageFoldersQ.data]);
+  }, [gesellschaftQ.data?.filing_folder, ablageFoldersQ.data]);
 
   // id -> code, so the mismatch hint can name the company that actually owns the property
   // rather than showing a bare uuid.
@@ -369,8 +369,8 @@ function GesellschaftDetailPage() {
     {
       label: t("gesellschaften.detail.field.gemeinkosten"),
       value:
-        g.overhead_cost_center != null
-          ? String(g.overhead_cost_center)
+        g.overhead_cost_centre != null
+          ? String(g.overhead_cost_centre)
           : t("gesellschaften.detail.field.gemeinkostenFehlt"),
     },
     { label: t("gesellschaften.detail.field.ablage"), value: ablagePfad, wide: true },
@@ -401,15 +401,15 @@ function GesellschaftDetailPage() {
     if (f.bookingBasis !== (g.booking_basis ?? "payment_date"))
       changes.booking_basis = f.bookingBasis;
     const folder = f.filingFolder.trim() || null;
-    if (folder !== (g.drive_folder_id ?? null)) changes.drive_folder_id = folder;
+    if (folder !== (g.filing_folder ?? null)) changes.filing_folder = folder;
     const gemeinkosten = f.gemeinkosten.trim();
     if (gemeinkosten !== "" && !/^[1-9]\d{0,8}$/.test(gemeinkosten)) {
       setFehler({ gemeinkosten: t("gesellschaften.detail.field.gemeinkostenUngueltig") });
       return;
     }
     const gemeinkostenNummer = gemeinkosten === "" ? null : Number(gemeinkosten);
-    if (gemeinkostenNummer !== (g.overhead_cost_center ?? null)) {
-      changes.overhead_cost_center = gemeinkostenNummer;
+    if (gemeinkostenNummer !== (g.overhead_cost_centre ?? null)) {
+      changes.overhead_cost_centre = gemeinkostenNummer;
     }
     // Same shared schema as the create dialog, so both ask for exactly the same thing and both
     // can point at the offending field instead of firing one toast that names every problem.
@@ -1040,7 +1040,7 @@ function GesellschaftDetailPage() {
                 {t("gesellschaften.detail.field.buchungsbasisHinweis")}
               </p>
             </div>
-            {/* companies.overhead_cost_center: the cost centre for everything booked to Gemeinkosten in
+            {/* companies.overhead_cost_centre: the cost centre for everything booked to Gemeinkosten in
                 this company. Seeded from the tax adviser's workbook and until now only changeable in
                 SQL. Updating a company is admin-only, so this field is too. */}
             <div className="space-y-1">

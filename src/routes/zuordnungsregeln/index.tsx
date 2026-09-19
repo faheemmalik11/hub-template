@@ -34,7 +34,7 @@ import { tabSearch, useTabParam } from "@/lib/use-tab-param";
 import { useTableView } from "@/lib/use-table-view";
 import type { BwaCategory } from "@/lib/data/types";
 import { KiImportKontenrahmenDialog } from "@/components/zuordnung/ki-import-kontenrahmen-dialog";
-import { pageTitle } from "@/lib/brand";
+import { pageTitle } from "@/config/brand";
 import { fehlerText } from "@/lib/data/format";
 import {
   DeleteRuleDialog,
@@ -48,13 +48,9 @@ import {
   pickWinner,
   type AssignmentRuleDraftSeed,
   type RuleImpact,
-} from "@hub-kit/core/assignment-rules";
-import type {
-  AssignmentRuleDraft,
-  AssignmentRuleQuery,
-  AssignmentRuleView,
-} from "@hub-kit/core/adapters";
-import { SearchInput } from "@hub-kit/core/data-table";
+} from "@/kit/pages/assignment-rules";
+import type { AssignmentRuleDraft, AssignmentRuleQuery, AssignmentRuleView } from "@/kit/adapters";
+import { SearchInput } from "@/kit/components/data-table";
 
 import { useAssignmentRulesAdapter } from "@/hub/adapters/assignment-rules";
 import { useAssignmentRulesLabels } from "@/hub/adapters/assignment-rules-labels";
@@ -75,7 +71,7 @@ const FISCAL_YEAR_OPTIONS: ComboboxOption[] = Array.from({ length: 2099 - 1999 +
   return { value: String(year), label: String(year) };
 });
 
-const TABS = ["regeln", "spielplatz", "kontenrahmen", "vorschlaege"] as const;
+const TABS = ["regeln", "spielplatz", "kontenrahmen", "suggestions"] as const;
 const VISIBLE_TABS = TABS.filter((key) => key !== "kontenrahmen");
 type Tab = (typeof TABS)[number];
 
@@ -143,7 +139,7 @@ function ZuordnungsregelnPage() {
         {panel("spielplatz", <SpielplatzTab />)}
         {panel("kontenrahmen", <KontenrahmenTab />)}
         {panel(
-          "vorschlaege",
+          "suggestions",
           <VorschlaegeTab
             onRegelAnlegen={(vorlage) => {
               setRegelVorlage(vorlage);
@@ -720,7 +716,7 @@ function VorschlaegeTab({
       kategorie: BwaCategory;
       label: string;
       belege: number;
-      gesamt: number;
+      total: number;
     }[] = [];
     for (const s of suggestionsQ.data ?? []) {
       const viaId = s.category_id ? categoryById.get(s.category_id) : undefined;
@@ -733,7 +729,7 @@ function VorschlaegeTab({
         kategorie,
         label: label(kategorie),
         belege: s.receipt_count,
-        gesamt: s.total_receipts,
+        total: s.total_receipts,
       });
     }
     return out;
@@ -795,7 +791,7 @@ function VorschlaegeTab({
                   <TableRow key={z.supplierId}>
                     <TableCell className="font-medium text-foreground">{z.name}</TableCell>
                     <TableCell className="text-sm tabular-nums text-muted-foreground">
-                      {t("vorschlaege.belegeCount", { n: z.belege, total: z.gesamt })}
+                      {t("vorschlaege.belegeCount", { n: z.belege, total: z.total })}
                     </TableCell>
                     <TableCell className="text-sm text-foreground">{z.label}</TableCell>
                     <TableCell className="text-right">
@@ -820,7 +816,7 @@ function VorschlaegeTab({
               <div key={z.supplierId} className="rounded-xl border border-border bg-card p-4">
                 <p className="font-medium text-foreground">{z.name}</p>
                 <p className="mt-0.5 text-xs tabular-nums text-muted-foreground">
-                  {t("vorschlaege.belegeCount", { n: z.belege, total: z.gesamt })}
+                  {t("vorschlaege.belegeCount", { n: z.belege, total: z.total })}
                 </p>
                 <p className="mt-2 text-sm text-foreground">{z.label}</p>
                 <Button

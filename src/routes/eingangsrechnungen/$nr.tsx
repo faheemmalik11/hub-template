@@ -1,7 +1,7 @@
 import { createFileRoute } from "@tanstack/react-router";
 
 import { BelegDetailPage } from "@/features/invoice-detail/InvoiceDetailPage";
-import { pageTitle } from "@/lib/brand";
+import { pageTitle } from "@/config/brand";
 import { pickListSearch } from "@/lib/belege-list-search";
 import { tabSearch } from "@/lib/use-tab-param";
 

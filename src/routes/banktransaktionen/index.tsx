@@ -9,8 +9,8 @@ import {
   SearchInput,
   SortableColumnHeader,
   StackedCell,
-} from "@hub-kit/core/data-table";
-import type { FilterField } from "@hub-kit/core/data-table";
+} from "@/kit/components/data-table";
+import type { FilterField } from "@/kit/components/data-table";
 import { Button } from "@/components/ui/button";
 import {
   useZeitraumOptionen,
@@ -43,7 +43,7 @@ import { TriggerSyncButton } from "@/components/bank/trigger-sync-button";
 import { ManualImportDialog } from "@/components/bank/manual-import-dialog";
 import { EmptyState, ErrorState, TableSkeleton } from "@/components/belege/query-states";
 import { useTranslation } from "@/lib/i18n";
-import { pageTitle } from "@/lib/brand";
+import { pageTitle } from "@/config/brand";
 
 export const Route = createFileRoute("/banktransaktionen/")({
   head: () => ({ meta: [{ title: pageTitle("Banktransaktionen") }] }),
@@ -105,7 +105,7 @@ const STANDARD_SORT: BankTransactionSort = "booking_date";
 // The only values the Abgleich filter offers. A stale or hand-edited ?matching= used to be passed
 // straight into .eq("matching_status", …), which matched nothing and then let the empty state
 // blame the import; anything unknown now simply means "no filter".
-const MATCHING_FILTER = ["offen", "vorschlag", "zugeordnet", "ignoriert"];
+const MATCHING_FILTER = ["open", "suggestion", "matched", "ignored"];
 
 function BanktransaktionenPage() {
   const navigate = useNavigate();
@@ -361,10 +361,10 @@ function BanktransaktionenPage() {
       defaultValue: ALLE,
       options: [
         { value: ALLE, label: t("bank.list.filter.alle") },
-        { value: "offen", label: t("bank.txnMatching.offen") },
-        { value: "vorschlag", label: t("bank.txnMatching.vorschlag") },
-        { value: "zugeordnet", label: t("bank.txnMatching.zugeordnet") },
-        { value: "ignoriert", label: t("bank.txnMatching.ignoriert") },
+        { value: "open", label: t("bank.txnMatching.offen") },
+        { value: "suggestion", label: t("bank.txnMatching.vorschlag") },
+        { value: "matched", label: t("bank.txnMatching.zugeordnet") },
+        { value: "ignored", label: t("bank.txnMatching.ignoriert") },
       ],
       onChange: setFStatus,
     },

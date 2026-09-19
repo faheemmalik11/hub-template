@@ -8,7 +8,7 @@
 //   * The handover PUSHES paid receipts by email to the tax advisor's upload address and records
 //     itself, because the mail provider confirms the send.
 //   * This PULLS a zip to the operator's machine and records nothing. What somebody does with the
-//     archive afterwards is invisible here, so stamping `datev_handed_over_at` would mark
+//     archive afterwards is invisible here, so stamping `handed_over_at` would mark
 //     documents as handed over that may never arrive.
 //
 // NO IBAN COLUMN in the manifest, unlike Eiffler's original. `invoices.iban` exists only there;
@@ -24,7 +24,7 @@ import { z } from "zod";
 
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 import { AppError } from "./errors";
-import { TABLE } from "@/lib/data/tables";
+import { TABLE } from "@/config/tables";
 
 // Held well under the archive a browser can hold in memory as one base64 string. Reaching it stops
 // the archive growing rather than failing the whole export: a partial archive whose manifest names

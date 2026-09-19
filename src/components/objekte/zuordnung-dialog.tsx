@@ -57,7 +57,7 @@ export function ZuordnungDialog({
     (waehltGesellschaft ? link?.company_id : link?.property_id) ?? "",
   );
   const [nummer, setNummer] = useState<string>(
-    link?.cost_center_number != null ? String(link.cost_center_number) : "",
+    link?.cost_centre_number != null ? String(link.cost_centre_number) : "",
   );
   const [fehler, setFehler] = useState<{ auswahl?: string; nummer?: string }>({});
 
@@ -100,7 +100,7 @@ export function ZuordnungDialog({
         previousCompanyId: link?.company_id ?? null,
         // A non-admin cannot set a number, so nothing is sent for them.
         nummer: isAdmin ? nummerWert : null,
-        nummerGeaendert: isAdmin && nummerWert !== (link?.cost_center_number ?? null),
+        nummerGeaendert: isAdmin && nummerWert !== (link?.cost_centre_number ?? null),
         actor: user?.email ?? null,
       },
       {

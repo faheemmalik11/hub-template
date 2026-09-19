@@ -9,7 +9,7 @@ const KEYWORDS: Array<{
   { field: "value_date", keywords: ["valuta", "wertstellung", "value date"] },
   { field: "amount", keywords: ["betrag", "amount", "umsatz"] },
   { field: "amountDebit", keywords: ["soll", "belastung", "debit", "ausgang"] },
-  { field: "amountCredit", keywords: ["haben", "gutschrift", "credit", "eingang"] },
+  { field: "amountCredit", keywords: ["haben", "credit_note", "credit", "eingang"] },
   { field: "currency", keywords: ["währung", "waehrung", "currency"] },
   {
     field: "counterparty_holder",

@@ -1,7 +1,7 @@
 import { useEffect, useState, type ReactNode } from "react";
 import { Info, Loader2 } from "lucide-react";
 
-import { HintTooltip } from "@hub-kit/core/data-table";
+import { HintTooltip } from "@/kit/components/data-table";
 
 import {
   AlertDialog,

@@ -38,13 +38,13 @@ import {
 } from "@/components/bank/match-panel/link-confirm-dialog";
 import type { MatchReasons } from "@/lib/data/types";
 
-function gruppe(status: string): "abgeglichen" | "vorschlaege" | "abgelehnt" {
-  if (status === "bestaetigt") return "abgeglichen";
-  if (status === "abgelehnt") return "abgelehnt";
-  return "vorschlaege";
+function gruppe(status: string): "reconciled" | "suggestions" | "rejected" {
+  if (status === "confirmed") return "reconciled";
+  if (status === "rejected") return "rejected";
+  return "suggestions";
 }
 
-const GRUPPEN_RANG = { abgeglichen: 0, vorschlaege: 1, abgelehnt: 2 } as const;
+const GROUP_ORDER = { reconciled: 0, suggestions: 1, rejected: 2 } as const;
 
 interface DisplayMatch {
   id: string;
@@ -145,7 +145,7 @@ export function InvoiceMatches({
   // TransactionMatches's identical comment on why it is not simply filtered out.
 
   const matches = [...alleMatches].sort(
-    (a, b) => GRUPPEN_RANG[gruppe(a.status)] - GRUPPEN_RANG[gruppe(b.status)],
+    (a, b) => GROUP_ORDER[gruppe(a.status)] - GROUP_ORDER[gruppe(b.status)],
   );
 
   if (matches.length === 0) {
@@ -161,7 +161,7 @@ export function InvoiceMatches({
       <PaymentRightNotice className="mb-3" />
       <ul className="space-y-3">
         {matches.map((m, i) => {
-          const offen = m.status === "kandidat" || m.status === "auto";
+          const offen = m.status === "candidate" || m.status === "auto";
           const g = gruppe(m.status);
           const neueGruppe = i === 0 || gruppe(matches[i - 1].status) !== g;
           return (
@@ -173,7 +173,7 @@ export function InvoiceMatches({
               )}
               <li>
                 <MatchCard
-                  muted={m.status === "abgelehnt"}
+                  muted={m.status === "rejected"}
                   title={
                     m.entityId ? (
                       <Link
@@ -190,7 +190,7 @@ export function InvoiceMatches({
                     )
                   }
                   badge={
-                    m.status === "bestaetigt" ? undefined : <MatchStatusBadge status={m.status} />
+                    m.status === "confirmed" ? undefined : <MatchStatusBadge status={m.status} />
                   }
                   meta={
                     <>
@@ -245,7 +245,7 @@ export function InvoiceMatches({
                           }}
                         />
                       </>
-                    ) : m.status === "bestaetigt" && m.entityId ? (
+                    ) : m.status === "confirmed" && m.entityId ? (
                       <UnlinkInvoiceMatchButton
                         isOutgoing={isOutgoing}
                         matchId={m.id}

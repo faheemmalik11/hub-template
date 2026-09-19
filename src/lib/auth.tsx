@@ -23,7 +23,7 @@ import {
 import type { Session } from "@supabase/supabase-js";
 
 import { supabase } from "@/integrations/supabase/client";
-import { TABLE } from "@/lib/data/tables";
+import { TABLE } from "@/config/tables";
 
 export type AppRole = "super_admin" | "admin" | "supervisor" | "assistant";
 

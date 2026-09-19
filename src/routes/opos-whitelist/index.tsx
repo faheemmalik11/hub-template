@@ -49,8 +49,8 @@ import {
   SortableColumnHeader,
   TablePagination,
   useTableView,
-} from "@hub-kit/core/data-table";
-import type { FilterField } from "@hub-kit/core/data-table";
+} from "@/kit/components/data-table";
+import type { FilterField } from "@/kit/components/data-table";
 import {
   useCreateOposWhitelistRule,
   useDeleteOposWhitelistRule,
@@ -64,7 +64,7 @@ import type { OposTermImpact } from "@/lib/data/queries";
 import { ErrorState, TableSkeleton } from "@/components/belege/query-states";
 import { useTranslation } from "@/lib/i18n";
 import { useAuth } from "@/lib/auth";
-import { PERMISSIONS } from "@/lib/permissions";
+import { PERMISSIONS } from "@/config/permissions";
 import { cn } from "@/lib/utils";
 import { useDebouncedValue } from "@/lib/use-debounced-value";
 import {
@@ -76,7 +76,7 @@ import {
 } from "@/lib/data/opos";
 import type { OposCategory, OposWhitelistRule, OposWhitelistScope } from "@/lib/data/types";
 import { fehlerText, formatDate } from "@/lib/data/format";
-import { pageTitle } from "@/lib/brand";
+import { pageTitle } from "@/config/brand";
 
 export const Route = createFileRoute("/opos-whitelist/")({
   head: () => ({ meta: [{ title: pageTitle("Ausgeschlossene Zahlungen") }] }),
@@ -89,7 +89,7 @@ export const Route = createFileRoute("/opos-whitelist/")({
 // bookkeeper has to be able to answer, and this list is the answer.
 function useDarfSchreiben() {
   const { can } = useAuth();
-  return can(PERMISSIONS.oposWhitelistWrite);
+  return can(PERMISSIONS.bankWrite);
 }
 
 type StatusFilter = "alle" | "aktiv" | "inaktiv";
@@ -360,7 +360,7 @@ function OposWhitelistPage() {
                         keyboard, on exactly the value whose spelling matters most (#11). */}
                     <TableCell className="min-w-[160px] break-words font-medium text-foreground">
                       {r.term}
-                      <UeberdecktBadge regel={r} gewinner={ueberdeckt.get(r.id)} />
+                      <UeberdecktBadge rule={r} gewinner={ueberdeckt.get(r.id)} />
                     </TableCell>
                     <TableCell className="text-right tabular-nums text-muted-foreground">
                       {hits.get(r.id) ?? 0}
@@ -410,7 +410,7 @@ function OposWhitelistPage() {
                   <ActiveToggle rule={r} />
                 </div>
                 <p className="mt-3 break-words font-medium text-foreground">{r.term}</p>
-                <UeberdecktBadge regel={r} gewinner={ueberdeckt.get(r.id)} />
+                <UeberdecktBadge rule={r} gewinner={ueberdeckt.get(r.id)} />
                 {r.note && <p className="mt-1 text-sm text-muted-foreground">{r.note}</p>}
                 <p className="mt-1 text-xs text-muted-foreground">
                   {t("oposWhitelist.list.angelegtVon", {
@@ -461,14 +461,14 @@ function OposWhitelistPage() {
  * visible without this line (#2).
  */
 function UeberdecktBadge({
-  regel,
+  rule,
   gewinner,
 }: {
-  regel: OposWhitelistRule;
+  rule: OposWhitelistRule;
   gewinner: OposWhitelistRule | undefined;
 }) {
   const { t } = useTranslation();
-  if (!gewinner || !regel.is_active) return null;
+  if (!gewinner || !rule.is_active) return null;
   return (
     <span className="mt-1 flex items-start gap-1 text-xs font-normal text-amber-700">
       <Layers className="mt-0.5 size-3 shrink-0" />
@@ -597,7 +597,7 @@ function ImpactPreview({
         ? t("oposWhitelist.vorschau.keine", { gesamt: grundgesamtheit })
         : t("oposWhitelist.vorschau.treffer", {
             anzahl: treffer,
-            gesamt: grundgesamtheit,
+            total: grundgesamtheit,
             prozent: anteil.toFixed(anteil < 10 ? 1 : 0),
           })}
     </p>

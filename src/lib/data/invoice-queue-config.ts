@@ -34,11 +34,11 @@ export function nextAction(row: {
   paid_at?: string | null;
   has_confirmed_bank_match?: boolean | null;
 }): NextAction {
-  if (row.status === "zu_pruefen") return "review";
+  if (row.status === "needs_review") return "review";
   // Only the supervisor step is payable. An invoice approved by the assistant still needs the
   // final approval, and offering "pay" there leads to a dialog whose button is disabled.
-  if (!row.paid_at && row.workflow_status === "freigegeben_vorgesetzter") return "pay";
-  if (!row.paid_at && row.workflow_status === "freigegeben_assistenz") return "approve";
+  if (!row.paid_at && row.workflow_status === "approved_final") return "pay";
+  if (!row.paid_at && row.workflow_status === "approved_first") return "approve";
   if (!row.paid_at && !row.has_confirmed_bank_match) return "match";
   return "none";
 }
@@ -49,7 +49,7 @@ export const QUEUE_CARDS: QueueCardSpec[] = [
     tone: "warning",
     icon: FileWarning,
     to: "/eingangsrechnungen",
-    search: { status: "zu_pruefen" },
+    search: { status: "needs_review" },
   },
   {
     key: "missing_assignment",
@@ -63,14 +63,14 @@ export const QUEUE_CARDS: QueueCardSpec[] = [
     tone: "success",
     icon: Wallet,
     to: "/eingangsrechnungen",
-    search: { workflow: "freigegeben_vorgesetzter", zahlung: "offen" },
+    search: { workflow: "approved_final", zahlung: "open" },
   },
   {
     key: "pay_now",
     tone: "danger",
     icon: Clock,
     to: "/eingangsrechnungen",
-    search: { faellig: "due_now", zahlung: "offen", paymentType: "transfer" },
+    search: { faellig: "due_now", zahlung: "open", paymentType: "transfer" },
     sort: "faellig",
     dir: "asc",
   },
@@ -79,6 +79,6 @@ export const QUEUE_CARDS: QueueCardSpec[] = [
     tone: "neutral",
     icon: CheckCircle2,
     to: "/eingangsrechnungen",
-    search: { zahlung: "bezahlt" },
+    search: { zahlung: "paid" },
   },
 ];

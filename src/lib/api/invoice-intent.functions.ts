@@ -7,12 +7,12 @@ import {
   type ModelUsage,
   type ModelUsageContext,
   type SqlPreview,
-} from "@hub-kit/core/ai-search-sql";
+} from "@/kit/lib/ai-search-sql";
 
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 import { buildSqlPreviewConfig, loadIntentVocabulary } from "./invoice-intent-config";
 import { AppError } from "./errors";
-import { TABLE } from "@/lib/data/tables";
+import { TABLE } from "@/config/tables";
 
 const InputSchema = z.object({
   query: z.string().trim().min(1).max(500),
@@ -46,7 +46,7 @@ async function recordAiSearchUsage(
     output_tokens: event.usage.outputTokens,
   }));
   try {
-    await db.from(TABLE.aiSearchUsage).insert(rows);
+    await db.from(TABLE.assistantUsage).insert(rows);
   } catch {
     // Recording only — a failed write here must never fail the search itself.
   }

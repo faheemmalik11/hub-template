@@ -1,8 +1,8 @@
 import { Link } from "@tanstack/react-router";
 import { ArrowRight } from "lucide-react";
 
-import { ChecklistSteps, ProgressRing } from "@hub-kit/core/checklist";
-import { TanStackChecklistLink } from "@hub-kit/core/checklist/tanstack";
+import { ChecklistSteps, ProgressRing } from "@/kit/components/checklist";
+import { TanStackChecklistLink } from "@/kit/components/checklist/tanstack-link";
 import {
   checklistStepDescription,
   checklistStepProblems,

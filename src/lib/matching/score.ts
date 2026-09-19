@@ -1,8 +1,8 @@
-// The transposed-digit rule lives in hub-kit (@hub-kit/core/bank-matching) so this scorer, the
+// The transposed-digit rule lives in the kit (@/kit/lib/bank-matching) so this scorer, the
 // hubs' other three copies of this screen and anything else that has to agree about "8759 is
 // probably 8795" all answer identically. The Deno edge function keeps its own copy -- it cannot
 // import from node_modules -- and that one is the exception, not the pattern.
-import { amountMatch, hasTransposedDigits, TOLERANCE_PENALTY } from "@hub-kit/core/bank-matching";
+import { amountMatch, hasTransposedDigits, TOLERANCE_PENALTY } from "@/kit/lib/bank-matching";
 
 export interface MatchBeleg {
   id: string;
@@ -38,7 +38,7 @@ export interface MatchReasons {
 }
 
 export type MatchDirection = "incoming" | "outgoing";
-export type MatchStatus = "auto" | "kandidat";
+export type MatchStatus = "auto" | "candidate";
 
 export interface MatchCandidate {
   document_id: string;
@@ -165,7 +165,7 @@ export function runMatching(
         document_id: beleg.id,
         transaction_id: txn.id,
         score: Number(score.toFixed(2)),
-        status: score >= autoThreshold ? "auto" : "kandidat",
+        status: score >= autoThreshold ? "auto" : "candidate",
         match_reasons: reasons,
         amount_matched: pairAmount(beleg, txn),
       });

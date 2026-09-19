@@ -1,4 +1,4 @@
-// Server function backing the "Rechnung hochladen" flow for outgoing invoices. Stäy Hub has no
+// Server function backing the "Rechnung hochladen" flow for outgoing invoices. this Hub has no
 // LexOffice integration for any real company (client requirement: "no API integration to any
 // invoicing tool"), so this upload path is the only way an outgoing invoice gets created here —
 // ported from immonetz's equivalent feature, which was built for their own non-LexOffice
@@ -21,7 +21,7 @@ import {
   OUTGOING_INVOICE_UPLOAD_MIME,
   MAX_OUTGOING_INVOICE_UPLOAD_BASE64_CHARS,
 } from "./outgoing-invoice-shared";
-import { TABLE } from "@/lib/data/tables";
+import { TABLE } from "@/config/tables";
 import { tenantCredential } from "@/lib/postfach/channel-credentials.server";
 
 const OPENAI_RESPONSES_URL = "https://api.openai.com/v1/responses";
@@ -94,8 +94,8 @@ function buildJsonSchema(companyCodes: string[]) {
         type: ["string", "null"],
         description: "Full postal address of the customer as a single line, if present.",
       },
-      voucher_number: { type: ["string", "null"] },
-      voucher_date: { type: ["string", "null"], description: "ISO format YYYY-MM-DD." },
+      invoice_number: { type: ["string", "null"] },
+      invoice_date: { type: ["string", "null"], description: "ISO format YYYY-MM-DD." },
       due_date: { type: ["string", "null"], description: "ISO format YYYY-MM-DD." },
       amount_net: { type: ["number", "null"] },
       amount_gross: { type: ["number", "null"] },
@@ -110,8 +110,8 @@ function buildJsonSchema(companyCodes: string[]) {
       "matched_company_code",
       "customer_name",
       "customer_address",
-      "voucher_number",
-      "voucher_date",
+      "invoice_number",
+      "invoice_date",
       "due_date",
       "amount_net",
       "amount_gross",
@@ -222,8 +222,8 @@ async function callOpenAi(
       matchedCompanyCode: (parsed.matched_company_code as string | null) ?? null,
       customerName: (parsed.customer_name as string | null) ?? null,
       customerAddress: (parsed.customer_address as string | null) ?? null,
-      voucherNumber: (parsed.voucher_number as string | null) ?? null,
-      voucherDate: (parsed.voucher_date as string | null) ?? null,
+      voucherNumber: (parsed.invoice_number as string | null) ?? null,
+      voucherDate: (parsed.invoice_date as string | null) ?? null,
       dueDate: (parsed.due_date as string | null) ?? null,
       amountNet: (parsed.amount_net as number | null) ?? null,
       amountGross: (parsed.amount_gross as number | null) ?? null,
@@ -234,7 +234,7 @@ async function callOpenAi(
 }
 
 // Normalizes a German company/legal-entity name for a loose, deterministic fallback match — drops
-// legal-form suffixes and punctuation so "Stäy GmbH" and "stäy" line up.
+// legal-form suffixes and punctuation so "Example GmbH" and "example" line up.
 function normalizeLegalName(name: string): string {
   return name
     .toLowerCase()
@@ -246,7 +246,7 @@ function normalizeLegalName(name: string): string {
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 type Db = any;
 
-// Stäy Hub's companies table has no tax_number column (unlike immonetz's, which added one in a
+// this Hub's companies table has no tax_number column (unlike immonetz's, which added one in a
 // later migration) — the exact-tax-number backstop that migration added doesn't apply here.
 // Company matching stays on the model's own code pick plus a normalized-name fallback.
 async function matchCompany(

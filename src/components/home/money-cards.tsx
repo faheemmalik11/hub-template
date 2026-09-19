@@ -101,9 +101,9 @@ function MoneyCard({ config }: { config: (typeof CARDS)[number] }) {
   const ausgangRows = (von?: string | null, bis?: string | null) =>
     (outgoingQ.data ?? []).filter(
       (r) =>
-        inDateRange(r.voucher_date, { von: von ?? null, bis: bis ?? null }) &&
-        r.voucher_status !== "draft" &&
-        r.voucher_status !== "voided",
+        inDateRange(r.invoice_date, { von: von ?? null, bis: bis ?? null }) &&
+        r.status !== "draft" &&
+        r.status !== "voided",
     );
   const ausgangSumme = (von?: string | null, bis?: string | null) =>
     ausgangRows(von, bis).reduce((s, r) => s + (r.amount_gross ?? 0), 0);

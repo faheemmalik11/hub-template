@@ -19,7 +19,7 @@ import { belegNachgeprueft } from "@/features/invoice-detail/nachpruefung";
 import { validierungDetail } from "@/features/invoice-detail/pruefung";
 import type { Beleg } from "@/lib/data/types";
 import { NotFoundError } from "./errors";
-import { TABLE } from "@/lib/data/tables";
+import { TABLE } from "@/config/tables";
 
 // invoices is not in the generated Database type, so reads/writes go through an untyped client,
 // same convention as the rest of src/lib/api.
@@ -32,7 +32,7 @@ export interface PruefErgebnis {
   /** Every check, merged: the pipeline's verdict with the verified corrections over the top. */
   checks: Record<string, { status: string; source?: string; message?: string }>;
   /** The checks that are still a problem. Same list the review card renders. */
-  offen: string[];
+  open: string[];
   /** The checks that pass only because the data was corrected after ingest. */
   korrigiert: string[];
 }
@@ -70,7 +70,7 @@ export const validateInvoice = createServerFn({ method: "POST" })
     const detail = validierungDetail(geprueft) ?? {};
 
     const checks: PruefErgebnis["checks"] = {};
-    const offen: string[] = [];
+    const open: string[] = [];
     const korrigiert: string[] = [];
     for (const [feld, eintrag] of Object.entries(detail)) {
       const status = (eintrag.status ?? "").trim().toLowerCase();
@@ -78,10 +78,10 @@ export const validateInvoice = createServerFn({ method: "POST" })
       // Same allow-list the review card uses: 'ok' passed, 'not_applicable'/'skipped' never ran,
       // anything else is a problem. See detailFehlgeschlagen in pruefung.ts.
       if (status && status !== "ok" && status !== "not_applicable" && status !== "skipped") {
-        offen.push(feld);
+        open.push(feld);
       }
       if (eintrag.source) korrigiert.push(feld);
     }
 
-    return { invoiceId: beleg.id, checks, offen, korrigiert };
+    return { invoiceId: beleg.id, checks, open, korrigiert };
   });

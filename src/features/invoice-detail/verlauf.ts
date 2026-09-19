@@ -18,15 +18,15 @@ import { AKTION_ZIELSTATUS, APPROVAL_VERLAUF_TYPES, LEGACY_ACTION_IDS } from "./
 // `t` is passed in so this stays a plain helper (no hook) while still translating.
 export function verlaufTypLabel(typ: string, t: (key: string) => string): string {
   const known = [
-    "notiz",
-    "statuswechsel",
-    "aenderung",
-    "zuweisung",
-    "zuordnung",
-    "loeschung",
-    "regel",
-    "nicht_relevant",
-    "archiviert",
+    "note",
+    "status_change",
+    "change",
+    "assigned",
+    "booking",
+    "deletion",
+    "rule",
+    "not_relevant",
+    "archived",
     ...APPROVAL_VERLAUF_TYPES,
   ];
   return known.includes(typ) ? t(`belege.detail.verlaufTyp.${typ}`) : typ;
@@ -121,20 +121,20 @@ export function verlaufZusatz(
   v: BelegVerlauf,
   t: (key: string, opts?: Record<string, unknown>) => string,
 ): string | null {
-  if (v.type === "korrektur") return t("belege.detail.historie.korrigiert");
+  if (v.type === "correction") return t("belege.detail.historie.korrigiert");
   // Its own name, not "manually corrected". The status did move, but nobody set it: a
   // payment came off and the status followed. Without this the chip fell through to the
   // generic reason chip and read simply "Grund", which named no action at all.
   if (v.type === "zuordnung_getrennt") return t("belege.detail.historie.zuordnungGetrennt");
   if (v.type === "zuordnung_bestaetigt") return t("belege.detail.historie.zuordnungBestaetigt");
-  if (v.type === "rueckfrage") return t("belege.detail.historie.rueckfrageZusatz");
+  if (v.type === "query") return t("belege.detail.historie.rueckfrageZusatz");
   // WHICH of the three payment routes reached 'bezahlt'. The timeline titles every row by the
   // state it reached, so a manual mark, a confirmed bank match and a BANKSapi transfer all read
   // as a bare "Bezahlt" -- three quite different assertions about where the money went, told
   // apart nowhere on the page. The manner was already in the row's German audit sentence, which
   // this timeline never prints; the trigger now stores it as data.paid_source so it can be said
   // in the reader's own language.
-  if (v.type === "bezahlt") {
+  if (v.type === "paid") {
     const quelle = (v.data as { paid_source?: unknown } | null)?.paid_source;
     if (typeof quelle === "string" && quelle.trim() !== "") {
       return t(`belege.detail.historie.bezahltVia.${quelle}`, {
@@ -215,10 +215,10 @@ export function verlaufZeilen(
   // person wrote. Entries this page does not model (a note, an assignment) keep their stored text.
   if (
     verlaufZielStatus(v) !== null ||
-    v.type === "korrektur" ||
+    v.type === "correction" ||
     v.type === "zuordnung_getrennt" ||
     v.type === "zuordnung_bestaetigt" ||
-    v.type === "rueckfrage"
+    v.type === "query"
   ) {
     const kommentar = verlaufKommentar(v);
     return kommentar ? [kommentar] : [];

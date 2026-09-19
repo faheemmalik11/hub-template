@@ -1,3 +1,4 @@
+import { TABLE } from "@/config/tables";
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { ZeitraumPicker } from "@/components/data-table/zeitraum-picker";
 import {
@@ -105,17 +106,17 @@ import {
   readStoredAiSearch,
 } from "@/components/belege/intent-console-panel";
 import type { InvoiceSearchOutcome } from "@/lib/api/invoice-intent.functions";
-import { AiSimpleSearch, type AiSearchLabels } from "@hub-kit/core/ai-search/ui";
-import { FilterFieldsGroup, type FilterField } from "@hub-kit/core/filters";
+import { AiSimpleSearch, type AiSearchLabels } from "@/kit/components/ai-search";
+import { FilterFieldsGroup, type FilterField } from "@/kit/components/filters";
 import {
   BulkActionBar,
   SelectPageCheckbox,
   SelectRowCheckbox,
   useRowSelection,
   type BulkAction,
-} from "@hub-kit/core/bulk-actions";
+} from "@/kit/components/bulk-actions";
 import type { BelegeFilter, BelegListeRow, BelegSortKey } from "@/lib/data/types";
-import { pageTitle } from "@/lib/brand";
+import { pageTitle } from "@/config/brand";
 import {
   ALLE,
   DATEV_VALUES,
@@ -153,7 +154,7 @@ function errText(err: unknown): string {
 function isBackendMissing(err: unknown): boolean {
   const m = errText(err).toLowerCase();
   return (
-    m.includes("v_invoices_list") ||
+    m.includes(TABLE.vDocumentsList) ||
     m.includes("v_invoices_review") ||
     m.includes("invoices_kpis") ||
     m.includes("invoices_facets") ||
@@ -682,8 +683,8 @@ function EingangsrechnungenPage() {
     },
     {
       // Approval-chain stage — a separate axis from `status` (AI review) and `zahlung` (paid or
-      // not). A receipt sitting at 'freigegeben_vorgesetzter', waiting on payment, is otherwise
-      // indistinguishable in this list from one still at 'eingegangen'.
+      // not). A receipt sitting at 'approved_final', waiting on payment, is otherwise
+      // indistinguishable in this list from one still at 'received'.
       key: "workflow",
       label: t("belege.list.filter.workflow"),
       value: search.workflow,
@@ -760,15 +761,15 @@ function EingangsrechnungenPage() {
       value: search.bankMatch,
       options: [
         { value: ALLE, label: t("belege.list.filter.alleBankMatch") },
-        { value: "offen", label: t("belege.badge.bankMatchOffen") },
-        { value: "vorschlag", label: t("belege.badge.bankMatchVorschlag") },
-        { value: "zugeordnet", label: t("belege.badge.bankMatchZugeordnet") },
+        { value: "open", label: t("belege.badge.bankMatchOffen") },
+        { value: "suggestion", label: t("belege.badge.bankMatchVorschlag") },
+        { value: "matched", label: t("belege.badge.bankMatchZugeordnet") },
       ],
       onChange: (v) => setSearch({ bankMatch: v }),
     },
     {
       // Recognition traffic light. Its own filter because it is its own axis: the pipeline flags
-      // a yellow receipt for a human nod while still leaving status='erkannt', so without this
+      // a yellow receipt for a human nod while still leaving status='recognised', so without this
       // there is no way to list the yellow ones at all.
       key: "ampel",
       label: t("belege.list.filter.ampel"),
@@ -776,9 +777,9 @@ function EingangsrechnungenPage() {
       options: [
         { value: ALLE, label: t("belege.list.filter.alleAmpeln") },
         { value: "auffaellig", label: t("belege.list.filter.ampelAuffaellig") },
-        { value: "gruen", label: t("belege.ampel.gruen") },
-        { value: "gelb", label: t("belege.ampel.gelb") },
-        { value: "rot", label: t("belege.ampel.rot") },
+        { value: "green", label: t("belege.ampel.gruen") },
+        { value: "yellow", label: t("belege.ampel.gelb") },
+        { value: "red", label: t("belege.ampel.rot") },
       ],
       onChange: (v) => setSearch({ ampel: v }),
     },
@@ -1466,7 +1467,7 @@ function EingangsrechnungenPage() {
                     </span>
                     <span className="flex items-center gap-1">
                       {t("belege.list.col.datev")}:{" "}
-                      <DatevUebergabeBadge handedOverAt={b.datev_handed_over_at} />
+                      <DatevUebergabeBadge handedOverAt={b.handed_over_at} />
                     </span>
                   </div>
                   <div className="mt-2 flex flex-wrap items-center gap-x-3 gap-y-1 text-xs text-muted-foreground tabular-nums">
@@ -1783,7 +1784,7 @@ function KanbanBoard({
           // and nine requests where three would do is the kind of thing that makes a board feel
           // slow for no reason.
           aktiv={aktiv && (counts[workflow] ?? 0) > 0}
-          offen={offeneSpalte === workflow}
+          open={offeneSpalte === workflow}
           onToggle={() => setWahl(offeneSpalte === workflow ? null : workflow)}
           stellerName={stellerName}
           detailSearch={detailSearch}
@@ -1807,7 +1808,7 @@ function KanbanSpalte({
   anzahl,
   filter,
   aktiv,
-  offen,
+  open,
   onToggle,
   stellerName,
   detailSearch,
@@ -1817,7 +1818,7 @@ function KanbanSpalte({
   anzahl: number;
   filter: BelegeFilter;
   aktiv: boolean;
-  offen: boolean;
+  open: boolean;
   onToggle: () => void;
   stellerName: (b: BelegListeRow) => string;
   detailSearch: ReturnType<typeof carryListSearch>;
@@ -1858,7 +1859,7 @@ function KanbanSpalte({
       <button
         type="button"
         onClick={onToggle}
-        aria-expanded={offen}
+        aria-expanded={open}
         // A stable hook for the column, independent of markup. `[aria-expanded]` alone is not
         // specific enough: in Eiffler the accounting screens render inside the hub shell, whose
         // sidebar groups carry it too.
@@ -1882,7 +1883,7 @@ function KanbanSpalte({
           <ChevronDown
             className={cn(
               "size-4 text-muted-foreground transition-transform sm:hidden",
-              offen && "rotate-180",
+              open && "rotate-180",
             )}
           />
         </span>
@@ -1892,7 +1893,7 @@ function KanbanSpalte({
         className={cn(
           "max-h-[60vh] space-y-2 overflow-y-auto pr-0.5",
           // Closed on a phone, always shown from `sm` up.
-          !offen && "hidden sm:block",
+          !open && "hidden sm:block",
         )}
       >
         {items.map((b) => (

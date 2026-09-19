@@ -38,10 +38,10 @@ export function NoReceiptAction({
   const { t } = useTranslation();
   const set = useSetNoReceipt();
   const clear = useClearNoReceipt();
-  const hidden = txn.matching_status === "ignoriert";
+  const hidden = txn.matching_status === "ignored";
 
   // A reconciled transaction has its receipt — nothing to hide, and the RPC would refuse anyway.
-  if (txn.matching_status === "zugeordnet") return null;
+  if (txn.matching_status === "matched") return null;
 
   function hide(reason: OposCategory) {
     set.mutate(

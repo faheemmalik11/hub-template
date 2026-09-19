@@ -27,7 +27,7 @@ import type { PropertyCompany } from "@/lib/data/types";
 import { GesellschaftChip } from "@/components/belege/badges";
 import { fehlerText } from "@/lib/data/format";
 import { useAuth } from "@/lib/auth";
-import { pageTitle } from "@/lib/brand";
+import { pageTitle } from "@/config/brand";
 import { useTranslation } from "@/lib/i18n";
 
 export const Route = createFileRoute("/objekte/$code")({
@@ -36,10 +36,10 @@ export const Route = createFileRoute("/objekte/$code")({
 });
 
 /**
- * The Stäy wiring for the shared Objekt detail screen.
+ * The this client wiring for the shared Objekt detail screen.
  *
  * The assignment card is EDITABLE here, unlike Immonetz where the Geschäftsbereiche screen owns the
- * relation. Stäy assigns a property straight to companies, and this page is the only place that
+ * relation. this client assigns a property straight to companies, and this page is the only place that
  * does it, so editing it where it is displayed is the whole of the feature rather than half of it.
  */
 function ObjektDetailPage() {
@@ -60,7 +60,7 @@ function ObjektDetailPage() {
       verwerfeNeuParam: () => navigate({ to: "/objekte", search: {}, replace: true }),
       oeffneGesellschaft: (id) => navigate({ to: "/gesellschaften/$id", params: { id } }),
       // Archiving is supported; the review date and the ownership type are not columns here, and
-      // drive_folder_id is a Dropbox path for the pipeline rather than a link anybody opens. See
+      // filing_folder is a Dropbox path for the pipeline rather than a link anybody opens. See
       // the capability table in features/properties/PORTING.md.
       stammdatenPruefung: false,
       archivierung: true,
@@ -161,13 +161,13 @@ function ZuordnungEditor({
               <div className="ml-auto flex items-center gap-1">
                 <span
                   className={
-                    link.cost_center_number != null
+                    link.cost_centre_number != null
                       ? "text-xs text-muted-foreground"
                       : "text-xs text-warning"
                   }
                 >
-                  {link.cost_center_number != null
-                    ? t("objekte.detail.kostenstelle", { nr: link.cost_center_number })
+                  {link.cost_centre_number != null
+                    ? t("objekte.detail.kostenstelle", { nr: link.cost_centre_number })
                     : t("objekte.detail.kostenstelleFehlt")}
                 </span>
                 {/* Edit and remove appear on hover (and on keyboard focus), always on a phone where

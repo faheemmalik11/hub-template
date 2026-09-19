@@ -61,7 +61,7 @@ export function ReviewBadge({
         ? "ausgeschlossen"
         : alreadyPaid
           ? "bereitsBezahlt"
-          : reasonCount > 0 || (ungeprueft && status === "zu_pruefen")
+          : reasonCount > 0 || (ungeprueft && status === "needs_review")
             ? "needed"
             : "none";
   return (

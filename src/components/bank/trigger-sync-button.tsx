@@ -56,7 +56,7 @@ export function TriggerSyncButton({
         toast.success(
           t("bankverbindungen.toast.syncDone", {
             neu: res.transactions_new ?? 0,
-            vorschlaege: res.matches_candidate ?? 0,
+            suggestions: res.matches_candidate ?? 0,
           }),
         ),
       onError: (e) => toast.error(t("bankverbindungen.toast.syncFailed", { error: fehlerText(e) })),

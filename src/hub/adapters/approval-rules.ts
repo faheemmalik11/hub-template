@@ -8,7 +8,7 @@ import type {
   ApproverOption,
   DimensionKey,
   ScopeOption,
-} from "@hub-kit/core/adapters";
+} from "@/kit/adapters";
 
 import {
   useApprovalRules,
@@ -24,7 +24,7 @@ import {
 import { useTranslation } from "@/lib/i18n";
 import type { ApprovalRule, ChainPerson } from "@/lib/data/types";
 
-export const STAEY_APPROVAL_CONFIG: ApprovalRulesConfig = {
+export const APPROVAL_RULES_CONFIG: ApprovalRulesConfig = {
   dimensions: ["company", "supplier", "property"],
   maxSteps: 2,
   defaultChainLabels: [],
@@ -140,7 +140,7 @@ export function useApprovalRulesAdapter(): ApprovalRulesAdapter {
   );
 
   return {
-    config: STAEY_APPROVAL_CONFIG,
+    config: APPROVAL_RULES_CONFIG,
     rules: {
       data: rules,
 

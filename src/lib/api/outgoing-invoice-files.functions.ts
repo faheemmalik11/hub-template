@@ -7,7 +7,7 @@ import { createServerFn } from "@tanstack/react-start";
 
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 import { AppError, NotFoundError } from "./errors";
-import { TABLE } from "@/lib/data/tables";
+import { TABLE } from "@/config/tables";
 
 const InputSchema = z.object({
   outgoingInvoiceId: z.string().uuid(),

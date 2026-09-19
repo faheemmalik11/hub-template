@@ -1,11 +1,11 @@
-// Lists the StaeyBelege Dropbox app folder's real folders so the Postfach screen's filing picker
+// Lists the this clientBelege Dropbox app folder's real folders so the Postfach screen's filing picker
 // can offer them (Briefing Screen 1: "Source and Destination Folder"). Read-only.
 //
 // The DROPBOX_APP_KEY / APP_SECRET / REFRESH_TOKEN the admin panel stored on the scan-folder source,
 // the same ones the pipeline reads, and never a copy in .env (lib/postfach/channel-credentials).
 // The DROPBOX_ACCESS_TOKEN escape hatch from .env is gone with it.
 //
-// Dropbox is an "app folder" permission app, so `path: ""` already means the StaeyBelege root —
+// Dropbox is an "app folder" permission app, so `path: ""` already means the this clientBelege root —
 // there is no separate configured root to fetch, unlike Drive's Shared Drives.
 //
 // .server.ts suffix: Vite excludes this from the client bundle.

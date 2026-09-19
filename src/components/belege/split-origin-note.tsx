@@ -1,7 +1,7 @@
 // "This invoice came out of a multi-receipt scan" — shown on a CHILD invoice's detail page.
 //
 // WHY: a scan with several receipts on it is split into one invoice per receipt, and the original PDF
-// stays attached to a container row (status='aufgeteilt'). That container is deliberately kept for the
+// stays attached to a container row (status='split'). That container is deliberately kept for the
 // audit trail (GoBD) but is hidden from the invoice lists, because it is not an invoice — it has no
 // issuer, amount or date, and it used to show up as a phantom extra entry (pipeline migration 0020).
 //

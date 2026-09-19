@@ -109,7 +109,7 @@ import { NeueRegelDialog } from "@/components/zuordnung/neue-regel-dialog";
 import { BankAccountDialog } from "@/components/suppliers/bank-account-dialog";
 import { SectionSkeleton } from "@/components/records/section-skeleton";
 import { useTranslation } from "@/lib/i18n";
-import { pageTitle } from "@/lib/brand";
+import { pageTitle } from "@/config/brand";
 import { cn } from "@/lib/utils";
 import type { Lieferant, SupplierBankAccount } from "@/lib/data/types";
 

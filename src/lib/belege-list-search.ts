@@ -24,15 +24,15 @@ export const SORT_KEYS: BelegSortKey[] = [
   "status",
   "pruefung",
 ];
-export const STATUS_VALUES = ["erkannt", "zu_pruefen"] as const;
-export const ZAHLUNG_VALUES = ["bezahlt", "offen"] as const;
+export const STATUS_VALUES = ["recognised", "needs_review"] as const;
+export const ZAHLUNG_VALUES = ["paid", "open"] as const;
 export const PAYMENT_TYPE_VALUES = ["direct_debit", "transfer"] as const;
-export const DATEV_VALUES = ["uebergeben", "offen"] as const;
+export const DATEV_VALUES = ["uebergeben", "open"] as const;
 // The full approval chain plus its one terminal side path that still shows up in the everyday
-// list (rejecting a receipt doesn't archive or soft-delete it). 'nicht_relevant' is deliberately
+// list (rejecting a receipt doesn't archive or soft-delete it). 'not_relevant' is deliberately
 // excluded — those rows are unconditionally hidden from this list server-side (applyBelegeFilter),
 // so offering it here would be a filter option that always returns zero rows.
-export const WORKFLOW_FILTER_VALUES = [...WORKFLOW_REIHENFOLGE, "abgelehnt"] as const;
+export const WORKFLOW_FILTER_VALUES = [...WORKFLOW_REIHENFOLGE, "rejected"] as const;
 
 export { DUE_FILTER_VALUES };
 
@@ -136,21 +136,21 @@ export function validateSearch(input: Record<string, unknown>): BelegeSearch {
     dir: input.dir === "asc" ? "asc" : "desc",
     gesellschaft: str(input.gesellschaft),
     objekt: str(input.objekt),
-    status: status === "erkannt" || status === "zu_pruefen" ? status : undefined,
+    status: status === "recognised" || status === "needs_review" ? status : undefined,
     belegart: str(input.belegart),
-    zahlung: zahlung === "bezahlt" || zahlung === "offen" ? zahlung : undefined,
+    zahlung: zahlung === "paid" || zahlung === "open" ? zahlung : undefined,
     paymentType: (PAYMENT_TYPE_VALUES as readonly string[]).includes(paymentType ?? "")
       ? paymentType
       : undefined,
-    datev: datev === "uebergeben" || datev === "offen" ? datev : undefined,
+    datev: datev === "uebergeben" || datev === "open" ? datev : undefined,
     bankMatch:
-      bankMatch === "vorschlag" || bankMatch === "zugeordnet" || bankMatch === "offen"
+      bankMatch === "suggestion" || bankMatch === "matched" || bankMatch === "open"
         ? bankMatch
         : undefined,
     // Recognition traffic light. Only the three pipeline values are accepted, so a hand-edited URL
     // cannot silently produce a filter that matches nothing.
     ampel:
-      ampel === "gruen" || ampel === "gelb" || ampel === "rot" || ampel === "auffaellig"
+      ampel === "green" || ampel === "yellow" || ampel === "red" || ampel === "auffaellig"
         ? ampel
         : undefined,
     // Approval-chain stage. Only real workflow_status values are accepted, same reasoning as ampel

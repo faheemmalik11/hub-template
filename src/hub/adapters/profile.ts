@@ -1,8 +1,9 @@
 import { useCallback, useMemo } from "react";
+import { BUCKET } from "@/config/buckets";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 
-import type { AccessPermission } from "@hub-kit/core/access";
-import type { ProfileAdapter, ProfileUser } from "@hub-kit/core/adapters";
+import type { AccessPermission } from "@/kit/components/access";
+import type { ProfileAdapter, ProfileUser } from "@/kit/adapters";
 
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/lib/auth";
@@ -12,7 +13,7 @@ import { useTranslation } from "@/lib/i18n";
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 const sb = supabase as any;
 
-const PICTURE_BUCKET = "profile-pictures";
+const PICTURE_BUCKET = BUCKET.profilePictures;
 const MAX_PICTURE_BYTES = 2 * 1024 * 1024;
 const PICTURE_TYPES = ["image/png", "image/jpeg", "image/webp"];
 // The same floor completePasswordChange enforces, so the form never offers a password it rejects.

@@ -22,7 +22,7 @@ import { useAuth } from "@/lib/auth";
 import { fehlerText } from "@/lib/data/format";
 import { useMatchingSettings, useUpdateMatchingSettings } from "@/lib/data/queries";
 import { useTranslation } from "@/lib/i18n";
-import { pageTitle } from "@/lib/brand";
+import { pageTitle } from "@/config/brand";
 
 export const Route = createFileRoute("/bank-einstellungen/")({
   head: () => ({ meta: [{ title: pageTitle("Bank-Einstellungen") }] }),

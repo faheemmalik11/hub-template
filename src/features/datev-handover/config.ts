@@ -13,7 +13,7 @@ import type { DatevDirection } from "./adapter";
 export interface DatevHandoverConfig {
   /**
    * Which directions the handover can actually SEND today, as opposed to merely store an address
-   * for. This genuinely differs: Immonetz and Stäy send `incoming` only, Eiffler has wired
+   * for. This genuinely differs: Immonetz and this client send `incoming` only, Eiffler has wired
    * `outgoing` as well (migration `20260817190000_acc_outgoing_datev_handover_columns`).
    *
    * Every direction NOT in this list still gets its address field, its switch and its stored value

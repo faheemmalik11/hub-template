@@ -38,13 +38,13 @@ import {
 } from "@/components/bank/match-panel/link-confirm-dialog";
 import type { MatchReasons } from "@/lib/data/types";
 
-function gruppe(status: string): "abgeglichen" | "vorschlaege" | "abgelehnt" {
-  if (status === "bestaetigt") return "abgeglichen";
-  if (status === "abgelehnt") return "abgelehnt";
-  return "vorschlaege";
+function gruppe(status: string): "reconciled" | "suggestions" | "rejected" {
+  if (status === "confirmed") return "reconciled";
+  if (status === "rejected") return "rejected";
+  return "suggestions";
 }
 
-const GRUPPEN_RANG = { abgeglichen: 0, vorschlaege: 1, abgelehnt: 2 } as const;
+const GROUP_ORDER = { reconciled: 0, suggestions: 1, rejected: 2 } as const;
 
 // One row's worth of what's direction-specific, normalized so the JSX below reads the same either
 // way. entityId is whichever id the confirm/reject mutation needs (invoice or outgoing invoice).
@@ -145,7 +145,7 @@ export function TransactionMatches({
           match_reasons: m.match_reasons,
           amount_matched: m.amount_matched,
           label: oi?.customers?.name ?? t("bank.matches.beleg"),
-          nr: oi?.voucher_number ?? null,
+          nr: oi?.invoice_number ?? null,
           amountGross: oi?.amount_gross ?? null,
           // No in-app detail page for an outgoing invoice; its file is reachable from the
           // Ausgangsrechnungen list instead.
@@ -173,7 +173,7 @@ export function TransactionMatches({
   // last and muted, with their own badge -- the rejection is a decision somebody made, and the
   // screen is where you would look to see that it happened.
   const matches = [...alleMatches].sort(
-    (a, b) => GRUPPEN_RANG[gruppe(a.status)] - GRUPPEN_RANG[gruppe(b.status)],
+    (a, b) => GROUP_ORDER[gruppe(a.status)] - GROUP_ORDER[gruppe(b.status)],
   );
 
   if (matches.length === 0) {
@@ -183,7 +183,7 @@ export function TransactionMatches({
   // A collective payment is only readable as a running total: how much of this transaction is
   // already explained by receipts, and how much still is not.
   const allocated = matches
-    .filter((m) => m.status === "bestaetigt")
+    .filter((m) => m.status === "confirmed")
     .reduce((s, m) => s + Math.abs(m.amount_matched ?? 0), 0);
   const total = Math.abs(transactionAmount ?? 0);
   const rest = Math.max(total - allocated, 0);
@@ -194,15 +194,15 @@ export function TransactionMatches({
       {total > 0 && allocated > 0 && (
         <p className="mb-3 text-xs text-muted-foreground">
           {t("bank.matches.zugeordnetVon", {
-            zugeordnet: formatEUR(allocated),
-            gesamt: formatEUR(total),
+            matched: formatEUR(allocated),
+            total: formatEUR(total),
           })}
           {rest > 0.01 && ` · ${t("bank.matches.restOffen", { rest: formatEUR(rest) })}`}
         </p>
       )}
       <ul className="space-y-3">
         {matches.map((m, i) => {
-          const offen = m.status === "kandidat" || m.status === "auto";
+          const offen = m.status === "candidate" || m.status === "auto";
           const g = gruppe(m.status);
           const neueGruppe = i === 0 || gruppe(matches[i - 1].status) !== g;
           return (
@@ -214,7 +214,7 @@ export function TransactionMatches({
               )}
               <li>
                 <MatchCard
-                  muted={m.status === "abgelehnt"}
+                  muted={m.status === "rejected"}
                   title={
                     m.link?.kind === "internal" ? (
                       <Link
@@ -235,7 +235,7 @@ export function TransactionMatches({
                     )
                   }
                   badge={
-                    m.status === "bestaetigt" ? undefined : <MatchStatusBadge status={m.status} />
+                    m.status === "confirmed" ? undefined : <MatchStatusBadge status={m.status} />
                   }
                   meta={
                     <>
@@ -296,7 +296,7 @@ export function TransactionMatches({
                           }}
                         />
                       </>
-                    ) : m.status === "bestaetigt" && m.entityId ? (
+                    ) : m.status === "confirmed" && m.entityId ? (
                       <UnlinkMatchButton
                         isCredit={isCredit}
                         matchId={m.id}
@@ -389,7 +389,7 @@ function UnlinkMatchButton({
         ),
     };
     // NOT the reject mutation: unlinking hands the pair back as a suggestion, so it can be linked
-    // again with one click. Rejecting parked it in 'abgelehnt', where the Match button never
+    // again with one click. Rejecting parked it in 'rejected', where the Match button never
     // returned -- reported from the live app.
     if (isCredit) {
       unlinkOutgoingMatch.mutate(

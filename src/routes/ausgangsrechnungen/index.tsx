@@ -59,7 +59,7 @@ import { TablePagination } from "@/components/data-table/table-pagination";
 import { useTableView } from "@/lib/use-table-view";
 import { useTranslation } from "@/lib/i18n";
 import type { OutgoingInvoice, OutgoingVoucherStatus } from "@/lib/data/types";
-import { brandVars, pageTitle } from "@/lib/brand";
+import { brandVars, pageTitle } from "@/config/brand";
 
 export const Route = createFileRoute("/ausgangsrechnungen/")({
   head: () => ({ meta: [{ title: pageTitle("Ausgangsrechnungen") }] }),
@@ -67,15 +67,15 @@ export const Route = createFileRoute("/ausgangsrechnungen/")({
 });
 
 const ALLE = "__alle";
-const STATUS_VALUES = ["entwurf", "offen", "ueberfaellig", "bezahlt", "storniert"] as const;
+const STATUS_VALUES = ["entwurf", "open", "ueberfaellig", "paid", "storniert"] as const;
 type StatusFilter = (typeof STATUS_VALUES)[number];
 
 function effectiveStatus(status: OutgoingVoucherStatus, dueDate: string | null): StatusFilter {
-  if (status === "paidoff") return "bezahlt";
+  if (status === "paidoff") return "paid";
   if (status === "voided") return "storniert";
   if (status === "draft") return "entwurf";
   const today = new Date().toISOString().slice(0, 10);
-  return !!dueDate && dueDate < today ? "ueberfaellig" : "offen";
+  return !!dueDate && dueDate < today ? "ueberfaellig" : "open";
 }
 
 // WHAT THE SEARCH BOX ACTUALLY SEARCHES. It was the customer name and nothing else, so looking an
@@ -83,7 +83,7 @@ function effectiveStatus(status: OutgoingVoucherStatus, dueDate: string | null):
 // nothing at all. Customer name and invoice number both, matched case-insensitively.
 function passtZurSuche(inv: OutgoingInvoice, q: string): boolean {
   if (!q) return true;
-  const felder = [inv.customers?.name ?? "", inv.voucher_number ?? ""];
+  const felder = [inv.customers?.name ?? "", inv.invoice_number ?? ""];
   return felder.some((feld) => feld.toLowerCase().includes(q));
 }
 
@@ -102,8 +102,7 @@ function AusgangsrechnungenPage() {
   const gefiltert = useMemo(() => {
     const q = suche.trim().toLowerCase();
     return (invoicesQ.data ?? []).filter((inv) => {
-      if (status !== ALLE && effectiveStatus(inv.voucher_status, inv.due_date) !== status)
-        return false;
+      if (status !== ALLE && effectiveStatus(inv.status, inv.due_date) !== status) return false;
       if (!passtZurSuche(inv, q)) return false;
       return true;
     });
@@ -126,11 +125,11 @@ function AusgangsrechnungenPage() {
     let bezahlt = 0;
     let bezahltBetrag = 0;
     for (const inv of basis) {
-      const stand = effectiveStatus(inv.voucher_status, inv.due_date);
+      const stand = effectiveStatus(inv.status, inv.due_date);
       const brutto = inv.amount_gross ?? 0;
       // A voided invoice is not money anybody expects, so it counts in neither total.
       if (stand !== "storniert") volumen += brutto;
-      if (stand === "offen" || stand === "ueberfaellig") {
+      if (stand === "open" || stand === "ueberfaellig") {
         offenerBetrag += brutto;
         if (stand === "ueberfaellig") {
           ueberfaellig += 1;
@@ -140,13 +139,13 @@ function AusgangsrechnungenPage() {
           offenBetrag += brutto;
         }
       }
-      if (stand === "bezahlt") {
+      if (stand === "paid") {
         bezahlt += 1;
         bezahltBetrag += brutto;
       }
     }
     return {
-      gesamt: basis.length,
+      total: basis.length,
       offen,
       ueberfaellig,
       volumen,
@@ -168,10 +167,10 @@ function AusgangsrechnungenPage() {
       amount: number;
     }[] = [
       {
-        key: "offen",
+        key: "open",
         tone: "warning",
         icon: Clock,
-        ziel: "offen",
+        ziel: "open",
         count: kennzahlen.offen,
         amount: kennzahlen.offenBetrag,
       },
@@ -184,10 +183,10 @@ function AusgangsrechnungenPage() {
         amount: kennzahlen.ueberfaelligBetrag,
       },
       {
-        key: "bezahlt",
+        key: "paid",
         tone: "success",
         icon: CheckCircle2,
-        ziel: "bezahlt",
+        ziel: "paid",
         count: kennzahlen.bezahlt,
         amount: kennzahlen.bezahltBetrag,
       },
@@ -218,7 +217,7 @@ function AusgangsrechnungenPage() {
         case "faellig":
           return inv.due_date ?? "";
         default:
-          return inv.voucher_date ?? "";
+          return inv.invoice_date ?? "";
       }
     },
   });
@@ -256,7 +255,7 @@ function AusgangsrechnungenPage() {
           active on every fresh page and read as a filter nobody applied. */}
       <p className="mt-2 text-xs text-muted-foreground">
         {t("ausgangsrechnungen.list.kpi.volumenZeile", {
-          count: kennzahlen.gesamt,
+          count: kennzahlen.total,
           summe: formatEUR(kennzahlen.volumen),
         })}
       </p>
@@ -343,7 +342,7 @@ function AusgangsrechnungenPage() {
               {view.pageRows.map((inv) => (
                 <TableRow key={inv.id}>
                   <TableCell className="font-medium text-foreground">
-                    {inv.voucher_number ?? t("ausgangsrechnungen.list.entwurf")}
+                    {inv.invoice_number ?? t("ausgangsrechnungen.list.entwurf")}
                   </TableCell>
                   <TableCell className="text-sm text-foreground">
                     {inv.customers?.name ?? "—"}
@@ -354,7 +353,7 @@ function AusgangsrechnungenPage() {
                     />
                   </TableCell>
                   <TableCell className="text-sm text-muted-foreground tabular-nums">
-                    {formatDate(inv.voucher_date)}
+                    {formatDate(inv.invoice_date)}
                   </TableCell>
                   <TableCell className="text-sm text-muted-foreground tabular-nums">
                     {formatDate(inv.due_date)}
@@ -406,8 +405,8 @@ function AusgangsrechnungenPage() {
 const UPLOAD_STATUS_VALUES: OutgoingVoucherStatus[] = ["draft", "open", "paidoff", "voided"];
 const STATUS_LABEL_KEY: Record<OutgoingVoucherStatus, string> = {
   draft: "entwurf",
-  open: "offen",
-  paidoff: "bezahlt",
+  open: "open",
+  paidoff: "paid",
   voided: "storniert",
 };
 
@@ -417,7 +416,7 @@ function OutgoingStatusCell({ invoice }: { invoice: OutgoingInvoice }) {
 
   return (
     <Select
-      value={invoice.voucher_status}
+      value={invoice.status}
       onValueChange={(v) =>
         setStatus.mutate(
           { id: invoice.id, status: v as OutgoingVoucherStatus },

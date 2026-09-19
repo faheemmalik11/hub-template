@@ -22,11 +22,11 @@ import { FilterPills } from "@/components/data-table/filter-pills";
 import { ListToolbar } from "@/components/records/list-toolbar";
 import { EmptyState, ErrorState, TableSkeleton } from "@/components/belege/query-states";
 import { useAuth } from "@/lib/auth";
-import { PERMISSIONS } from "@/lib/permissions";
+import { PERMISSIONS } from "@/config/permissions";
 import type { SortDir } from "@/lib/use-table-view";
 import { tabSearch, useTabParam } from "@/lib/use-tab-param";
 import { useTranslation } from "@/lib/i18n";
-import { pageTitle } from "@/lib/brand";
+import { pageTitle } from "@/config/brand";
 
 export const Route = createFileRoute("/bankkonten/")({
   head: () => ({ meta: [{ title: pageTitle("Bankkonten") }] }),
@@ -132,7 +132,7 @@ function BankkontenPage() {
   const companiesQ = useGesellschaften();
   const connectionsQ = useBankConnections();
   const { can } = useAuth();
-  const darfVerbindungen = can(PERMISSIONS.pageBankverbindungen);
+  const darfVerbindungen = can(PERMISSIONS.pageBankConnections);
 
   // Report the webform outcome once, then strip the param so a reload or a shared link
   // does not replay the message. The ref guards against StrictMode's double effect.
@@ -432,7 +432,7 @@ function KontenTab({
   const companiesQ = useGesellschaften();
   // Switching an account off stops the import for it, so it stays an admin action.
   const { can } = useAuth();
-  const darfEntfernen = can(PERMISSIONS.bankAccountsRemove);
+  const darfEntfernen = can(PERMISSIONS.bankWrite);
 
   const { suche, statusFilter, gesellschaftFilter, banksapiFilter, nurSandbox } = filter;
   const [sortierung, setSortierung] = useState<SortKey>("konto");

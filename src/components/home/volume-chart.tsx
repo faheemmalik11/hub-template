@@ -67,10 +67,10 @@ export function VolumeChart({ von, bis }: { von?: string | null; bis?: string | 
     for (const r of outgoing) {
       // Same rule the figure cards use: a draft was never sent and a voided one was cancelled, so
       // neither is money anybody owes.
-      if (r.voucher_status === "draft" || r.voucher_status === "voided") continue;
-      if (von && r.voucher_date && r.voucher_date < von) continue;
-      if (bis && r.voucher_date && r.voucher_date > bis) continue;
-      const b = bucket(r.voucher_date);
+      if (r.status === "draft" || r.status === "voided") continue;
+      if (von && r.invoice_date && r.invoice_date < von) continue;
+      if (bis && r.invoice_date && r.invoice_date > bis) continue;
+      const b = bucket(r.invoice_date);
       if (b) b.ausgang += r.amount_gross ?? 0;
     }
     return [...buckets.entries()]

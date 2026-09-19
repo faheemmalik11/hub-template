@@ -346,17 +346,17 @@ export function BankAccountsTable({
           <TableBody>
             {gruppiert
               ? gruppen.map(({ gruppe, konten: rows }) => {
-                  const offen = alleOffen || aufgeklappt.has(gruppe.key);
+                  const open = alleOffen || aufgeklappt.has(gruppe.key);
                   return (
                     <Fragment key={gruppe.key}>
                       <ConnectionGroupRow
                         gruppe={gruppe}
-                        offen={offen}
+                        open={open}
                         onToggle={() => onToggleGruppe(gruppe.key)}
                         colSpan={spalten}
                         darfTrennen={ctx.darfTrennen}
                       />
-                      {offen &&
+                      {open &&
                         rows.map((a) => <KontoZeile key={a.id} a={a} eingerueckt ctx={ctx} />)}
                     </Fragment>
                   );

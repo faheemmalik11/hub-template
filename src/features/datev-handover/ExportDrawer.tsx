@@ -30,7 +30,7 @@ import {
  * The handover pushes paid receipts by email to the tax advisor's upload address and records
  * itself, because the mail provider confirms the send. This pulls a zip to the operator's machine
  * and records nothing: what somebody does with the archive afterwards is invisible here, so
- * stamping `datev_handed_over_at` would mark documents as handed over that may never arrive.
+ * stamping `handed_over_at` would mark documents as handed over that may never arrive.
  *
  * The scope differs to match. The archive is EVERYTHING dated in that month for that company: no
  * workflow filter, no "not yet handed over" filter. A month's batch is the month, and silently

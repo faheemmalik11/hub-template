@@ -6,7 +6,7 @@ import {
   NotifyBanner,
   type NotifySomeoneLabels,
   type NotifyBannerLabels,
-} from "@hub-kit/core/notify-someone";
+} from "@/kit/components/notify-someone";
 
 import {
   useAcknowledgeNotification,
@@ -20,12 +20,12 @@ import { formatDateTime } from "@/lib/data/format";
 import type { NotificationTargetKind } from "@/lib/data/notification-target";
 
 /**
- * "Notify someone": a direct message to one colleague about the record you are on (Stäy meeting
+ * "Notify someone": a direct message to one colleague about the record you are on (a client meeting
  * 26.08, and again on 09.09 for payments with no document).
  *
  * THE UI IS IN HUB-KIT, the data is here. All four hubs show the same dialog and the same banner;
  * none of them share a data layer, so what the kit gets is a recipient list, some labels and a
- * callback. Everything below is the staeyhub half of that contract.
+ * callback. Everything below is the this Hub half of that contract.
  */
 
 /**

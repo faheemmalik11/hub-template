@@ -70,11 +70,11 @@ import { useDebouncedValue } from "@/lib/use-debounced-value";
 import { tabSearch, useTabParam } from "@/lib/use-tab-param";
 import type { BankTransaction, OpenItemBlocker } from "@/lib/data/types";
 import type { BankTransactionSort } from "@/lib/data/queries";
-import { pageTitle } from "@/lib/brand";
+import { pageTitle } from "@/config/brand";
 
 const ALLE_GESELLSCHAFTEN = "__alle";
 // "Ohne Gesellschaft" is the most common value in that column (20 of 28 rows on Immonetz, 225 of
-// 433 on the Stäy Hub) and it is the one worth working off, but the filter used to offer only the
+// 433 on the this Hub) and it is the one worth working off, but the filter used to offer only the
 // real companies plus "all", so the rows that need assigning were the only ones that could not be
 // isolated. A sentinel of its own, matched against `company_id is null`.
 const OHNE_GESELLSCHAFT = "__ohne";
@@ -293,7 +293,7 @@ function OffenePostenPage() {
   );
   // Missing receipts = outgoing bank debits still unmatched (incoming invoices) or incoming bank
   // credits still unmatched (outgoing invoices/revenue). Transactions that can never have a receipt
-  // (salaries, taxes, rebookings, loan installments …) are parked in matching_status 'ignoriert' by
+  // (salaries, taxes, rebookings, loan installments …) are parked in matching_status 'ignored' by
   // the OPOS whitelist and therefore already excluded here — see the pipeline's migration 0018 and
   // the /opos-whitelist screen. They are counted, not hidden silently.
   // Declared before the queries below, which read the page and size to ask the server for
@@ -317,7 +317,7 @@ function OffenePostenPage() {
     [periodTransactions],
   );
   const fehlendQ = useBankTransactionsPage({
-    matchingStatus: "offen",
+    matchingStatus: "open",
     richtung: fehlendRichtung,
     search: sucheFehlend,
     companyId:
@@ -375,19 +375,19 @@ function OffenePostenPage() {
   // Outgoing-direction mirror (migration 0045). Outgoing invoices have no view of their own: there
   // are few of them and their coverage math is the same helper, so they stay client-side.
   //
-  // voucher_status === "open" is required alongside the coverage check: a draft (not yet a real
+  // status === "open" is required alongside the coverage check: a draft (not yet a real
   // invoice) or a voided (cancelled) outgoing invoice can still have amount_gross set and no
   // confirmed match, so coverage alone let it show up here as "open" money owed to us that isn't
   // real. useOpenOutgoingInvoicesInfinite (the manual-search picker's own query, see
-  // match-panel/manual-search.tsx) already filters on voucher_status server-side for exactly this
+  // match-panel/manual-search.tsx) already filters on status server-side for exactly this
   // reason; this client-side list now matches it.
   const offeneAusgangsrechnungen = useMemo(
     () =>
       (outgoingInvoicesQ.data ?? []).filter(
         (oi) =>
-          oi.voucher_status === "open" &&
+          oi.status === "open" &&
           // The alreadyPaid flag only ever mattered for a "paidoff" voucher, which the guard above
-          // already excludes -- always false here, not oi.voucher_status === "paidoff" (which TS
+          // already excludes -- always false here, not oi.status === "paidoff" (which TS
           // correctly flags as unreachable once narrowed to "open").
           !isFullyCovered(
             oi.amount_gross,
@@ -444,17 +444,17 @@ function OffenePostenPage() {
           companyId: oi.company_id,
           supplierId: null,
           gegenpartei: customerName || "—",
-          nr: oi.voucher_number,
+          nr: oi.invoice_number,
           betrag: oi.amount_gross,
           matched: outgoingMatchedByInvoice.get(oi.id) ?? 0,
           datum: oi.created_at,
-          rechnungsdatum: oi.voucher_date,
+          rechnungsdatum: oi.invoice_date,
           faellig: oi.due_date,
           skonto: null,
           blocker: null,
           suchtext: suchtextFuer([
             customerName,
-            oi.voucher_number,
+            oi.invoice_number,
             gesellschaft?.code,
             gesellschaft?.name,
             oi.amount_gross,
@@ -520,7 +520,7 @@ function OffenePostenPage() {
     dirBelege,
   ]);
 
-  // Partially allocated transactions keep matching_status 'offen' (migration 0024), so they arrive
+  // Partially allocated transactions keep matching_status 'open' (migration 0024), so they arrive
   // here on their own and stay available for the receipts that still have to explain the rest.
   // Company filter applied client-side: the list is already fetched in full for pagination/count
   // purposes, and company_id is a real column so this is an exact filter, not a guess.
@@ -735,9 +735,9 @@ function OffenePostenPage() {
       id: oi.id,
       type: "outgoing",
       label: oi.customers?.name || "—",
-      nr: oi.voucher_number,
+      nr: oi.invoice_number,
       amount: oi.amount_gross,
-      documentDate: oi.voucher_date,
+      documentDate: oi.invoice_date,
       dueDate: oi.due_date,
     };
   })();
@@ -1491,7 +1491,7 @@ function OffenePostenPage() {
                           <span className="block text-[0.7rem] font-normal leading-tight text-amber-700">
                             {t("offenePosten.fehlend.restOffen", {
                               rest: formatEUR(offenerRest(txn)),
-                              zugeordnet: formatEUR(
+                              matched: formatEUR(
                                 (txn.amount < 0 ? allocatedByTxn : outgoingAllocatedByTxn).get(
                                   txn.id,
                                 ) ?? 0,
@@ -1568,7 +1568,7 @@ function OffenePostenPage() {
                           <span className="block text-[0.7rem] font-normal leading-tight text-amber-700">
                             {t("offenePosten.fehlend.restOffen", {
                               rest: formatEUR(Math.max(Math.abs(txn.amount) - allocated, 0)),
-                              zugeordnet: formatEUR(allocated),
+                              matched: formatEUR(allocated),
                             })}
                           </span>
                         )}
@@ -1784,7 +1784,7 @@ function GegenparteiLink({ row }: { row: OpenInvoiceRow }) {
  * `invoices.due_date` is written by nobody today: the pipeline never extracts it (no
  * `faelligkeit` key exists in a single `extracted` blob in either database) and until now the
  * invoice form had no field for it, so the column was 0 of 30 filled on Immonetz and 0 of 433 on
- * the Stäy Hub. A column of dashes on the screen whose entire purpose is "which of these is late".
+ * the this Hub. A column of dashes on the screen whose entire purpose is "which of these is late".
  * A due date is now enterable on the invoice detail AND, when there is none, the cell falls back to
  * how long the receipt has been sitting there, which is always knowable.
  */

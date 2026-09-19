@@ -6,7 +6,7 @@ import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
 
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
-import { TABLE } from "@/lib/data/tables";
+import { TABLE } from "@/config/tables";
 
 const InputSchema = z.object({ email: z.string().trim().min(3).max(255) });
 

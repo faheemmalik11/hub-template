@@ -1,10 +1,10 @@
 import { useMemo } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 
-import type { TourSeenStore } from "@hub-kit/core/tour";
+import type { TourSeenStore } from "@/kit/components/tour";
 
 import { supabase } from "@/integrations/supabase/client";
-import { TABLE } from "@/lib/data/tables";
+import { TABLE } from "@/config/tables";
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 const sb = supabase as any;

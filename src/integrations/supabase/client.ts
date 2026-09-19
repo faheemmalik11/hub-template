@@ -1,5 +1,5 @@
-// Supabase-Client für Stäy. URL + öffentlicher (publishable) Key des
-// Stäy-Projekts. Der service_role-Key gehört NIE hierher (nur Server).
+// Supabase-Client für this client. URL + öffentlicher (publishable) Key des
+// this client-Projekts. Der service_role-Key gehört NIE hierher (nur Server).
 import { createClient } from "@supabase/supabase-js";
 import type { Database } from "./types";
 

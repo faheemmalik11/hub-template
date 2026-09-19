@@ -17,7 +17,7 @@
 // value the panel has sealed since per-client keys ("v2."), and SECRET_ENCRYPTION_KEY, the panel's
 // master key, for the older Fernet values not re-saved since. Neither may reach the browser.
 import type { ChannelKind } from "@/lib/data/types";
-import { TABLE } from "@/lib/data/tables";
+import { TABLE } from "@/config/tables";
 import { fernetDecrypt, looksEncrypted } from "./fernet.server";
 import { looksSealed, openSealed } from "./sealed.server";
 

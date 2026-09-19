@@ -212,8 +212,8 @@ export function DatevHandoverPage({ config }: { config: DatevHandoverConfig }) {
                     dropdown, which is not even rendered on a short register. */}
                   <button
                     type="button"
-                    onClick={() => setStatus(status === "offen" ? "alle" : "offen")}
-                    aria-pressed={status === "offen"}
+                    onClick={() => setStatus(status === "open" ? "alle" : "open")}
+                    aria-pressed={status === "open"}
                     className="text-warning underline underline-offset-2 hover:no-underline focus-visible:ring-ring rounded-sm focus-visible:ring-2 focus-visible:outline-none"
                   >
                     {t("datevUebergabe.summary.offen", { count: summary.needSetup })}
@@ -224,7 +224,7 @@ export function DatevHandoverPage({ config }: { config: DatevHandoverConfig }) {
           )}
 
           {/* ALWAYS SHOWN, whatever the register holds. It used to appear only past six companies,
-              which meant the controls were there on Eiffler's 29 and missing on Stäy's 6, and the
+              which meant the controls were there on Eiffler's 29 and missing on this client's 6, and the
               summary line could set a filter this Hub then gave you no visible way to clear. The
               same screen should not offer different controls per Hub. */}
           <div className="flex w-full items-center gap-2 sm:w-auto">

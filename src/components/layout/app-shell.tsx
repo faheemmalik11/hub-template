@@ -45,9 +45,9 @@ import {
   ShellFooterGroup,
   type ShellBadge,
   type ShellNavEntry,
-} from "@hub-kit/core/shell";
-import { TourButton, TourProvider } from "@hub-kit/core/tour";
-import { Avatar } from "@hub-kit/core/ui";
+} from "@/kit/components/shell";
+import { TourButton, TourProvider } from "@/kit/components/tour";
+import { Avatar } from "@/kit/ui";
 import { Button } from "@/components/ui/button";
 import { Toaster } from "@/components/ui/sonner";
 import {
@@ -60,7 +60,7 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { SidebarMenu } from "@/components/ui/sidebar";
 import { useAuth } from "@/lib/auth";
-import { PERMISSIONS, type PermissionKey } from "@/lib/permissions";
+import { PERMISSIONS, type PermissionKey } from "@/config/permissions";
 import { useActingAs, useInvoicesReturnedToMe } from "@/lib/data/queries";
 import { useTranslation } from "@/lib/i18n";
 import { useTourLabels, useTours } from "@/lib/tour/tours";
@@ -107,7 +107,7 @@ const nav: NavEntry[] = [
         labelKey: "nav.dateibenennung",
         to: "/dateibenennung",
         icon: Receipt,
-        permission: PERMISSIONS.pageDateibenennung,
+        permission: PERMISSIONS.pageFileNaming,
       },
       { labelKey: "nav.postfach", to: "/postfach", icon: Settings },
     ],
@@ -122,7 +122,7 @@ const nav: NavEntry[] = [
       // Bank connections used to be a second entry here. They are now the group headers of the
       // accounts table on /bankkonten, together with the sync controls and the sync log, so the
       // menu no longer offers two routes to the same subject. The connection layer is still gated
-      // by PERMISSIONS.pageBankverbindungen inside that page, for the same reason the nav entry
+      // by PERMISSIONS.pageBankConnections inside that page, for the same reason the nav entry
       // was: bank_connections and bank_sync_logs carry the BANKSapi access handles and the banking
       // relationship, neither has a company_id to scope by, and migration 20260819160000 denies
       // both to the assistant role at the database.
@@ -158,7 +158,7 @@ const nav: NavEntry[] = [
         labelKey: "nav.freigabeRegeln",
         to: "/freigabe-regeln",
         icon: ShieldCheck,
-        permission: PERMISSIONS.pageFreigabeRegeln,
+        permission: PERMISSIONS.pageApprovalRules,
       },
       { labelKey: "nav.ausschlussregeln", to: "/ausschlussregeln", icon: Trash2 },
     ],
@@ -178,7 +178,7 @@ const nav: NavEntry[] = [
     to: "/auswertungen",
     tourId: "shell-nav-auswertungen",
     icon: PieChart,
-    permission: PERMISSIONS.pageAuswertungen,
+    permission: PERMISSIONS.pageReports,
   },
 ];
 
@@ -192,19 +192,19 @@ const adminNav: NavGroup = {
       labelKey: "nav.benachrichtigungen",
       to: "/benachrichtigungen",
       icon: BellRing,
-      permission: PERMISSIONS.notificationsSettings,
+      permission: PERMISSIONS.settingsManage,
     },
     {
       labelKey: "nav.protokoll",
       to: "/protokoll",
       icon: ScrollText,
-      permission: PERMISSIONS.pageProtokoll,
+      permission: PERMISSIONS.pageActivityLog,
     },
     {
       labelKey: "nav.papierkorb",
       to: "/papierkorb",
       icon: Trash2,
-      permission: PERMISSIONS.pagePapierkorb,
+      permission: PERMISSIONS.pageTrash,
     },
   ],
 };

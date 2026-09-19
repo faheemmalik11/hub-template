@@ -2,7 +2,7 @@
 //
 // Migration 0074 let an `invoice_files` row belong to a bank_transaction instead of an invoice: a
 // Pleo card purchase IS the receipt, and no invoice record exists for it. The sync has been filling
-// that in since 2026-08 -- 2,145 files across 2,078 transactions on Stäy -- and nothing in the app
+// that in since 2026-08 -- 2,145 files across 2,078 transactions on this client -- and nothing in the app
 // has ever read them back, so every one of those transactions looked like it had no document at
 // all. That is the dead end the client hit in the 09.09.2026 meeting.
 //
@@ -21,7 +21,7 @@ import { createServerFn } from "@tanstack/react-start";
 
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 import { AppError } from "./errors";
-import { TABLE } from "@/lib/data/tables";
+import { TABLE } from "@/config/tables";
 
 const InputSchema = z.object({
   transactionId: z.string().uuid(),

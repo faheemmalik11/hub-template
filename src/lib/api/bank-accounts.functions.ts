@@ -17,7 +17,7 @@ import { z } from "zod";
 
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 import { checkCompanyAccess } from "./company-access";
-import { PERMISSIONS } from "@/lib/permissions";
+import { PERMISSIONS } from "@/config/permissions";
 import { requirePermission } from "./require-permission";
 import { AppError, ForbiddenError, NotFoundError, ValidationError } from "./errors";
 import {
@@ -28,7 +28,7 @@ import {
   type BankAccountFields,
   type BankAccountRules,
 } from "@/lib/data/bank-account-fields";
-import { TABLE } from "@/lib/data/tables";
+import { TABLE } from "@/config/tables";
 
 // bank_accounts isn't in the generated Database type (see CLAUDE.md), so writes go through an
 // untyped client, same convention as the rest of src/lib/api.
@@ -44,7 +44,7 @@ function callerEmailFrom(context: { claims?: unknown }): string {
 // Start's server-fn return-type serializability check (see bank-manual-import.functions.ts for
 // where this was first hit).
 const BANK_ACCOUNT_COLUMNS =
-  "id, connection_id, company_id, banksapi_product_id, banksapi_provider_id, provider_id, " +
+  "id, connection_id, company_id, provider_account_ref, provider_ref, provider_id, " +
   "connect_route, account_name, iban, bic, holder, bank_name, product_type, currency, balance, " +
   "balance_date, is_own_account, is_sandbox, name_is_custom, excluded_at, excluded_by, " +
   "exclusion_reason, created_at, updated_at";
@@ -59,8 +59,8 @@ export interface BankAccountRow {
   id: string;
   connection_id: string | null;
   company_id: string | null;
-  banksapi_product_id: string | null;
-  banksapi_provider_id: string | null;
+  provider_account_ref: string | null;
+  provider_ref: string | null;
   provider_id: string | null;
   connect_route: string | null;
   account_name: string | null;
@@ -89,7 +89,7 @@ async function requireActiveAdmin(db: Db, callerEmail: string): Promise<void> {
   await requirePermission(
     db,
     callerEmail,
-    PERMISSIONS.bankAccountsRemove,
+    PERMISSIONS.bankWrite,
     "Only admins may remove bank accounts",
   );
 }
@@ -138,7 +138,7 @@ function ibanConflictError(error: { code?: string; message: string }): AppError 
 
 // ---------------------------------------------------------------------------
 // createBankAccount — a manually-added "own account" with no BANKSapi feed (connection_id/
-// banksapi_product_id stay null). If it's later matched by IBAN during a BANKSapi sync, bank-sync
+// provider_account_ref stay null). If it's later matched by IBAN during a BANKSapi sync, bank-sync
 // adopts it (its "seeded row" branch updates rather than inserts) rather than creating a
 // duplicate — same behavior immonetz relies on for pre-seeded accounts.
 // ---------------------------------------------------------------------------
@@ -328,7 +328,7 @@ export const excludeBankAccount = createServerFn({ method: "POST" })
     let purgedFiles = 0;
     if (transactionIds.length > 0) {
       const [matchCount, outgoingCount, fileCount] = await Promise.all([
-        countIn(TABLE.invoiceTransactionMatches, "transaction_id"),
+        countIn(TABLE.documentTransactionMatches, "transaction_id"),
         countIn(TABLE.outgoingInvoiceTransactionMatches, "transaction_id"),
         countIn(TABLE.documentFiles, "transaction_id"),
       ]);

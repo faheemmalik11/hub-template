@@ -1,9 +1,9 @@
 import { useMemo } from "react";
 
-import type { ProfileLabels } from "@hub-kit/core/pages";
+import type { ProfileLabels } from "@/kit/pages";
 
 import { useAuth } from "@/lib/auth";
-import { PERMISSIONS } from "@/lib/permissions";
+import { PERMISSIONS } from "@/config/permissions";
 import { useTranslation } from "@/lib/i18n";
 
 export function useProfileLabels(): ProfileLabels {

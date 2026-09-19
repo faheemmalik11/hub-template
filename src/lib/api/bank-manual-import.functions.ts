@@ -27,7 +27,7 @@ import {
   normalizeBankAccountFields,
   validateBankAccountFields,
 } from "@/lib/data/bank-account-fields";
-import { TABLE } from "@/lib/data/tables";
+import { TABLE } from "@/config/tables";
 
 // bank_accounts/bank_transactions aren't in the generated Database type (see CLAUDE.md), so
 // writes go through an untyped client, same convention as employees.functions.ts.

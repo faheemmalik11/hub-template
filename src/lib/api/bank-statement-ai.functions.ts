@@ -1,7 +1,7 @@
 // Server function backing AI extraction of bank transactions from a PDF statement — a second,
 // AI-assisted path alongside the deterministic CSV/XLSX parsers in src/lib/bank-import/. Real
 // bank statements the client actually has are mostly PDF, and every bank formats its statement
-// differently, so this standardizes whatever shape a given bank uses into the same fields Stäy
+// differently, so this standardizes whatever shape a given bank uses into the same fields this client
 // needs everywhere else — but a PDF upload lands on its own editable preview step
 // (manual-import-ai-preview-step.tsx), not the read-only CSV/XLSX one, because the model can
 // genuinely fail to find a required field (see missing_fields below) and the human has to fill it

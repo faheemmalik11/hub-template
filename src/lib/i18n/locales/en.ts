@@ -867,7 +867,7 @@ const en = {
       slackAppErstellen: "Open Slack",
       slackVerbunden: "Slack is connected",
       slackSchritt1:
-        "Add Stäy to your Slack. Press Open Slack below, then do the following on Slack's own site. You need to be allowed to install apps in that workspace.",
+        "Add this client to your Slack. Press Open Slack below, then do the following on Slack's own site. You need to be allowed to install apps in that workspace.",
       slackSchritt1a:
         "Pick your workspace, then confirm the summary Slack shows you. Everything in it is filled in already.",
       slackSchritt1b: "Press Install to Workspace, then Allow.",
@@ -5419,7 +5419,7 @@ const en = {
     bereich: {
       keiner: "No area",
       hospitality: "Hospitality",
-      stay_re: "Stäy RE and projects",
+      stay_re: "this client RE and projects",
       alle: "All areas",
     },
     leerGenehmiger: "No approvers set up yet.",

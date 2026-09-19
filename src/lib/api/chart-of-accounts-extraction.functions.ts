@@ -22,7 +22,7 @@ import {
   MAX_CHART_OF_ACCOUNTS_UPLOAD_BASE64_CHARS,
   MAX_CHART_OF_ACCOUNTS_TEXT_CHARS,
 } from "./chart-of-accounts-extraction-shared";
-import { TABLE } from "@/lib/data/tables";
+import { TABLE } from "@/config/tables";
 import { tenantCredential } from "@/lib/postfach/channel-credentials.server";
 
 const OPENAI_RESPONSES_URL = "https://api.openai.com/v1/responses";

@@ -1,7 +1,7 @@
 import { useMemo } from "react";
 import { useRouterState } from "@tanstack/react-router";
 
-import type { TourDefinition, TourLabels, TourMap, TourStep } from "@hub-kit/core/tour";
+import type { TourDefinition, TourLabels, TourMap, TourStep } from "@/kit/components/tour";
 
 import { useIsMobile } from "@/hooks/use-mobile";
 import { useAuth } from "@/lib/auth";
@@ -11,7 +11,7 @@ import {
   usePermissionCatalogue,
 } from "@/lib/data/queries";
 import { useTranslation } from "@/lib/i18n";
-import { PERMISSIONS } from "@/lib/permissions";
+import { PERMISSIONS } from "@/config/permissions";
 
 export function useTourLabels(): TourLabels {
   const { t } = useTranslation();
@@ -343,7 +343,7 @@ function bankAccountsSpec(activeTab: string | undefined): TourSpec {
 const ASSIGNMENT_TABS: Record<string, StepSpec> = {
   regeln: { target: "assignment-rules", key: "rules", placement: "top" },
   spielplatz: { target: "assignment-playground", key: "playground", placement: "top" },
-  vorschlaege: { target: "assignment-suggestions", key: "suggestions", placement: "top" },
+  suggestions: { target: "assignment-suggestions", key: "suggestions", placement: "top" },
 };
 
 function assignmentSpec(
@@ -569,14 +569,14 @@ export function useTours(): TourMap {
   const channelsQ = useNotificationChannels();
   const hasSlackChannel = (channelsQ.data ?? []).length > 0;
 
-  const canOposWrite = can(PERMISSIONS.oposWhitelistWrite);
-  const canApprovals = can(PERMISSIONS.pageFreigabeRegeln);
-  const canFilenames = can(PERMISSIONS.pageDateibenennung);
-  const canCostAnalysis = can(PERMISSIONS.pageAuswertungen);
+  const canOposWrite = can(PERMISSIONS.bankWrite);
+  const canApprovals = can(PERMISSIONS.pageApprovalRules);
+  const canFilenames = can(PERMISSIONS.pageFileNaming);
+  const canCostAnalysis = can(PERMISSIONS.pageReports);
   const canTeam = can(PERMISSIONS.pageTeam);
-  const canLog = can(PERMISSIONS.pageProtokoll);
-  const canTrash = can(PERMISSIONS.pagePapierkorb);
-  const canNotificationSettings = can(PERMISSIONS.notificationsSettings);
+  const canLog = can(PERMISSIONS.pageActivityLog);
+  const canTrash = can(PERMISSIONS.pageTrash);
+  const canNotificationSettings = can(PERMISSIONS.settingsManage);
 
   return useMemo(() => {
     const build = (spec: TourSpec): TourDefinition => ({
@@ -607,7 +607,7 @@ export function useTours(): TourMap {
     map["/opos-whitelist"] = build(oposSpec(canOposWrite));
     map["/bankkonten"] = build(bankAccountsSpec(tab));
     map["/zuordnungsregeln"] = build(
-      assignmentSpec(tab, ["regeln", "spielplatz", "vorschlaege"], "tabsRegeln"),
+      assignmentSpec(tab, ["regeln", "spielplatz", "suggestions"], "tabsRegeln"),
     );
     map["/benachrichtigungen"] = build(
       notificationsSpec(tab, canNotificationSettings, hasSlackChannel),

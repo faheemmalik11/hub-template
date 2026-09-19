@@ -1,7 +1,7 @@
 // Server functions backing the Team & Rollen screen (Briefing Screen 17, Appendix A7). Creating
 // a real login-capable employee needs the Supabase Admin Auth API (service role) -- something
 // only server code can hold -- so this one mutation can't live in the client-side query layer
-// the way most of this app's writes do (see the staey-data skill). Everything else on that
+// the way most of this app's writes do (see the data-layer skill). Everything else on that
 // screen (role change, company-access grants, deactivation) is a plain RLS-gated row write from
 // the client, since app_users/user_company_access already carry admin-only write policies
 // (migration 0046) -- no server function needed for those.
@@ -11,10 +11,10 @@ import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
 
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
-import { PERMISSIONS } from "@/lib/permissions";
+import { PERMISSIONS } from "@/config/permissions";
 import { requirePermission } from "./require-permission";
 import { AppError, UnauthorizedError } from "./errors";
-import { TABLE } from "@/lib/data/tables";
+import { TABLE } from "@/config/tables";
 
 // The generated Database type only knows a handful of tables (see CLAUDE.md) -- app_users,
 // roles, user_company_access, change_history aren't in it, so writes go through an untyped

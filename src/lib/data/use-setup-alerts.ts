@@ -6,7 +6,7 @@ import { checklistStepLink } from "@/lib/checklist-config";
 import { useSetupChecklist } from "@/lib/data/use-setup-checklist";
 import { useTranslation } from "@/lib/i18n";
 
-const DISMISS_KEY_BASE = "staey.setupWarning.dismissed";
+const DISMISS_KEY_BASE = "hub.setupWarning.dismissed";
 const PREFIX = "setup:";
 
 export function isSetupAlert(item: NotificationItem) {

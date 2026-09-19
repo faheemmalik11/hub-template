@@ -39,7 +39,7 @@ import {
 import { toast } from "sonner";
 
 import { useAuth } from "@/lib/auth";
-import { PERMISSIONS } from "@/lib/permissions";
+import { PERMISSIONS } from "@/config/permissions";
 import { usePaymentRight } from "@/lib/payment-right";
 import { PaymentRightNotice } from "@/components/bank/payment-right-notice";
 import { CloseRemainderButton } from "@/components/bank/close-remainder";
@@ -52,7 +52,7 @@ import { Separator } from "@/components/ui/separator";
 import { Switch } from "@/components/ui/switch";
 import { Combobox } from "@/components/ui/combobox";
 import { PingDialog, PingNotice, usePingRecipients } from "@/components/belege/ping-button";
-import { useShellLeafLabel } from "@hub-kit/core/shell";
+import { useShellLeafLabel } from "@/kit/components/shell";
 import {
   Dialog,
   DialogContent,
@@ -134,8 +134,8 @@ import {
   releasesPaymentLink,
   UnlinkMatchButton,
   type UnlinkMatchLabels,
-} from "@hub-kit/core/invoice-payment-link";
-import { backwardsTargets } from "@hub-kit/core/invoice-workflow";
+} from "@/kit/components/invoice-payment-link";
+import { backwardsTargets } from "@/kit/components/invoice-workflow";
 import {
   GESELLSCHAFT_OHNE,
   APPROVAL_TERMINAL_STATUSES,
@@ -185,12 +185,12 @@ import {
   LabelledSelect,
   ReviewCard,
   WorkflowLadder,
-} from "@hub-kit/core/ui";
+} from "@/kit/ui";
 import type {
   WorkflowLadderLinkComponent,
   WorkflowLadderLinkProps,
   WorkflowLadderStep,
-} from "@hub-kit/core/ui";
+} from "@/kit/ui";
 import { AccountChips, type AccountChip } from "@/components/suppliers/account-chips";
 import { BankAccountDialog } from "@/components/suppliers/bank-account-dialog";
 import { FactList } from "@/components/records/fact-list";
@@ -211,7 +211,7 @@ import type {
   WorkflowStatus,
 } from "@/lib/data/types";
 import { INCOME_TAX_TREATMENTS, VAT_SPECIAL_CASES, VAT_TREATMENTS } from "@/lib/data/types";
-import { pageTitle } from "@/lib/brand";
+import { pageTitle } from "@/config/brand";
 import { pickListSearch } from "@/lib/belege-list-search";
 
 import {
@@ -573,7 +573,7 @@ function BelegDetail({ beleg }: { beleg: Beleg }) {
   // affordance goes through. Without `invoices.book` the database refuses the write (the trigger in
   // migration 20260828270000), so an enabled button here could only ever open a form that fails on
   // save with a raw Postgres error -- the same defect the paid switch had.
-  const darfBuchen = darfAlsPerson(PERMISSIONS.invoicesBook);
+  const darfBuchen = darfAlsPerson(PERMISSIONS.documentsWrite);
   const kannBearbeiten = (section: string) =>
     darfBuchen && (editSection === null || editSection === section);
 
@@ -1006,7 +1006,7 @@ function BelegDetail({ beleg }: { beleg: Beleg }) {
   }, [freitextKategorie, categories]);
 
   // property → company (table property_companies, migration 0083). A property may genuinely belong
-  // to more than one company (the client's dual-ownership cases — Hinterstraße is Infio AND Stäy),
+  // to more than one company (the client's dual-ownership cases — Hinterstraße is Infio AND this client),
   // so more than one match is a real state to surface, not a master-data contradiction to resolve.
   //
   // Offered as a suggestion rather than written silently: the reviewer stays the one who decides,
@@ -1071,7 +1071,7 @@ function BelegDetail({ beleg }: { beleg: Beleg }) {
     (logQ.data ?? []).find((v) => v.source_item_id === beleg.source_item_id) ??
     logQ.data?.[0] ??
     null;
-  const wf = beleg.workflow_status ?? "eingegangen";
+  const wf = beleg.workflow_status ?? "received";
   const lastschrift = istLastschrift(beleg.payment_method);
   // Per-field first (extracted.validation_detail), falling back to the flat gates. `gruendeDetail`
   // stays what the badges count.
@@ -1082,7 +1082,7 @@ function BelegDetail({ beleg }: { beleg: Beleg }) {
 
   const canApprove = darfAlsPerson(PERMISSIONS.invoicesApprove);
   const canFinalApprove = darfAlsPerson(PERMISSIONS.invoicesApproveFinal);
-  const darfZuweisen = darfAlsPerson(PERMISSIONS.invoicesAssign);
+  const darfZuweisen = darfAlsPerson(PERMISSIONS.documentsWrite);
 
   const chainPeopleById = useMemo(() => new Map(chainPeople.map((p) => [p.id, p])), [chainPeople]);
   /**
@@ -1172,13 +1172,13 @@ function BelegDetail({ beleg }: { beleg: Beleg }) {
   // The full ladder, taken from WORKFLOW_REIHENFOLGE rather than a second list kept in step by
   // hand. `rueckfrage` is dropped: it is a loop back to the review step, not a stage of its own,
   // which is why the canonical order has eight entries and the ladder has seven.
-  const WORKFLOW_STUFEN = useMemo(() => WORKFLOW_REIHENFOLGE.filter((s) => s !== "rueckfrage"), []);
+  const WORKFLOW_STUFEN = useMemo(() => WORKFLOW_REIHENFOLGE.filter((s) => s !== "query"), []);
   // A document in `rueckfrage` is back at the review step, so that is where the marker sits; the
   // query itself is carried by the review chip and the Freigabe tab, not by a node on the line.
   const aktuelleStufe = WORKFLOW_STUFEN.indexOf(
-    (wf === "rueckfrage" ? "in_pruefung" : wf) as (typeof WORKFLOW_STUFEN)[number],
+    (wf === "query" ? "in_review" : wf) as (typeof WORKFLOW_STUFEN)[number],
   );
-  const abseitsDerKette = wf === "abgelehnt" || wf === "nicht_relevant";
+  const abseitsDerKette = wf === "rejected" || wf === "not_relevant";
 
   /**
    * The chain drawn above IS the control that moves the invoice along it.
@@ -1228,7 +1228,7 @@ function BelegDetail({ beleg }: { beleg: Beleg }) {
    */
   const keineAktionenGrund = useMemo(() => {
     if (legalActions.length > 0) return null;
-    if ((APPROVAL_TERMINAL_STATUSES as string[]).includes(wf)) return { key: "abgeschlossen" };
+    if ((APPROVAL_TERMINAL_STATUSES as string[]).includes(wf)) return { key: "closed" };
     // Only the super admin can reach this, and only by choosing "(nobody)" in the Acting as
     // picker. It used to fire for anybody simply missing from the approvers table, which is a
     // state that cannot exist now that the chain names accounts.
@@ -1293,8 +1293,8 @@ function BelegDetail({ beleg }: { beleg: Beleg }) {
     if (aktuelleStufe >= 0 && index <= aktuelleStufe) return null;
     // 'bezahlt' and after. None of the three is clickable, but they are not blocked for the same
     // reason and a single sentence covering all three said nothing about any of them: 'bezahlt'
-    // comes off a confirmed payment (trigger, migration 0049), 'uebergeben_datev' off the DATEV
-    // handover (trigger, migration 0051), and 'abgeschlossen' off NOTHING -- no trigger and no
+    // comes off a confirmed payment (trigger, migration 0049), 'handed_over' off the DATEV
+    // handover (trigger, migration 0051), and 'closed' off NOTHING -- no trigger and no
     // approval action writes it, so the only route to it is the manual "Status korrigieren"
     // select in the Freigabe tab. Each step names its own mechanism.
     if (AUTO_STUFEN.includes(stufe as WorkflowStatus))
@@ -1308,8 +1308,8 @@ function BelegDetail({ beleg }: { beleg: Beleg }) {
     // One sentence for the closing step, whoever is reading and wherever the invoice is. It is
     // blocked for two reasons at once (not at DATEV yet, and only a supervisor closes it), and
     // answering only one of them left the reader to discover the other by trying.
-    if (stufe === "abgeschlossen") return t("belege.detail.stufenNav.gesperrt.abschluss");
-    if (stufe === "freigegeben_vorgesetzter") {
+    if (stufe === "closed") return t("belege.detail.stufenNav.gesperrt.abschluss");
+    if (stufe === "approved_final") {
       const regel = approvalRuleQ.data;
       // Mirrors nextLegalActions' own test, so the reason a step is locked can never contradict
       // whether it is actually clickable.
@@ -1338,7 +1338,7 @@ function BelegDetail({ beleg }: { beleg: Beleg }) {
     // would still be dead after their own approval. Who may act has to beat what has to happen
     // first, or the sentence describes a future that never arrives for this reader.
     // Between here and the step you may take: a manager's approval out of review lands on
-    // 'freigegeben_vorgesetzter' and passes straight over 'freigegeben_assistenz'.
+    // 'approved_final' and passes straight over 'approved_first'.
     if (naechsteAktionStufe != null && index < naechsteAktionStufe)
       return t("belege.detail.stufenNav.gesperrt.uebersprungen", {
         stufe: t(`belege.workflow.${WORKFLOW_STUFEN[naechsteAktionStufe]}`),
@@ -1453,13 +1453,13 @@ function BelegDetail({ beleg }: { beleg: Beleg }) {
   // step 1 owns eingegangen/in_pruefung/rueckfrage, step 2 owns freigegeben_assistenz AND
   // freigegeben_vorgesetzter (the approving manager stays responsible for getting it paid, even
   // after delegating execution to the account holder — see paymentHandoff below, since
-  // 'freigegeben_vorgesetzter' IS the "awaiting payment" state, migration 0036). Beyond that,
+  // 'approved_final' IS the "awaiting payment" state, migration 0036). Beyond that,
   // 'bezahlt' has no single "still needs to act" person outside a payment failure, so there is
   // deliberately no fallback to step 1, who already did their part.
   const responsibleApproverId =
-    wf === "freigegeben_assistenz" || wf === "freigegeben_vorgesetzter"
+    wf === "approved_first" || wf === "approved_final"
       ? approvalRuleQ.data?.step_2_user_id
-      : wf === "eingegangen" || wf === "in_pruefung" || wf === "rueckfrage" || !wf
+      : wf === "received" || wf === "in_review" || wf === "query" || !wf
         ? approvalRuleQ.data?.step_1_user_id
         : undefined;
   // The directory includes DEACTIVATED people on purpose: deactivating somebody never edits the
@@ -1475,16 +1475,16 @@ function BelegDetail({ beleg }: { beleg: Beleg }) {
   // the switch); an account has one switch, so one warning covers it.
   const responsibleApproverInactive = !!responsibleApprover && !responsibleApprover.is_active;
 
-  // 'zuweisung' also shows here, on top of the general Verlauf tab — the "Zugewiesen an" field
+  // 'assigned' also shows here, on top of the general Verlauf tab — the "Zugewiesen an" field
   // it logs lives on this same Freigabe tab, so its history belongs next to it too.
   const approvalActionHistory = useMemo(
     () =>
-      // 'rueckfrage' included. It used to be excluded here and shown in a Queries card of its
+      // 'query' included. It used to be excluded here and shown in a Queries card of its
       // own, which left the approval history with a hole exactly where the chain had turned
       // around: the invoice went back for a query and this list did not mention it. The query's
       // comment rides along on the row, so nothing is lost by dropping the second card.
       (verlaufQ.data ?? []).filter(
-        (v) => APPROVAL_VERLAUF_TYPES.includes(v.type) || v.type === "zuweisung",
+        (v) => APPROVAL_VERLAUF_TYPES.includes(v.type) || v.type === "assigned",
       ),
     [verlaufQ.data],
   );
@@ -1493,7 +1493,7 @@ function BelegDetail({ beleg }: { beleg: Beleg }) {
     [verlaufQ.data],
   );
   const allNotes = useMemo(
-    () => (verlaufQ.data ?? []).filter((v) => v.type === "notiz"),
+    () => (verlaufQ.data ?? []).filter((v) => v.type === "note"),
     [verlaufQ.data],
   );
   const headerNotes = allNotes.slice(0, HEADER_NOTE_COUNT);
@@ -1558,7 +1558,7 @@ function BelegDetail({ beleg }: { beleg: Beleg }) {
   // Sums the amount allocated to THIS invoice per link, not the whole transaction: one collective
   // transfer of 3.000 paying three invoices of 1.000 must count 1.000 here, not 3.000.
   const headerMatchedSum = (headerMatchesQ.data ?? [])
-    .filter((m) => m.status === "bestaetigt")
+    .filter((m) => m.status === "confirmed")
     .reduce((s, m) => s + Math.abs(m.amount_matched ?? 0), 0);
   // A suggestion nobody has confirmed or rejected yet. It contributes nothing to headerMatchedSum
   // (that counts confirmed links only), so without this the header said "Nicht abgeglichen" while a
@@ -1613,7 +1613,7 @@ function BelegDetail({ beleg }: { beleg: Beleg }) {
       //
       // Without this the value stays derived from the PREVIOUS property, and the pipeline can no
       // longer correct it either: a human assignment freezes vat_treatment against re-extraction.
-      // That leaves a receipt claiming, say, "steuerpflichtig" under a property that is tax-exempt,
+      // That leaves a receipt claiming, say, "taxable" under a property that is tax-exempt,
       // which is a wrong number with tax consequences rather than a cosmetic mismatch.
       (changes as Record<string, unknown>).vat_treatment = o?.vat_status ?? null;
 
@@ -1624,8 +1624,7 @@ function BelegDetail({ beleg }: { beleg: Beleg }) {
       // like vat_treatment above. Skipped only when the reviewer is editing deductibility by hand in
       // this very same save — their explicit value wins, not the property's default.
       if (!deductibilityEditedByHand) {
-        const pct =
-          o?.vat_status === "steuerpflichtig" ? 100 : o?.vat_status === "steuerfrei" ? 0 : null;
+        const pct = o?.vat_status === "taxable" ? 100 : o?.vat_status === "exempt" ? 0 : null;
         (changes as Record<string, unknown>).vat_deductible_pct = pct;
         (changes as Record<string, unknown>).vat_deductibility_source = pct == null ? null : "ai";
       }
@@ -1698,7 +1697,7 @@ function BelegDetail({ beleg }: { beleg: Beleg }) {
         feldAenderungDe(k, beleg[k as keyof Beleg], changes[k as keyof Beleg], ANZEIGE[k]),
       );
 
-    // Assignment changes log as typ "zuordnung", pure field edits as "aenderung". Either way the
+    // Assignment changes log as typ "booking", pure field edits as "change". Either way the
     // text carries the full list of before→after lines.
     const istZuordnung = labels.some((k) => ZUORDNUNG_FELDER.includes(k));
 
@@ -1864,7 +1863,7 @@ function BelegDetail({ beleg }: { beleg: Beleg }) {
         // the detail screen lists them one per row without re-parsing the joined text (a value can
         // itself contain the separator — a business line reads "GB-01 · Vermietung").
         protokoll: {
-          typ: istZuordnung ? "zuordnung" : "aenderung",
+          typ: istZuordnung ? "booking" : "change",
           text: alleLinien.join(" · "),
           daten: {
             felder: labels,
@@ -1943,8 +1942,7 @@ function BelegDetail({ beleg }: { beleg: Beleg }) {
     // Who approved, as a key rather than a name. The two-person rule compares the payer against
     // this, and it has to be cleared the moment the invoice leaves the approved state -- otherwise
     // a rejected-then-reapproved invoice still names whoever approved it the first time.
-    const approvedBy =
-      action.nextStatus === "freigegeben_vorgesetzter" ? (appUserId ?? null) : null;
+    const approvedBy = action.nextStatus === "approved_final" ? (appUserId ?? null) : null;
     updateBeleg.mutate(
       {
         // Every remaining action is a plain move along the chain. The one that also cleared
@@ -2015,8 +2013,8 @@ function BelegDetail({ beleg }: { beleg: Beleg }) {
 
   // Manual correction — fixes an accidental click by setting workflow_status directly to any
   // status, bypassing the gated actions entirely (so it also works to undo a terminal state like
-  // 'abgelehnt', which nextLegalActions otherwise blocks everything on). Confirmed before applying
-  // so the fix itself can't be another accidental click. 'nicht_relevant' is excluded — that has
+  // 'rejected', which nextLegalActions otherwise blocks everything on). Confirmed before applying
+  // so the fix itself can't be another accidental click. 'not_relevant' is excluded — that has
   // its own dedicated flow (useSetNotRelevant/useClearNotRelevant) which also updates the mailbox
   // return flags; setting the raw column here would desync those.
   const [pendingCorrection, setPendingCorrection] = useState<WorkflowStatus | null>(null);
@@ -2033,7 +2031,7 @@ function BelegDetail({ beleg }: { beleg: Beleg }) {
   // (Immonetz has an extra approval step), which is why it takes WORKFLOW_REIHENFOLGE as an
   // argument rather than assuming one.
   const korrekturUnlinkMatch = useUnlinkMatch();
-  const bestaetigteMatches = (headerMatchesQ.data ?? []).filter((m) => m.status === "bestaetigt");
+  const bestaetigteMatches = (headerMatchesQ.data ?? []).filter((m) => m.status === "confirmed");
   const { mayPay: darfSelbstZahlen, reason: keinZahlrechtKorrektur } = usePaymentRight();
   const korrekturLoestZahlung =
     pendingCorrection != null &&
@@ -2050,7 +2048,7 @@ function BelegDetail({ beleg }: { beleg: Beleg }) {
   // Past "Bezahlt" nothing is offered: those records have gone to DATEV and are not coming back.
   const rueckschritt = backwardsTargets(wf, WORKFLOW_REIHENFOLGE, {
     mayApprove: canApprove,
-    mayPay: darfAlsPerson(PERMISSIONS.invoicesPay),
+    mayPay: darfAlsPerson(PERMISSIONS.paymentsWrite),
   });
 
   // WHO THE CHANGE WAS MADE AS, for every workflow write -- not just the approval actions.
@@ -2078,21 +2076,21 @@ function BelegDetail({ beleg }: { beleg: Beleg }) {
         return;
       }
     }
-    // 'bezahlt'/'uebergeben_datev' are otherwise DB-trigger-derived only (migrations 0036/0038,
-    // fire on paid_at/datev_handed_over_at null→non-null) — correcting the raw column here must
+    // 'bezahlt'/'handed_over' are otherwise DB-trigger-derived only (migrations 0036/0038,
+    // fire on paid_at/handed_over_at null→non-null) — correcting the raw column here must
     // keep those checkbox fields in step, or they desync: correcting FORWARD past one without a
     // real event leaves it null forever (the trigger can never re-fire); correcting BACKWARD past
     // one leaves it stale (blocking a later real event's null→non-null edge from ever firing).
     // Ranked by position in the main chain (WORKFLOW_REIHENFOLGE) so this holds for every
-    // transition, not just to/from 'bezahlt' — 'abgelehnt' (not in that array, indexOf = -1)
-    // ranks below 'eingegangen', so correcting a paid/handed-over invoice to rejected also clears
+    // transition, not just to/from 'bezahlt' — 'rejected' (not in that array, indexOf = -1)
+    // ranks below 'received', so correcting a paid/handed-over invoice to rejected also clears
     // both, matching "this never should have progressed".
     const targetRank = WORKFLOW_REIHENFOLGE.indexOf(
       target as (typeof WORKFLOW_REIHENFOLGE)[number],
     );
     const currentRank = WORKFLOW_REIHENFOLGE.indexOf(wf as (typeof WORKFLOW_REIHENFOLGE)[number]);
-    const bezahltRank = WORKFLOW_REIHENFOLGE.indexOf("bezahlt");
-    const uebergebenRank = WORKFLOW_REIHENFOLGE.indexOf("uebergeben_datev");
+    const bezahltRank = WORKFLOW_REIHENFOLGE.indexOf("paid");
+    const uebergebenRank = WORKFLOW_REIHENFOLGE.indexOf("handed_over");
 
     const paymentSync =
       targetRank >= bezahltRank && !beleg.paid_at
@@ -2101,16 +2099,16 @@ function BelegDetail({ beleg }: { beleg: Beleg }) {
           ? { paid_at: null, paid_source: null }
           : {};
     const datevSync =
-      targetRank >= uebergebenRank && !beleg.datev_handed_over_at
-        ? { datev_handed_over_at: new Date().toISOString() }
+      targetRank >= uebergebenRank && !beleg.handed_over_at
+        ? { handed_over_at: new Date().toISOString() }
         : targetRank < uebergebenRank && currentRank >= uebergebenRank
-          ? { datev_handed_over_at: null }
+          ? { handed_over_at: null }
           : {};
     updateBeleg.mutate(
       {
         changes: { workflow_status: target, ...paymentSync, ...datevSync },
         protokoll: {
-          typ: "korrektur",
+          typ: "correction",
           // Persisted audit text stays German (do not translate).
           text: grund
             ? `Manuell korrigiert: ${workflowLabelDe(wf)} → ${workflowLabelDe(target)} – ${grund}`
@@ -2159,7 +2157,7 @@ function BelegDetail({ beleg }: { beleg: Beleg }) {
         changes: { assigned_user_id: wert },
         // Persisted audit text stays German.
         protokoll: {
-          typ: "zuweisung",
+          typ: "assigned",
           text: wert ? `Zugewiesen an ${name}` : "Zuweisung entfernt",
           // What notify_event_from_history() reads to address the notification (migration
           // 20260901160500). Without it the trigger falls back to matching `assigned_to` by name
@@ -2197,7 +2195,7 @@ function BelegDetail({ beleg }: { beleg: Beleg }) {
     // Guarded on 'bezahlt': once an invoice has moved on to DATEV or been closed, removing a paid
     // mark is not a reason to drag it back through the chain -- that is a correction for a
     // super_admin to make deliberately, not a side effect of a switch.
-    const zuruecknahme = !checked && beleg.workflow_status === "bezahlt";
+    const zuruecknahme = !checked && beleg.workflow_status === "paid";
 
     // H8 (client meeting 09.09.2026). This switch is the path anybody holding invoices.pay takes
     // to say an invoice was not paid after all, and it walks the status back from 'bezahlt' on its
@@ -2205,7 +2203,7 @@ function BelegDetail({ beleg }: { beleg: Beleg }) {
     // invoice reads as unpaid while the transaction still reads as reconciled against it, and the
     // next bank import has nothing left to match. Same rule as the super-admin correction, which
     // is why both ask hub-kit rather than each deciding for itself.
-    if (zuruecknahme && releasesPaymentLink(wf, "in_pruefung", WORKFLOW_REIHENFOLGE)) {
+    if (zuruecknahme && releasesPaymentLink(wf, "in_review", WORKFLOW_REIHENFOLGE)) {
       try {
         for (const treffer of bestaetigteMatches) {
           await korrekturUnlinkMatch.mutateAsync({
@@ -2232,7 +2230,7 @@ function BelegDetail({ beleg }: { beleg: Beleg }) {
           // the paid mark while leaving the flag standing would send the invoice back to In
           // Prüfung as unpaid AND keep it invisible in the open items -- owed to the supplier and
           // listed nowhere.
-          ...(zuruecknahme ? { workflow_status: "in_pruefung" as const, already_paid: null } : {}),
+          ...(zuruecknahme ? { workflow_status: "in_review" as const, already_paid: null } : {}),
         },
         // Persisted audit text stays German.
         // `korrektur` rather than `aenderung`, and only for the withdrawal: it is the type for
@@ -2242,12 +2240,12 @@ function BelegDetail({ beleg }: { beleg: Beleg }) {
         // verlaufZielStatus() reads to title the row with the state reached.
         protokoll: zuruecknahme
           ? {
-              typ: "korrektur",
+              typ: "correction",
               text: "Manuelle Bezahlt-Markierung entfernt, Status zurück auf In Prüfung",
-              daten: { nach: "in_pruefung", ...handelndAlsDaten },
+              daten: { nach: "in_review", ...handelndAlsDaten },
             }
           : {
-              typ: "aenderung",
+              typ: "change",
               text: checked
                 ? "Manuell als bezahlt markiert"
                 : "Manuelle Bezahlt-Markierung entfernt",
@@ -2492,7 +2490,7 @@ function BelegDetail({ beleg }: { beleg: Beleg }) {
           }))}
         />
       )}
-      {wf === "freigegeben_vorgesetzter" && !beleg.paid_at && (
+      {wf === "approved_final" && !beleg.paid_at && (
         <Button
           size="sm"
           className="gap-2"
@@ -2572,7 +2570,7 @@ function BelegDetail({ beleg }: { beleg: Beleg }) {
             ? [{ id: "ping", icon: BellRing, label: t("ping.aktion") }]
             : []),
           // Verwerfen (für "zu prüfen"): kein Beleg -- Soft-Delete mit Grund.
-          ...(beleg.status === "zu_pruefen"
+          ...(beleg.status === "needs_review"
             ? [
                 {
                   id: "verwerfen",
@@ -2771,20 +2769,20 @@ function BelegDetail({ beleg }: { beleg: Beleg }) {
                 {!istEingangsrechnung(beleg.document_type) && (
                   <BelegartBadge belegart={beleg.document_type} />
                 )}
-                {/* 'rueckfrage' is the one workflow status the ladder cannot draw: it is a loop
+                {/* 'query' is the one workflow status the ladder cannot draw: it is a loop
                     back to the review step, not a stage of its own, so the bar marks the invoice
                     as sitting on "In Prüfung" and nothing anywhere said a query was open. The
                     invoice LIST says so plainly (WorkflowBadge on workflow_status), so a reader
                     coming from a row marked "Rückfrage" opened the invoice and lost the fact. Same
                     badge, same colour, stated where it went missing. */}
-                {wf === "rueckfrage" && (
+                {wf === "query" && (
                   <button
                     type="button"
                     onClick={() => springeZu("freigabe", RUECKFRAGE_ANKER)}
                     aria-label={t("belege.detail.rueckfrageOffen")}
                     className="cursor-pointer rounded-md transition hover:brightness-95 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand focus-visible:ring-offset-2"
                   >
-                    <WorkflowBadge status="rueckfrage" />
+                    <WorkflowBadge status="query" />
                   </button>
                 )}
               </div>
@@ -2964,7 +2962,7 @@ function BelegDetail({ beleg }: { beleg: Beleg }) {
                   // mode: there the circle sets the status directly, and sending the one person who can do
                   // that off to another screen instead would be a downgrade.
                   const datevZiel =
-                    !aktion && !korrekturZiel && !erreicht && stufe === "uebergeben_datev"
+                    !aktion && !korrekturZiel && !erreicht && stufe === "handed_over"
                       ? "/datev-uebergabe"
                       : null;
                   return {
@@ -2979,10 +2977,10 @@ function BelegDetail({ beleg }: { beleg: Beleg }) {
                     since: stufeSeit ?? undefined,
                     // The open query, marked on the step it is holding up. The bar could never say this, and
                     // it is the reason a reader had to open a tab to find out why the invoice had stopped.
-                    // Aimed at the same tab the header's own query badge opens (see `wf === "rueckfrage"`
+                    // Aimed at the same tab the header's own query badge opens (see `wf === "query"`
                     // above): one control, one destination, whichever of the two a reader happens to click.
                     note:
-                      aktuell && wf === "rueckfrage"
+                      aktuell && wf === "query"
                         ? {
                             icon: MessageCircleQuestion,
                             label: t("belege.detail.rueckfrageOffen"),
@@ -3151,7 +3149,7 @@ function BelegDetail({ beleg }: { beleg: Beleg }) {
               nothing is wrong and nothing needs doing, so it carries the "i" and a calm colour
               rather than the amber triangle the "Braucht deine Eingabe" card uses. Saskia read the
               triangle as an error or a required action (17.09.2026); same rule as H13 in
-              docs/MEETING_2026-09-09_STAEY.md: TriangleAlert only where the user must act. */}
+              TriangleAlert only where the user must act. */}
           {lastschrift && (
             <div className="flex items-start gap-3 rounded-xl border border-border bg-muted/40 p-4 text-base text-foreground">
               <Info className="mt-0.5 size-5 shrink-0 text-brand" />
@@ -3557,23 +3555,23 @@ function BelegDetail({ beleg }: { beleg: Beleg }) {
                 title={t("belege.detail.section.beteiligte")}
                 anchorId={BETEILIGTE_ANKER}
                 editable
-                editDisabled={!kannBearbeiten("zuordnung")}
-                isEditing={isEdit("zuordnung")}
+                editDisabled={!kannBearbeiten("booking")}
+                isEditing={isEdit("booking")}
                 saving={updateBeleg.isPending}
-                onEdit={() => startEdit("zuordnung")}
+                onEdit={() => startEdit("booking")}
                 onCancel={abbrechen}
                 onSave={speichern}
               >
                 <div className="grid gap-4 sm:grid-cols-2">
                   <Field
-                    edit={isEdit("zuordnung")}
+                    edit={isEdit("booking")}
                     label={t("belege.detail.field.rechnungssteller")}
                     konfidenz={konf.rechnungssteller}
                     value={beleg.issuer}
                     formValue={form.issuer}
                     onChange={(v) => set("issuer", v)}
                   />
-                  {isEdit("zuordnung") ? (
+                  {isEdit("booking") ? (
                     <div className="space-y-1">
                       <span className="text-sm text-muted-foreground">
                         {t("belege.detail.field.gesellschaft")}
@@ -3606,9 +3604,9 @@ function BelegDetail({ beleg }: { beleg: Beleg }) {
                         // it belongs to, whether or not this invoice is booked to Gemeinkosten.
                         sub={
                           gesellschaft ? (
-                            gesellschaft.overhead_cost_center != null ? (
+                            gesellschaft.overhead_cost_centre != null ? (
                               t("belege.detail.field.gemeinkostenNummer", {
-                                nr: gesellschaft.overhead_cost_center,
+                                nr: gesellschaft.overhead_cost_centre,
                               })
                             ) : (
                               <>
@@ -3643,7 +3641,7 @@ function BelegDetail({ beleg }: { beleg: Beleg }) {
                     </div>
                   )}
                   <div className="space-y-1">
-                    {isEdit("zuordnung") ? (
+                    {isEdit("booking") ? (
                       <>
                         <span className="text-sm text-muted-foreground">
                           {t("belege.detail.field.objekt")}
@@ -3726,7 +3724,7 @@ function BelegDetail({ beleg }: { beleg: Beleg }) {
                     ) : null}
                     {/* The company follows from the property (migration 0083), so offer it instead
                         of making the reviewer look it up on the property page. */}
-                    {isEdit("zuordnung") && companyVorschlagOffen ? (
+                    {isEdit("booking") && companyVorschlagOffen ? (
                       <div className="flex flex-wrap items-center gap-2 rounded-md border border-sky-300 bg-sky-50 px-2 py-1.5 text-sm text-sky-800">
                         <span>
                           {t("belege.detail.field.gesellschaftVorschlag", {
@@ -3743,11 +3741,11 @@ function BelegDetail({ beleg }: { beleg: Beleg }) {
                           {t("belege.detail.field.gesellschaftUebernehmen")}
                         </Button>
                       </div>
-                    ) : isEdit("zuordnung") && companyVorschlag?.mehrdeutig ? (
+                    ) : isEdit("booking") && companyVorschlag?.mehrdeutig ? (
                       <p className="rounded-md border border-amber-300 bg-amber-50 px-2 py-1.5 text-sm text-amber-800">
                         {t("belege.detail.field.gesellschaftMehrdeutig")}
                       </p>
-                    ) : isEdit("zuordnung") && companyVorschlag?.fehlt ? (
+                    ) : isEdit("booking") && companyVorschlag?.fehlt ? (
                       <p className="rounded-md border border-amber-300 bg-amber-50 px-2 py-1.5 text-sm text-amber-800">
                         {t("belege.detail.field.gesellschaftKeineZuordnung")}
                       </p>
@@ -3758,7 +3756,7 @@ function BelegDetail({ beleg }: { beleg: Beleg }) {
                       mirror the rule engine also writes, but it is derived automatically
                       (speichern() above) and never shown or edited here directly anymore. */}
                   <div className="space-y-1">
-                    {isEdit("zuordnung") ? (
+                    {isEdit("booking") ? (
                       <>
                         <span className="text-sm text-muted-foreground">
                           {t("belege.detail.field.kategorie")}
@@ -3795,7 +3793,7 @@ function BelegDetail({ beleg }: { beleg: Beleg }) {
                         }
                       />
                     )}
-                    {!isEdit("zuordnung") && !beleg.category_id ? (
+                    {!isEdit("booking") && !beleg.category_id ? (
                       freitextKategorie ? (
                         // There IS a category on this receipt, it is just the free-text one the
                         // pipeline wrote and never linked to the taxonomy. Showing it beats
@@ -3832,7 +3830,7 @@ function BelegDetail({ beleg }: { beleg: Beleg }) {
                         this receipt has one) is the suggested scope — both adjustable in the
                         dialog, with the same retroactive preview as the rules screen
                         (Briefing Screen 4: "this would change N receipts"). */}
-                    {!isEdit("zuordnung") &&
+                    {!isEdit("booking") &&
                     beleg.category_id &&
                     beleg.supplier_id &&
                     !regelnQ.data?.cost_category ? (
@@ -3849,7 +3847,7 @@ function BelegDetail({ beleg }: { beleg: Beleg }) {
                         }
                       />
                     ) : null}
-                    {!isEdit("zuordnung") && regelnQ.data?.cost_category ? (
+                    {!isEdit("booking") && regelnQ.data?.cost_category ? (
                       <RegelHinweis
                         belegId={beleg.id}
                         target="cost_category"
@@ -4069,7 +4067,7 @@ function BelegDetail({ beleg }: { beleg: Beleg }) {
                           confirmed, explained and written into the history. */}
                       {!beleg.paid_at &&
                         ((
-                          !darfAlsPerson(PERMISSIONS.invoicesPay)
+                          !darfAlsPerson(PERMISSIONS.paymentsWrite)
                             ? t("belege.detail.zahlung.keineZahlBerechtigung")
                             : null
                         ) ? (
@@ -4082,7 +4080,7 @@ function BelegDetail({ beleg }: { beleg: Beleg }) {
                               </span>
                             </TooltipTrigger>
                             <TooltipContent>
-                              {!darfAlsPerson(PERMISSIONS.invoicesPay)
+                              {!darfAlsPerson(PERMISSIONS.paymentsWrite)
                                 ? t("belege.detail.zahlung.keineZahlBerechtigung")
                                 : null}
                             </TooltipContent>
@@ -4721,9 +4719,9 @@ function BelegDetail({ beleg }: { beleg: Beleg }) {
                           <span
                             className={cn(
                               "mt-1.5 size-2 shrink-0 rounded-full",
-                              v.type === "notiz"
+                              v.type === "note"
                                 ? "bg-brand"
-                                : v.type === "loeschung"
+                                : v.type === "deletion"
                                   ? "bg-red-500"
                                   : "bg-muted-foreground/50",
                             )}
@@ -4941,7 +4939,7 @@ function JetztBezahlenSection({
   // like every other gate on this screen -- this section is a separate component, so it resolves
   // that itself rather than taking it as a prop (React Query dedupes the underlying reads).
   const { darfAlsPerson, istFremdeIdentitaet } = useActingCapabilities();
-  const canTriggerPayment = darfAlsPerson(PERMISSIONS.invoicesPay);
+  const canTriggerPayment = darfAlsPerson(PERMISSIONS.paymentsWrite);
 
   const ordersQ = usePaymentOrders(beleg.id);
   const accountsQ = useBankAccounts();
@@ -5002,7 +5000,7 @@ function JetztBezahlenSection({
   // assigned" rows match each other, offering an unverified account as a payment source for an
   // unclassified invoice. Both sides must be a real, equal, non-null id.
   const accounts = (accountsQ.data ?? []).filter(
-    (a) => !!beleg.company_id && a.company_id === beleg.company_id && !!a.banksapi_product_id,
+    (a) => !!beleg.company_id && a.company_id === beleg.company_id && !!a.provider_account_ref,
   );
 
   // A masked IBAN is on file so somebody can complete it, and is not a thing money can be sent to.
@@ -5015,7 +5013,7 @@ function JetztBezahlenSection({
   const betrag = Number(betragEingabe.replace(",", "."));
   const betragGueltig = Number.isFinite(betrag) && betrag > 0;
 
-  // 'freigegeben_vorgesetzter' IS the "awaiting payment" state (migration 0037/0048). UX gate
+  // 'approved_final' IS the "awaiting payment" state (migration 0037/0048). UX gate
   // only — payment-initiate enforces this server-side too, since that's the real authorization
   // boundary.
   const alreadyPaid = !!beleg.paid_at || (!!latest && latest.status === "executed");
@@ -5037,7 +5035,7 @@ function JetztBezahlenSection({
         !empfaengerKontenLaedt &&
           empfaengerKonten.length === 0 &&
           t("belege.detail.lieferant.zahlung.deaktiviertGrund.keinIban"),
-        beleg.workflow_status !== "freigegeben_vorgesetzter" &&
+        beleg.workflow_status !== "approved_final" &&
           t("belege.detail.lieferant.zahlung.deaktiviertGrund.nichtFreigegeben"),
         // The two-person rule. payment-initiate and payment_orders' INSERT policy both refuse this
         // too; saying so here is what turns a refusal into an explanation.
@@ -5508,14 +5506,14 @@ function ZahlungAbgleichSection({ beleg }: { beleg: Beleg }) {
   const matches = matchesQ.data ?? [];
   // Per-link allocation, not the transaction total. See headerMatchedSum above.
   const matchedSum = matches
-    .filter((m) => m.status === "bestaetigt")
+    .filter((m) => m.status === "confirmed")
     .reduce((s, m) => s + Math.abs(m.amount_matched ?? 0), 0);
   // Invoice claims it is already paid (direct debit) AND a bank transaction was found but not yet
   // confirmed: nudge the reviewer to confirm — paid is only set once the match is confirmed.
   const claimsPaid = istLastschrift(beleg.payment_method);
-  const hasOpenMatch = matches.some((m) => m.status === "kandidat" || m.status === "auto");
+  const hasOpenMatch = matches.some((m) => m.status === "candidate" || m.status === "auto");
   // `hasOpenMatch` passed, same as the header does. Without it this call could only ever return
-  // 'offen' or 'abgeglichen', so the card sat on a grey "Nicht abgeglichen" chip with the pending
+  // 'open' or 'reconciled', so the card sat on a grey "Nicht abgeglichen" chip with the pending
   // suggestion rendered directly underneath it, while the header two cards up read "Vorschlag
   // offen" about the very same invoice.
   const status = abgleichStatus(
@@ -5545,10 +5543,10 @@ function ZahlungAbgleichSection({ beleg }: { beleg: Beleg }) {
         {matchedSum > 0 && (
           <span className="text-sm tabular-nums text-muted-foreground">
             {t("belege.detail.abgleich.vonSumme", {
-              zugeordnet: formatEUR(matchedSum),
-              gesamt: formatEUR(Math.abs(beleg.amount_gross ?? 0)),
+              matched: formatEUR(matchedSum),
+              total: formatEUR(Math.abs(beleg.amount_gross ?? 0)),
             })}
-            {status === "teilweise" &&
+            {status === "partial" &&
               ` · ${t("belege.detail.abgleich.restOffen", {
                 rest: formatEUR(Math.max(Math.abs(beleg.amount_gross ?? 0) - matchedSum, 0)),
               })}`}
@@ -5618,7 +5616,7 @@ function ZahlungAbgleichSection({ beleg }: { beleg: Beleg }) {
         <ul className="space-y-3">
           {matches.map((m) => {
             const txn = m.bank_transactions ?? null;
-            const offen = (m.status === "kandidat" || m.status === "auto") && !!txn;
+            const offen = (m.status === "candidate" || m.status === "auto") && !!txn;
             return (
               <li
                 key={m.id}
@@ -5709,7 +5707,7 @@ function ZahlungAbgleichSection({ beleg }: { beleg: Beleg }) {
                     </Button>
                   </div>
                 )}
-                {m.status === "bestaetigt" && (
+                {m.status === "confirmed" && (
                   <UnlinkMatchButton
                     labels={unlinkLabels}
                     disabled={unlinkMatch.isPending || !mayPay}
@@ -5911,7 +5909,7 @@ function QuelleBadge({
 }) {
   const { t } = useTranslation();
   const key = fieldSourceKey(source, hasValue);
-  if (key === "keine") return null;
+  if (key === "none") return null;
   return (
     <span
       className={cn(

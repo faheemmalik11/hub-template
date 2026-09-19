@@ -8,7 +8,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { useAuth, type AuthResult } from "@/lib/auth";
-import { brandVars } from "@/lib/brand";
+import { brandVars } from "@/config/brand";
 import { useTranslation } from "@/lib/i18n";
 import { cn } from "@/lib/utils";
 

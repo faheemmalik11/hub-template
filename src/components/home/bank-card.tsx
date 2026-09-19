@@ -29,39 +29,39 @@ export function BankCard() {
           icon={Landmark}
           iconCls={CHIP.brand}
           label={t("home.bank.gesamt")}
-          value={val(c?.gesamt)}
+          value={val(c?.total)}
         />
         <StatRow
           to="/banktransaktionen"
-          search={{ matching: "offen" }}
+          search={{ matching: "open" }}
           icon={Link2Off}
-          iconCls={c && c.offen > 0 ? CHIP.warning : CHIP.neutral}
+          iconCls={c && c.open > 0 ? CHIP.warning : CHIP.neutral}
           label={t("home.bank.offen")}
-          value={val(c?.offen)}
+          value={val(c?.open)}
         />
         <StatRow
           to="/banktransaktionen"
-          search={{ matching: "vorschlag" }}
+          search={{ matching: "suggestion" }}
           icon={Search}
-          iconCls={c && c.vorschlag > 0 ? CHIP.brand : CHIP.neutral}
+          iconCls={c && c.suggestion > 0 ? CHIP.brand : CHIP.neutral}
           label={t("home.bank.vorschlag")}
-          value={val(c?.vorschlag)}
+          value={val(c?.suggestion)}
         />
         <StatRow
           to="/banktransaktionen"
-          search={{ matching: "zugeordnet" }}
+          search={{ matching: "matched" }}
           icon={CheckCircle2}
           iconCls={CHIP.success}
           label={t("home.bank.zugeordnet")}
-          value={val(c?.zugeordnet)}
+          value={val(c?.matched)}
         />
         <StatRow
           to="/banktransaktionen"
-          search={{ matching: "ignoriert" }}
+          search={{ matching: "ignored" }}
           icon={EyeOff}
           iconCls={CHIP.neutral}
           label={t("home.bank.ignoriert")}
-          value={val(c?.ignoriert)}
+          value={val(c?.ignored)}
         />
       </div>
       <Link

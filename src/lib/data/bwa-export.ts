@@ -1,7 +1,7 @@
 // CSV export and prior-period comparison for the Cost Analysis (BWA) screen.
 //
 // Both are pure helpers with no React and no Supabase, so the three Hubs that carry this screen
-// (Immonetz, Stäy, Eiffler /buchhaltung) can hold byte-identical copies and cannot drift on the one
+// (Immonetz, this client, Eiffler /buchhaltung) can hold byte-identical copies and cannot drift on the one
 // thing the client actually checks — the numbers.
 //
 // CSV dialect is deliberately the German-Excel one: semicolon separator, comma decimal, UTF-8 BOM.

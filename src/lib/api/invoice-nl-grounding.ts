@@ -1,4 +1,4 @@
-import { TABLE } from "@/lib/data/tables";
+import { TABLE } from "@/config/tables";
 // Shared "real tenant vocabulary" used by invoice-nl-retrieval.functions.ts (constrains
 // Text-to-SQL filter values to real codes/categories via a JSON-schema enum) and
 // voice-transcription.functions.ts / voice-entity-resolution.ts (bias speech transcription toward

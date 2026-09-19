@@ -920,7 +920,7 @@ const de = {
       slackAppErstellen: "Slack öffnen",
       slackVerbunden: "Slack ist verbunden",
       slackSchritt1:
-        "Stäy zu Ihrem Slack hinzufügen. Klicken Sie unten auf Slack öffnen und machen Sie dann bei Slack Folgendes. Sie müssen dort Apps installieren dürfen.",
+        "this client zu Ihrem Slack hinzufügen. Klicken Sie unten auf Slack öffnen und machen Sie dann bei Slack Folgendes. Sie müssen dort Apps installieren dürfen.",
       slackSchritt1a:
         "Workspace auswählen und die Zusammenfassung bestätigen, die Slack anzeigt. Alles darin ist schon ausgefüllt.",
       slackSchritt1b: "Auf Install to Workspace klicken, dann auf Allow.",
@@ -4089,7 +4089,7 @@ const de = {
       steuerfrei: "Steuerfrei",
       gemischt: "Gemischt",
     },
-    // Eigenbestand vs. Fremdverwaltung. Stäys properties-Tabelle hat die Spalte nicht; die Labels
+    // Eigenbestand vs. Fremdverwaltung. this clients properties-Tabelle hat die Spalte nicht; die Labels
     // stehen hier, damit ein Umlegen des Capability-Flags keinen Übersetzungslauf nachzieht.
     eigentum: {
       own: "Eigenbestand",
@@ -4215,7 +4215,7 @@ const de = {
       zuordnungEntfernenBestaetigen: "Entfernen",
       zuordnungLetzte:
         "Ein Objekt braucht mindestens eine Gesellschaft. Füge zuerst eine andere hinzu.",
-      // Für die Capabilities, die Stäy nicht einschaltet (Archiv, Prüfung, Ordner-Link).
+      // Für die Capabilities, die this client nicht einschaltet (Archiv, Prüfung, Ordner-Link).
       reviewBanner: "Zuletzt geprüft am {{datum}}: Sind diese Angaben noch korrekt?",
       archivedNotice: "Dieses Objekt ist archiviert ({{grund}}), nicht mehr im aktiven Bestand.",
       archivedNoticeOhneGrund: "kein Grund angegeben",
@@ -5636,7 +5636,7 @@ const de = {
     bereich: {
       keiner: "Kein Bereich",
       hospitality: "Hospitality",
-      stay_re: "Stäy RE und Projekte",
+      stay_re: "this client RE und Projekte",
       alle: "Alle Bereiche",
     },
     leerGenehmiger: "Noch keine Genehmiger angelegt.",

@@ -63,8 +63,8 @@ export function ProcessingCard() {
     const verarbeitet = Object.values(logCounts).reduce((s, n) => s + n, 0);
     const fehler = logCounts.fehler ?? 0;
     const rows = invoicesQ.data ?? [];
-    const erkannt = rows.filter((r) => r.status === "erkannt").length;
-    const zuPruefen = rows.filter((r) => r.status === "zu_pruefen").length;
+    const erkannt = rows.filter((r) => r.status === "recognised").length;
+    const zuPruefen = rows.filter((r) => r.status === "needs_review").length;
     const kanaele = new Map<string, number>();
     for (const r of rows) {
       if (!r.intake_channel) continue;
@@ -115,13 +115,13 @@ export function ProcessingCard() {
         />
         <StatTile
           to="/eingangsrechnungen"
-          search={{ status: "erkannt" }}
+          search={{ status: "recognised" }}
           label={t("home.processing.erkannt")}
           value={val(stats.erkannt)}
         />
         <StatTile
           to="/eingangsrechnungen"
-          search={{ status: "zu_pruefen" }}
+          search={{ status: "needs_review" }}
           label={t("home.processing.zuPruefen")}
           value={val(stats.zuPruefen)}
           valueCls={stats.zuPruefen > 0 ? "text-warning" : undefined}

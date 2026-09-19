@@ -286,7 +286,7 @@ export function BankMatchBadge({
 }) {
   const { t } = useTranslation();
   // CONFIRMED wins over suggested, not the other way round. invoice_transaction_matches is m:n, and
-  // confirming one candidate does not withdraw its siblings -- they stay 'kandidat'. With
+  // confirming one candidate does not withdraw its siblings -- they stay 'candidate'. With
   // suggested-first, a fully reconciled invoice kept rendering amber "Zuordnung offen" forever,
   // and the same row was returned by both the "Zuordnung offen" and "Zugeordnet" filters.
   if (!hasConfirmed && !hasSuggested && !showWhenEmpty) return null;
@@ -310,7 +310,7 @@ export function BankMatchBadge({
   );
 }
 
-// DATEV handover state derived from datev_handed_over_at: handed over → green "Übergeben",
+// DATEV handover state derived from handed_over_at: handed over → green "Übergeben",
 // otherwise "Offen". Two-state (always visible either way), unlike DatevBereitBadge above which
 // is shown only when true — this is for a dedicated yes/no list column, not a positive-only chip.
 export function DatevUebergabeBadge({
@@ -338,7 +338,7 @@ export function DatevUebergabeBadge({
   );
 }
 
-// Outgoing-invoice status (Briefing Screen 15) — renders voucher_status ('draft'/'open'/
+// Outgoing-invoice status (Briefing Screen 15) — renders status ('draft'/'open'/
 // 'paidoff'/'voided', set via migration 0085's set_uploaded_outgoing_invoice_status RPC or its
 // auto-match trigger). "Überfällig" isn't a stored status; it's derived here from status='open'
 // + a past due date, same rule the server function's sync uses to decide whether to even look
@@ -357,20 +357,20 @@ export function OutgoingStatusBadge({
   const overdue = istUeberfaellig(status, dueDate, today);
   const key =
     status === "paidoff"
-      ? "bezahlt"
+      ? "paid"
       : status === "voided"
         ? "storniert"
         : status === "draft"
           ? "entwurf"
           : overdue
             ? "ueberfaellig"
-            : "offen";
+            : "open";
   const cls: Record<string, string> = {
     bezahlt: "bg-emerald-100 text-emerald-800",
     storniert: "bg-muted text-muted-foreground line-through",
     ueberfaellig: "bg-destructive/10 text-destructive",
     entwurf: "bg-amber-100 text-amber-800",
-    offen: "bg-muted text-muted-foreground",
+    open: "bg-muted text-muted-foreground",
   };
   return (
     <span
@@ -599,7 +599,7 @@ export function KonfidenzDot({
         {/* The whole scale, not just this dot's band. The colours are only readable as a scale,
             and a reader who has to hover three dots to infer it has been given a puzzle. */}
         <ul className="mt-2 space-y-1">
-          {(["gruen", "gelb", "rot"] as const).map((k) => (
+          {(["green", "yellow", "red"] as const).map((k) => (
             <li key={k} className="flex items-center gap-1.5">
               <span className={cn("inline-block size-2 shrink-0 rounded-full", AMPEL_STYLES[k])} />
               <span>{t(`belege.konfidenz.skala.${k}`)}</span>

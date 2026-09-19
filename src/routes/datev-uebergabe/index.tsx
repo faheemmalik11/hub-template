@@ -2,13 +2,13 @@ import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useMemo } from "react";
 
 import { DatevHandoverPage, type DatevHandoverConfig } from "@/features/datev-handover";
-import { pageTitle } from "@/lib/brand";
+import { pageTitle } from "@/config/brand";
 
 /**
- * Stäy's shell around the shared DATEV-Übergabe feature.
+ * this client's shell around the shared DATEV-Übergabe feature.
  *
  * Everything on screen lives in `src/features/datev-handover/`, which is copied between the Hubs as
- * a unit (see its PORTING.md). This file is only what is genuinely Stäy's: the route path, the
+ * a unit (see its PORTING.md). This file is only what is genuinely this client's: the route path, the
  * document title, this Hub's invoice-detail navigation, and which directions actually send here.
  *
  * No `validateSearch`: the screen was three tabs and kept the active one in `?tab=`. It is one page

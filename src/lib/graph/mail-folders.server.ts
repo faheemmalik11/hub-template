@@ -1,4 +1,4 @@
-// Lists the accounting@staey.de mailbox's real folders so the Postfach screen's mailbox picker
+// Lists the accounting mailbox's real folders so the Postfach screen's mailbox picker
 // can offer them (Briefing Screen 1: "Source and Destination Folder"). Read-only — this never
 // creates, renames or moves anything.
 //

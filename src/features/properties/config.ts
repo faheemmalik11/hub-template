@@ -4,7 +4,7 @@ import type { ReactNode } from "react";
  * The property fields the shared screens read.
  *
  * Deliberately NOT the Hub's own `Objekt` type. The Hubs model a property differently: Immonetz
- * carries an archive, an ownership type, a review date and a Drive folder on the row, Stäy carries
+ * carries an archive, an ownership type, a review date and a Drive folder on the row, this client carries
  * none of them. Declaring the common core as required and the rest as optional means one screen
  * can serve both, and a Hub's own `Objekt` satisfies this structurally without any mapping.
  *
@@ -136,7 +136,7 @@ export interface PropertiesConfig {
   /** Said under a read-only assignment list: where the edit actually lives. */
   zuordnungHinweis?: ReactNode;
   /**
-   * A control in the assignment card's header, beside its title, such as Stäy's "Gesellschaft
+   * A control in the assignment card's header, beside its title, such as this client's "Gesellschaft
    * hinzufügen". Absent in a Hub whose assignments are not edited on this screen.
    */
   zuordnungAktion?: (objekt: ObjektDaten) => ReactNode;
@@ -144,7 +144,7 @@ export interface PropertiesConfig {
   /**
    * A field the Hub must collect when a property is CREATED, beyond the shared form.
    *
-   * Stäy requires at least one company on every property and enforces it at creation, so leaving it
+   * this client requires at least one company on every property and enforces it at creation, so leaving it
    * to a follow-up edit would let a property exist in a state that Hub treats as invalid. The Hub
    * owns the control and its state; this screen only places it, blocks Anlegen while
    * `unvollstaendig`, and calls `speichern` with the new row's id once the insert succeeds.

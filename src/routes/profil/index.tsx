@@ -1,13 +1,14 @@
 import { createFileRoute } from "@tanstack/react-router";
 
-import { ProfilePage } from "@hub-kit/core/pages";
+import { ProfilePage } from "@/kit/pages";
 
 import { useProfileAdapter } from "@/hub/adapters/profile";
 import { useProfileLabels } from "@/hub/adapters/profile-labels";
 import { useAuth } from "@/lib/auth";
+import { pageTitle } from "@/config/brand";
 
 export const Route = createFileRoute("/profil/")({
-  head: () => ({ meta: [{ title: "Mein Profil · Stäy Hub" }] }),
+  head: () => ({ meta: [{ title: pageTitle("Mein Profil") }] }),
   component: ProfilRoute,
 });
 

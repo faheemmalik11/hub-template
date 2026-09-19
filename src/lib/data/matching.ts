@@ -22,10 +22,10 @@ export type {
 export const AUTO_THRESHOLD = 0.9;
 export const CANDIDATE_THRESHOLD = 0.6;
 
-export type ConfidenceBand = "auto" | "kandidat" | "schwach";
+export type ConfidenceBand = "auto" | "candidate" | "schwach";
 
 export function confidenceBand(score: number): ConfidenceBand {
   if (score >= AUTO_THRESHOLD) return "auto";
-  if (score >= CANDIDATE_THRESHOLD) return "kandidat";
+  if (score >= CANDIDATE_THRESHOLD) return "candidate";
   return "schwach";
 }

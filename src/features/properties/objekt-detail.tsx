@@ -81,7 +81,7 @@ import type { ObjektDaten, ObjektZuordnung, PropertiesConfig } from "./config";
 // "Gesamt" in the shared period vocabulary. The picker's whole option list is fixed and shared now
 // (see `zeitraum-optionen`), so this screen no longer derives months and years from its own rows.
 const ALLE_ZEITRAEUME = ZEITRAUM_ALLE;
-const UST_STATUS_OPTIONEN = ["steuerpflichtig", "steuerfrei", "gemischt"] as const;
+const UST_STATUS_OPTIONEN = ["taxable", "exempt", "gemischt"] as const;
 const OWNERSHIP_OPTIONEN = ["own", "client"] as const;
 
 type OForm = {
