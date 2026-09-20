@@ -60,7 +60,7 @@ import {
   useSlackDirectory,
   useChannelSecretPresent,
   type NotificationSettings,
-} from "@/lib/data/queries";
+} from "@/data";
 import { useNotificationAcks } from "@/lib/data/use-notification-acks";
 import { useNotificationItems } from "@/lib/data/use-notification-items";
 import { useLocale, useTranslation } from "@/lib/i18n";

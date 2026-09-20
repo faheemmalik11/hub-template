@@ -23,7 +23,7 @@ import type {
   NormalizeResult,
   ParsedTable,
 } from "@/lib/bank-import/types";
-import { useManualBankImport } from "@/lib/data/queries";
+import { useManualBankImport } from "@/data";
 import { useTranslation } from "@/lib/i18n";
 import { cn } from "@/lib/utils";
 import { ManualImportAccountStep } from "./manual-import-account-step";

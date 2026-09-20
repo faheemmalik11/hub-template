@@ -17,7 +17,7 @@ import { useEffect, useRef, useState } from "react";
 import { Loader2, Mic, Square } from "lucide-react";
 
 import { useTranslation } from "@/lib/i18n";
-import { useTranscribeVoiceQuery } from "@/lib/data/queries";
+import { useTranscribeVoiceQuery } from "@/data";
 import { Button } from "@/components/ui/button";
 import {
   Dialog,

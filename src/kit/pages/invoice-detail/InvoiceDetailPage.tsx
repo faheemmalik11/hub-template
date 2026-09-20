@@ -25,6 +25,15 @@ import {
   DropdownMenuTrigger,
 } from "../../ui/dropdown-menu";
 import { ErrorState, readableErrorMessage } from "../../components/feedback/query-states";
+import {
+  NONE,
+  detailsFormFrom,
+  overviewFormFrom,
+  useInvoiceActions,
+  useInvoiceEdit,
+  type DetailsForm,
+  type OverviewForm,
+} from "../../widgets/invoice-detail";
 import { cn } from "../../lib/class-names";
 import { englishFormatters, type Formatters } from "../../lib/formatters";
 import type {
@@ -45,106 +54,12 @@ import { WorkflowHistoryList, type WorkflowHistoryRow } from "./WorkflowHistoryL
 import { historyLines, historyQualifier, historyStateLabel } from "./history";
 import { englishInvoiceDetailLabels, type InvoiceDetailLabels } from "./labels";
 
-const NONE = "__none";
-
 export interface InvoiceDetailPageProps {
   invoiceId: string;
   adapter: InvoiceDetailAdapter;
   config: InvoiceDetailConfig;
   labels?: InvoiceDetailLabels;
   formatters?: Formatters;
-}
-
-interface OverviewForm {
-  issuer: string;
-  invoice_number: string;
-  order_number: string;
-  document_date: string;
-  due_date: string;
-  service_date: string;
-  amount_net: string;
-  vat_rate: string;
-  vat_amount: string;
-  amount_gross: string;
-  currency: string;
-  company_code: string;
-  property_code: string;
-  category_id: string;
-}
-
-function overviewFormFrom(invoice: InvoiceDetailRecord): OverviewForm {
-  const s = (v: string | null) => v ?? "";
-  const n = (v: number | null) => (v == null ? "" : String(v));
-  return {
-    issuer: s(invoice.issuer),
-    invoice_number: s(invoice.invoice_number),
-    order_number: s(invoice.order_number),
-    document_date: s(invoice.document_date),
-    due_date: s(invoice.due_date),
-    service_date: s(invoice.service_date),
-    amount_net: n(invoice.amount_net),
-    vat_rate: n(invoice.vat_rate),
-    vat_amount: n(invoice.vat_amount),
-    amount_gross: n(invoice.amount_gross),
-    currency: s(invoice.currency),
-    company_code: s(invoice.company_code),
-    property_code: s(invoice.property_code),
-    category_id: s(invoice.category_id),
-  };
-}
-
-interface DetailsForm {
-  recipient_name: string;
-  customer_number: string;
-  payment_reference: string;
-  payment_method: string;
-  tax_note: string;
-  service_description: string;
-}
-
-function detailsFormFrom(invoice: InvoiceDetailRecord): DetailsForm {
-  const s = (v: string | null) => v ?? "";
-  return {
-    recipient_name: s(invoice.recipient_name),
-    customer_number: s(invoice.customer_number),
-    payment_reference: s(invoice.payment_reference),
-    payment_method: s(invoice.payment_method),
-    tax_note: s(invoice.tax_note),
-    service_description: s(invoice.service_description),
-  };
-}
-
-function parseNumber(value: string): number | null {
-  const trimmed = value.trim();
-  if (trimmed === "") return null;
-  const n = Number(trimmed.replace(",", "."));
-  return Number.isFinite(n) ? n : NaN;
-}
-
-function diff(
-  form: Record<string, string>,
-  base: Record<string, unknown>,
-  numericKeys: string[],
-  labelFor: (key: string) => string,
-): { changes: Record<string, unknown>; labels: string[]; invalid: string[] } {
-  const changes: Record<string, unknown> = {};
-  const labels: string[] = [];
-  const invalid: string[] = [];
-  for (const key of Object.keys(form)) {
-    const isNumeric = numericKeys.includes(key);
-    const raw = form[key];
-    const next = isNumeric ? parseNumber(raw) : raw.trim() === "" ? null : raw.trim();
-    if (isNumeric && Number.isNaN(next)) {
-      invalid.push(labelFor(key));
-      continue;
-    }
-    const prev = (base[key] as string | number | null) ?? null;
-    if (next !== prev) {
-      changes[key] = next;
-      labels.push(labelFor(key));
-    }
-  }
-  return { changes, labels, invalid };
 }
 
 export function InvoiceDetailPage({
@@ -162,19 +77,46 @@ export function InvoiceDetailPage({
   const categoryOptionsQuery = adapter.useCategoryOptions();
 
   const [activeTab, setActiveTab] = useState("overview");
-  const [overviewEditOpen, setOverviewEditOpen] = useState(false);
-  const [detailsEditOpen, setDetailsEditOpen] = useState(false);
-  const [overviewForm, setOverviewForm] = useState<OverviewForm | null>(null);
-  const [detailsForm, setDetailsForm] = useState<DetailsForm | null>(null);
-  const [isSaving, setIsSaving] = useState(false);
-  const [noteText, setNoteText] = useState("");
-  const [deleteOpen, setDeleteOpen] = useState(false);
-  const [deleteReason, setDeleteReason] = useState("");
-  const [approvalComment, setApprovalComment] = useState("");
   const [reviewOpen, setReviewOpen] = useState(false);
   const [reviewFlash, setReviewFlash] = useState(false);
 
   const invoice = invoiceQuery.data;
+
+  function fieldLabel(key: string): string {
+    const map: Record<string, string> = {
+      issuer: page.fieldIssuer,
+      invoice_number: page.fieldInvoiceNumber,
+      order_number: page.fieldOrderNumber,
+      document_date: page.fieldDocumentDate,
+      due_date: page.fieldDueDate,
+      service_date: page.fieldServiceDate,
+      amount_net: page.fieldAmountNet,
+      vat_rate: page.fieldVatRate,
+      vat_amount: page.fieldVatAmount,
+      amount_gross: page.fieldAmountGross,
+      currency: page.fieldCurrency,
+      company_code: page.fieldCompany,
+      property_code: page.fieldProperty,
+      category_id: page.fieldCategory,
+      recipient_name: page.fieldRecipientName,
+      customer_number: page.fieldCustomerNumber,
+      payment_reference: page.fieldPaymentReference,
+      payment_method: page.fieldPaymentMethod,
+      tax_note: page.fieldTaxNote,
+      service_description: page.fieldServiceDescription,
+    };
+    return map[key] ?? key;
+  }
+
+  const edit = useInvoiceEdit(invoice, adapter, fieldLabel, {
+    saved: page.saved,
+    saveFailed: page.saveFailed,
+  });
+  const actions = useInvoiceActions(invoice, adapter, {
+    noteAdded: page.noteAdded,
+    deletedToast: page.deletedToast,
+    paidToast: page.paidToast,
+  });
 
   const legalActionsQuery = adapter.approval?.useLegalActions(
     invoice ?? ({} as InvoiceDetailRecord),
@@ -245,140 +187,8 @@ export function InvoiceDetailPage({
     );
   }
 
-  function openOverviewEdit() {
-    setOverviewForm(overviewFormFrom(invoice!));
-    setOverviewEditOpen(true);
-  }
-  function openDetailsEdit() {
-    setDetailsForm(detailsFormFrom(invoice!));
-    setDetailsEditOpen(true);
-  }
-
-  async function saveOverview() {
-    if (!overviewForm) return;
-    const {
-      changes,
-      labels: changed,
-      invalid,
-    } = diff(
-      overviewForm as unknown as Record<string, string>,
-      invoice as unknown as Record<string, unknown>,
-      ["amount_net", "vat_rate", "vat_amount", "amount_gross"],
-      fieldLabel,
-    );
-    if (invalid.length > 0) {
-      toast.error(page.saveFailed(invalid.join(", ")));
-      return;
-    }
-    if (Object.keys(changes).length === 0) {
-      setOverviewEditOpen(false);
-      return;
-    }
-    setIsSaving(true);
-    try {
-      await adapter.updateInvoice(invoice!.id, changes, changed);
-      toast.success(page.saved);
-      setOverviewEditOpen(false);
-    } catch (error) {
-      toast.error(page.saveFailed(readableErrorMessage(error, "")));
-    } finally {
-      setIsSaving(false);
-    }
-  }
-
-  async function saveDetails() {
-    if (!detailsForm) return;
-    const { changes, labels: changed } = diff(
-      detailsForm as unknown as Record<string, string>,
-      invoice as unknown as Record<string, unknown>,
-      [],
-      fieldLabel,
-    );
-    if (Object.keys(changes).length === 0) {
-      setDetailsEditOpen(false);
-      return;
-    }
-    setIsSaving(true);
-    try {
-      await adapter.updateInvoice(invoice!.id, changes, changed);
-      toast.success(page.saved);
-      setDetailsEditOpen(false);
-    } catch (error) {
-      toast.error(page.saveFailed(readableErrorMessage(error, "")));
-    } finally {
-      setIsSaving(false);
-    }
-  }
-
-  function fieldLabel(key: string): string {
-    const map: Record<string, string> = {
-      issuer: page.fieldIssuer,
-      invoice_number: page.fieldInvoiceNumber,
-      order_number: page.fieldOrderNumber,
-      document_date: page.fieldDocumentDate,
-      due_date: page.fieldDueDate,
-      service_date: page.fieldServiceDate,
-      amount_net: page.fieldAmountNet,
-      vat_rate: page.fieldVatRate,
-      vat_amount: page.fieldVatAmount,
-      amount_gross: page.fieldAmountGross,
-      currency: page.fieldCurrency,
-      company_code: page.fieldCompany,
-      property_code: page.fieldProperty,
-      category_id: page.fieldCategory,
-      recipient_name: page.fieldRecipientName,
-      customer_number: page.fieldCustomerNumber,
-      payment_reference: page.fieldPaymentReference,
-      payment_method: page.fieldPaymentMethod,
-      tax_note: page.fieldTaxNote,
-      service_description: page.fieldServiceDescription,
-    };
-    return map[key] ?? key;
-  }
-
-  async function addNote() {
-    const text = noteText.trim();
-    if (!text) return;
-    try {
-      await adapter.addNote(invoice!.id, text);
-      setNoteText("");
-      toast.success(page.noteAdded);
-    } catch (error) {
-      toast.error(readableErrorMessage(error, ""));
-    }
-  }
-
-  async function confirmDelete() {
-    try {
-      await adapter.softDelete(invoice!.id, deleteReason.trim());
-      toast.success(page.deletedToast);
-      setDeleteOpen(false);
-      adapter.openInvoiceList();
-    } catch (error) {
-      toast.error(readableErrorMessage(error, ""));
-    }
-  }
-
-  async function togglePaid() {
-    if (!adapter.payment) return;
-    try {
-      await adapter.payment.setPaid(invoice!.id, !invoice!.paid_at);
-      toast.success(page.paidToast);
-    } catch (error) {
-      toast.error(readableErrorMessage(error, ""));
-    }
-  }
-
-  async function runApprovalAction(actionId: string, requiresComment: boolean) {
-    if (!adapter.approval) return;
-    if (requiresComment && !approvalComment.trim()) return;
-    try {
-      await adapter.approval.runAction(invoice!.id, actionId, approvalComment.trim() || undefined);
-      setApprovalComment("");
-    } catch (error) {
-      toast.error(readableErrorMessage(error, ""));
-    }
-  }
+  const openOverviewEdit = () => edit.openOverview(invoice!);
+  const openDetailsEdit = () => edit.openDetails(invoice!);
 
   const reasonCount = reviewSummary?.reasons.length ?? 0;
   const unchecked = hasNoReviewChecks(invoice);
@@ -447,7 +257,10 @@ export function InvoiceDetailPage({
               </Button>
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end">
-              <DropdownMenuItem onClick={() => setDeleteOpen(true)} className="text-destructive">
+              <DropdownMenuItem
+                onClick={() => actions.setDeleteOpen(true)}
+                className="text-destructive"
+              >
                 <Trash2 className="size-4" />
                 {page.deleteButton}
               </DropdownMenuItem>
@@ -488,7 +301,7 @@ export function InvoiceDetailPage({
             actions={legalActionsMap}
             onAction={(step) => {
               const action = legalActionsQuery?.data.get(step);
-              if (action) void runApprovalAction(action.id, action.requiresComment);
+              if (action) void actions.runApprovalAction(action.id, action.requiresComment);
             }}
             labels={labels.workflowLadder}
             ladderColors={config.ladderColors}
@@ -539,8 +352,8 @@ export function InvoiceDetailPage({
               <div className="space-y-3 rounded-xl border border-border bg-card p-4">
                 <Label className="text-xs text-muted-foreground">{page.approvalComment}</Label>
                 <Textarea
-                  value={approvalComment}
-                  onChange={(event) => setApprovalComment(event.target.value)}
+                  value={actions.approvalComment}
+                  onChange={(event) => actions.setApprovalComment(event.target.value)}
                   placeholder={page.approvalCommentPlaceholder}
                   rows={2}
                 />
@@ -549,7 +362,7 @@ export function InvoiceDetailPage({
                     <Button
                       key={step}
                       size="sm"
-                      onClick={() => runApprovalAction(action.id, action.requiresComment)}
+                      onClick={() => actions.runApprovalAction(action.id, action.requiresComment)}
                     >
                       {page.runAction} — {step}
                     </Button>
@@ -568,7 +381,7 @@ export function InvoiceDetailPage({
               <span className="text-sm text-foreground">
                 {invoice.paid_at ? page.markUnpaid : page.markPaid}
               </span>
-              <Switch checked={!!invoice.paid_at} onCheckedChange={togglePaid} />
+              <Switch checked={!!invoice.paid_at} onCheckedChange={actions.togglePaid} />
             </div>
             <div className="rounded-xl border border-border bg-card p-4">
               <Label className="text-xs text-muted-foreground">{page.payableAccount}</Label>
@@ -622,13 +435,13 @@ export function InvoiceDetailPage({
         <TabsContent value="history" className="mt-4 space-y-4">
           <div className="flex gap-2">
             <Textarea
-              value={noteText}
-              onChange={(event) => setNoteText(event.target.value)}
+              value={actions.noteText}
+              onChange={(event) => actions.setNoteText(event.target.value)}
               placeholder={page.addNotePlaceholder}
               rows={2}
               className="flex-1"
             />
-            <Button onClick={addNote} disabled={!noteText.trim()}>
+            <Button onClick={actions.addNote} disabled={!actions.noteText.trim()}>
               {page.addNoteButton}
             </Button>
           </div>
@@ -644,77 +457,80 @@ export function InvoiceDetailPage({
         </TabsContent>
       </Tabs>
 
-      <Dialog open={overviewEditOpen} onOpenChange={setOverviewEditOpen}>
+      <Dialog open={edit.overviewOpen} onOpenChange={edit.setOverviewOpen}>
         <DialogContent className="max-w-2xl">
           <DialogHeader>
             <DialogTitle>{page.tabOverview}</DialogTitle>
           </DialogHeader>
-          {overviewForm && (
+          {edit.overviewForm && (
             <div className="grid gap-3 sm:grid-cols-2">
               <TextField
                 label={page.fieldIssuer}
-                value={overviewForm.issuer}
-                onChange={(v) => setOverviewForm({ ...overviewForm, issuer: v })}
+                value={edit.overviewForm.issuer}
+                onChange={(v) => edit.setOverviewForm({ ...edit.overviewForm!, issuer: v })}
               />
               <TextField
                 label={page.fieldInvoiceNumber}
-                value={overviewForm.invoice_number}
-                onChange={(v) => setOverviewForm({ ...overviewForm, invoice_number: v })}
+                value={edit.overviewForm.invoice_number}
+                onChange={(v) => edit.setOverviewForm({ ...edit.overviewForm!, invoice_number: v })}
               />
               <TextField
                 label={page.fieldOrderNumber}
-                value={overviewForm.order_number}
-                onChange={(v) => setOverviewForm({ ...overviewForm, order_number: v })}
+                value={edit.overviewForm.order_number}
+                onChange={(v) => edit.setOverviewForm({ ...edit.overviewForm!, order_number: v })}
               />
               <TextField
                 label={page.fieldDocumentDate}
-                value={overviewForm.document_date}
-                onChange={(v) => setOverviewForm({ ...overviewForm, document_date: v })}
+                value={edit.overviewForm.document_date}
+                onChange={(v) => edit.setOverviewForm({ ...edit.overviewForm!, document_date: v })}
                 type="date"
               />
               <TextField
                 label={page.fieldDueDate}
-                value={overviewForm.due_date}
-                onChange={(v) => setOverviewForm({ ...overviewForm, due_date: v })}
+                value={edit.overviewForm.due_date}
+                onChange={(v) => edit.setOverviewForm({ ...edit.overviewForm!, due_date: v })}
                 type="date"
               />
               <TextField
                 label={page.fieldServiceDate}
-                value={overviewForm.service_date}
-                onChange={(v) => setOverviewForm({ ...overviewForm, service_date: v })}
+                value={edit.overviewForm.service_date}
+                onChange={(v) => edit.setOverviewForm({ ...edit.overviewForm!, service_date: v })}
                 type="date"
               />
               <TextField
                 label={page.fieldAmountNet}
-                value={overviewForm.amount_net}
-                onChange={(v) => setOverviewForm({ ...overviewForm, amount_net: v })}
+                value={edit.overviewForm.amount_net}
+                onChange={(v) => edit.setOverviewForm({ ...edit.overviewForm!, amount_net: v })}
               />
               <TextField
                 label={page.fieldVatRate}
-                value={overviewForm.vat_rate}
-                onChange={(v) => setOverviewForm({ ...overviewForm, vat_rate: v })}
+                value={edit.overviewForm.vat_rate}
+                onChange={(v) => edit.setOverviewForm({ ...edit.overviewForm!, vat_rate: v })}
               />
               <TextField
                 label={page.fieldVatAmount}
-                value={overviewForm.vat_amount}
-                onChange={(v) => setOverviewForm({ ...overviewForm, vat_amount: v })}
+                value={edit.overviewForm.vat_amount}
+                onChange={(v) => edit.setOverviewForm({ ...edit.overviewForm!, vat_amount: v })}
               />
               <TextField
                 label={page.fieldAmountGross}
-                value={overviewForm.amount_gross}
-                onChange={(v) => setOverviewForm({ ...overviewForm, amount_gross: v })}
+                value={edit.overviewForm.amount_gross}
+                onChange={(v) => edit.setOverviewForm({ ...edit.overviewForm!, amount_gross: v })}
               />
               <TextField
                 label={page.fieldCurrency}
-                value={overviewForm.currency}
-                onChange={(v) => setOverviewForm({ ...overviewForm, currency: v })}
+                value={edit.overviewForm.currency}
+                onChange={(v) => edit.setOverviewForm({ ...edit.overviewForm!, currency: v })}
               />
               <div className="space-y-1">
                 <Label className="text-xs text-muted-foreground">{page.fieldCompany}</Label>
                 <Combobox
-                  value={overviewForm.company_code || NONE}
+                  value={edit.overviewForm.company_code || NONE}
                   onValueChange={(v) =>
-                    setOverviewForm({ ...overviewForm, company_code: v === NONE ? "" : v })
+                    edit.setOverviewForm({
+                      ...edit.overviewForm!,
+                      company_code: v === NONE ? "" : v,
+                    })
                   }
                   options={[
                     { value: NONE, label: "—" },
@@ -728,9 +544,12 @@ export function InvoiceDetailPage({
               <div className="space-y-1">
                 <Label className="text-xs text-muted-foreground">{page.fieldProperty}</Label>
                 <Combobox
-                  value={overviewForm.property_code || NONE}
+                  value={edit.overviewForm.property_code || NONE}
                   onValueChange={(v) =>
-                    setOverviewForm({ ...overviewForm, property_code: v === NONE ? "" : v })
+                    edit.setOverviewForm({
+                      ...edit.overviewForm!,
+                      property_code: v === NONE ? "" : v,
+                    })
                   }
                   options={[
                     { value: NONE, label: "—" },
@@ -744,9 +563,12 @@ export function InvoiceDetailPage({
               <div className="space-y-1">
                 <Label className="text-xs text-muted-foreground">{page.fieldCategory}</Label>
                 <Combobox
-                  value={overviewForm.category_id || NONE}
+                  value={edit.overviewForm.category_id || NONE}
                   onValueChange={(v) =>
-                    setOverviewForm({ ...overviewForm, category_id: v === NONE ? "" : v })
+                    edit.setOverviewForm({
+                      ...edit.overviewForm!,
+                      category_id: v === NONE ? "" : v,
+                    })
                   }
                   options={[
                     { value: NONE, label: "—" },
@@ -760,83 +582,87 @@ export function InvoiceDetailPage({
             </div>
           )}
           <DialogFooter>
-            <Button variant="outline" onClick={() => setOverviewEditOpen(false)}>
+            <Button variant="outline" onClick={() => edit.closeOverview()}>
               {page.cancel}
             </Button>
-            <Button onClick={saveOverview} disabled={isSaving}>
-              {isSaving ? page.saving : page.save}
+            <Button onClick={edit.saveOverview} disabled={edit.saving}>
+              {edit.saving ? page.saving : page.save}
             </Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>
 
-      <Dialog open={detailsEditOpen} onOpenChange={setDetailsEditOpen}>
+      <Dialog open={edit.detailsOpen} onOpenChange={edit.setDetailsOpen}>
         <DialogContent className="max-w-2xl">
           <DialogHeader>
             <DialogTitle>{page.tabDetails}</DialogTitle>
           </DialogHeader>
-          {detailsForm && (
+          {edit.detailsForm && (
             <div className="grid gap-3 sm:grid-cols-2">
               <TextField
                 label={page.fieldRecipientName}
-                value={detailsForm.recipient_name}
-                onChange={(v) => setDetailsForm({ ...detailsForm, recipient_name: v })}
+                value={edit.detailsForm.recipient_name}
+                onChange={(v) => edit.setDetailsForm({ ...edit.detailsForm!, recipient_name: v })}
               />
               <TextField
                 label={page.fieldCustomerNumber}
-                value={detailsForm.customer_number}
-                onChange={(v) => setDetailsForm({ ...detailsForm, customer_number: v })}
+                value={edit.detailsForm.customer_number}
+                onChange={(v) => edit.setDetailsForm({ ...edit.detailsForm!, customer_number: v })}
               />
               <TextField
                 label={page.fieldPaymentReference}
-                value={detailsForm.payment_reference}
-                onChange={(v) => setDetailsForm({ ...detailsForm, payment_reference: v })}
+                value={edit.detailsForm.payment_reference}
+                onChange={(v) =>
+                  edit.setDetailsForm({ ...edit.detailsForm!, payment_reference: v })
+                }
               />
               <TextField
                 label={page.fieldPaymentMethod}
-                value={detailsForm.payment_method}
-                onChange={(v) => setDetailsForm({ ...detailsForm, payment_method: v })}
+                value={edit.detailsForm.payment_method}
+                onChange={(v) => edit.setDetailsForm({ ...edit.detailsForm!, payment_method: v })}
               />
               <TextField
                 label={page.fieldTaxNote}
-                value={detailsForm.tax_note}
-                onChange={(v) => setDetailsForm({ ...detailsForm, tax_note: v })}
+                value={edit.detailsForm.tax_note}
+                onChange={(v) => edit.setDetailsForm({ ...edit.detailsForm!, tax_note: v })}
               />
               <TextField
                 label={page.fieldServiceDescription}
-                value={detailsForm.service_description}
-                onChange={(v) => setDetailsForm({ ...detailsForm, service_description: v })}
+                value={edit.detailsForm.service_description}
+                onChange={(v) =>
+                  edit.setDetailsForm({ ...edit.detailsForm!, service_description: v })
+                }
               />
             </div>
           )}
           <DialogFooter>
-            <Button variant="outline" onClick={() => setDetailsEditOpen(false)}>
+            <Button variant="outline" onClick={() => edit.closeDetails()}>
               {page.cancel}
             </Button>
-            <Button onClick={saveDetails} disabled={isSaving}>
-              {isSaving ? page.saving : page.save}
+            <Button onClick={edit.saveDetails} disabled={edit.saving}>
+              {edit.saving ? page.saving : page.save}
             </Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>
 
-      <Dialog open={deleteOpen} onOpenChange={setDeleteOpen}>
+      <Dialog open={actions.deleteOpen} onOpenChange={actions.setDeleteOpen}>
         <DialogContent>
           <DialogHeader>
             <DialogTitle>{page.deleteDialogTitle}</DialogTitle>
             <DialogDescription>{page.deleteDialogDescription}</DialogDescription>
           </DialogHeader>
           <Textarea
-            value={deleteReason}
-            onChange={(event) => setDeleteReason(event.target.value)}
+            value={actions.deleteReason}
+            onChange={(event) => actions.setDeleteReason(event.target.value)}
             placeholder={page.deleteReasonPlaceholder}
             rows={2}
           />
           <DialogFooter>
-            <Button variant="outline" onClick={() => setDeleteOpen(false)}>
+            <Button variant="outline" onClick={() => actions.setDeleteOpen(false)}>
               {page.cancel}
             </Button>
-            <Button variant="destructive" onClick={confirmDelete}>
+            <Button variant="destructive" onClick={actions.confirmDelete}>
               {page.deleteConfirm}
             </Button>
           </DialogFooter>

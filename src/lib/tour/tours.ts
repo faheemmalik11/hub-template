@@ -5,11 +5,7 @@ import type { TourDefinition, TourLabels, TourMap, TourStep } from "@/kit/compon
 
 import { useIsMobile } from "@/hooks/use-mobile";
 import { useAuth } from "@/lib/auth";
-import {
-  useInvoiceQueueKpis,
-  useNotificationChannels,
-  usePermissionCatalogue,
-} from "@/lib/data/queries";
+import { useInvoiceQueueKpis, useNotificationChannels, usePermissionCatalogue } from "@/data";
 import { useTranslation } from "@/lib/i18n";
 import { PERMISSIONS } from "@/config/permissions";
 

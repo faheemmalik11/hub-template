@@ -14,7 +14,7 @@ import {
   usePingsForMe,
   usePipelineHealth,
   useSentPings,
-} from "@/lib/data/queries";
+} from "@/data";
 import { formatDateTimeShort, formatRelativeTime } from "@/lib/data/format";
 import { readNotificationTarget, targetLabelKey } from "@/lib/data/notification-target";
 import { useTranslation } from "@/lib/i18n";

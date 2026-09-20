@@ -27,12 +27,7 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import {
-  useCreateCustomer,
-  useCustomers,
-  useGesellschaften,
-  useKundeRechnungSummen,
-} from "@/lib/data/queries";
+import { useCreateCustomer, useCustomers, useGesellschaften, useKundeRechnungSummen } from "@/data";
 import { fehlerText, formatEUR } from "@/lib/data/format";
 import { ErrorState, TableSkeleton } from "@/components/belege/query-states";
 import { Skeleton } from "@/components/ui/skeleton";

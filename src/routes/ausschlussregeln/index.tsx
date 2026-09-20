@@ -50,7 +50,7 @@ import {
   useExclusions,
   useUpdateExclusion,
   useExclusionImpact,
-} from "@/lib/data/queries";
+} from "@/data";
 import { ErrorState, TableSkeleton } from "@/components/belege/query-states";
 import {
   FilterPills,
@@ -66,7 +66,7 @@ import type { FilterField } from "@/kit/components/data-table";
 import { cn } from "@/lib/utils";
 import { useTranslation } from "@/lib/i18n";
 import type { Exclusion, ExclusionScope } from "@/lib/data/types";
-import type { ExclusionImpact } from "@/lib/data/queries";
+import type { ExclusionImpact } from "@/data";
 import { pageTitle } from "@/config/brand";
 import { fehlerText } from "@/lib/data/format";
 

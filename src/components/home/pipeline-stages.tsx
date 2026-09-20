@@ -4,7 +4,7 @@ import { DashboardPanel } from "@/components/dashboard/panel";
 import { StageTiles, type StageTile } from "@/components/dashboard/stage-tiles";
 import { PeriodPicker, useStoredPeriod } from "@/components/home/period-picker";
 import { overviewPeriodRange } from "@/lib/data/format";
-import { useBelegeKanbanCounts } from "@/lib/data/queries";
+import { useBelegeKanbanCounts } from "@/data";
 import { useTranslation } from "@/lib/i18n";
 
 /**

@@ -11,7 +11,7 @@ import {
   type ChartConfig,
 } from "@/components/ui/chart";
 import { formatDayShort, formatEUR, formatEURCompact, formatMonthShort } from "@/lib/data/format";
-import { useOutgoingInvoices, useOverviewInvoices } from "@/lib/data/queries";
+import { useOutgoingInvoices, useOverviewInvoices } from "@/data";
 import { useTranslation } from "@/lib/i18n";
 
 /**

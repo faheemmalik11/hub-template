@@ -31,7 +31,7 @@ import {
   useOutgoingInvoiceMatches,
   useOutgoingTransactionMatches,
   useTransactionMatches,
-} from "@/lib/data/queries";
+} from "@/data";
 import type { BankTransaction } from "@/lib/data/types";
 
 /**

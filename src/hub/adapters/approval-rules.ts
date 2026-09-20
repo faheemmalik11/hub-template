@@ -20,7 +20,7 @@ import {
   useSoftDeleteApprovalRule,
   useUpdateApprovalRule,
   type ApprovalRuleInput,
-} from "@/lib/data/queries";
+} from "@/data";
 import { useTranslation } from "@/lib/i18n";
 import type { ApprovalRule, ChainPerson } from "@/lib/data/types";
 

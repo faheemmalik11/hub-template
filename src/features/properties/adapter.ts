@@ -10,7 +10,7 @@
 
 import { useMemo } from "react";
 
-import { useGesellschaften, usePropertyCompanies } from "@/lib/data/queries";
+import { useGesellschaften, usePropertyCompanies } from "@/data";
 
 import type { ObjektGesellschaft, ObjektGesellschaftenIndex, ObjektZuordnung } from "./config";
 
@@ -27,7 +27,7 @@ export {
 } from "@/lib/data/format";
 
 export type { Beleg, Objekt } from "@/lib/data/types";
-export type { BelegAggregatZeile } from "@/lib/data/queries";
+export type { BelegAggregatZeile } from "@/data";
 
 export { useTranslation } from "@/lib/i18n";
 export { cn } from "@/lib/utils";
@@ -46,7 +46,7 @@ export {
   useObjekte,
   useUnarchiveObjekt,
   useUpdateObjekt,
-} from "@/lib/data/queries";
+} from "@/data";
 
 export { useFetchNextSentinel } from "@/lib/use-fetch-next-sentinel";
 export { useTableView } from "@/lib/use-table-view";

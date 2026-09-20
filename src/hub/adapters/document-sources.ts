@@ -25,7 +25,7 @@ import {
   useRunRequests,
   useSaveChannelFolders,
   useUpdateChannel,
-} from "@/lib/data/queries";
+} from "@/data";
 import type { FolderOption } from "@/lib/postfach/folder-option";
 import {
   processedRoleFor,

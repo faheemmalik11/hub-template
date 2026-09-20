@@ -34,7 +34,7 @@ import {
   useGesellschaften,
   useObjekte,
   usePropertyCompanies,
-} from "@/lib/data/queries";
+} from "@/data";
 import { fehlerText, formatDate, formatEUR } from "@/lib/data/format";
 import { ErrorState, TableSkeleton } from "@/components/belege/query-states";
 import { type FilterField } from "@/components/data-table/filter-fields";

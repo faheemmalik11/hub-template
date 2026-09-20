@@ -12,7 +12,7 @@ import {
   overviewPeriodRange,
   previousPeriodRange,
 } from "@/lib/data/format";
-import { useOutgoingInvoices, useOverviewInvoices } from "@/lib/data/queries";
+import { useOutgoingInvoices, useOverviewInvoices } from "@/data";
 import { BWA_SCOPE_ALL, useBwaScope } from "@/lib/data/use-bwa-scope";
 import { useTranslation } from "@/lib/i18n";
 import { cn } from "@/lib/utils";

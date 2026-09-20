@@ -14,7 +14,7 @@ import {
   useOpenBankTransactionsInfinite,
   useOpenBelegeInfinite,
   useOpenOutgoingInvoicesInfinite,
-} from "@/lib/data/queries";
+} from "@/data";
 import { fehlerText, formatDate, formatEUR, formatSignedEUR } from "@/lib/data/format";
 import { SEARCH_PAGE_SIZE } from "@/components/bank/match-panel/constants";
 import {

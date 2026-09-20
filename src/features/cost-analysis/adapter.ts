@@ -74,7 +74,7 @@ export {
   useGesellschaften,
   useObjekte,
   useOutgoingInvoices,
-} from "@/lib/data/queries";
+} from "@/data";
 
 // ---------------------------------------------------------------------------
 // Shared UI. Re-exported here for the same reason as the data layer: so a port is one file's worth

@@ -26,7 +26,7 @@ import {
   useRulePreview,
   useRulePreviewScope,
   useSuggestAssignmentRules,
-} from "@/lib/data/queries";
+} from "@/data";
 import { EmptyState, ErrorState, TableSkeleton } from "@/components/belege/query-states";
 import { TablePagination, PAGE_SIZES } from "@/components/data-table/table-pagination";
 import { useTranslation } from "@/lib/i18n";

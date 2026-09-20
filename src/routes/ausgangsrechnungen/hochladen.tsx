@@ -24,7 +24,7 @@ import {
   useCustomers,
   useExtractOutgoingInvoiceFields,
   useGesellschaften,
-} from "@/lib/data/queries";
+} from "@/data";
 import { fehlerText, formatEUR, parseDecimalInput } from "@/lib/data/format";
 import { useTranslation } from "@/lib/i18n";
 import { pageTitle } from "@/config/brand";

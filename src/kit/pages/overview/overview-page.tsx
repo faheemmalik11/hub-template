@@ -2,27 +2,22 @@ import type { ReactNode } from "react";
 import { useMemo, useState } from "react";
 
 import {
-  DashboardPanel,
-  MoneyCardsRow,
-  MoneyTrendChart,
-  PeriodPicker,
-  PipelineStagesPanel,
-  ProcessingSummaryPanel,
-  RankedListPanel,
-  StatRowsPanel,
   englishPeriodLabels,
-  overviewPeriodRange,
   previousPeriodRange,
-  readStoredPeriod,
-  writeStoredPeriod,
-  useStoredPeriod,
   type MoneyCardSpec,
   type PeriodLabels,
-  type PeriodValue,
 } from "../../components/dashboard";
-import type { MoneyFigure, OverviewAdapter, PeriodRange } from "../../adapters/overview";
-import { englishTourLabels, useTour, useTourPlaceholderData } from "../../components/tour";
+import type { OverviewAdapter } from "../../adapters/overview";
+import { englishTourLabels, useTour } from "../../components/tour";
 import { createPlaceholderOverviewAdapter } from "../../lib/tour-placeholders";
+import {
+  MoneyCardsWidget,
+  ProcessingWidget,
+  RankedListWidget,
+  StagesWidget,
+  StatRowsWidget,
+  TrendChartWidget,
+} from "../../widgets/overview";
 import { englishOverviewLabels, type OverviewLabels } from "./labels";
 
 export type OverviewWidget =
@@ -45,16 +40,6 @@ const ALL_WIDGETS: OverviewWidget[] = [
   "openItems",
   "bank",
 ];
-
-const NO_MONEY_FIGURES: { data: Record<string, MoneyFigure>; loading: boolean } = {
-  data: {},
-  loading: false,
-};
-const NO_TREND = { data: [], loading: false };
-const NO_STAGES = { data: [], loading: false, error: false };
-const NO_RANKED = { data: { rows: [], totalText: "" }, loading: false };
-const NO_PROCESSING = { data: undefined, loading: false, error: false };
-const NO_STAT_ROWS = { data: [], loading: false, error: false };
 
 export interface OverviewLinks {
   processingLog: string;
@@ -83,7 +68,7 @@ export function OverviewPage({
   labels = englishOverviewLabels,
   periodLabels = englishPeriodLabels,
 }: OverviewPageProps) {
-  const providedWidgets: Record<OverviewWidget, boolean> = {
+  const provided: Record<OverviewWidget, boolean> = {
     moneyCards: adapter.useMoneyFigures !== undefined,
     trendChart: adapter.useMoneyTrend !== undefined,
     stages: adapter.useInvoiceStages !== undefined,
@@ -93,102 +78,24 @@ export function OverviewPage({
     openItems: adapter.useOpenItemsSummary !== undefined,
     bank: adapter.useBankSummary !== undefined,
   };
-  const show = (widget: OverviewWidget) => widgets.includes(widget) && providedWidgets[widget];
+  const show = (widget: OverviewWidget) => widgets.includes(widget) && provided[widget];
 
-  const [moneyPeriods, setMoneyPeriod] = useMoneyCardPeriods(moneyCards);
-  const [trendPeriod, setTrendPeriod] = useStoredPeriod("chart");
-  const [stagesPeriod, setStagesPeriod] = useStoredPeriod("stages");
-  const [suppliersPeriod, setSuppliersPeriod] = useStoredPeriod("suppliers");
-  const [companiesPeriod, setCompaniesPeriod] = useStoredPeriod("companies");
-  const [processingPeriod, setProcessingPeriod] = useStoredPeriod("processing");
-
-  const trendRange = useMemo(
-    () => overviewPeriodRange(trendPeriod.period, new Date(), trendPeriod),
-    [trendPeriod],
-  );
-  const stagesRange = useMemo(
-    () => overviewPeriodRange(stagesPeriod.period, new Date(), stagesPeriod),
-    [stagesPeriod],
-  );
-  const suppliersRange = useMemo(
-    () => overviewPeriodRange(suppliersPeriod.period, new Date(), suppliersPeriod),
-    [suppliersPeriod],
-  );
-  const companiesRange = useMemo(
-    () => overviewPeriodRange(companiesPeriod.period, new Date(), companiesPeriod),
-    [companiesPeriod],
-  );
-  const processingRange = useMemo(
-    () => overviewPeriodRange(processingPeriod.period, new Date(), processingPeriod),
-    [processingPeriod],
-  );
-
-  const moneyRanges = useMemo(() => {
-    const ranges: Record<string, PeriodRange> = {};
-    for (const card of moneyCards) {
-      const period = moneyPeriods[card.key];
-      ranges[card.key] = overviewPeriodRange(period.period, new Date(), period);
-    }
-    return ranges;
-  }, [moneyCards, moneyPeriods]);
-  const realMoneyFigures = (adapter.useMoneyFigures ?? (() => NO_MONEY_FIGURES))(moneyRanges);
-  const realTrend = (adapter.useMoneyTrend ?? (() => NO_TREND))(trendRange);
-  const realStages = (adapter.useInvoiceStages ?? (() => NO_STAGES))(stagesRange);
-  const realSuppliers = (adapter.useTopSuppliers ?? (() => NO_RANKED))(suppliersRange);
-  const realCompanies = (adapter.useSpendByCompany ?? (() => NO_RANKED))(companiesRange);
-  const realProcessing = (adapter.useProcessingSummary ?? (() => NO_PROCESSING))(processingRange);
-  const realOpenItems = (adapter.useOpenItemsSummary ?? (() => NO_STAT_ROWS))();
-  const realBank = (adapter.useBankSummary ?? (() => NO_STAT_ROWS))();
-
-  const fallbackPlaceholderAdapter = useMemo(
+  const fallbackSamples = useMemo(
     () => createPlaceholderOverviewAdapter(undefined, adapter.formatMoney),
     [adapter.formatMoney],
   );
-  const samples = placeholderAdapter ?? fallbackPlaceholderAdapter;
-
-  const sampleMoneyFigures = (samples.useMoneyFigures ?? (() => NO_MONEY_FIGURES))(moneyRanges);
-  const sampleTrend = (samples.useMoneyTrend ?? (() => NO_TREND))(trendRange);
-  const sampleStages = (samples.useInvoiceStages ?? (() => NO_STAGES))(stagesRange);
-  const sampleSuppliers = (samples.useTopSuppliers ?? (() => NO_RANKED))(suppliersRange);
-  const sampleCompanies = (samples.useSpendByCompany ?? (() => NO_RANKED))(companiesRange);
-  const sampleProcessing = (samples.useProcessingSummary ?? (() => NO_PROCESSING))(processingRange);
-  const sampleOpenItems = (samples.useOpenItemsSummary ?? (() => NO_STAT_ROWS))();
-  const sampleBank = (samples.useBankSummary ?? (() => NO_STAT_ROWS))();
+  const samples = placeholderAdapter ?? fallbackSamples;
 
   const tour = useTour();
   const tourLabels = tour?.labels ?? englishTourLabels;
-  const wantsSampleData = useTourPlaceholderData();
+  const [sampleWidgets, setSampleWidgets] = useState<Record<string, boolean>>({});
+  const noteSample = (widget: string) => (showing: boolean) =>
+    setSampleWidgets((current) =>
+      current[widget] === showing ? current : { ...current, [widget]: showing },
+    );
+  const showingSampleData = Object.values(sampleWidgets).some(Boolean);
 
-  const moneyIsEmpty = Object.values(realMoneyFigures.data).every(
-    (figure) => !figure.loading && figure.value === 0,
-  );
-  const trendIsEmpty = !realTrend.loading && realTrend.data.length === 0;
-  const stagesIsEmpty = !realStages.loading && realStages.data.length === 0;
-  const suppliersIsEmpty = !realSuppliers.loading && realSuppliers.data.rows.length === 0;
-  const companiesIsEmpty = !realCompanies.loading && realCompanies.data.rows.length === 0;
-  const processingIsEmpty = !realProcessing.loading && realProcessing.data === undefined;
-  const openItemsIsEmpty = !realOpenItems.loading && realOpenItems.data.length === 0;
-  const bankIsEmpty = !realBank.loading && realBank.data.length === 0;
-
-  const showSample = (isEmpty: boolean) => wantsSampleData && isEmpty;
-  const showingSampleData =
-    showSample(moneyIsEmpty) ||
-    showSample(trendIsEmpty) ||
-    showSample(stagesIsEmpty) ||
-    showSample(suppliersIsEmpty) ||
-    showSample(companiesIsEmpty) ||
-    showSample(processingIsEmpty) ||
-    showSample(openItemsIsEmpty) ||
-    showSample(bankIsEmpty);
-
-  const moneyFigures = showSample(moneyIsEmpty) ? sampleMoneyFigures : realMoneyFigures;
-  const trend = showSample(trendIsEmpty) ? sampleTrend : realTrend;
-  const stages = showSample(stagesIsEmpty) ? sampleStages : realStages;
-  const suppliers = showSample(suppliersIsEmpty) ? sampleSuppliers : realSuppliers;
-  const companies = showSample(companiesIsEmpty) ? sampleCompanies : realCompanies;
-  const processing = showSample(processingIsEmpty) ? sampleProcessing : realProcessing;
-  const openItems = showSample(openItemsIsEmpty) ? sampleOpenItems : realOpenItems;
-  const bank = showSample(bankIsEmpty) ? sampleBank : realBank;
+  const shared = { adapter, sampleAdapter: samples, periodLabels };
 
   return (
     <div>
@@ -203,43 +110,22 @@ export function OverviewPage({
               data-tour="overview-money-cards"
               className="min-w-0 rounded-2xl bg-brand-wash p-4 lg:col-span-2"
             >
-              <MoneyCardsRow
+              <MoneyCardsWidget
+                {...shared}
                 cards={moneyCards}
-                figures={moneyFigures.data}
-                periods={moneyPeriods}
-                onPeriodChange={setMoneyPeriod}
-                periodLabels={periodLabels}
-                formatMoney={adapter.formatMoney}
-                formatDay={adapter.formatDay}
+                onShowingSample={noteSample("moneyCards")}
               />
             </section>
           )}
 
           {show("trendChart") && (
-            <DashboardPanel
-              dataTour="overview-trend-chart"
+            <TrendChartWidget
+              {...shared}
               title={labels.trendChart.title}
-              headerRight={
-                <PeriodPicker
-                  value={trendPeriod}
-                  onChange={setTrendPeriod}
-                  labels={periodLabels}
-                  formatDay={adapter.formatDay}
-                />
-              }
-              className="overflow-hidden"
-            >
-              <div className="mt-2">
-                <MoneyTrendChart
-                  data={trend.data}
-                  loading={trend.loading}
-                  incomingLabel={labels.trendChart.incoming}
-                  outgoingLabel={labels.trendChart.outgoing}
-                  formatMoney={adapter.formatMoney}
-                  formatMoneyCompact={adapter.formatMoneyCompact}
-                />
-              </div>
-            </DashboardPanel>
+              incomingLabel={labels.trendChart.incoming}
+              outgoingLabel={labels.trendChart.outgoing}
+              onShowingSample={noteSample("trendChart")}
+            />
           )}
         </div>
       )}
@@ -248,31 +134,25 @@ export function OverviewPage({
         <div className="mt-3 grid gap-3 lg:grid-cols-3">
           {show("stages") && (
             <div className="min-w-0 lg:col-span-2">
-              <PipelineStagesPanel
-                dataTour="overview-stages"
+              <StagesWidget
+                {...shared}
                 title={labels.stagesTitle}
-                stages={stages.data}
-                loading={stages.loading}
-                error={stages.error}
-                period={stagesPeriod}
-                onPeriodChange={setStagesPeriod}
-                periodLabels={periodLabels}
-                formatDay={adapter.formatDay}
                 className="h-full"
+                onShowingSample={noteSample("stages")}
               />
             </div>
           )}
           {show("topSuppliers") && (
-            <RankedListPanel
+            <RankedListWidget
+              adapter={adapter}
+              read={adapter.useTopSuppliers}
+              readSample={samples.useTopSuppliers}
+              storageKey="suppliers"
               dataTour="overview-top-suppliers"
-              title={labels.topSuppliersTitle(suppliers.data.rows.length)}
-              totalLabel={labels.rankTotal(suppliers.data.totalText)}
-              rows={suppliers.data.rows}
-              loading={suppliers.loading}
-              period={suppliersPeriod}
-              onPeriodChange={setSuppliersPeriod}
+              title={labels.topSuppliersTitle}
+              totalLabel={labels.rankTotal}
               periodLabels={periodLabels}
-              formatDay={adapter.formatDay}
+              onShowingSample={noteSample("topSuppliers")}
             />
           )}
         </div>
@@ -281,78 +161,51 @@ export function OverviewPage({
       {(show("processing") || show("spendByCompany") || show("openItems") || show("bank")) && (
         <div className="mt-3 grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
           {show("processing") && (
-            <ProcessingSummaryPanel
-              dataTour="overview-processing"
-              title={labels.processing.title}
-              seeAllLabel={labels.processing.seeAll}
+            <ProcessingWidget
+              {...shared}
+              labels={labels.processing}
               seeAllTo={links.processingLog}
-              summary={processing.data}
-              loading={processing.loading}
-              error={processing.error}
-              labels={{
-                processed: labels.processing.processed,
-                recognized: labels.processing.recognized,
-                needsReview: labels.processing.needsReview,
-                errors: labels.processing.errors,
-                channelsPrefix: labels.processing.channelsPrefix,
-              }}
-              period={processingPeriod}
-              onPeriodChange={setProcessingPeriod}
-              periodLabels={periodLabels}
-              formatDay={adapter.formatDay}
+              onShowingSample={noteSample("processing")}
             />
           )}
           {show("spendByCompany") && (
-            <RankedListPanel
+            <RankedListWidget
+              adapter={adapter}
+              read={adapter.useSpendByCompany}
+              readSample={samples.useSpendByCompany}
+              storageKey="companies"
               dataTour="overview-spend-by-company"
-              title={labels.spendByCompanyTitle(companies.data.rows.length)}
-              totalLabel={labels.rankTotal(companies.data.totalText)}
-              rows={companies.data.rows}
-              loading={companies.loading}
-              period={companiesPeriod}
-              onPeriodChange={setCompaniesPeriod}
+              title={labels.spendByCompanyTitle}
+              totalLabel={labels.rankTotal}
               periodLabels={periodLabels}
-              formatDay={adapter.formatDay}
+              onShowingSample={noteSample("spendByCompany")}
             />
           )}
           {show("openItems") && (
-            <StatRowsPanel
+            <StatRowsWidget
+              read={adapter.useOpenItemsSummary}
+              readSample={samples.useOpenItemsSummary}
               dataTour="overview-open-items"
               title={labels.openItems.title}
-              rows={openItems.data}
-              loading={openItems.loading}
               emptyText={labels.openItems.empty}
               footerLink={{ to: links.openItems, label: labels.openItems.seeAll }}
+              onShowingSample={noteSample("openItems")}
             />
           )}
           {show("bank") && (
-            <StatRowsPanel
+            <StatRowsWidget
+              read={adapter.useBankSummary}
+              readSample={samples.useBankSummary}
               dataTour="overview-bank"
               title={labels.bank.title}
-              rows={bank.data}
-              loading={bank.loading}
               footerLink={{ to: links.bank, label: labels.bank.seeAll }}
+              onShowingSample={noteSample("bank")}
             />
           )}
         </div>
       )}
     </div>
   );
-}
-
-function useMoneyCardPeriods(
-  cards: MoneyCardSpec[],
-): [Record<string, PeriodValue>, (cardKey: string, value: PeriodValue) => void] {
-  const [periods, setPeriods] = useState<Record<string, PeriodValue>>(() => {
-    const initial: Record<string, PeriodValue> = {};
-    for (const card of cards) initial[card.key] = readStoredPeriod(`card.${card.key}`);
-    return initial;
-  });
-  const setPeriod = (cardKey: string, value: PeriodValue) => {
-    setPeriods((current) => ({ ...current, [cardKey]: value }));
-    writeStoredPeriod(`card.${cardKey}`, value);
-  };
-  return [periods, setPeriod];
 }
 
 export { previousPeriodRange };

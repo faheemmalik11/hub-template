@@ -25,7 +25,7 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
-import { useUpdateCustomer } from "@/lib/data/queries";
+import { useUpdateCustomer } from "@/data";
 import type { Customer } from "@/lib/data/types";
 import { useTranslation } from "@/lib/i18n";
 import { fehlerText } from "@/lib/data/format";

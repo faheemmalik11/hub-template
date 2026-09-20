@@ -3,7 +3,7 @@ import { useQueryClient } from "@tanstack/react-query";
 
 import type { NotificationItem } from "@/components/notifications/types";
 import { useAuth } from "@/lib/auth";
-import { useNotificationSettings, useSaveNotificationSettings } from "@/lib/data/queries";
+import { useNotificationSettings, useSaveNotificationSettings } from "@/data";
 
 /**
  * PER-ROW acknowledgement, shared by every alert surface (bell, dashboard strip, notifications

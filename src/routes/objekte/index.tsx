@@ -4,7 +4,7 @@ import { useMemo, useState } from "react";
 import { CompanyAssignmentField } from "@/components/objekte/company-assignment-field";
 import { ObjekteListe, validatePropertiesSearch } from "@/features/properties";
 import type { PropertiesConfig, PropertiesSearch } from "@/features/properties";
-import { useSetPropertyCompanies } from "@/lib/data/queries";
+import { useSetPropertyCompanies } from "@/data";
 import { useAuth } from "@/lib/auth";
 import { pageTitle } from "@/config/brand";
 

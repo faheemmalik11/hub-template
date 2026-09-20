@@ -33,6 +33,9 @@ was before. Read it before touching `tables.ts` or migrating a client.
 | `0010_access` | row level security for every table |
 | `0011_functions` | the functions the screens call, and the helpers those call in turn |
 | `0012_views` | the views the screens read |
+| `0013_scheduled_jobs` | what runs on a timer, per client, as rows |
+| `0014_triggers` | what the database does by itself |
+| `0015_server_permissions` | `person_may()`, for callers with no session |
 
 A new table goes in the file for its subject, not at the end of the last one.
 

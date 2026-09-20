@@ -58,7 +58,7 @@ import {
   useBelegeListe,
   useBulkInvoiceActions,
   useGesellschaften,
-} from "@/lib/data/queries";
+} from "@/data";
 import { useTranslation } from "@/lib/i18n";
 import {
   GESELLSCHAFT_OHNE,

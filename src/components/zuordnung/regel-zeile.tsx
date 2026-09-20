@@ -31,7 +31,7 @@ import {
   useRulePreview,
   useSoftDeleteAssignmentRule,
   useUpdateAssignmentRule,
-} from "@/lib/data/queries";
+} from "@/data";
 import type { AssignmentRule } from "@/lib/data/types";
 import { fehlerText } from "@/lib/data/format";
 

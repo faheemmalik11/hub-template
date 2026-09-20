@@ -59,8 +59,8 @@ import {
   useOposWhitelistRules,
   useReapplyOposWhitelist,
   useUpdateOposWhitelistRule,
-} from "@/lib/data/queries";
-import type { OposTermImpact } from "@/lib/data/queries";
+} from "@/data";
+import type { OposTermImpact } from "@/data";
 import { ErrorState, TableSkeleton } from "@/components/belege/query-states";
 import { useTranslation } from "@/lib/i18n";
 import { useAuth } from "@/lib/auth";

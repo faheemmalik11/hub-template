@@ -17,11 +17,7 @@ import { Input } from "@/components/ui/input";
 import { Skeleton } from "@/components/ui/skeleton";
 import { cn } from "@/lib/utils";
 import { useTranslation } from "@/lib/i18n";
-import {
-  useMatchAllocation,
-  useMatchingSettings,
-  useOutgoingMatchAllocation,
-} from "@/lib/data/queries";
+import { useMatchAllocation, useMatchingSettings, useOutgoingMatchAllocation } from "@/data";
 import {
   formatDate,
   formatEUR,

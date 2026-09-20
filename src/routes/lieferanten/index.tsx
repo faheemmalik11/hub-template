@@ -44,7 +44,7 @@ import {
   useMergeSuppliers,
   useSupplierDuplicates,
   useSupplierBankAccounts,
-} from "@/lib/data/queries";
+} from "@/data";
 import {
   erkenneSteuerIds,
   isPayableIBAN,

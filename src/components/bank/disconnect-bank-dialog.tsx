@@ -15,7 +15,7 @@ import {
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { useDisconnectBank, useDisconnectPreview } from "@/lib/data/queries";
+import { useDisconnectBank, useDisconnectPreview } from "@/data";
 import { fehlerText } from "@/lib/data/format";
 import { useTranslation } from "@/lib/i18n";
 

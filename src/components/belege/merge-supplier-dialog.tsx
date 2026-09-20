@@ -23,7 +23,7 @@ import {
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
 import { Combobox } from "@/components/ui/combobox";
-import { useMergeSuppliers } from "@/lib/data/queries";
+import { useMergeSuppliers } from "@/data";
 import { useTranslation } from "@/lib/i18n";
 import type { Lieferant } from "@/lib/data/types";
 import { fehlerText } from "@/lib/data/format";

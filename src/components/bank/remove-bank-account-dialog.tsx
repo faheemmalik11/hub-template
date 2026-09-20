@@ -16,7 +16,7 @@ import {
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { useBankAccountPurgePreview, useExcludeBankAccount } from "@/lib/data/queries";
+import { useBankAccountPurgePreview, useExcludeBankAccount } from "@/data";
 import type { BankAccount } from "@/lib/data/types";
 import { useTranslation } from "@/lib/i18n";
 import { fehlerText } from "@/lib/data/format";

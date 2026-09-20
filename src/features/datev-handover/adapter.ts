@@ -60,7 +60,7 @@ export {
   useGesellschaften,
   useSaveDatevRoutes,
   useTriggerDatevHandover,
-} from "@/lib/data/queries";
+} from "@/data";
 
 // ---------------------------------------------------------------------------
 // Shared components. `RouteStatus` is NOT part of this folder on purpose — LexOffice renders the

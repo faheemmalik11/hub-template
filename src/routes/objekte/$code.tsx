@@ -18,11 +18,7 @@ import {
 import { Button } from "@/components/ui/button";
 import { ObjektDetail } from "@/features/properties";
 import type { ObjektDaten, PropertiesConfig } from "@/features/properties";
-import {
-  useGesellschaften,
-  usePropertyCompanies,
-  useRemovePropertyCompanyLink,
-} from "@/lib/data/queries";
+import { useGesellschaften, usePropertyCompanies, useRemovePropertyCompanyLink } from "@/data";
 import type { PropertyCompany } from "@/lib/data/types";
 import { GesellschaftChip } from "@/components/belege/badges";
 import { fehlerText } from "@/lib/data/format";

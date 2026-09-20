@@ -3,7 +3,7 @@ import { useFokus } from "@/lib/use-fokus";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { toast } from "sonner";
 
-import { useBankAccounts, useBankConnections, useGesellschaften } from "@/lib/data/queries";
+import { useBankAccounts, useBankConnections, useGesellschaften } from "@/data";
 import type { BankAccount, BankConnection } from "@/lib/data/types";
 import { BankAccountDialog } from "@/components/bank/bank-account-dialog";
 import { ConnectBankDialog } from "@/components/bank/connect-bank-dialog";

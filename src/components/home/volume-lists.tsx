@@ -8,7 +8,7 @@ import {
 } from "@/components/dashboard/ranked-bars";
 import { PeriodPicker, useStoredPeriod } from "@/components/home/period-picker";
 import { formatEURCompact, GESELLSCHAFT_OHNE, overviewPeriodRange } from "@/lib/data/format";
-import { useOverviewInvoices } from "@/lib/data/queries";
+import { useOverviewInvoices } from "@/data";
 import { useTranslation } from "@/lib/i18n";
 
 /**

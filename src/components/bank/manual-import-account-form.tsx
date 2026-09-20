@@ -3,7 +3,7 @@ import { toast } from "sonner";
 
 import { Button } from "@/components/ui/button";
 import type { ManualBankAccountRow } from "@/lib/api/bank-manual-import.functions";
-import { useCreateManualBankAccount, useGesellschaften } from "@/lib/data/queries";
+import { useCreateManualBankAccount, useGesellschaften } from "@/data";
 import {
   BANK_ACCOUNT_IMPORT_RULES,
   normalizeBankAccountFields,

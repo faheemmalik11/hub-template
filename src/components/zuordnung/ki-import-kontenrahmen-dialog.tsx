@@ -33,8 +33,8 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { cn } from "@/lib/utils";
-import { useExtractChartOfAccounts, useImportBwaAccountMapping } from "@/lib/data/queries";
-import type { BwaAccountMappingRow } from "@/lib/data/queries";
+import { useExtractChartOfAccounts, useImportBwaAccountMapping } from "@/data";
+import type { BwaAccountMappingRow } from "@/data";
 import { useTranslation } from "@/lib/i18n";
 import type { BwaCategory, Gesellschaft } from "@/lib/data/types";
 import { CHART_OF_ACCOUNTS_FILE_MIME } from "@/lib/api/chart-of-accounts-extraction-shared";

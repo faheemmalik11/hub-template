@@ -81,7 +81,7 @@ import {
   useUpdateEmployeeRole,
   AreaConflictError,
   type AssignableRole,
-} from "@/lib/data/queries";
+} from "@/data";
 import type { ApprovalArea, Employee } from "@/lib/data/types";
 import { useTranslation } from "@/lib/i18n";
 import { BRAND, pageTitle } from "@/config/brand";

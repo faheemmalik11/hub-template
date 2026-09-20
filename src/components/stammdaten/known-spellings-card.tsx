@@ -21,7 +21,7 @@ import {
   useDeactivateEntityAlias,
   useEntityAliases,
   type EntityAliasType,
-} from "@/lib/data/queries";
+} from "@/data";
 import { fehlerText } from "@/lib/data/format";
 
 /**

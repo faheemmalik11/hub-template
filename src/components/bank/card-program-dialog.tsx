@@ -15,7 +15,7 @@ import {
 } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { useGesellschaften, useUpdateBankAccount } from "@/lib/data/queries";
+import { useGesellschaften, useUpdateBankAccount } from "@/data";
 import type { BankAccount } from "@/lib/data/types";
 import { useTranslation } from "@/lib/i18n";
 import { fehlerText } from "@/lib/data/format";

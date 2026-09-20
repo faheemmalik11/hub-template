@@ -61,7 +61,7 @@ import {
 import { SidebarMenu } from "@/components/ui/sidebar";
 import { useAuth } from "@/lib/auth";
 import { PERMISSIONS, type PermissionKey } from "@/config/permissions";
-import { useActingAs, useInvoicesReturnedToMe } from "@/lib/data/queries";
+import { useActingAs, useInvoicesReturnedToMe } from "@/data";
 import { useTranslation } from "@/lib/i18n";
 import { useTourLabels, useTours } from "@/lib/tour/tours";
 import { useTourSeenStore } from "@/lib/tour/use-tour-seen-store";

@@ -22,7 +22,7 @@ import {
   useManualBookings,
   useObjekte,
   useOutgoingInvoices,
-} from "@/lib/data/queries";
+} from "@/data";
 import { coveredAmount, isFullyCovered } from "@/lib/data/format";
 import {
   computeBwaSkeleton,

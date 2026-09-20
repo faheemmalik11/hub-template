@@ -20,7 +20,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { ErrorState } from "@/components/belege/query-states";
 import { useAuth } from "@/lib/auth";
 import { fehlerText } from "@/lib/data/format";
-import { useMatchingSettings, useUpdateMatchingSettings } from "@/lib/data/queries";
+import { useMatchingSettings, useUpdateMatchingSettings } from "@/data";
 import { useTranslation } from "@/lib/i18n";
 import { pageTitle } from "@/config/brand";
 

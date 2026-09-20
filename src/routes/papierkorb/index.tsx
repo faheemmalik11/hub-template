@@ -54,7 +54,7 @@ import { ErrorState, TableSkeleton } from "@/components/belege/query-states";
 import { PAGE_SIZES, TablePagination } from "@/components/data-table/table-pagination";
 import { useAuth } from "@/lib/auth";
 import { PERMISSIONS } from "@/config/permissions";
-import { usePurgeRecord, useRestoreRecord, useTrash, useTrashTables } from "@/lib/data/queries";
+import { usePurgeRecord, useRestoreRecord, useTrash, useTrashTables } from "@/data";
 import { fehlerText, formatDateTime } from "@/lib/data/format";
 import type { TrashRecord } from "@/lib/data/types";
 import { useTranslation } from "@/lib/i18n";

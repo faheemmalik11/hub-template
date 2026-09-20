@@ -58,3 +58,32 @@ It belongs in `@hub-kit/core`, which is the only way every Hub gets it without c
 - **A permission whose page is off.** The role may still hold `invoices.pay` while the payments
   module is off. The resolver answers no, which is correct, and the Rollen tab should show it as
   unavailable rather than as revoked.
+
+## The server side, checked 19.09.2026
+
+A switch has to reach three surfaces, not one. Where each stands:
+
+| Surface | Covered by | Notes |
+|---|---|---|
+| The screens | `can()` in the menu and the route guard | |
+| The database | RLS calling `current_permissions()` | the entitlement sits in front of the admin path in `may_read` |
+| The server routes | the caller's own token, plus `person_may()` where a route guards explicitly | see below |
+
+**21 of the 22 server routes run as the caller.** `requireSupabaseAuth` builds a client from the
+caller's Bearer token, so every query they make is under RLS and the switch applies without the
+route doing anything.
+
+**One route holds elevated rights**, `invoice-files.functions.ts`, and it is written correctly: it
+first reads the file row through the **caller's** client with a `documents!inner` embed, so RLS
+decides whether that document is visible at all, and only then uses the admin client to mint a
+signed URL. A switched-off module fails at the embed, exactly as if the file did not exist.
+
+**What was actually broken:** `requirePermission` re-implemented the permission rule in TypeScript
+and knew nothing about feature settings. It now calls `person_may(email, capability)` in SQL, which
+resolves the personal override, the role default, the protected account and `live_features()`
+together. Proved: with payments switched off in the panel, the owner is refused on the server path
+too, and allowed again when it is switched back on.
+
+**The rule to keep:** a server route never re-derives who may do what. It asks the database, because
+two implementations of one rule is how they drift, and the drift is invisible until somebody
+switches something off.

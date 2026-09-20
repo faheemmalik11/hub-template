@@ -87,7 +87,7 @@ import {
   useSupplierBankAccounts,
   useSupplierIbanHistory,
   useUpdateLieferant,
-} from "@/lib/data/queries";
+} from "@/data";
 import {
   compactIBAN,
   dateLocale,

@@ -15,7 +15,7 @@ import {
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Checkbox } from "@/components/ui/checkbox";
-import { useStartBankConnect, type BankConnectResult } from "@/lib/data/queries";
+import { useStartBankConnect, type BankConnectResult } from "@/data";
 import { useTranslation } from "@/lib/i18n";
 import { fehlerText } from "@/lib/data/format";
 

@@ -31,7 +31,7 @@ import {
   useVerarbeitungsLogStatusCounts,
   searchWasDropped,
   type ChangeHistoryEntry,
-} from "@/lib/data/queries";
+} from "@/data";
 import { formatDateTime } from "@/lib/data/format";
 import { parseReason, parseSender, type ParsedSender } from "@/lib/data/protokoll-format";
 import { downloadCsv } from "@/lib/data/bwa-export";

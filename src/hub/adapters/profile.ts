@@ -7,7 +7,7 @@ import type { ProfileAdapter, ProfileUser } from "@/kit/adapters";
 
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/lib/auth";
-import { usePermissionCatalogue, type PermissionRow } from "@/lib/data/queries";
+import { usePermissionCatalogue, type PermissionRow } from "@/data";
 import { useTranslation } from "@/lib/i18n";
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any

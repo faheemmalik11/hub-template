@@ -23,7 +23,7 @@ import {
   useTransactionUploads,
   useCloseTransactionRemainder,
   useReopenTransactionRemainder,
-} from "@/lib/data/queries";
+} from "@/data";
 import { useCategoryOptions } from "@/components/zuordnung/neue-regel-dialog";
 import {
   fehlerText,

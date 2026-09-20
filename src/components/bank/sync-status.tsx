@@ -14,7 +14,7 @@ import { useEffect, useState } from "react";
 import { AlertTriangle, CheckCircle2, CircleSlash, Loader2 } from "lucide-react";
 
 import { cn } from "@/lib/utils";
-import { useBankSyncLogs } from "@/lib/data/queries";
+import { useBankSyncLogs } from "@/data";
 import { computeSyncHealth, type SyncHealthStatus } from "@/lib/data/sync-health";
 import { formatDateTime } from "@/lib/data/format";
 import { useTranslation } from "@/lib/i18n";

@@ -3,7 +3,7 @@ import { useMemo, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Combobox } from "@/components/ui/combobox";
 import type { ManualBankAccountRow } from "@/lib/api/bank-manual-import.functions";
-import { useBankAccounts } from "@/lib/data/queries";
+import { useBankAccounts } from "@/data";
 import { useTranslation } from "@/lib/i18n";
 import { ManualImportAccountForm } from "./manual-import-account-form";
 

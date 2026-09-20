@@ -30,6 +30,11 @@ import { Switch } from "../../ui/switch";
 import { cn } from "../../lib/class-names";
 import { SourceIconBadge, StatusChip } from "./source-visuals";
 import type { DocumentSourcesLabels } from "./labels";
+import {
+  useConnectionTest,
+  useDependentFieldOptions,
+  useSourceForm,
+} from "../../widgets/document-sources";
 
 export interface SourceSettingsSheetProps {
   source: DocumentSource | null;
@@ -90,142 +95,18 @@ function SheetBody({
   onLoadFieldOptions,
   onTestConnection,
 }: SourceSettingsSheetProps & { source: DocumentSource }) {
-  const initialValues = useMemo(() => {
-    const values: Record<string, SourceFieldValue> = {};
-    for (const field of source.fields) {
-      values[field.key] = field.value;
-    }
-    return values;
-  }, [source.fields]);
-
-  const [values, setValues] = useState(initialValues);
-  const [saving, setSaving] = useState(false);
-  const [saveError, setSaveError] = useState(false);
-  const [testing, setTesting] = useState(false);
-  const [testResult, setTestResult] = useState<ConnectionTestResult | null>(null);
-
-  useEffect(() => {
-    setValues(initialValues);
-  }, [initialValues]);
-
-  const isDirty = useMemo(
-    () => source.fields.some((field) => !sameValue(values[field.key], initialValues[field.key])),
-    [source.fields, values, initialValues],
-  );
-
-  const setValue = (key: string, value: SourceFieldValue) => {
-    setValues((current) => ({ ...current, [key]: value }));
-  };
-
-  const dependentFields = source.fields.filter((field) => field.dependsOn);
-  const [dynamicOptions, setDynamicOptions] = useState<
-    Record<string, { loading: boolean; error?: boolean; options: FieldOption[] }>
-  >({});
-  const loadedDependency = useRef<Record<string, string | null>>({});
-  const dependencyValuesKey = dependentFields
-    .map((field) => {
-      const raw = values[field.dependsOn as string];
-      return field.key + " " + (typeof raw === "string" ? raw.trim() : "");
-    })
-    .join("|");
-  useEffect(() => {
-    if (!onLoadFieldOptions) {
-      return;
-    }
-    for (const field of dependentFields) {
-      const raw = values[field.dependsOn as string];
-      const dependency = typeof raw === "string" && raw.trim() !== "" ? raw.trim() : null;
-      const seenBefore = field.key in loadedDependency.current;
-      if (seenBefore && loadedDependency.current[field.key] === dependency) {
-        continue;
-      }
-      loadedDependency.current[field.key] = dependency;
-      if (seenBefore) {
-        setValue(field.key, Array.isArray(field.value) ? [] : null);
-      }
-      if (!dependency) {
-        setDynamicOptions((current) => ({
-          ...current,
-          [field.key]: { loading: false, options: [] },
-        }));
-        continue;
-      }
-      setDynamicOptions((current) => ({
-        ...current,
-        [field.key]: { loading: true, options: current[field.key]?.options ?? [] },
-      }));
-      onLoadFieldOptions(source.id, field.key, dependency).then(
-        (options) => {
-          if (loadedDependency.current[field.key] !== dependency) {
-            return;
-          }
-          setDynamicOptions((current) => ({
-            ...current,
-            [field.key]: { loading: false, options },
-          }));
-        },
-        () => {
-          if (loadedDependency.current[field.key] !== dependency) {
-            return;
-          }
-          setDynamicOptions((current) => ({
-            ...current,
-            [field.key]: { loading: false, error: true, options: [] },
-          }));
-        },
-      );
-    }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [dependencyValuesKey, onLoadFieldOptions, source.id]);
-
-  const withDynamicOptions = (field: SourceField): SourceField => {
-    if (!field.dependsOn) {
-      return field;
-    }
-    const dynamic = dynamicOptions[field.key];
-    if (!dynamic) {
-      return field;
-    }
-    return {
-      ...field,
-      options: dynamic.options,
-      optionsLoading: dynamic.loading,
-      optionsError: dynamic.error ?? false,
-    };
-  };
+  const form = useSourceForm(source, onSave, onClose);
+  const { values, setValue, isDirty, saving, saveFailed: saveError } = form;
+  const withDynamicOptions = useDependentFieldOptions(source, values, setValue, onLoadFieldOptions);
+  const connection = useConnectionTest(source.id, onTestConnection, labels.sheet.saveFailed);
+  const { testing, result: testResult } = connection;
+  const test = connection.test;
+  const save = form.save;
 
   const headerField = source.fields.find((field) => field.showInHeader);
   const bodyFields = source.fields.filter((field) => !field.showInHeader);
   const plainFields = bodyFields.filter((field) => !field.advanced);
   const advancedFields = bodyFields.filter((field) => field.advanced);
-
-  const save = async () => {
-    setSaving(true);
-    setSaveError(false);
-    try {
-      await onSave(source.id, values);
-      onClose();
-    } catch {
-      setSaveError(true);
-    } finally {
-      setSaving(false);
-    }
-  };
-
-  const test = async () => {
-    if (!onTestConnection) {
-      return;
-    }
-    setTesting(true);
-    setTestResult(null);
-    try {
-      setTestResult(await onTestConnection(source.id));
-    } catch {
-      setTestResult({ ok: false, message: labels.sheet.saveFailed });
-    } finally {
-      setTesting(false);
-    }
-  };
 
   const renderField = (field: SourceField, index?: number) => (
     <FieldRow
@@ -586,14 +467,6 @@ export function FieldControl({
 }
 
 const NONE_VALUE = "__none";
-
-function sameValue(left: SourceFieldValue, right: SourceFieldValue): boolean {
-  if (Array.isArray(left) || Array.isArray(right)) {
-    const asList = (value: SourceFieldValue) => (Array.isArray(value) ? value : []);
-    return asList(left).join("\u0000") === asList(right).join("\u0000");
-  }
-  return (left ?? "") === (right ?? "");
-}
 
 function withSavedValues(
   options: FieldOption[] | undefined,

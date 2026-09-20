@@ -33,7 +33,7 @@ import {
 } from "@/components/data-table/zeitraum-optionen";
 import { EmptyState, ErrorState, TableSkeleton } from "@/components/belege/query-states";
 import { cn } from "@/lib/utils";
-import { useBankConnections, useBankSyncLogFacets, useBankSyncLogsPage } from "@/lib/data/queries";
+import { useBankConnections, useBankSyncLogFacets, useBankSyncLogsPage } from "@/data";
 import { dateLocale, formatDate, formatDateTime, syncEventLabel } from "@/lib/data/format";
 import { useTranslation } from "@/lib/i18n";
 

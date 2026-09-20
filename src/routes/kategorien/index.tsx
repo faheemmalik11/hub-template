@@ -43,7 +43,7 @@ import {
   useSoftDeleteBwaCategory,
   useUpdateBwaCategory,
   type BwaCategoryInput,
-} from "@/lib/data/queries";
+} from "@/data";
 import { EmptyState, ErrorState, TableSkeleton } from "@/components/belege/query-states";
 import { useTranslation } from "@/lib/i18n";
 import type { BwaCategory } from "@/lib/data/types";

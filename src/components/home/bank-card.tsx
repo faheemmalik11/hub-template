@@ -3,7 +3,7 @@ import { CheckCircle2, EyeOff, Landmark, Link2Off, Search } from "lucide-react";
 
 import { DashboardPanel } from "@/components/dashboard/panel";
 import { CHIP, StatRow } from "@/components/dashboard/stat-tile";
-import { useBankMatchingCounts } from "@/lib/data/queries";
+import { useBankMatchingCounts } from "@/data";
 import { useTranslation } from "@/lib/i18n";
 
 /**

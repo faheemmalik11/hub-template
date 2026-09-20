@@ -14,7 +14,7 @@ import {
 } from "@/components/ui/alert-dialog";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
-import { useTriggerSync } from "@/lib/data/queries";
+import { useTriggerSync } from "@/data";
 import { fehlerText } from "@/lib/data/format";
 import type { BankConnection } from "@/lib/data/types";
 import { useTranslation } from "@/lib/i18n";

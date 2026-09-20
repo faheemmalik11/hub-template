@@ -9,7 +9,7 @@ import {
   heuteLokal,
   URGENT_DUE_BUCKETS,
 } from "@/lib/data/format";
-import { useOffeneBelege } from "@/lib/data/queries";
+import { useOffeneBelege } from "@/data";
 import { DashboardPanel } from "@/components/dashboard/panel";
 import { CHIP, StatRow } from "@/components/dashboard/stat-tile";
 import { useTranslation } from "@/lib/i18n";

@@ -10,7 +10,7 @@ import {
   useSoftDeleteAssignmentRule,
   useUpdateAssignmentRule,
   type AssignmentRuleInput,
-} from "@/lib/data/queries";
+} from "@/data";
 import type { AssignmentRule, BwaCategory } from "@/lib/data/types";
 
 import type {

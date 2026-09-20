@@ -13,7 +13,7 @@ import {
   useChainPeople,
   useRecordNotifications,
   useSendPing,
-} from "@/lib/data/queries";
+} from "@/data";
 import { useTranslation } from "@/lib/i18n";
 import { useAuth } from "@/lib/auth";
 import { formatDateTime } from "@/lib/data/format";

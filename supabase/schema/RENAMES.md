@@ -75,3 +75,18 @@ schema. The Hub reads them when they exist.
   returns the parts and the app composes the words.
 - **The search language** was compiled into a generated column. It is one variable at the top of
   `0009_search.sql`.
+
+## Two shapes for line items and taxes, and only one is used
+
+`documents.line_items` and `documents.tax` are jsonb, and `document_line_items` and
+`document_taxes` are tables holding the same facts.
+
+Checked 19.09.2026: **the jsonb columns are the live ones.** The VAT badge reads `documents.tax`,
+because a German invoice routinely carries two rates and `vat_rate` alone once reported 19% on a
+bill whose real VAT was 7.1% blended. The pipeline persists both `tax` and `line_items` as columns.
+
+**Nothing in the app reads the two tables.** They are created and never queried.
+
+So this is not a duplication to clean up here. Either the tables get wired up and the jsonb becomes
+a cache, or the tables go, and that decision belongs with whoever owns the pipeline's persistence.
+Do not delete either side without settling it there first.

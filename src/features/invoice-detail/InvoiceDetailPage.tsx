@@ -128,7 +128,7 @@ import {
   useUnarchiveBeleg,
   useUpdateBeleg,
   useVerarbeitungsLogFuerBeleg,
-} from "@/lib/data/queries";
+} from "@/data";
 import { resolveKostenstelle, type Kostenstelle } from "@/lib/data/kostenstelle";
 import {
   releasesPaymentLink,

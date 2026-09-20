@@ -41,7 +41,7 @@ import {
   useOutgoingInvoice,
   useOutgoingInvoices,
   useSetTransactionCategory,
-} from "@/lib/data/queries";
+} from "@/data";
 import { useCategoryOptions } from "@/components/zuordnung/neue-regel-dialog";
 import {
   coveredAmount,
@@ -69,7 +69,7 @@ import { useTranslation } from "@/lib/i18n";
 import { useDebouncedValue } from "@/lib/use-debounced-value";
 import { tabSearch, useTabParam } from "@/lib/use-tab-param";
 import type { BankTransaction, OpenItemBlocker } from "@/lib/data/types";
-import type { BankTransactionSort } from "@/lib/data/queries";
+import type { BankTransactionSort } from "@/data";
 import { pageTitle } from "@/config/brand";
 
 const ALLE_GESELLSCHAFTEN = "__alle";

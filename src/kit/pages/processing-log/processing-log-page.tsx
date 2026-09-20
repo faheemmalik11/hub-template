@@ -28,6 +28,7 @@ import type {
 } from "../../adapters/processing-log";
 import { parseReason, parseSender, type ParsedReason, type ParsedSender } from "./mail-parsing";
 import { englishProcessingLogLabels, type ProcessingLogLabels } from "./labels";
+import { LOG_PERIODS, isoToday, useDebouncedTerm, useLogView } from "../../widgets/processing-log";
 
 const ALL = "__all";
 
@@ -46,31 +47,6 @@ const TONE_STYLE: Record<StatusTone, string> = {
   danger: "bg-danger-soft text-danger",
   neutral: "bg-muted text-muted-foreground",
 };
-
-function isoDaysAgo(daysBack: number): string {
-  const date = new Date();
-  date.setDate(date.getDate() - daysBack);
-  const month = String(date.getMonth() + 1).padStart(2, "0");
-  const day = String(date.getDate()).padStart(2, "0");
-  return `${date.getFullYear()}-${month}-${day}`;
-}
-
-function periodBounds(period: Period): { fromDate: string | null; toDate: string | null } {
-  if (period === PERIODS.today) return { fromDate: isoDaysAgo(0), toDate: isoDaysAgo(0) };
-  if (period === PERIODS.sevenDays) return { fromDate: isoDaysAgo(6), toDate: isoDaysAgo(0) };
-  if (period === PERIODS.thirtyDays) return { fromDate: isoDaysAgo(29), toDate: isoDaysAgo(0) };
-  return { fromDate: null, toDate: null };
-}
-
-// Waits 300ms after the last keystroke before the term reaches the server.
-function useDebouncedTerm(input: string): string {
-  const [term, setTerm] = useState("");
-  useEffect(() => {
-    const timer = window.setTimeout(() => setTerm(input.trim()), 300);
-    return () => window.clearTimeout(timer);
-  }, [input]);
-  return term;
-}
 
 export interface ProcessingLogPageProps {
   adapter: ProcessingLogAdapter;
@@ -116,46 +92,29 @@ function ProcessingTab({
   labels: ProcessingLogLabels;
   formatters: Formatters;
 }) {
-  const [searchInput, setSearchInput] = useState("");
-  const searchTerm = useDebouncedTerm(searchInput);
-  const [statusFilter, setStatusFilter] = useState(ALL);
-  const [period, setPeriod] = useState<Period>(PERIODS.all);
-  const [page, setPage] = useState(1);
-  const [pageSize, setPageSize] = useState(25);
-  const [openEntry, setOpenEntry] = useState<ProcessingLogEntry | null>(null);
-
-  useEffect(() => {
-    setPage(1);
-  }, [searchTerm, statusFilter, period, pageSize]);
-
-  const bounds = useMemo(() => periodBounds(period), [period]);
-
-  const logQuery = adapter.useLogPage({
-    search: searchTerm,
-    status: statusFilter === ALL ? undefined : statusFilter,
-    fromDate: bounds.fromDate,
-    toDate: bounds.toDate,
+  const view = useLogView(adapter, LOG_PERIODS.all);
+  const {
+    searchInput,
+    setSearchInput,
+    searchTerm,
+    searchIgnored,
+    statusFilter,
+    setStatusFilter,
+    statusValues,
+    counts,
+    period,
+    setPeriod,
+    rows,
+    total,
     page,
+    setPage,
     pageSize,
-  });
-  const countsQuery = adapter.useStatusCounts({
-    search: searchTerm,
-    fromDate: bounds.fromDate,
-    toDate: bounds.toDate,
-  });
-
-  const rows = logQuery.data?.rows ?? [];
-  const total = logQuery.data?.total ?? 0;
-  const totalPages = Math.max(1, Math.ceil(total / pageSize));
-  const firstShown = total === 0 ? 0 : (page - 1) * pageSize + 1;
-  const lastShown = Math.min(page * pageSize, total);
-  const searchIgnored = adapter.searchTermWasIgnored(searchTerm);
-
-  const counts = useMemo(() => countsQuery.data ?? {}, [countsQuery.data]);
-  const statusValues = useMemo(
-    () => Object.keys(counts).sort((a, b) => (counts[b] ?? 0) - (counts[a] ?? 0)),
-    [counts],
-  );
+    setPageSize,
+    totalPages,
+    firstShown,
+    lastShown,
+  } = view;
+  const [openEntry, setOpenEntry] = useState<ProcessingLogEntry | null>(null);
 
   function exportCsv() {
     const header = [
@@ -175,7 +134,7 @@ function ProcessingTab({
         entry.reason ?? "",
       ]),
     ];
-    downloadTextFile(`processing-log-${isoDaysAgo(0)}.csv`, toCsv(lines));
+    downloadTextFile(`processing-log-${isoToday()}.csv`, toCsv(lines));
   }
 
   function statusBadgeStyle(status: string | null): string {
@@ -188,7 +147,7 @@ function ProcessingTab({
       <p className="text-sm text-muted-foreground">{labels.processingSubtitle}</p>
 
       <div className="mt-4 flex min-h-[34px] flex-wrap items-center gap-2">
-        {countsQuery.isLoading ? (
+        {view.countsLoading ? (
           <>
             <Skeleton className="h-[26px] w-28 rounded-full" />
             <Skeleton className="h-[26px] w-24 rounded-full" />
@@ -290,11 +249,11 @@ function ProcessingTab({
         </p>
       )}
 
-      {logQuery.isError ? (
+      {view.error ? (
         <div className="mt-4">
-          <ErrorState error={logQuery.error} onRetry={logQuery.refetch} />
+          <ErrorState error={view.error} onRetry={view.retry} />
         </div>
-      ) : logQuery.isLoading ? (
+      ) : view.loading ? (
         <div className="mt-4">
           <TableSkeleton rows={10} columns={4} />
         </div>
@@ -302,7 +261,7 @@ function ProcessingTab({
         <>
           <p className="mt-4 text-sm text-muted-foreground">
             {labels.matchCount(total)}
-            {logQuery.isRefreshing && ` · ${labels.refreshing}`}
+            {view.refreshing && ` · ${labels.refreshing}`}
           </p>
           <div className="mt-3 hidden overflow-hidden rounded-xl border border-border bg-card sm:block">
             <Table>

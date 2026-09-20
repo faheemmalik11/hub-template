@@ -28,7 +28,7 @@ import {
   useUnlinkMatch,
   useUnlinkOutgoingMatch,
   useTransactionMatches,
-} from "@/lib/data/queries";
+} from "@/data";
 import { fehlerText, formatEUR } from "@/lib/data/format";
 import { MatchStatusBadge } from "@/components/bank/badges";
 import { MatchCard, MatchCardAction } from "@/components/bank/match-panel/match-card";

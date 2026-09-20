@@ -24,12 +24,7 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { Skeleton } from "@/components/ui/skeleton";
-import {
-  useCustomer,
-  useGesellschaften,
-  useOutgoingInvoices,
-  useSoftDeleteCustomer,
-} from "@/lib/data/queries";
+import { useCustomer, useGesellschaften, useOutgoingInvoices, useSoftDeleteCustomer } from "@/data";
 import { fehlerText, formatDate, formatEUR, zaehltAlsUmsatz } from "@/lib/data/format";
 import { CopyButton } from "@/components/belege/copy-button";
 import {

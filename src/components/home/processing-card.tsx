@@ -11,7 +11,7 @@ import {
   usePipelineHealth,
   useRunRequests,
   useVerarbeitungsLogStatusCounts,
-} from "@/lib/data/queries";
+} from "@/data";
 import { useTranslation } from "@/lib/i18n";
 
 // The pipeline's channel key, and the Postfach card that shows the same channel.

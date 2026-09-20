@@ -11,12 +11,7 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import {
-  useAssignmentRules,
-  useGesellschaften,
-  useVatReserve,
-  useVatReserveAll,
-} from "@/lib/data/queries";
+import { useAssignmentRules, useGesellschaften, useVatReserve, useVatReserveAll } from "@/data";
 import { EmptyState, ErrorState, TableSkeleton } from "@/components/belege/query-states";
 import { formatEUR } from "@/lib/data/format";
 import { cn } from "@/lib/utils";

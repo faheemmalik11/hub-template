@@ -1,6 +1,6 @@
 import { useMemo } from "react";
 
-import { useMatchingSettings, useOpenBankTransactionsInfinite } from "@/lib/data/queries";
+import { useMatchingSettings, useOpenBankTransactionsInfinite } from "@/data";
 import { scoreMatch, type MatchBeleg, type MatchTransaction } from "@/lib/data/matching";
 // The scorer's own MatchReasons has no index signature; this app-wide one (mirroring the DB's
 // jsonb column) does, and is what MatchScoreBreakdown / the link mutations both expect -- cast

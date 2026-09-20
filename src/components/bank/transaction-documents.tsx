@@ -27,7 +27,7 @@ import {
 } from "@/components/ui/dialog";
 import { Skeleton } from "@/components/ui/skeleton";
 import { PdfPane } from "@/components/belege/pdf-pane";
-import { useTransactionDocuments } from "@/lib/data/queries";
+import { useTransactionDocuments } from "@/data";
 import { useTranslation } from "@/lib/i18n";
 import { cn } from "@/lib/utils";
 

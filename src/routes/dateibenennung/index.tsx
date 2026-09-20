@@ -17,7 +17,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { ErrorState } from "@/components/belege/query-states";
-import { useFilenameSettings, useUpdateFilenameSettings } from "@/lib/data/queries";
+import { useFilenameSettings, useUpdateFilenameSettings } from "@/data";
 import { buildSuggestedFilename } from "@/lib/filename";
 import { useAuth } from "@/lib/auth";
 import { PERMISSIONS } from "@/config/permissions";

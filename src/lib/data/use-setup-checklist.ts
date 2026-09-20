@@ -15,7 +15,7 @@ import {
   useChannels,
   useObjekte,
   usePipelineHealth,
-} from "@/lib/data/queries";
+} from "@/data";
 
 export type { SetupStepKey, SetupStepState };
 

@@ -31,7 +31,7 @@ import {
   useObjekte,
   useRulePreviewScope,
   type AssignmentRuleInput,
-} from "@/lib/data/queries";
+} from "@/data";
 import { useTranslation } from "@/lib/i18n";
 import type { BwaCategory, RuleTarget, VatSpecialCase, VatTreatment } from "@/lib/data/types";
 import { VAT_SPECIAL_CASES, VAT_TREATMENTS } from "@/lib/data/types";

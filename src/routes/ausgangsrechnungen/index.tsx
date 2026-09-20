@@ -50,7 +50,7 @@ import {
   useOutgoingInvoices,
   useSetUploadedOutgoingInvoiceStatus,
   useSoftDeleteOutgoingInvoice,
-} from "@/lib/data/queries";
+} from "@/data";
 import { fehlerText, formatDate, formatEUR } from "@/lib/data/format";
 import { ErrorState, TableSkeleton } from "@/components/belege/query-states";
 import { GesellschaftChip } from "@/components/belege/badges";

@@ -31,9 +31,9 @@ import {
   useBankTransactionsPage,
   useGesellschaften,
   useBankConnections,
-} from "@/lib/data/queries";
+} from "@/data";
 import type { BankTransaction } from "@/lib/data/types";
-import type { BankTransactionSort } from "@/lib/data/queries";
+import type { BankTransactionSort } from "@/data";
 import { TablePagination } from "@/components/data-table/table-pagination";
 import { dateLocale, eindeutigeKontoLabels, formatDate, formatSignedEUR } from "@/lib/data/format";
 import { TRANSACTION_TYPES } from "@/lib/data/types";

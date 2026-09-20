@@ -44,6 +44,7 @@ import { TablePagination } from "../../components/feedback/table-pagination";
 import { englishFormatters, type Formatters } from "../../lib/formatters";
 import type { TrashAdapter, TrashedRecord } from "../../adapters/trash";
 import { englishTrashPageLabels, type TrashPageLabels } from "./labels";
+import { recordKey, useTrashView } from "../../widgets/trash";
 
 const ALL = "__all";
 
@@ -64,10 +65,6 @@ function ageInDays(deletedAt: string): number {
   return Math.floor((Date.now() - new Date(deletedAt).getTime()) / 86_400_000);
 }
 
-function recordKey(record: TrashedRecord): string {
-  return `${record.tableName}-${record.id}`;
-}
-
 function ageOptionLabel(value: AgeOptionValue, labels: TrashPageLabels): string {
   if (value === "olderThanThirtyDays") return labels.olderThanThirtyDays;
   if (value === "olderThanNinetyDays") return labels.olderThanNinetyDays;
@@ -86,19 +83,42 @@ export function TrashPage({
   labels = englishTrashPageLabels,
   formatters = englishFormatters,
 }: TrashPageProps) {
-  const [tableFilter, setTableFilter] = useState<string>(ALL);
-  const [searchInput, setSearchInput] = useState("");
-  const [ageFilter, setAgeFilter] = useState<AgeOptionValue>("any");
-  const [sortKey, setSortKey] = useState<SortKey>("deletedAt");
-  const [sortAscending, setSortAscending] = useState(false);
-  const [pageIndex, setPageIndex] = useState(0);
-  const [pageSize, setPageSize] = useState(DEFAULT_PAGE_SIZE);
-  const [selectedKeys, setSelectedKeys] = useState<Set<string>>(new Set());
+  const view = useTrashView(adapter, AGE_OPTIONS);
+  const {
+    tableFilter,
+    setTableFilter,
+    searchInput,
+    setSearchInput,
+    ageFilter,
+    setAgeFilter,
+    sortKey,
+    sortAscending,
+    sortBy,
+    visibleRecords,
+    selectedKeys,
+    selectedRecords,
+    wholePageSelected,
+    pagePartlySelected,
+    togglePageSelection,
+    selectAllFiltered,
+    toggleOne,
+    pageSize,
+    setPageSize,
+    totalPages,
+    allFilteredSelected,
+    moreThanOnePage,
+  } = view;
+  const filteredRecords = view.records;
+  const allRecords = view.allRecords;
+  const currentPageIndex = view.pageIndex;
+  const setPageIndex = view.setPageIndex;
+  const recordsQuery = {
+    isLoading: view.loading,
+    isError: !!view.error,
+    error: view.error,
+    refetch: view.refetch,
+  };
 
-  const recordsQuery = adapter.useTrashedRecords(tableFilter === ALL ? undefined : tableFilter);
-  const allRecords = useMemo(() => recordsQuery.data ?? [], [recordsQuery.data]);
-
-  // The filter options come from the backend; fall back to the types actually present.
   const tablesQuery = adapter.useTrashTableNames();
   const eligibleTables = useMemo(() => {
     const fromBackend = tablesQuery.data?.eligible ?? [];
@@ -109,78 +129,6 @@ export function TrashPage({
     () => new Set(tablesQuery.data?.purgeable ?? eligibleTables),
     [tablesQuery.data, eligibleTables],
   );
-
-  const filteredRecords = useMemo(() => {
-    const needle = searchInput.trim().toLowerCase();
-    const minimumDays = AGE_OPTIONS.find((option) => option.value === ageFilter)?.minimumDays ?? 0;
-    const matches = allRecords.filter((record) => {
-      if (minimumDays > 0 && ageInDays(record.deletedAt) < minimumDays) return false;
-      if (!needle) return true;
-      return [record.label, record.deleteReason, record.deletedBy, record.tableName]
-        .filter(Boolean)
-        .some((field) => String(field).toLowerCase().includes(needle));
-    });
-
-    const direction = sortAscending ? 1 : -1;
-    return [...matches].sort((a, b) => {
-      if (sortKey === "deletedAt") {
-        return (new Date(a.deletedAt).getTime() - new Date(b.deletedAt).getTime()) * direction;
-      }
-      const left = sortKey === "type" ? a.tableName : (a.label ?? "");
-      const right = sortKey === "type" ? b.tableName : (b.label ?? "");
-      return left.localeCompare(right) * direction;
-    });
-  }, [allRecords, searchInput, ageFilter, sortKey, sortAscending]);
-
-  const totalPages = Math.max(1, Math.ceil(filteredRecords.length / pageSize));
-  const currentPageIndex = Math.min(pageIndex, totalPages - 1);
-  const visibleRecords = filteredRecords.slice(
-    currentPageIndex * pageSize,
-    (currentPageIndex + 1) * pageSize,
-  );
-
-  const selectedRecords = filteredRecords.filter((record) => selectedKeys.has(recordKey(record)));
-
-  // The header checkbox is scoped to this page; selecting the whole result set is a separate, explicit click.
-  const visibleKeys = visibleRecords.map(recordKey);
-  const wholePageSelected =
-    visibleRecords.length > 0 && visibleKeys.every((key) => selectedKeys.has(key));
-  const pagePartlySelected = !wholePageSelected && visibleKeys.some((key) => selectedKeys.has(key));
-  const allFilteredSelected =
-    filteredRecords.length > 0 && selectedRecords.length === filteredRecords.length;
-  const moreThanOnePage = filteredRecords.length > visibleRecords.length;
-
-  function togglePageSelection() {
-    setSelectedKeys((previous) => {
-      const next = new Set(previous);
-      if (wholePageSelected) visibleKeys.forEach((key) => next.delete(key));
-      else visibleKeys.forEach((key) => next.add(key));
-      return next;
-    });
-  }
-
-  function selectAllFiltered() {
-    setSelectedKeys(new Set(filteredRecords.map(recordKey)));
-  }
-
-  function toggleOne(record: TrashedRecord) {
-    setSelectedKeys((previous) => {
-      const next = new Set(previous);
-      const key = recordKey(record);
-      if (next.has(key)) next.delete(key);
-      else next.add(key);
-      return next;
-    });
-  }
-
-  function sortBy(key: SortKey) {
-    if (key === sortKey) setSortAscending((value) => !value);
-    else {
-      setSortKey(key);
-      setSortAscending(key !== "deletedAt");
-    }
-    setPageIndex(0);
-  }
 
   return (
     <TooltipProvider delayDuration={150}>
@@ -217,7 +165,7 @@ export function TrashPage({
             onValueChange={(value) => {
               setTableFilter(value);
               setPageIndex(0);
-              setSelectedKeys(new Set());
+              view.clearSelection();
             }}
           >
             <SelectTrigger className="w-full sm:w-[220px]" aria-label={labels.columns.type}>
@@ -272,7 +220,7 @@ export function TrashPage({
               canSelectAllFiltered={wholePageSelected && moreThanOnePage && !allFilteredSelected}
               moreThanOnePage={moreThanOnePage}
               onSelectAllFiltered={selectAllFiltered}
-              onDone={() => setSelectedKeys(new Set())}
+              onDone={view.clearSelection}
             />
 
             <div className="mt-3 hidden overflow-hidden rounded-xl border border-border bg-card sm:block">

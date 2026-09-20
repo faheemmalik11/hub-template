@@ -3,7 +3,7 @@ import { toast } from "sonner";
 
 import { useTranslation } from "@/lib/i18n";
 import { usePaymentRight } from "@/lib/payment-right";
-import { useLinkInvoiceTransaction, useLinkOutgoingInvoiceTransaction } from "@/lib/data/queries";
+import { useLinkInvoiceTransaction, useLinkOutgoingInvoiceTransaction } from "@/data";
 import { fehlerText, formatEUR } from "@/lib/data/format";
 import {
   MatchCard,

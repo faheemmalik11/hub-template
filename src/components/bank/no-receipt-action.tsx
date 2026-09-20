@@ -19,7 +19,7 @@ import {
   DropdownMenuLabel,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { useClearNoReceipt, useSetNoReceipt } from "@/lib/data/queries";
+import { useClearNoReceipt, useSetNoReceipt } from "@/data";
 import { OPOS_CATEGORIES } from "@/lib/data/opos";
 import { useTranslation } from "@/lib/i18n";
 import type { BankTransaction, OposCategory } from "@/lib/data/types";

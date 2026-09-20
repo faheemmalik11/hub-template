@@ -29,7 +29,7 @@ import {
   DialogTrigger,
 } from "@/components/ui/dialog";
 import { DocumentPreview } from "@/components/belege/document-preview";
-import { useBelegDatei } from "@/lib/data/queries";
+import { useBelegDatei } from "@/data";
 import { useTranslation } from "@/lib/i18n";
 
 export function SplitOriginNote({

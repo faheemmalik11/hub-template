@@ -16,7 +16,7 @@ import {
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
 import { cn } from "@/lib/utils";
-import { useCreateUploadBelege, type UploadInput } from "@/lib/data/queries";
+import { useCreateUploadBelege, type UploadInput } from "@/data";
 import {
   ACCEPTED_EXTENSIONS,
   BUCKETS,

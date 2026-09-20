@@ -2,7 +2,7 @@ import { useEffect, useState } from "react";
 
 import type { NotificationItem } from "@/components/notifications/types";
 import { useAuth } from "@/lib/auth";
-import { useNotificationSettings, useSaveNotificationSettings } from "@/lib/data/queries";
+import { useNotificationSettings, useSaveNotificationSettings } from "@/data";
 
 const SEEN_PREFIX = "seen:";
 

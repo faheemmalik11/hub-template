@@ -12,7 +12,7 @@ import {
   DialogTitle,
   DialogTrigger,
 } from "@/components/ui/dialog";
-import { useCreateBankAccount, useGesellschaften, useUpdateBankAccount } from "@/lib/data/queries";
+import { useCreateBankAccount, useGesellschaften, useUpdateBankAccount } from "@/data";
 import type { BankAccount } from "@/lib/data/types";
 import {
   BANK_ACCOUNT_DIALOG_RULES,

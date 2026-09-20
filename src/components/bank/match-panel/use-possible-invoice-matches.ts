@@ -4,7 +4,7 @@ import {
   useMatchingSettings,
   useOpenBelegeInfinite,
   useOpenOutgoingInvoicesInfinite,
-} from "@/lib/data/queries";
+} from "@/data";
 import { scoreMatch, type MatchBeleg, type MatchTransaction } from "@/lib/data/matching";
 import type { MatchReasons } from "@/lib/data/types";
 

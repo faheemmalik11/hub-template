@@ -1,7 +1,7 @@
 import { MultiCombobox } from "@/components/ui/multi-combobox";
 import { Label } from "@/components/ui/label";
 import { PflichtStern } from "@/components/ui/form-field";
-import { useGesellschaften } from "@/lib/data/queries";
+import { useGesellschaften } from "@/data";
 import { useTranslation } from "@/lib/i18n";
 
 /**

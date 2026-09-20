@@ -74,7 +74,7 @@ import {
   useUpdateGesellschaft,
   useFilingFolders,
   useRemovePropertyCompanyLink,
-} from "@/lib/data/queries";
+} from "@/data";
 import { useAuth } from "@/lib/auth";
 import { dateLocale, fehlerText, formatDate, formatEUR } from "@/lib/data/format";
 import { StatusBadge } from "@/components/belege/badges";

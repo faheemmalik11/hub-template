@@ -16,7 +16,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { useAuth } from "@/lib/auth";
 import { fehlerText } from "@/lib/data/format";
-import { useGesellschaften, useObjekte, useSavePropertyCompanyLink } from "@/lib/data/queries";
+import { useGesellschaften, useObjekte, useSavePropertyCompanyLink } from "@/data";
 import type { PropertyCompany } from "@/lib/data/types";
 import { useTranslation } from "@/lib/i18n";
 

@@ -9,7 +9,7 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { EmptyState, ErrorState, TableSkeleton } from "@/components/belege/query-states";
-import { usePleoEmployees } from "@/lib/data/queries";
+import { usePleoEmployees } from "@/data";
 import type { BankAccount } from "@/lib/data/types";
 import { useTranslation } from "@/lib/i18n";
 

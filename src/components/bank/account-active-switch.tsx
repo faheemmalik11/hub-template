@@ -1,7 +1,7 @@
 import { toast } from "sonner";
 
 import { Switch } from "@/components/ui/switch";
-import { useSetBankAccountActive } from "@/lib/data/queries";
+import { useSetBankAccountActive } from "@/data";
 import type { BankAccount } from "@/lib/data/types";
 import { fehlerText } from "@/lib/data/format";
 import { useTranslation } from "@/lib/i18n";

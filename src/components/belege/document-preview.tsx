@@ -18,7 +18,7 @@ import {
   useBelegDatei,
   useFilenameSettings,
   useInvoiceFileUrl,
-} from "@/lib/data/queries";
+} from "@/data";
 import { buildSuggestedFilename } from "@/lib/filename";
 import { cn } from "@/lib/utils";
 import { PdfPane } from "@/components/belege/pdf-pane";
