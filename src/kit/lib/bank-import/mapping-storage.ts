@@ -1,6 +1,6 @@
 import type { ColumnMapping } from "./types";
 
-const STORAGE_PREFIX = "hub-kit.bank-import.mapping.";
+const STORAGE_PREFIX = "hub.bank-import.mapping.";
 
 function fingerprint(headers: string[]): string {
   const key = [...headers]

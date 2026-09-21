@@ -23,9 +23,9 @@ import type { NotificationTargetKind } from "@/lib/data/notification-target";
  * "Notify someone": a direct message to one colleague about the record you are on (a client meeting
  * 26.08, and again on 09.09 for payments with no document).
  *
- * THE UI IS IN HUB-KIT, the data is here. All four hubs show the same dialog and the same banner;
+ * THE UI IS IN src/kit, the data is here. Every Hub shows the same dialog and the same banner, and
  * none of them share a data layer, so what the kit gets is a recipient list, some labels and a
- * callback. Everything below is the this Hub half of that contract.
+ * callback. Everything below is this Hub's half of that contract.
  */
 
 /**

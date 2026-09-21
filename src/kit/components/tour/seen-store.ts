@@ -1,12 +1,15 @@
 import type { TourSeenStore } from "./types";
 
-const STORAGE_KEY = "hub-kit.tour.seen";
+const STORAGE_KEY = "hub.tour.seen";
+// What the key was called before the kit stopped being a package of its own. Read, never written,
+// so nobody is walked through a tour they already sat through. See the note on hasSeenTour.
+const RETIRED_KEY = "hub-kit.tour.seen";
 
 type StoredEntry = { id: string; version: number };
 
 function readEntries(): StoredEntry[] {
   try {
-    const raw = localStorage.getItem(STORAGE_KEY);
+    const raw = localStorage.getItem(STORAGE_KEY) ?? localStorage.getItem(RETIRED_KEY);
     const parsed = raw ? (JSON.parse(raw) as unknown) : null;
     if (!Array.isArray(parsed)) {
       return [];
@@ -58,6 +61,7 @@ export const localTourSeenStore: TourSeenStore = {
 export function resetSeenTours(): void {
   try {
     localStorage.removeItem(STORAGE_KEY);
+    localStorage.removeItem(RETIRED_KEY);
   } catch {
     return;
   }

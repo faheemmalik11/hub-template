@@ -48,7 +48,7 @@ export const englishPeriodLabels: PeriodLabels = {
 
 const PRESETS = OVERVIEW_PERIODS.filter((period) => period !== "custom");
 
-const STORAGE_PREFIX = "hub-kit.overview-period.";
+const STORAGE_PREFIX = "hub.overview-period.";
 
 export function readStoredPeriod(key: string): PeriodValue {
   if (typeof window === "undefined") return { period: OVERVIEW_PERIOD_DEFAULT };
