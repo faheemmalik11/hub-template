@@ -4509,7 +4509,7 @@ begin
   -- and entity_aliases_one_owner_uniq is keyed on (entity_type, folded(alias)), so it is indifferent
   -- to the move: the only index a move can violate is entity_aliases_uniq, and the guard below is
   -- exactly its columns. It deliberately does not test is_active -- that index is partial on three
-  -- of the four Hubs and plain on Immonetz, and ignoring is_active is the correct guard under both.
+  -- of the Hubs and plain on the rest, and ignoring is_active is the correct guard under both.
   update public.entity_aliases a
      set entity_code = p_keep_id::text,
          updated_at = now()
@@ -4535,7 +4535,7 @@ begin
   -- Remember the merged-away name as a known spelling of the survivor.
   --
   -- ON CONFLICT carries no target on purpose. A target has to repeat the predicate of the index it
-  -- names, and entity_aliases_uniq is partial here but plain on Immonetz -- and naming either one
+  -- names, and entity_aliases_uniq is partial here but plain elsewhere -- and naming either one
   -- leaves a clash on entity_aliases_one_owner_uniq unswallowed, which would roll back the entire
   -- merge to avoid losing a single alias. Untargeted, it takes DO NOTHING on any unique index.
   --
