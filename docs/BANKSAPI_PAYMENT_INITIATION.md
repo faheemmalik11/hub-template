@@ -7,24 +7,24 @@ still open before it can run against a real bank. Companion to
 
 > **Provenance note:** the schema (`payment_orders`, migration `0081_payment_orders.sql`) and
 > the three Edge Functions (`payment-initiate`, `payment-callback`, `payment-cancel`) were
-> **ported verbatim from immonetz** (`0081`'s own header: _"ported verbatim from immonetz's
+> **ported verbatim from a sister Hub** (`0081`'s own header: _"ported verbatim from a sister Hub's
 > 0053_payment_orders.sql"_) in an earlier pass on this repo — before this doc existed here.
 > **The frontend ("Jetzt bezahlen" UI on the invoice detail page) was missing entirely until
 > 2026-08-06**, when it was ported to close that gap (see §3). This doc itself is also ported
-> from immonetz's own `docs/BANKSAPI_PAYMENT_INITIATION.md` and trimmed/adapted for this repo —
+> from a sister Hub's own `docs/BANKSAPI_PAYMENT_INITIATION.md` and trimmed/adapted for this repo —
 > the BANKSapi API research below (§2) describes the shared BANKSapi product both repos
 > integrate against, so it transfers directly; the file/migration references and "what's built"
-> section have been rewritten to describe staeyhub's own code.
+> section have been rewritten to describe this Hub's own code.
 
 ## 1. What was asked for
 
-Client requirement (per immonetz's own handover doc, inherited as the shared product spec both
+Client requirement (per a sister Hub's own handover doc, inherited as the shared product spec both
 repos implement against): _"Payments: after final approval, payment is initiated via BanksAPI
 from the platform ('two clicks out'), instead of manual typing into a banking app. This is a
 money-moving operation: build it with explicit confirmation steps, strict permissions
 (supervisor role only), and a full audit trail."_
 
-Decisions carried over from immonetz's build (not independently re-confirmed with Stäy's
+Decisions carried over from a sister Hub's build (not independently re-confirmed with this client's
 client — worth a gut-check before this goes live for real money):
 
 - v1 is single-invoice payments only — no batch/collective transfers.
@@ -37,9 +37,9 @@ client — worth a gut-check before this goes live for real money):
 
 ## 2. BANKSapi payment API — the researched facts (apply to both repos, same product)
 
-Both immonetz and Stäy Hub integrate against the same BANKSapi ONE/Connect product family. This
-research was done against immonetz's sandbox/tenant but describes the API itself, not anything
-tenant-specific — re-verify against Stäy's own tenant before trusting it fully live, but treat
+Both a sister Hub and this client Hub integrate against the same BANKSapi ONE/Connect product family. This
+research was done against a sister Hub's sandbox/tenant but describes the API itself, not anything
+tenant-specific — re-verify against this client's own tenant before trusting it fully live, but treat
 it as the accurate starting point rather than re-deriving from scratch.
 
 - **Endpoint**: `POST /customer/v2/payment/bulk-transfer` (a one-item `transferDetails[]` array
@@ -50,12 +50,12 @@ it as the accurate starting point rather than re-deriving from scratch.
 - **`callbackUrl` must be appended (URL-encoded) to the returned webform `Location` URL**, the
   same way `bank-connect` already does it — passing it only as a POST query param is silently
   ignored for a REG/Protect tenant (confirmed against the full OpenAPI spec, correcting an
-  earlier wrong assumption during immonetz's own research).
+  earlier wrong assumption during a sister Hub's own research).
 - **Verification of Payee (VoP) has no separate API call** — confirmed against the full
   operation catalog, no dedicated VoP endpoint exists anywhere. For a REG/Protect tenant (which
   this integration uses), VoP appears to run automatically inside the webform flow. **Never
-  independently confirmed end-to-end against a real completed payment** on immonetz's side —
-  treat as a strong inference, not a settled fact, until Stäy's own sandbox/live testing
+  independently confirmed end-to-end against a real completed payment** on a sister Hub's side —
+  treat as a strong inference, not a settled fact, until this client's own sandbox/live testing
   confirms it.
 - **No `status` field on the payment-status response.** `GetSingleTransfer`'s response
   (`SingleTransferResult`) has `messages[]` (`{level, code, message, details}`), not a clean
@@ -138,10 +138,10 @@ UEBERWEISUNG_ANKER)`, so it switches tab, scrolls to the transfer card and flash
   trigger — no separate "paid" UI was added.
 - Translated under `belege.detail.lieferant.zahlung.*` in `de.ts`/`en.ts`.
 
-## 4. What's NOT built / not verified for Stäy
+## 4. What's NOT built / not verified for this client
 
 - **Live payment execution against a real bank is unverified for this tenant.** The API research
-  in §2 came from immonetz's own sandbox testing — re-verify against Stäy's actual BANKSapi
+  in §2 came from a sister Hub's own sandbox testing — re-verify against this client's actual BANKSapi
   contract/tenant before trusting it live. Concrete open risks: real-bank TAN/SCA behavior
   (sandboxes typically skip it), whether a bank batch-books the transfer as one lump sum (would
   break strict 1:1 transaction↔invoice matching), and the `messages[]` status-parsing mapping
@@ -177,7 +177,7 @@ Two gaps closed in `payment-initiate`; see `docs/ROLES_AND_ACCESS.md` for the fu
 Note `payment-cancel` imports the same shared module, so cancelling an attempt now also requires
 `can_pay`.
 
-## 5. Open questions (inherited from immonetz's research — re-confirm for Stäy specifically)
+## 5. Open questions (inherited from a sister Hub's research — re-confirm for this client specifically)
 
 - Whether BANKSapi requires SCA for every payment or only some.
 - IBAN-change lookback window: currently a hardcoded 90 days in both `payment-initiate/index.ts`
@@ -186,16 +186,16 @@ Note `payment-cancel` imports the same shared module, so cancelling an attempt n
 - **Which of the connected bank accounts is a valid payment source per company?** There's no
   "default payment account" concept — every BANKSapi-connected account for the invoice's
   company shows up in the picker, including any deposit/reserve accounts that shouldn't be used
-  for routine supplier payments. Worth asking Stäy's client which accounts should even be
+  for routine supplier payments. Worth asking this client's client which accounts should even be
   offered.
 - **Amount threshold / dual authorization** — is role-gating alone sufficient at any payment
   amount, or should a larger transfer need a second approver?
 - **Payment failure notification** — a failed payment currently only shows as a toast + a badge
-  on the invoice; nobody is proactively notified. Does Stäy want an email/notification on
+  on the invoice; nobody is proactively notified. Does this client want an email/notification on
   failure, and to whom?
 - **SEPA Instant vs. standard** — the endpoint takes an `instant` boolean; instant settles in
   seconds but may cost more per transfer, standard SEPA is free but next-business-day. Which
   should be the default?
 - **Scheduled/future-dated payments** — the request schema supports `requestedExecutionDate`;
-  not used here (always executes immediately on click). Worth asking whether Stäy wants the
+  not used here (always executes immediately on click). Worth asking whether this client wants the
   option to schedule for the invoice's due date instead.

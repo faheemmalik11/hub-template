@@ -55,7 +55,7 @@ break), **Usability** (can someone get their task done efficiently), **UI** (the
 11. **Rows are clickable but not reachable by keyboard.** Both tabs use `<TableRow onClick>` and `<div onClick>` for the mobile cards, with no `href`, no `role`, no `tabIndex` and no key handler, so neither the invoice detail nor the transaction detail can be opened from here without a mouse, and no row can be middle-clicked into a new tab. Same finding as `docs/audit/banktransaktionen/bank-transactions/ISSUES.md` #11; this screen has it on two tabs.
     _Categories: UI, UX_
 
-12. **A receipt with a negative amount sits in the open list demanding to be "paid".** Live on page 1: an incoming receipt of **−839,45 €** (issuer "Stäy GmbH", Nr. RE-ST-25-1050, i.e. money coming back rather than going out) is listed as an open item, because the coverage test works on `Math.abs(amount_gross)` and simply asks for 839,45 € of matched payment. Closing it means matching an incoming credit against it, which the matcher only proposes for outgoing invoices (`isCredit` in `TransactionMatches` routes credits to `outgoing_invoice_transaction_matches`). So a supplier credit note has no path to closure here and stays on the list.
+12. **A receipt with a negative amount sits in the open list demanding to be "paid".** Live on page 1: an incoming receipt of **−839,45 €** (issuer "this client GmbH", Nr. RE-ST-25-1050, i.e. money coming back rather than going out) is listed as an open item, because the coverage test works on `Math.abs(amount_gross)` and simply asks for 839,45 € of matched payment. Closing it means matching an incoming credit against it, which the matcher only proposes for outgoing invoices (`isCredit` in `TransactionMatches` routes credits to `outgoing_invoice_transaction_matches`). So a supplier credit note has no path to closure here and stays on the list.
     _Categories: Current bug, Usability_
 
 ---
@@ -63,7 +63,7 @@ break), **Usability** (can someone get their task done efficiently), **UI** (the
 ## Resolution (19.08.2026)
 
 Screen rewritten across all three tabs. Feature doc: `docs/OFFENE_POSTEN.md`. The same pass ran on
-Immonetz, the Eiffler Hub and the Living Immo cockpit.
+a sister Hub, the another client Hub and the Living Immo cockpit.
 
 | #        | Status               | What was done                                                                                                                                                                                                                                                                                                                                                                                                         |
 | -------- | -------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |

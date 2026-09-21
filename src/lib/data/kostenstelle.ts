@@ -13,7 +13,8 @@
 
 import { useMemo } from "react";
 
-import { useGesellschaften, useObjekte, usePropertyCompanies } from "./queries";
+import { useGesellschaften } from "@/data/companies";
+import { useObjekte, usePropertyCompanies } from "@/data/properties";
 
 export interface Kostenstelle {
   /**

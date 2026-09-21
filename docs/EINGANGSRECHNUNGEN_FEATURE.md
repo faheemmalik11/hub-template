@@ -28,7 +28,7 @@ what is a placeholder.
 | Upload page                                   | `src/routes/eingangsrechnungen/upload.tsx` |
 
 Route registration: TanStack Router file-based route
-`createFileRoute("/eingangsrechnungen/")`, title _"Eingangsrechnungen — Immonetz"_.
+`createFileRoute("/eingangsrechnungen/")`, title _"Eingangsrechnungen — a sister Hub"_.
 
 ---
 
@@ -550,7 +550,7 @@ The per-rate split was extracted correctly all along and sits in `invoices.tax`
 `UstBadge` now takes an optional `steuer` prop (the `tax` array, available on `Beleg` and therefore
 on every list row too). When more than one rate carries a non-zero net, it renders "USt gemischt"
 with the rates in the tooltip instead of picking one. Single-rate and unknown-rate behaviour is
-unchanged. On Stäy this affects 66 of 435 active invoices.
+unchanged. On this client this affects 66 of 435 active invoices.
 
 ## The Fällig filter and the Apply button (2026-08-28)
 
@@ -643,6 +643,6 @@ from one scan of `public.invoices`. The filter already recovered once the list q
 competing with it, so the function was borderline rather than broken; the migration is what makes it
 stop being borderline.
 
-The same `CROSS JOIN LATERAL` exists in immonetz, mayestate2 and eiffler-hubv2. In those three it is
+The same `CROSS JOIN LATERAL` exists in a sister Hub, another client2 and another Hub. In those three it is
 inside `v_invoices_list` itself rather than `v_invoices_review`, so the view fix is the one that
 matters there and the `listenQuelle` split would not help.

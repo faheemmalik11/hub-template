@@ -1,4 +1,4 @@
-# Immonetz — Project Roadmap (client vision, from Miro)
+# a sister Hub — Project Roadmap (client vision, from Miro)
 
 > **Source:** Client (Fabian Tscheu), 2026-07, written on miro.com — the full 7-step
 > vision for the platform. This is the **product north star**. Each step below records

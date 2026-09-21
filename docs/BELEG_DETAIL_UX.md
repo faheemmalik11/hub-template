@@ -1,8 +1,8 @@
 # Invoice detail screen — UX improvements
 
-Scope: `src/routes/eingangsrechnungen/$nr.tsx` (4.6k lines on Stäy; 4.8k Immonetz, 5.0k Mayestate,
-6.2k Eiffler). Everything below was measured on Stäy against the live database on 2026-08-25; line
-numbers are Stäy's and will have drifted in the other three.
+Scope: `src/routes/eingangsrechnungen/$nr.tsx` (4.6k lines on this client; 4.8k a sister Hub, 5.0k another client,
+6.2k another client). Everything below was measured on this client against the live database on 2026-08-25; line
+numbers are this client's and will have drifted in the other three.
 
 The complaint that started this: _"too much info which is of no use"_ on landing.
 
@@ -34,7 +34,7 @@ nearly empty, one carrying a payment button that has no business being there.
 
 ## 1. Landing tab: say what to do, show less — **DONE**
 
-Implemented on Stäy, not yet ported.
+Implemented on this client, not yet ported.
 
 ### 1a. Decision banner
 
@@ -57,7 +57,7 @@ Incidental fix: `APPROVAL_TERMINAL_STATUSES` was module-private in `format.ts` a
 Its call site needs `(APPROVAL_TERMINAL_STATUSES as string[]).includes(wf)` — widening the list
 rather than asserting `wf` into `WorkflowStatus`, because `workflow_status` is a plain string column
 and the assertion would claim something the data does not guarantee. **This is the same expression
-as the pre-existing error at `mayestate2/src/routes/eingangsrechnungen/$nr.tsx:2828`; the same
+as the pre-existing error at `another client2/src/routes/eingangsrechnungen/$nr.tsx:2828`; the same
 one-line fix clears it.**
 
 ### 1b. Rechnungsinfo opens with six fields, not sixteen
@@ -115,7 +115,7 @@ They look like synonyms. They are not. Traced through both mutations:
 | Lands in              | Trash (recoverable)                                     | Drops out of processing                                           |
 | **The source email**  | untouched                                               | **handed back to the mailbox by the pipeline**                    |
 | Shown when            | `status === 'zu_pruefen'` only                          | always                                                            |
-| **Live usage (Stäy)** | **92**                                                  | **0**                                                             |
+| **Live usage (this client)** | **92**                                                  | **0**                                                             |
 
 The real distinction is what happens to the _email_: Discard means "this was never a document" and
 keeps it in the trash; Not relevant means "this is a real document but not ours" and returns it to
@@ -211,17 +211,17 @@ Raised, deliberately deferred:
 
 | #   | Item                                  | Effort           | Blocked on                      |
 | --- | ------------------------------------- | ---------------- | ------------------------------- |
-| 1   | Landing tab (banner + compact fields) | **done on Stäy** | port to the other three         |
-| 4   | Banner → Overview                     | **done on Stäy** | port                            |
-| 2   | Header `⋮`                            | **done on Stäy** | port                            |
-| 3   | Relabel the two discard actions       | **done on Stäy** | port; merge decision still open |
+| 1   | Landing tab (banner + compact fields) | **done on this client** | port to the other three         |
+| 4   | Banner → Overview                     | **done on this client** | port                            |
+| 2   | Header `⋮`                            | **done on this client** | port                            |
+| 3   | Relabel the two discard actions       | **done on this client** | port; merge decision still open |
 | 5   | Payment & reconciliation rebuild      | large            | **not started**                 |
 
-Stäy passes `tsc`, `eslint` and `vite build` after 1–4.
+this client passes `tsc`, `eslint` and `vite build` after 1–4.
 
 ## Port status
 
-Items 1–4 are implemented on **Stäy** only. Immonetz, Mayestate and Eiffler still have the original
+Items 1–4 are implemented on **this client** only. a sister Hub, another client and another client still have the original
 header, landing tab and labels. Item 5 is not started anywhere.
-Eiffler uses `@acc/` path aliases, `errorText` instead of `fehlerText`, and keeps this screen under
+another client uses `@acc/` path aliases, `errorText` instead of `fehlerText`, and keeps this screen under
 `src/accounting/`.

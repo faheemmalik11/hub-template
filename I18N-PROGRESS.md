@@ -1,4 +1,4 @@
-# Stäy — i18n Progress Tracker
+# this client — i18n Progress Tracker
 
 _Separate living doc for the internationalization effort. Last updated: 2026-07-10._
 
@@ -7,7 +7,7 @@ every environment** (no localhost gate). Only UI display strings are translated 
 content, and persisted audit text stay German.
 
 Library: **i18next + react-i18next** (added with bun). Locale persisted in `localStorage`
-(`staey.locale`), default `de`.
+(`this client.locale`), default `de`.
 
 ---
 
@@ -69,7 +69,7 @@ Copied bank-transfer reference block also kept German (functional data).
 
 ## Known remaining hardcoded German in the invoice module (deliberate)
 
-- Route `head` titles: `"Beleg — Stäy"`, `"Eingangsrechnungen — Stäy"` (static route meta,
+- Route `head` titles: `"Beleg — this client"`, `"Eingangsrechnungen — this client"` (static route meta,
   no hook; low value — browser tab title).
 - The Zahlung-&-Abgleich section's **bank badge labels** (`AbgleichBadge`, `MatchStatusBadge` from
   `src/components/bank/badges.tsx`) stay German — shared bank components, out of scope for now.

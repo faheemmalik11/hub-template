@@ -2,7 +2,7 @@
 
 ## What the client asked for
 
-Saskia, Stäy meeting 09.09.2026, 10:07 to 13:16. In Pleo the employee already sets the receipt, the
+Saskia, this client meeting 09.09.2026, 10:07 to 13:16. In Pleo the employee already sets the receipt, the
 category and the property. The Hub showed none of it, so the same assignment was made twice. At
 13:03: *"almost everything is already available here in Pleo. Then we could completely avoid doing
 the assignments again."* Fabian: *"then we'll pull that data in."*

@@ -1,6 +1,6 @@
 # Notify someone
 
-Covers meeting item **H11** (`MEETING_2026-09-09_STAEY.md`) and the 11.09.2026 request that
+Covers meeting item **H11** (`a client meeting note`) and the 11.09.2026 request that
 generalised it. Saskia, at 19:20, describing what Petra does when a payment has no document:
 *"she has to request it from somebody… Or, what she does today, she makes a list. But then she has
 to maintain that list manually and write down every missing item. That's exactly what we want to
@@ -33,7 +33,7 @@ The kit never learns what an invoice or a transaction is. It receives `recipient
 `onSend({recipientId, note})` already bound to whatever the button sits on. That is what lets one
 dialog serve four hubs whose data layers have nothing in common.
 
-staeyhub's half is `src/components/belege/ping-button.tsx`: `usePingRecipients`, `useSendPing`, the
+this Hub's half is `src/components/belege/ping-button.tsx`: `usePingRecipients`, `useSendPing`, the
 German labels, and thin wrappers `NotifySomeone` / `PingDialog` / `PingNotice`.
 
 ## 2. The target is open ended
@@ -145,14 +145,14 @@ to 15 minutes before.
 
 **A Hub user who is not in the Slack workspace gets their notification posted in the team channel.**
 `slackUserId` falls back to `config.team_channel` when `users.lookupByEmail` returns
-`users_not_found`, so it is delivered but publicly. Observed for `lukas.oldach@staey.de`.
+`users_not_found`, so it is delivered but publicly. Observed for `lukas.oldach@this client.de`.
 Pre-existing, not introduced here, but it leaks "who was asked what" whenever Hub membership and
 Slack membership differ.
 
 ## Open
 
-- Only staeyhub is wired. The kit half is ready for the other three; each needs its own
-  `useRecordNotifications` / `useAcknowledgeNotification` and the migration adapted. immonetz also
+- Only this Hub is wired. The kit half is ready for the other three; each needs its own
+  `useRecordNotifications` / `useAcknowledgeNotification` and the migration adapted. a sister Hub also
   lacks `invoice_files.transaction_id` entirely.
 - The banner is only on the invoice and transaction details. Supplier, customer and property pages
   can take `PingNotice` and `NotifySomeone` as one line each.

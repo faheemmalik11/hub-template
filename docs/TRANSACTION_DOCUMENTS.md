@@ -1,6 +1,6 @@
 # Receipts on a bank transaction
 
-Covers meeting item **H9** parts 1 and 2 (`MEETING_2026-09-09_STAEY.md`): show the document a
+Covers meeting item **H9** parts 1 and 2 (`a client meeting note`): show the document a
 transaction already has, and give one that has none a route to reconciliation.
 
 ## What was wrong
@@ -8,7 +8,7 @@ transaction already has, and give one that has none a route to reconciliation.
 Migration `0074` let an `invoice_files` row belong to a `bank_transaction` instead of an invoice — a
 Pleo card purchase has no invoice record, the photographed receipt **is** the document. The sync has
 been downloading and storing those files since 2026-08: **2,145 files across 2,078 transactions** on
-Stäy (11.09.2026, after a backfill that found the hourly cron had never been asking for them at
+this client (11.09.2026, after a backfill that found the hourly cron had never been asking for them at
 all, see `PLEO_RECEIPTS.md`). Nothing in the app ever read them back.
 
 So a transaction that already had its receipt looked exactly like one that had nothing, and the bank
@@ -116,5 +116,5 @@ untouched for that whole window and the next person uploads the same document ag
 minute, because extraction lands out of band and there is no write here to invalidate on.
 
 ## Open
-- Only staeyhub has this. **immonetz lacks `invoice_files.transaction_id` entirely** and needs a
+- Only this Hub has this. **a sister Hub lacks `invoice_files.transaction_id` entirely** and needs a
   migration adapted from `0074` before any of it can be ported.

@@ -5,7 +5,7 @@
 (package versions `0008_supplier_bank_account_is_default` and
 `0009_supplier_bank_accounts_soft_delete`).
 
-One file rather than two, because neither version had run against this database. Immonetz keeps them
+One file rather than two, because neither version had run against this database. a sister Hub keeps them
 separate: 0008 was applied there on 27.08.2026 at 13:34 UTC, before 0009 existed.
 
 **NOT YET APPLIED HERE.** The supplier pages read both columns, so they will fail until it runs.
@@ -45,7 +45,7 @@ Neither loops: each writes only when the compacted values actually differ, so th
 nothing to change.
 
 The compacted comparison matters for more than looping. Suppliers routinely store their IBAN with
-spaces (30 of 131 in Immonetz). Writing the compacted form back to them would not be a change of account,
+spaces (30 of 131 in a sister Hub). Writing the compacted form back to them would not be a change of account,
 but `supplier_iban_history` would record it as one, and the supplier list would then show 30 rows
 with an amber "bank details changed" IBAN. Verified: the backfill creates zero history rows.
 
@@ -61,14 +61,14 @@ Run against each live database inside a transaction that was rolled back:
 
 |                  | accounts | marked default | carried in | suppliers with two defaults |
 | ---------------- | -------- | -------------- | ---------- | --------------------------- |
-| Stäy (this repo) | 135      | 130            | 1          | 0                           |
-| Immonetz         | 91       | 83             | 3          | 0                           |
-| Eiffler          | 73       | 58             | 0          | 0                           |
+| this client (this repo) | 135      | 130            | 1          | 0                           |
+| a sister Hub         | 91       | 83             | 3          | 0                           |
+| another client          | 73       | 58             | 0          | 0                           |
 
 All three also created zero `supplier_iban_history` rows, which is the check that the compacted
 comparison is doing its job.
 
-Plus five behaviour tests on Immonetz, all passing: writing `suppliers.iban` moves the flag; setting the flag
+Plus five behaviour tests on a sister Hub, all passing: writing `suppliers.iban` moves the flag; setting the flag
 moves `suppliers.iban`; the previous default is always cleared; deactivating the default is refused;
 a merged-in default does not depose the keeper's; clearing `suppliers.iban` clears the default.
 Applying the file twice is a no-op (`0 carried in, 0 marked`).
@@ -106,7 +106,7 @@ supplier is hidden either way, so its accounts are unreachable in the UI regardl
 
 ## Not done
 
-- The migration's comments name `payment-guards.ts`, which exists in Immonetz and Eiffler but not
+- The migration's comments name `payment-guards.ts`, which exists in a sister Hub and another client but not
   here. The file is byte-identical across repos on purpose, so the four stay diffable.
 - The column is not yet the authoritative side. If it becomes one, drop
   `trg_supplier_default_iban_sync` and move the writers over. Nothing else in the migration changes.

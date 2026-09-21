@@ -89,8 +89,8 @@ seeds nothing — the real addresses are confidential and are entered by a human
 
 - **The send transport moved from Gmail to Microsoft Graph (2026-08-20).** It was previously
   `sendGmailRaw` against `gmail.googleapis.com`, authenticated by a Google service account with
-  domain-wide delegation over the sender's domain. That could never have worked here: `staey.de`
-  is a Microsoft 365 tenant (MX -> `staey-de.mail.protection.outlook.com`), not a Google
+  domain-wide delegation over the sender's domain. That could never have worked here: `this client.de`
+  is a Microsoft 365 tenant (MX -> `this client-de.mail.protection.outlook.com`), not a Google
   Workspace one, so the token request would fail with `unauthorized_client` before any mail was
   attempted - which is why `GOOGLE_SA_KEY_JSON` and `GOOGLE_IMPERSONATE_USER` never had values.
 

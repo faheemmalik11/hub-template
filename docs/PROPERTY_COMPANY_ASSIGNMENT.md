@@ -5,14 +5,14 @@ external-repo follow-up — not done here.
 
 ## What was asked
 
-StäyHub was built by copying immonetz's codebase, including immonetz's **business-line model**:
+this Hub was built by copying a sister Hub's codebase, including a sister Hub's **business-line model**:
 a property belongs to a company _through a business line_ (rental vs. sale), and the same
 property could belong to two companies via two different business lines. Once the business line
 resolved the company, it also decided VAT treatment (sale = exempt, rental = liable).
 
-That model doesn't fit StäyHub. The client's cost-centre workbook lists several properties under
+That model doesn't fit this Hub. The client's cost-centre workbook lists several properties under
 **two companies at once** with nothing that maps onto a business-line dimension — e.g. Hinterstraße
-20-22 → Infio/Stäy, Czernyring 42-44 → My Baufi/Stäy — and `property_assignment` had **0 rows** in
+20-22 → Infio/this client, Czernyring 42-44 → My Baufi/this client — and `property_assignment` had **0 rows** in
 the live DB by design (migration `0077` deliberately left it empty because the workbook's company
 relationships were ambiguous prose, not structured data).
 
@@ -20,7 +20,7 @@ The direction evolved over three points in the project's communication history:
 
 1. **2026-08-04** (`communication/threads/2026-08-04-scope-clarification/04-inbound-client.md`):
    client says build one-to-one property→company assignment first ("we don't have any other choice
-   than how we did it in ImmoNetz"), always notify when a property is unassigned, and defer the
+   than how we did it in a sister Hub"), always notify when a property is unassigned, and defer the
    dual-company cases to a later call.
 2. **`communication/INDEX.md`** tracked the dual-company cases as an open, unresolved question
    ("Awaiting client answer" #2) through the rest of the project's early history.
@@ -104,7 +104,7 @@ The direction evolved over three points in the project's communication history:
 
 ## What's still open
 
-1. **The external Python ingestion pipeline's resolver is not updated.** `docs/PIPELINE_STAEY.md`
+1. **The external Python ingestion pipeline's resolver is not updated.** `the pipeline's own documentation`
    documents `adapters/assignment/resolver.py` as still reading the old
    `property_assignment`/`business_line` shape. Its join key needs to become
    `property → company(ies)` directly, ambiguous when a property links to more than one company.

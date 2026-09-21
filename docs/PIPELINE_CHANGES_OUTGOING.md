@@ -43,7 +43,7 @@ So this is not a flag on an existing row. It is a second write path.
 ## Proposed change
 
 **Route by source folder.** A file arriving in a designated Dropbox folder, say
-`/Stäy/Ausgangsrechnungen`, is written as an outgoing invoice. Everything else keeps today's
+`/this client/Ausgangsrechnungen`, is written as an outgoing invoice. Everything else keeps today's
 behaviour.
 
 1. **Config.** Add an outgoing folder path alongside the existing intake settings, so it is

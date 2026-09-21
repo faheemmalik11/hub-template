@@ -88,7 +88,7 @@ Slack is connected to a **test workspace**, posting to the **`#breifing`** chann
 person linked so private messages could be checked. A private message, a daily summary and a
 channel post were all received successfully.
 
-Two things to redo before the team starts using it: connect the real Stäy workspace, and open the
+Two things to redo before the team starts using it: connect the real this client workspace, and open the
 Slack settings on the live site and press Save once, so the links inside Slack messages point at
 the real Hub.
 

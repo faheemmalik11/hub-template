@@ -1,7 +1,7 @@
 # BANKSapi Sandbox — Onboarding
 
 _English onboarding for the BANKSapi test sandbox. **Placeholders only — no real secrets in this
-file.** Real values live in `~/.secrets/immonetz-banksapi` and in Supabase secrets. German
+file.** Real values live in `~/.secrets/a sister Hub-banksapi` and in Supabase secrets. German
 UI/DB/business terms are translated in parentheses on first use._
 
 ## Overview
@@ -114,7 +114,7 @@ To clear stuck sessions: `DELETE {BASE_URL}/customer/v2/regprotect/sessions`.
 ## Security note
 
 - **Never commit real secrets.** This file uses placeholders only. Real values live in
-  `~/.secrets/immonetz-banksapi` (local) and in **Supabase secrets** (server-side).
+  `~/.secrets/a sister Hub-banksapi` (local) and in **Supabase secrets** (server-side).
 - BANKSapi credentials are used **only inside Supabase Edge Functions**, never in the frontend.
 - `.env`, `banksapi-sandbox.env`, `zugangsdaten.txt`, token JSON, and service-account keys are
   gitignored and must never be committed.

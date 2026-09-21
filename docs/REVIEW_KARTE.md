@@ -114,7 +114,7 @@ Three things about that list are load-bearing:
   so a gate the pipeline means to waive is written `not_applicable` or `skipped` and passes on
   that alone. What the map says failed, the card shows. Re-deriving a waiver from
   `is_small_amount` on top of that let one check silently suppress another: invoice
-  `72647ba7-b23b-41d8-b858-db5cf3065420` in Immonetz is -270,44 EUR and the pipeline compared the negative
+  `72647ba7-b23b-41d8-b858-db5cf3065420` in a sister Hub is -270,44 EUR and the pipeline compared the negative
   number against the 250 EUR threshold, so it came through as "small amount, lighter checks
   apply" and a genuinely missing invoice number vanished from the card. The flat-boolean fallback
   (source 4) keeps its own relaxation, because there the gates cannot say "waived" and somebody
@@ -279,8 +279,8 @@ like the rest of that folder except `config.ts` (see its `PORTING.md`).
 
 ## Open
 
-- Built in Immonetz, ported here. Not yet carried to Mayestate.
-- `invoices.validation_detail` was populated on 48 rows in Immonetz at the time of writing. Older invoices
+- Built in a sister Hub, ported here. Not yet carried to another client.
+- `invoices.validation_detail` was populated on 48 rows in a sister Hub at the time of writing. Older invoices
   fall through to sources 2 to 4 above; there is no backfill.
 - The pipeline compares the raw gross against the 250 EUR threshold for `is_small_amount`, not
   its magnitude, so every negative-gross row is reported as a small amount. It no longer hides

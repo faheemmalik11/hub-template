@@ -55,7 +55,7 @@ transferred as well. Measured on the day: 24 rows, of which 2 paid and 12 direct
 **`missing_assignment` counts company only, on purpose.** The design's card reads "Missing company
 or property", but `applyBelegeFilter` ANDs its axes and cannot express "company OR property
 missing". A card counting both sent the reader to a list showing a different number (463 vs 270 on
-Stäy). Company is also the blocking one. If the OR is ever wanted, the list filter needs a
+this client). Company is also the blocking one. If the OR is ever wanted, the list filter needs a
 combined sentinel first, and the SQL and the card must move together.
 
 ### Selection behaviour
@@ -133,9 +133,9 @@ The status dropdown stays: the cards cover four of the six status values, and `e
   removed. They need their own grouping, which the client has not defined; the mock's tab counts
   match neither the cards nor anything in the database.
 - The design's **toolbar** (row selection, bulk actions, "Review priority") is not built.
-- Not ported to Immonetz.
+- Not ported to a sister Hub.
 
 ## 8. Applied where
 
-`20260828180000_invoice_queue_kpis.sql` is applied and recorded on the live Stäy project
+`20260828180000_invoice_queue_kpis.sql` is applied and recorded on the live this client project
 (`xsgbdtdwhrrhoeximeon`). Nowhere else.

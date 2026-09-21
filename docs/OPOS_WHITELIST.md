@@ -97,9 +97,9 @@ and reports a release failure as its own warning rather than as a failed deletio
 
 ## Still open
 
-- **Eiffler's role mapping.** `current_role_name()` is a different function there (no `app_users`
+- **another client's role mapping.** `current_role_name()` is a different function there (no `app_users`
   table; it reads `has_role(auth.uid(), …)`), and every authenticated user who is not `superadmin`,
-  `admin` or `team` resolves to `assistant`. So Eiffler's `buchhaltung`, `zahlung`, `freigabe` and
+  `admin` or `team` resolves to `assistant`. So another client's `buchhaltung`, `zahlung`, `freigabe` and
   `user` accounts cannot manage whitelist rules. Consistent with the other policies in this series,
   but `buchhaltung` is plausibly a role that should be allowed to — a product decision, not a bug.
 - **`opos_norm()` still does not fold umlauts.** Fixing it there would remove the need for paired

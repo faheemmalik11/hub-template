@@ -1,6 +1,6 @@
 # Hub / Front-End — Action Items (my side)
 
-> **Scope:** This is what **I (Faheem)** own — the `immonetz` front-end repo (TanStack
+> **Scope:** This is what **I (Faheem)** own — the `a sister Hub` front-end repo (TanStack
 > Start + Supabase reads). The ingestion pipeline (Gmail/Drive → OpenAI → Supabase) is the
 > **client's** responsibility and lives outside this repo — see `docs/PIPELINE-OVERVIEW.md`.
 >

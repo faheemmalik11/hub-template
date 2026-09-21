@@ -6,9 +6,9 @@ One screen at `/bankkonten`. It used to be two.
 
 Bring the Bank accounts and Bank connections screens up to the standard of the reworked screens
 (incoming/outgoing invoices, suppliers, bank reconciliation, overview), and **merge them into a
-single page, because they describe the same thing**. The Eiffler Hub had already merged its pair
-and was named as the reference. Stäy is the base; the result has to be portable to Immonetz,
-Eiffler and Mayestate.
+single page, because they describe the same thing**. The another client Hub had already merged its pair
+and was named as the reference. this client is the base; the result has to be portable to a sister Hub,
+another client and another client.
 
 ## Why they were merged
 
@@ -393,7 +393,7 @@ of magnitude the fix is a view or an RPC that groups in Postgres, not a bigger f
 ### Sync health
 
 `src/lib/data/sync-health.ts` — `computeSyncHealth(rows, nowMs)`, a pure function over
-`bank_sync_logs`, plus `syncNeedsAttention`. Ported from the Eiffler Hub and adapted:
+`bank_sync_logs`, plus `syncNeedsAttention`. Ported from the another client Hub and adapted:
 
 - Completion is `ingest_done` **or** `sync_finished`; a start is `cron_fired`, `ingest_start` or
   `sync_started`. Reading only the ingest pair gets it badly wrong here: per migration
@@ -422,7 +422,7 @@ deleted.
 | `src/components/bank/trigger-sync-button.tsx`         | The confirmed "Jetzt synchronisieren", with `variant`/`size`.    |
 | `src/components/bank/connection-group-row.tsx`        | The connection group header + `KontoGruppe`.                     |
 
-Each takes plain data and labels, and carries no Stäy-specific vocabulary, so a sibling Hub takes
+Each takes plain data and labels, and carries no this client-specific vocabulary, so a sibling Hub takes
 them as they are. What stays repo-specific is the route itself: the permission names and the removal
 flow differ per Hub, and `pleo-panel.tsx` only applies where Pleo is connected.
 
@@ -472,7 +472,7 @@ From `docs/audit/bankverbindungen/bank-connections/ISSUES.md`:
 
 - **No per-connection action** (`bank-connections` #4). There is no disconnect and no
   re-authorise on this Hub: `supabase/functions/` has `bank-connect`, `bank-callback` and
-  `bank-sync` and no disconnect function, so there is nothing for a button to call. The Eiffler Hub
+  `bank-sync` and no disconnect function, so there is nothing for a button to call. The another client Hub
   has built both (`useDisconnectBank`, `useReauthorizeBank`) and its group row carries them, which
   is where the port comes from when the Edge Function lands here. The group row is already the
   right place to hang them.
@@ -521,4 +521,4 @@ From `docs/audit/bankverbindungen/bank-connections/ISSUES.md`:
   it sits behind the Supabase login and no session was available.
 - **Switching tabs resets the accounts tab's search and filters.** Radix unmounts inactive
   `TabsContent`, and that state is deliberately local to `KontenTab`. Only `?tab=` is in the URL.
-- **Not yet ported** to Immonetz, Eiffler or Mayestate. Stäy is the base, per the brief.
+- **Not yet ported** to a sister Hub, another client or another client. this client is the base, per the brief.

@@ -60,10 +60,10 @@ Additive only. `bwa_block` and `bwa_line` were deliberately left alone.
 A bookkeeper now types a name and an optional note. That is what the spec's acceptance
 criterion requires.
 
-## Open: the taxonomy is still Immonetz's
+## Open: the taxonomy is still a sister Hub's
 
-The live database holds **106 categories (20 parents, 86 children) from Immonetz**:
-Raumkosten, Kfz-Kosten, Abschreibungen, Materialaufwand. Stäy's list from the specification
+The live database holds **106 categories (20 parents, 86 children) from a sister Hub**:
+Raumkosten, Kfz-Kosten, Abschreibungen, Materialaufwand. this client's list from the specification
 (Betriebskosten, Reisekosten, Personalkosten, Marketingkosten, and 10 more) is **not loaded**.
 
 Replacing it is currently free. Verified against the live DB:
@@ -81,19 +81,19 @@ flow in, the same change becomes a data migration.
 ### Why it was not reseeded in this pass
 
 `src/lib/data/bwa-skeleton.ts` drives the Auswertungen cost report and is hardwired to twenty
-Immonetz category **codes** (`REVENUE`, `COGS_MATERIAL`, `OCCUPANCY`, `PERSONNEL`, …), which
-are exactly the 20 parents in the database. Swapping in Stäy's codes (`SR`, `BL`, `OC`, `TR`,
+a sister Hub category **codes** (`REVENUE`, `COGS_MATERIAL`, `OCCUPANCY`, `PERSONNEL`, …), which
+are exactly the 20 parents in the database. Swapping in this client's codes (`SR`, `BL`, `OC`, `TR`,
 `PC`, …) would leave every report line summing nothing: no crash, just a screen of zeros.
 
-That skeleton was reproduced from _Immonetz's_ client's DATEV Form 01, with an explicit
-instruction from that client not to reorder or merge its lines. It is not Stäy's structure.
+That skeleton was reproduced from _a sister Hub's_ client's DATEV Form 01, with an explicit
+instruction from that client not to reorder or merge its lines. It is not this client's structure.
 
 So reseeding is blocked on awaiting-client item 10 in `communication/INDEX.md`: **does "NO need
 for Live BWA" mean drop the live view, or drop BWA categorisation entirely?**
 
-- BWA dropped → `bwa-skeleton.ts` goes away, Auswertungen groups by Stäy's own categories,
+- BWA dropped → `bwa-skeleton.ts` goes away, Auswertungen groups by this client's own categories,
   and `bwa_block` / `bwa_line` can become nullable.
-- BWA kept → someone must map Stäy's 14 parents onto the DATEV Form 01 lines. That is a tax
+- BWA kept → someone must map this client's 14 parents onto the DATEV Form 01 lines. That is a tax
   advisor's decision.
 
 Either way the work done here holds: tabs, ordering and the simplified form are independent of

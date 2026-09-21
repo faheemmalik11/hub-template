@@ -3,10 +3,10 @@
 Everything changed on `/eingangsrechnungen/$nr` and its dependencies, in enough detail to reproduce
 it exactly on another Hub. Written for a Claude Code session picking this up cold.
 
-Reference implementation: **Stäy** (`staeyhub`). Line numbers are Stäy's at time of writing and
+Reference implementation: **this client** (`this Hub`). Line numbers are this client's at time of writing and
 will drift; anchors are given as code snippets, not positions.
 
-Path note for **Eiffler**: this screen lives under `src/accounting/`, imports use the `@acc/` alias,
+Path note for **another client**: this screen lives under `src/accounting/`, imports use the `@acc/` alias,
 and the error helper is `errorText` (from `@acc/lib/data/error-text`) rather than `fehlerText`.
 
 Language rule throughout (per each Hub's CLAUDE.md): **code and comments English, UI strings German**,
@@ -43,7 +43,7 @@ wrapping a pill wrapping one word, above a row of outline buttons.
 ← Eingangsrechnungen                                                    [⋮]
 
 Yesef Woldu PutzKönig
-136 ⧉ · Stäy GmbH · 1.199,12 €                        ▲ 96 Tage überfällig
+136 ⧉ · this client GmbH · 1.199,12 €                        ▲ 96 Tage überfällig
 ✓ Keine Prüfung nötig · 99 % Konfidenz  ○ Noch keine passende Bankbuchung        Fällig 21. Mai 2026
 ────────────────────────────────────────────────────────────────────────
         ↓
@@ -290,7 +290,7 @@ Keeping "zurück ins Postfach" in _Nicht für uns_'s tooltip is load-bearing: it
 distinguishing it from _Kein Beleg_. The two differ solely in what happens to the source email —
 _Kein Beleg_ sets `deleted_at` (trash, recoverable), _Nicht für uns_ sets `not_relevant_at/_by/_note`
 
-- `workflow_status='nicht_relevant'` and has the pipeline hand the email back. On Stäy: 92 uses vs 0.
+- `workflow_status='nicht_relevant'` and has the pipeline hand the email back. On this client: 92 uses vs 0.
 
 ---
 
@@ -340,7 +340,7 @@ const hasSecondStep = !!rule?.step_2_approver;
 const approveNextStatus = hasSecondStep ? "freigegeben_assistenz" : "freigegeben_vorgesetzter";
 ```
 
-Every rule on Stäy has `step_2_approver` empty, so _every_ approval by _anyone_ — assistants
+Every rule on this client has `step_2_approver` empty, so _every_ approval by _anyone_ — assistants
 included — landed on `freigegeben_vorgesetzter`, which is the state that unlocks "Jetzt bezahlen".
 An assistant could put an invoice into the payable state with no supervisor involved.
 
@@ -357,7 +357,7 @@ const istStep2 = !!rule && rule.step_2_approver === actingAs.name;
 if (rule && !istStep1 && !istStep2) return [];
 ```
 
-**No rule resolved is deliberately not a refusal.** Rules are scoped (company only, on Stäy) with no
+**No rule resolved is deliberately not a refusal.** Rules are scoped (company only, on this client) with no
 catch-all, so most invoices match none; refusing there would leave them approvable by nobody. Role
 decides in that case. So: **no company → no rule → any approver may act; company assigned → only the
 rule's named approvers.**
@@ -370,7 +370,7 @@ Was module-private. The screen needs to distinguish "chain finished" from "someb
 Call it as `(APPROVAL_TERMINAL_STATUSES as string[]).includes(wf)` — widening the **list**, not
 casting `wf`. `workflow_status` is a plain string column, so asserting it into `WorkflowStatus` claims
 something the data does not guarantee. **This is the same expression as the pre-existing type error at
-`mayestate2/src/routes/eingangsrechnungen/$nr.tsx:2828`; the same fix clears it.**
+`another client2/src/routes/eingangsrechnungen/$nr.tsx:2828`; the same fix clears it.**
 
 ### 4.6 THE BIG ONE — `resolve_approval_rule` returns a record of nulls
 
@@ -386,7 +386,7 @@ every column null**, so `data ?? null` never fired and `approvalRuleQ.data` was 
 every invoice matching no rule. Consequences before the fix:
 
 - `if (rule && !istStep1 && !istStep2) return []` refused **every action on every unmatched invoice**
-  (273 on Stäy).
+  (273 on this client).
 - The reason message said "a rule applies and names no approver" when no rule applied.
 - `responsibleApproverName` read `step_1_approver` off a phantom rule.
 
@@ -487,7 +487,7 @@ const pruefGruendeText = useMemo(() => {
 The review box uses `const reviewReasons: string[] = pruefGruendeText;` so the two cannot disagree.
 
 **Why the traffic light was added**: it is a _separate axis_ from `status` (the pipeline's `scoring.py`
-says so explicitly) and `pruefGruende` never read it. On Stäy, of 361 receipts in review only 58 had a
+says so explicitly) and `pruefGruende` never read it. On this client, of 361 receipts in review only 58 had a
 failing validation gate and **zero** had a `decision_reason`. Of the 303 unexplained: 121 `rot`, 18
 `gelb`, 164 `gruen`.
 
@@ -592,7 +592,7 @@ Removed:
 - **Verantwortlich**, the read-only name derived from the rule. It repeated what the ladder already
   shows, and beside an assignment that now _overrides_ the rule it read as a contradiction. Only the
   displayed field went: `responsibleApprover` still drives the deactivated/overdue warnings above it
-  (and, on Immonetz, the invoice list's own Verantwortlich column), which say something the ladder
+  (and, on a sister Hub, the invoice list's own Verantwortlich column), which say something the ladder
   does not.
 
 What remains: the deactivated/overdue approver warnings, **Handelnd als / Zugewiesen an side by
@@ -609,7 +609,7 @@ administrator who is not in the `approvers` table could not reach the one tool t
 status. It is now `{(actingAs || istSuperAdmin || eigeneRolle === "admin") && (`. Nothing inside the
 disclosure reads `actingAs`, so this is purely a widening.
 
-### 7.2b Assignment overrides the approval rule (Stäy only)
+### 7.2b Assignment overrides the approval rule (this client only)
 
 `nextLegalActions` gained a fourth parameter, `assignedTo: string | null = null`, passed as
 `beleg.assigned_to`. Defaulted so any caller that does not know about assignment keeps its exact
@@ -634,7 +634,7 @@ made untrue. Its `drin` test now includes `beleg.assigned_to === actingAs.name`,
 `keineAktionen.nichtImRegelwerk` names the way out ("an administrator can assign the invoice to
 you").
 
-**Immonetz needs none of this.** Its `nextLegalActions` takes `Pick<Approver, "role">` and never
+**a sister Hub needs none of this.** Its `nextLegalActions` takes `Pick<Approver, "role">` and never
 gates by name at all, so any approver can already act on any invoice; there is no gate for an
 assignment to open. Only the UI changes ported (§7.2 layout, admin-gated assignment, corrections).
 
@@ -964,5 +964,5 @@ Specific traps hit while doing this work:
   `stufen.abseits` which the off-chain box still renders.
 - `openSupplierTitle` — unused since the native `title` was removed.
 - `review.grund.manuell` — no longer referenced.
-- `mayestate2/.../$nr.tsx:2828` — pre-existing `APPROVAL_TERMINAL_STATUSES.includes(wf)` type error,
+- `another client2/.../$nr.tsx:2828` — pre-existing `APPROVAL_TERMINAL_STATUSES.includes(wf)` type error,
   fixed by §4.5's widening.

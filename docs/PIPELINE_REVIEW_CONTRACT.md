@@ -2,7 +2,7 @@
 
 **Pipeline:** `book-keeping`, pack `german_invoice`. (Not `pipeline_new/` in this repo, which
 is a vendored copy and was not touched.)
-**Hubs:** staeyhub and immonetz, both implemented.
+**Hubs:** this Hub and a sister Hub, both implemented.
 **Status:** **implemented on both sides.** Section 8 records what shipped and where it differs from
 the spec above.
 
@@ -16,7 +16,7 @@ is a silent, invisible-in-testing break of the invoice list, the Kanban and the 
 ## 1. What has to change
 
 1. **Mandatory-field presence decides `status` and `traffic_light`.** Today the traffic light is a
-   confidence band that deterministic checks can cap (`core/rules/packs/staey/scoring.py`), and
+   confidence band that deterministic checks can cap (`core/rules/packs/this client/scoring.py`), and
    `status` is derived from it (`pack.py`: `status = "erkannt" if (ampel == "gruen" and verdict ==
 "ok") else "zu_pruefen"`). After this change, a missing mandatory field is what puts an invoice
    in review, and AI confidence no longer decides it.
@@ -40,7 +40,7 @@ Count the problems: every check whose entry is `missing` or `failed` (section 3)
 | 1 to `ampel_rot_ab - 1` | `zu_pruefen` | `gelb`          | review needed, only a few things missing |
 | `ampel_rot_ab` or more  | `zu_pruefen` | `rot`           | review needed, a lot is missing          |
 
-Add the threshold to `core/rules/packs/staey/thresholds.py` next to the existing bands, so it is
+Add the threshold to `core/rules/packs/this client/thresholds.py` next to the existing bands, so it is
 tunable per tenant rather than a literal in the branch:
 
 ```python

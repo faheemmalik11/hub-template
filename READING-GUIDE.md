@@ -1,6 +1,6 @@
 # Reading This Codebase — A Map for Newcomers
 
-This is **Stäy**, an internal accounting cockpit (German: _Buchhaltungs-Cockpit_)
+This is **this client**, an internal accounting cockpit (German: _Buchhaltungs-Cockpit_)
 for a property company. It reads invoices that an external pipeline has already
 scanned with AI, lets staff review/correct/approve them, and writes the changes back.
 

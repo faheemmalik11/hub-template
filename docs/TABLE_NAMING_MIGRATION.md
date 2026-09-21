@@ -1,6 +1,6 @@
 # Table naming migration
 
-Moving StäyHub's database onto the vocabulary the book-keeping pipeline and its admin panel use:
+Moving this Hub's database onto the vocabulary the book-keeping pipeline and its admin panel use:
 `invoices` becomes `documents`, and nine other tables and five columns move with it.
 
 Status: **APPLIED to the live database on 16.09.2026.** The Hub, the Edge Functions and the
@@ -14,13 +14,13 @@ migration has been written and no database object has changed.
 The panel provisions a tenant database with English names and queries `public.channels`,
 `public.categories` and `public.tenant_settings` by name. It refuses to provision a database
 holding tables it did not create, and stands that refusal down only once one of its own steps is
-recorded in `public.schema_migrations`. StäyHub has no such ledger yet (inventory section 9), so
+recorded in `public.schema_migrations`. this Hub has no such ledger yet (inventory section 9), so
 the panel cannot set this client up at all.
 
 The pipeline itself does not care. `book-keeping/src/adapters/db/schema_translation.py` wraps the
 connection in a translating cursor, so it runs against either vocabulary.
 
-MAYESTATE did this on 14 and 15 September 2026. Its write-up, `docs/MAYESTATE-MIGRATION.md`, is the
+ANOTHER CLIENT did this on 14 and 15 September 2026. Its write-up, `docs/another client's migration note`, is the
 source for the traps listed here and is worth reading in full before the next client.
 
 ## The name map
@@ -45,8 +45,8 @@ step. Confirmed against the live schema, inventory section 1.
 
 No target name exists yet, so there is no collision.
 
-The two absent ones are the difference from MAYESTATE: StäyHub has no channel tables. Ingestion
-runs through `mail_settings` and the `ingest` Edge Function. `config/tenants/staeyhub.json` in
+The two absent ones are the difference from ANOTHER CLIENT: this Hub has no channel tables. Ingestion
+runs through `mail_settings` and the `ingest` Edge Function. `config/tenants/this Hub.json` in
 book-keeping sets `storage.channel_config: "channels"`, which
 `composition/registry/channel_config_sources.py` maps from `mail_settings`. **Open question:** how
 the pipeline reads channels for this client, and whether the panel will want the channel tables
@@ -54,7 +54,7 @@ created separately.
 
 ### Columns
 
-14 renames across 11 tables, read from `information_schema` rather than assumed. MAYESTATE's
+14 renames across 11 tables, read from `information_schema` rather than assumed. ANOTHER CLIENT's
 hand-written draft got this wrong in six places, so this list is generated, not typed.
 
 ```
@@ -74,9 +74,9 @@ alter table public.processing_log              rename column gmail_message_id  t
 alter table public.processing_log              rename column invoice_id        to document_id;
 ```
 
-Note what is NOT here, against MAYESTATE's list: `bwa_category_aliases` has no `name_de`, and
+Note what is NOT here, against ANOTHER CLIENT's list: `bwa_category_aliases` has no `name_de`, and
 `invoice_open_items`, `private_reclassifications` and `sharepoint_filing_failures` do not exist in
-this database. `vermerk` exists nowhere. Do not copy MAYESTATE's statements across.
+this database. `vermerk` exists nowhere. Do not copy ANOTHER CLIENT's statements across.
 
 ## Step 1: the snapshot (done)
 
@@ -127,7 +127,7 @@ own output columns.
 
 A function body is stored as source and does not follow a rename. All 35 need recreating.
 
-Unlike MAYESTATE, **no signature moves**: no OUT parameter and no RETURNS TABLE column carries a
+Unlike ANOTHER CLIENT, **no signature moves**: no OUT parameter and no RETURNS TABLE column carries a
 renamed word, so `CREATE OR REPLACE` works for every one and nothing has to be dropped first. That
 removes the trap where dropping indiscriminately took `has_module_access` with it.
 
@@ -148,8 +148,8 @@ They appear in `enforce_invoice_write_permissions` (6), `enforce_match_payment_p
 the `payment_orders_insert` RLS policy (1). Renaming one makes every policy behind it deny
 everyone.
 
-**This is the StäyHub-specific trap.** MAYESTATE's permission module was the exact string
-`'invoices'`, separable by equality. StäyHub's scopes are dotted, so a `\binvoices\b` regex matches
+**This is the this Hub-specific trap.** ANOTHER CLIENT's permission module was the exact string
+`'invoices'`, separable by equality. this Hub's scopes are dotted, so a `\binvoices\b` regex matches
 *inside* every one of them, because a full stop is a word boundary. Never run a blind word
 replacement over this schema.
 
@@ -181,14 +181,14 @@ they stay in the migration: rows can appear between now and the cutover.
 
 ### Storage
 
-Four buckets. Invoice file rows point at **two** of them, which MAYESTATE did not have to deal with:
+Four buckets. Invoice file rows point at **two** of them, which ANOTHER CLIENT did not have to deal with:
 
 | bucket | file rows |
 | --- | --- |
 | receipts | 2738 |
 | belege-files | 5 |
 
-`config/tenants/staeyhub.json` has `archive_bucket: "receipts"` and the upload channel on
+`config/tenants/this Hub.json` has `archive_bucket: "receipts"` and the upload channel on
 `bucket: "receipts"`. `supabase/functions/pleo-receipts/index.ts:21` hardcodes `const BUCKET =
 "receipts"`. A bucket cannot be renamed, so moving to `documents` is a copy job. `belege-files` and
 its 5 rows need a decision of their own.
@@ -237,8 +237,8 @@ Everywhere else the two sides already agree.
 rename map:
 
 - `book-keeping/schema/0001` to `0005`, the DDL a new tenant is provisioned with. Every name it
-  shares with StäyHub now matches a key here.
-- MAYESTATE's own `src/lib/data/tables.ts`, which is already post-migration, so its keys are the
+  shares with this Hub now matches a key here.
+- ANOTHER CLIENT's own `src/lib/data/tables.ts`, which is already post-migration, so its keys are the
   target vocabulary. It still spells `invoiceTransactionMatches`, `invoiceOpenItems`,
   `outgoingInvoices`, `bwaAccountMapping`, `processingLog`, `pipelineRuns` and every `v_*` view
   unchanged, which is why those keep their names here too.
@@ -270,7 +270,7 @@ pass touched is lint clean.
 ### Two things found on the way
 
 **`v_bank_transactions_list` does not exist on this database.** Migration
-`0066_hub_view_security_invoker.sql` says it "only ever existed on immonetz's live database", and
+`0066_hub_view_security_invoker.sql` says it "only ever existed on a sister Hub's live database", and
 the live schema confirms it. Two call sites ask for it and fail against PostgREST today:
 `src/lib/data/queries.ts` (the bank reconciliation KPI tile, `has_suggested_match` count) and
 `supabase/functions/notify-dispatch/index.ts`. They are kept working exactly as before through a
@@ -353,7 +353,7 @@ Functional checks on the migrated copy:
   survived
 - `trash_eligible_tables()` returns `documents` and `categories`, so the table names stored as data
   were rewritten
-- the ledger recorded `0003_master_data` and `0004_documents`, the same two as MAYESTATE
+- the ledger recorded `0003_master_data` and `0004_documents`, the same two as ANOTHER CLIENT
 - both `is_direct_debit` overloads are back
 - zero old table names remain
 
@@ -371,8 +371,8 @@ onboarding-v3`:
 | `src/adapters/db/schema_translation.py` | **does not exist** | 17-entry `LEGACY_TO_ENGLISH` + translating cursor |
 | `ENGLISH_SCHEMAS` in `registry/manifest.py` | **not present** | `("documents",)` |
 | `schema/0001` to `0005` provisioning DDL | **does not exist** | present, 386 lines |
-| `staeyhub.json` `storage.channel_config` | `mail_settings` | `channels` |
-| `staeyhub.json` `naming_settings_from_hub` | `true` | absent |
+| `this Hub.json` `storage.channel_config` | `mail_settings` | `channels` |
+| `this Hub.json` `naming_settings_from_hub` | `true` | absent |
 
 **ANSWERED 16.09.2026: the server runs `onboarding-v3`.** So the translating cursor is there and
 the rename is viable. `CLAUDE.md` in this repo still says the pipeline runs `dev`; that is stale
@@ -384,7 +384,7 @@ change able to repair it**, since that branch has never heard of `documents`.
 
 ### The channels question, answered
 
-Earlier this doc asked how the pipeline reads channels for StäyHub. The branches disagree:
+Earlier this doc asked how the pipeline reads channels for this Hub. The branches disagree:
 
 - `dev` sets `channel_config: "mail_settings"`, which matches the database, where `mail_settings`
   exists and `channels` does not.
@@ -392,7 +392,7 @@ Earlier this doc asked how the pipeline reads channels for StäyHub. The branche
   one entry, `channels -> adapters.db.channels`. `channel_config_sources.RENAMED` maps the old
   `mail_settings` name onto that same module, so there is no `mail_settings` reader left.
 - That module opens with `select to_regclass('public.channels')`, so it degrades rather than
-  crashing, but StäyHub has no such table and would offer no sources.
+  crashing, but this Hub has no such table and would offer no sources.
 
 **In practice this is not broken.** `onboarding-v3` is what the server runs, and
 `public.pipeline_runs` shows real work over the last 14 days: the mailbox source processed 43
@@ -406,13 +406,13 @@ it does not block the cutover.
 A rename moves tables, not columns. Comparing the live schema against `onboarding-v3`'s
 provisioning DDL, mapped through the rename so both sides speak the target vocabulary:
 
-**Seven tables a new tenant gets that StäyHub does not have at all:** `channels`, `channel_state`,
+**Seven tables a new tenant gets that this Hub does not have at all:** `channels`, `channel_state`,
 `channel_folders`, `credentials`, `credential_reads`, `tenant_settings`,
 `tenant_settings_history`.
 
 **Eight tables present but short of columns:**
 
-| table | columns a new client gets that StäyHub lacks |
+| table | columns a new client gets that this Hub lacks |
 | --- | --- |
 | documents | content_hash, document_types, drive_named_at, llm_calls, llm_input_tokens, llm_output_tokens, note, private_hold, rules_version |
 | document_files | content, web_url |
@@ -423,7 +423,7 @@ provisioning DDL, mapped through the rename so both sides speak the target vocab
 | document_bank_accounts | created_at |
 | supplier_bank_accounts | created_at |
 
-StäyHub also has 89 columns across 15 tables that the DDL does not create. Those are local
+this Hub also has 89 columns across 15 tables that the DDL does not create. Those are local
 features, not a gap.
 
 ### Verdict: nothing here breaks a run
@@ -435,15 +435,15 @@ not block the cutover.
 | what is missing | why it is safe |
 | --- | --- |
 | the 9 `documents` columns | both write paths call `_only_columns_this_schema_has` (`receipt_store.py:1908` and `:2494`), which drops fields this Hub's table does not have. Its own docstring says so. |
-| `document_files.content` | no insert ever names it. StäyHub dropped it deliberately in migration 0023 when the bytes moved to Storage. |
+| `document_files.content` | no insert ever names it. this Hub dropped it deliberately in migration 0023 when the bytes moved to Storage. |
 | `document_files.web_url` | guarded: `if web_url and self._has_column("invoice_files", "web_url")` (`:691`) |
 | `imported_items.id`, `created_at` | the inserts name an explicit column list (`:1870`, `:1926`) and neither appears in it |
 | `suppliers.fax`, `website` | guarded by `_has_column("suppliers", column)` (`:1167`) |
-| `companies`/`properties.filing_binding` | only read by `adapters/outbound/filing_targets.py`, selected through the `filing_targets` config key, which StäyHub leaves empty |
-| `documents.drive_named_at` | only written by `mark_renamed()`, reached from the `rename` stage. StäyHub runs `file, return_not_relevant, bank_sync, datev_bounce, track`. No `rename`. |
+| `companies`/`properties.filing_binding` | only read by `adapters/outbound/filing_targets.py`, selected through the `filing_targets` config key, which this Hub leaves empty |
+| `documents.drive_named_at` | only written by `mark_renamed()`, reached from the `rename` stage. this Hub runs `file, return_not_relevant, bank_sync, datev_bounce, track`. No `rename`. |
 | `document_bank_accounts`/`supplier_bank_accounts.created_at` | those inserts name explicit column lists that do not include it |
 
-`private_hold` deserved a second look, since it decides whether private post is held back. StäyHub
+`private_hold` deserved a second look, since it decides whether private post is held back. this Hub
 has no equivalent column under any name and the Hub never references it, so the feature is simply
 not in use here.
 
@@ -455,7 +455,7 @@ properly, they would be dead columns here.
 `adapters/db/receipt_store.py` (`PostgresReceiptStore`), the same store the old `invoices` schema
 used, with the translating cursor switched on. The `llm_calls`, `llm_input_tokens` and
 `llm_output_tokens` writes live in `incoming_receipt_store.py`, which serves the separate
-`incoming_receipts` schema and never runs for StäyHub. The same goes for the `content_hash` dedup:
+`incoming_receipts` schema and never runs for this Hub. The same goes for the `content_hash` dedup:
 `duplicate_detection.find()` is called from that store and queries
 `incoming_receipts.content_sha256`, a table and column that do not exist here at all.
 
@@ -481,7 +481,7 @@ trap once more: the migration history says the table was created, the database s
 ### The missing view, created
 
 `supabase/migrations/20260916110000_bank_transactions_list_view.sql` creates
-`v_bank_transactions_list` from immonetz's own definition
+`v_bank_transactions_list` from a sister Hub's own definition
 (`0056_bank_transactions_suggested_match_filter.sql`), which is where the reading code came from.
 `has_suggested_match` is `exists` over both match tables for a row with status `kandidat` or
 `auto`, because `matching_status` only flips to `zugeordnet` once a match is confirmed and there
@@ -502,7 +502,7 @@ in both `tables.ts` files now.
 
 `scripts/move-buckets-to-documents.ts`, dry run unless given `--commit`, nothing ever deleted.
 
-StäyHub has **two** source buckets where MAYESTATE had one: `receipts` (2738 file rows, what the
+this Hub has **two** source buckets where ANOTHER CLIENT had one: `receipts` (2738 file rows, what the
 pipeline writes) and `belege-files` (5, what the Hub's upload screen wrote). Both go to
 `documents`. `outgoing-invoice-files` and `profile-pictures` stay put.
 
@@ -515,7 +515,7 @@ rename has run first. `belege-files` stays in the insert policy until the old bu
 so an upload already in flight does not fail.
 
 Two things it deliberately does NOT carry, because they live elsewhere: `archive_bucket` and the
-upload channel's bucket in `config/tenants/staeyhub.json`, and `BUCKET` in
+upload channel's bucket in `config/tenants/this Hub.json`, and `BUCKET` in
 `supabase/functions/pleo-receipts/index.ts`, which needs that function redeployed.
 
 ## Step 3b: the columns, which the table constant does not cover (done)
@@ -540,7 +540,7 @@ renaming them in the app would break `resolve_approval_rule`, `link_invoice_tran
 `outgoing_invoice_id` untouched, 0 old column names left.
 
 `name_de` to `name` was checked for a collision first. `BwaCategory` has `name_de` and `name_en`
-and no `name`, and `name_en` is a StäyHub-only extra that the pipeline's DDL does not create, so it
+and no `name`, and `name_en` is a this Hub-only extra that the pipeline's DDL does not create, so it
 stays.
 
 Verified: typecheck, lint and build all pass, and every identifier the app names inside a query
@@ -590,28 +590,28 @@ during the cutover itself. It should have been done days earlier, in the same pa
 
 6. **Cut over in one window:** Hub code flipped, migration applied, Edge Functions deployed, Hub
    deployed, then `storage.database` set from `invoices` to `documents` in
-   `config/tenants/staeyhub.json`. Step 5 is not optional: `ENGLISH_SCHEMAS` in
+   `config/tenants/this Hub.json`. Step 5 is not optional: `ENGLISH_SCHEMAS` in
    `composition/registry/manifest.py` holds only `documents`, and `composition_root.py:41` wraps the
    translating cursor only when `speaks_english(cfg.storage.database)`. Left on `invoices`, every
    pipeline run fails.
-7. **The column gap.** A rename moves tables, not columns. MAYESTATE found ten tables short of
+7. **The column gap.** A rename moves tables, not columns. ANOTHER CLIENT found ten tables short of
    columns the provisioning DDL now creates, two of them load-bearing. Compare the live schema
    column by column against `book-keeping/schema/0001` to `0005` and write a second migration.
 8. **The bucket move**, if `documents` is wanted here too.
 
 ## Open questions
 
-- Does `invoice_tags` become `document_tags`? It is StäyHub-only and carries the prefix, and the
+- Does `invoice_tags` become `document_tags`? It is this Hub-only and carries the prefix, and the
   pipeline's map does not mention it.
 - How does the pipeline read channels for this client, given `storage.channel_config: "channels"`
   and no channel tables in the database?
 - What happens to `belege-files` and its 5 file rows.
 - Whether the panel's `updateExistingTables` is the intended route for the column gap rather than a
-  hand-written migration. MAYESTATE left this unsettled.
+  hand-written migration. ANOTHER CLIENT left this unsettled.
 
 ## Corrections to other docs, to make when this lands
 
 - `CLAUDE.md` says the generated `Database` type is empty. It is not, it is partial.
-- `CLAUDE.md` and `docs/PIPELINE_STAEY.md` describe the schema as pipeline-owned and read-only from
+- `CLAUDE.md` and `the pipeline's own documentation` describe the schema as pipeline-owned and read-only from
   here. This repo holds 240 migrations and applies them.
 - `supabase/schema.sql` is a German-era snapshot and should be replaced with the real one.

@@ -1,8 +1,8 @@
-# Incoming-invoice detail screen — audit resolution (Stäy Hub)
+# Incoming-invoice detail screen — audit resolution (this client Hub)
 
-The audit itself was carried out on Immonetz. Its full write-up, including the reasoning behind
+The audit itself was carried out on a sister Hub. Its full write-up, including the reasoning behind
 each finding and two findings that were withdrawn after re-testing, lives in the sibling repo at
-`immonetz/docs/audit/eingangsrechnungen/invoice-detail/ISSUES.md`. This file records what is
+`a sister Hub/docs/audit/eingangsrechnungen/invoice-detail/ISSUES.md`. This file records what is
 implemented **here**, so a session working only in this repo can verify it against the code.
 
 Screen: `src/routes/eingangsrechnungen/$nr.tsx`. Cover: `e2e/beleg-detail.spec.ts`.

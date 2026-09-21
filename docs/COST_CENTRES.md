@@ -2,7 +2,7 @@
 
 ## What the client asked for
 
-Saskia, Stäy meeting 09.09.2026, 11:12 to 13:03:
+Saskia, this client meeting 09.09.2026, 11:12 to 13:03:
 
 > We have all of the properties in the system, but we don't have "overhead costs." For us, the
 > properties are effectively our cost centres. ... At our tax adviser, each property is effectively
@@ -25,7 +25,7 @@ is a positive statement that carries a cost-centre number, and the two must not 
 Not on the property, because the tax adviser's workbook numbers the same building differently in
 each company's books:
 
-| Property | Stäy | Impuls | My Baufi | Infio |
+| Property | this client | Impuls | My Baufi | Infio |
 |---|---|---|---|---|
 | LU-EKS Ludwigshafen | 6 | 101 | | |
 | LA-HIN Hinterstraße | 2 | | | 2001 |
@@ -35,14 +35,14 @@ Migration 0077 had already reached this conclusion and put the column on `proper
 migration 0083 replaced that table with `property_companies` and the column went with it. This puts
 it back.
 
-The overhead counterpart is `companies.overhead_cost_center`, seeded by 0077: 10000 for Stäy and
-Infio, 1000 for Impuls, My Baufi and Stäy Gronau.
+The overhead counterpart is `companies.overhead_cost_center`, seeded by 0077: 10000 for this client and
+Infio, 1000 for Impuls, My Baufi and this client Gronau.
 
 ### Why this migration seeds pairings when 0077 refused to
 
 0077 declined to seed `property_assignment` because its only evidence was column D of the workbook:
 free-text prose naming one or two companies with no role, where "My Baufi" alone sat next to a note
-saying Stäy rents the office. That column is not a reliable pair.
+saying this client rents the office. That column is not a reliable pair.
 
 The cost-centre NUMBERS are different evidence. Each company's own sheet lists the properties booked
 in that company's accounts, one number per line. A number under Impuls is the tax adviser stating
@@ -136,7 +136,7 @@ pick it up on their own.
 
 Saskia asked on an invoice for Heddesheim (HED-GÄ): *"Was ist hiermit gemeint? Wo kann ich die
 Kostenstelle auswählen?"* The property is not in the tax adviser's workbook, so neither of its
-pairings (Stäy, My Baufi) had a number, and "Keine Kostenstelle hinterlegt" read as a field she had
+pairings (this client, My Baufi) had a number, and "Keine Kostenstelle hinterlegt" read as a field she had
 to fill in. Until now nothing in the Hub could set a number; only a migration could.
 
 The number stays out of the invoice on purpose: it is a fact about a property in one company's books,
@@ -194,8 +194,8 @@ missing and links to it:
 told apart.
 
 Gaps at the time of writing (17.09.2026), all needing a number from Saskia or the tax adviser, 14
-live invoices affected: HED-GÄ at Stäy and at My Baufi (not in the workbook), and FT-KAR, NW-FHS5 and
-NW-WBS at Stäy (the workbook numbers them only for My Baufi, so the Stäy link may simply be wrong).
+live invoices affected: HED-GÄ at this client and at My Baufi (not in the workbook), and FT-KAR, NW-FHS5 and
+NW-WBS at this client (the workbook numbers them only for My Baufi, so the this client link may simply be wrong).
 
 ## Still open
 
@@ -219,7 +219,7 @@ NW-WBS at Stäy (the workbook numbers them only for My Baufi, so the Stäy link 
   current). It is what made the gap above visible. A property linked to a company the
   workbook does not pair it with resolves to no number.
 - **The Kostenanalyse still does not show it, on purpose.** `src/features/cost-analysis/` is copied
-  byte-identical across four Hubs (see the header of its `adapter.ts`), and cost centres are Stäy's
+  byte-identical across four Hubs (see the header of its `adapter.ts`), and cost centres are this client's
   concept alone, so a column there would break the other three. The deeper problem is that the
   screen's property filter is not company-scoped: with the company filter on "alle", a property has
   no single number, and printing one would be wrong rather than merely absent. Showing it there

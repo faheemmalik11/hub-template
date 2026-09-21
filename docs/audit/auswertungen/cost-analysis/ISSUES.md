@@ -1,15 +1,15 @@
-# Auswertungen / Kostenanalyse (Cost Analysis) — Stäy Hub
+# Auswertungen / Kostenanalyse (Cost Analysis) — this client Hub
 
 Screen: `http://localhost:7070/auswertungen`.
 
-The findings for this screen were written up on the **Immonetz Hub** — see that repo's
+The findings for this screen were written up on the **a sister Hub Hub** — see that repo's
 `docs/audit/auswertungen/cost-analysis/ISSUES.md` for the 13 numbered items, the evidence behind
 each, and the shared Resolution. All 13 applied here too and all 13 are fixed here. This file records
 only what is **different about this Hub**, so nobody re-derives it.
 
 ## Structural difference
 
-Immonetz extracted the BWA computation into `src/lib/data/use-bwa-scope.ts`; **this Hub computes it
+a sister Hub extracted the BWA computation into `src/lib/data/use-bwa-scope.ts`; **this Hub computes it
 inline in `src/routes/auswertungen/index.tsx`** (`scoped`, `scopedRevenue`, `manualScoped`). The
 fixes are therefore in the route, not in a hook. Same behaviour, different location.
 
@@ -31,7 +31,7 @@ the selected period and the comparison period — from that one list.
 
 Consequence: findings #4 and #6 cannot be reached from the live data. #4 is covered in
 `e2e/kostenanalyse.spec.ts` by cloning a real invoice into a fully-covered one with `amount_net:
-null`; **#6 is covered on the Immonetz Hub instead** — here it would need a synthetic outgoing
+null`; **#6 is covered on the a sister Hub Hub instead** — here it would need a synthetic outgoing
 invoice _and_ a synthetic confirmed match, because every company on this Hub books on
 `payment_date`, so revenue has no booking date without one.
 

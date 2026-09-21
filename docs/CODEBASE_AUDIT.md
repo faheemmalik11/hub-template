@@ -1,4 +1,4 @@
-# Immonetz Codebase Audit
+# a sister Hub Codebase Audit
 
 _Read-only audit. No app code, migrations, or Supabase writes were performed. Date: 2026-07-01._
 
@@ -6,7 +6,7 @@ _Read-only audit. No app code, migrations, or Supabase writes were performed. Da
 
 ## 1. Executive Summary
 
-Immonetz is a **TanStack Start (React 19 + TypeScript)** single-page/SSR app, generated with Lovable, that acts as an internal accounting cockpit for incoming invoices (`Eingangsrechnungen`). It is a **read-and-correct front end on top of Supabase (Postgres)**. There is **no custom backend in this repo** — the browser talks directly to Supabase; an **external Python pipeline (not in this repo)** does the Gmail import, OCR, and AI extraction and writes rows the app then displays and edits.
+a sister Hub is a **TanStack Start (React 19 + TypeScript)** single-page/SSR app, generated with Lovable, that acts as an internal accounting cockpit for incoming invoices (`Eingangsrechnungen`). It is a **read-and-correct front end on top of Supabase (Postgres)**. There is **no custom backend in this repo** — the browser talks directly to Supabase; an **external Python pipeline (not in this repo)** does the Gmail import, OCR, and AI extraction and writes rows the app then displays and edits.
 
 What actually works today (real, wired to Supabase):
 
@@ -90,7 +90,7 @@ Referenced in code but **not present in `.env`**:
 
 - `SUPABASE_SERVICE_ROLE_KEY` — required by `src/integrations/supabase/client.server.ts` (admin client). Since nothing uses that client, it is never hit today, but the admin path is non-functional without it.
 - `VITE_BUGHERD_KEY` — the BugHerd feedback widget in `src/routes/__root.tsx`. Optional: with no
-  key the script tag is not emitted at all. Ported from immonetz, which loads it the same way.
+  key the script tag is not emitted at all. Ported from a sister Hub, which loads it the same way.
   **Privacy:** a submitted feedback item includes a **screenshot of the current screen**, i.e. real
   financial data, plus the URL and browser info, stored on BugHerd's servers. Only invited BugHerd
   project members and guests ever see the sidebar; ordinary users get nothing.

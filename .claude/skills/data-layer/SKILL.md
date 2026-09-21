@@ -14,12 +14,31 @@ screen asks for what it needs by name and gets typed rows back. That is the whol
 |---|---|
 | `src/config/tables.ts` | every table and view name, spelled once. A renamed table is one edit here, and a name that no longer exists fails to compile |
 | `supabase/functions/_shared/tables.ts` | the Deno twin of that list. Edge Functions cannot import from `src/`, so a rename touches both |
-| `src/lib/data/queries.ts` | today: 262 hooks in one 9,800-line file. Being split, see `planning/10-data-layer.md` |
-| `src/lib/api/*.functions.ts` | 22 server-function files that also query, moving into their domains |
+| `src/data/index.ts` | **the only thing the app imports.** Re-exports every domain, so a hook can move without a call site changing |
+| `src/data/client.ts` | the one `sb` handle, `STALE`, `actorEmail`, `insertChangeHistory`, `SINGLETON_ROW_ID` |
+| `src/data/shared.ts` | helpers several domains need: `fetchAllRows`, `pflichtGrund`, `invalidateMatchState`, `invalidateRuleState`, `hasNextInfinitePage` |
+| `src/data/keys.ts` | query keys, one factory per domain |
+| `src/data/<domain>/` | one folder per subject: settings, suppliers, rules, team, bank, approval, review, categories, handover, folders, tax, manual-bookings, outgoing-invoices, aliases, pipeline |
+| `src/lib/api/*.functions.ts` | server functions. Elevated rights live here and nowhere else |
 
-The target shape is `src/data/<domain>/` with reads, writes and that domain's server functions
-together, and an `index.ts` as the only thing the app imports. The migration is six mechanical steps
-and never breaks the app, because step one re-exports the old file behind the new entry point.
+`src/lib/data/queries.ts` is what is left of the original 9,829-line file, and it is shrinking. Do
+not add to it: new work goes in a domain folder.
+
+## Moving a domain out
+
+1. Cut the section. **A section ends where the next section marker begins**, never at the end of the
+   file: cutting to EOF swallows every domain below it.
+2. Write `src/data/<domain>/<domain>.ts`, then let the compiler list the imports it needs.
+3. Write `index.ts` with **values and types exported separately**:
+   ```ts
+   export { useThing } from "./thing";
+   export type { ThingRow } from "./thing";
+   ```
+   Re-exporting a type as a value passes `tsc` and then fails in the browser with
+   *"does not provide an export named X"*. Only the screen walk catches it.
+4. Add one line to `src/data/index.ts`.
+5. A helper both sides need goes to `src/data/shared.ts`, not copied.
+6. Verify: typecheck, lint, and `node scripts/walk-screens.mjs`.
 
 ## Adding a query
 

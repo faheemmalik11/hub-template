@@ -50,7 +50,7 @@ break), **Usability** (can someone get their task done efficiently), **UI** (the
 8. **Six of the notes on screen are English developer text.** Live, the Notiz column reads "ATM / counter cash withdrawal", "Seen in dev: ATM withdrawal booking text", "Standard German bank fee booking text", "Bank quarterly fee posting", "Umlaut spelling", "Briefing Screen 10: loan installments". They are seed values from the migration rendered verbatim in a German UI, which CLAUDE.md's language rule excludes ("if a string is rendered to the user → German"), and two of them ("Seen in dev …") describe the development process rather than the rule.
    _Categories: UI_
 
-9. **Every deletion writes the same hardcoded English reason.** `useDeleteOposWhitelistRule` sets `delete_reason: "removed via UI"`, with no way for the person to give one. `/papierkorb` renders `delete_reason` in its Grund column, so every whitelist rule ever removed appears there under the same non-German, non-informative string. immonetz recorded the same column being unusable from the other direction (`immonetz/docs/audit/papierkorb/trash/ISSUES.md` #2, half the reasons empty); here it is filled with a constant.
+9. **Every deletion writes the same hardcoded English reason.** `useDeleteOposWhitelistRule` sets `delete_reason: "removed via UI"`, with no way for the person to give one. `/papierkorb` renders `delete_reason` in its Grund column, so every whitelist rule ever removed appears there under the same non-German, non-informative string. a sister Hub recorded the same column being unusable from the other direction (`a sister Hub/docs/audit/papierkorb/trash/ISSUES.md` #2, half the reasons empty); here it is filled with a constant.
    _Categories: UI, Usability_
 
 10. **The hit counts load without paging, so they will start under-reporting silently.** `useOposRuleHitCounts` runs `.select("whitelist_rule_id").not("whitelist_rule_id","is",null)` with no `.limit()` and no `fetchAllRows`, then counts client-side. `fetchAllRows` exists in the same file specifically to work around the platform's per-request row cap (see its own comment), and this is the query most likely to cross it: it grows by one row per hidden transaction forever, 41 today, and the failure mode is a Treffer column that quietly goes stale rather than an error.
@@ -75,7 +75,7 @@ break), **Usability** (can someone get their task done efficiently), **UI** (the
 | 10  | Hit counts load without paging, will under-report silently         | **Fixed** — `fetchAllRows`                                                                                                    |
 | 11  | No filter, no sort, no author information                          | **Fixed** — search, three filters, sortable headers, Angelegt column                                                          |
 
-The term-truncation finding immonetz recorded as its #11 did not apply here: this repo's table never
+The term-truncation finding a sister Hub recorded as its #11 did not apply here: this repo's table never
 truncated the Suchbegriff cell. It does now wrap explicitly, matching the other two Hubs.
 
 **Applied 2026-08-19 and verified afterwards on all three projects.** `pg_policies` now shows
@@ -111,8 +111,8 @@ opos_whitelist_auth_update   UPDATE  {authenticated}  qual: true  with_check: tr
 Other measurements taken at the same time, which move some of the numbers in the text above:
 
 - **28 rules now, not 16.** The seeded set has grown in all three.
-- **Immonetz holds 0 bank transactions**, so every Treffer there is 0 for that reason alone.
-  Stäy: 41 hidden of 2759. Eiffler: 12 hidden of 65.
+- **a sister Hub holds 0 bank transactions**, so every Treffer there is 0 for that reason alone.
+  this client: 41 hidden of 2759. another client: 12 hidden of 65.
 - **All 21 distinct seed notes are byte-identical across the three databases**, so one translation
   table covers all of them.
 - **No rule in today's seeded set is shadowed by another** (checked by running the rule below over
@@ -131,7 +131,7 @@ decision on demand through the same matcher, and a "Buchungen neu bewerten" butt
 calls it. The hint text no longer names any script, and points at the per-transaction "Wieder
 aufnehmen" action for the single-row case.
 
-Dry-run on Stäy's live data before shipping, read-only: re-evaluating all 41 currently-hidden rows
+Dry-run on this client's live data before shipping, read-only: re-evaluating all 41 currently-hidden rows
 changes 0 of them (correct — every rule is still active and still matches, so the operation is a
 no-op and therefore idempotent). Simulating "Darlehen" being switched off shows all 19 of its
 transactions releasing back to Offene Posten, 0 falling to another rule. That is exactly the
@@ -173,7 +173,7 @@ already accepted term/scope/category/note and simply had no caller.
 in the dialog and on the save button. `useOposTermImpact` counts, live and debounced, how many
 outgoing transactions the term would match, and warns in amber past 20% of the ledger. It is an
 estimate and is labelled "geschätzt": it uses `ilike`, which does not collapse runs of whitespace the
-way `opos_norm()` does. Cross-checked on Stäy: typing "Darlehen" predicts 19 of 2569 outgoing
+way `opos_norm()` does. Cross-checked on this client: typing "Darlehen" predicts 19 of 2569 outgoing
 transactions, which is exactly the hit count the database's own matcher records for that rule.
 Switching the field to "Beliebiges Feld" correctly widens the count (338 → 340 for "202"), which also
 exercises the quoted multi-column `or()` path.
@@ -219,13 +219,13 @@ order is total.
 - `src/lib/i18n/locales/{de,en}.ts`
 
 **Worth knowing about the role gate, checked after applying.** `current_role_name()` is not the same
-function in all three. immonetz and Stäy resolve it from `app_users`/`roles` by JWT e-mail; **Eiffler
+function in all three. a sister Hub and this client resolve it from `app_users`/`roles` by JWT e-mail; **another client
 has no `app_users` table at all** and resolves it from `has_role(auth.uid(), …)`, mapping
 `superadmin → super_admin`, `admin → admin`, `team → supervisor`, and _every other authenticated
 user → `assistant`_. It returns the same vocabulary either way, so the policies behave identically,
-and nobody is locked out: Eiffler has 2 superadmin + 4 team accounts that can write, Stäy 5 of 7.
+and nobody is locked out: another client has 2 superadmin + 4 team accounts that can write, this client 5 of 7.
 
-The consequence on Eiffler is worth a decision though: its `buchhaltung`, `zahlung`, `freigabe` and
+The consequence on another client is worth a decision though: its `buchhaltung`, `zahlung`, `freigabe` and
 `user` roles (9 accounts) all resolve to `assistant` and therefore **cannot** manage whitelist rules.
 That is consistent with every other RLS policy written in this series, so it was left as is — but
 `buchhaltung` is plausibly the role that should be managing these rules, and widening the gate is a

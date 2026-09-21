@@ -61,13 +61,13 @@ with no action on the screen able to close them:
 
 They are reported, not dropped. Tab A shows "N Belege lassen sich nicht abgleichen" with an
 **Anzeigen** toggle that lists exactly those rows, each with a badge naming the reason and a tooltip
-saying what to do about it. Live: 13 here (7 `kein_betrag`, 6 `gutschrift`), 0 on Immonetz.
+saying what to do about it. Live: 13 here (7 `kein_betrag`, 6 `gutschrift`), 0 on a sister Hub.
 
 ## The Fällig / Alter column
 
 `invoices.due_date` used to be written by nobody on the incoming side: at the time this section was
 written the pipeline extracted no due date at all, and the column was 0 of 433 filled here and 0 of
-30 on Immonetz — a column of dashes whose whole job is "which of these is late". The pipeline
+30 on a sister Hub — a column of dashes whose whole job is "which of these is late". The pipeline
 started extracting `faelligkeit` on 20.08.2026, but it is still thin: 24 of 525 filled as of
 28.08.2026, so the age fallback below is what most rows show.
 
@@ -104,7 +104,7 @@ so the band on the screen and the band behind the link are decided by one functi
   match the name and the number only, while the identical-looking box one tab over searched the
   bank's full text.
 - **"Ohne Gesellschaft"** is a filter value on both tabs. It is the most common value in that
-  column (225 of 433 rows here, 20 of 28 on Immonetz) and used to be the one thing that could
+  column (225 of 433 rows here, 20 of 28 on a sister Hub) and used to be the one thing that could
   not be isolated.
 - Both tabs get a **Filter zurücksetzen** link once anything is set.
 

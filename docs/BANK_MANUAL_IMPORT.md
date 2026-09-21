@@ -4,7 +4,7 @@ The third of three `bank_transactions` inflows. Reference for what the client as
 implemented, and what is still open.
 
 > **Source:** `communication/threads/2026-08-04-scope-clarification/` (client thread, confirmed
-> 2026-08-04) and `communication/work-log/2026-08-05-immonetz-vs-staey-differences.md` (item 5,
+> 2026-08-04) and `communication/work-log/2026-08-05-a sister Hub-vs-this client-differences.md` (item 5,
 > listed this as unbuilt). See also `communication/work-log/2026-08-05-pleo-vs-banksapi.md` for
 > the three-inflow model this feature completes.
 
@@ -197,7 +197,7 @@ thrown error for the conflict case) and `useManualBankImport()` (invalidates
 **Note on row validation:** the Edge Function version individually skipped and counted malformed
 rows server-side. The server function instead validates the whole batch with a zod schema
 (`ImportManualTransactionsSchema`) and rejects the request outright if any row is malformed —
-consistent with every other endpoint in this codebase (`staey-backend-api`'s mandatory-validation
+consistent with every other endpoint in this codebase (`this client-backend-api`'s mandatory-validation
 convention). This is safe because row-level normalization/skipping already happens **client-side**
 in `normalizeTable()` before the request is ever sent — by the time a row reaches the server it
 should already be well-formed, so an all-or-nothing check here is a defense-in-depth boundary, not

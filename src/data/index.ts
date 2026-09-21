@@ -1,12 +1,29 @@
 /**
  * Every query and mutation the app may import.
  *
- * Being split by domain: `src/lib/data/queries.ts` is 9,800 lines, and each domain moves into
- * `src/data/<domain>/` a piece at a time. Everything is re-exported here, so a hook can move
- * without a single call site changing. See planning/10-data-layer.md.
+ * One folder per subject. Nothing outside `src/data/` imports a domain directly, so a hook can
+ * move between them without a call site changing. See planning/10-data-layer.md.
  */
-export * from "@/lib/data/queries";
 
 export * from "./settings";
 export * from "./suppliers";
 export * from "./rules";
+export * from "./outgoing-invoices";
+export * from "./team";
+export * from "./handover";
+export * from "./folders";
+export * from "./categories";
+export * from "./manual-bookings";
+export * from "./tax";
+
+export * from "./aliases";
+export * from "./approval";
+export * from "./review";
+export * from "./bank";
+export * from "./pipeline";
+export * from "./documents";
+export * from "./companies";
+export * from "./properties";
+
+export { useFeature, useFeatureGate } from "./use-feature";
+export { searchTokens, searchWasDropped } from "./shared";

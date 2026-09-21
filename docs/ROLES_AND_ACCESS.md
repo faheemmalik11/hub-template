@@ -4,7 +4,7 @@ Reference for the roles/permissions system: what the client's briefing asks for,
 already implemented on this branch (`bank-reconcilation-phase-2`), and what is still
 missing to fully match the spec.
 
-> **Source:** `FUNKTIONSBRIEFING-EN.md.pdf` (Functional Briefing — Immonetz Finance
+> **Source:** `FUNKTIONSBRIEFING-EN.md.pdf` (Functional Briefing — a sister Hub Finance
 > Workflow, EN, 2026-07-15), Part 2 Screen 17, and Appendix A7 ("Roles & rights").
 > Related screens: Screen 6 (Approval workflow), Screen 16 (Natural-language search),
 > Screen 18 (Delete & trash), Appendix A6 (status model).
@@ -44,15 +44,15 @@ missing to fully match the spec.
 > full detail; both are cross-referenced there and here since they're one underlying
 > fact relevant to both docs.
 >
-> **2026-08-10 — cross-app verification against the Immonetz Hub sibling app:** this
+> **2026-08-10 — cross-app verification against the a sister Hub Hub sibling app:** this
 > app's own RLS was clean (no equivalent of the `auth_read` regression found on
-> Immonetz — see below), but two gaps surfaced. `apply_assignment_rule_bulk()` was
+> a sister Hub — see below), but two gaps surfaced. `apply_assignment_rule_bulk()` was
 > `anon`/`PUBLIC`-executable (not just `authenticated`) on this project too — same
-> root cause as Immonetz, fixed here by
+> root cause as a sister Hub, fixed here by
 > `20260810062807_revoke_anon_execute_apply_assignment_rule_bulk.sql`. `/auswertungen` also had
 > no route-level guard (only nav-hidden from the assistant role) — added an
 > `AuswertungenGuard` wrapper matching `TeamGuard`'s pattern. See §2.7 for the full
-> write-up, including what was found and fixed on the Immonetz side for reference.
+> write-up, including what was found and fixed on the a sister Hub side for reference.
 
 ---
 
@@ -98,7 +98,7 @@ missing to fully match the spec.
   amount threshold above which approval isn't required.
 - **Screen 16 (Search):** must respect access rights — an employee finds only what
   they're allowed to see anyway. Explicitly **not a build priority yet** (Fabian),
-  but built anyway (ported from immonetz at the developer's request) — see
+  but built anyway (ported from a sister Hub at the developer's request) — see
   `docs/NATURAL_LANGUAGE_SEARCH.md`. It does respect access rights: both its RPCs
   and its grounding queries run through the caller's own RLS-scoped client, same
   as every other read on this screen.
@@ -228,9 +228,9 @@ surface has the same class of leak — not just the two the user happened to hit
   narrows, not vacuous passes against empty tables. **Update (2026-08-06):**
   LexOffice was removed entirely from this app (see `docs/AUSGANGSRECHNUNGEN_UPLOAD.md`);
   migration `0086` drops both `lexoffice_config` and `lexoffice_sync_log` — the 2 live
-  `lexoffice_config` rows referenced tax/company codes that didn't match any real Stäy
+  `lexoffice_config` rows referenced tax/company codes that didn't match any real this client
   company, a likely cross-client credential that this table drop removes from this
-  database (any live-key rotation on the LexOffice/immonetz side is outside this repo).
+  database (any live-key rotation on the LexOffice/a sister Hub side is outside this repo).
 - **Every `SECURITY DEFINER` function in the schema audited** (bypasses RLS by
   design, so each one is an independent candidate for exactly this class of bug).
   Cross-referenced against every RPC actually called from the frontend
@@ -521,18 +521,18 @@ forever — the flag was recorded but nothing checked it. Closed:
   the docs `docs/PROJECT-ROADMAP.md` / `docs/CODEBASE_AUDIT.md` calling this
   "not started" are **stale**.
 
-### 2.7 Cross-app verification against Immonetz Hub, 2026-08-10 — two shared gaps found and fixed here, one regression found and fixed on Immonetz only
+### 2.7 Cross-app verification against a sister Hub Hub, 2026-08-10 — two shared gaps found and fixed here, one regression found and fixed on a sister Hub only
 
-The Immonetz Hub sibling app (`docs/PROJECT-ROADMAP.md`'s lineage, its own Supabase project
+The a sister Hub Hub sibling app (`docs/PROJECT-ROADMAP.md`'s lineage, its own Supabase project
 `txxqvvpvrylnqbpscmpv`) has its own copy of this doc and its own roles/access implementation.
 Comparing the two live, side by side, surfaced drift in both directions.
 
-- **This app's `companies`/`invoices`/`property_assignment` RLS was confirmed clean** — Immonetz
+- **This app's `companies`/`invoices`/`property_assignment` RLS was confirmed clean** — a sister Hub
   had regained a leftover `auth_read USING (true)` permissive SELECT policy alongside the
   correctly-scoped one on those three tables (Postgres OR's permissive policies together, so
   `true OR has_company_access(...)` always wins), silently defeating company scoping on its two
   most-used screens. Confirmed via `pg_policies` that this app has no equivalent duplicate policy
-  on any table — this was isolated to Immonetz's DEV project, fixed there via
+  on any table — this was isolated to a sister Hub's DEV project, fixed there via
   `20260810110000_fix_stale_auth_read_rls_policies.sql`. Nothing to do here; recorded for context
   since a future session on this app should know the same class of bug was checked for and ruled
   out on this date, not just left unexamined.
@@ -550,7 +550,7 @@ Comparing the two live, side by side, surfaced drift in both directions.
   per this doc's own framing of nav gating). An assistant typing the URL directly could still
   reach the BWA screen, which A7 says they should not see "at all." Added an `AuswertungenGuard`
   wrapper (same `ready`/redirect pattern as `TeamGuard`) to `src/routes/auswertungen/index.tsx`,
-  redirecting the `assistant` role to `/`. Same fix applied on Immonetz.
+  redirecting the `assistant` role to `/`. Same fix applied on a sister Hub.
 - Both fixes re-verified live after applying: `apply_assignment_rule_bulk`'s grantees are exactly
   `service_role`/`authenticated`/`postgres` (no `anon`/`PUBLIC`); `tsc --noEmit` and
   `bun run lint` clean for every file this pass touched.
@@ -621,7 +621,7 @@ null`, unique where non-null, backfilled by exact case-insensitive name match. S
      to the coarse `Approver.role` tier. Used wherever the UI IDENTIFIES a person rather
      than deciding what they may do: the Genehmiger tab's Rolle column and mobile card,
      the deputy picker, the rule step-approver picker, the "Handelnd als" line and its
-     super-admin picker on the invoice detail screen (and Immonetz's "Zugewiesen an"
+     super-admin picker on the invoice detail screen (and a sister Hub's "Zugewiesen an"
      list). Before this, an Admin read as "Vorgesetzter" everywhere, because the tier was
      printed as if it were the person's role. The tier still governs the chain and still
      derives from `AppRole` via `approverRoleForEmployeeRole()` — nothing about routing
@@ -724,7 +724,7 @@ of the one unrestricted account.
 ### Company scoping
 
 `has_company_access()` grants the super admin unrestricted access **by role**
-(`20260813140000` on immonetz / `20260813150000` on staeyhub), rather than relying on it happening
+(`20260813140000` on a sister Hub / `20260813150000` on this Hub), rather than relying on it happening
 to have no `user_company_access` rows. Before that, a single grant row created by any other route
 would have silently turned the one unrestricted account into a company-restricted one, with no UI
 left to clear it because the company picker is hidden for that row.
@@ -757,7 +757,7 @@ returns it instead of redirecting:
 `variant` selects the wording only (`zugriff.textAdmin` / `zugriff.textManager` in
 `src/lib/i18n/locales/`). The gating logic itself is unchanged, and RLS remains the real boundary.
 `/papierkorb` keeps its own more specific text under `papierkorb.guard`, since it can name what is
-being withheld. Same change applied on Immonetz.
+being withheld. Same change applied on a sister Hub.
 
 ## The two-person rule, and `can_approve`/`can_pay` becoming real (2026-08-28)
 

@@ -2,7 +2,7 @@
 
 Written after the client asked for the demo bank connections/accounts to be removed so real
 accounts can be added, and after a manual delete of the demo rows reappeared on its own within
-the hour — same issue and same fix as ported from immonetz's `docs/BANKSAPI_GO_LIVE.md` (the two
+the hour — same issue and same fix as ported from a sister Hub's `docs/BANKSAPI_GO_LIVE.md` (the two
 repos share this Edge Function code line-for-line as of this writing). Companion to
 `docs/BANKSAPI_SANDBOX_ONBOARDING.md` (sandbox setup — **see the staleness warning in §4 below
 before trusting it**) and `docs/BANKSAPI_PAYMENT_INITIATION.md` (payment initiation — a separate,
@@ -116,7 +116,7 @@ Flip the secret **before** deleting rows, or the next hourly tick recreates them
      --project-ref xsgbdtdwhrrhoeximeon
    ```
    (2026-08-07 correction: this doc originally named `pbwfihepsrxgcytkvqgf` here — that project is
-   actually named "Immonetz Philipp Netz" in Supabase, unrelated to staeyhub. The real staeyhub/Stäy
+   actually named "a sister Hub Philipp Netz" in Supabase, unrelated to this Hub. The real this Hub/this client
    project ref, confirmed from the production pipeline's own `SUPABASE_DB_URL`
    (`db.xsgbdtdwhrrhoeximeon.supabase.co`), is `xsgbdtdwhrrhoeximeon`. No command was ever actually
    run against the wrong ref — this was caught before anything executed.)
@@ -157,10 +157,10 @@ Flip the secret **before** deleting rows, or the next hourly tick recreates them
   `wtdigitaltest` Basic Auth tenant model (`BANKSAPI_BASIC_USERNAME`/`_PASSWORD`,
   `BANKSAPI_TEST_USER`) with a sandbox validity date of 2026-08-03 — already expired as of this
   writing (2026-08-07) — while the actual code in `banksapi.ts` already reads
-  `BANKSAPI_ONE_CONNECT_API_KEY`, the newer single-API-key model immonetz cut over to on
-  2026-08-05 (see immonetz's `BANKSAPI_SANDBOX_ONBOARDING.md`). Don't use that onboarding doc to
+  `BANKSAPI_ONE_CONNECT_API_KEY`, the newer single-API-key model a sister Hub cut over to on
+  2026-08-05 (see a sister Hub's `BANKSAPI_SANDBOX_ONBOARDING.md`). Don't use that onboarding doc to
   decide what credential is live here; verify directly against the Supabase project's secrets.
-  Once confirmed, that doc should be rewritten to match, same as immonetz's was.
+  Once confirmed, that doc should be rewritten to match, same as a sister Hub's was.
 - Whether this project's current tenant/API key is trial or production is unconfirmed. Step 2
   itself **has** been done (see §0, 2026-08-11); what remains unconfirmed is only which BANKSapi
   contract the key belongs to.

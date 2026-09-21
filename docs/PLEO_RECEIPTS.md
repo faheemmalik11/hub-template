@@ -94,4 +94,4 @@ select to_char(t.booking_date, 'YYYY-MM') as month,
 - **`ingest_receipts` is only logged when the step runs.** A future regression looks like the same
   silence: `ingest_done` says "2 source(s) ok" and nothing says receipts were skipped. Logging the
   skip explicitly would have made this visible in a day rather than five weeks.
-- The other three hubs are not checked. immonetz and mayestate have Pleo functions of their own.
+- The other three hubs are not checked. a sister Hub and another client have Pleo functions of their own.

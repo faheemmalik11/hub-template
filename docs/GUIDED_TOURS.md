@@ -1,6 +1,6 @@
-# Guided tours (Stäy)
+# Guided tours (this client)
 
-Ported from immonetz to reach full page parity. A tour is a short, step-by-step overlay that
+Ported from a sister Hub to reach full page parity. A tour is a short, step-by-step overlay that
 points at real elements on a page, opens automatically on a user's first visit to that page, and
 can be reopened any time from the header button. Per-user progress is stored in the database, so a
 dismissed or completed tour is not offered again, full stop. `version` is still recorded on the
@@ -71,17 +71,17 @@ Tours behind a page permission are only mapped when the user has it (`freigabe-r
 ## Deliberately excluded
 
 - `/bankverbindungen` — a redirect-only stub to `/bankkonten`, no UI to anchor.
-- Business lines (`geschaeftsbereiche`) — no such route in Stäy (immonetz has it, Stäy does not).
-  The immonetz copy that referenced business lines was reworded on the way in.
-- The immonetz LexOffice-tab tour and outgoing "neu" tour — Stäy has no matching screens.
+- Business lines (`geschaeftsbereiche`) — no such route in this client (a sister Hub has it, this client does not).
+  The a sister Hub copy that referenced business lines was reworded on the way in.
+- The a sister Hub LexOffice-tab tour and outgoing "neu" tour — this client has no matching screens.
 
-## Differences from immonetz worth knowing
+## Differences from a sister Hub worth knowing
 
-- The customer copy still mentions LexOffice: Stäy genuinely uses LexOffice (36 references in the
+- The customer copy still mentions LexOffice: this client genuinely uses LexOffice (36 references in the
   app), so that wording is correct here, unlike the business-line wording which was removed.
-- Overview omits the "spend by company" step (that panel is not on Stäy's dashboard).
-- Team uses a simplified two-step tour (Stäy's screen is simpler than immonetz's tabbed matrix).
-- Reconciliation is a single four-step tour (intro, tabs, filters, list) rather than immonetz's
+- Overview omits the "spend by company" step (that panel is not on this client's dashboard).
+- Team uses a simplified two-step tour (this client's screen is simpler than a sister Hub's tabbed matrix).
+- Reconciliation is a single four-step tour (intro, tabs, filters, list) rather than a sister Hub's
   two tab-split tours; the `?tab=belege|fehlend` branches are conditionally rendered, so the same
   anchor names live in both branches and resolve to whichever tab is mounted.
 

@@ -4,7 +4,7 @@ _Status: DRAFT for review. No code, no deployment. Compiled 2026-07-03._
 
 ## Purpose & scope
 
-Introduce **bank-transaction reconciliation** into the Immonetz Hub: import bank accounts
+Introduce **bank-transaction reconciliation** into the a sister Hub Hub: import bank accounts
 and transactions via **BANKSapi**, match transactions to receipts (`belege`), surface
 missing receipts and open items, and let a human confirm/reject matches.
 
@@ -397,7 +397,7 @@ reverts to fixtures without a deploy of app code.
 
 ## Prerequisites & open decisions (confirm before build → live)
 
-1. **Target repo** — this `immonetz` repo vs. `living-immo-hub` (Fabian).
+1. **Target repo** — this `a sister Hub` repo vs. `living-immo-hub` (Fabian).
 2. **Supabase admin access** — service_role + rights to run migrations and deploy Edge Functions on
    `pbwfihepsrxgcytkvqgf`, or coordinate with the pipeline owner.
 3. **Manual-match write path** — direct RLS-guarded writes to `beleg_transaction_matches` vs. via an

@@ -2,9 +2,9 @@
 
 The supplier list at `/lieferanten`, in `src/routes/lieferanten/index.tsx`.
 
-This doc covers the 2026-08-27 UI/UX pass, ported here from Immonetz, where it was built first.
+This doc covers the 2026-08-27 UI/UX pass, ported here from a sister Hub, where it was built first.
 The split it rests on is between **portable** components and **repository-specific** wiring: the
-same screen exists in Immonetz, Eiffler and Mayestate, and porting means writing adapters rather
+same screen exists in a sister Hub, another client and another client, and porting means writing adapters rather
 than copying the page.
 
 What the port actually cost, as a record for the two hubs still to do: the portable files copied
@@ -143,7 +143,7 @@ different currency or locale needs no change to the component.
 - **The migration for this repo has not been applied yet.** The supplier pages read `is_default`
   and `deleted_at` on `supplier_bank_accounts`; until
   `supabase/migrations/20260827170000_supplier_bank_accounts_default_and_soft_delete.sql` runs
-  against this database, those reads fail. Immonetz took the same change as two migrations because
+  against this database, those reads fail. a sister Hub took the same change as two migrations because
   0008 was already applied there; here both arrive in one file.
 - Not verified in a running browser: the app is behind a Supabase login, and this pass was checked
   by `bun run lint`, `tsc --noEmit` and `bun run build`.

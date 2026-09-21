@@ -1,7 +1,7 @@
 # Allowed payment difference, and closing a match that has one
 
 Covers meeting items **H5** (fuzzy matching as a second pass) and **H6** (confirm a match despite a
-payment difference) from `MEETING_2026-09-09_STAEY.md`, plus the settings page they moved to.
+payment difference) from `a client meeting note`, plus the settings page they moved to.
 
 ## What was asked
 
@@ -161,7 +161,7 @@ that has already been made.
 - **77 pre-existing suggestions** (33 `auto`, 44 `kandidat`) were scored before this change and carry
   no `amountTolerated` flag. They will not show the "needed the allowance" label until re-scored.
 - The **close-remainder half** is now in all four Hubs: the same component, the same two placements,
-  and `20260911230000_close_sides_manually.sql` in immonetz, eiffler-hubv2 and mayestate2 (the same
-  file as staeyhub's `20260910190000`, renumbered).
-- The **tolerance half** is still staeyhub only. The other three have the hub-kit part
+  and `20260911230000_close_sides_manually.sql` in a sister Hub, another Hub and another client2 (the same
+  file as this Hub's `20260910190000`, renumbered).
+- The **tolerance half** is still this Hub only. The other three have the hub-kit part
   (`@hub-kit/core`) but not `matching_settings`, the settings page or the link-confirm dialog.

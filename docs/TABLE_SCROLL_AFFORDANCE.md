@@ -83,7 +83,7 @@ wrapped in `ScrollShadow` directly, replacing its own `overflow-x-auto` div.
 A shade only appears when there is something hidden, and an auto-layout `w-full` table never hides
 anything: it squeezes columns until the content cannot shrink any further. On the incoming-invoices
 list at 1468px that meant a truncated issuer and received dates wrapped onto three lines, while the
-table technically still fitted, so it never scrolled and the shade was correctly absent. Eiffler
+table technically still fitted, so it never scrolled and the shade was correctly absent. another client
 showed the shade at the same width only because its copy of that table carries one extra column.
 
 So every table with **8 or more columns** now sets a minimum width, at roughly **125px per column**,

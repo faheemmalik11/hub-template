@@ -39,10 +39,10 @@ implementation follows:
   on) + descriptive field (what feeds the description slot), with a live preview built from the
   client's own example values.
 
-### The USt-Kennzeichen is off for Stäy
+### The USt-Kennzeichen is off for this client
 
 Saskia asked for it at the 09.09.2026 meeting (30:16): she did not know what the field was for,
-and for Stäy the answer never varies — always VAT at Stäy, never at the other companies — so the
+and for this client the answer never varies — always VAT at this client, never at the other companies — so the
 toggle only asked people to decide something they had no basis to decide. She could not turn it
 off herself because the screen is gated by `PERMISSIONS.pageDateibenennung`.
 
@@ -54,7 +54,7 @@ What was done, and deliberately not done:
   toggle, and takes the suffix out of the Save validation so a hidden field can never be the
   reason Save is dead.
 - **The columns and `filename.ts` are unchanged.** Other real-estate clients want the suffix, and
-  the column default stays `true` so a fresh tenant still gets it. Re-enabling for Stäy is one
+  the column default stays `true` so a fresh tenant still gets it. Re-enabling for this client is one
   boolean plus one update.
 - **`src/components/belege/document-preview.tsx`** — accepts an optional `beleg` prop; when
   present (wired from `src/routes/eingangsrechnungen/$nr.tsx`), the preview/download filename is

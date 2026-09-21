@@ -11,9 +11,9 @@ verify against the code without re-deriving it), and what is still open.
 > **Scope-priority note, worth surfacing to the client:** the briefing explicitly marks this
 > screen "do not build yet — first come the core screens" (per Fabian, cited in
 > `docs/ROLES_AND_ACCESS.md` point 5). It was built here anyway, ported directly from the sibling
-> `immonetz` project (which built the same feature under the same instruction, also ahead of that
+> `a sister Hub` project (which built the same feature under the same instruction, also ahead of that
 > stated priority) at the developer's explicit request. Not a silent scope addition — flagging it
-> here the same way the immonetz doc flagged it there, so the client can be told.
+> here the same way the a sister Hub doc flagged it there, so the client can be told.
 
 ## TL;DR
 
@@ -46,9 +46,9 @@ previously flagged for this screen (see "Access rights" section below).
 | UI                                                     | `src/routes/eingangsrechnungen/index.tsx` — the toolbar's first control (replaces the old debounced full-text `Input`), the mic button next to it, plus the answer/SQL-preview panel below the toolbar                                                                                                                                                                                                                                                                                                                                                                                       |
 | i18n                                                   | `src/lib/i18n/locales/de.ts` / `en.ts` — `belege.list.nlSearch.{placeholder,searching,error,clear,voiceStart,voiceStop,voiceRecording,voiceError}`                                                                                                                                                                                                                                                                                                                                                                                                                                           |
 
-Ported from `/home/faheemmalik/Documents/Projects/immonetz` (`nl-retrieval.functions.ts` +
+Ported from `/home/faheemmalik/Documents/Projects/a sister Hub` (`nl-retrieval.functions.ts` +
 `nl-ask.functions.ts` + migration `20260810151421_invoices_filtered_search.sql`), adapted to
-staeyhub's own table/view names (`v_invoices_review`, `companies`, `properties`,
+this Hub's own table/view names (`v_invoices_review`, `companies`, `properties`,
 `bwa_categories`) and its `requireSupabaseAuth`/`OpenAiApiError`/`AppError` conventions, which
 were already in active use here for other OpenAI-backed features
 (`bank-statement-ai.functions.ts`, `chart-of-accounts-extraction.functions.ts`) — no new backend
@@ -109,7 +109,7 @@ keystroke or on every back/forward navigation. For the same reason, `aiQuery`/th
 in component state, **not** synced into the URL like every other filter here — a bookmarked URL
 would either replay an expensive query on load or show a stale answer it can't cheaply
 regenerate. This is a deliberate deviation from this screen's usual "every control is a URL
-param" convention, carried over unchanged from the immonetz original.
+param" convention, carried over unchanged from the a sister Hub original.
 
 ## Access rights (closes a previously-flagged gap)
 
@@ -136,7 +136,7 @@ existing row's own embedding and getting `similarity ≈ 1.0` back for itself). 
 (`runInvoiceRetrieval` + synthesis) was then run against ~8 realistic German questions with real
 OpenAI calls.
 
-**One real bug found and fixed by this testing:** for _"Wie viel haben wir dieses Jahr bei Stäy
+**One real bug found and fixed by this testing:** for _"Wie viel haben wir dieses Jahr bei this client
 GmbH für Zinsen bezahlt?"_, `extractIntent()` initially picked `costCategory: 'Zinserträge'`
 (interest **income**) instead of `'Zinsaufwand'` (interest **expense**) — `bwa_categories`
 contains several such opposite-direction near-synonym pairs (`Zinserträge`/`Zinsaufwand`,
@@ -207,8 +207,8 @@ found" with zero transparency about alternatives considered.
 
 ## Round 3: VAT/net/gross support, answer-language fix, voice input (2026-08-11)
 
-Ported from immonetz, which built these three pieces after staeyhub's initial port (Round 1/2
-above) — this section brings staeyhub back to parity, adapted to this project's own table names,
+Ported from a sister Hub, which built these three pieces after this Hub's initial port (Round 1/2
+above) — this section brings this Hub back to parity, adapted to this project's own table names,
 `Grounding` shape, and `OpenAiApiError`/`AppError`/`callOpenAiJsonSchema()` conventions rather than
 copied verbatim.
 
@@ -229,7 +229,7 @@ have we paid this year?" through the actual app answers "€16,493.43" with SQL 
 
 **Answer language follows the QUESTION, not the DE/EN toggle.** `synthesizeAnswer()` took a
 `locale` param from the caller's site-wide DE/EN toggle and forced the answer into that language —
-the same design immonetz originally shipped, and the same bug immonetz later found and fixed:
+the same design a sister Hub originally shipped, and the same bug a sister Hub later found and fixed:
 asking in a different language than whatever the toggle happens to be on produces a mismatched
 answer. Fixed identically: `InputSchema`/`synthesizeAnswer()`/`useAskInvoiceQuestion()` all dropped
 `locale` entirely; the model now detects the question's own language via an explicit `LANGUAGE`
@@ -237,14 +237,14 @@ instruction placed FIRST in the prompt (highest priority) with a concrete counte
 `temperature: 0` (extended `callOpenAiJsonSchema()` with an optional `temperature` param for this).
 `eingangsrechnungen/index.tsx` dropped the `useEffect` that re-ran the last AI search on every
 locale change (built to keep the answer in sync with the toggle — no longer needed or correct) and
-fixed the same `aiActive = ask.isSuccess` race immonetz found (react-query flips `isSuccess` to
+fixed the same `aiActive = ask.isSuccess` race a sister Hub found (react-query flips `isSuccess` to
 false the instant a re-search starts pending even though `ask.data` still holds the previous
 result, so gating `filter.ids` on `isSuccess` alone flashed the full unfiltered table during a
 re-search; now keyed on `ask.data !== undefined`).
 Also ported the entity-echo fix: `RetrievalResult` gained `resolvedFilters: InvoiceFilters` (the
 filters actually used, after any fallback), passed into the synthesis prompt as an explicit
 `RESOLVED FILTERS: ...` line with an instruction requiring the model to use that spelling, not the
-question's raw wording — closes the same class of bug immonetz found (a misheard/mistyped company
+question's raw wording — closes the same class of bug a sister Hub found (a misheard/mistyped company
 name surviving into the answer text even though the SQL filter itself resolved correctly).
 **Verified live**: an English VAT question answers in English (correct sentence + usually-correct
 `€X,XXX.XX` formatting — see the flakiness note below); a German question answers in German;
@@ -254,21 +254,21 @@ switching the DE/EN toggle after either does NOT change or re-run the already-sh
 English number format (`€16,493.43`), 1/4 correct English wording but German number grouping
 (`16.493,43 €`). The SENTENCE language was correct in all 4 runs; only the number-format
 instruction occasionally didn't take, even at `temperature: 0`. Same class of OpenAI
-sampling non-determinism immonetz documented for its own category-guessing bug — not something
+sampling non-determinism a sister Hub documented for its own category-guessing bug — not something
 prompt wording alone reliably eliminates. The underlying VALUE is always correct either way, only
 the formatting style is occasionally "wrong-locale-idiomatic" — low severity, left as a known,
 disclosed gap rather than over-fit the prompt chasing a rare formatting nit.
 
 **Voice input.** Ported ElevenLabs Scribe transcription + post-transcription entity resolution —
-staeyhub never had an OpenAI Whisper/gpt-4o-mini-transcribe path to begin with (immonetz built one
+this Hub never had an OpenAI Whisper/gpt-4o-mini-transcribe path to begin with (a sister Hub built one
 first, found ElevenLabs more accurate via real-recording testing, then removed the OpenAI path
-entirely — staeyhub goes straight to ElevenLabs-only, no dead code to carry over).
+entirely — this Hub goes straight to ElevenLabs-only, no dead code to carry over).
 
 - `src/lib/api/voice-transcription-shared.ts` — `VOICE_RECORDING_MIME` (`audio/webm` | `audio/mp4`), extension map, upload size cap. Generic, ported unchanged.
-- `src/lib/api/voice-transcription-elevenlabs.ts` — `transcribeWithElevenLabs()`. `POST https://api.elevenlabs.io/v1/speech-to-text`, model `scribe_v2`, `xi-api-key` header, `keyterms` domain-vocabulary biasing (company/property codes+names, category names — built from the new `companyNames`/`propertyNames` fields added to `Grounding` for this, since the existing fields only had pre-joined display strings), `tag_audio_events: "false"` (ElevenLabs tags non-speech audio events like `(music)` by default; found live in immonetz to misfire on silent audio and return a fake tag instead of empty text — disabled from the start here since immonetz had already found this) plus `isNonSpeechEventTag()` as a defensive backstop.
-- `src/lib/api/voice-entity-resolution.ts` — `resolveTranscriptEntities()`, one more correction pass after transcription, using the shared `callOpenAiJsonSchema()` helper (not a hand-rolled fetch call, unlike immonetz's version — staeyhub already had this helper). Fixes mishearings against companies/properties/suppliers ONLY — **categories are deliberately excluded**, per immonetz's own real-recording finding: this pass kept confusing a correctly-heard word that merely relates to a category's meaning (e.g. "VAT", "repair", "scaffolding") with an actual mishearing of that category's German name, rewriting it to something like "Umsatzsteuerzahlung" — wrong, and would silently poison `extractIntent()`'s own (more reliable) category matching. Fail-open: any error returns the original uncorrected text.
+- `src/lib/api/voice-transcription-elevenlabs.ts` — `transcribeWithElevenLabs()`. `POST https://api.elevenlabs.io/v1/speech-to-text`, model `scribe_v2`, `xi-api-key` header, `keyterms` domain-vocabulary biasing (company/property codes+names, category names — built from the new `companyNames`/`propertyNames` fields added to `Grounding` for this, since the existing fields only had pre-joined display strings), `tag_audio_events: "false"` (ElevenLabs tags non-speech audio events like `(music)` by default; found live in a sister Hub to misfire on silent audio and return a fake tag instead of empty text — disabled from the start here since a sister Hub had already found this) plus `isNonSpeechEventTag()` as a defensive backstop.
+- `src/lib/api/voice-entity-resolution.ts` — `resolveTranscriptEntities()`, one more correction pass after transcription, using the shared `callOpenAiJsonSchema()` helper (not a hand-rolled fetch call, unlike a sister Hub's version — this Hub already had this helper). Fixes mishearings against companies/properties/suppliers ONLY — **categories are deliberately excluded**, per a sister Hub's own real-recording finding: this pass kept confusing a correctly-heard word that merely relates to a category's meaning (e.g. "VAT", "repair", "scaffolding") with an actual mishearing of that category's German name, rewriting it to something like "Umsatzsteuerzahlung" — wrong, and would silently poison `extractIntent()`'s own (more reliable) category matching. Fail-open: any error returns the original uncorrected text.
 - `src/lib/api/voice-transcription.functions.ts` — `transcribeVoiceQuery`, the `createServerFn` dispatcher: `loadGrounding()` once, `transcribeWithElevenLabs()`, then `resolveTranscriptEntities()`.
-- `src/components/belege/voice-search-button.tsx` — `MediaRecorder` state machine, ported unchanged (entirely generic, no immonetz-specific naming inside).
+- `src/components/belege/voice-search-button.tsx` — `MediaRecorder` state machine, ported unchanged (entirely generic, no a sister Hub-specific naming inside).
 
 **Live-verified, 2026-08-11** — `ELEVENLABS_API_KEY` was added to `.env` shortly after this was
 built (initially missing, flagged, then added). Verified in three stages:
@@ -276,23 +276,23 @@ built (initially missing, flagged, then added). Verified in three stages:
 1. Fake-mic Playwright test (no real speech): `Spracherkennung fehlgeschlagen` correctly shown,
    no config/500 error visible.
 2. A real synthesized utterance via `--use-file-for-fake-audio-capture`.
-3. **The same 10 real human voice recordings used to verify immonetz's voice input**
-   (`~/Downloads/Recodring Tests/*.m4a`), run through staeyhub's actual live pipeline end to end
+3. **The same 10 real human voice recordings used to verify a sister Hub's voice input**
+   (`~/Downloads/Recodring Tests/*.m4a`), run through this Hub's actual live pipeline end to end
    (transcription → entity resolution → real Text-to-SQL → real answer synthesis against
-   staeyhub's own DB) — results saved to `results-staeyhub.md` in that same folder, generated by a
-   reusable script alongside immonetz's own `run-recordings-full.mjs`. Several of these recordings
-   reference immonetz-specific entities (IMKO, KLMÜ4) that don't exist in staeyhub's data, so they
+   this Hub's own DB) — results saved to `results-this Hub.md` in that same folder, generated by a
+   reusable script alongside a sister Hub's own `run-recordings-full.mjs`. Several of these recordings
+   reference a sister Hub-specific entities (IMKO, KLMÜ4) that don't exist in this Hub's data, so they
    expectedly don't resolve to anything meaningful here (e.g. `extractIntent()` picked an arbitrary
    real property/company code for an unmatched "KLMU4"/"IMCO" mention rather than reliably
    returning null — an edge case from testing with wrong-tenant data, not representative of real
-   staeyhub usage, not chased further); the VAT/repair/scaffolding-shaped questions (tenant-
+   this Hub usage, not chased further); the VAT/repair/scaffolding-shaped questions (tenant-
    agnostic) all worked correctly.
 
 **A real, serious bug was found and fixed by this recording test — the entire keyterms
 request was silently broken.** `isValidKeyterm()` filtered keyterms by character length and
 disallowed characters, but never by WORD COUNT, despite ElevenLabs limiting each keyterm to 5
 words (4 spaces) — and despite this file's own comment already (wrongly) claiming that check
-existed. Two staeyhub property names exceed that limit ("Ludwigshafen, Edigheimer Str. 92a+b /
+existed. Two this Hub property names exceed that limit ("Ludwigshafen, Edigheimer Str. 92a+b /
 Kurt-Schumacher-Str. 96-100"; "Neustadt a.d. Weinstraße, Wittelsbacher Str. 61"). Critically,
 ElevenLabs rejects the ENTIRE keyterms list (HTTP 400) if even ONE term violates a limit — so
 every single one of the first 10 recording-test requests failed outright with a 400, not just a
@@ -301,17 +301,17 @@ identical generic "Spracherkennung fehlgeschlagen" error for ANY transcription f
 it's a genuine no-speech case or a broken API request — so the earlier fake-mic test (which never
 exercises real property names) couldn't have caught this, and a first pass at the recording test
 looked like a plausible "no speech" failure until the raw error was inspected directly. Fixed by
-adding a `MAX_KEYTERM_WORDS = 5` check to `isValidKeyterm()`. **Also fixed in immonetz**, which
+adding a `MAX_KEYTERM_WORDS = 5` check to `isValidKeyterm()`. **Also fixed in a sister Hub**, which
 has the identical bug in the identical file — it just hasn't triggered there yet because no
-current immonetz company/property/category name happens to exceed 5 words (confirmed live via a
+current a sister Hub company/property/category name happens to exceed 5 words (confirmed live via a
 direct query); a future long name added there would silently break voice search the same way.
 Re-tested after the fix: all 10 recordings transcribe successfully, zero 400s.
 
 **A second real bug found via live usage right after this, in the answer-language fix (2026-08-11)
 — fixed, then a fix-of-the-fix.** Real query: _"Give me all the invoices related to Electricity of
 my STAY company."_ — English question, German answer, 3/3 reproducible. Root cause: the
-LANGUAGE-matching instruction (this section, ported from immonetz) had only been stress-tested
-against MOCKED/short list-shaped data in immonetz's own testing, never a realistic
+LANGUAGE-matching instruction (this section, ported from a sister Hub) had only been stress-tested
+against MOCKED/short list-shaped data in a sister Hub's own testing, never a realistic
 `JSON.stringify(matches)` dump of German invoice rows (issuer names, `cost_category`, descriptions)
 — exactly what this real query's "retried without cost_category" fallback path produces, and much
 heavier German content than an aggregate answer's mostly-numeric result. That much German content
@@ -324,13 +324,13 @@ properly by making both the opening LANGUAGE paragraph and the closing reminder 
 a worked example in EACH direction (English→English, German→German), explicit "do not default to
 either language." Re-verified afterward: original English bug fixed (3/3), equivalent German list
 question still correct (3/3), aggregate path unaffected (English/German VAT both still correct) —
-8/8 checks across both directions and both query shapes. **Ported the same fix back into immonetz**
+8/8 checks across both directions and both query shapes. **Ported the same fix back into a sister Hub**
 too, since its own original wording had the identical one-directional-example risk (never actually
 triggered there, but the same latent asymmetry).
 
 ## Round 4: language decided upstream at intent-extraction time, not self-detected during synthesis (2026-08-11)
 
-**Bug, reported live on immonetz, ported here as a preemptive fix.** Even after Round 3's
+**Bug, reported live on a sister Hub, ported here as a preemptive fix.** Even after Round 3's
 symmetric-example fix, a further flaky case was reported: a typed (not spoken) English question
 sometimes still came back with a German answer. The Round 3 fix reduced but didn't eliminate it —
 `synthesizeAnswer()` still had to "detect" the question's language itself in the same call whose
@@ -351,10 +351,10 @@ its bidirectional worked examples in favor of a direct imperative — "write you
 {German/English} — this has ALREADY been determined... not open to interpretation or
 re-detection" — plus a shorter FINAL REMINDER restating the same fixed language.
 `askInvoiceQuestion`'s handler passes `result.language` through. Identical fix applied to
-immonetz's `nl-retrieval.functions.ts` / `nl-ask.functions.ts` the same day (that's where the bug
+a sister Hub's `nl-retrieval.functions.ts` / `nl-ask.functions.ts` the same day (that's where the bug
 was actually reported).
 
-**Verified live** on immonetz with a standalone script (real OpenAI, mocked `db`): 4/4 correct on
+**Verified live** on a sister Hub with a standalone script (real OpenAI, mocked `db`): 4/4 correct on
 EN/DE × aggregate/list pairs, then 5/5 repeated runs on the original failure-mode shape (an
 English list-shaped question whose category filter misses and falls back to a heavy-German-row
 semantic search). typecheck/lint clean on both projects' touched files.
@@ -374,8 +374,8 @@ retrieved data. No fix planned unless a third language becomes an actual product
 
 ## Round 5: payment questions — same question, two languages, opposite answers (2026-08-13)
 
-**Bug, reported live on immonetz with screenshots; this project runs the same retrieval design and
-was fixed in the same pass.** On immonetz, the same question asked in each language returned
+**Bug, reported live on a sister Hub with screenshots; this project runs the same retrieval design and
+was fixed in the same pass.** On a sister Hub, the same question asked in each language returned
 contradictory answers on the same data: EN _"How much have we paid E.ON?"_ extracted
 `paymentState='paid'` and answered €0 with an empty table, while DE _"Wie viel haben wir für E.ON
 bezahlt?"_ extracted `paymentState=null` and answered _"insgesamt 2.735,91 € bezahlt"_ over four
@@ -393,7 +393,7 @@ the question's own verb back as if it were a fact about the data.
    SPENDING wording (ausgegeben/spend/Kosten/Rechnungsbetrag) always means invoiced volume → `null`.
    Worked DE/EN pairs in **both** directions (the Round 3 lesson about one-directional examples),
    stated **first in the instructions** AND as a \*\*JSON-schema `description` on the field itself` —
-   both were needed: on eiffler, whose prompt is longer, the rule stated only in the body of the
+   both were needed: on another client, whose prompt is longer, the rule stated only in the body of the
    prompt was ignored 3/3 for the German "ausgegeben"; moving it to the top fixed it 3/3.
 2. **`temperature: 0` on the intent call** (it was running at default sampling while synthesis had
    been pinned at 0 since it was written — the reason the same question could come back as an
@@ -411,7 +411,7 @@ the question's own verb back as if it were a fact about the data.
    existed here).
 4. **No model arithmetic**: list-shaped data blocks now carry `rows_gross`/`paid_gross`/`open_gross`
    computed in code (`describeRowTotals()`, `invoice-nl-ask.functions.ts`), and the instructions
-   forbid summing rows by hand — found live on immonetz, where the model added four row amounts up
+   forbid summing rows by hand — found live on a sister Hub, where the model added four row amounts up
    itself and landed one euro off, stated with full confidence.
 5. **Filter-scope fixes found by the new suite**: `NZO` ("Nicht zugeordnet") removed from the
    company enum and asked for as a separate `unassignedCompany` boolean (as a selectable "company"
@@ -436,7 +436,7 @@ invoices. Run after ANY prompt change:
 bun --env-file=.env run scripts/nl-search-regression.ts
 ```
 
-**Result on this project: 36/36, twice.** (immonetz 36/36 ×2, eiffler 36/36 ×2 via its own
+**Result on this project: 36/36, twice.** (a sister Hub 36/36 ×2, another client 36/36 ×2 via its own
 `e2e/nl-search-regression.ts`.) One extra fix came out of the expanded suite and is in all three:
 "How much do we still owe X?" / "Wie viel schulden wir X noch?" ran as a sum in English and a list
 in German — same filters and same numbers, but an asymmetry — so the aggregate rule now explicitly
@@ -471,25 +471,25 @@ scope, an unbounded list, and a prompt-injection attempt). It found six further 
 6. **A payment-filtered list that finds nothing** answered a bare "none" while unpaid invoices sat
    right there. It now reports the empty result and then what the payment situation actually is.
 
-One flaw in the harness itself is worth recording: the staeyhub and eiffler suites called
+One flaw in the harness itself is worth recording: the this Hub and another client suites called
 `buildDataBlock()` with their own argument list and silently fell behind as parameters were added,
 so they were testing a weaker prompt than production. Both now go through a single
 `buildAnswerDataBlock(result)` used by the handler as well, so the suite and the app cannot drift.
 
-**Final state: 40/40 in all three repos, run twice each** (immonetz three times).
+**Final state: 40/40 in all three repos, run twice each** (a sister Hub three times).
 
-## Known, disclosed gaps (not fixed here — same as immonetz)
+## Known, disclosed gaps (not fixed here — same as a sister Hub)
 
 - **KPI tiles don't reflect the AI-matched subset.** `invoices_kpis()` has no `ids` parameter
   (same pre-existing gap as the ampel/archiv/datev filters — see `kpiIgnoriertFilter` in
   `eingangsrechnungen/index.tsx`), so the KPI tiles keep counting the whole unfiltered set while
   an AI search is active. Disclosed to the user via the same warning banner
   (`belege.list.kpi.ohneAmpelArchiv`, text extended to mention AI search).
-- **No autocomplete/suggestion chips** — a single plain input, same as immonetz shipped (its own
+- **No autocomplete/suggestion chips** — a single plain input, same as a sister Hub shipped (its own
   doc's "recent suggestions" idea was never built there either).
 - **No dedicated "parsed filter" chips** for the AI search (e.g. no "Company: IMKO" chip derived
   from the extracted intent) — the only visible artifacts are the prose answer and the raw
-  SQL-preview `<pre>` block, matching immonetz.
+  SQL-preview `<pre>` block, matching a sister Hub.
 - **`cost_category` is known-inconsistent** (a real electricity bill can be filed under a generic
   category like "Dienstleistungen" instead of "Energie") — mitigated, not fixed, by the
   zero-result fallback retry in `runInvoiceRetrieval()` and by the synthesis prompt explicitly
@@ -497,7 +497,7 @@ so they were testing a weaker prompt than production. Both now go through a sing
   inconsistency is a `pipeline_new`/assignment-rule issue, out of scope here.
 - **Answer language occasionally uses the wrong locale's number format** (correct sentence
   language, wrong digit grouping — ~1 in 4 on repeated identical questions in testing) — same
-  `temperature: 0` non-determinism class as immonetz's own category-guessing flakiness; not
+  `temperature: 0` non-determinism class as a sister Hub's own category-guessing flakiness; not
   chased further, value is always correct. See Round 3 above.
 - **`loadGrounding()` re-queries `companies`/`properties`/`bwa_categories`/`suppliers` on every
   single `askInvoiceQuestion` OR `transcribeVoiceQuery` call** (found by code review, 2026-08-11;
