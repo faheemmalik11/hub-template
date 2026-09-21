@@ -17,14 +17,13 @@
 /*
  * Design system
  *
- * Brand: white surfaces plus one warm accent. The ramp below is the template's default and is
+ * Brand: white surfaces plus one blue accent. The ramp below is the template's default and is
  * meant to be replaced: a client sets their own colours here and nothing else needs editing.
  * The dark tone (--brand-ink) is the text tone only, never a background.
  * Display = Cormorant Garamond (Serif). Body/UI = Hanken Grotesk.
- * Farben in oklch (Lovable-Konvention). Light-first; .dark bleibt definiert,
- * wird aktuell nicht aktiv genutzt.
+ * Colours in oklch. Light-first; .dark stays defined but is not in use yet.
  *
- * --ui-scale: globaler Größenregler (skaliert die rem-Basis), gesetzt per JS.
+ * --ui-scale: the global size control (scales the rem base), set from JS.
  */
 
 @theme inline {
@@ -127,37 +126,37 @@
   /* Brand ramp: the single source of the brand colours, so primary, ring, accent, charts and
      sidebar all derive from these. One hue runs through the whole ramp so the steps stay in
      family; change the hue here and everything follows. */
-  --brand: oklch(0.8 0.041 59.7);
-  --brand-hover: #98603d; /* primary brown: buttons, toggles, active states */
-  --brand-dark: #8f5e3a; /* button hover, active tab text, login panel */
-  --brand-soft: oklch(0.7 0.045 59.7);
-  --brand-tint: #f7efe8; /* accent light background */
-  --brand-wash: #fbf9f9; /* page background */
+  --brand: oklch(0.8 0.041 250);
+  --brand-hover: oklch(0.52 0.108 250); /* primary blue: buttons, toggles, active states */
+  --brand-dark: oklch(0.45 0.105 250); /* button hover, active tab text, login panel */
+  --brand-soft: oklch(0.7 0.045 250);
+  --brand-tint: oklch(0.96 0.017 250); /* accent light background */
+  --brand-wash: oklch(0.985 0.005 250); /* page background */
   --shell-wash: var(--brand-wash);
-  --header: #fafaf8; /* top bar, one step off the page */
-  --brand-ink: oklch(0.322 0.004 286.2); /* #333335 exact, logo charcoal */
+  --header: oklch(0.99 0.004 250); /* top bar, one step off the page */
+  --brand-ink: oklch(0.322 0.008 250); /* logo charcoal, cooled to the ramp */
 
-  --background: #fbf9f9;
-  --foreground: #24211f;
+  --background: oklch(0.985 0.005 250);
+  --foreground: oklch(0.25 0.012 250);
   --card: #ffffff;
-  --card-foreground: #24211f;
+  --card-foreground: oklch(0.25 0.012 250);
   --popover: #ffffff;
-  --popover-foreground: #24211f;
+  --popover-foreground: oklch(0.25 0.012 250);
 
   --primary: var(--brand-hover);
   --primary-foreground: #ffffff;
   --secondary: var(--brand-wash);
-  --secondary-foreground: #6f6964;
-  --muted: #eee9e4;
-  --muted-foreground: #6f6964;
+  --secondary-foreground: oklch(0.55 0.017 250);
+  --muted: oklch(0.94 0.008 250);
+  --muted-foreground: oklch(0.55 0.017 250);
   --accent: var(--brand-tint);
-  --accent-foreground: #24211f;
+  --accent-foreground: oklch(0.25 0.012 250);
   --destructive: #c64b4b;
   --destructive-foreground: #ffffff;
-  --border: #e8e2dc;
-  --input: #e3ddd7;
-  --switch-off: #ddd7d1;
-  --placeholder: #a39c96;
+  --border: oklch(0.91 0.011 250);
+  --input: oklch(0.89 0.013 250);
+  --switch-off: oklch(0.87 0.014 250);
+  --placeholder: oklch(0.65 0.018 250);
   --ring: var(--brand-hover);
 
   --success: #16845b;
@@ -173,13 +172,13 @@
   --chart-4: oklch(0.79 0.022 250);
   --chart-5: oklch(0.87 0.015 250);
 
-  --sidebar: #f8f4f1;
-  --sidebar-foreground: #24211f;
+  --sidebar: oklch(0.97 0.008 250);
+  --sidebar-foreground: oklch(0.25 0.012 250);
   --sidebar-primary: var(--brand-hover);
   --sidebar-primary-foreground: #ffffff;
-  --sidebar-accent: #efe6e0;
-  --sidebar-accent-foreground: #24211f;
-  --sidebar-border: #ebe4de;
+  --sidebar-accent: oklch(0.93 0.015 250);
+  --sidebar-accent-foreground: oklch(0.25 0.012 250);
+  --sidebar-border: oklch(0.91 0.011 250);
   --sidebar-ring: var(--brand-hover);
 }
 
@@ -214,7 +213,7 @@
 }
 
 html {
-  /* Globaler Größenregler: skaliert die gesamte rem-basierte UI */
+  /* The global size control: scales the whole rem-based UI */
   font-size: calc(100% * var(--ui-scale, 1));
   /* Reserves the scrollbar's gutter permanently, whether or not a scrollbar is actually drawn
      there. This is what makes the body[data-scroll-locked] override below possible without a
