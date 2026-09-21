@@ -3,7 +3,6 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { TABLE } from "@/config/tables";
 import { STALE, actorEmail, sb } from "@/data/client";
 import { fetchAllRows, requiredReason } from "@/data/shared";
-import { supabase } from "@/integrations/supabase/client";
 import { compactIBAN, isPayableIBAN } from "@/lib/data/format";
 import type { Supplier } from "@/lib/data/types";
 
@@ -27,7 +26,7 @@ export function useSuppliers(opts?: { includeDeleted?: boolean }) {
     staleTime: STALE,
     queryFn: async (): Promise<Supplier[]> => {
       return fetchAllRows<Supplier>((from, to, withCount) => {
-        let query = supabase
+        let query = sb
           .from(TABLE.suppliers)
           .select("*", withCount ? { count: "exact" } : undefined);
         if (!includeDeleted) query = query.is("deleted_at", null);
@@ -47,11 +46,7 @@ export function useSupplier(id: string) {
     enabled: !!id,
     staleTime: STALE,
     queryFn: async (): Promise<Supplier | null> => {
-      const { data, error } = await supabase
-        .from(TABLE.suppliers)
-        .select("*")
-        .eq("id", id)
-        .maybeSingle();
+      const { data, error } = await sb.from(TABLE.suppliers).select("*").eq("id", id).maybeSingle();
       if (error) throw error;
       return (data as unknown as Supplier) ?? null;
     },

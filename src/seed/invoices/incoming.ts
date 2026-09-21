@@ -1,18 +1,26 @@
-import type { Document } from "@/lib/data/types";
+import type { DocumentListRow } from "@/lib/data/types";
 import { COMPANIES, SUPPLIERS, sampleId } from "../shared";
 
 /**
  * The incoming invoices list: one row per state the screen draws differently, rather than twenty
  * rows of the same thing. A fixture is worth having only where it shows something.
+ *
+ * The columns are v_documents_list's, not the documents table's: the list reads the view, and a
+ * row missing its view columns draws an empty recognition, review, payment and bank column.
  */
-export const incomingInvoices: Document[] = [
+const rows: Partial<DocumentListRow>[] = [
   {
     id: sampleId(30, 1),
     company_id: COMPANIES[0].id,
     company_code: COMPANIES[0].code,
+    recipient_name: COMPANIES[0].name,
+    property_code: "HAF-12",
     supplier_id: SUPPLIERS[0].id,
     issuer: SUPPLIERS[0].name,
+    issuer_sort: SUPPLIERS[0].name.toLowerCase(),
     invoice_number: "RE-2026-0914",
+    document_type: "invoice",
+    cost_category: "Strom",
     document_date: "2026-09-14",
     due_date: "2026-09-28",
     amount_net: 210.08,
@@ -22,16 +30,29 @@ export const incomingInvoices: Document[] = [
     currency: "EUR",
     status: "recognised",
     workflow_status: "approved_first",
+    confidence_score: 0.97,
+    review_score: 0.96,
+    payment_method: "transfer",
+    intake_channel: "email",
+    has_suggested_bank_match: false,
+    has_confirmed_bank_match: false,
+    handed_over_at: null,
+    paid_at: null,
     is_overhead: false,
     created_at: "2026-09-14T08:12:00Z",
-  } as Document,
+  },
   {
     id: sampleId(30, 2),
     company_id: COMPANIES[1].id,
     company_code: COMPANIES[1].code,
+    recipient_name: COMPANIES[1].name,
+    property_code: null,
     supplier_id: SUPPLIERS[1].id,
     issuer: SUPPLIERS[1].name,
+    issuer_sort: SUPPLIERS[1].name.toLowerCase(),
     invoice_number: "TK-88120",
+    document_type: "invoice",
+    cost_category: null,
     document_date: "2026-09-02",
     due_date: "2026-09-16",
     amount_net: 79.83,
@@ -42,16 +63,29 @@ export const incomingInvoices: Document[] = [
     status: "needs_review",
     workflow_status: "in_review",
     traffic_light: "yellow",
+    confidence_score: 0.62,
+    review_score: 0.48,
+    payment_method: "direct_debit",
+    intake_channel: "email",
+    has_suggested_bank_match: true,
+    has_confirmed_bank_match: false,
+    handed_over_at: null,
+    paid_at: null,
     is_overhead: true,
     created_at: "2026-09-02T09:40:00Z",
-  } as Document,
+  },
   {
     id: sampleId(30, 3),
     company_id: COMPANIES[0].id,
     company_code: COMPANIES[0].code,
+    recipient_name: COMPANIES[0].name,
+    property_code: "MUE-4",
     supplier_id: SUPPLIERS[2].id,
     issuer: SUPPLIERS[2].name,
+    issuer_sort: SUPPLIERS[2].name.toLowerCase(),
     invoice_number: "2026-1180",
+    document_type: "invoice",
+    cost_category: "Instandhaltung",
     document_date: "2026-08-30",
     due_date: "2026-09-06",
     amount_net: 1260,
@@ -61,8 +95,17 @@ export const incomingInvoices: Document[] = [
     currency: "EUR",
     status: "recognised",
     workflow_status: "paid",
+    confidence_score: 0.99,
+    review_score: 0.99,
+    payment_method: "transfer",
+    intake_channel: "upload",
+    has_suggested_bank_match: false,
+    has_confirmed_bank_match: true,
+    handed_over_at: "2026-09-10T09:00:00Z",
     paid_at: "2026-09-05T11:00:00Z",
     is_overhead: false,
     created_at: "2026-08-30T16:05:00Z",
-  } as Document,
+  },
 ];
+
+export const incomingInvoices = rows as DocumentListRow[];

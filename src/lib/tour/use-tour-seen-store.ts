@@ -2,6 +2,8 @@ import { useMemo } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 
 import type { TourSeenStore } from "@/kit/components/tour";
+import { localTourSeenStore } from "@/kit/components/tour";
+import { SEED_MODE } from "@/config/seed";
 
 import { supabase } from "@/integrations/supabase/client";
 import { TABLE } from "@/config/tables";
@@ -36,7 +38,7 @@ export function useTourSeenStore(): TourSeenStore {
 
   const progressQuery = useQuery({
     queryKey: ["tour_progress", userId],
-    enabled: Boolean(userId),
+    enabled: Boolean(userId) && !SEED_MODE,
     staleTime: Infinity,
     queryFn: async (): Promise<TourProgressRow[]> => {
       const { data, error } = await sb.from(TABLE.tourProgress).select("tour_id, version");
@@ -74,7 +76,9 @@ export function useTourSeenStore(): TourSeenStore {
   const rows = progressQuery.data;
   const saveTour = save.mutate;
 
-  return useMemo<TourSeenStore>(
+  // Seed mode remembers a skipped tour in localStorage, because tour_progress is the one thing a
+  // Hub with no database still has to remember: without it every reload reopens the same tour.
+  const store = useMemo<TourSeenStore>(
     () => ({
       // Until the rows are in, the answer is unknown, and guessing would either hide a tour from
       // somebody who never saw it or replay one somebody already dismissed.
@@ -89,4 +93,6 @@ export function useTourSeenStore(): TourSeenStore {
     }),
     [userId, progressQuery.isLoading, rows, saveTour],
   );
+
+  return SEED_MODE ? localTourSeenStore : store;
 }

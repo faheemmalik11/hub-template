@@ -3,7 +3,6 @@ import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { TABLE } from "@/config/tables";
 import { actorEmail, sb } from "@/data/client";
 import { insertHistory, requiredReason } from "@/data/shared";
-import { supabase } from "@/integrations/supabase/client";
 import { useCompanies } from "@/data/companies";
 
 // ---- Review decisions: not relevant, archive ----
@@ -24,7 +23,7 @@ export function useSetNotRelevant(documentId: string) {
   return useMutation({
     mutationFn: async (reason: string) => {
       const actor = await actorEmail();
-      const { data: before, error: readError } = await supabase
+      const { data: before, error: readError } = await sb
         .from(TABLE.documents)
         .select("workflow_status")
         .eq("id", documentId)
@@ -70,7 +69,7 @@ export function useClearNotRelevant(documentId: string) {
   const qc = useQueryClient();
   return useMutation({
     mutationFn: async () => {
-      const { data: last, error: readError } = await supabase
+      const { data: last, error: readError } = await sb
         .from(TABLE.documentHistory)
         .select("data")
         .eq("document_id", documentId)
@@ -208,7 +207,7 @@ export function useBulkInvoiceActions() {
 
   async function markNotRelevant(documentId: string, reason: string | null) {
     const actor = await actorEmail();
-    const { data: before, error: readError } = await supabase
+    const { data: before, error: readError } = await sb
       .from(TABLE.documents)
       .select("workflow_status")
       .eq("id", documentId)

@@ -3,7 +3,6 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { TABLE } from "@/config/tables";
 import { STALE, actorEmail, sb } from "@/data/client";
 import { requiredReason } from "@/data/shared";
-import { supabase } from "@/integrations/supabase/client";
 import type { Company } from "@/lib/data/types";
 
 // `companies` has carried deleted_at/deleted_by/delete_reason since early on, but nothing ever wrote
@@ -20,7 +19,7 @@ export function useCompanies(opts?: { includeArchived?: boolean }) {
     queryKey: ["gesellschaften", { includeArchived }],
     staleTime: STALE,
     queryFn: async (): Promise<Company[]> => {
-      let query = supabase.from(TABLE.companies).select("*");
+      let query = sb.from(TABLE.companies).select("*");
       if (!includeArchived) query = query.is("deleted_at", null);
       const { data, error } = await query.order("code", { ascending: true });
       if (error) throw error;
@@ -84,11 +83,7 @@ export function useCompany(id: string) {
     enabled: !!id,
     staleTime: STALE,
     queryFn: async (): Promise<Company | null> => {
-      const { data, error } = await supabase
-        .from(TABLE.companies)
-        .select("*")
-        .eq("id", id)
-        .maybeSingle();
+      const { data, error } = await sb.from(TABLE.companies).select("*").eq("id", id).maybeSingle();
       if (error) throw error;
       return (data as unknown as Company) ?? null;
     },

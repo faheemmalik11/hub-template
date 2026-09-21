@@ -19,7 +19,6 @@ import {
   type InfinitePage,
 } from "@/data/shared";
 import { documentRechecked } from "@/features/invoice-detail/recheck";
-import { supabase } from "@/integrations/supabase/client";
 import { getInvoiceFileUrl } from "@/lib/api/invoice-files.functions";
 import {
   askInvoiceQuestion,
@@ -149,7 +148,7 @@ export function useDocumentsForCompanyPages(
     getNextPageParam: (_lastPage: InfinitePage<Document>, allPages) =>
       hasNextInfinitePage(allPages) ? allPages.length : undefined,
     queryFn: async ({ pageParam }): Promise<InfinitePage<Document>> => {
-      let query = supabase
+      let query = sb
         .from(TABLE.documents)
         .select(DOCUMENT_ROW_COLUMNS, { count: "exact" })
         .is("deleted_at", null)
@@ -188,7 +187,7 @@ export function useCompanyDocumentAggregate(
     queryFn: async (): Promise<DocumentAggregateRow[]> =>
       fetchAllRows<DocumentAggregateRow>(
         (from, to, withCount) =>
-          supabase
+          sb
             .from(TABLE.documents)
             .select(DOCUMENT_AGGREGATE_COLUMNS, withCount ? { count: "exact" } : undefined)
             .is("deleted_at", null)
@@ -289,7 +288,7 @@ export function useDocumentsForPropertyPages(
     getNextPageParam: (_lastPage: InfinitePage<Document>, allPages) =>
       hasNextInfinitePage(allPages) ? allPages.length : undefined,
     queryFn: async ({ pageParam }): Promise<InfinitePage<Document>> => {
-      let query = supabase
+      let query = sb
         .from(TABLE.documents)
         .select(DOCUMENT_ROW_COLUMNS_VAT, { count: "exact" })
         .is("deleted_at", null)
@@ -328,7 +327,7 @@ export function usePropertyDocumentAggregate(
     queryFn: async (): Promise<DocumentAggregateRow[]> =>
       fetchAllRows<DocumentAggregateRow>(
         (from, to, withCount) =>
-          supabase
+          sb
             .from(TABLE.documents)
             .select(DOCUMENT_AGGREGATE_COLUMNS, withCount ? { count: "exact" } : undefined)
             .is("deleted_at", null)
@@ -528,7 +527,7 @@ export function useDocumentsByProperty(
         : `property_code.eq."${propertyCode}"`;
       return fetchAllRows<Document>(
         (from, to, withCount) =>
-          supabase
+          sb
             .from(TABLE.documents)
             // Narrow, for the reason spelled out above BELEG_ZEILE_SPALTEN: `select("*")` here was
             // moving this property's entire OCR text and embedding vectors to render five columns.
@@ -592,7 +591,7 @@ export function useDocumentsForCostAnalysis() {
     queryFn: async (): Promise<CostAnalysisDocument[]> =>
       fetchAllRows<CostAnalysisDocument>(
         (from, to, withCount) =>
-          supabase
+          sb
             .from(TABLE.documents)
             .select(
               COSTANALYSIS_DOCUMENT_COLUMNS.join(","),
@@ -627,7 +626,7 @@ export function useDocuments(search?: string) {
       // hook is read everywhere as "the whole invoices table", so a silent partial result here would
       // be wrong on the dashboard, Auswertungen, and Offene Posten all at once, not just here.
       return fetchAllRows<Document>((from, to, withCount) => {
-        let query = supabase
+        let query = sb
           .from(TABLE.documents)
           .select("*", withCount ? { count: "exact" } : undefined)
           .is("deleted_at", null)
@@ -676,7 +675,7 @@ async function rechecked<T extends Document>(rows: T[]): Promise<T[]> {
   const ids = Array.from(new Set(rows.map((r) => r.supplier_id).filter((v): v is string => !!v)));
   let ibans = new Map<string, string | null>();
   if (ids.length > 0) {
-    const { data } = await supabase.from(TABLE.suppliers).select("id, iban").in("id", ids);
+    const { data } = await sb.from(TABLE.suppliers).select("id, iban").in("id", ids);
     ibans = new Map(
       ((data ?? []) as { id: string; iban: string | null }[]).map((l) => [l.id, l.iban]),
     );
@@ -1253,7 +1252,7 @@ export function useDocument(id: string) {
     enabled: !!id,
     staleTime: STALE,
     queryFn: async (): Promise<Document | null> => {
-      const { data, error } = await supabase
+      const { data, error } = await sb
         .from(TABLE.documents)
         .select("*")
         .eq("id", id)
@@ -1335,7 +1334,7 @@ export function useDocumentHistory(documentId: string) {
     enabled: !!documentId,
     staleTime: STALE,
     queryFn: async (): Promise<DocumentHistory[]> => {
-      const { data, error } = await supabase
+      const { data, error } = await sb
         .from(TABLE.documentHistory)
         .select("*")
         .eq("document_id", documentId)
@@ -1566,7 +1565,7 @@ export function useDocumentsBySupplierPages(
     getNextPageParam: (_lastPage: InfinitePage<Document>, allPages) =>
       hasNextInfinitePage(allPages) ? allPages.length : undefined,
     queryFn: async ({ pageParam }): Promise<InfinitePage<Document>> => {
-      let query = supabase
+      let query = sb
         .from(TABLE.documents)
         .select(DOCUMENT_ROW_COLUMNS, { count: "exact" })
         .is("deleted_at", null)
@@ -1596,7 +1595,7 @@ export function useSupplierDocumentAggregate(supplierId: string) {
     queryFn: async (): Promise<DocumentAggregateRow[]> =>
       fetchAllRows<DocumentAggregateRow>(
         (from, to, withCount) =>
-          supabase
+          sb
             .from(TABLE.documents)
             .select(DOCUMENT_AGGREGATE_COLUMNS, withCount ? { count: "exact" } : undefined)
             .is("deleted_at", null)
@@ -1681,7 +1680,7 @@ export function useOverviewInvoices(from?: string | null, toDate?: string | null
     placeholderData: keepPreviousData,
     queryFn: async (): Promise<OverviewInvoiceRow[]> =>
       fetchAllRows<OverviewInvoiceRow>((from, to, withCount) => {
-        let query = supabase
+        let query = sb
           .from(TABLE.documents)
           .select(
             "status, amount_gross, document_date, issuer, company_code, supplier_id, intake_channel",

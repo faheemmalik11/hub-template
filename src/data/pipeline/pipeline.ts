@@ -3,7 +3,6 @@ import { keepPreviousData, useMutation, useQuery, useQueryClient } from "@tansta
 import { TABLE } from "@/config/tables";
 import { STALE, sb } from "@/data/client";
 import { fetchAllRows, searchTokens, searchWasDropped } from "@/data/shared";
-import { supabase } from "@/integrations/supabase/client";
 import type { PipelineHealth, PipelineRun, RunRequest, ProcessingLog } from "@/lib/data/types";
 
 // Pipeline-Lauf-Heartbeat fürs Health-Panel (Briefing Betrieb/Monitoring: running / last run / errors).
@@ -192,10 +191,12 @@ export function useProcessingLogPage(
 
       const from = (page - 1) * pageSize;
       const to = from + pageSize - 1;
-      const query = applyLogFilter(
-        supabase.from(TABLE.processingLog).select("*", { count: "exact" }),
-        { search, status, fromDate, toDate },
-      );
+      const query = applyLogFilter(sb.from(TABLE.processingLog).select("*", { count: "exact" }), {
+        search,
+        status,
+        fromDate,
+        toDate,
+      });
       const { data, error, count } = await query
         // id breaks processed_at ties — an ingest run writes many rows within the same instant.
         .order("processed_at", { ascending: false })
@@ -235,9 +236,7 @@ export function useProcessingLogStatusCounts(filter: ProcessingLogFilter = {}) {
       if (dropped) return {};
       const rows = await fetchAllRows<{ status: string | null }>((from, to, withCount) =>
         applyLogFilter(
-          supabase
-            .from(TABLE.processingLog)
-            .select("status", withCount ? { count: "exact" } : undefined),
+          sb.from(TABLE.processingLog).select("status", withCount ? { count: "exact" } : undefined),
           // The status filter is deliberately NOT passed: the chips must keep showing every status.
           { search, fromDate, toDate },
         )
@@ -314,7 +313,7 @@ export function useProcessingLogForDocument(documentId: string) {
     enabled: !!documentId,
     staleTime: STALE,
     queryFn: async (): Promise<ProcessingLog[]> => {
-      const { data, error } = await supabase
+      const { data, error } = await sb
         .from(TABLE.processingLog)
         .select("*")
         .eq("document_id", documentId)
