@@ -5,6 +5,7 @@ import { Logo } from "@/components/brand/logo";
 import { Card } from "@/components/ui/card";
 import { BRAND, brandVars } from "@/config/brand";
 import { useTranslation } from "@/lib/i18n";
+import { team } from "@/seed";
 
 export const Route = createFileRoute("/demo")({
   head: () => ({ meta: [{ title: `${BRAND.productName} · Demo` }] }),
@@ -12,11 +13,14 @@ export const Route = createFileRoute("/demo")({
 });
 
 /**
- * Klick-Demo: Profilauswahl statt echter Anmeldung.
+ * A click-through demo: pick a profile instead of signing in.
  *
- * Bewusst getrennt vom echten Login (`auth-gate.tsx`, Supabase E-Mail/Passwort).
- * Hier wird keine Session erzeugt und nichts geschrieben — der Screen dient
- * ausschließlich dazu, die Oberfläche ohne Zugangsdaten zu zeigen.
+ * Deliberately separate from the real login (`auth-gate.tsx`, Supabase email and password). No
+ * session is created and nothing is written; this exists only to show the interface without
+ * credentials.
+ *
+ * The people come from `src/seed`, never from a client's own team. Names typed in here would be
+ * one client's staff appearing in the next client's Hub.
  */
 type DemoProfile = {
   id: string;
@@ -24,14 +28,11 @@ type DemoProfile = {
   role: "management" | "accounting";
 };
 
-/** Entspricht dem realen Team laut Kundenangabe (Geschäftsführung + Buchhaltung). */
-const DEMO_PROFILES: DemoProfile[] = [
-  { id: "saskia", name: "Saskia Christ", role: "management" },
-  { id: "andreas", name: "Andreas Christ", role: "management" },
-  { id: "lukas", name: "Lukas Oldach", role: "management" },
-  { id: "petra", name: "Petra Kistner", role: "accounting" },
-  { id: "vanessa", name: "Vanessa Zelt", role: "accounting" },
-];
+const DEMO_PROFILES: DemoProfile[] = team.map((one) => ({
+  id: one.id,
+  name: one.name,
+  role: one.role === "assistant" ? "accounting" : "management",
+}));
 
 function initials(name: string) {
   return name
@@ -47,7 +48,7 @@ function DemoRegister() {
 
   return (
     <div className="grid min-h-screen lg:grid-cols-[1.05fr_1fr]">
-      {/* Marken-Panel */}
+      {/* The brand panel */}
       <div className="relative hidden flex-col justify-between overflow-hidden bg-brand-dark p-12 text-white lg:flex">
         <div
           className="pointer-events-none absolute inset-0 opacity-[0.07]"
@@ -70,7 +71,7 @@ function DemoRegister() {
         </div>
       </div>
 
-      {/* Profilauswahl */}
+      {/* Pick a profile */}
       <div className="flex items-center justify-center bg-background px-6 py-12">
         <div className="w-full max-w-sm">
           <div className="mb-8 lg:hidden">

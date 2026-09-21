@@ -1,0 +1,68 @@
+import type { Document } from "@/lib/data/types";
+import { COMPANIES, SUPPLIERS, sampleId } from "../shared";
+
+/**
+ * The incoming invoices list: one row per state the screen draws differently, rather than twenty
+ * rows of the same thing. A fixture is worth having only where it shows something.
+ */
+export const incomingInvoices: Document[] = [
+  {
+    id: sampleId(30, 1),
+    company_id: COMPANIES[0].id,
+    company_code: COMPANIES[0].code,
+    supplier_id: SUPPLIERS[0].id,
+    issuer: SUPPLIERS[0].name,
+    invoice_number: "RE-2026-0914",
+    document_date: "2026-09-14",
+    due_date: "2026-09-28",
+    amount_net: 210.08,
+    vat_rate: 19,
+    vat_amount: 39.92,
+    amount_gross: 250,
+    currency: "EUR",
+    status: "recognised",
+    workflow_status: "approved_first",
+    is_overhead: false,
+    created_at: "2026-09-14T08:12:00Z",
+  } as Document,
+  {
+    id: sampleId(30, 2),
+    company_id: COMPANIES[1].id,
+    company_code: COMPANIES[1].code,
+    supplier_id: SUPPLIERS[1].id,
+    issuer: SUPPLIERS[1].name,
+    invoice_number: "TK-88120",
+    document_date: "2026-09-02",
+    due_date: "2026-09-16",
+    amount_net: 79.83,
+    vat_rate: 19,
+    vat_amount: 15.17,
+    amount_gross: 95,
+    currency: "EUR",
+    status: "needs_review",
+    workflow_status: "in_review",
+    traffic_light: "yellow",
+    is_overhead: true,
+    created_at: "2026-09-02T09:40:00Z",
+  } as Document,
+  {
+    id: sampleId(30, 3),
+    company_id: COMPANIES[0].id,
+    company_code: COMPANIES[0].code,
+    supplier_id: SUPPLIERS[2].id,
+    issuer: SUPPLIERS[2].name,
+    invoice_number: "2026-1180",
+    document_date: "2026-08-30",
+    due_date: "2026-09-06",
+    amount_net: 1260,
+    vat_rate: 19,
+    vat_amount: 239.4,
+    amount_gross: 1499.4,
+    currency: "EUR",
+    status: "recognised",
+    workflow_status: "paid",
+    paid_at: "2026-09-05T11:00:00Z",
+    is_overhead: false,
+    created_at: "2026-08-30T16:05:00Z",
+  } as Document,
+];

@@ -1,14 +1,19 @@
 import { supabase } from "@/integrations/supabase/client";
 import { TABLE } from "@/config/tables";
+import { SEED_MODE } from "@/config/seed";
+import { seedClient } from "@/seed/client";
 
 /**
  * The one database client every query uses, and the helpers every domain needs.
  *
  * The generated `Database` type covers a minority of the tables, so writes would resolve to
  * `never`. They go through this untyped handle instead, the same way reads cast their results.
+ *
+ * This is also the one place seed mode is decided. Every query in the app goes through `sb`, so
+ * switching it here switches the whole Hub over at once, and no screen needs to know.
  */
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
-export const sb = supabase as any;
+export const sb = (SEED_MODE ? seedClient : supabase) as any;
 
 /** How long a query stays fresh before React Query refetches it. */
 export const STALE = 60_000;
