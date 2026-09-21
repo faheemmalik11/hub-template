@@ -59,20 +59,19 @@ export const BRAND = {
    * Brand assets under `public/`. `logo.mode` selects how `<Logo>` renders:
    * `"text"` draws `wordmark`, `"image"` draws `logo.src` / `logo.white`.
    *
-   * The logo and favicon are the client's own files. The
-   * white variant is the same artwork with the charcoal wordmark recoloured to
-   * white for the dark `bg-brand-dark` login panel; the beige umlaut dots stay
-   * beige, which is what keeps it legible there. Set `mode` back to `"text"` to
-   * fall back to the plain wordmark.
+   * The artwork here is ours, not a client's. A client replaces these three files with their own
+   * and edits nothing else; what must never happen is one client's mark reaching the next client's
+   * Hub, which is what shipping their files in this folder would do. The white variant is the same
+   * artwork recoloured for the dark login panel.
    */
   assets: {
     icon: "/favicon.ico",
     logo: {
       mode: "image" as "text" | "image",
-      src: "/brand/logo.svg",
-      white: "/brand/logo-white.svg",
-      /** Intrinsic aspect ratio (138.62 × 71.43), so callers can size by height alone. */
-      aspectRatio: "138.62 / 71.43",
+      src: "/brand/logo.png",
+      white: "/brand/logo-white.png",
+      /** Intrinsic aspect ratio (1000 × 444), so callers can size by height alone. */
+      aspectRatio: "1000 / 444",
     },
   },
 } as const;

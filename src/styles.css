@@ -15,10 +15,11 @@
 }
 
 /*
- * Stäy Design System
+ * Design system
  *
- * Brand: white surfaces + the warm beige from the client's logo on staey.de.
- * The logo's charcoal (--brand-ink) is the text tone only, never a background.
+ * Brand: white surfaces plus one warm accent. The ramp below is the template's default and is
+ * meant to be replaced: a client sets their own colours here and nothing else needs editing.
+ * The dark tone (--brand-ink) is the text tone only, never a background.
  * Display = Cormorant Garamond (Serif). Body/UI = Hanken Grotesk.
  * Farben in oklch (Lovable-Konvention). Light-first; .dark bleibt definiert,
  * wird aktuell nicht aktiv genutzt.
@@ -123,11 +124,10 @@
 :root {
   --radius: 0.5rem;
 
-  /* Brand ramp, taken from the client's own logo on staey.de: the umlaut dots are
-     #D2B8A4 and the wordmark is #333335. Single source of the brand colors, so
-     primary, ring, accent, charts and sidebar all derive from these.
-     Hue 59.7 comes from #D2B8A4; the whole ramp shares it so the steps stay in family. */
-  --brand: oklch(0.8 0.041 59.7); /* #D2B8A4 exact, logo beige */
+  /* Brand ramp: the single source of the brand colours, so primary, ring, accent, charts and
+     sidebar all derive from these. One hue runs through the whole ramp so the steps stay in
+     family; change the hue here and everything follows. */
+  --brand: oklch(0.8 0.041 59.7);
   --brand-hover: #98603d; /* primary brown: buttons, toggles, active states */
   --brand-dark: #8f5e3a; /* button hover, active tab text, login panel */
   --brand-soft: oklch(0.7 0.045 59.7);

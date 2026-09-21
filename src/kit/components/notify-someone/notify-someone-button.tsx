@@ -25,10 +25,9 @@ export interface NotifyRecipient {
 /**
  * "Notify someone": ask one named colleague to look at the record you are on.
  *
- * From the Stäy meeting of 09.09.2026, Saskia describing what Petra does when a payment has no
- * document: she chases whoever probably has it, today by keeping a list by hand. The list is the
- * thing to remove, so this is a message and not an assignment. Nobody holds the record afterwards
- * and there is no second state to clear later.
+ * Asked for by a client whose bookkeeper chased whoever probably had a missing document, keeping
+ * the list by hand. The list is the thing to remove, so this is a message and not an assignment.
+ * Nobody holds the record afterwards and there is no second state to clear later.
  *
  * DELIBERATELY RECORD-AGNOSTIC. The kit never learns what an invoice or a transaction is: the host
  * passes `onSend` already bound to whatever the button sits on. That is what lets the same dialog
