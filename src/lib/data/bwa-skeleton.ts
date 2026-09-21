@@ -12,13 +12,13 @@
 // into a skeleton row), resolving the net/gross-where-not-deductible amount, and picking the right
 // booking date per company. This module only groups and sums what it's handed.
 
-import type { BwaCategory } from "./types";
+import type { CostAnalysisCategory } from "./types";
 
-export type BwaSkeletonRowKind = "line" | "subtotal";
+export type CostAnalysisSkeletonRowKind = "line" | "subtotal";
 
-export interface BwaSkeletonRow {
+export interface CostAnalysisSkeletonRow {
   key: string;
-  kind: BwaSkeletonRowKind;
+  kind: CostAnalysisSkeletonRowKind;
   // Sign a "line" row's amount contributes to the running total. Subtotal rows carry no own
   // amount input (categoryCodes is empty) — their value is the running total up to that point.
   sign: 1 | -1;
@@ -32,7 +32,7 @@ export interface BwaSkeletonRow {
 // a future edit to BWA_SKELETON can't accidentally fold either into a real P&L line.
 const SPECIAL_CASE_CODES = ["UNASSIGNED", "NOT_PNL"] as const;
 
-export const BWA_SKELETON: readonly BwaSkeletonRow[] = [
+export const COSTANALYSIS_SKELETON: readonly CostAnalysisSkeletonRow[] = [
   { key: "revenue", kind: "line", sign: 1, categoryCodes: ["REVENUE"] },
   // "Usually 0" per the briefing — no bwa_categories code maps to either today. Modeled as
   // fixed-zero rows rather than omitted, so the line structure still matches DATEV's Form 01
@@ -73,7 +73,7 @@ export const BWA_SKELETON: readonly BwaSkeletonRow[] = [
 
 if (import.meta.env.DEV) {
   const seen = new Set<string>();
-  for (const row of BWA_SKELETON) {
+  for (const row of COSTANALYSIS_SKELETON) {
     for (const code of row.categoryCodes) {
       if (SPECIAL_CASE_CODES.includes(code as (typeof SPECIAL_CASE_CODES)[number])) {
         throw new Error(`bwa-skeleton: ${code} must never appear in a P&L row (row "${row.key}")`);
@@ -86,36 +86,36 @@ if (import.meta.env.DEV) {
   }
 }
 
-export interface BwaLineInput {
+export interface CostAnalysisLineInput {
   categoryCode: string | null;
   amount: number;
-  belegId?: string;
+  documentId?: string;
   manualBookingSourceId?: string;
 }
 
-export interface BwaLineItem {
-  belegId?: string;
+export interface CostAnalysisLineItem {
+  documentId?: string;
   manualBookingSourceId?: string;
   amount: number;
 }
 
-export interface BwaSkeletonComputedRow {
+export interface CostAnalysisSkeletonComputedRow {
   key: string;
-  kind: BwaSkeletonRowKind;
+  kind: CostAnalysisSkeletonRowKind;
   amount: number;
-  items: BwaLineItem[];
+  items: CostAnalysisLineItem[];
 }
 
-export interface BwaSkeletonComputed {
-  rows: BwaSkeletonComputedRow[];
+export interface CostAnalysisSkeletonComputed {
+  rows: CostAnalysisSkeletonComputedRow[];
   unassignedAmount: number;
-  unassignedItems: BwaLineItem[];
+  unassignedItems: CostAnalysisLineItem[];
   excludedNotPnlAmount: number;
-  excludedNotPnlItems: BwaLineItem[];
+  excludedNotPnlItems: CostAnalysisLineItem[];
 }
 
 const CODE_TO_ROW_KEY = new Map<string, string>(
-  BWA_SKELETON.flatMap((row) => row.categoryCodes.map((code) => [code, row.key] as const)),
+  COSTANALYSIS_SKELETON.flatMap((row) => row.categoryCodes.map((code) => [code, row.key] as const)),
 );
 
 export const UNASSIGNED_ROW_KEY = "unassigned";
@@ -137,7 +137,9 @@ export function rowKeyForCategoryCode(categoryCode: string | null): string {
 // Groups already-filtered, already-net-adjusted, already-matched line items into the skeleton.
 // Does no filtering itself (that's the caller's job — see the file header) and never mutates the
 // static BWA_SKELETON array; each call returns a fresh computed structure.
-const SIGN_BY_ROW_KEY = new Map<string, 1 | -1>(BWA_SKELETON.map((row) => [row.key, row.sign]));
+const SIGN_BY_ROW_KEY = new Map<string, 1 | -1>(
+  COSTANALYSIS_SKELETON.map((row) => [row.key, row.sign]),
+);
 
 // The direction a row contributes to the running total. A cost line sums to a POSITIVE magnitude
 // here and is subtracted by its sign, which is invisible to anyone not used to reading the form:
@@ -149,17 +151,19 @@ export function signForRowKey(rowKey: string): 1 | -1 {
   return SIGN_BY_ROW_KEY.get(rowKey) ?? 1;
 }
 
-export function computeBwaSkeleton(items: BwaLineInput[]): BwaSkeletonComputed {
+export function computeCostAnalysisSkeleton(
+  items: CostAnalysisLineInput[],
+): CostAnalysisSkeletonComputed {
   const amountByRowKey = new Map<string, number>();
-  const itemsByRowKey = new Map<string, BwaLineItem[]>();
+  const itemsByRowKey = new Map<string, CostAnalysisLineItem[]>();
   let unassignedAmount = 0;
-  const unassignedItems: BwaLineItem[] = [];
+  const unassignedItems: CostAnalysisLineItem[] = [];
   let excludedNotPnlAmount = 0;
-  const excludedNotPnlItems: BwaLineItem[] = [];
+  const excludedNotPnlItems: CostAnalysisLineItem[] = [];
 
   for (const item of items) {
-    const lineItem: BwaLineItem = {
-      belegId: item.belegId,
+    const lineItem: CostAnalysisLineItem = {
+      documentId: item.documentId,
       manualBookingSourceId: item.manualBookingSourceId,
       amount: item.amount,
     };
@@ -180,9 +184,9 @@ export function computeBwaSkeleton(items: BwaLineInput[]): BwaSkeletonComputed {
     itemsByRowKey.set(rowKey, list);
   }
 
-  const rows: BwaSkeletonComputedRow[] = [];
+  const rows: CostAnalysisSkeletonComputedRow[] = [];
   let runningTotal = 0;
-  for (const row of BWA_SKELETON) {
+  for (const row of COSTANALYSIS_SKELETON) {
     if (row.kind === "line") {
       const amount = amountByRowKey.get(row.key) ?? 0;
       runningTotal += row.sign * amount;
@@ -202,7 +206,7 @@ export function computeBwaSkeleton(items: BwaLineInput[]): BwaSkeletonComputed {
 // so the coarse/fine rollup rule can't drift between the two.
 export function coarseCategoryCode(
   categoryId: string | null,
-  categoriesById: Map<string, BwaCategory>,
+  categoriesById: Map<string, CostAnalysisCategory>,
 ): string | null {
   if (!categoryId) return null;
   const cat = categoriesById.get(categoryId);

@@ -4,7 +4,7 @@ import { z } from "zod";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 import { AppError } from "./errors";
 import type {
-  MatchBeleg,
+  MatchDocument,
   MatchCandidate,
   MatchDirection,
   MatchTransaction,
@@ -88,7 +88,7 @@ function scopedToCompany<Q extends { eq: (column: string, value: string) => Q }>
   return companyId ? query.eq("company_id", companyId) : query;
 }
 
-function toIncomingBeleg(row: Record<string, unknown>): MatchBeleg {
+function toIncomingDocument(row: Record<string, unknown>): MatchDocument {
   const supplier = row.suppliers as { iban?: string | null } | null;
   return {
     id: row.id as string,
@@ -102,7 +102,7 @@ function toIncomingBeleg(row: Record<string, unknown>): MatchBeleg {
   };
 }
 
-function toOutgoingBeleg(row: Record<string, unknown>): MatchBeleg {
+function toOutgoingDocument(row: Record<string, unknown>): MatchDocument {
   const customer = row.customers as {
     name?: string | null;
     customer_number?: string | null;
@@ -119,7 +119,7 @@ function toOutgoingBeleg(row: Record<string, unknown>): MatchBeleg {
   };
 }
 
-function loadBelege(db: Db, direction: MatchDirection, companyId: string | null | undefined) {
+function loadDocuments(db: Db, direction: MatchDirection, companyId: string | null | undefined) {
   if (direction === "incoming") {
     return fetchAllRows<Record<string, unknown>>((from, to) =>
       scopedToCompany(
@@ -128,7 +128,7 @@ function loadBelege(db: Db, direction: MatchDirection, companyId: string | null 
       )
         .order("id")
         .range(from, to),
-    ).then((rows) => rows.map(toIncomingBeleg));
+    ).then((rows) => rows.map(toIncomingDocument));
   }
 
   return fetchAllRows<Record<string, unknown>>((from, to) =>
@@ -138,7 +138,7 @@ function loadBelege(db: Db, direction: MatchDirection, companyId: string | null 
     )
       .order("id")
       .range(from, to),
-  ).then((rows) => rows.map(toOutgoingBeleg));
+  ).then((rows) => rows.map(toOutgoingDocument));
 }
 
 function loadTransactions(db: Db, direction: MatchDirection, companyId: string | null | undefined) {
@@ -188,17 +188,17 @@ async function matchDirection(
 ): Promise<MatchingDirectionResult> {
   const { runMatching } = await import("@/lib/matching/score");
 
-  const [belege, transactions] = await Promise.all([
-    loadBelege(db, direction, companyId),
+  const [documents, transactions] = await Promise.all([
+    loadDocuments(db, direction, companyId),
     loadTransactions(db, direction, companyId),
   ]);
 
-  const candidates = runMatching(belege, transactions, direction);
+  const candidates = runMatching(documents, transactions, direction);
   await persistCandidates(db, direction, candidates);
 
   return {
     direction,
-    invoices: belege.length,
+    invoices: documents.length,
     transactions: transactions.length,
     proposed: candidates.length,
     auto: candidates.filter((c) => c.status === "auto").length,

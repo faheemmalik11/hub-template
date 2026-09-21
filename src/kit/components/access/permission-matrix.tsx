@@ -24,7 +24,7 @@ export function PermissionMatrix({
   categoryLabel?: (category: string) => string;
   className?: string;
 }) {
-  const gruppen = useMemo(() => {
+  const groups = useMemo(() => {
     const nach = new Map<string, AccessPermission[]>();
     for (const p of permissions) {
       if (!nach.has(p.category)) nach.set(p.category, []);
@@ -33,25 +33,22 @@ export function PermissionMatrix({
     return [...nach.entries()];
   }, [permissions]);
 
-  if (gruppen.length === 0 || roles.length === 0) return null;
+  if (groups.length === 0 || roles.length === 0) return null;
 
   return (
     <div className={cn("max-w-4xl space-y-5", className)}>
-      {gruppen.map(([kategorie, eintraege], gruppenIndex) => (
-        <section
-          key={kategorie}
-          className="overflow-hidden rounded-xl border border-border bg-card"
-        >
+      {groups.map(([category, entries], groupsIndex) => (
+        <section key={category} className="overflow-hidden rounded-xl border border-border bg-card">
           {}
           <div className="overflow-x-auto">
             <div className="min-w-[38rem]">
               <header className="flex items-end gap-4 border-b border-border bg-muted/40 px-4 py-3">
                 <div className="min-w-0 flex-1">
                   <div className="text-base font-semibold text-foreground">
-                    {categoryLabel(kategorie)}
+                    {categoryLabel(category)}
                   </div>
                   {}
-                  {gruppenIndex === 0 && (
+                  {groupsIndex === 0 && (
                     <div className="text-sm text-muted-foreground">{permissionColumnLabel}</div>
                   )}
                 </div>
@@ -66,7 +63,7 @@ export function PermissionMatrix({
               </header>
 
               <div className="divide-y divide-border">
-                {eintraege.map((p) => (
+                {entries.map((p) => (
                   <div
                     key={p.key}
                     className="flex items-center gap-4 px-4 py-3 transition-colors hover:bg-muted/40"

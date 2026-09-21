@@ -83,17 +83,17 @@ export function LinkConfirmDialog({
   const invoiceOpen = Math.max(gross - invoiceMatched, 0);
   const transactionFree = Math.max(txnTotal - transactionAllocated, 0);
   const derived = Math.min(invoiceOpen, transactionFree);
-  const betrag = pair?.fixedAmount != null ? Math.abs(pair.fixedAmount) : derived;
+  const amount = pair?.fixedAmount != null ? Math.abs(pair.fixedAmount) : derived;
 
-  const laedt = allocationQ.isLoading;
-  const ungueltig = !laedt && betrag <= 0;
-  const istSkonto =
-    !ungueltig &&
-    betrag < invoiceOpen - 0.01 &&
-    betrag >= invoiceOpen - paymentTolerance(pair?.invoiceGross ?? null);
-  const wirdVollBezahlt = isFullyCovered(pair?.invoiceGross ?? null, invoiceMatched + betrag);
-  const rechnungRest = Math.max(invoiceOpen - betrag, 0);
-  const transaktionRest = Math.max(transactionFree - betrag, 0);
+  const loading = allocationQ.isLoading;
+  const invalid = !loading && amount <= 0;
+  const isCashDiscount =
+    !invalid &&
+    amount < invoiceOpen - 0.01 &&
+    amount >= invoiceOpen - paymentTolerance(pair?.invoiceGross ?? null);
+  const willFullPaid = isFullyCovered(pair?.invoiceGross ?? null, invoiceMatched + amount);
+  const invoiceRest = Math.max(invoiceOpen - amount, 0);
+  const transactionRest = Math.max(transactionFree - amount, 0);
 
   // ONE CHECKBOX PER SIDE, each offered only when THAT side has something left over. There was a
   // single "mark invoice as fully paid", shown whenever either side had a remainder -- so linking a
@@ -111,11 +111,11 @@ export function LinkConfirmDialog({
   // The checkbox appears once the leftover is BIGGER than the allowance -- a real partial payment,
   // where writing off the rest is a decision somebody has to take on purpose, and where a
   // pre-ticked box would let 71,64 € disappear on one careless confirm.
-  const toleranz = Math.max(matchingSettingsQ.data?.amount_tolerance ?? 0.01, 0.01);
-  const rechnungFrageOffen = rechnungRest > toleranz + 1e-9;
-  const transaktionFrageOffen = transaktionRest > toleranz + 1e-9;
+  const tolerance = Math.max(matchingSettingsQ.data?.amount_tolerance ?? 0.01, 0.01);
+  const invoiceQuestionOpen = invoiceRest > tolerance + 1e-9;
+  const transactionQuestionOpen = transactionRest > tolerance + 1e-9;
   /** Inside the allowance the invoice counts as paid whether or not anybody ticks anything. */
-  const rechnungGilt = rechnungRest > 0.01 && !rechnungFrageOffen;
+  const invoiceGilt = invoiceRest > 0.01 && !invoiceQuestionOpen;
 
   useEffect(() => {
     setCloseInvoice(false);
@@ -126,7 +126,7 @@ export function LinkConfirmDialog({
   // WRITING MONEY OFF HAS TO SAY WHY. Both boxes close a side while money is still open on it, and
   // this sentence is the only record of that decision -- read months later by whoever is asked
   // where the missing 71,64 € went. So the button waits for it rather than accepting a blank.
-  const grundFehlt = (closeInvoice || closeTransaction) && differenceReason.trim() === "";
+  const reasonMissing = (closeInvoice || closeTransaction) && differenceReason.trim() === "";
 
   return (
     <AlertDialog open={pair != null} onOpenChange={(next) => !next && onCancel()}>
@@ -144,7 +144,7 @@ export function LinkConfirmDialog({
         {pair && (
           <div className="space-y-3 text-sm">
             <dl className="rounded-lg border border-border bg-muted/30 p-3">
-              <Zeile
+              <Row
                 label={t(
                   isOutgoing
                     ? "manualLink.confirm.ausgangsrechnung"
@@ -152,38 +152,38 @@ export function LinkConfirmDialog({
                 )}
                 value={`${pair.invoiceLabel} · ${pair.invoiceNr ?? t("manualLink.confirm.ohneNr")} · ${formatEUR(pair.invoiceGross)}`}
               />
-              <Zeile
+              <Row
                 label={t("manualLink.confirm.transaktion")}
                 value={`${pair.transactionLabel} · ${formatSignedEUR(pair.transactionAmount)}${
                   pair.transactionDate ? ` · ${formatDate(pair.transactionDate)}` : ""
                 }`}
               />
-              <Zeile
+              <Row
                 label={t("manualLink.confirm.betrag")}
-                value={laedt ? "…" : formatEUR(betrag)}
+                value={loading ? "…" : formatEUR(amount)}
                 stark
               />
-              {!laedt && (rechnungRest > 0.01 || transaktionRest > 0.01) && (
+              {!loading && (invoiceRest > 0.01 || transactionRest > 0.01) && (
                 <div className="mt-1 border-t border-border/60 pt-1">
-                  {rechnungRest > 0.01 && (
-                    <Zeile
+                  {invoiceRest > 0.01 && (
+                    <Row
                       label={t("manualLink.confirm.restRechnung")}
-                      value={formatEUR(rechnungRest)}
+                      value={formatEUR(invoiceRest)}
                     />
                   )}
-                  {transaktionRest > 0.01 && (
-                    <Zeile
+                  {transactionRest > 0.01 && (
+                    <Row
                       label={t("manualLink.confirm.restZahlung")}
-                      value={formatEUR(transaktionRest)}
+                      value={formatEUR(transactionRest)}
                     />
                   )}
                 </div>
               )}
             </dl>
 
-            {!laedt && (rechnungFrageOffen || transaktionFrageOffen) && (
+            {!loading && (invoiceQuestionOpen || transactionQuestionOpen) && (
               <div className="space-y-2 rounded-lg border border-border bg-muted/20 p-3">
-                {rechnungFrageOffen && (
+                {invoiceQuestionOpen && (
                   <label className="flex cursor-pointer items-start gap-2 text-sm">
                     <input
                       type="checkbox"
@@ -195,13 +195,13 @@ export function LinkConfirmDialog({
                       <span className="font-medium">{t("manualLink.confirm.close.rechnung")}</span>
                       <span className="block text-xs text-muted-foreground">
                         {t("manualLink.confirm.close.rechnungHint", {
-                          rest: formatEUR(rechnungRest),
+                          rest: formatEUR(invoiceRest),
                         })}
                       </span>
                     </span>
                   </label>
                 )}
-                {transaktionFrageOffen && (
+                {transactionQuestionOpen && (
                   <label className="flex cursor-pointer items-start gap-2 text-sm">
                     <input
                       type="checkbox"
@@ -215,7 +215,7 @@ export function LinkConfirmDialog({
                       </span>
                       <span className="block text-xs text-muted-foreground">
                         {t("manualLink.confirm.close.transaktionHint", {
-                          rest: formatEUR(transaktionRest),
+                          rest: formatEUR(transactionRest),
                         })}
                       </span>
                     </span>
@@ -244,50 +244,50 @@ export function LinkConfirmDialog({
               </div>
             )}
 
-            {laedt ? (
+            {loading ? (
               <Skeleton className="h-20 w-full" />
-            ) : ungueltig ? (
+            ) : invalid ? (
               <p className="rounded-lg border border-dashed border-border bg-muted/20 p-3 text-sm text-muted-foreground">
                 {t("manualLink.betrag.ungueltig")}
               </p>
             ) : (
               <ul className="space-y-1.5">
-                <Folge
+                <Sequence
                   text={
-                    wirdVollBezahlt || rechnungGilt || closeInvoice
+                    willFullPaid || invoiceGilt || closeInvoice
                       ? isOutgoing
                         ? t("manualLink.confirm.folge.bezahltOutgoing")
-                        : istSkonto || rechnungGilt || closeInvoice
+                        : isCashDiscount || invoiceGilt || closeInvoice
                           ? t("manualLink.confirm.folge.bezahltSkonto", {
-                              differenz: formatEUR(invoiceOpen - betrag),
+                              difference: formatEUR(invoiceOpen - amount),
                             })
                           : t("manualLink.confirm.folge.bezahlt")
                       : isOutgoing
                         ? t("manualLink.confirm.folge.teilweiseOutgoing", {
-                            rest: formatEUR(rechnungRest),
+                            rest: formatEUR(invoiceRest),
                           })
                         : t("manualLink.confirm.folge.teilweise", {
-                            rest: formatEUR(rechnungRest),
+                            rest: formatEUR(invoiceRest),
                           })
                   }
-                  ton={wirdVollBezahlt || rechnungGilt || closeInvoice ? "gut" : "warn"}
+                  ton={willFullPaid || invoiceGilt || closeInvoice ? "gut" : "warn"}
                 />
-                <Folge
+                <Sequence
                   text={
-                    transaktionRest <= 0.01
+                    transactionRest <= 0.01
                       ? t("manualLink.confirm.folge.transaktionVoll")
                       : closeTransaction
                         ? // The box is ticked: the remainder is being written off, so saying it
                           // "stays free for another invoice" would describe the opposite of what
                           // the Reconcile button is about to do.
                           t("manualLink.confirm.folge.transaktionAbgeschlossen", {
-                            rest: formatEUR(transaktionRest),
+                            rest: formatEUR(transactionRest),
                           })
                         : t("manualLink.confirm.folge.transaktionRest", {
-                            rest: formatEUR(transaktionRest),
+                            rest: formatEUR(transactionRest),
                           })
                   }
-                  ton={transaktionRest <= 0.01 || closeTransaction ? "gut" : "warn"}
+                  ton={transactionRest <= 0.01 || closeTransaction ? "gut" : "warn"}
                 />
               </ul>
             )}
@@ -300,18 +300,18 @@ export function LinkConfirmDialog({
           </AlertDialogCancel>
           <AlertDialogAction
             className="gap-2"
-            disabled={pending || laedt || ungueltig || grundFehlt}
+            disabled={pending || loading || invalid || reasonMissing}
             onClick={(e) => {
               e.preventDefault();
               if (pair) {
-                const schliesst = closeInvoice || closeTransaction;
+                const closes = closeInvoice || closeTransaction;
                 onConfirm(pair, {
-                  closeInvoice: rechnungFrageOffen && closeInvoice,
-                  closeTransaction: transaktionFrageOffen && closeTransaction,
+                  closeInvoice: invoiceQuestionOpen && closeInvoice,
+                  closeTransaction: transactionQuestionOpen && closeTransaction,
                   // Only carried when something is actually being written off. A reason on a
                   // clean full-for-full match would be a note about nothing.
                   differenceReason:
-                    schliesst && differenceReason.trim() ? differenceReason.trim() : undefined,
+                    closes && differenceReason.trim() ? differenceReason.trim() : undefined,
                 });
               }
             }}
@@ -325,7 +325,7 @@ export function LinkConfirmDialog({
   );
 }
 
-function Zeile({ label, value, stark }: { label: string; value: ReactNode; stark?: boolean }) {
+function Row({ label, value, stark }: { label: string; value: ReactNode; stark?: boolean }) {
   return (
     <div className="flex flex-wrap items-baseline justify-between gap-x-3 gap-y-0.5 py-1">
       <dt className="text-xs text-muted-foreground">{label}</dt>
@@ -341,7 +341,7 @@ function Zeile({ label, value, stark }: { label: string; value: ReactNode; stark
   );
 }
 
-function Folge({ text, ton }: { text: string; ton: "gut" | "warn" | "neutral" }) {
+function Sequence({ text, ton }: { text: string; ton: "gut" | "warn" | "neutral" }) {
   const dot =
     ton === "gut" ? "bg-emerald-500" : ton === "warn" ? "bg-amber-500" : "bg-muted-foreground/40";
   return (

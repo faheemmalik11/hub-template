@@ -6,8 +6,9 @@
  * reads this to turn a path into a feature key. A page added without an entry here is a page with
  * no menu item and no guard, which is the failure the old arrangement made easy.
  *
- * The path stays as it is. A client's URLs are German because the audience is, and changing them
- * would break every bookmark for nothing. The KEY is English, because it is an identifier.
+ * Paths are English, like every other identifier here. Each German path this template used to
+ * carry is still served, as a redirect route under its old name, so a client merging this keeps
+ * their bookmarks.
  */
 import { PERMISSIONS } from "@/config/permissions";
 
@@ -30,57 +31,57 @@ export const ROUTES: RouteEntry[] = [
     module: PERMISSIONS.moduleOverview,
   },
   {
-    path: "/profil",
+    path: "/profile",
     labelKey: "nav.meinProfil",
     key: PERMISSIONS.pageProfile,
     module: PERMISSIONS.moduleOverview,
   },
 
   {
-    path: "/eingangsrechnungen",
+    path: "/incoming-invoices",
     labelKey: "nav.eingangsrechnungen",
     key: PERMISSIONS.pageIncomingInvoices,
     module: PERMISSIONS.moduleInvoices,
   },
   {
-    path: "/ausgangsrechnungen",
+    path: "/outgoing-invoices",
     labelKey: "nav.ausgangsrechnungen",
     key: PERMISSIONS.pageOutgoingInvoices,
     module: PERMISSIONS.moduleInvoices,
   },
   {
-    path: "/manuelle-buchungen",
+    path: "/manual-bookings",
     labelKey: "nav.manuelleBuchungen",
     key: PERMISSIONS.pageManualBookings,
     module: PERMISSIONS.moduleInvoices,
   },
   {
-    path: "/dateibenennung",
+    path: "/file-naming",
     labelKey: "nav.dateibenennung",
     key: PERMISSIONS.pageFileNaming,
     module: PERMISSIONS.moduleInvoices,
   },
   {
-    path: "/postfach",
+    path: "/inbox",
     labelKey: "nav.postfach",
     key: PERMISSIONS.pageDocumentSources,
     module: PERMISSIONS.moduleInvoices,
   },
 
   {
-    path: "/offene-posten",
+    path: "/open-items",
     labelKey: "nav.offenePosten",
     key: PERMISSIONS.pageOpenItems,
     module: PERMISSIONS.modulePayments,
   },
   {
-    path: "/banktransaktionen",
+    path: "/bank-transactions",
     labelKey: "nav.banktransaktionen",
     key: PERMISSIONS.pageBankTransactions,
     module: PERMISSIONS.modulePayments,
   },
   {
-    path: "/bankkonten",
+    path: "/bank-accounts",
     labelKey: "nav.bankkonten",
     key: PERMISSIONS.pageBankAccounts,
     module: PERMISSIONS.modulePayments,
@@ -92,83 +93,83 @@ export const ROUTES: RouteEntry[] = [
     module: PERMISSIONS.modulePayments,
   },
   {
-    path: "/bank-einstellungen",
+    path: "/bank-settings",
     labelKey: "nav.bankEinstellungen",
     key: PERMISSIONS.pageBankSettings,
     module: PERMISSIONS.modulePayments,
   },
 
   {
-    path: "/lieferanten",
+    path: "/suppliers",
     labelKey: "nav.lieferanten",
     key: PERMISSIONS.pageSuppliers,
     module: PERMISSIONS.moduleMasterData,
   },
   {
-    path: "/kunden",
+    path: "/customers",
     labelKey: "nav.kunden",
     key: PERMISSIONS.pageCustomers,
     module: PERMISSIONS.moduleMasterData,
   },
   {
-    path: "/gesellschaften",
+    path: "/companies",
     labelKey: "nav.gesellschaften",
     key: PERMISSIONS.pageCompanies,
     module: PERMISSIONS.moduleMasterData,
   },
   {
-    path: "/objekte",
+    path: "/properties",
     labelKey: "nav.objekte",
     key: PERMISSIONS.pageProperties,
     module: PERMISSIONS.moduleMasterData,
   },
   {
-    path: "/kategorien",
+    path: "/categories",
     labelKey: "nav.kategorien",
     key: PERMISSIONS.pageCategories,
     module: PERMISSIONS.moduleMasterData,
   },
 
   {
-    path: "/zuordnungsregeln",
+    path: "/assignment-rules",
     labelKey: "nav.zuordnungsregeln",
     key: PERMISSIONS.pageAssignmentRules,
     module: PERMISSIONS.moduleRules,
   },
   {
-    path: "/freigabe-regeln",
+    path: "/approval-rules",
     labelKey: "nav.freigabeRegeln",
     key: PERMISSIONS.pageApprovalRules,
     module: PERMISSIONS.moduleRules,
   },
   {
-    path: "/ausschlussregeln",
+    path: "/exclusion-rules",
     labelKey: "nav.ausschlussregeln",
     key: PERMISSIONS.pageExclusionRules,
     module: PERMISSIONS.moduleRules,
   },
 
   {
-    path: "/ust-regeln",
+    path: "/vat-rules",
     labelKey: "nav.ustRegeln",
     key: PERMISSIONS.pageVatRules,
     module: PERMISSIONS.moduleTaxes,
   },
   {
-    path: "/steuerruecklage",
+    path: "/vat-reserve",
     labelKey: "nav.steuerruecklage",
     key: PERMISSIONS.pageTaxReserve,
     module: PERMISSIONS.moduleTaxes,
   },
   {
-    path: "/datev-uebergabe",
+    path: "/datev-handover",
     labelKey: "nav.datevUebergabe",
     key: PERMISSIONS.pageHandover,
     module: PERMISSIONS.moduleTaxes,
   },
 
   {
-    path: "/auswertungen",
+    path: "/reports",
     labelKey: "nav.auswertungen",
     key: PERMISSIONS.pageReports,
     module: PERMISSIONS.moduleReports,
@@ -187,19 +188,19 @@ export const ROUTES: RouteEntry[] = [
     module: PERMISSIONS.moduleAdmin,
   },
   {
-    path: "/benachrichtigungen",
+    path: "/notifications",
     labelKey: "nav.benachrichtigungen",
     key: PERMISSIONS.pageNotifications,
     module: PERMISSIONS.moduleAdmin,
   },
   {
-    path: "/protokoll",
+    path: "/activity-log",
     labelKey: "nav.protokoll",
     key: PERMISSIONS.pageActivityLog,
     module: PERMISSIONS.moduleAdmin,
   },
   {
-    path: "/papierkorb",
+    path: "/trash",
     labelKey: "nav.papierkorb",
     key: PERMISSIONS.pageTrash,
     module: PERMISSIONS.moduleAdmin,

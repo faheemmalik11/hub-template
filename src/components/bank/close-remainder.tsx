@@ -24,7 +24,7 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
-import { fehlerText } from "@/lib/data/format";
+import { errorText } from "@/lib/data/format";
 import { useTranslation } from "@/lib/i18n";
 
 export function CloseRemainderButton({
@@ -61,7 +61,7 @@ export function CloseRemainderButton({
       setOpen(false);
       setReason("");
     } catch (e) {
-      toast.error(fehlerText(e));
+      toast.error(errorText(e));
     } finally {
       setBusy(false);
     }
@@ -100,7 +100,7 @@ export function CloseRemainderButton({
             <AlertDialogDescription>{description}</AlertDialogDescription>
           </AlertDialogHeader>
           <p className="rounded-lg border border-amber-300 bg-amber-50 px-3 py-2 text-sm text-amber-900 dark:border-amber-900/60 dark:bg-amber-950/40 dark:text-amber-200">
-            {t("bank.detail.restschliessen.betrag", { betrag: remainderLabel })}
+            {t("bank.detail.restschliessen.betrag", { amount: remainderLabel })}
           </p>
           <div className="space-y-1.5">
             <Label htmlFor="close-remainder-reason">

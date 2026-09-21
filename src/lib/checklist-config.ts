@@ -1,4 +1,4 @@
-import type { BankConnection, DatevRoute, Gesellschaft, Objekt } from "@/lib/data/types";
+import type { BankConnection, DatevRoute, Company, Property } from "@/lib/data/types";
 import type { SourceView } from "@/lib/data/channel-sources";
 import { PERMISSIONS, type PermissionKey } from "@/config/permissions";
 
@@ -23,8 +23,8 @@ export interface ChecklistData {
   mail: SourceView | undefined;
   drive: SourceView | undefined;
   bankConnections: BankConnection[];
-  companies: Gesellschaft[];
-  properties: Objekt[];
+  companies: Company[];
+  properties: Property[];
   datevRoutes: DatevRoute[];
   now: number;
   errors: Record<SetupStepKey, boolean>;
@@ -41,11 +41,11 @@ export interface ChecklistStepConfig {
 
 const STALE_LIMIT_MS = 26 * 60 * 60 * 1000;
 
-const MAILBOX_FOKUS: Record<string, { hash: string; fokus: string }> = {
-  "mail-address": { hash: "mail", fokus: "mailbox_address" },
-  mail: { hash: "mail", fokus: "mail_processed_folder" },
-  "drive-sources": { hash: "filing", fokus: "drive_source_folders" },
-  drive: { hash: "filing", fokus: "drive_processed_folder" },
+const MAILBOX_FOCUS: Record<string, { hash: string; focus: string }> = {
+  "mail-address": { hash: "mail", focus: "mailbox_address" },
+  mail: { hash: "mail", focus: "mail_processed_folder" },
+  "drive-sources": { hash: "filing", focus: "drive_source_folders" },
+  drive: { hash: "filing", focus: "drive_processed_folder" },
 };
 
 export const CHECKLIST_STEPS: ChecklistStepConfig[] = [
@@ -71,9 +71,9 @@ export const CHECKLIST_STEPS: ChecklistStepConfig[] = [
       };
     },
     link: (state, kinds) => {
-      if (state !== "problem") return { to: "/postfach" };
-      const hit = (kinds[0] && MAILBOX_FOKUS[kinds[0]]) || MAILBOX_FOKUS.mail;
-      return { to: "/postfach", hash: hit.hash, search: { fokus: hit.fokus } };
+      if (state !== "problem") return { to: "/inbox" };
+      const hit = (kinds[0] && MAILBOX_FOCUS[kinds[0]]) || MAILBOX_FOCUS.mail;
+      return { to: "/inbox", hash: hit.hash, search: { focus: hit.focus } };
     },
   },
   {
@@ -97,7 +97,7 @@ export const CHECKLIST_STEPS: ChecklistStepConfig[] = [
         problemKinds: broken.length > 0 ? ["connection"] : [],
       };
     },
-    link: () => ({ to: "/bankkonten", search: { fokus: "verbindungen" } }),
+    link: () => ({ to: "/bank-accounts", search: { focus: "connections" } }),
   },
   {
     key: "companies",
@@ -107,7 +107,7 @@ export const CHECKLIST_STEPS: ChecklistStepConfig[] = [
       problemCount: 0,
       problemKinds: [],
     }),
-    link: () => ({ to: "/gesellschaften", search: { fokus: "liste" } }),
+    link: () => ({ to: "/companies", search: { focus: "list" } }),
   },
   {
     key: "properties",
@@ -117,7 +117,7 @@ export const CHECKLIST_STEPS: ChecklistStepConfig[] = [
       problemCount: 0,
       problemKinds: [],
     }),
-    link: () => ({ to: "/objekte", search: { fokus: "liste" } }),
+    link: () => ({ to: "/properties", search: { focus: "list" } }),
   },
   {
     key: "datev",
@@ -136,7 +136,7 @@ export const CHECKLIST_STEPS: ChecklistStepConfig[] = [
         problemKinds: uncovered > 0 ? ["coverage"] : [],
       };
     },
-    link: () => ({ to: "/datev-uebergabe", search: { fokus: "liste" } }),
+    link: () => ({ to: "/datev-handover", search: { focus: "list" } }),
   },
 ];
 

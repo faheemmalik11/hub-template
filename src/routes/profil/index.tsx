@@ -1,23 +1,14 @@
-import { createFileRoute } from "@tanstack/react-router";
+import { createFileRoute, redirect } from "@tanstack/react-router";
 
-import { ProfilePage } from "@/kit/pages";
-
-import { useProfileAdapter } from "@/hub/adapters/profile";
-import { useProfileLabels } from "@/hub/adapters/profile-labels";
-import { useAuth } from "@/lib/auth";
-import { pageTitle } from "@/config/brand";
-
+/**
+ * Moved to /profile when this template anglicised its URLs.
+ *
+ * The old path stays as a redirect rather than being deleted, so a client merging this keeps every
+ * bookmark and shared link working. `beforeLoad` throws before the component renders, so nothing of
+ * the old page is mounted on the way through.
+ */
 export const Route = createFileRoute("/profil/")({
-  head: () => ({ meta: [{ title: pageTitle("Mein Profil") }] }),
-  component: ProfilRoute,
+  beforeLoad: ({ search }) => {
+    throw redirect({ to: "/profile", search, replace: true });
+  },
 });
-
-// No permission gate: this screen only ever shows and changes the signed-in person's own account,
-// so everyone who can sign in may open it.
-function ProfilRoute() {
-  const { ready } = useAuth();
-  const adapter = useProfileAdapter();
-  const labels = useProfileLabels();
-  if (!ready) return null;
-  return <ProfilePage adapter={adapter} labels={labels} />;
-}

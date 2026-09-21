@@ -1,7 +1,7 @@
 import { TriangleAlert } from "lucide-react";
 
 import { Badge } from "@/components/ui/badge";
-import { CopyButton } from "@/components/belege/copy-button";
+import { CopyButton } from "@/components/documents/copy-button";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import { cn } from "@/lib/utils";
 

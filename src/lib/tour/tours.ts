@@ -336,11 +336,11 @@ function bankAccountsSpec(activeTab: string | undefined): TourSpec {
 // Zuordnungsregeln keeps its tab in ?tab= and Radix unmounts the inactive panel, so the panel
 // step travels with the tab the reader is on. Kategorien is a single, untabbed screen and gets
 // its own one-step tour below.
-const ASSIGNMENT_TABS: Record<string, StepSpec> = {
-  regeln: { target: "assignment-rules", key: "rules", placement: "top" },
-  spielplatz: { target: "assignment-playground", key: "playground", placement: "top" },
-  suggestions: { target: "assignment-suggestions", key: "suggestions", placement: "top" },
-};
+const ASSIGNMENT_TABS = new Map<string, StepSpec>([
+  ["regeln", { target: "assignment-rules", key: "rules", placement: "top" }],
+  ["spielplatz", { target: "assignment-playground", key: "playground", placement: "top" }],
+  ["suggestions", { target: "assignment-suggestions", key: "suggestions", placement: "top" }],
+]);
 
 function assignmentSpec(
   activeTab: string | undefined,
@@ -352,11 +352,14 @@ function assignmentSpec(
     id: `assignment-${pageTabs[0]}`,
     version: 1,
     namespace: "tour.assignmentRules",
-    steps: [{ target: "assignment-tabs", key: tabsKey, placement: "bottom" }, ASSIGNMENT_TABS[key]],
+    steps: [
+      { target: "assignment-tabs", key: tabsKey, placement: "bottom" },
+      ASSIGNMENT_TABS.get(key)!,
+    ],
   };
 }
 
-const KATEGORIEN: TourSpec = {
+const CATEGORIES: TourSpec = {
   id: "categories",
   version: 1,
   namespace: "tour.assignmentRules",
@@ -515,19 +518,19 @@ const TRASH: TourSpec = {
 
 // Fixed, per-path tours whose targets do not depend on tab or permission.
 const BY_PATH: Record<string, TourSpec> = {
-  "/lieferanten": SUPPLIERS,
-  "/kunden": CUSTOMERS,
-  "/gesellschaften": COMPANIES,
-  "/objekte": PROPERTIES,
-  "/ausschlussregeln": EXCLUSIONS,
-  "/datev-uebergabe": DATEV_HANDOVER,
-  "/ust-regeln": VAT_RULES,
-  "/steuerruecklage": VAT_RESERVE,
-  "/kategorien": KATEGORIEN,
-  "/manuelle-buchungen": MANUAL_BOOKINGS,
-  "/banktransaktionen": BANK_TRANSACTIONS,
-  "/eingangsrechnungen/upload": INCOMING_UPLOAD,
-  "/ausgangsrechnungen/hochladen": OUTGOING_UPLOAD,
+  "/suppliers": SUPPLIERS,
+  "/customers": CUSTOMERS,
+  "/companies": COMPANIES,
+  "/properties": PROPERTIES,
+  "/exclusion-rules": EXCLUSIONS,
+  "/datev-handover": DATEV_HANDOVER,
+  "/vat-rules": VAT_RULES,
+  "/vat-reserve": VAT_RESERVE,
+  "/categories": CATEGORIES,
+  "/manual-bookings": MANUAL_BOOKINGS,
+  "/bank-transactions": BANK_TRANSACTIONS,
+  "/incoming-invoices/upload": INCOMING_UPLOAD,
+  "/outgoing-invoices/upload": OUTGOING_UPLOAD,
 };
 
 // A single record lives at /<module>/<id>, so its address differs on every visit and cannot be a
@@ -595,36 +598,34 @@ export function useTours(): TourMap {
     }
 
     map["/"] = build(overviewSpec(!isMobile, canCostAnalysis));
-    map["/eingangsrechnungen"] = build(incomingListSpec(hasQueueCards));
-    map["/ausgangsrechnungen"] = build(OUTGOING);
-    map["/postfach"] = build(MAILBOX);
+    map["/incoming-invoices"] = build(incomingListSpec(hasQueueCards));
+    map["/outgoing-invoices"] = build(OUTGOING);
+    map["/inbox"] = build(MAILBOX);
     map["/onboarding"] = build(ONBOARDING);
-    map["/offene-posten"] = build(reconcileSpec());
+    map["/open-items"] = build(reconcileSpec());
     map["/opos-whitelist"] = build(oposSpec(canOposWrite));
-    map["/bankkonten"] = build(bankAccountsSpec(tab));
-    map["/zuordnungsregeln"] = build(
+    map["/bank-accounts"] = build(bankAccountsSpec(tab));
+    map["/assignment-rules"] = build(
       assignmentSpec(tab, ["regeln", "spielplatz", "suggestions"], "tabsRegeln"),
     );
-    map["/benachrichtigungen"] = build(
-      notificationsSpec(tab, canNotificationSettings, hasSlackChannel),
-    );
+    map["/notifications"] = build(notificationsSpec(tab, canNotificationSettings, hasSlackChannel));
     if (canApprovals) {
-      map["/freigabe-regeln"] = build(APPROVALS);
+      map["/approval-rules"] = build(APPROVALS);
     }
     if (canFilenames) {
-      map["/dateibenennung"] = build(FILENAMES);
+      map["/file-naming"] = build(FILENAMES);
     }
     if (canCostAnalysis) {
-      map["/auswertungen"] = build(COST_ANALYSIS);
+      map["/reports"] = build(COST_ANALYSIS);
     }
     if (canTeam) {
       map["/team"] = build(teamSpec(tab, permissionCategories));
     }
     if (canLog) {
-      map["/protokoll"] = build(LOG);
+      map["/activity-log"] = build(LOG);
     }
     if (canTrash) {
-      map["/papierkorb"] = build(TRASH);
+      map["/trash"] = build(TRASH);
     }
 
     const detail = DETAIL_PATHS.find((d) => d.pattern.test(pathname));

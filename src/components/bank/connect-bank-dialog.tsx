@@ -17,7 +17,7 @@ import { Label } from "@/components/ui/label";
 import { Checkbox } from "@/components/ui/checkbox";
 import { useStartBankConnect, type BankConnectResult } from "@/data";
 import { useTranslation } from "@/lib/i18n";
-import { fehlerText } from "@/lib/data/format";
+import { errorText } from "@/lib/data/format";
 
 /**
  * Connect a bank account through BANKSapi.
@@ -65,7 +65,7 @@ export function ConnectBankDialog() {
         window.open(res.webformUrl, "_blank", "noopener,noreferrer");
       }
     } catch (e) {
-      toast.error(fehlerText(e));
+      toast.error(errorText(e));
     }
   }
 
@@ -80,14 +80,14 @@ export function ConnectBankDialog() {
       <DialogTrigger asChild>
         <Button>
           <Link2 className="size-4" />
-          {t("bankverbindungen.connectDialog.button")}
+          {t("bankConnections.connectDialog.button")}
         </Button>
       </DialogTrigger>
 
       <DialogContent className="max-w-lg">
         <DialogHeader>
-          <DialogTitle>{t("bankverbindungen.connectDialog.titel")}</DialogTitle>
-          <DialogDescription>{t("bankverbindungen.connectDialog.beschreibung")}</DialogDescription>
+          <DialogTitle>{t("bankConnections.connectDialog.titel")}</DialogTitle>
+          <DialogDescription>{t("bankConnections.connectDialog.beschreibung")}</DialogDescription>
         </DialogHeader>
 
         {!result ? (
@@ -96,27 +96,27 @@ export function ConnectBankDialog() {
             <div className="rounded-md border border-amber-300/60 bg-amber-50 p-3 dark:border-amber-500/30 dark:bg-amber-950/30">
               <p className="flex items-center gap-2 text-sm font-medium text-amber-900 dark:text-amber-200">
                 <AlertTriangle className="size-4 shrink-0" />
-                {t("bankverbindungen.connectDialog.warnungTitel")}
+                {t("bankConnections.connectDialog.warnungTitel")}
               </p>
               <ol className="mt-2 list-decimal space-y-1 pl-5 text-sm text-amber-900/90 dark:text-amber-200/90">
-                <li>{t("bankverbindungen.connectDialog.checkbox1")}</li>
-                <li>{t("bankverbindungen.connectDialog.checkbox2")}</li>
+                <li>{t("bankConnections.connectDialog.checkbox1")}</li>
+                <li>{t("bankConnections.connectDialog.checkbox2")}</li>
               </ol>
               <p className="mt-2 text-xs text-amber-900/80 dark:text-amber-200/80">
-                {t("bankverbindungen.connectDialog.warnungHinweis")}
+                {t("bankConnections.connectDialog.warnungHinweis")}
               </p>
             </div>
 
             <div className="space-y-1.5">
-              <Label htmlFor="customer-ip">{t("bankverbindungen.connectDialog.ipLabel")}</Label>
+              <Label htmlFor="customer-ip">{t("bankConnections.connectDialog.ipLabel")}</Label>
               <Input
                 id="customer-ip"
                 value={customerIp}
                 onChange={(e) => setCustomerIp(e.target.value)}
-                placeholder={t("bankverbindungen.connectDialog.ipPlatzhalter")}
+                placeholder={t("bankConnections.connectDialog.ipPlatzhalter")}
               />
               <p className="text-xs text-muted-foreground">
-                {t("bankverbindungen.connectDialog.ipHinweis")}
+                {t("bankConnections.connectDialog.ipHinweis")}
               </p>
             </div>
 
@@ -127,26 +127,26 @@ export function ConnectBankDialog() {
                 className="mt-0.5"
               />
               <span className="text-muted-foreground">
-                {t("bankverbindungen.connectDialog.bestaetigung")}
+                {t("bankConnections.connectDialog.bestaetigung")}
               </span>
             </label>
           </div>
         ) : (
           <div className="space-y-3">
             <p className="text-sm text-foreground">
-              {t("bankverbindungen.connectDialog.geoeffnet")}
+              {t("bankConnections.connectDialog.geoeffnet")}
             </p>
             {result.webformUrl && (
               // Re-opening invalidates the link, so this is a copy target, not a second "open".
               <div className="space-y-1">
-                <Label className="text-xs">{t("bankverbindungen.connectDialog.linkLabel")}</Label>
+                <Label className="text-xs">{t("bankConnections.connectDialog.linkLabel")}</Label>
                 <Input
                   readOnly
                   value={result.webformUrl}
                   onFocus={(e) => e.currentTarget.select()}
                 />
                 <p className="text-xs text-amber-700 dark:text-amber-400">
-                  {t("bankverbindungen.connectDialog.einmalig")}
+                  {t("bankConnections.connectDialog.einmalig")}
                 </p>
               </div>
             )}
@@ -158,12 +158,12 @@ export function ConnectBankDialog() {
             <Button onClick={() => void begin()} disabled={!acknowledged || start.isPending}>
               <ExternalLink className="size-4" />
               {start.isPending
-                ? t("bankverbindungen.connectDialog.starte")
-                : t("bankverbindungen.connectDialog.starten")}
+                ? t("bankConnections.connectDialog.starte")
+                : t("bankConnections.connectDialog.starten")}
             </Button>
           ) : (
             <Button variant="secondary" onClick={() => setOpen(false)}>
-              {t("bankverbindungen.connectDialog.schliessen")}
+              {t("bankConnections.connectDialog.schliessen")}
             </Button>
           )}
         </DialogFooter>

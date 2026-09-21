@@ -10,10 +10,10 @@ import { useAuth } from "@/lib/auth";
 import {
   useBankConnections,
   useDatevRoutes,
-  useGesellschaften,
+  useCompanies,
   useChannelFolders,
   useChannels,
-  useObjekte,
+  useProperties,
   usePipelineHealth,
 } from "@/data";
 
@@ -43,8 +43,8 @@ export function useSetupChecklist(): SetupChecklist {
   const channelsQ = useChannels();
   const folderRowsQ = useChannelFolders();
   const bankQ = useBankConnections();
-  const companiesQ = useGesellschaften();
-  const propertiesQ = useObjekte();
+  const companiesQ = useCompanies();
+  const propertiesQ = useProperties();
   const datevQ = useDatevRoutes();
   const healthQ = usePipelineHealth();
 

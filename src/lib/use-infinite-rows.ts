@@ -37,7 +37,7 @@ export function useInfiniteRows<T>(rows: T[], pageSize = 25) {
   const hasMore = count < rows.length;
 
   /** Rebuild the single observer over whatever sentinels are mounted right now. */
-  const beobachten = useCallback(() => {
+  const watch = useCallback(() => {
     observerRef.current?.disconnect();
     observerRef.current = null;
     if (!hasMore || nodesRef.current.size === 0) return;
@@ -65,13 +65,13 @@ export function useInfiniteRows<T>(rows: T[], pageSize = 25) {
     (node: HTMLElement | null) => {
       if (!node) return;
       nodesRef.current.add(node);
-      beobachten();
+      watch();
       return () => {
         nodesRef.current.delete(node);
-        beobachten();
+        watch();
       };
     },
-    [beobachten],
+    [watch],
   );
 
   useEffect(

@@ -1,7 +1,7 @@
 import { useMemo } from "react";
 
 import { useMatchingSettings, useOpenBankTransactionsInfinite } from "@/data";
-import { scoreMatch, type MatchBeleg, type MatchTransaction } from "@/lib/data/matching";
+import { scoreMatch, type MatchDocument, type MatchTransaction } from "@/lib/data/matching";
 // The scorer's own MatchReasons has no index signature; this app-wide one (mirroring the DB's
 // jsonb column) does, and is what MatchScoreBreakdown / the link mutations both expect -- cast
 // once here, at the boundary, rather than at every place a ScoredMatch gets used downstream.
@@ -28,14 +28,17 @@ function dayGap(dayDiff: number | null | undefined): number {
   return dayDiff ?? Number.MAX_SAFE_INTEGER;
 }
 
-function windowBounds(anchor: string | null): { von?: string; bis?: string } {
+function windowBounds(anchor: string | null): { fromDate?: string; toDate?: string } {
   if (!anchor) return {};
   const center = new Date(`${anchor}T00:00:00`);
-  const von = new Date(center);
-  von.setDate(von.getDate() - DATE_WINDOW_DAYS);
-  const bis = new Date(center);
-  bis.setDate(bis.getDate() + DATE_WINDOW_DAYS);
-  return { von: von.toISOString().slice(0, 10), bis: bis.toISOString().slice(0, 10) };
+  const fromDate = new Date(center);
+  fromDate.setDate(fromDate.getDate() - DATE_WINDOW_DAYS);
+  const toDate = new Date(center);
+  toDate.setDate(toDate.getDate() + DATE_WINDOW_DAYS);
+  return {
+    fromDate: fromDate.toISOString().slice(0, 10),
+    toDate: toDate.toISOString().slice(0, 10),
+  };
 }
 
 /**
@@ -50,7 +53,7 @@ function windowBounds(anchor: string | null): { von?: string; bis?: string } {
  * hit, date+name proximity alone is never enough (the same rule `runMatching` itself uses), so
  * this never surfaces a same-supplier coincidence as if it were a real candidate.
  */
-export function usePossibleMatches(beleg: {
+export function usePossibleMatches(doc: {
   id: string;
   amount: number | null;
   documentDate: string | null;
@@ -60,16 +63,16 @@ export function usePossibleMatches(beleg: {
   /** "incoming" = we owe money (settled by a debit); "outgoing" = we're owed money (settled by a credit). */
   invoiceType: "incoming" | "outgoing";
 }): { isLoading: boolean; matches: ScoredMatch[] } {
-  const { von, bis } = windowBounds(beleg.dueDate ?? beleg.documentDate);
+  const { fromDate, toDate } = windowBounds(doc.dueDate ?? doc.documentDate);
   const q = useOpenBankTransactionsInfinite(
     {
       matchingStatus: "open",
       // Same convention ManualSearch/TransactionMatches already use: an incoming invoice is
       // settled by an outgoing (debit) bank movement, an outgoing invoice by an incoming
       // (credit) one.
-      richtung: beleg.invoiceType === "outgoing" ? "eingehend" : "ausgehend",
-      bookingDateVon: von,
-      bookingDateBis: bis,
+      direction: doc.invoiceType === "outgoing" ? "eingehend" : "ausgehend",
+      bookingDateFromDate: fromDate,
+      bookingDateToDate: toDate,
       sort: "booking_date",
       dir: "desc",
       pageSize: CANDIDATE_FETCH_SIZE,
@@ -77,7 +80,7 @@ export function usePossibleMatches(beleg: {
     // Callers pass an empty id until the real candidate count is known to be zero (see
     // match-panel.tsx) -- no point fetching a fallback shortlist before then, or at all for a
     // transaction target, which has no fallback built yet.
-    { enabled: !!beleg.id },
+    { enabled: !!doc.id },
   );
   const rows = useMemo(() => q.data?.pages.flatMap((p) => p.rows) ?? [], [q.data]);
 
@@ -85,19 +88,19 @@ export function usePossibleMatches(beleg: {
   // the scorer; this list ran the identical scorer with the 0.01 default, so raising the tolerance
   // changed what the nightly run matched and nothing a person could see. Two answers to one
   // question is worse than one strict answer.
-  const toleranz = useMatchingSettings().data?.amount_tolerance;
+  const tolerance = useMatchingSettings().data?.amount_tolerance;
 
   const matches = useMemo(() => {
-    const matchBeleg: MatchBeleg = {
-      id: beleg.id,
-      amount_gross: beleg.amount,
-      document_date: beleg.documentDate,
-      due_date: beleg.dueDate,
-      invoice_number: beleg.nr,
+    const matchDocument: MatchDocument = {
+      id: doc.id,
+      amount_gross: doc.amount,
+      document_date: doc.documentDate,
+      due_date: doc.dueDate,
+      invoice_number: doc.nr,
       // Not available on this narrowed row (v_open_items doesn't carry it) -- the amount and
       // reference signals alone are enough to anchor a real candidate; see the module comment.
       customer_number: null,
-      issuer: beleg.label,
+      issuer: doc.label,
       supplier_iban: null,
     };
     return rows
@@ -110,22 +113,13 @@ export function usePossibleMatches(beleg: {
           counterparty_iban: txn.counterparty_iban,
           counterparty_holder: txn.counterparty_holder,
         };
-        const { score, reasons } = scoreMatch(matchBeleg, matchTxn, toleranz);
+        const { score, reasons } = scoreMatch(matchDocument, matchTxn, tolerance);
         return { txn, score, reasons: reasons as MatchReasons };
       })
       .filter((r) => r.reasons.amount || r.reasons.reference)
       .sort((a, b) => b.score - a.score || dayGap(a.reasons.dayDiff) - dayGap(b.reasons.dayDiff))
       .slice(0, MAX_SHOWN);
-  }, [
-    rows,
-    beleg.id,
-    beleg.amount,
-    beleg.documentDate,
-    beleg.dueDate,
-    beleg.nr,
-    beleg.label,
-    toleranz,
-  ]);
+  }, [rows, doc.id, doc.amount, doc.documentDate, doc.dueDate, doc.nr, doc.label, tolerance]);
 
   return { isLoading: q.isLoading, matches };
 }

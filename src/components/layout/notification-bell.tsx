@@ -25,7 +25,7 @@ export function AppNotificationBell() {
       emptyText={t("notifications.empty")}
       ariaLabel={t("notifications.title")}
       seeAllLabel={t("notifications.alleAnsehen")}
-      seeAllTo="/benachrichtigungen"
+      seeAllTo="/notifications"
     />
   );
 }

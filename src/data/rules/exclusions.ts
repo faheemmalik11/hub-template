@@ -2,7 +2,7 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 
 import { TABLE } from "@/config/tables";
 import { STALE, actorEmail, insertChangeHistory, sb } from "@/data/client";
-import { fetchAllRows, invalidateMatchState, pflichtGrund } from "@/data/shared";
+import { fetchAllRows, invalidateMatchState, requiredReason } from "@/data/shared";
 import { OPOS_TERM_MIN_LENGTH } from "@/lib/data/opos";
 import type {
   Exclusion,
@@ -31,46 +31,45 @@ import type {
  * for a scope it cannot check is worse than no preview.
  */
 export type ExclusionImpact =
-  | { supported: false }
-  | { supported: true; treffer: number; grundgesamtheit: number; quelle: string };
+  { supported: false } | { supported: true; match: number; population: number; source: string };
 
 export function useExclusionImpact(scope: string, term: string, enabled: boolean) {
-  const suchbegriff = term.trim();
+  const searchTerm = term.trim();
   return useQuery({
-    queryKey: ["exclusion_impact", scope, suchbegriff],
-    enabled: enabled && suchbegriff.length >= 2,
+    queryKey: ["exclusion_impact", scope, searchTerm],
+    enabled: enabled && searchTerm.length >= 2,
     staleTime: 30_000,
     queryFn: async (): Promise<ExclusionImpact> => {
-      const quelle =
+      const source =
         scope === "sender" || scope === "subject"
           ? { table: TABLE.processingLog, column: scope }
           : scope === "party" || scope === "supplier"
             ? { table: TABLE.documents, column: "issuer" }
             : null;
-      if (!quelle) return { supported: false };
+      if (!source) return { supported: false };
 
       // % and _ are LIKE wildcards; a term containing them would silently widen the preview
       // relative to the rule it is previewing. Postgres LIKE takes backslash as the escape by default.
-      const escaped = suchbegriff.replace(/([\\%_])/g, "\\$1");
+      const escaped = searchTerm.replace(/([\\%_])/g, "\\$1");
 
-      const [treffer, gesamt] = await Promise.all([
+      const [match, total] = await Promise.all([
         (async () => {
           const { count, error } = await sb
-            .from(quelle.table)
+            .from(source.table)
             .select("id", { count: "exact", head: true })
-            .ilike(quelle.column, `%${escaped}%`);
+            .ilike(source.column, `%${escaped}%`);
           if (error) throw error;
           return count ?? 0;
         })(),
         (async () => {
           const { count, error } = await sb
-            .from(quelle.table)
+            .from(source.table)
             .select("id", { count: "exact", head: true });
           if (error) throw error;
           return count ?? 0;
         })(),
       ]);
-      return { supported: true, treffer, grundgesamtheit: gesamt, quelle: quelle.table };
+      return { supported: true, match, population: total, source: source.table };
     },
   });
 }
@@ -95,7 +94,7 @@ export function useExclusions() {
 export function useCreateExclusion() {
   const qc = useQueryClient();
   return useMutation({
-    mutationFn: async (werte: {
+    mutationFn: async (values: {
       scope: Exclusion["scope"];
       term: string;
       note?: string | null;
@@ -104,10 +103,10 @@ export function useCreateExclusion() {
       const { data, error } = await sb
         .from(TABLE.ingestExclusions)
         .insert({
-          scope: werte.scope,
-          term: werte.term.trim(),
+          scope: values.scope,
+          term: values.term.trim(),
           is_active: true,
-          note: werte.note?.trim() || null,
+          note: values.note?.trim() || null,
           created_by: actor,
         })
         .select("*")
@@ -178,12 +177,12 @@ function invalidateOposRules(qc: ReturnType<typeof useQueryClient>) {
 // treatment as the match-learning step further down for the same reason.
 async function logOposRuleChange(
   id: string,
-  typ: string,
+  type: string,
   text: string | null,
-  daten: Record<string, unknown> | null = null,
+  data: Record<string, unknown> | null = null,
 ) {
   try {
-    await insertChangeHistory("opos_whitelist_rules", id, typ, text, daten);
+    await insertChangeHistory("opos_whitelist_rules", id, type, text, data);
   } catch (e) {
     console.warn("change_history entry for OPOS whitelist rule failed", e);
   }
@@ -209,7 +208,7 @@ export function useOposWhitelistRules() {
 export function useCreateOposWhitelistRule() {
   const qc = useQueryClient();
   return useMutation({
-    mutationFn: async (werte: {
+    mutationFn: async (values: {
       scope: OposWhitelistScope;
       category: OposCategory;
       term: string;
@@ -219,23 +218,23 @@ export function useCreateOposWhitelistRule() {
       const { data, error } = await sb
         .from(TABLE.openItemWhitelistRules)
         .insert({
-          scope: werte.scope,
-          category: werte.category,
-          term: werte.term.trim(),
+          scope: values.scope,
+          category: values.category,
+          term: values.term.trim(),
           is_active: true,
-          note: werte.note?.trim() || null,
+          note: values.note?.trim() || null,
           created_by: actor,
         })
         .select("*")
         .single();
       if (error) throw error;
-      const regel = data as OposWhitelistRule;
-      await logOposRuleChange(regel.id, "angelegt", regel.term, {
-        scope: regel.scope,
-        category: regel.category,
-        note: regel.note,
+      const rule = data as OposWhitelistRule;
+      await logOposRuleChange(rule.id, "angelegt", rule.term, {
+        scope: rule.scope,
+        category: rule.category,
+        note: rule.note,
       });
-      return regel;
+      return rule;
     },
     onSuccess: () => invalidateOposRules(qc),
   });
@@ -276,18 +275,18 @@ export function useDeleteOposWhitelistRule() {
       // removed sat there under the same uninformative, non-German string (#9). The table already
       // carries the trash_require_delete_reason trigger, so a reason is a database-level
       // requirement as well — pflichtGrund is that same rule one step earlier, in a sentence.
-      const grund = pflichtGrund(args.reason);
+      const reason = requiredReason(args.reason);
       const { error } = await sb
         .from(TABLE.openItemWhitelistRules)
         .update({
           deleted_at: new Date().toISOString(),
           deleted_by: actor,
-          delete_reason: grund,
+          delete_reason: reason,
           is_active: false,
         })
         .eq("id", args.id);
       if (error) throw error;
-      await logOposRuleChange(args.id, "geloescht", grund);
+      await logOposRuleChange(args.id, "geloescht", reason);
     },
     onSuccess: () => invalidateOposRules(qc),
   });
@@ -322,8 +321,8 @@ export function useOposRuleHitCounts() {
 
 /** What a term would catch, counted before the rule exists. */
 export interface OposTermImpact {
-  treffer: number;
-  grundgesamtheit: number;
+  match: number;
+  population: number;
 }
 
 // A rule was saveable with any non-empty string and no indication of what it would take out of the
@@ -336,35 +335,35 @@ export interface OposTermImpact {
 // ilike does not, so a term containing a double space reads low here. Outgoing only, matching
 // apply_opos_whitelist()'s own `amount < 0` guard — incoming credits are never hidden by a rule.
 export function useOposTermImpact(scope: OposWhitelistScope, term: string, enabled: boolean) {
-  const suchbegriff = term.trim();
+  const searchTerm = term.trim();
   return useQuery({
-    queryKey: ["opos_term_impact", scope, suchbegriff],
-    enabled: enabled && suchbegriff.length >= OPOS_TERM_MIN_LENGTH,
+    queryKey: ["opos_term_impact", scope, searchTerm],
+    enabled: enabled && searchTerm.length >= OPOS_TERM_MIN_LENGTH,
     staleTime: 30_000,
     queryFn: async (): Promise<OposTermImpact> => {
       // % and _ are LIKE wildcards; a term containing one would silently widen the preview
       // relative to the rule it is previewing. Postgres LIKE takes backslash as the escape.
-      const escaped = suchbegriff.replace(/([\\%_])/g, "\\$1");
-      const spalten: Record<OposWhitelistScope, string[]> = {
+      const escaped = searchTerm.replace(/([\\%_])/g, "\\$1");
+      const columns: Record<OposWhitelistScope, string[]> = {
         reference: ["payment_reference"],
         counterparty: ["counterparty_holder"],
         iban: ["counterparty_iban"],
         booking_text: ["booking_text"],
         any: ["payment_reference", "counterparty_holder", "counterparty_iban", "booking_text"],
       };
-      const spalte = spalten[scope];
+      const column = columns[scope];
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      const filtern = (query: any) => {
-        if (spalte.length === 1) return query.ilike(spalte[0], `%${escaped}%`);
+      const filter = (query: any) => {
+        if (column.length === 1) return query.ilike(column[0], `%${escaped}%`);
         // Inside an or() PostgREST reads commas and parentheses as structure, so the value is
         // quoted — and inside those quotes a backslash or a quote has to be escaped in turn.
-        const zitiert = escaped.replace(/(["\\])/g, "\\$1");
-        return query.or(spalte.map((c) => `${c}.ilike."%${zitiert}%"`).join(","));
+        const quoted = escaped.replace(/(["\\])/g, "\\$1");
+        return query.or(column.map((c) => `${c}.ilike."%${quoted}%"`).join(","));
       };
 
-      const [treffer, gesamt] = await Promise.all([
+      const [match, total] = await Promise.all([
         (async () => {
-          const { count, error } = await filtern(
+          const { count, error } = await filter(
             sb
               .from(TABLE.bankTransactions)
               .select("id", { count: "exact", head: true })
@@ -382,7 +381,7 @@ export function useOposTermImpact(scope: OposWhitelistScope, term: string, enabl
           return (count as number | null) ?? 0;
         })(),
       ]);
-      return { treffer, grundgesamtheit: gesamt };
+      return { match, population: total };
     },
   });
 }

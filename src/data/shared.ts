@@ -59,8 +59,8 @@ export async function fetchAllRows<T>(
  * Same wording as the trigger's, deliberately: two different messages for one rule reads like two
  * different problems.
  */
-export function pflichtGrund(grund: string | null | undefined): string {
-  const text = (grund ?? "").trim();
+export function requiredReason(reason: string | null | undefined): string {
+  const text = (reason ?? "").trim();
   if (!text) {
     throw new Error(
       "Bitte einen Löschgrund angeben — ein Datensatz darf nicht ohne Begründung im Papierkorb landen.",
@@ -136,16 +136,16 @@ export function invalidateRuleState(qc: ReturnType<typeof useQueryClient>) {
 }
 
 // Verlaufseintrag schreiben (Notiz, Statuswechsel, Änderung, Zuweisung, Löschung).
-export async function insertVerlauf(
-  belegId: string,
-  typ: string,
+export async function insertHistory(
+  documentId: string,
+  type: string,
   text: string | null,
-  daten: Record<string, unknown> | null = null,
+  data: Record<string, unknown> | null = null,
 ) {
   const actor = await actorEmail();
   const { error } = await sb
     .from(TABLE.documentHistory)
-    .insert({ document_id: belegId, type: typ, text, data: daten, actor });
+    .insert({ document_id: documentId, type: type, text, data: data, actor });
   if (error) throw error;
 }
 

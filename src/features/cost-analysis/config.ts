@@ -1,4 +1,4 @@
-export type BelegFokus = "ust" | "kategorie";
+export type DocumentFocus = "ust" | "kategorie";
 
 import type { ReactNode } from "react";
 
@@ -26,7 +26,7 @@ export interface CostAnalysisConfig {
    * mark it. Landing on a long form at the top and being left to find the one field the card was
    * about is the part that made these disclosures feel like dead ends.
    */
-  onOpenBeleg: (id: string, fokus?: BelegFokus) => void;
+  onOpenDocument: (id: string, focus?: DocumentFocus) => void;
   /**
    * Open the manual bookings screen. Omit in a Hub that has none — the links that lead there are
    * then not rendered rather than navigating to a route that does not exist.
@@ -44,11 +44,11 @@ export interface CostAnalysisConfig {
    * loosely on purpose: each Hub's own hook declares its own filter shape, and only the Hub that
    * supplies this knows which field its hook understands.
    */
-  zusatzDimension?: {
+  extraDimension?: {
     /** Search-param key, so the choice survives a reload and travels in a shared link. */
     key: string;
     labelKey: string;
-    alleLabelKey: string;
+    allLabelKey: string;
     /**
      * The options to offer. A hook, because they come from a query, and it receives the current
      * filter state because a dimension can depend on another one: Eiffler only offers tenancies
@@ -59,7 +59,7 @@ export interface CostAnalysisConfig {
   };
 
   /** Extra content under the header, e.g. a Hub-specific notice. */
-  kopfzeile?: ReactNode;
+  headerRow?: ReactNode;
 }
 
 /**
@@ -67,15 +67,15 @@ export interface CostAnalysisConfig {
  * send to each other; component state alone loses them on reload.
  */
 export interface CostAnalysisSearch {
-  gesellschaft?: string;
-  objekt?: string;
-  kategorie?: string;
-  konto?: string;
-  zeitraum?: string;
-  von?: string;
-  bis?: string;
+  company?: string;
+  property?: string;
+  category?: string;
+  account?: string;
+  period?: string;
+  fromDate?: string;
+  toDate?: string;
   /** The value of `config.zusatzDimension`, when a Hub declares one. */
-  zusatz?: string;
+  extra?: string;
   /** "gross" books invoices as billed; anything else is the standard net treatment. */
   basis?: string;
 }
@@ -86,14 +86,14 @@ const str = (v: unknown): string | undefined =>
 /** Shared by every Hub's route, so the four cannot drift on what a link carries. */
 export function validateCostAnalysisSearch(input: Record<string, unknown>): CostAnalysisSearch {
   return {
-    gesellschaft: str(input.gesellschaft),
-    objekt: str(input.objekt),
-    kategorie: str(input.kategorie),
-    konto: str(input.konto),
-    zeitraum: str(input.zeitraum),
-    von: str(input.von),
-    bis: str(input.bis),
-    zusatz: str(input.zusatz),
+    company: str(input.company),
+    property: str(input.property),
+    category: str(input.category),
+    account: str(input.account),
+    period: str(input.period),
+    fromDate: str(input.fromDate),
+    toDate: str(input.toDate),
+    extra: str(input.extra),
     basis: input.basis === "gross" ? "gross" : undefined,
   };
 }

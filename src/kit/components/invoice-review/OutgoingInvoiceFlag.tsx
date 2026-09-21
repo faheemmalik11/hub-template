@@ -4,7 +4,7 @@ import { cn } from "../../lib/class-names";
 import { Extracted } from "./pipeline-types";
 
 export function isOutgoingInvoice(invoice: { extracted: Extracted | null }): boolean {
-  return (invoice.extracted?.richtung as string | undefined)?.trim().toLowerCase() === "ausgang";
+  return (invoice.extracted?.direction as string | undefined)?.trim().toLowerCase() === "ausgang";
 }
 
 export interface OutgoingInvoiceLabels {

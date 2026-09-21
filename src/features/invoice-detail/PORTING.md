@@ -49,9 +49,9 @@ bundling copies — the hubs share this architecture, and duplicating it would
 fork it. To port, the target repo must provide:
 
 1. **Route file** `src/routes/eingangsrechnungen/$nr.tsx` — a thin shell that
-   calls `createFileRoute("/eingangsrechnungen/$nr")` with
+   calls `createFileRoute("/incoming-invoices/$nr")` with
    `component: BelegDetailPage`. The page finds its route via
-   `getRouteApi("/eingangsrechnungen/$nr")`, so the path must match.
+   `getRouteApi("/incoming-invoices/$nr")`, so the path must match.
 2. **`@/lib/data/format`** — `formatDauer`, `formatDateTime`, `formatEUR`,
    `workflowLabelDe`, `approvalActionLabelDe`, `WORKFLOW_REIHENFOLGE`,
    `pruefKarte`/`pruefGruendeDetail` and friends, `abgleichStatus`,

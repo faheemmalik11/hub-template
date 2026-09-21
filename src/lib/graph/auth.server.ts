@@ -9,7 +9,7 @@
 // .server.ts suffix: Vite excludes this from the client bundle, so the client secret can never
 // end up in a browser response even by accident.
 
-import { channelCredential } from "@/lib/postfach/channel-credentials.server";
+import { channelCredential } from "@/lib/inbox/channel-credentials.server";
 
 export async function getGraphAccessToken(): Promise<string> {
   const [tenant, clientId, clientSecret] = await Promise.all([

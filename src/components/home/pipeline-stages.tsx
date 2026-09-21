@@ -4,7 +4,7 @@ import { DashboardPanel } from "@/components/dashboard/panel";
 import { StageTiles, type StageTile } from "@/components/dashboard/stage-tiles";
 import { PeriodPicker, useStoredPeriod } from "@/components/home/period-picker";
 import { overviewPeriodRange } from "@/lib/data/format";
-import { useBelegeKanbanCounts } from "@/data";
+import { useDocumentsKanbanCounts } from "@/data";
 import { useTranslation } from "@/lib/i18n";
 
 /**
@@ -49,15 +49,18 @@ const STAGES: { key: string; statuses: string[]; tileCls: string; labelCls: stri
 
 export function PipelineStages() {
   const { t } = useTranslation();
-  const [zeitraum, setZeitraum] = useStoredPeriod("stages");
+  const [period, setPeriod] = useStoredPeriod("stages");
   const range = useMemo(
     () =>
-      overviewPeriodRange(zeitraum.period, new Date(), { von: zeitraum.von, bis: zeitraum.bis }),
-    [zeitraum],
+      overviewPeriodRange(period.period, new Date(), {
+        fromDate: period.fromDate,
+        toDate: period.toDate,
+      }),
+    [period],
   );
-  const countsQ = useBelegeKanbanCounts({
-    von: range.von ?? undefined,
-    bis: range.bis ?? undefined,
+  const countsQ = useDocumentsKanbanCounts({
+    fromDate: range.fromDate ?? undefined,
+    toDate: range.toDate ?? undefined,
   });
 
   const stages = useMemo<StageTile[]>(() => {
@@ -70,7 +73,7 @@ export function PipelineStages() {
       labelCls: s.labelCls,
       // The list takes a single workflow value, so a merged step links to the status a person
       // would look in first.
-      link: { to: "/eingangsrechnungen", search: { workflow: s.statuses[0] } },
+      link: { to: "/incoming-invoices", search: { workflow: s.statuses[0] } },
     }));
   }, [countsQ.data, t]);
 
@@ -84,7 +87,7 @@ export function PipelineStages() {
   return (
     <DashboardPanel
       title={t("home.stages.title")}
-      headerRight={<PeriodPicker value={zeitraum} onChange={setZeitraum} />}
+      headerRight={<PeriodPicker value={period} onChange={setPeriod} />}
       className="h-full"
     >
       <StageTiles stages={stages} loading={countsQ.isLoading} />

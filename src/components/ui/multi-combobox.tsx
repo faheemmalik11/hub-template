@@ -82,8 +82,8 @@ export function MultiCombobox({
   // twelve companies would otherwise push the buttons below the fold. Past the cap the remainder
   // becomes one "+n" pill, which is the only place a bare number is still the honest answer.
   const PILL_LIMIT = 4;
-  const sichtbar = selected.slice(0, PILL_LIMIT);
-  const rest = selected.length - sichtbar.length;
+  const visible = selected.slice(0, PILL_LIMIT);
+  const rest = selected.length - visible.length;
 
   return (
     <Popover
@@ -114,7 +114,7 @@ export function MultiCombobox({
             </span>
           ) : (
             <span className="flex min-w-0 flex-wrap items-center gap-1">
-              {sichtbar.map((o) => (
+              {visible.map((o) => (
                 <span
                   key={o.value}
                   className="inline-flex max-w-full items-center gap-1 rounded-md bg-muted px-1.5 py-0.5 text-xs font-medium text-foreground"

@@ -6,7 +6,7 @@ import { Calendar } from "@/components/ui/calendar";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { useTranslation } from "@/lib/i18n";
 import { cn } from "@/lib/utils";
-import { useFeldId } from "@/components/ui/feld-context";
+import { useFieldId } from "@/components/ui/feld-context";
 
 /**
  * The one date field for the whole app.
@@ -64,22 +64,22 @@ export function DatePicker({
   const { t, i18n } = useTranslation();
   const [open, setOpen] = useState(false);
   // Inside a Feld this carries the id the sibling Label points at.
-  const feldId = useFeldId();
-  const englisch = !!i18n.language?.startsWith("en");
+  const fieldId = useFieldId();
+  const english = !!i18n.language?.startsWith("en");
   const selected = isoToDate(value);
 
   // What the user sees while typing. Kept separate from `value` so a half-typed "15.0" is not
   // parsed, rejected and yanked back on every keystroke; it is committed on blur and on Enter.
-  const [text, setText] = useState(() => isoToInput(value, englisch));
-  const tippt = useRef(false);
+  const [text, setText] = useState(() => isoToInput(value, english));
+  const types = useRef(false);
   useEffect(() => {
     // Re-sync when the value changes from outside (form reset, a different record loaded, the
     // calendar) -- but never while the field is being typed into.
-    if (!tippt.current) setText(isoToInput(value, englisch));
-  }, [value, englisch]);
+    if (!types.current) setText(isoToInput(value, english));
+  }, [value, english]);
 
-  function commit(roh: string) {
-    const trimmed = roh.trim();
+  function commit(raw: string) {
+    const trimmed = raw.trim();
     if (!trimmed) {
       if (value) onChange("");
       setText("");
@@ -89,22 +89,22 @@ export function DatePicker({
     if (iso && iso !== value) onChange(iso);
     // Snap the text back to the canonical rendering, so "1.8.26" becomes "01.08.2026" and an
     // unparseable entry returns to the last good value rather than sitting there looking accepted.
-    setText(isoToInput(iso ?? value, englisch));
+    setText(isoToInput(iso ?? value, english));
   }
 
   // HOW FAR THE CALENDAR CAN NAVIGATE, not just how far its dropdowns list: in react-day-picker v9
   // `startMonth`/`endMonth` bound both. A fixed [now-10, now+5] put a 2014 supplier invoice out of
   // the calendar's reach altogether. Wide enough for old documents, and always stretched to cover
   // whatever is already selected or bounded, so no value the field can hold is unreachable.
-  const jetzt = new Date().getFullYear();
-  const jahre = [
-    jetzt,
+  const now = new Date().getFullYear();
+  const years = [
+    now,
     selected?.getFullYear(),
     isoToDate(min ?? "")?.getFullYear(),
     isoToDate(max ?? "")?.getFullYear(),
   ].filter((j): j is number => typeof j === "number");
-  const startJahr = Math.min(jetzt - 30, ...jahre);
-  const endJahr = Math.max(jetzt + 10, ...jahre);
+  const startYear = Math.min(now - 30, ...years);
+  const endYear = Math.max(now + 10, ...years);
 
   return (
     <div
@@ -117,7 +117,7 @@ export function DatePicker({
       )}
     >
       <input
-        id={id ?? feldId ?? undefined}
+        id={id ?? fieldId ?? undefined}
         type="text"
         inputMode="numeric"
         autoComplete="off"
@@ -125,13 +125,13 @@ export function DatePicker({
         aria-invalid={invalid}
         aria-label={ariaLabel}
         value={text}
-        placeholder={placeholder ?? formatHinweis(englisch)}
+        placeholder={placeholder ?? formatHint(english)}
         onFocus={() => {
-          tippt.current = true;
+          types.current = true;
         }}
         onChange={(e) => setText(e.target.value)}
         onBlur={(e) => {
-          tippt.current = false;
+          types.current = false;
           commit(e.target.value);
         }}
         onKeyDown={(e) => {
@@ -140,7 +140,7 @@ export function DatePicker({
             commit(text);
           }
           if (e.key === "Escape") {
-            setText(isoToInput(value, englisch));
+            setText(isoToInput(value, english));
           }
         }}
         className="min-w-0 flex-1 bg-transparent text-sm outline-none placeholder:text-muted-foreground disabled:cursor-not-allowed"
@@ -181,9 +181,9 @@ export function DatePicker({
             // Month and year as dropdowns rather than one arrow at a time: entering a date from last
             // year meant twelve clicks otherwise.
             captionLayout="dropdown"
-            startMonth={new Date(startJahr, 0)}
-            endMonth={new Date(endJahr, 11)}
-            locale={englisch ? enUS : deLocale}
+            startMonth={new Date(startYear, 0)}
+            endMonth={new Date(endYear, 11)}
+            locale={english ? enUS : deLocale}
             disabled={[
               ...(isoToDate(min ?? "") ? [{ before: isoToDate(min ?? "")! }] : []),
               ...(isoToDate(max ?? "") ? [{ after: isoToDate(max ?? "")! }] : []),
@@ -192,7 +192,7 @@ export function DatePicker({
               if (!d) return;
               const iso = dateToIso(d);
               onChange(iso);
-              setText(isoToInput(iso, englisch));
+              setText(isoToInput(iso, english));
               setOpen(false);
             }}
             autoFocus
@@ -204,18 +204,18 @@ export function DatePicker({
 }
 
 /** The format the field shows and expects, as a placeholder people can actually act on. */
-function formatHinweis(englisch: boolean): string {
-  return englisch ? "MM/DD/YYYY" : "TT.MM.JJJJ";
+function formatHint(english: boolean): string {
+  return english ? "MM/DD/YYYY" : "TT.MM.JJJJ";
 }
 
 /** ISO to the editable numeric rendering for the current language. */
-function isoToInput(iso: string, englisch: boolean): string {
+function isoToInput(iso: string, english: boolean): string {
   const d = isoToDate(iso);
   if (!d) return "";
   const pad = (n: number) => String(n).padStart(2, "0");
   const tag = pad(d.getDate());
-  const monat = pad(d.getMonth() + 1);
-  return englisch ? `${monat}/${tag}/${d.getFullYear()}` : `${tag}.${monat}.${d.getFullYear()}`;
+  const month = pad(d.getMonth() + 1);
+  return english ? `${month}/${tag}/${d.getFullYear()}` : `${tag}.${month}.${d.getFullYear()}`;
 }
 
 /**
@@ -229,28 +229,28 @@ function inputToIso(raw: string): string | null {
 
   // ISO first: unambiguous, and the format that arrives when a value is pasted out of the app.
   const iso = /^(\d{4})-(\d{1,2})-(\d{1,2})$/.exec(s);
-  if (iso) return bauen(Number(iso[1]), Number(iso[2]), Number(iso[3]));
+  if (iso) return build(Number(iso[1]), Number(iso[2]), Number(iso[3]));
 
-  const punkt = /^(\d{1,2})[.](\d{1,2})[.](\d{2}|\d{4})$/.exec(s); // 15.8.2026 / 15.08.26
-  if (punkt) return bauen(jahr(punkt[3]), Number(punkt[2]), Number(punkt[1]));
+  const point = /^(\d{1,2})[.](\d{1,2})[.](\d{2}|\d{4})$/.exec(s); // 15.8.2026 / 15.08.26
+  if (point) return build(year(point[3]), Number(point[2]), Number(point[1]));
 
-  const schraeg = /^(\d{1,2})\/(\d{1,2})\/(\d{2}|\d{4})$/.exec(s); // 8/15/2026, month first
-  if (schraeg) return bauen(jahr(schraeg[3]), Number(schraeg[1]), Number(schraeg[2]));
+  const italic = /^(\d{1,2})\/(\d{1,2})\/(\d{2}|\d{4})$/.exec(s); // 8/15/2026, month first
+  if (italic) return build(year(italic[3]), Number(italic[1]), Number(italic[2]));
 
-  const kompakt = /^(\d{2})(\d{2})(\d{4})$/.exec(s); // 15082026, typed without separators
-  if (kompakt) return bauen(Number(kompakt[3]), Number(kompakt[2]), Number(kompakt[1]));
+  const compact = /^(\d{2})(\d{2})(\d{4})$/.exec(s); // 15082026, typed without separators
+  if (compact) return build(Number(compact[3]), Number(compact[2]), Number(compact[1]));
 
   return null;
 }
 
-function jahr(teil: string): number {
-  const n = Number(teil);
+function year(part: string): number {
+  const n = Number(part);
   // A two-digit year is this century. "26" is 2026, not 1926 -- nobody is entering 1920s invoices.
-  return teil.length === 2 ? 2000 + n : n;
+  return part.length === 2 ? 2000 + n : n;
 }
 
 /** Builds ISO only if the parts are a date that exists: 31.02. comes back null, not 03.03. */
-function bauen(y: number, m: number, d: number): string | null {
+function build(y: number, m: number, d: number): string | null {
   if (!y || !m || !d || m < 1 || m > 12 || d < 1 || d > 31) return null;
   const date = new Date(y, m - 1, d);
   if (date.getFullYear() !== y || date.getMonth() !== m - 1 || date.getDate() !== d) return null;

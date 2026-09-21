@@ -31,7 +31,7 @@ export function SyncLogDialog() {
             was one guess too many for a button that is not a common action. */}
         <Button variant="outline" className="gap-2">
           <ScrollText className="size-4" />
-          {t("bankkonten.syncLog.button")}
+          {t("bankAccounts.syncLog.button")}
         </Button>
       </DialogTrigger>
       {/* A column with a bounded height, not a scrolling block. The title, the last-run line
@@ -39,7 +39,7 @@ export function SyncLogDialog() {
           them moves. */}
       <DialogContent className="flex max-h-[85vh] max-w-5xl flex-col overflow-hidden">
         <DialogHeader className="shrink-0">
-          <DialogTitle>{t("bankkonten.syncLog.titel")}</DialogTitle>
+          <DialogTitle>{t("bankAccounts.syncLog.titel")}</DialogTitle>
           {/* The last run, where the page used to state it. Taking it off the accounts screen was
               the point, but deleting it would have thrown away the one line that answers "is the
               feed alive" -- so it moved to the top of the history it summarises. DialogDescription

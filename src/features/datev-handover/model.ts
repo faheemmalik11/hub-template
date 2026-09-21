@@ -5,7 +5,7 @@ import {
   type DatevOutgoingInvoice,
   type DatevReadyInvoice,
   type DatevRoute,
-  type Gesellschaft,
+  type Company,
 } from "./adapter";
 
 /**
@@ -29,7 +29,7 @@ export type SetupState = "missing" | "ready" | "paused";
 export type RowAction = "configure" | "send" | "none";
 
 export interface CompanyRow {
-  company: Gesellschaft;
+  company: Company;
   /** The `incoming` route — the only direction wired to a send. */
   route: DatevRoute | undefined;
   /** Every direction's route, for the setup drawer. */
@@ -39,7 +39,7 @@ export interface CompanyRow {
   ready: DatevReadyInvoice[];
   /** Same rule minus the file — the receipts a send would drop if nobody said so. */
   blocked: DatevReadyInvoice[];
-  readySumme: number;
+  readyTotal: number;
   /** Receipts handed over at some point in the past. */
   sent: number;
   /** Newest SUCCESSFUL batch. A failed attempt is not a handover and must not date this column. */
@@ -75,7 +75,7 @@ const RANG: Record<RowAction, number> = { send: 0, configure: 1, none: 2 };
  * refreshes — a list that reshuffles itself while being read is its own problem.
  */
 export function buildRows(args: {
-  companies: Gesellschaft[];
+  companies: Company[];
   routes: DatevRoute[];
   status: Record<string, DatevCompanyStatus> | undefined;
   batches: DatevHandoverBatch[];
@@ -111,7 +111,7 @@ export function buildRows(args: {
       setup,
       ready,
       blocked,
-      readySumme: ready.reduce((sum, i) => sum + (i.amount_gross ?? 0), 0),
+      readyTotal: ready.reduce((sum, i) => sum + (i.amount_gross ?? 0), 0),
       sent: s?.handedOver ?? 0,
       lastSent: lastSuccess.get(company.id),
       lastAttemptFailed: lastAny.get(company.id)?.status === "error",
@@ -130,7 +130,7 @@ export function fleetSummary(rows: CompanyRow[]) {
   return {
     companies: rows.length,
     filesReady: rows.reduce((n, r) => n + r.ready.length, 0),
-    readySumme: rows.reduce((n, r) => n + r.readySumme, 0),
+    readyTotal: rows.reduce((n, r) => n + r.readyTotal, 0),
     alreadySent: rows.reduce((n, r) => n + r.sent, 0),
     needSetup: rows.filter((r) => r.setup === "missing").length,
     /** Companies a page-level send would actually move. */

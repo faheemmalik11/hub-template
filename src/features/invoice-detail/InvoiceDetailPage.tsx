@@ -51,7 +51,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Separator } from "@/components/ui/separator";
 import { Switch } from "@/components/ui/switch";
 import { Combobox } from "@/components/ui/combobox";
-import { PingDialog, PingNotice, usePingRecipients } from "@/components/belege/ping-button";
+import { PingDialog, PingNotice, usePingRecipients } from "@/components/documents/ping-button";
 import { useShellLeafLabel } from "@/kit/components/shell";
 import {
   Dialog,
@@ -95,41 +95,41 @@ import {
   useCloseInvoiceRemainder,
   useReopenInvoiceRemainder,
   ACTING_AS_NONE,
-  useAddNotiz,
+  useAddNote,
   useApplyAssignmentRules,
-  useArchiveBeleg,
+  useArchiveDocument,
   useAssignmentRuleCandidates,
   useAssignmentRules,
-  useBeleg,
+  useDocument,
   useBankAccounts,
-  useBelegMatches,
-  useBelegVerlauf,
-  useBwaCategories,
+  useDocumentMatches,
+  useDocumentHistory,
+  useCostAnalysisCategories,
   useCancelPaymentOrder,
   useClearNotRelevant,
   useConfirmMatch,
   useActingCapabilities,
-  useGesellschaften,
+  useCompanies,
   useInitiatePayment,
   useAddSupplierBankAccount,
   useInvoiceBankAccounts,
-  useLieferant,
+  useSupplier,
   useLinkInvoiceBankAccount,
-  useLieferanten,
-  useObjekte,
+  useSuppliers,
+  useProperties,
   usePaymentOrders,
   usePropertyCompanies,
   useRejectMatch,
   useResolveApprovalRule,
   useResolvedRules,
   useSetNotRelevant,
-  useSoftDeleteBeleg,
+  useSoftDeleteDocument,
   useSupplierBankAccounts,
-  useUnarchiveBeleg,
-  useUpdateBeleg,
-  useVerarbeitungsLogFuerBeleg,
+  useUnarchiveDocument,
+  useUpdateDocument,
+  useProcessingLogForDocument,
 } from "@/data";
-import { resolveKostenstelle, type Kostenstelle } from "@/lib/data/kostenstelle";
+import { resolveCostCentre, type CostCentre } from "@/lib/data/cost-centre";
 import {
   releasesPaymentLink,
   UnlinkMatchButton,
@@ -137,45 +137,45 @@ import {
 } from "@/kit/components/invoice-payment-link";
 import { backwardsTargets } from "@/kit/components/invoice-workflow";
 import {
-  GESELLSCHAFT_OHNE,
+  COMPANY_WITHOUT,
   APPROVAL_TERMINAL_STATUSES,
-  QUELLE_META,
-  WORKFLOW_REIHENFOLGE,
-  abgleichStatus,
-  istOffenerVorschlag,
+  SOURCE_META,
+  WORKFLOW_ORDER,
+  matchingStatus,
+  isOpenSuggestion,
   approvalActionLabelDe,
   approvalQueryTarget,
-  fehlerText,
-  feldAenderungDe,
+  errorText,
+  fieldChangeDe,
   fieldSourceKey,
   formatDate,
   formatDateTime,
   formatEUR,
   formatIBAN,
   formatSignedEUR,
-  istEingangsrechnung,
-  istLastschrift,
+  isIncomingInvoice,
+  isDirectDebit,
   nextLegalActions,
   parseDecimalInput,
   type ApprovalAction,
   type ApprovalActionId,
   workflowLabelDe,
-  zahlungGruende,
-  FELD_LABEL_DE,
+  paymentReasons,
+  FIELD_LABEL_DE,
 } from "@/lib/data/format";
-import { pruefGruendeDetail, pruefKarte } from "./pruefung";
+import { checkReasonsDetail, checkCard } from "./checks";
 import { useTranslation, tDe, Trans } from "@/lib/i18n";
 import { useTabParam } from "@/lib/use-tab-param";
 import {
-  BelegartBadge,
-  KanalBadge,
-  KonfidenzDot,
-  KonfidenzPill,
+  DocumentTypeBadge,
+  ChannelBadge,
+  ConfidenceDot,
+  ConfidencePill,
   WorkflowBadge,
-} from "@/components/belege/badges";
-import { AbgleichBadge, MatchStatusBadge } from "@/components/bank/badges";
+} from "@/components/documents/badges";
+import { MatchingBadge, MatchStatusBadge } from "@/components/bank/badges";
 import { MatchScoreBreakdown } from "@/components/bank/match-score";
-import { CopyButton } from "@/components/belege/copy-button";
+import { CopyButton } from "@/components/documents/copy-button";
 import {
   ActionButtons,
   HeaderNotes,
@@ -196,54 +196,54 @@ import { BankAccountDialog } from "@/components/suppliers/bank-account-dialog";
 import { FactList } from "@/components/records/fact-list";
 import { PaymentAccounts } from "@/components/suppliers/payment-account-summary";
 import { PlainSection } from "@/components/records/plain-section";
-import { DocumentPreview } from "@/components/belege/document-preview";
-import { SplitOriginNote } from "@/components/belege/split-origin-note";
-import { ErrorState } from "@/components/belege/query-states";
-import { NeueRegelDialog } from "@/components/zuordnung/neue-regel-dialog";
+import { DocumentPreview } from "@/components/documents/document-preview";
+import { SplitOriginNote } from "@/components/documents/split-origin-note";
+import { ErrorState } from "@/components/documents/query-states";
+import { NewRuleDialog } from "@/components/assignment/new-rule-dialog";
 import type {
   AssignmentRule,
-  Beleg,
-  BwaCategory,
+  Document,
+  CostAnalysisCategory,
   ChainPerson,
-  Konfidenz,
-  Lieferant,
+  Confidence,
+  Supplier,
   RuleTarget,
   WorkflowStatus,
 } from "@/lib/data/types";
 import { INCOME_TAX_TREATMENTS, VAT_SPECIAL_CASES, VAT_TREATMENTS } from "@/lib/data/types";
 import { pageTitle } from "@/config/brand";
-import { pickListSearch } from "@/lib/belege-list-search";
+import { pickListSearch } from "@/lib/documents-list-search";
 
 import {
-  APPROVAL_VERLAUF_TYPES,
-  AUTO_STUFEN,
+  APPROVAL_HISTORY_TYPES,
+  AUTO_STEPS,
   CHAIN_ACTION_IDS,
   CORRECTABLE_STATUSES,
   LADDER_THEME,
-  ABGLEICH_ANKER,
-  BETRAEGE_ANKER,
-  BETEILIGTE_ANKER,
-  FELD_SPRUNGZIEL,
-  LIEFERANT_ANKER,
-  UEBERWEISUNG_ANKER,
-  RECHNUNGSDATEN_ANKER,
-  REVIEW_ANKER,
+  MATCHING_ANCHOR,
+  AMOUNTS_ANCHOR,
+  PARTICIPANTS_ANCHOR,
+  FIELD_JUMPTARGET,
+  SUPPLIER_ANCHOR,
+  TRANSFER_ANCHOR,
+  INVOICEDATA_ANCHOR,
+  REVIEW_ANCHOR,
   HEADER_NOTE_COUNT,
-  NOTIZEN_ANKER,
-  RUECKFRAGE_ANKER,
+  NOTES_ANCHOR,
+  QUERY_ANCHOR,
 } from "./config";
-import { verlaufBasis, verlaufTypLabel, verlaufZeilen, verlaufZusatz } from "./verlauf";
-import { AusgangBanner } from "./AusgangFlag";
-import { belegNachgeprueft } from "./nachpruefung";
-import { ohnePruefungen, pruefGruendeAnzeige, pruefungLabelDe } from "./pruefung";
+import { historyBasis, historyTypeLabel, historyRows, historyExtra } from "./history";
+import { OutgoingBanner } from "./OutgoingFlag";
+import { documentRechecked } from "./recheck";
+import { withoutChecks, checkReasonsDisplay, checkLabelDe } from "./checks";
 import { ReviewBadge } from "./ReviewChip";
 import { SideBySide } from "./SideBySide";
-import { WorkflowVerlaufListe } from "./WorkflowVerlaufListe";
+import { WorkflowHistoryList } from "./WorkflowHistoryList";
 
 // The page is portable (see PORTING.md) and must not import the Route object from the route
 // file, which imports it back -- getRouteApi is TanStack Router's own decoupling for exactly
 // this. The route path string is the one thing that has to match the host repo's route file.
-const route = getRouteApi("/eingangsrechnungen/$nr");
+const route = getRouteApi("/incoming-invoices/$nr");
 
 /**
  * The list state to return to. Empty when the invoice was opened from somewhere other than the
@@ -254,13 +254,13 @@ function useListSearch() {
   return pickListSearch(route.useSearch());
 }
 
-export function BelegDetailPage() {
+export function DocumentDetailPage() {
   const { nr } = route.useParams();
   const { t } = useTranslation();
   const listSearch = useListSearch();
-  const { data: beleg, isLoading, isError, error, refetch } = useBeleg(nr);
+  const { data: doc, isLoading, isError, error, refetch } = useDocument(nr);
   // The URL carries the row id; the breadcrumb should carry something a person recognises.
-  useShellLeafLabel(beleg ? (beleg.invoice_number ?? beleg.issuer ?? null) : null);
+  useShellLeafLabel(doc ? (doc.invoice_number ?? doc.issuer ?? null) : null);
 
   if (isLoading) {
     return (
@@ -281,25 +281,25 @@ export function BelegDetailPage() {
     return <ErrorState error={error} onRetry={() => refetch()} />;
   }
 
-  if (!beleg) {
+  if (!doc) {
     return (
       <div className="mx-auto max-w-md py-20 text-center">
         <h1 className="text-xl font-semibold tracking-tight text-foreground">
-          {t("belege.detail.notFoundTitle")}
+          {t("documents.detail.notFoundTitle")}
         </h1>
         <p className="mt-2 text-base text-muted-foreground">
-          {t("belege.detail.notFoundBody", { nr })}
+          {t("documents.detail.notFoundBody", { nr })}
         </p>
         <Button asChild className="mt-6">
-          <Link to="/eingangsrechnungen" search={listSearch}>
-            {t("belege.detail.toOverview")}
+          <Link to="/incoming-invoices" search={listSearch}>
+            {t("documents.detail.toOverview")}
           </Link>
         </Button>
       </div>
     );
   }
 
-  return <BelegDetail key={beleg.id} beleg={beleg} />;
+  return <DocumentDetail key={doc.id} doc={doc} />;
 }
 
 // Editierbare Felder als String-Formular (Inputs liefern Strings).
@@ -341,7 +341,7 @@ type FormState = {
   income_tax_treatment: string;
 };
 
-function formFromBeleg(b: Beleg): FormState {
+function formFromDocument(b: Document): FormState {
   const s = (v: string | null) => v ?? "";
   const n = (v: number | null) => (v == null ? "" : String(v));
   return {
@@ -360,7 +360,7 @@ function formFromBeleg(b: Beleg): FormState {
     amount_gross: n(b.amount_gross),
     currency: s(b.currency),
     company_code: s(b.company_code),
-    property_code: b.is_overhead ? GEMEINKOSTEN : s(b.property_code),
+    property_code: b.is_overhead ? OVERHEAD : s(b.property_code),
     category_id: s(b.category_id),
     service_description: s(b.service_description),
     recipient_name: s(b.recipient_name),
@@ -410,12 +410,12 @@ const NUM_KEYS = [
 // The detail screen's six tabs, shared by the always-visible desktop row and the collapsed mobile
 // disclosure so the two can never list a different set of tabs from each other.
 const TAB_ITEMS = [
-  { value: "uebersicht", labelKey: "belege.detail.tab.uebersicht" },
-  { value: "freigabe", labelKey: "belege.detail.tab.freigabe" },
-  { value: "zahlung", labelKey: "belege.detail.tab.zahlung" },
-  { value: "lieferant", labelKey: "belege.detail.tab.lieferant" },
-  { value: "details", labelKey: "belege.detail.tab.details" },
-  { value: "verlauf", labelKey: "belege.detail.tab.verlauf" },
+  { value: "uebersicht", labelKey: "documents.detail.tab.uebersicht" },
+  { value: "freigabe", labelKey: "documents.detail.tab.freigabe" },
+  { value: "zahlung", labelKey: "documents.detail.tab.zahlung" },
+  { value: "lieferant", labelKey: "documents.detail.tab.lieferant" },
+  { value: "details", labelKey: "documents.detail.tab.details" },
+  { value: "verlauf", labelKey: "documents.detail.tab.verlauf" },
 ] as const;
 
 // Formular → DB-Änderungen (nur geänderte Felder); leere Strings → null.
@@ -432,13 +432,13 @@ const TAB_ITEMS = [
  * would need every one of those columns to mean "ignore me". Saskia's rule (09.09.2026, 12:36):
  * "If it says overhead costs, then there is no property."
  */
-const GEMEINKOSTEN = "__overhead";
+const OVERHEAD = "__overhead";
 
 function diffChanges(
   form: FormState,
-  b: Beleg,
+  b: Document,
 ): {
-  changes: Partial<Beleg>;
+  changes: Partial<Document>;
   before: Record<string, unknown>;
   labels: string[];
   invalid: string[];
@@ -448,56 +448,56 @@ function diffChanges(
   const labels: string[] = [];
   const invalid: string[] = [];
   for (const k of TEXT_KEYS) {
-    const neu = form[k].trim() === "" ? null : form[k].trim();
+    const next = form[k].trim() === "" ? null : form[k].trim();
     const alt = (b[k] as string | null) ?? null;
-    if (neu !== alt) {
-      changes[k] = neu;
+    if (next !== alt) {
+      changes[k] = next;
       before[k] = alt;
       labels.push(k);
     }
   }
   for (const k of NUM_KEYS) {
-    const neu = parseDecimalInput(form[k]); // null = cleared, NaN = invalid input
-    if (neu !== null && Number.isNaN(neu)) {
+    const next = parseDecimalInput(form[k]); // null = cleared, NaN = invalid input
+    if (next !== null && Number.isNaN(next)) {
       invalid.push(k);
       continue; // never overwrite a value with NaN — no silent data loss
     }
     const alt = (b[k] as number | null) ?? null;
-    if (neu !== alt) {
-      changes[k] = neu;
+    if (next !== alt) {
+      changes[k] = next;
       before[k] = alt;
       labels.push(k);
     }
   }
-  return { changes: changes as Partial<Beleg>, before, labels, invalid };
+  return { changes: changes as Partial<Document>, before, labels, invalid };
 }
 
-function BelegDetail({ beleg }: { beleg: Beleg }) {
+function DocumentDetail({ doc }: { doc: Document }) {
   // Same list state the page header's back link uses, so both return to the filtered list.
   const listSearch = useListSearch();
   const navigate = useNavigate();
   const { t } = useTranslation();
-  const lieferantQ = useLieferant(beleg.supplier_id ?? "");
-  const rechnungsKontenQ = useInvoiceBankAccounts(beleg.id, beleg.supplier_id);
-  const gesellschaftenQ = useGesellschaften();
-  const objekteQ = useObjekte();
-  const categoriesQ = useBwaCategories();
+  const supplierQ = useSupplier(doc.supplier_id ?? "");
+  const invoiceAccountsQ = useInvoiceBankAccounts(doc.id, doc.supplier_id);
+  const companiesQ = useCompanies();
+  const propertiesQ = useProperties();
+  const categoriesQ = useCostAnalysisCategories();
   const propertyCompaniesQ = usePropertyCompanies();
-  const logQ = useVerarbeitungsLogFuerBeleg(beleg.id);
-  const verlaufQ = useBelegVerlauf(beleg.id);
+  const logQ = useProcessingLogForDocument(doc.id);
+  const historyQ = useDocumentHistory(doc.id);
   // Which rule currently wins for this receipt, per field. Shown even when the field is human-set
   // and therefore protected: knowing which rule you are overriding is the useful part.
-  const regelnQ = useResolvedRules(beleg.id);
+  const rulesQ = useResolvedRules(doc.id);
 
-  const updateBeleg = useUpdateBeleg(beleg.id);
-  const addNotiz = useAddNotiz(beleg.id);
-  const softDelete = useSoftDeleteBeleg(beleg.id);
+  const updateDocument = useUpdateDocument(doc.id);
+  const addNote = useAddNote(doc.id);
+  const softDelete = useSoftDeleteDocument(doc.id);
   const applyRules = useApplyAssignmentRules();
-  const setNotRelevant = useSetNotRelevant(beleg.id);
-  const clearNotRelevant = useClearNotRelevant(beleg.id);
-  const archive = useArchiveBeleg(beleg.id);
-  const unarchive = useUnarchiveBeleg(beleg.id);
-  const approvalRuleQ = useResolveApprovalRule(beleg.id);
+  const setNotRelevant = useSetNotRelevant(doc.id);
+  const clearNotRelevant = useClearNotRelevant(doc.id);
+  const archive = useArchiveDocument(doc.id);
+  const unarchive = useUnarchiveDocument(doc.id);
+  const approvalRuleQ = useResolveApprovalRule(doc.id);
 
   // Per-section editing: only one section is editable at a time (its key here, or null).
   // Replaces the old single global edit button so a single field can be corrected in isolation.
@@ -509,9 +509,9 @@ function BelegDetail({ beleg }: { beleg: Beleg }) {
     actingAs,
     people: chainPeople,
     chooseActingAs,
-    darfHandelnAls,
-    istFremdeIdentitaet,
-    darfAlsPerson,
+    canActAls,
+    isForeignIdentity,
+    canAlsPerson,
   } = useActingCapabilities();
   const [editSection, setEditSection] = useState<string | null>(null);
   // Which of the six detail tabs is showing.
@@ -519,43 +519,43 @@ function BelegDetail({ beleg }: { beleg: Beleg }) {
     ["uebersicht", "freigabe", "zahlung", "lieferant", "details", "verlauf"] as const,
     "uebersicht",
   );
-  const [form, setForm] = useState<FormState>(() => formFromBeleg(beleg));
+  const [form, setForm] = useState<FormState>(() => formFromDocument(doc));
   // The receipt as it looked when the open section started editing. The dirty check below diffs
   // against this rather than the live `beleg`, which keeps refetching underneath the open form.
-  const [basis, setBasis] = useState<Beleg>(beleg);
-  const [notiz, setNotiz] = useState("");
+  const [basis, setBasis] = useState<Document>(doc);
+  const [note, setNote] = useState("");
   const [noteFormOpen, setNoteFormOpen] = useState(false);
-  const [nichtRelevantGrund, setNichtRelevantGrund] = useState("");
-  const [archivHinweis, setArchivHinweis] = useState("");
+  const [notRelevantReason, setNotRelevantReason] = useState("");
+  const [archiveHint, setArchiveHint] = useState("");
   // Which destructive action is confirming. One slot, not three booleans: only one of these
   // dialogs can be open at a time, and the ⋮ menu that opens them closes on select.
-  const [aktionDialog, setAktionDialog] = useState<
+  const [actionDialog, setActionDialog] = useState<
     "nichtRelevant" | "archivieren" | "verwerfen" | null
   >(null);
-  const [pingOffen, setPingOffen] = useState(false);
-  const pingEmpfaenger = usePingRecipients();
+  const [pingOpen, setPingOpen] = useState(false);
+  const pingRecipient = usePingRecipients();
   // Which direction the paid switch was flipped, held until it is confirmed. `null` = no dialog;
   // `true` = about to mark paid, `false` = about to withdraw the mark. Not a plain boolean open
   // flag, because the two directions say different things and one of them is not reversible by the
   // bank reconciliation.
-  const [bezahltDialog, setBezahltDialog] = useState<boolean | null>(null);
+  const [paidDialog, setPaidDialog] = useState<boolean | null>(null);
   // Selected supplier while editing the Lieferant tab (id, or "__none" to unlink).
-  const [lieferantWahl] = useState("__none");
+  const [supplierChoice] = useState("__none");
   // Deductibility can be entered either as a percentage or as a fixed EUR amount (whichever is more
   // natural for the reviewer); this holds the amount side. vat_deductible_amount itself is a
   // GENERATED column and can never be written directly — only vat_deductible_pct (in `form`) is
   // ever sent to the DB, this is purely a convenience input kept in sync with it.
-  const [abzugBetragEingabe, setAbzugBetragEingabe] = useState(() =>
-    beleg.vat_deductible_amount != null ? String(beleg.vat_deductible_amount) : "",
+  const [deductionAmountInput, setDeductionAmountInput] = useState(() =>
+    doc.vat_deductible_amount != null ? String(doc.vat_deductible_amount) : "",
   );
   // Pending reassignment awaiting confirmation (overwriting an already-set company/property).
   const [reassign, setReassign] = useState<{
-    changes: Partial<Beleg>;
+    changes: Partial<Document>;
     before: Record<string, unknown>;
     labels: string[];
     // Every field this save touches, as before→after lines — what gets written to the history.
     changeLines: string[];
-    istZuordnung: boolean;
+    isAssignment: boolean;
     // Only the assignment overwrites, which is what the dialog asks about.
     lines: string[];
   } | null>(null);
@@ -573,15 +573,14 @@ function BelegDetail({ beleg }: { beleg: Beleg }) {
   // affordance goes through. Without `invoices.book` the database refuses the write (the trigger in
   // migration 20260828270000), so an enabled button here could only ever open a form that fails on
   // save with a raw Postgres error -- the same defect the paid switch had.
-  const darfBuchen = darfAlsPerson(PERMISSIONS.documentsWrite);
-  const kannBearbeiten = (section: string) =>
-    darfBuchen && (editSection === null || editSection === section);
+  const canBook = canAlsPerson(PERMISSIONS.documentsWrite);
+  const canEdit = (section: string) => canBook && (editSection === null || editSection === section);
 
   // The Lieferant section is edited through its own combobox instead of `form`, so diffChanges
   // cannot see it and it has to be checked separately (see speichernLieferant).
-  const lieferantGeaendert =
+  const supplierChanged =
     editSection === "lieferant" &&
-    (lieferantWahl === "__none" ? null : lieferantWahl) !== (basis.supplier_id ?? null);
+    (supplierChoice === "__none" ? null : supplierChoice) !== (basis.supplier_id ?? null);
 
   // Which fields the open edit form would throw away. `diffChanges` is the same helper the save
   // path uses, so "changed" here means exactly what "changed" means when saving -- no separate
@@ -592,7 +591,7 @@ function BelegDetail({ beleg }: { beleg: Beleg }) {
   // reported the server's own changes as the reviewer's unsaved input. Opening a section, typing
   // nothing and clicking "Regeln anwenden" was enough to produce a warning about fields nobody
   // had touched -- and saving from that state would have reverted the rules again.
-  const geaenderteFelder = useMemo(() => {
+  const changedFields = useMemo(() => {
     if (!editSection) return [];
     const { labels, invalid } = diffChanges(form, basis);
     // `invalid` is typed-but-unparseable input ("1.2.3" in Betrag brutto). It never reaches
@@ -602,15 +601,15 @@ function BelegDetail({ beleg }: { beleg: Beleg }) {
     // FormState keys, and "invoice_number, amount_gross" is not what somebody who just typed
     // into "Rechnungsnummer" is looking for. Same map the history lines already use.
     return [...labels, ...invalid]
-      .map((k) => FELD_LABEL_DE[k] ?? k)
-      .concat(lieferantGeaendert ? [FELD_LABEL_DE.supplier_id] : []);
-  }, [editSection, form, basis, lieferantGeaendert]);
-  const hatUngespeicherte = geaenderteFelder.length > 0;
+      .map((k) => FIELD_LABEL_DE[k] ?? k)
+      .concat(supplierChanged ? [FIELD_LABEL_DE.supplier_id] : []);
+  }, [editSection, form, basis, supplierChanged]);
+  const hatUnsaved = changedFields.length > 0;
 
   // Switching tabs closes the open section (that is deliberate), so with typed-but-unsaved input
   // it has to ask first. Without this, one click on another tab silently discarded up to 13 fields
   // somebody had just copied off a PDF, with nothing shown at all.
-  const [tabWunsch, setTabWunsch] = useState<string | null>(null);
+  const [tabRequest, setTabRequest] = useState<string | null>(null);
 
   // Leaving the invoice entirely: the back button, a link, a reload, closing the tab. The tab
   // strip is deliberately NOT blocked here -- it stays on the same invoice and is handled by
@@ -620,21 +619,21 @@ function BelegDetail({ beleg }: { beleg: Beleg }) {
   // somebody walking away from unsaved input: the record they were editing no longer exists, and
   // "Weiter bearbeiten" would cancel the redirect and leave them editing a deleted receipt. A ref
   // rather than state, so shouldBlockFn sees it in the same tick the navigation starts.
-  const eigeneNavigation = useRef(false);
+  const ownNavigation = useRef(false);
 
   const blocker = useBlocker({
     shouldBlockFn: ({ current, next }) =>
-      !eigeneNavigation.current && hatUngespeicherte && current.pathname !== next.pathname,
-    enableBeforeUnload: () => hatUngespeicherte,
+      !ownNavigation.current && hatUnsaved && current.pathname !== next.pathname,
+    enableBeforeUnload: () => hatUnsaved,
     withResolver: true,
   });
 
-  const verwerfenFrage = tabWunsch !== null || blocker.status === "blocked";
-  function aenderungenVerwerfen() {
-    if (tabWunsch !== null) {
-      setActiveTab(tabWunsch);
+  const discardQuestion = tabRequest !== null || blocker.status === "blocked";
+  function changesDiscard() {
+    if (tabRequest !== null) {
+      setActiveTab(tabRequest);
       setEditSection(null);
-      setTabWunsch(null);
+      setTabRequest(null);
       return;
     }
     if (blocker.status === "blocked") {
@@ -642,9 +641,9 @@ function BelegDetail({ beleg }: { beleg: Beleg }) {
       blocker.proceed();
     }
   }
-  function weiterBearbeiten() {
-    if (tabWunsch !== null) {
-      setTabWunsch(null);
+  function nextEdit() {
+    if (tabRequest !== null) {
+      setTabRequest(null);
       return;
     }
     if (blocker.status === "blocked") blocker.reset();
@@ -673,49 +672,49 @@ function BelegDetail({ beleg }: { beleg: Beleg }) {
   // Open when the card is asking for something, collapsed when it only reports that every
   // check passed -- which is what the comment above always claimed and the initialiser never
   // did. Initial value only: once a reader toggles it, onToggle owns it for the visit.
-  const [reviewOffen, setReviewOffen] = useState(() => pruefGruendeDetail(beleg).length > 0);
-  const [reviewBlitz, setReviewBlitz] = useState(false);
+  const [reviewOpen, setReviewOpen] = useState(() => checkReasonsDetail(doc).length > 0);
+  const [reviewFlash, setReviewFlash] = useState(false);
   useEffect(() => {
-    if (!reviewBlitz) return;
-    const id = window.setTimeout(() => setReviewBlitz(false), 1800);
+    if (!reviewFlash) return;
+    const id = window.setTimeout(() => setReviewFlash(false), 1800);
     return () => window.clearTimeout(id);
-  }, [reviewBlitz]);
+  }, [reviewFlash]);
 
   /** Open the review box, scroll it into view, and flash it so the eye lands on what changed. */
-  const zeigeReview = () => {
-    setReviewOffen(true);
-    setReviewBlitz(true);
+  const showReview = () => {
+    setReviewOpen(true);
+    setReviewFlash(true);
     // One frame later: <details> has to have been re-rendered open before scrolling to it, or the
     // browser scrolls to the collapsed summary and the reasons open below the fold.
     requestAnimationFrame(() => {
       document
-        .getElementById(REVIEW_ANKER)
+        .getElementById(REVIEW_ANCHOR)
         ?.scrollIntoView({ behavior: "smooth", block: "center" });
     });
   };
 
-  const [scrollZiel, setScrollZiel] = useState<{ tab: string; id: string } | null>(null);
+  const [scrollTarget, setScrollTarget] = useState<{ tab: string; id: string } | null>(null);
   useEffect(() => {
-    if (!scrollZiel || activeTab !== scrollZiel.tab) return;
+    if (!scrollTarget || activeTab !== scrollTarget.tab) return;
     let frames = 0;
     let raf = 0;
-    const versuch = () => {
-      const el = document.getElementById(scrollZiel.id);
+    const attempt = () => {
+      const el = document.getElementById(scrollTarget.id);
       if (el) {
         el.scrollIntoView({ behavior: "smooth", block: "start" });
         // Scrolling alone drops the reader somewhere on a long tab with no sign of WHICH field the
         // card meant. Applied to the node rather than through state because every anchor is a
         // different section owned by different code.
-        const blitz = [
+        const flash = [
           "ring-2",
           "ring-amber-400",
           "ring-offset-4",
           "ring-offset-background",
           "rounded-lg",
         ];
-        el.classList.add(...blitz);
-        window.setTimeout(() => el.classList.remove(...blitz), 1800);
-        setScrollZiel(null);
+        el.classList.add(...flash);
+        window.setTimeout(() => el.classList.remove(...flash), 1800);
+        setScrollTarget(null);
         return;
       }
       // The panel is not there yet, and nothing will re-run this effect to try again -- `activeTab`
@@ -724,21 +723,21 @@ function BelegDetail({ beleg }: { beleg: Beleg }) {
       // ALREADY open: the tab value round-trips through the router (useTabParam navigates), so on a
       // switch `activeTab` flips a render or two before Radix mounts the matching TabsContent.
       // Bounded so a wrong id cannot spin forever.
-      if (++frames < 60) raf = requestAnimationFrame(versuch);
-      else setScrollZiel(null);
+      if (++frames < 60) raf = requestAnimationFrame(attempt);
+      else setScrollTarget(null);
     };
-    raf = requestAnimationFrame(versuch);
+    raf = requestAnimationFrame(attempt);
     return () => cancelAnimationFrame(raf);
-  }, [scrollZiel, activeTab]);
+  }, [scrollTarget, activeTab]);
 
-  const springeZu = (tab: string, id: string) => {
-    setScrollZiel({ tab, id });
+  const jumpZu = (tab: string, id: string) => {
+    setScrollTarget({ tab, id });
     handleTabChange(tab);
   };
 
   const handleTabChange = (v: string) => {
-    if (hatUngespeicherte) {
-      setTabWunsch(v);
+    if (hatUnsaved) {
+      setTabRequest(v);
       return;
     }
     setActiveTab(v);
@@ -748,10 +747,10 @@ function BelegDetail({ beleg }: { beleg: Beleg }) {
   // Any section currently in edit disables the other sections' edit buttons (one at a time).
   // Start editing a section from the latest beleg, so edits never build on stale form state.
   function startEdit(section: string) {
-    setForm(formFromBeleg(beleg));
-    setBasis(beleg);
-    setAbzugBetragEingabe(
-      beleg.vat_deductible_amount != null ? String(beleg.vat_deductible_amount) : "",
+    setForm(formFromDocument(doc));
+    setBasis(doc);
+    setDeductionAmountInput(
+      doc.vat_deductible_amount != null ? String(doc.vat_deductible_amount) : "",
     );
     setEditSection(section);
   }
@@ -766,64 +765,65 @@ function BelegDetail({ beleg }: { beleg: Beleg }) {
 
   // Whichever of percentage/amount the user actually types drives the other; both ultimately
   // resolve to a single vat_deductible_pct, which is the only real column.
-  function onAbzugProzentChange(v: string) {
+  function onDeductionPercentChange(v: string) {
     set("vat_deductible_pct", v);
     if (v.trim() === "") {
-      setAbzugBetragEingabe("");
+      setDeductionAmountInput("");
       return;
     }
     const pct = Number(v.replace(",", "."));
     if (Number.isFinite(pct) && liveVatAmount != null) {
-      setAbzugBetragEingabe(String(Math.round(((liveVatAmount * pct) / 100) * 100) / 100));
+      setDeductionAmountInput(String(Math.round(((liveVatAmount * pct) / 100) * 100) / 100));
     }
   }
-  function onAbzugBetragChange(v: string) {
-    setAbzugBetragEingabe(v);
+  function onDeductionAmountChange(v: string) {
+    setDeductionAmountInput(v);
     if (v.trim() === "") {
       set("vat_deductible_pct", "");
       return;
     }
-    const betrag = Number(v.replace(",", "."));
-    if (Number.isFinite(betrag) && liveVatAmount) {
-      set("vat_deductible_pct", String(Math.round((betrag / liveVatAmount) * 100 * 100) / 100));
+    const amount = Number(v.replace(",", "."));
+    if (Number.isFinite(amount) && liveVatAmount) {
+      set("vat_deductible_pct", String(Math.round((amount / liveVatAmount) * 100 * 100) / 100));
     }
   }
 
-  const lieferant = lieferantQ.data ?? null;
+  const supplier = supplierQ.data ?? null;
   // The accounts THIS document named. Only the ids matter here: the panel shows one account, and
   // this is what tells it that the account came off the invoice rather than off the supplier.
-  const rechnungsKonten = useMemo(
+  const invoiceAccounts = useMemo(
     () =>
-      rechnungsKontenQ.data?.origin === "invoice" ? (rechnungsKontenQ.data?.accounts ?? []) : [],
-    [rechnungsKontenQ.data],
+      invoiceAccountsQ.data?.origin === "invoice" ? (invoiceAccountsQ.data?.accounts ?? []) : [],
+    [invoiceAccountsQ.data],
   );
   // What the payment opens on: the first account this document named that money can actually be
   // sent to. A masked IBAN is on file so somebody can complete it, not to be paid.
-  const zahlKonto = rechnungsKonten.find((konto) => konto.is_payable !== false) ?? null;
+  const payableInvoiceAccount =
+    invoiceAccounts.find((account) => account.is_payable !== false) ?? null;
   // Every account this supplier could be paid on, for the "andere wählen" dialog. A masked IBAN is
   // on file to be completed, never to be paid, so it is not offered.
-  const lieferantenKontenQ = useSupplierBankAccounts(beleg.supplier_id ?? undefined);
-  const neuesLieferantenKonto = useAddSupplierBankAccount(beleg.supplier_id ?? "");
-  const kontoVerknuepfen = useLinkInvoiceBankAccount(beleg.id);
-  const zahlbareKonten = useMemo(
-    () => (lieferantenKontenQ.data ?? []).filter((k) => k.is_active && k.is_payable !== false),
-    [lieferantenKontenQ.data],
+  const suppliersAccountsQ = useSupplierBankAccounts(doc.supplier_id ?? undefined);
+  const newSuppliersAccount = useAddSupplierBankAccount(doc.supplier_id ?? "");
+  const accountLink = useLinkInvoiceBankAccount(doc.id);
+  const payableAccounts = useMemo(
+    () => (suppliersAccountsQ.data ?? []).filter((k) => k.is_active && k.is_payable !== false),
+    [suppliersAccountsQ.data],
   );
-  const [kontoWahlOffen, setKontoWahlOffen] = useState(false);
+  const [accountChoiceOpen, setAccountChoiceOpen] = useState(false);
   // What the pay dialog opens on: the account this document named, else the supplier's default.
   // Whoever is paying can still switch to any other account of theirs inside that dialog.
-  const aktuellesKonto =
-    zahlbareKonten.find((k) => k.id === zahlKonto?.id) ??
-    zahlbareKonten.find((k) => k.is_default) ??
+  const currentAccount =
+    payableAccounts.find((k) => k.id === payableInvoiceAccount?.id) ??
+    payableAccounts.find((k) => k.is_default) ??
     null;
   // Payable or not, every account either side knows about, for looking one up by id.
-  const alleKonten = useMemo(
-    () => [...(rechnungsKontenQ.data?.accounts ?? []), ...zahlbareKonten],
-    [rechnungsKontenQ.data, zahlbareKonten],
+  const allAccounts = useMemo(
+    () => [...(invoiceAccountsQ.data?.accounts ?? []), ...payableAccounts],
+    [invoiceAccountsQ.data, payableAccounts],
   );
-  const rechnungsKontoIds = useMemo(
-    () => new Set(rechnungsKonten.map((k) => k.id)),
-    [rechnungsKonten],
+  const invoiceAccountIds = useMemo(
+    () => new Set(invoiceAccounts.map((k) => k.id)),
+    [invoiceAccounts],
   );
   // Three origins, in the order that answers "why is THIS the account": the document named it, it
   // is the supplier's standing account, or somebody chose it by hand.
@@ -832,9 +832,9 @@ function BelegDetail({ beleg }: { beleg: Beleg }) {
    * document named AND that the supplier already had shows both, which the single joined sentence
    * this replaces could not express without implying one followed from the other.
    */
-  function kontoChips(id: string): AccountChip[] {
-    const konto = alleKonten.find((k) => k.id === id);
-    const vonRechnung = rechnungsKontoIds.has(id);
+  function accountChips(id: string): AccountChip[] {
+    const account = allAccounts.find((k) => k.id === id);
+    const fromDateInvoice = invoiceAccountIds.has(id);
     const chips: AccountChip[] = [];
     // "already saved" and "new" only mean anything ABOUT A DOCUMENT: they answer whether the
     // supplier was billing from this account before this invoice named it. Read off an account the
@@ -843,37 +843,37 @@ function BelegDetail({ beleg }: { beleg: Beleg }) {
     // Printed on the document is the whole story of where this account came from. Adding "and the
     // supplier already had it" or "and a person typed it" beside that reads as three competing
     // accounts of the same fact, so being on the document silences both.
-    if (vonRechnung) {
+    if (fromDateInvoice) {
       chips.push({
         kind: "invoice",
-        label: t("belege.detail.lieferant.zahlkonto.chip.rechnung"),
-        hint: t("belege.detail.lieferant.zahlkonto.chip.rechnungHinweis"),
+        label: t("documents.detail.lieferant.zahlkonto.chip.rechnung"),
+        hint: t("documents.detail.lieferant.zahlkonto.chip.rechnungHinweis"),
       });
-      if (!konto?.confirmed_at) {
+      if (!account?.confirmed_at) {
         chips.push({
           kind: "new",
-          label: t("belege.detail.lieferant.zahlkonto.neuBadge"),
-          hint: t("belege.detail.lieferant.konten.neuHinweis"),
+          label: t("documents.detail.lieferant.zahlkonto.neuBadge"),
+          hint: t("documents.detail.lieferant.konten.neuHinweis"),
         });
       }
     }
-    if (konto?.is_default) {
+    if (account?.is_default) {
       chips.push({
         kind: "default",
-        label: t("belege.detail.lieferant.zahlkonto.chip.standard"),
+        label: t("documents.detail.lieferant.zahlkonto.chip.standard"),
         // When nothing was read off the document, the default is standing in, and that is the one
         // thing a reader most needs to know about why this account is on screen at all.
-        hint: vonRechnung
-          ? t("belege.detail.lieferant.zahlkonto.chip.standardHinweis")
-          : t("belege.detail.lieferant.zahlkonto.standardHinweis"),
+        hint: fromDateInvoice
+          ? t("documents.detail.lieferant.zahlkonto.chip.standardHinweis")
+          : t("documents.detail.lieferant.zahlkonto.standardHinweis"),
       });
     }
     // Nothing above applied, so there is one thing left to say: the supplier has it on file.
     if (chips.length === 0) {
       chips.push({
         kind: "manual",
-        label: t("belege.detail.lieferant.zahlkonto.chip.manuell"),
-        hint: t("belege.detail.lieferant.zahlkonto.chip.manuellHinweis"),
+        label: t("documents.detail.lieferant.zahlkonto.chip.manuell"),
+        hint: t("documents.detail.lieferant.zahlkonto.chip.manuellHinweis"),
       });
     }
     return chips;
@@ -881,77 +881,77 @@ function BelegDetail({ beleg }: { beleg: Beleg }) {
   // Every account this document named, in the order it printed them, else the one account the
   // supplier is normally paid on. A masked IBAN is listed too: it was on the document, and hiding
   // it would be the panel claiming the invoice named nothing.
-  const anzeigeKonten = rechnungsKontenQ.data?.accounts ?? [];
+  const displayAccounts = invoiceAccountsQ.data?.accounts ?? [];
   // Nothing is recorded against this invoice, yet the supplier has an account: it was completed
   // after the invoice was read, so the two were never connected. Offered rather than assumed,
   // because attaching an account to an invoice is a statement about how it gets paid.
-  const nachtraeglichesKonto =
-    anzeigeKonten.length === 0
-      ? (zahlbareKonten.find((k) => k.is_default) ?? zahlbareKonten[0] ?? null)
+  const subsequentAccount =
+    displayAccounts.length === 0
+      ? (payableAccounts.find((k) => k.is_default) ?? payableAccounts[0] ?? null)
       : null;
   // The reader is deliberately NOT told "no account exists" when the document did print one and it
   // simply could not be read: those are different facts and only one of them is the supplier's.
-  const ibanImDokument = String(beleg.extracted?.iban ?? "").trim();
-  const kontoFehltErklaerung = ibanImDokument
-    ? t("belege.detail.lieferant.zahlkonto.leerLesefehler")
-    : t("belege.detail.lieferant.zahlkonto.leerNichts");
+  const ibanImDocument = String(doc.extracted?.iban ?? "").trim();
+  const accountMissingExplanation = ibanImDocument
+    ? t("documents.detail.lieferant.zahlkonto.leerLesefehler")
+    : t("documents.detail.lieferant.zahlkonto.leerNichts");
   // The accounts this invoice can be paid to, worded once and rendered on two tabs. Lieferant
   // lists them as the supplier's bank details, Zahlung puts the pay control under the same list,
   // so an account reads identically wherever it is met.
-  const zahlkontenPanel = {
-    accounts: anzeigeKonten.map((k) => ({
+  const paymentAccountsPanel = {
+    accounts: displayAccounts.map((k) => ({
       id: k.id,
       iban: formatIBAN(k.iban),
       rawIban: k.iban,
       bankName: k.bank_name,
       bic: k.bic,
-      chips: kontoChips(k.id),
+      chips: accountChips(k.id),
     })),
-    emptyExplanation: kontoFehltErklaerung,
+    emptyExplanation: accountMissingExplanation,
     labels: {
-      account: t("belege.detail.lieferant.zahlkonto.konto"),
-      info: t("belege.detail.lieferant.zahlkonto.chip.info"),
-      emptyTitle: t("belege.detail.lieferant.zahlkonto.leerTitel"),
-      add: t("belege.detail.lieferant.zahlkonto.hinzufuegen"),
-      availableTitle: t("belege.detail.lieferant.zahlkonto.nachgetragenTitel"),
-      link: t("belege.detail.lieferant.zahlkonto.verknuepfen"),
+      account: t("documents.detail.lieferant.zahlkonto.konto"),
+      info: t("documents.detail.lieferant.zahlkonto.chip.info"),
+      emptyTitle: t("documents.detail.lieferant.zahlkonto.leerTitel"),
+      add: t("documents.detail.lieferant.zahlkonto.hinzufuegen"),
+      availableTitle: t("documents.detail.lieferant.zahlkonto.nachgetragenTitel"),
+      link: t("documents.detail.lieferant.zahlkonto.verknuepfen"),
     },
-    available: nachtraeglichesKonto
+    available: subsequentAccount
       ? {
-          iban: formatIBAN(nachtraeglichesKonto.iban),
-          bankName: nachtraeglichesKonto.bank_name,
+          iban: formatIBAN(subsequentAccount.iban),
+          bankName: subsequentAccount.bank_name,
         }
       : null,
-    linking: kontoVerknuepfen.isPending,
+    linking: accountLink.isPending,
     onLink: () =>
-      nachtraeglichesKonto &&
-      kontoVerknuepfen.mutate(nachtraeglichesKonto.id, {
+      subsequentAccount &&
+      accountLink.mutate(subsequentAccount.id, {
         onSuccess: () =>
           toast.success(
-            t("belege.detail.lieferant.zahlkonto.verknuepft", {
-              iban: formatIBAN(nachtraeglichesKonto.iban),
+            t("documents.detail.lieferant.zahlkonto.verknuepft", {
+              iban: formatIBAN(subsequentAccount.iban),
             }),
           ),
         onError: (e) =>
-          toast.error(t("belege.detail.toast.fehlgeschlagen", { error: fehlerText(e) })),
+          toast.error(t("documents.detail.toast.fehlgeschlagen", { error: errorText(e) })),
       }),
-    onAdd: () => setKontoWahlOffen(true),
+    onAdd: () => setAccountChoiceOpen(true),
   };
   // `?? []` on its own mints a fresh array every render, which makes every downstream useMemo that
   // depends on it recompute every render. Memoized once here so the master-data lists are stable
   // identities for the lookups below.
-  const gesellschaften = useMemo(() => gesellschaftenQ.data ?? [], [gesellschaftenQ.data]);
-  const gesellschaft = useMemo(
-    () => gesellschaften.find((g) => g.code === beleg.company_code) ?? null,
-    [gesellschaften, beleg.company_code],
+  const companies = useMemo(() => companiesQ.data ?? [], [companiesQ.data]);
+  const company = useMemo(
+    () => companies.find((g) => g.code === doc.company_code) ?? null,
+    [companies, doc.company_code],
   );
-  const objekte = useMemo(() => objekteQ.data ?? [], [objekteQ.data]);
-  const objekt = useMemo(
-    () => objekte.find((o) => o.code === beleg.property_code) ?? null,
-    [objekte, beleg.property_code],
+  const properties = useMemo(() => propertiesQ.data ?? [], [propertiesQ.data]);
+  const property = useMemo(
+    () => properties.find((o) => o.code === doc.property_code) ?? null,
+    [properties, doc.property_code],
   );
   // A property code that came from AI extraction but isn't in the master data — must be corrected.
-  const objektUnbekannt = !!beleg.property_code && !objekt;
+  const propertyUnknown = !!doc.property_code && !property;
 
   // assignment_decided_by is ONE shared provenance column for both company and property (there is
   // no per-field source at the DB level — see the ZUORDNUNG_FELDER stamp below), so the SOURCE
@@ -972,11 +972,11 @@ function BelegDetail({ beleg }: { beleg: Beleg }) {
   const categoriesById = useMemo(() => new Map(categories.map((c) => [c.id, c])), [categories]);
   // "Coarse › Fine" for a tag under a parent, plain name for a coarse category picked on its own —
   // the briefing explicitly allows assigning at either granularity when the fine tag isn't known.
-  const categoryLabel = (c: BwaCategory) =>
+  const categoryLabel = (c: CostAnalysisCategory) =>
     c.parent_id ? `${categoriesById.get(c.parent_id)?.name ?? "?"} › ${c.name}` : c.name;
   // A category id in a history line is not a record of anything a person can check, so every
   // save path renders it through the taxonomy path instead.
-  const kategorieName = (id: unknown) => {
+  const categoryName = (id: unknown) => {
     const v = id as string | null | undefined;
     if (!v) return null;
     const c = categoriesById.get(v);
@@ -987,23 +987,23 @@ function BelegDetail({ beleg }: { beleg: Beleg }) {
     label: categoryLabel(c),
     keywords: c.code,
   }));
-  const category = beleg.category_id ? (categoriesById.get(beleg.category_id) ?? null) : null;
+  const category = doc.category_id ? (categoriesById.get(doc.category_id) ?? null) : null;
 
   // The free-text `cost_category` is described in the code below as a legacy mirror that this
   // screen derives automatically -- true for anything edited HERE, but not for what the pipeline
   // wrote. Receipts carry the free text with no category_id at all, and the screen showed those as
   // "nicht kategorisiert" while the value sat in the row. It is the field the assignment-rule
   // engine targets, so calling it nothing was the one reading that was wrong.
-  const freitextKategorie = !beleg.category_id ? (beleg.cost_category?.trim() ?? "") : "";
+  const freeTextCategory = !doc.category_id ? (doc.cost_category?.trim() ?? "") : "";
   // Only offered when the free text names a real category exactly (case aside). A near-miss is a
   // decision for a person, not something to guess at from a detail screen.
-  const passendeKategorie = useMemo(() => {
-    if (!freitextKategorie) return null;
-    const gesucht = freitextKategorie.toLowerCase();
+  const matchingCategory = useMemo(() => {
+    if (!freeTextCategory) return null;
+    const searched = freeTextCategory.toLowerCase();
     return (
-      categories.find((c) => !c.is_catchall && c.name.trim().toLowerCase() === gesucht) ?? null
+      categories.find((c) => !c.is_catchall && c.name.trim().toLowerCase() === searched) ?? null
     );
-  }, [freitextKategorie, categories]);
+  }, [freeTextCategory, categories]);
 
   // property → company (table property_companies, migration 0083). A property may genuinely belong
   // to more than one company (the client's dual-ownership cases — Hinterstraße is Infio AND this client),
@@ -1019,37 +1019,37 @@ function BelegDetail({ beleg }: { beleg: Beleg }) {
    * The rule itself lives in `resolveKostenstelle` (src/lib/data/kostenstelle.ts), shared with the
    * invoice list and the property page so the three cannot disagree about what a receipt books to.
    */
-  const kostenstelle = useMemo(
+  const costCentre = useMemo(
     () =>
-      resolveKostenstelle(
+      resolveCostCentre(
         {
           companyCode: form.company_code,
           propertyCode: form.property_code,
-          gemeinkosten: form.property_code === GEMEINKOSTEN,
+          overhead: form.property_code === OVERHEAD,
         },
-        { gesellschaften, objekte, links: propertyCompaniesQ.data ?? [] },
+        { companies, properties, links: propertyCompaniesQ.data ?? [] },
       ),
-    [gesellschaften, objekte, propertyCompaniesQ.data, form.company_code, form.property_code],
+    [companies, properties, propertyCompaniesQ.data, form.company_code, form.property_code],
   );
 
-  const companyVorschlag = useMemo(() => {
-    const propId = objekte.find((o) => o.code === form.property_code)?.id;
+  const companySuggestion = useMemo(() => {
+    const propId = properties.find((o) => o.code === form.property_code)?.id;
     if (!propId) return null;
-    const treffer = (propertyCompaniesQ.data ?? []).filter((a) => a.property_id === propId);
+    const match = (propertyCompaniesQ.data ?? []).filter((a) => a.property_id === propId);
     // More than one company linked to this property means the reviewer has to pick, not something
     // to guess a winner from.
-    if (treffer.length !== 1) {
-      return { code: null, mehrdeutig: treffer.length > 1, fehlt: treffer.length === 0 };
+    if (match.length !== 1) {
+      return { code: null, ambiguous: match.length > 1, missing: match.length === 0 };
     }
-    const g = gesellschaften.find((x) => x.id === treffer[0].company_id);
-    return g ? { code: g.code, mehrdeutig: false, fehlt: false } : null;
-  }, [objekte, gesellschaften, propertyCompaniesQ.data, form.property_code]);
+    const g = companies.find((x) => x.id === match[0].company_id);
+    return g ? { code: g.code, ambiguous: false, missing: false } : null;
+  }, [properties, companies, propertyCompaniesQ.data, form.property_code]);
 
   // True when the suggestion exists and disagrees with what is currently in the form.
-  const companyVorschlagOffen =
-    !!companyVorschlag?.code && companyVorschlag.code !== (form.company_code || null);
+  const companySuggestionOpen =
+    !!companySuggestion?.code && companySuggestion.code !== (form.company_code || null);
 
-  const stellerName = lieferant?.name ?? beleg.issuer ?? t("belege.detail.unknownSteller");
+  const issuerName = supplier?.name ?? doc.issuer ?? t("documents.detail.unknownSteller");
   // Every invoice used to sit in the browser tab as the same static "Beleg". Comparing two
   // receipts in two tabs is an ordinary thing to do here -- the supplier, the amount and the PDF
   // are all on screen to compare -- and the tab bar could not tell them apart. Supplier first
@@ -1057,32 +1057,32 @@ function BelegDetail({ beleg }: { beleg: Beleg }) {
   // because two receipts from the SAME supplier is exactly the duplicate case people open two tabs
   // for.
   useEffect(() => {
-    const nr = beleg.invoice_number?.trim();
-    document.title = pageTitle(`${stellerName}${nr ? ` · ${nr}` : ""}`);
-  }, [stellerName, beleg.invoice_number]);
-  const konf: Konfidenz = beleg.extracted?.konfidenz ?? {};
+    const nr = doc.invoice_number?.trim();
+    document.title = pageTitle(`${issuerName}${nr ? ` · ${nr}` : ""}`);
+  }, [issuerName, doc.invoice_number]);
+  const confidence: Confidence = doc.extracted?.confidence ?? {};
 
-  const positionen = beleg.line_items ?? [];
-  const volltext = beleg.ocr_fulltext ?? (beleg.extracted?.volltext as string | undefined) ?? null;
+  const lineItems = doc.line_items ?? [];
+  const fullText = doc.ocr_fulltext ?? (doc.extracted?.fullText as string | undefined) ?? null;
   // Envelope metadata of the source email (Briefing Screen 2). One invoice can have several
   // processing_log rows (reprocessing, splits) but they share the same source email — prefer the
   // one matching this invoice's own source_item_id, else fall back to the most recent entry.
   const emailLog =
-    (logQ.data ?? []).find((v) => v.source_item_id === beleg.source_item_id) ??
+    (logQ.data ?? []).find((v) => v.source_item_id === doc.source_item_id) ??
     logQ.data?.[0] ??
     null;
-  const wf = beleg.workflow_status ?? "received";
-  const lastschrift = istLastschrift(beleg.payment_method);
+  const wf = doc.workflow_status ?? "received";
+  const directDebit = isDirectDebit(doc.payment_method);
   // Per-field first (extracted.validation_detail), falling back to the flat gates. `gruendeDetail`
   // stays what the badges count.
-  const pruefungen = useMemo(() => pruefKarte(beleg), [beleg]);
-  const gruendeDetail = pruefungen.gruende;
+  const checks = useMemo(() => checkCard(doc), [doc]);
+  const reasonsDetail = checks.reasons;
 
   const { appUserId } = useAuth();
 
-  const canApprove = darfAlsPerson(PERMISSIONS.invoicesApprove);
-  const canFinalApprove = darfAlsPerson(PERMISSIONS.invoicesApproveFinal);
-  const darfZuweisen = darfAlsPerson(PERMISSIONS.documentsWrite);
+  const canApprove = canAlsPerson(PERMISSIONS.invoicesApprove);
+  const canFinalApprove = canAlsPerson(PERMISSIONS.invoicesApproveFinal);
+  const canAssign = canAlsPerson(PERMISSIONS.documentsWrite);
 
   const chainPeopleById = useMemo(() => new Map(chainPeople.map((p) => [p.id, p])), [chainPeople]);
   /**
@@ -1093,7 +1093,7 @@ function BelegDetail({ beleg }: { beleg: Beleg }) {
    * it with its own first entry, so listing it again among the people was a duplicate of the
    * option directly above it.
    */
-  const waehlbarePersonen = useMemo(
+  const selectablePeople = useMemo(
     () => chainPeople.filter((p) => p.is_active && p.role_name !== "super_admin"),
     [chainPeople],
   );
@@ -1101,15 +1101,15 @@ function BelegDetail({ beleg }: { beleg: Beleg }) {
   // (migration 20260901160500) -- so handing it to yourself produces a message addressed to the
   // person who just sent it. The acting-as picker above keeps the unfiltered list on purpose: it
   // answers a different question, namely whose permissions the screen should behave with.
-  const zuweisbarePersonen = useMemo(
-    () => waehlbarePersonen.filter((p) => p.id !== appUserId),
-    [waehlbarePersonen, appUserId],
+  const assignablePeople = useMemo(
+    () => selectablePeople.filter((p) => p.id !== appUserId),
+    [selectablePeople, appUserId],
   );
   // Name plus role, matching the approval-rule step pickers. "Petra Kistner" alone does not say
   // whether picking her produces a chain that can actually move.
-  const personenLabel = useCallback(
+  const peopleLabel = useCallback(
     (p: ChainPerson) => {
-      const name = p.name ?? t("belege.detail.workflow.unbekannt");
+      const name = p.name ?? t("documents.detail.workflow.unbekannt");
       return p.role_name ? `${name} (${t(`team.role.${p.role_name}`)})` : name;
     },
     [t],
@@ -1117,9 +1117,9 @@ function BelegDetail({ beleg }: { beleg: Beleg }) {
   // useCallback so the memos below can depend on it honestly. An id that resolves to nobody is
   // NOT blank: a rule or an assignment pointing at a deleted account has to say so, or the field
   // reads as "not set" and the broken reference stays invisible.
-  const personenName = useCallback(
+  const peopleName = useCallback(
     (id: string | null | undefined) =>
-      id ? (chainPeopleById.get(id)?.name ?? t("belege.detail.workflow.unbekannt")) : null,
+      id ? (chainPeopleById.get(id)?.name ?? t("documents.detail.workflow.unbekannt")) : null,
     [chainPeopleById, t],
   );
 
@@ -1144,15 +1144,15 @@ function BelegDetail({ beleg }: { beleg: Beleg }) {
   // it fired no change. Impersonating a real approver still leaves the mode, which is the part
   // that matters: a correction taken while wearing somebody else's identity would be recorded
   // against them. Same shape Eiffler uses.
-  const superAdminModus = darfHandelnAls && !istFremdeIdentitaet;
+  const superAdminMode = canActAls && !isForeignIdentity;
 
   const legalActions = useMemo(
     () =>
-      nextLegalActions(wf, approvalRuleQ.data ?? null, actingAs, beleg.assigned_user_id, {
+      nextLegalActions(wf, approvalRuleQ.data ?? null, actingAs, doc.assigned_user_id, {
         canApprove,
         canFinalApprove,
       }),
-    [wf, approvalRuleQ.data, actingAs, beleg.assigned_user_id, canApprove, canFinalApprove],
+    [wf, approvalRuleQ.data, actingAs, doc.assigned_user_id, canApprove, canFinalApprove],
   );
 
   // Rechnungsinfo opened with sixteen fields in four stacked grids, every one of them styled the
@@ -1172,13 +1172,13 @@ function BelegDetail({ beleg }: { beleg: Beleg }) {
   // The full ladder, taken from WORKFLOW_REIHENFOLGE rather than a second list kept in step by
   // hand. `rueckfrage` is dropped: it is a loop back to the review step, not a stage of its own,
   // which is why the canonical order has eight entries and the ladder has seven.
-  const WORKFLOW_STUFEN = useMemo(() => WORKFLOW_REIHENFOLGE.filter((s) => s !== "query"), []);
+  const WORKFLOW_STEPS = useMemo(() => WORKFLOW_ORDER.filter((s) => s !== "query"), []);
   // A document in `rueckfrage` is back at the review step, so that is where the marker sits; the
   // query itself is carried by the review chip and the Freigabe tab, not by a node on the line.
-  const aktuelleStufe = WORKFLOW_STUFEN.indexOf(
-    (wf === "query" ? "in_review" : wf) as (typeof WORKFLOW_STUFEN)[number],
+  const currentStep = WORKFLOW_STEPS.indexOf(
+    (wf === "query" ? "in_review" : wf) as (typeof WORKFLOW_STEPS)[number],
   );
-  const abseitsDerKette = wf === "rejected" || wf === "not_relevant";
+  const asideTheChain = wf === "rejected" || wf === "not_relevant";
 
   /**
    * The chain drawn above IS the control that moves the invoice along it.
@@ -1190,33 +1190,33 @@ function BelegDetail({ beleg }: { beleg: Beleg }) {
    * lands on becomes a button, and only the actions that move nowhere ON the ladder keep a button
    * of their own below it.
    */
-  const stufenAktionen = useMemo(() => {
+  const stepsActions = useMemo(() => {
     const map = new Map<string, ApprovalAction>();
     for (const action of legalActions) {
       if (!CHAIN_ACTION_IDS.includes(action.id)) continue;
-      const ziel = WORKFLOW_STUFEN.indexOf(action.nextStatus as (typeof WORKFLOW_STUFEN)[number]);
+      const target = WORKFLOW_STEPS.indexOf(action.nextStatus as (typeof WORKFLOW_STEPS)[number]);
       // Off the ladder, backwards, or stamped by a DB trigger: not a circle.
-      if (ziel < 0 || ziel <= aktuelleStufe) continue;
-      if (AUTO_STUFEN.includes(action.nextStatus)) continue;
+      if (target < 0 || target <= currentStep) continue;
+      if (AUTO_STEPS.includes(action.nextStatus)) continue;
       map.set(action.nextStatus, action);
     }
     return map;
-  }, [legalActions, aktuelleStufe, WORKFLOW_STUFEN]);
+  }, [legalActions, currentStep, WORKFLOW_STEPS]);
 
   /** The nearest step this person can move the invoice to; drives the dotted run and the arrow. */
-  const naechsteAktionStufe = useMemo(() => {
-    const treffer = WORKFLOW_STUFEN.map((s, i) => (stufenAktionen.has(s) ? i : -1)).filter(
+  const nextActionStep = useMemo(() => {
+    const match = WORKFLOW_STEPS.map((s, i) => (stepsActions.has(s) ? i : -1)).filter(
       (i) => i >= 0,
     );
-    return treffer.length > 0 ? Math.min(...treffer) : null;
-  }, [WORKFLOW_STUFEN, stufenAktionen]);
+    return match.length > 0 ? Math.min(...match) : null;
+  }, [WORKFLOW_STEPS, stepsActions]);
 
   // Everything the strip cannot express. A query goes sideways, a rejection leaves the chain and a
   // failed payment goes backwards, so all three keep a button of their own under the bar. Three at
   // most, so they need no overflow menu behind them.
-  const nebenAktionen = useMemo(
-    () => legalActions.filter((a) => stufenAktionen.get(a.nextStatus)?.id !== a.id),
-    [legalActions, stufenAktionen],
+  const secondaryActions = useMemo(
+    () => legalActions.filter((a) => stepsActions.get(a.nextStatus)?.id !== a.id),
+    [legalActions, stepsActions],
   );
 
   /**
@@ -1226,7 +1226,7 @@ function BelegDetail({ beleg }: { beleg: Beleg }) {
    * different responses -- ask an administrator, ask the named approver, nothing is wrong, or
    * wait. Naming the reason is the difference between a dead end and an instruction.
    */
-  const keineAktionenGrund = useMemo(() => {
+  const noActionsReason = useMemo(() => {
     if (legalActions.length > 0) return null;
     if ((APPROVAL_TERMINAL_STATUSES as string[]).includes(wf)) return { key: "closed" };
     // Only the super admin can reach this, and only by choosing "(nobody)" in the Acting as
@@ -1236,48 +1236,48 @@ function BelegDetail({ beleg }: { beleg: Beleg }) {
     // its own message for that. For anybody else this is the directory still loading -- which used
     // to print "you are not set up as an approver": alarming, and for that fraction of a second
     // false. An unresolved identity is not a fact worth stating.
-    if (!actingAs) return darfHandelnAls ? { key: "keinFreigeber" } : null;
+    if (!actingAs) return canActAls ? { key: "keinFreigeber" } : null;
     // The permission, before the rule. nextLegalActions returns an empty list for a missing
     // `invoices.approve` before it looks at the chain at all, so without this the reader was told
     // "no step is available" -- true, and silent about the one thing that would fix it. Worded
     // differently when previewing somebody else, because "you lack the right" is then false.
     if (!canApprove)
       return {
-        key: istFremdeIdentitaet ? "keinRechtPerson" : "keinRecht",
-        namen: actingAs.name ?? "",
+        key: isForeignIdentity ? "keinRechtPerson" : "keinRecht",
+        names: actingAs.name ?? "",
       };
-    const regel = approvalRuleQ.data;
-    if (regel) {
-      const namen = [regel.step_1_user_id, regel.step_2_user_id]
-        .map((id) => personenName(id))
+    const rule = approvalRuleQ.data;
+    if (rule) {
+      const names = [rule.step_1_user_id, rule.step_2_user_id]
+        .map((id) => peopleName(id))
         .filter(Boolean)
         .join(", ");
       // A rule that matches but names nobody. Reading the names out would produce "assigned to .
       // Only they can approve it" -- a sentence with a hole in it, blaming a person who does not
       // exist. It is a broken rule, and saying so is the only thing that leads anywhere.
-      if (!namen) return { key: "regelOhneFreigeber" };
+      if (!names) return { key: "regelOhneFreigeber" };
       // An assignment counts as being in the chain, exactly as nextLegalActions treats it. Without
       // this, somebody an admin assigned the invoice to would be told "only {{namen}} can approve
       // it" -- which the assignment has just made untrue.
-      const drin =
-        regel.step_1_user_id === actingAs.id ||
-        regel.step_2_user_id === actingAs.id ||
-        beleg.assigned_user_id === actingAs.id;
+      const inside =
+        rule.step_1_user_id === actingAs.id ||
+        rule.step_2_user_id === actingAs.id ||
+        doc.assigned_user_id === actingAs.id;
       // Named in the rule but not at this step: it is somebody else's move, not a permission problem.
-      if (drin) return { key: "andererSchritt", namen };
-      return { key: "nichtImRegelwerk", namen };
+      if (inside) return { key: "andererSchritt", names };
+      return { key: "nichtImRegelwerk", names };
     }
     return { key: "keineSchritte" };
   }, [
     legalActions.length,
     wf,
     actingAs,
-    darfHandelnAls,
+    canActAls,
     canApprove,
-    istFremdeIdentitaet,
+    isForeignIdentity,
     approvalRuleQ.data,
-    beleg.assigned_user_id,
-    personenName,
+    doc.assigned_user_id,
+    peopleName,
   ]);
 
   /**
@@ -1288,18 +1288,18 @@ function BelegDetail({ beleg }: { beleg: Beleg }) {
    * four different responses: wait for the system, wait for the invoice to get there, it will be
    * skipped, or it is not your move.
    */
-  function stufenSperrGrund(index: number, stufe: string): string | null {
+  function stepsBlockReason(index: number, step: string): string | null {
     // Already reached, or where the invoice is right now. Nothing to explain.
-    if (aktuelleStufe >= 0 && index <= aktuelleStufe) return null;
+    if (currentStep >= 0 && index <= currentStep) return null;
     // 'bezahlt' and after. None of the three is clickable, but they are not blocked for the same
     // reason and a single sentence covering all three said nothing about any of them: 'bezahlt'
     // comes off a confirmed payment (trigger, migration 0049), 'handed_over' off the DATEV
     // handover (trigger, migration 0051), and 'closed' off NOTHING -- no trigger and no
     // approval action writes it, so the only route to it is the manual "Status korrigieren"
     // select in the Freigabe tab. Each step names its own mechanism.
-    if (AUTO_STUFEN.includes(stufe as WorkflowStatus))
-      return t(`belege.detail.stufenNav.gesperrt.stufe.${stufe}`, {
-        defaultValue: t("belege.detail.stufenNav.gesperrt.automatisch"),
+    if (AUTO_STEPS.includes(step as WorkflowStatus))
+      return t(`documents.detail.stufenNav.gesperrt.stufe.${step}`, {
+        defaultValue: t("documents.detail.stufenNav.gesperrt.automatisch"),
       });
     // Step-specific answers first. The generic "nothing is available" below is the
     // catch-all, and it fires whenever legalActions is empty -- which is the normal
@@ -1308,30 +1308,30 @@ function BelegDetail({ beleg }: { beleg: Beleg }) {
     // One sentence for the closing step, whoever is reading and wherever the invoice is. It is
     // blocked for two reasons at once (not at DATEV yet, and only a supervisor closes it), and
     // answering only one of them left the reader to discover the other by trying.
-    if (stufe === "closed") return t("belege.detail.stufenNav.gesperrt.abschluss");
-    if (stufe === "approved_final") {
-      const regel = approvalRuleQ.data;
+    if (step === "closed") return t("documents.detail.stufenNav.gesperrt.abschluss");
+    if (step === "approved_final") {
+      const rule = approvalRuleQ.data;
       // Mirrors nextLegalActions' own test, so the reason a step is locked can never contradict
       // whether it is actually clickable.
-      const darfFinal = regel
-        ? !!regel.step_2_user_id && regel.step_2_user_id === actingAs?.id
+      const canFinal = rule
+        ? !!rule.step_2_user_id && rule.step_2_user_id === actingAs?.id
         : canFinalApprove;
-      if (!darfFinal)
-        return regel?.step_2_user_id
-          ? t("belege.detail.stufenNav.gesperrt.nurFreigeber", {
-              name: personenName(regel.step_2_user_id) ?? "",
+      if (!canFinal)
+        return rule?.step_2_user_id
+          ? t("documents.detail.stufenNav.gesperrt.nurFreigeber", {
+              name: peopleName(rule.step_2_user_id) ?? "",
             })
-          : t("belege.detail.stufenNav.gesperrt.nurVorgesetzter");
+          : t("documents.detail.stufenNav.gesperrt.nurVorgesetzter");
     }
 
     // Nothing is available at all: the header already has a sentence for that case, and it names
     // the actual cause (not an approver, rule without approvers, somebody else's step).
     if (legalActions.length === 0)
-      return keineAktionenGrund
-        ? t(`belege.detail.keineAktionen.${keineAktionenGrund.key}`, {
-            namen: keineAktionenGrund.namen ?? "",
+      return noActionsReason
+        ? t(`documents.detail.keineAktionen.${noActionsReason.key}`, {
+            names: noActionsReason.names ?? "",
           })
-        : t("belege.detail.keineAktionen.keineSchritte");
+        : t("documents.detail.keineAktionen.keineSchritte");
     // A step this person will NEVER be able to take, whatever the invoice does next. Only the
     // manager role may run `final_approve` (or, when a rule applies, its step-2 approver), so an
     // assistant reading "once the assistant has approved it" was being promised a circle that
@@ -1339,9 +1339,9 @@ function BelegDetail({ beleg }: { beleg: Beleg }) {
     // first, or the sentence describes a future that never arrives for this reader.
     // Between here and the step you may take: a manager's approval out of review lands on
     // 'approved_final' and passes straight over 'approved_first'.
-    if (naechsteAktionStufe != null && index < naechsteAktionStufe)
-      return t("belege.detail.stufenNav.gesperrt.uebersprungen", {
-        stufe: t(`belege.workflow.${WORKFLOW_STUFEN[naechsteAktionStufe]}`),
+    if (nextActionStep != null && index < nextActionStep)
+      return t("documents.detail.stufenNav.gesperrt.uebersprungen", {
+        step: t(`documents.workflow.${WORKFLOW_STEPS[nextActionStep]}`),
       });
     // Further along the chain. What is missing is an EVENT, so the sentence names the event rather
     // than a position: "Freigegeben (Vorgesetzter)" is waiting for the assistant to approve, which
@@ -1350,31 +1350,29 @@ function BelegDetail({ beleg }: { beleg: Beleg }) {
     // built from the preceding step's label, stays as the fallback for a step with no sentence of
     // its own.
     if (index > 0)
-      return t(`belege.detail.stufenNav.gesperrt.voraussetzung.${stufe}`, {
-        defaultValue: t("belege.detail.stufenNav.gesperrt.spaeter", {
-          stufe: t(`belege.workflow.${WORKFLOW_STUFEN[index - 1]}`),
+      return t(`documents.detail.stufenNav.gesperrt.voraussetzung.${step}`, {
+        defaultValue: t("documents.detail.stufenNav.gesperrt.spaeter", {
+          step: t(`documents.workflow.${WORKFLOW_STEPS[index - 1]}`),
         }),
       });
-    return t("belege.detail.stufenNav.gesperrt.nichtErlaubt");
+    return t("documents.detail.stufenNav.gesperrt.nichtErlaubt");
   }
 
   /** The company's own name; the code stays as the tooltip. */
-  const gesellschaftName = useMemo(() => {
-    if (!beleg.company_code) return null;
-    return (
-      gesellschaftenQ.data?.find((g) => g.code === beleg.company_code)?.name ?? beleg.company_code
-    );
-  }, [gesellschaftenQ.data, beleg.company_code]);
+  const companyName = useMemo(() => {
+    if (!doc.company_code) return null;
+    return companiesQ.data?.find((g) => g.code === doc.company_code)?.name ?? doc.company_code;
+  }, [companiesQ.data, doc.company_code]);
 
   /** How long this invoice has been at its current step, as a phrase rather than a timestamp. */
-  const stufeSeit = useMemo(() => {
-    const neueste = (verlaufQ.data ?? [])[0]?.created_at ?? beleg.created_at;
-    if (!neueste) return null;
-    const tage = Math.floor((Date.now() - new Date(neueste).getTime()) / (24 * 60 * 60 * 1000));
-    if (tage <= 0) return t("belege.detail.seit.heute");
-    if (tage === 1) return t("belege.detail.seit.gestern");
-    return t("belege.detail.seit.vorTagen", { tage });
-  }, [verlaufQ.data, beleg.created_at, t]);
+  const stepSince = useMemo(() => {
+    const latest = (historyQ.data ?? [])[0]?.created_at ?? doc.created_at;
+    if (!latest) return null;
+    const days = Math.floor((Date.now() - new Date(latest).getTime()) / (24 * 60 * 60 * 1000));
+    if (days <= 0) return t("documents.detail.seit.heute");
+    if (days === 1) return t("documents.detail.seit.gestern");
+    return t("documents.detail.seit.vorTagen", { days });
+  }, [historyQ.data, doc.created_at, t]);
 
   /**
    * The reported checks, as readable sentences.
@@ -1389,9 +1387,9 @@ function BelegDetail({ beleg }: { beleg: Beleg }) {
    * check, and the last one rendered as "1 check" above its own text "no automatic check failed".
    * The card reports validation and only validation; every other axis has its own place on screen.
    */
-  const pruefGruendeText = useMemo(
-    () => pruefGruendeAnzeige(gruendeDetail, t, FELD_SPRUNGZIEL),
-    [gruendeDetail, t],
+  const checkReasonsText = useMemo(
+    () => checkReasonsDisplay(reasonsDetail, t, FIELD_JUMPTARGET),
+    [reasonsDetail, t],
   );
 
   /**
@@ -1400,36 +1398,37 @@ function BelegDetail({ beleg }: { beleg: Beleg }) {
    * identical to the invoice date, which is the common case and says nothing the row above does
    * not already say.
    */
-  const leistungszeitraum = useMemo(() => {
-    const von = beleg.service_period_from;
-    const bis = beleg.service_period_to;
-    if (von && bis && von !== bis) return `${formatDate(von)} – ${formatDate(bis)}`;
-    const einzel = beleg.service_date ?? von ?? bis;
-    if (!einzel || einzel === beleg.document_date) return null;
-    return formatDate(einzel);
-  }, [beleg.service_period_from, beleg.service_period_to, beleg.service_date, beleg.document_date]);
+  const servicePeriod = useMemo(() => {
+    const fromDate = doc.service_period_from;
+    const toDate = doc.service_period_to;
+    if (fromDate && toDate && fromDate !== toDate)
+      return `${formatDate(fromDate)} – ${formatDate(toDate)}`;
+    const single = doc.service_date ?? fromDate ?? toDate;
+    if (!single || single === doc.document_date) return null;
+    return formatDate(single);
+  }, [doc.service_period_from, doc.service_period_to, doc.service_date, doc.document_date]);
 
   /** Days past due; null when there is no due date or it has not passed. */
-  const tageUeberfaellig = useMemo(() => {
-    if (!beleg.due_date || beleg.paid_at) return null;
-    const tage = Math.floor(
-      (Date.now() - new Date(beleg.due_date).getTime()) / (24 * 60 * 60 * 1000),
+  const daysOverdue = useMemo(() => {
+    if (!doc.due_date || doc.paid_at) return null;
+    const days = Math.floor(
+      (Date.now() - new Date(doc.due_date).getTime()) / (24 * 60 * 60 * 1000),
     );
-    return tage > 0 ? tage : null;
-  }, [beleg.due_date, beleg.paid_at]);
+    return days > 0 ? days : null;
+  }, [doc.due_date, doc.paid_at]);
 
   /** Overdue chip text: plain days under a year, years and months beyond that. */
-  const ueberfaelligText = useMemo(() => {
-    if (tageUeberfaellig == null) return null;
-    if (tageUeberfaellig < 365) {
-      return t("belege.detail.faellig.ueberfaelligKurz", { tage: tageUeberfaellig });
+  const overdueText = useMemo(() => {
+    if (daysOverdue == null) return null;
+    if (daysOverdue < 365) {
+      return t("documents.detail.faellig.ueberfaelligKurz", { days: daysOverdue });
     }
-    const monateGesamt = Math.floor(tageUeberfaellig / 30.44);
-    const jahre = Math.floor(monateGesamt / 12);
-    const monate = monateGesamt % 12;
-    if (monate === 0) return t("belege.detail.faellig.ueberfaelligJahre", { jahre });
-    return t("belege.detail.faellig.ueberfaelligJahreMonate", { jahre, monate });
-  }, [tageUeberfaellig, t]);
+    const monthsTotal = Math.floor(daysOverdue / 30.44);
+    const years = Math.floor(monthsTotal / 12);
+    const months = monthsTotal % 12;
+    if (months === 0) return t("documents.detail.faellig.ueberfaelligJahre", { years });
+    return t("documents.detail.faellig.ueberfaelligJahreMonate", { years, months });
+  }, [daysOverdue, t]);
 
   /**
    * The one thing this invoice needs next, stated as a verb.
@@ -1483,18 +1482,18 @@ function BelegDetail({ beleg }: { beleg: Beleg }) {
       // own, which left the approval history with a hole exactly where the chain had turned
       // around: the invoice went back for a query and this list did not mention it. The query's
       // comment rides along on the row, so nothing is lost by dropping the second card.
-      (verlaufQ.data ?? []).filter(
-        (v) => APPROVAL_VERLAUF_TYPES.includes(v.type) || v.type === "assigned",
+      (historyQ.data ?? []).filter(
+        (v) => APPROVAL_HISTORY_TYPES.includes(v.type) || v.type === "assigned",
       ),
-    [verlaufQ.data],
+    [historyQ.data],
   );
   const generalHistory = useMemo(
-    () => (verlaufQ.data ?? []).filter((v) => !APPROVAL_VERLAUF_TYPES.includes(v.type)),
-    [verlaufQ.data],
+    () => (historyQ.data ?? []).filter((v) => !APPROVAL_HISTORY_TYPES.includes(v.type)),
+    [historyQ.data],
   );
   const allNotes = useMemo(
-    () => (verlaufQ.data ?? []).filter((v) => v.type === "note"),
-    [verlaufQ.data],
+    () => (historyQ.data ?? []).filter((v) => v.type === "note"),
+    [historyQ.data],
   );
   const headerNotes = allNotes.slice(0, HEADER_NOTE_COUNT);
 
@@ -1506,7 +1505,7 @@ function BelegDetail({ beleg }: { beleg: Beleg }) {
     approvalActionHistory.reduce<string | null>(
       (latest, v) => (!latest || v.created_at > latest ? v.created_at : latest),
       null,
-    ) ?? beleg.created_at;
+    ) ?? doc.created_at;
   const daysSinceLastMove = (Date.now() - new Date(lastMovedAt).getTime()) / 86_400_000;
   // An inactive or trashed approver's own escalation clock is moot -- they can't act on it either
   // way, so the warning below takes over instead of the normal overdue banner.
@@ -1527,34 +1526,34 @@ function BelegDetail({ beleg }: { beleg: Beleg }) {
    * Oldest first, top to bottom, because each row's left-hand state is the previous row's
    * right-hand state: read downwards, the column spells out the path the invoice actually took.
    */
-  const workflowVerlauf = useMemo(() => {
-    const chronologisch = [...approvalActionHistory].sort(
+  const workflowHistory = useMemo(() => {
+    const chronological = [...approvalActionHistory].sort(
       (a, b) => new Date(a.created_at).getTime() - new Date(b.created_at).getTime(),
     );
     // The invoice arriving is the implicit first state -- no history row is written for it, but
     // every duration on the first move is measured from it.
-    let vonLabel = t("belege.detail.historie.eingegangen");
-    let vonAt = beleg.created_at;
-    return chronologisch.map((v) => {
-      const nach = verlaufBasis(v, t);
-      const zeile = {
+    let fromDateLabel = t("documents.detail.historie.eingegangen");
+    let fromDateAt = doc.created_at;
+    return chronological.map((v) => {
+      const nach = historyBasis(v, t);
+      const row = {
         v,
-        von: vonLabel,
+        fromDate: fromDateLabel,
         nach,
-        zusatz: verlaufZusatz(v, t),
-        ms: new Date(v.created_at).getTime() - new Date(vonAt).getTime(),
+        extra: historyExtra(v, t),
+        ms: new Date(v.created_at).getTime() - new Date(fromDateAt).getTime(),
       };
-      vonLabel = nach;
-      vonAt = v.created_at;
-      return zeile;
+      fromDateLabel = nach;
+      fromDateAt = v.created_at;
+      return row;
     });
-  }, [approvalActionHistory, beleg.created_at, t]);
+  }, [approvalActionHistory, doc.created_at, t]);
 
   // AI confidence, review, workflow and payment are SEPARATE signals — surfaced and explained
   // independently in the header (the user must be able to read "how sure the AI is" apart from
   // "does a human need to check it"). Bank matches drive the reconciliation axis; the same query
   // powers the Payment & reconciliation card below (React Query dedupes it).
-  const headerMatchesQ = useBelegMatches(beleg.id);
+  const headerMatchesQ = useDocumentMatches(doc.id);
   // Sums the amount allocated to THIS invoice per link, not the whole transaction: one collective
   // transfer of 3.000 paying three invoices of 1.000 must count 1.000 here, not 3.000.
   const headerMatchedSum = (headerMatchesQ.data ?? [])
@@ -1563,16 +1562,16 @@ function BelegDetail({ beleg }: { beleg: Beleg }) {
   // A suggestion nobody has confirmed or rejected yet. It contributes nothing to headerMatchedSum
   // (that counts confirmed links only), so without this the header said "Nicht abgeglichen" while a
   // transaction sat one tab away waiting for a yes or a no.
-  const headerHatVorschlag = (headerMatchesQ.data ?? []).some((m) => istOffenerVorschlag(m.status));
-  const abgleich = abgleichStatus(
-    beleg.amount_gross,
+  const headerHatSuggestion = (headerMatchesQ.data ?? []).some((m) => isOpenSuggestion(m.status));
+  const matching = matchingStatus(
+    doc.amount_gross,
     headerMatchedSum,
-    headerHatVorschlag,
-    Boolean(beleg.paid_at),
+    headerHatSuggestion,
+    Boolean(doc.paid_at),
   );
-  const zahlungReasons = zahlungGruende(beleg, abgleich);
+  const paymentReasonIds = paymentReasons(doc, matching);
 
-  function speichern() {
+  function save() {
     // Against `basis` (the receipt when this edit opened), so the write covers exactly the fields
     // the reviewer touched. Diffing against the live `beleg` meant that anything the server had
     // changed underneath the open form -- a rule run, another reviewer -- came out as a change of
@@ -1581,10 +1580,10 @@ function BelegDetail({ beleg }: { beleg: Beleg }) {
     // The history records what was actually overwritten, which is the value live NOW, not the one
     // on screen when the section was opened.
     const before: Record<string, unknown> = Object.fromEntries(
-      labels.map((k) => [k, (beleg[k as keyof Beleg] as unknown) ?? null]),
+      labels.map((k) => [k, (doc[k as keyof Document] as unknown) ?? null]),
     );
     if (invalid.length > 0) {
-      toast.error(t("belege.detail.toast.ungueltigeZahl", { fields: invalid.join(", ") }));
+      toast.error(t("documents.detail.toast.ungueltigeZahl", { fields: invalid.join(", ") }));
       return;
     }
     // Captured BEFORE any synthetic additions below, so a business-line-driven deductibility
@@ -1595,16 +1594,16 @@ function BelegDetail({ beleg }: { beleg: Beleg }) {
     // Keep the foreign keys in sync with the edited codes, so relational queries and the
     // free-text codes can't disagree (company already did this; property now does too).
     if ("company_code" in changes) {
-      const g = gesellschaften.find((x) => x.code === changes.company_code);
+      const g = companies.find((x) => x.code === changes.company_code);
       (changes as Record<string, unknown>).company_id = g?.id ?? null;
     }
     if ("property_code" in changes) {
       // Gemeinkosten is not a property. It goes to its own column and clears the property, which
       // the database also insists on (invoices_overhead_xor_property).
-      const gemeinkosten = changes.property_code === GEMEINKOSTEN;
-      (changes as Record<string, unknown>).is_overhead = gemeinkosten;
-      if (gemeinkosten) (changes as Record<string, unknown>).property_code = null;
-      const o = gemeinkosten ? undefined : objekte.find((x) => x.code === changes.property_code);
+      const overhead = changes.property_code === OVERHEAD;
+      (changes as Record<string, unknown>).is_overhead = overhead;
+      if (overhead) (changes as Record<string, unknown>).property_code = null;
+      const o = overhead ? undefined : properties.find((x) => x.code === changes.property_code);
       (changes as Record<string, unknown>).property_id = o?.id ?? null;
 
       // The VAT treatment hangs on the property's own vat_status (migration 0083; previously
@@ -1641,7 +1640,7 @@ function BelegDetail({ beleg }: { beleg: Beleg }) {
     // 'human' and become untouchable for the rule engine (apply_assignment_rules skips them).
     // Stamped per dimension rather than once for the whole form: correcting the category must not
     // silently freeze the VAT rate against a rule that would still improve it.
-    const ZUORDNUNG_FELDER = ["company_code", "property_code"];
+    const ASSIGNMENT_FIELDS = ["company_code", "property_code"];
     // Per FIELD, not per dimension: the two used to share one assignment_decided_by column, so
     // correcting only the company also marked the property human-decided and its badge flipped to
     // "manual" on a field nobody had touched.
@@ -1668,7 +1667,7 @@ function BelegDetail({ beleg }: { beleg: Beleg }) {
     }
 
     if (labels.length === 0) {
-      toast.info(t("belege.detail.toast.keineAenderungen"));
+      toast.info(t("documents.detail.toast.keineAenderungen"));
       setEditSection(null);
       return;
     }
@@ -1680,26 +1679,26 @@ function BelegDetail({ beleg }: { beleg: Beleg }) {
     //
     // A code is replaced by the name it stands for where one exists. "Lieferant: 4f2c-…" is not a
     // record of anything a person can check.
-    const ANZEIGE: Record<string, (wert: unknown) => string | null> = {
-      category_id: kategorieName,
+    const DISPLAY: Record<string, (value: unknown) => string | null> = {
+      category_id: categoryName,
     };
 
     const changeLines = labels.map((k) =>
-      feldAenderungDe(k, beleg[k as keyof Beleg], changes[k as keyof Beleg], ANZEIGE[k]),
+      fieldChangeDe(k, doc[k as keyof Document], changes[k as keyof Document], DISPLAY[k]),
     );
 
     // `reassignLines` are overwrites of an assignment that was ALREADY set; those need an explicit
     // confirmation before we commit. Clearing one (unlink) does not: removing an assignment is the
     // briefing's own escape hatch and must not be gated behind a dialog.
     const reassignLines = labels
-      .filter((k) => ZUORDNUNG_FELDER.includes(k) && !!beleg[k as keyof Beleg])
+      .filter((k) => ASSIGNMENT_FIELDS.includes(k) && !!doc[k as keyof Document])
       .map((k) =>
-        feldAenderungDe(k, beleg[k as keyof Beleg], changes[k as keyof Beleg], ANZEIGE[k]),
+        fieldChangeDe(k, doc[k as keyof Document], changes[k as keyof Document], DISPLAY[k]),
       );
 
     // Assignment changes log as typ "booking", pure field edits as "change". Either way the
     // text carries the full list of before→after lines.
-    const istZuordnung = labels.some((k) => ZUORDNUNG_FELDER.includes(k));
+    const isAssignment = labels.some((k) => ASSIGNMENT_FIELDS.includes(k));
 
     if (reassignLines.length > 0) {
       // Overwriting an existing assignment — make it explicit before committing.
@@ -1708,12 +1707,12 @@ function BelegDetail({ beleg }: { beleg: Beleg }) {
         before,
         labels,
         changeLines,
-        istZuordnung,
+        isAssignment,
         lines: reassignLines,
       });
       return;
     }
-    commitSpeichern(changes, before, labels, changeLines, istZuordnung);
+    commitSave(changes, before, labels, changeLines, isAssignment);
   }
 
   // Promotes the free-text category to the structured one. Goes through the same save path as any
@@ -1733,7 +1732,7 @@ function BelegDetail({ beleg }: { beleg: Beleg }) {
    * ("Nicht zugeordnet") is a real row that means exactly this and is what every filter and KPI
    * tile already treats as unassigned.
    */
-  const KEINE_WAHL = "__keine";
+  const NO_CHOICE = "__keine";
   // `assignment_decided_by` is ONE column for two dimensions -- the existing save path stamps it
   // whenever company_code OR property_code changes -- so it cannot say which of the two a person
   // settled. Keying both on it meant choosing "none" for the company also marked the property
@@ -1742,10 +1741,10 @@ function BelegDetail({ beleg }: { beleg: Beleg }) {
   // The company does not need the stamp: NZO ("Nicht zugeordnet") is a real row meaning exactly
   // "decided, none", so a non-null company_code IS the evidence. The stamp is left to the property,
   // which has no such code and where empty would otherwise be indistinguishable from undecided.
-  const objektEntschieden = beleg.property_assignment_source === "human";
-  const gesellschaftOffen = !beleg.company_code;
-  const objektOffen = !beleg.property_code && !objektEntschieden;
-  const kategorieOffen = !beleg.category_id && beleg.cost_category_source !== "human";
+  const propertyDecided = doc.property_assignment_source === "human";
+  const companyOpen = !doc.company_code;
+  const propertyOpen = !doc.property_code && !propertyDecided;
+  const categoryOpen = !doc.category_id && doc.cost_category_source !== "human";
 
   /**
    * Set the company or the property from the attention card, without opening the Zuordnung editor.
@@ -1763,70 +1762,70 @@ function BelegDetail({ beleg }: { beleg: Beleg }) {
    * the decision. It also stops apply_assignment_rules from filling the field in later and
    * quietly overturning that judgement.
    */
-  function zuordnungAlsErledigt(feld: "property_code" | "category_id") {
-    const stempel =
-      feld === "category_id"
+  function assignmentAlsDone(field: "property_code" | "category_id") {
+    const stamp =
+      field === "category_id"
         ? { cost_category_source: "human" }
         : { property_assignment_source: "human" };
-    commitSpeichern(
-      stempel as Partial<Beleg>,
+    commitSave(
+      stamp as Partial<Document>,
       {},
       [],
       [
-        t("belege.detail.eingabe.keineWahlProtokoll", {
-          feld: t(`belege.detail.field.${feld === "category_id" ? "kategorie" : "objekt"}`),
+        t("documents.detail.eingabe.keineWahlProtokoll", {
+          field: t(`documents.detail.field.${field === "category_id" ? "kategorie" : "objekt"}`),
         }),
       ],
-      feld !== "category_id",
+      field !== "category_id",
     );
   }
 
-  function zuordnungVerknuepfen(feld: "company_code" | "property_code", code: string) {
-    commitSpeichern(
+  function assignmentLink(field: "company_code" | "property_code", code: string) {
+    commitSave(
       // Both dimensions get the stamp, each on its own column. A value picked here is a
       // person's decision exactly like one typed in the Zuordnung editor, so the source badge has
       // to read "manual" either way, and the rule engine has to leave it alone.
       {
-        ...(feld === "property_code" && code === GEMEINKOSTEN
+        ...(field === "property_code" && code === OVERHEAD
           ? // Same translation as the Zuordnung editor: overhead is its own column, and it clears
             // the property rather than being stored as one.
             { property_code: null, property_id: null, is_overhead: true }
-          : { [feld]: code, ...(feld === "property_code" ? { is_overhead: false } : {}) }),
-        [feld === "company_code" ? "company_assignment_source" : "property_assignment_source"]:
+          : { [field]: code, ...(field === "property_code" ? { is_overhead: false } : {}) }),
+        [field === "company_code" ? "company_assignment_source" : "property_assignment_source"]:
           "human",
-      } as Partial<Beleg>,
-      { [feld]: (beleg[feld] as string | null) ?? null },
-      [feld],
-      [feldAenderungDe(feld, beleg[feld], code, (v) => String(v ?? ""))],
+      } as Partial<Document>,
+      { [field]: (doc[field] as string | null) ?? null },
+      [field],
+      [fieldChangeDe(field, doc[field], code, (v) => String(v ?? ""))],
       true,
     );
   }
 
-  function kategorieVerknuepfen(ziel: BwaCategory) {
-    commitSpeichern(
+  function categoryLink(target: CostAnalysisCategory) {
+    commitSave(
       {
-        category_id: ziel.id,
+        category_id: target.id,
         // The same provenance stamp `speichern` writes for a hand-picked category, for the same
         // reason: apply_assignment_rules only leaves a field alone once its source is 'human'
         // (migration 0083). Without it the next "Regeln anwenden" -- or a bulk run -- overwrote
         // the link a person had just made, and QuelleBadge went on calling it KI/Regel.
         cost_category_source: "human",
-      } as Partial<Beleg>,
-      { category_id: beleg.category_id ?? null },
+      } as Partial<Document>,
+      { category_id: doc.category_id ?? null },
       ["category_id"],
       // Rendered by feldAenderungDe like every other change line, so the persisted history keeps
       // one format instead of one special case that has to be read differently.
-      [feldAenderungDe("category_id", beleg.category_id, ziel.id, kategorieName)],
+      [fieldChangeDe("category_id", doc.category_id, target.id, categoryName)],
       false,
     );
   }
 
-  function commitSpeichern(
-    changes: Partial<Beleg>,
+  function commitSave(
+    changes: Partial<Document>,
     before: Record<string, unknown>,
     labels: string[],
     changeLines: string[],
-    istZuordnung: boolean,
+    isAssignment: boolean,
   ) {
     /**
      * Which checks this edit fixed, and which it broke again.
@@ -1836,63 +1835,63 @@ function BelegDetail({ beleg }: { beleg: Beleg }) {
      * change to what this screen says, so the history records it, and here is the only place it
      * can be worked out: between the row as it is and the row as it will be.
      */
-    const ibanJetzt = lieferant?.iban ?? null;
-    const offeneFelder = (b: Beleg) =>
+    const ibanNow = supplier?.iban ?? null;
+    const openFields = (b: Document) =>
       new Set(
-        pruefGruendeDetail(belegNachgeprueft(b, { lieferantIban: ibanJetzt })).map((g) => g.feld),
+        checkReasonsDetail(documentRechecked(b, { supplierIban: ibanNow })).map((g) => g.field),
       );
-    const vorher = offeneFelder(beleg);
-    const nachher = offeneFelder({ ...beleg, ...changes } as Beleg);
-    const behoben = [...vorher].filter((f) => !nachher.has(f));
-    const zurueck = [...nachher].filter((f) => !vorher.has(f));
+    const openBefore = openFields(doc);
+    const openAfter = openFields({ ...doc, ...changes } as Document);
+    const fixed = [...openBefore].filter((f) => !openAfter.has(f));
+    const back = [...openAfter].filter((f) => !openBefore.has(f));
     // Persisted audit text stays German (tDe, not t) whatever language the reviewer reads in.
-    const alleLinien = [
+    const allLines = [
       ...changeLines,
-      ...behoben.map((f) =>
-        tDe("belege.detail.historie.pruefungBehoben", { pruefung: pruefungLabelDe(f, tDe) }),
+      ...fixed.map((f) =>
+        tDe("documents.detail.historie.pruefungBehoben", { check: checkLabelDe(f, tDe) }),
       ),
-      ...zurueck.map((f) =>
-        tDe("belege.detail.historie.pruefungZurueck", { pruefung: pruefungLabelDe(f, tDe) }),
+      ...back.map((f) =>
+        tDe("documents.detail.historie.pruefungZurueck", { check: checkLabelDe(f, tDe) }),
       ),
     ];
-    updateBeleg.mutate(
+    updateDocument.mutate(
       {
         changes,
         // Persisted audit text stays German (do not translate). `daten` keeps the same change
         // machine-readable: `before` and `after` key for key, plus the already-rendered lines, so
         // the detail screen lists them one per row without re-parsing the joined text (a value can
         // itself contain the separator — a business line reads "GB-01 · Vermietung").
-        protokoll: {
-          typ: istZuordnung ? "booking" : "change",
-          text: alleLinien.join(" · "),
-          daten: {
-            felder: labels,
-            before,
-            after: changes as Record<string, unknown>,
-            lines: alleLinien,
-            pruefungen_behoben: behoben,
-            pruefungen_zurueck: zurueck,
+        activityLog: {
+          type: isAssignment ? "booking" : "change",
+          text: allLines.join(" · "),
+          data: {
+            fields: labels,
+            vorher: before,
+            nachher: changes as Record<string, unknown>,
+            lines: allLines,
+            pruefungen_behoben: fixed,
+            pruefungen_zurueck: back,
           },
         },
       },
       {
         onSuccess: () => {
-          toast.success(t("belege.detail.toast.gespeichert"));
+          toast.success(t("documents.detail.toast.gespeichert"));
           setReassign(null);
           setEditSection(null);
         },
         onError: (e) =>
           toast.error(
-            t("belege.detail.toast.speichernFehlgeschlagen", {
-              error: fehlerText(e),
+            t("documents.detail.toast.speichernFehlgeschlagen", {
+              error: errorText(e),
             }),
           ),
       },
     );
   }
 
-  function abbrechen() {
-    setForm(formFromBeleg(beleg));
+  function cancel() {
+    setForm(formFromDocument(doc));
     setEditSection(null);
   }
 
@@ -1907,7 +1906,7 @@ function BelegDetail({ beleg }: { beleg: Beleg }) {
         "[data-radix-popper-content-wrapper], [role='dialog'][data-state='open'], [role='alertdialog'][data-state='open']",
       );
       if (overlayOpen) return;
-      abbrechen();
+      cancel();
     };
     document.addEventListener("keydown", onKeyDown);
     return () => document.removeEventListener("keydown", onKeyDown);
@@ -1922,13 +1921,13 @@ function BelegDetail({ beleg }: { beleg: Beleg }) {
   // cannot win this race: it only becomes true after React re-renders, and both clicks of a real
   // double-click land in the same frame, before that. A ref flips synchronously inside the click
   // itself, so the second one is refused by the time it arrives.
-  const aktionLaeuft = useRef(false);
+  const actionRunning = useRef(false);
   const [pendingAction, setPendingAction] = useState<ApprovalAction | null>(null);
   const [actionComment, setActionComment] = useState("");
 
   function runApprovalAction(action: ApprovalAction, comment: string) {
-    if (aktionLaeuft.current) return;
-    aktionLaeuft.current = true;
+    if (actionRunning.current) return;
+    actionRunning.current = true;
     const label = approvalActionLabelDe(action.id);
     const text = comment.trim() ? `${label}: ${comment.trim()}` : label;
     // The id the notification producer addresses (migration 20260901160500), plus the display name
@@ -1938,20 +1937,20 @@ function BelegDetail({ beleg }: { beleg: Beleg }) {
       action.id === "return_with_query"
         ? approvalQueryTarget(approvalRuleQ.data ?? null, actingAs)
         : null;
-    const returnedTo = personenName(returnedToId);
+    const returnedTo = peopleName(returnedToId);
     // Who approved, as a key rather than a name. The two-person rule compares the payer against
     // this, and it has to be cleared the moment the invoice leaves the approved state -- otherwise
     // a rejected-then-reapproved invoice still names whoever approved it the first time.
     const approvedBy = action.nextStatus === "approved_final" ? (appUserId ?? null) : null;
-    updateBeleg.mutate(
+    updateDocument.mutate(
       {
         // Every remaining action is a plain move along the chain. The one that also cleared
         // paid_at was 'payment_failed', and nobody marks a payment failed by hand any more.
         changes: { workflow_status: action.nextStatus, approved_by: approvedBy },
-        protokoll: {
-          typ: action.typ,
+        activityLog: {
+          type: action.type,
           text,
-          daten: {
+          data: {
             ...(returnedTo ? { returned_to: returnedTo } : {}),
             ...(returnedToId ? { recipient_user_id: returnedToId } : {}),
             // The action and its comment as DATA, next to the German `text` above rather than
@@ -1959,13 +1958,13 @@ function BelegDetail({ beleg }: { beleg: Beleg }) {
             // deliberately German -- but it is also the only thing the history list had to render,
             // so an English reader got a German sentence under an English heading. With the id
             // stored, the list can translate; rows written before this keep falling back to `text`.
-            aktion: action.id,
+            action: action.id,
             // Where it landed. `aktion` says what was clicked; this says what the invoice
             // BECAME, which is what "Time per step" needs to chain its rows together -- without
             // it every point was named after its event type, so three corrections in a row read
             // "Status manually corrected → Status manually corrected → Status manually corrected".
             nach: action.nextStatus,
-            ...(comment.trim() ? { kommentar: comment.trim() } : {}),
+            ...(comment.trim() ? { comment: comment.trim() } : {}),
             // Who the approval was given AS. `actor` on the history row is the logged-in account,
             // which is the right thing to hold someone to, but the chain itself is name-based
             // (useActingAs lets one account act as any approver), so the actor alone never said
@@ -1982,8 +1981,8 @@ function BelegDetail({ beleg }: { beleg: Beleg }) {
       {
         onSuccess: () => {
           toast.success(
-            t("belege.detail.toast.statusGesetzt", {
-              label: t(`belege.workflow.${action.nextStatus}`),
+            t("documents.detail.toast.statusGesetzt", {
+              label: t(`documents.workflow.${action.nextStatus}`),
             }),
           );
           setPendingAction(null);
@@ -1991,13 +1990,13 @@ function BelegDetail({ beleg }: { beleg: Beleg }) {
         },
         onError: (e) =>
           toast.error(
-            t("belege.detail.toast.fehlgeschlagen", {
-              error: fehlerText(e),
+            t("documents.detail.toast.fehlgeschlagen", {
+              error: errorText(e),
             }),
           ),
         // Released whichever way it went, so a failed action can be retried immediately.
         onSettled: () => {
-          aktionLaeuft.current = false;
+          actionRunning.current = false;
         },
       },
     );
@@ -2020,7 +2019,7 @@ function BelegDetail({ beleg }: { beleg: Beleg }) {
   const [pendingCorrection, setPendingCorrection] = useState<WorkflowStatus | null>(null);
   // Undoing a payment has to say why, and that reason is kept: it is what the workflow
   // history shows under "Grund", and what the tax adviser reads later.
-  const [korrekturGrund, setKorrekturGrund] = useState("");
+  const [correctionReason, setCorrectionReason] = useState("");
 
   // H8 (client meeting 09.09.2026): somebody marks an invoice paid, finds out later it was not, and
   // corrects the status back. Fabian was explicit that the payment link has to come off WITH the
@@ -2030,13 +2029,13 @@ function BelegDetail({ beleg }: { beleg: Beleg }) {
   // The rule lives in hub-kit so all four hubs answer it the same way; the chain differs per repo
   // (Immonetz has an extra approval step), which is why it takes WORKFLOW_REIHENFOLGE as an
   // argument rather than assuming one.
-  const korrekturUnlinkMatch = useUnlinkMatch();
-  const bestaetigteMatches = (headerMatchesQ.data ?? []).filter((m) => m.status === "confirmed");
-  const { mayPay: darfSelbstZahlen, reason: keinZahlrechtKorrektur } = usePaymentRight();
-  const korrekturLoestZahlung =
+  const correctionUnlinkMatch = useUnlinkMatch();
+  const confirmedMatches = (headerMatchesQ.data ?? []).filter((m) => m.status === "confirmed");
+  const { mayPay: canSelfPay, reason: noPaymentRightCorrection } = usePaymentRight();
+  const correctionTriggersPayment =
     pendingCorrection != null &&
-    bestaetigteMatches.length > 0 &&
-    releasesPaymentLink(wf, pendingCorrection, WORKFLOW_REIHENFOLGE);
+    confirmedMatches.length > 0 &&
+    releasesPaymentLink(wf, pendingCorrection, WORKFLOW_ORDER);
 
   // Moving an invoice back down the bar (client meeting 09.09.2026). Two different decisions wear
   // the same gesture, and hub-kit keeps them apart so all four hubs answer identically:
@@ -2046,33 +2045,33 @@ function BelegDetail({ beleg }: { beleg: Beleg }) {
   //                   and the confirmed bank transactions come off with it.
   //
   // Past "Bezahlt" nothing is offered: those records have gone to DATEV and are not coming back.
-  const rueckschritt = backwardsTargets(wf, WORKFLOW_REIHENFOLGE, {
+  const stepBack = backwardsTargets(wf, WORKFLOW_ORDER, {
     mayApprove: canApprove,
-    mayPay: darfAlsPerson(PERMISSIONS.paymentsWrite),
+    mayPay: canAlsPerson(PERMISSIONS.paymentsWrite),
   });
 
   // WHO THE CHANGE WAS MADE AS, for every workflow write -- not just the approval actions.
   // Only runApprovalAction recorded this, so a correction, a withdrawn payment or an assignment
   // taken while standing in for somebody came out of the history looking like the signed-in
   // account's own work. Selecting a person and acting twice produced two rows that disagreed.
-  const handelndAlsDaten = actingAs
+  const actingAlsData = actingAs
     ? { handelnd_als: actingAs.name ?? null, handelnd_als_id: actingAs.id ?? null }
     : {};
-  async function runCorrection(target: WorkflowStatus, grund: string | null) {
+  async function runCorrection(target: WorkflowStatus, reason: string | null) {
     // Before the status moves, not after: if the unlink fails the invoice must not be
     // left claiming it is unpaid while the transaction still points at it.
-    if (releasesPaymentLink(wf, target, WORKFLOW_REIHENFOLGE)) {
+    if (releasesPaymentLink(wf, target, WORKFLOW_ORDER)) {
       try {
-        for (const treffer of bestaetigteMatches) {
-          await korrekturUnlinkMatch.mutateAsync({
-            matchId: treffer.id,
-            belegId: beleg.id,
+        for (const match of confirmedMatches) {
+          await correctionUnlinkMatch.mutateAsync({
+            matchId: match.id,
+            documentId: doc.id,
             // Persisted audit text stays German (do not translate).
-            grund: `Statuskorrektur ${workflowLabelDe(wf)} \u2192 ${workflowLabelDe(target)}`,
+            reason: `Statuskorrektur ${workflowLabelDe(wf)} \u2192 ${workflowLabelDe(target)}`,
           });
         }
       } catch (e) {
-        toast.error(t("belege.detail.toast.fehlgeschlagen", { error: fehlerText(e) }));
+        toast.error(t("documents.detail.toast.fehlgeschlagen", { error: errorText(e) }));
         return;
       }
     }
@@ -2085,105 +2084,103 @@ function BelegDetail({ beleg }: { beleg: Beleg }) {
     // transition, not just to/from 'bezahlt' — 'rejected' (not in that array, indexOf = -1)
     // ranks below 'received', so correcting a paid/handed-over invoice to rejected also clears
     // both, matching "this never should have progressed".
-    const targetRank = WORKFLOW_REIHENFOLGE.indexOf(
-      target as (typeof WORKFLOW_REIHENFOLGE)[number],
-    );
-    const currentRank = WORKFLOW_REIHENFOLGE.indexOf(wf as (typeof WORKFLOW_REIHENFOLGE)[number]);
-    const bezahltRank = WORKFLOW_REIHENFOLGE.indexOf("paid");
-    const uebergebenRank = WORKFLOW_REIHENFOLGE.indexOf("handed_over");
+    const targetRank = WORKFLOW_ORDER.indexOf(target as (typeof WORKFLOW_ORDER)[number]);
+    const currentRank = WORKFLOW_ORDER.indexOf(wf as (typeof WORKFLOW_ORDER)[number]);
+    const paidRank = WORKFLOW_ORDER.indexOf("paid");
+    const handOverRank = WORKFLOW_ORDER.indexOf("handed_over");
 
     const paymentSync =
-      targetRank >= bezahltRank && !beleg.paid_at
+      targetRank >= paidRank && !doc.paid_at
         ? { paid_at: new Date().toISOString(), paid_source: "manual" as const }
-        : targetRank < bezahltRank && currentRank >= bezahltRank
+        : targetRank < paidRank && currentRank >= paidRank
           ? { paid_at: null, paid_source: null }
           : {};
     const datevSync =
-      targetRank >= uebergebenRank && !beleg.handed_over_at
+      targetRank >= handOverRank && !doc.handed_over_at
         ? { handed_over_at: new Date().toISOString() }
-        : targetRank < uebergebenRank && currentRank >= uebergebenRank
+        : targetRank < handOverRank && currentRank >= handOverRank
           ? { handed_over_at: null }
           : {};
-    updateBeleg.mutate(
+    updateDocument.mutate(
       {
         changes: { workflow_status: target, ...paymentSync, ...datevSync },
-        protokoll: {
-          typ: "correction",
+        activityLog: {
+          type: "correction",
           // Persisted audit text stays German (do not translate).
-          text: grund
-            ? `Manuell korrigiert: ${workflowLabelDe(wf)} → ${workflowLabelDe(target)} – ${grund}`
+          text: reason
+            ? `Manuell korrigiert: ${workflowLabelDe(wf)} → ${workflowLabelDe(target)} – ${reason}`
             : `Manuell korrigiert: ${workflowLabelDe(wf)} → ${workflowLabelDe(target)}`,
           // The two ends of the move as STATUS CODES, so the history list can name them in the
           // reader's language and, more to the point, name them at all: "Status manually
           // corrected" on its own says that something was overridden but not to what, which is
           // the only part anybody reads this row to find out. `text` above is untouched -- it is
           // the German audit record. Rows written before this fall back to it.
-          daten: {
+          data: {
             korrektur_von: wf,
             korrektur_nach: target,
-            ...handelndAlsDaten,
+            ...actingAlsData,
             // The key verlaufKommentar() reads, so the reason renders under
             // "Grund" in the workflow history without a change there.
-            ...(grund ? { kommentar: grund } : {}),
+            ...(reason ? { kommentar: reason } : {}),
           },
         },
       },
       {
         onSuccess: () => {
           toast.success(
-            t("belege.detail.toast.statusGesetzt", { label: t(`belege.workflow.${target}`) }),
+            t("documents.detail.toast.statusGesetzt", { label: t(`documents.workflow.${target}`) }),
           );
           setPendingCorrection(null);
-          setKorrekturGrund("");
+          setCorrectionReason("");
         },
         onError: (e) =>
           toast.error(
-            t("belege.detail.toast.fehlgeschlagen", {
-              error: fehlerText(e),
+            t("documents.detail.toast.fehlgeschlagen", {
+              error: errorText(e),
             }),
           ),
       },
     );
   }
 
-  function setZuweisung(userId: string) {
-    const wert = userId === "__none" ? null : userId;
+  function setAssignment(userId: string) {
+    const value = userId === "__none" ? null : userId;
     // Reopening the detail page and reclicking the same already-set value must not append a
     // "Zuweisung entfernt"/"Zugewiesen an X" audit line — nothing actually changed.
-    if (wert === (beleg.assigned_user_id ?? null)) return;
-    const name = personenName(wert);
-    updateBeleg.mutate(
+    if (value === (doc.assigned_user_id ?? null)) return;
+    const name = peopleName(value);
+    updateDocument.mutate(
       {
-        changes: { assigned_user_id: wert },
+        changes: { assigned_user_id: value },
         // Persisted audit text stays German.
-        protokoll: {
-          typ: "assigned",
-          text: wert ? `Zugewiesen an ${name}` : "Zuweisung entfernt",
+        activityLog: {
+          type: "assigned",
+          text: value ? `Zugewiesen an ${name}` : "Zuweisung entfernt",
           // What notify_event_from_history() reads to address the notification (migration
           // 20260901160500). Without it the trigger falls back to matching `assigned_to` by name
           // against app_users, which is the fragile path this whole change removes -- and for an
           // un-assignment there is deliberately nobody to tell.
-          daten: wert ? { recipient_user_id: wert, assigned_to: name } : null,
+          data: value ? { recipient_user_id: value, assigned_to: name } : null,
         },
       },
       {
         onSuccess: () =>
           toast.success(
-            wert
-              ? t("belege.detail.toast.zugewiesenAn", { name: name ?? "" })
-              : t("belege.detail.toast.zuweisungEntfernt"),
+            value
+              ? t("documents.detail.toast.zugewiesenAn", { name: name ?? "" })
+              : t("documents.detail.toast.zuweisungEntfernt"),
           ),
         onError: (e) =>
           toast.error(
-            t("belege.detail.toast.fehlgeschlagen", {
-              error: fehlerText(e),
+            t("documents.detail.toast.fehlgeschlagen", {
+              error: errorText(e),
             }),
           ),
       },
     );
   }
 
-  async function setBezahlt(checked: boolean) {
+  async function setPaid(checked: boolean) {
     // Turning the switch OFF has to undo what turning it on did, and until now it only did half.
     // paid_at going null -> non-null advances workflow_status to 'bezahlt' through
     // advance_workflow_on_payment(), and that trigger has no reverse: it fires on null -> non-null
@@ -2195,7 +2192,7 @@ function BelegDetail({ beleg }: { beleg: Beleg }) {
     // Guarded on 'bezahlt': once an invoice has moved on to DATEV or been closed, removing a paid
     // mark is not a reason to drag it back through the chain -- that is a correction for a
     // super_admin to make deliberately, not a side effect of a switch.
-    const zuruecknahme = !checked && beleg.workflow_status === "paid";
+    const withdrawal = !checked && doc.workflow_status === "paid";
 
     // H8 (client meeting 09.09.2026). This switch is the path anybody holding invoices.pay takes
     // to say an invoice was not paid after all, and it walks the status back from 'bezahlt' on its
@@ -2203,22 +2200,22 @@ function BelegDetail({ beleg }: { beleg: Beleg }) {
     // invoice reads as unpaid while the transaction still reads as reconciled against it, and the
     // next bank import has nothing left to match. Same rule as the super-admin correction, which
     // is why both ask hub-kit rather than each deciding for itself.
-    if (zuruecknahme && releasesPaymentLink(wf, "in_review", WORKFLOW_REIHENFOLGE)) {
+    if (withdrawal && releasesPaymentLink(wf, "in_review", WORKFLOW_ORDER)) {
       try {
-        for (const treffer of bestaetigteMatches) {
-          await korrekturUnlinkMatch.mutateAsync({
-            matchId: treffer.id,
-            belegId: beleg.id,
+        for (const match of confirmedMatches) {
+          await correctionUnlinkMatch.mutateAsync({
+            matchId: match.id,
+            documentId: doc.id,
             // Persisted audit text stays German (do not translate).
-            grund: "Bezahlt-Markierung entfernt",
+            reason: "Bezahlt-Markierung entfernt",
           });
         }
       } catch (e) {
-        toast.error(t("belege.detail.toast.fehlgeschlagen", { error: fehlerText(e) }));
+        toast.error(t("documents.detail.toast.fehlgeschlagen", { error: errorText(e) }));
         return;
       }
     }
-    updateBeleg.mutate(
+    updateDocument.mutate(
       {
         // paid_source marks this as a human decision, so the bank-match trigger (migration 0024)
         // never clears it again when coverage drops. Only a paid_at it set itself is withdrawn.
@@ -2230,7 +2227,7 @@ function BelegDetail({ beleg }: { beleg: Beleg }) {
           // the paid mark while leaving the flag standing would send the invoice back to In
           // Prüfung as unpaid AND keep it invisible in the open items -- owed to the supplier and
           // listed nowhere.
-          ...(zuruecknahme ? { workflow_status: "in_review" as const, already_paid: null } : {}),
+          ...(withdrawal ? { workflow_status: "in_review" as const, already_paid: null } : {}),
         },
         // Persisted audit text stays German.
         // `korrektur` rather than `aenderung`, and only for the withdrawal: it is the type for
@@ -2238,14 +2235,14 @@ function BelegDetail({ beleg }: { beleg: Beleg }) {
         // it is one of APPROVAL_VERLAUF_TYPES, so the row lands in the Workflow-history timeline
         // instead of the general history nobody reads for chain movements. `nach` is what
         // verlaufZielStatus() reads to title the row with the state reached.
-        protokoll: zuruecknahme
+        activityLog: withdrawal
           ? {
-              typ: "correction",
+              type: "correction",
               text: "Manuelle Bezahlt-Markierung entfernt, Status zurück auf In Prüfung",
-              daten: { nach: "in_review", ...handelndAlsDaten },
+              data: { nach: "in_review", ...actingAlsData },
             }
           : {
-              typ: "change",
+              type: "change",
               text: checked
                 ? "Manuell als bezahlt markiert"
                 : "Manuelle Bezahlt-Markierung entfernt",
@@ -2254,25 +2251,25 @@ function BelegDetail({ beleg }: { beleg: Beleg }) {
       {
         onError: (e) =>
           toast.error(
-            t("belege.detail.toast.fehlgeschlagen", {
-              error: fehlerText(e),
+            t("documents.detail.toast.fehlgeschlagen", {
+              error: errorText(e),
             }),
           ),
       },
     );
   }
 
-  function notizSpeichern() {
-    if (!notiz.trim()) return;
-    addNotiz.mutate(notiz.trim(), {
+  function noteSave() {
+    if (!note.trim()) return;
+    addNote.mutate(note.trim(), {
       onSuccess: () => {
-        toast.success(t("belege.detail.toast.notizGespeichert"));
-        setNotiz("");
+        toast.success(t("documents.detail.toast.notizGespeichert"));
+        setNote("");
       },
       onError: (e) =>
         toast.error(
-          t("belege.detail.toast.fehlgeschlagen", {
-            error: fehlerText(e),
+          t("documents.detail.toast.fehlgeschlagen", {
+            error: errorText(e),
           }),
         ),
     });
@@ -2282,16 +2279,16 @@ function BelegDetail({ beleg }: { beleg: Beleg }) {
   // is reported field by field rather than as a blanket "done": a run that changed nothing because
   // a person already decided everything is a success, but a different one, and saying "2 fields
   // updated" when 2 were skipped would be a lie the user cannot check.
-  function regelnAnwenden() {
-    applyRules.mutate(beleg.id, {
+  function rulesApply() {
+    applyRules.mutate(doc.id, {
       onSuccess: (res) => {
         if (res.changed.length === 0 && res.skipped.length === 0) {
-          toast.info(t("belege.detail.regel.keineTreffer"));
+          toast.info(t("documents.detail.regel.keineTreffer"));
         } else if (res.changed.length === 0) {
-          toast.info(t("belege.detail.regel.nurUebersprungen", { count: res.skipped.length }));
+          toast.info(t("documents.detail.regel.nurUebersprungen", { count: res.skipped.length }));
         } else {
           toast.success(
-            t("belege.detail.regel.angewendet", {
+            t("documents.detail.regel.angewendet", {
               count: res.changed.length,
               skipped: res.skipped.length,
             }),
@@ -2300,59 +2297,59 @@ function BelegDetail({ beleg }: { beleg: Beleg }) {
       },
       onError: (e) =>
         toast.error(
-          t("belege.detail.regel.fehlgeschlagen", {
-            error: fehlerText(e),
+          t("documents.detail.regel.fehlgeschlagen", {
+            error: errorText(e),
           }),
         ),
     });
   }
 
-  function nichtRelevant() {
-    setNotRelevant.mutate(nichtRelevantGrund.trim(), {
+  function notRelevant() {
+    setNotRelevant.mutate(notRelevantReason.trim(), {
       onSuccess: () => {
-        toast.success(t("belege.detail.action.nichtRelevantOk"));
-        setNichtRelevantGrund("");
+        toast.success(t("documents.detail.action.nichtRelevantOk"));
+        setNotRelevantReason("");
       },
       onError: (e) =>
         toast.error(
-          t("belege.detail.toast.fehlgeschlagen", {
-            error: fehlerText(e),
+          t("documents.detail.toast.fehlgeschlagen", {
+            error: errorText(e),
           }),
         ),
     });
   }
 
-  function archivieren() {
-    archive.mutate(archivHinweis.trim(), {
+  function confirmArchive() {
+    archive.mutate(archiveHint.trim(), {
       onSuccess: () => {
-        toast.success(t("belege.detail.action.archivierenOk"));
-        setArchivHinweis("");
+        toast.success(t("documents.detail.action.archivierenOk"));
+        setArchiveHint("");
       },
       onError: (e) =>
         toast.error(
-          t("belege.detail.toast.fehlgeschlagen", {
-            error: fehlerText(e),
+          t("documents.detail.toast.fehlgeschlagen", {
+            error: errorText(e),
           }),
         ),
     });
   }
 
-  function verwerfen() {
+  function discard() {
     // Persisted reason (loesch_grund) stays German.
     softDelete.mutate("Verworfen — kein Beleg", {
       onSuccess: () => {
-        toast.success(t("belege.detail.toast.verworfen"));
+        toast.success(t("documents.detail.toast.verworfen"));
         // The receipt is gone, so the open edit is moot. Without this the blocker asked about
         // unsaved changes to a deleted record, and "Weiter bearbeiten" cancelled the redirect and
         // left the reviewer sitting on it.
-        eigeneNavigation.current = true;
+        ownNavigation.current = true;
         setEditSection(null);
-        navigate({ to: "/eingangsrechnungen" });
+        navigate({ to: "/incoming-invoices" });
       },
       onError: (e) =>
         toast.error(
-          t("belege.detail.toast.verwerfenFehlgeschlagen", {
-            error: fehlerText(e),
+          t("documents.detail.toast.verwerfenFehlgeschlagen", {
+            error: errorText(e),
           }),
         ),
     });
@@ -2382,18 +2379,18 @@ function BelegDetail({ beleg }: { beleg: Beleg }) {
    */
   // Null when there IS something to do, and in super-admin mode, where the whole ladder is
   // clickable and an explanation for absent buttons would contradict it.
-  const keineAktionenText =
-    legalActions.length === 0 && !superAdminModus
-      ? keineAktionenGrund
-        ? t(`belege.detail.keineAktionen.${keineAktionenGrund.key}`, {
-            namen: keineAktionenGrund.namen ?? "",
+  const noActionsText =
+    legalActions.length === 0 && !superAdminMode
+      ? noActionsReason
+        ? t(`documents.detail.keineAktionen.${noActionsReason.key}`, {
+            names: noActionsReason.names ?? "",
           })
-        : t("belege.detail.keineAktionen.keineSchritte")
+        : t("documents.detail.keineAktionen.keineSchritte")
       : null;
 
-  const actingAsControl = darfHandelnAls ? (
+  const actingAsControl = canActAls ? (
     <LabelledSelect
-      label={t("belege.detail.workflow.actingAsChoose")}
+      label={t("documents.detail.workflow.actingAsChoose")}
       // THE VALUE HAS TO BE ONE OF THE OPTIONS, or the select renders blank. With nothing chosen
       // yet, `actingAs` is the signed-in person -- and a super admin is filtered out of the list
       // below, so their own id matched no option and the control came up empty: it never said who
@@ -2401,7 +2398,7 @@ function BelegDetail({ beleg }: { beleg: Beleg }) {
       // selectable (yourself included) maps onto the ACTING_AS_NONE entry, which is exactly what
       // that entry means.
       value={
-        actingAs && waehlbarePersonen.some((p) => p.id === actingAs.id)
+        actingAs && selectablePeople.some((p) => p.id === actingAs.id)
           ? actingAs.id
           : ACTING_AS_NONE
       }
@@ -2414,9 +2411,9 @@ function BelegDetail({ beleg }: { beleg: Beleg }) {
         // to "me".
         {
           value: ACTING_AS_NONE,
-          label: t("belege.detail.workflow.alsSuperAdmin"),
+          label: t("documents.detail.workflow.alsSuperAdmin"),
         },
-        ...waehlbarePersonen.map((p) => ({ value: p.id, label: personenLabel(p) })),
+        ...selectablePeople.map((p) => ({ value: p.id, label: peopleLabel(p) })),
       ]}
     />
   ) : null;
@@ -2436,25 +2433,23 @@ function BelegDetail({ beleg }: { beleg: Beleg }) {
    * somewhere else. The derivation itself stays — responsibleApprover still drives the
    * deactivated/overdue warnings on this tab and the Verantwortlich column on the invoice list.
    */
-  const zuweisungControl = darfZuweisen ? (
+  const assignmentControl = canAssign ? (
     <LabelledSelect
-      label={t("belege.detail.workflow.assignedTo")}
-      value={beleg.assigned_user_id ?? "__none"}
-      onValueChange={setZuweisung}
-      placeholder={t("belege.detail.workflow.nobody")}
+      label={t("documents.detail.workflow.assignedTo")}
+      value={doc.assigned_user_id ?? "__none"}
+      onValueChange={setAssignment}
+      placeholder={t("documents.detail.workflow.nobody")}
       options={[
-        { value: "__none", label: t("belege.detail.workflow.nobody") },
-        ...zuweisbarePersonen.map((p) => ({ value: p.id, label: personenLabel(p) })),
+        { value: "__none", label: t("documents.detail.workflow.nobody") },
+        ...assignablePeople.map((p) => ({ value: p.id, label: peopleLabel(p) })),
         // An existing assignment pointing at a deactivated account -- or at yourself, from before
         // this filter -- stays selectable, so the field does not look broken and the current value
         // is not silently rewritten on the next save. Not offered as a choice going forward.
-        ...(beleg.assigned_user_id &&
-        !zuweisbarePersonen.some((p) => p.id === beleg.assigned_user_id)
+        ...(doc.assigned_user_id && !assignablePeople.some((p) => p.id === doc.assigned_user_id)
           ? [
               {
-                value: beleg.assigned_user_id,
-                label:
-                  personenName(beleg.assigned_user_id) ?? t("belege.detail.workflow.unbekannt"),
+                value: doc.assigned_user_id,
+                label: peopleName(doc.assigned_user_id) ?? t("documents.detail.workflow.unbekannt"),
               },
             ]
           : []),
@@ -2462,10 +2457,10 @@ function BelegDetail({ beleg }: { beleg: Beleg }) {
     />
   ) : null;
 
-  async function linkKopieren() {
+  async function linkCopy() {
     try {
       await navigator.clipboard.writeText(window.location.href);
-      toast.success(t("belege.detail.action.linkKopiert"));
+      toast.success(t("documents.detail.action.linkKopiert"));
     } catch {
       toast.error(t("common.copy.failed"));
     }
@@ -2473,59 +2468,55 @@ function BelegDetail({ beleg }: { beleg: Beleg }) {
 
   // Return-with-query, Reject and Pay now, up on the title line. Approving stays on the ladder:
   // the step a click lands on depends on the person, and a single button cannot say that.
-  const kopfAktionen = (
+  const headerActions = (
     <>
       {legalActions.length > 0 && (
         <ActionButtons
-          disabled={updateBeleg.isPending}
+          disabled={updateDocument.isPending}
           onAction={(id) => {
-            const action = nebenAktionen.find((a) => a.id === id);
+            const action = secondaryActions.find((a) => a.id === id);
             if (action) onApprovalAction(action);
           }}
-          actions={nebenAktionen.map((action) => ({
+          actions={secondaryActions.map((action) => ({
             id: action.id,
             icon: APPROVAL_ACTION_ICON[action.id],
-            label: t(`belege.workflow.actions.${action.id}`),
+            label: t(`documents.workflow.actions.${action.id}`),
             destructive: action.id === "reject",
           }))}
         />
       )}
-      {wf === "approved_final" && !beleg.paid_at && (
-        <Button
-          size="sm"
-          className="gap-2"
-          onClick={() => springeZu("zahlung", UEBERWEISUNG_ANKER)}
-        >
+      {wf === "approved_final" && !doc.paid_at && (
+        <Button size="sm" className="gap-2" onClick={() => jumpZu("zahlung", TRANSFER_ANCHOR)}>
           <Send className="size-4" />
-          {t("belege.detail.lieferant.zahlung.jetztBezahlen")}
+          {t("documents.detail.lieferant.zahlung.jetztBezahlen")}
         </Button>
       )}
     </>
   );
 
-  const dokumentAktionen = (
+  const documentActions = (
     <>
       <IconMenu
-        label={t("belege.detail.action.mehr")}
+        label={t("documents.detail.action.mehr")}
         className="size-8"
         onSelect={(id) => {
-          if (id === "linkKopieren") linkKopieren();
-          else if (id === "regelnAnwenden") regelnAnwenden();
+          if (id === "linkKopieren") linkCopy();
+          else if (id === "regelnAnwenden") rulesApply();
           else if (id === "nichtRelevantZurueck")
             clearNotRelevant.mutate(undefined, {
-              onSuccess: () => toast.success(t("belege.detail.action.nichtRelevantZurueckOk")),
+              onSuccess: () => toast.success(t("documents.detail.action.nichtRelevantZurueckOk")),
             });
-          else if (id === "nichtRelevant") setAktionDialog("nichtRelevant");
+          else if (id === "nichtRelevant") setActionDialog("nichtRelevant");
           else if (id === "archivZurueck")
             unarchive.mutate(undefined, {
-              onSuccess: () => toast.success(t("belege.detail.action.archivZurueckOk")),
+              onSuccess: () => toast.success(t("documents.detail.action.archivZurueckOk")),
             });
-          else if (id === "archivieren") setAktionDialog("archivieren");
-          else if (id === "ping") setPingOffen(true);
-          else if (id === "verwerfen") setAktionDialog("verwerfen");
+          else if (id === "archivieren") setActionDialog("archivieren");
+          else if (id === "ping") setPingOpen(true);
+          else if (id === "verwerfen") setActionDialog("verwerfen");
         }}
         items={[
-          { id: "linkKopieren", icon: Link2, label: t("belege.detail.action.linkKopieren") },
+          { id: "linkKopieren", icon: Link2, label: t("documents.detail.action.linkKopieren") },
           // No confirmation dialog: the RPC cannot touch a human-set value, so the worst case is
           // that it changes an AI guess, and every change is logged and reversible by editing the
           // field. Gating a safe, audited action behind a dialog trains people to click through
@@ -2533,49 +2524,49 @@ function BelegDetail({ beleg }: { beleg: Beleg }) {
           {
             id: "regelnAnwenden",
             icon: Wand2,
-            label: t("belege.detail.regel.anwenden"),
+            label: t("documents.detail.regel.anwenden"),
             disabled: applyRules.isPending,
             separatorBefore: true,
           },
           // Nicht relevant: ein echter Beleg, aber nicht unserer -- geht zurück ins Postfach.
-          beleg.not_relevant_at
+          doc.not_relevant_at
             ? {
                 id: "nichtRelevantZurueck",
                 icon: Undo2,
-                label: t("belege.detail.action.nichtRelevantZurueck"),
+                label: t("documents.detail.action.nichtRelevantZurueck"),
                 disabled: clearNotRelevant.isPending,
                 separatorBefore: true,
               }
             : {
                 id: "nichtRelevant",
                 icon: MailQuestion,
-                label: t("belege.detail.action.nichtRelevant"),
+                label: t("documents.detail.action.nichtRelevant"),
                 separatorBefore: true,
               },
           // Archivieren: falsch eingesammelter Beleg, bleibt mit Warnhinweis erhalten.
-          beleg.archived_at
+          doc.archived_at
             ? {
                 id: "archivZurueck",
                 icon: ArchiveRestore,
-                label: t("belege.detail.action.archivZurueck"),
+                label: t("documents.detail.action.archivZurueck"),
                 disabled: unarchive.isPending,
               }
             : {
                 id: "archivieren",
                 icon: Archive,
-                label: t("belege.detail.action.archivieren"),
+                label: t("documents.detail.action.archivieren"),
                 destructive: true,
               },
-          ...(pingEmpfaenger.length > 0
+          ...(pingRecipient.length > 0
             ? [{ id: "ping", icon: BellRing, label: t("ping.aktion") }]
             : []),
           // Verwerfen (für "zu prüfen"): kein Beleg -- Soft-Delete mit Grund.
-          ...(beleg.status === "needs_review"
+          ...(doc.status === "needs_review"
             ? [
                 {
                   id: "verwerfen",
                   icon: X,
-                  label: t("belege.detail.action.verwerfen"),
+                  label: t("documents.detail.action.verwerfen"),
                   destructive: true,
                 },
               ]
@@ -2585,78 +2576,78 @@ function BelegDetail({ beleg }: { beleg: Beleg }) {
 
       <PingDialog
         kind="invoice"
-        id={beleg.id}
-        recipients={pingEmpfaenger}
-        open={pingOffen}
-        onOpenChange={setPingOffen}
+        id={doc.id}
+        recipients={pingRecipient}
+        open={pingOpen}
+        onOpenChange={setPingOpen}
       />
 
       {/* The dialogs themselves, unchanged in wording and effect -- only the trigger moved. */}
       <AlertDialog
-        open={aktionDialog === "nichtRelevant"}
-        onOpenChange={(o) => !o && setAktionDialog(null)}
+        open={actionDialog === "nichtRelevant"}
+        onOpenChange={(o) => !o && setActionDialog(null)}
       >
         <AlertDialogContent>
           <AlertDialogHeader>
-            <AlertDialogTitle>{t("belege.detail.action.nichtRelevantTitle")}</AlertDialogTitle>
+            <AlertDialogTitle>{t("documents.detail.action.nichtRelevantTitle")}</AlertDialogTitle>
             <AlertDialogDescription>
-              {t("belege.detail.action.nichtRelevantDesc")}
+              {t("documents.detail.action.nichtRelevantDesc")}
             </AlertDialogDescription>
           </AlertDialogHeader>
           <Input
-            value={nichtRelevantGrund}
-            onChange={(e) => setNichtRelevantGrund(e.target.value)}
-            placeholder={t("belege.detail.action.grundPlaceholder")}
+            value={notRelevantReason}
+            onChange={(e) => setNotRelevantReason(e.target.value)}
+            placeholder={t("documents.detail.action.grundPlaceholder")}
           />
           <AlertDialogFooter>
-            <AlertDialogCancel>{t("belege.detail.action.abbrechen")}</AlertDialogCancel>
-            <AlertDialogAction onClick={nichtRelevant}>
-              {t("belege.detail.action.nichtRelevantConfirm")}
+            <AlertDialogCancel>{t("documents.detail.action.abbrechen")}</AlertDialogCancel>
+            <AlertDialogAction onClick={notRelevant}>
+              {t("documents.detail.action.nichtRelevantConfirm")}
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
 
       <AlertDialog
-        open={aktionDialog === "archivieren"}
-        onOpenChange={(o) => !o && setAktionDialog(null)}
+        open={actionDialog === "archivieren"}
+        onOpenChange={(o) => !o && setActionDialog(null)}
       >
         <AlertDialogContent>
           <AlertDialogHeader>
-            <AlertDialogTitle>{t("belege.detail.action.archivierenTitle")}</AlertDialogTitle>
+            <AlertDialogTitle>{t("documents.detail.action.archivierenTitle")}</AlertDialogTitle>
             <AlertDialogDescription>
-              {t("belege.detail.action.archivierenDesc")}
+              {t("documents.detail.action.archivierenDesc")}
             </AlertDialogDescription>
           </AlertDialogHeader>
           <Input
-            value={archivHinweis}
-            onChange={(e) => setArchivHinweis(e.target.value)}
-            placeholder={t("belege.detail.action.hinweisPlaceholder")}
+            value={archiveHint}
+            onChange={(e) => setArchiveHint(e.target.value)}
+            placeholder={t("documents.detail.action.hinweisPlaceholder")}
           />
           <AlertDialogFooter>
-            <AlertDialogCancel>{t("belege.detail.action.abbrechen")}</AlertDialogCancel>
-            <AlertDialogAction onClick={archivieren}>
-              {t("belege.detail.action.archivierenConfirm")}
+            <AlertDialogCancel>{t("documents.detail.action.abbrechen")}</AlertDialogCancel>
+            <AlertDialogAction onClick={confirmArchive}>
+              {t("documents.detail.action.archivierenConfirm")}
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
 
       <AlertDialog
-        open={aktionDialog === "verwerfen"}
-        onOpenChange={(o) => !o && setAktionDialog(null)}
+        open={actionDialog === "verwerfen"}
+        onOpenChange={(o) => !o && setActionDialog(null)}
       >
         <AlertDialogContent>
           <AlertDialogHeader>
-            <AlertDialogTitle>{t("belege.detail.action.verwerfenTitle")}</AlertDialogTitle>
+            <AlertDialogTitle>{t("documents.detail.action.verwerfenTitle")}</AlertDialogTitle>
             <AlertDialogDescription>
-              {t("belege.detail.action.verwerfenDesc")}
+              {t("documents.detail.action.verwerfenDesc")}
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
-            <AlertDialogCancel>{t("belege.detail.action.abbrechen")}</AlertDialogCancel>
-            <AlertDialogAction onClick={verwerfen}>
-              {t("belege.detail.action.verwerfenConfirm")}
+            <AlertDialogCancel>{t("documents.detail.action.abbrechen")}</AlertDialogCancel>
+            <AlertDialogAction onClick={discard}>
+              {t("documents.detail.action.verwerfenConfirm")}
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
@@ -2677,7 +2668,7 @@ function BelegDetail({ beleg }: { beleg: Beleg }) {
       {/* Why this person is here. Somebody sent them to this invoice with a note, and without this
           the note stays behind in the bell on the screen they came from. Above the header card
           because it explains the whole page, and it renders nothing when nothing is waiting. */}
-      <PingNotice kind="invoice" id={beleg.id} />
+      <PingNotice kind="invoice" id={doc.id} />
 
       <div
         data-tour="invoice-detail-header"
@@ -2689,15 +2680,15 @@ function BelegDetail({ beleg }: { beleg: Beleg }) {
               from the figures: a menu sitting directly above a total reads as acting on the total. */}
           <div className="flex items-center justify-between gap-4">
             <Link
-              to="/eingangsrechnungen"
+              to="/incoming-invoices"
               search={listSearch}
               className="inline-flex items-center gap-1.5 text-base text-muted-foreground transition-colors hover:text-foreground"
             >
-              <ArrowLeft className="size-4" /> {t("belege.detail.back")}
+              <ArrowLeft className="size-4" /> {t("documents.detail.back")}
             </Link>
             <div className="flex flex-wrap items-center justify-end gap-2">
-              {kopfAktionen}
-              {dokumentAktionen}
+              {headerActions}
+              {documentActions}
             </div>
           </div>
 
@@ -2716,44 +2707,44 @@ function BelegDetail({ beleg }: { beleg: Beleg }) {
                     only the first has master data behind it -- so the label says which. */}
                 <InfoTip
                   label={
-                    lieferant
-                      ? t("belege.detail.tip.lieferant")
-                      : t("belege.detail.tip.rechnungssteller")
+                    supplier
+                      ? t("documents.detail.tip.lieferant")
+                      : t("documents.detail.tip.rechnungssteller")
                   }
                 >
-                  {lieferant ? (
+                  {supplier ? (
                     <Link
-                      to="/lieferanten/$id"
-                      params={{ id: lieferant.id }}
+                      to="/suppliers/$id"
+                      params={{ id: supplier.id }}
                       className="underline-offset-4 hover:underline"
                     >
-                      {stellerName}
+                      {issuerName}
                     </Link>
                   ) : (
-                    <span>{stellerName}</span>
+                    <span>{issuerName}</span>
                   )}
                 </InfoTip>
               </h1>
               <div className="mt-1 flex flex-wrap items-center gap-2 text-base text-muted-foreground">
-                <InfoTip label={t("belege.detail.tip.rechnungsnummer")}>
+                <InfoTip label={t("documents.detail.tip.rechnungsnummer")}>
                   <span className="font-mono">
-                    {beleg.invoice_number ?? t("belege.detail.ohneNr")}
+                    {doc.invoice_number ?? t("documents.detail.ohneNr")}
                   </span>
                 </InfoTip>
-                {beleg.invoice_number && (
+                {doc.invoice_number && (
                   <CopyButton
-                    value={beleg.invoice_number}
-                    label={t("belege.detail.field.rechnungsnummer")}
+                    value={doc.invoice_number}
+                    label={t("documents.detail.field.rechnungsnummer")}
                     className="size-6"
                   />
                 )}
-                {gesellschaftName && (
+                {companyName && (
                   <>
                     <span aria-hidden="true">·</span>
                     {/* The company's NAME; the code is an internal handle and lives in the
                         explanation rather than on screen. */}
-                    <InfoTip label={t("belege.detail.tip.gesellschaft")}>
-                      <span>{gesellschaftName}</span>
+                    <InfoTip label={t("documents.detail.tip.gesellschaft")}>
+                      <span>{companyName}</span>
                     </InfoTip>
                   </>
                 )}
@@ -2761,13 +2752,13 @@ function BelegDetail({ beleg }: { beleg: Beleg }) {
                     entirely: it is one line of the Beträge card, where it reads as part of the
                     calculation rather than as a third fact about the document. */}
                 <span aria-hidden="true">·</span>
-                <InfoTip label={t("belege.detail.tip.brutto")}>
+                <InfoTip label={t("documents.detail.tip.brutto")}>
                   <span className="text-lg font-semibold tabular-nums text-foreground">
-                    {formatEUR(beleg.amount_gross)}
+                    {formatEUR(doc.amount_gross)}
                   </span>
                 </InfoTip>
-                {!istEingangsrechnung(beleg.document_type) && (
-                  <BelegartBadge belegart={beleg.document_type} />
+                {!isIncomingInvoice(doc.document_type) && (
+                  <DocumentTypeBadge documentType={doc.document_type} />
                 )}
                 {/* 'query' is the one workflow status the ladder cannot draw: it is a loop
                     back to the review step, not a stage of its own, so the bar marks the invoice
@@ -2778,8 +2769,8 @@ function BelegDetail({ beleg }: { beleg: Beleg }) {
                 {wf === "query" && (
                   <button
                     type="button"
-                    onClick={() => springeZu("freigabe", RUECKFRAGE_ANKER)}
-                    aria-label={t("belege.detail.rueckfrageOffen")}
+                    onClick={() => jumpZu("freigabe", QUERY_ANCHOR)}
+                    aria-label={t("documents.detail.rueckfrageOffen")}
                     className="cursor-pointer rounded-md transition hover:brightness-95 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand focus-visible:ring-offset-2"
                   >
                     <WorkflowBadge status="query" />
@@ -2801,26 +2792,26 @@ function BelegDetail({ beleg }: { beleg: Beleg }) {
                       was. It now says the verdict and what the click does, which is the one thing
                       the panel cannot say before it is open. Two lines, same shape as the
                       reconciliation chip beside it. */}
-                  {pruefGruendeText.length > 0 ? (
+                  {checkReasonsText.length > 0 ? (
                     <InfoTipButton
-                      onClick={zeigeReview}
+                      onClick={showReview}
                       label={
                         <>
                           <div className="font-medium">
-                            {t("belege.detail.tip.reviewBefund", {
-                              count: pruefGruendeText.length,
+                            {t("documents.detail.tip.reviewBefund", {
+                              count: checkReasonsText.length,
                             })}
                           </div>
                           <div className="mt-1 text-sm opacity-80">
-                            {t("belege.detail.tip.reviewOeffnen")}
+                            {t("documents.detail.tip.reviewOeffnen")}
                           </div>
                         </>
                       }
                     >
                       <ReviewBadge
-                        reasonCount={pruefGruendeText.length}
-                        ungeprueft={ohnePruefungen(beleg)}
-                        status={beleg.status}
+                        reasonCount={checkReasonsText.length}
+                        unchecked={withoutChecks(doc)}
+                        status={doc.status}
                       />
                     </InfoTipButton>
                   ) : (
@@ -2830,9 +2821,9 @@ function BelegDetail({ beleg }: { beleg: Beleg }) {
                       <TooltipTrigger asChild>
                         <span className="inline-flex">
                           <ReviewBadge
-                            reasonCount={pruefGruendeText.length}
-                            ungeprueft={ohnePruefungen(beleg)}
-                            status={beleg.status}
+                            reasonCount={checkReasonsText.length}
+                            unchecked={withoutChecks(doc)}
+                            status={doc.status}
                           />
                         </span>
                       </TooltipTrigger>
@@ -2841,11 +2832,11 @@ function BelegDetail({ beleg }: { beleg: Beleg }) {
                             bestanden" stands behind the verdict in a way the bare sentence does
                             not. Falls back to the sentence for a receipt whose validation is only
                             the old flat gates, where there is no honest number to name. */}
-                        {pruefungen.bestanden.length > 0
-                          ? t("belege.detail.tip.reviewAlleBestanden", {
-                              count: pruefungen.bestanden.length,
+                        {checks.passed.length > 0
+                          ? t("documents.detail.tip.reviewAlleBestanden", {
+                              count: checks.passed.length,
                             })
-                          : t("belege.detail.tip.reviewOhneBefund")}
+                          : t("documents.detail.tip.reviewOhneBefund")}
                       </TooltipContent>
                     </Tooltip>
                   )}
@@ -2858,20 +2849,22 @@ function BelegDetail({ beleg }: { beleg: Beleg }) {
                   <TooltipTrigger asChild>
                     <button
                       type="button"
-                      onClick={() => springeZu("zahlung", ABGLEICH_ANKER)}
-                      aria-label={t("belege.detail.abgleichTip.oeffnen")}
+                      onClick={() => jumpZu("zahlung", MATCHING_ANCHOR)}
+                      aria-label={t("documents.detail.abgleichTip.oeffnen")}
                       // brightness, not a colour swap: the badge's own background and label move
                       // together, so the hover is visible and the text stays as readable as it was
                       // at rest. Whatever state colour the pill is carrying keeps working.
                       className="cursor-pointer rounded-md transition hover:brightness-95 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand focus-visible:ring-offset-2"
                     >
-                      <AbgleichBadge status={abgleich} />
+                      <MatchingBadge status={matching} />
                     </button>
                   </TooltipTrigger>
                   <TooltipContent className="max-w-[18rem]">
-                    <div className="font-medium">{t(`belege.detail.abgleichTip.${abgleich}`)}</div>
+                    <div className="font-medium">
+                      {t(`documents.detail.abgleichTip.${matching}`)}
+                    </div>
                     <div className="mt-1 text-sm opacity-80">
-                      {t("belege.detail.abgleichTip.oeffnen")}
+                      {t("documents.detail.abgleichTip.oeffnen")}
                     </div>
                   </TooltipContent>
                 </Tooltip>
@@ -2889,9 +2882,9 @@ function BelegDetail({ beleg }: { beleg: Beleg }) {
                   a touch screen. Naming it costs a few characters and removes the tooltip. Muted
                   and unbordered by band on purpose: it reports how well the extraction read, it is
                   not a verdict, and colouring it would make it argue with the review chip. */}
-              {beleg.confidence_score != null && (
-                <KonfidenzPill
-                  score={beleg.confidence_score}
+              {doc.confidence_score != null && (
+                <ConfidencePill
+                  score={doc.confidence_score}
                   mitLabel
                   className="px-2.5 py-1 text-base"
                 />
@@ -2901,17 +2894,17 @@ function BelegDetail({ beleg }: { beleg: Beleg }) {
                   this block two rows tall and shunted the confidence chip up a line, so an invoice
                   going overdue silently rearranged the header above it. Side by side, the column
                   is two rows whatever happens and nothing above moves. */}
-              {(tageUeberfaellig != null || beleg.due_date) && (
+              {(daysOverdue != null || doc.due_date) && (
                 <div className="flex flex-wrap items-center justify-end gap-2">
-                  {tageUeberfaellig != null && (
+                  {daysOverdue != null && (
                     <span className="inline-flex items-center gap-1 rounded-md bg-destructive/10 px-2 py-0.5 text-sm font-medium text-destructive">
                       <AlertTriangle className="size-3.5 shrink-0" />
-                      {ueberfaelligText}
+                      {overdueText}
                     </span>
                   )}
-                  {beleg.due_date && (
+                  {doc.due_date && (
                     <span className="text-sm text-muted-foreground">
-                      {t("belege.detail.faellig.am", { datum: formatDate(beleg.due_date) })}
+                      {t("documents.detail.faellig.am", { datum: formatDate(doc.due_date) })}
                     </span>
                   )}
                 </div>
@@ -2927,10 +2920,10 @@ function BelegDetail({ beleg }: { beleg: Beleg }) {
               ones that can be clicked. The separate workflow menu is gone -- it offered the same
               transitions a second time, in words that never said where the invoice would land. */}
           <div className="mt-1">
-            {abseitsDerKette ? (
+            {asideTheChain ? (
               <div className="inline-flex items-center gap-2 rounded-md bg-muted px-3 py-1.5 text-base text-muted-foreground">
                 <WorkflowBadge status={wf} />
-                {t("belege.detail.stufen.abseits")}
+                {t("documents.detail.stufen.abseits")}
               </div>
             ) : (
               // The connector belongs to the node it LEAVES, so each step is [dot][line] and the
@@ -2938,82 +2931,81 @@ function BelegDetail({ beleg }: { beleg: Beleg }) {
               // attempt -- put the first dot a tenth of the way in and the last a tenth from the
               // end, so the line neither started nor finished on a node.
               <WorkflowLadder
-                ariaLabel={t("belege.detail.stufenNav.aria")}
+                ariaLabel={t("documents.detail.stufenNav.aria")}
                 theme={LADDER_THEME}
-                disabled={updateBeleg.isPending}
+                disabled={updateDocument.isPending}
                 LinkComponent={LadderLink}
-                steps={WORKFLOW_STUFEN.map((stufe, i): WorkflowLadderStep => {
-                  const erreicht = aktuelleStufe >= 0 && i <= aktuelleStufe;
-                  const aktuell = i === aktuelleStufe;
-                  const aktion = stufenAktionen.get(stufe) ?? null;
-                  const stufeLabel = t(`belege.workflow.${stufe}`);
+                steps={WORKFLOW_STEPS.map((step, i): WorkflowLadderStep => {
+                  const reached = currentStep >= 0 && i <= currentStep;
+                  const current = i === currentStep;
+                  const action = stepsActions.get(step) ?? null;
+                  const stepLabel = t(`documents.workflow.${step}`);
                   // Super-admin mode: any step, forwards or backwards, through runCorrection's confirmation
                   // dialog. The step the invoice is already on is excluded -- correcting a status to itself
                   // does nothing but write an audit line saying so.
-                  const korrekturZiel =
-                    (superAdminModus &&
-                      !aktuell &&
-                      CORRECTABLE_STATUSES.includes(stufe as WorkflowStatus)) ||
-                    rueckschritt.targets.includes(stufe)
-                      ? (stufe as WorkflowStatus)
+                  const correctionTarget =
+                    (superAdminMode &&
+                      !current &&
+                      CORRECTABLE_STATUSES.includes(step as WorkflowStatus)) ||
+                    stepBack.targets.includes(step)
+                      ? (step as WorkflowStatus)
                       : null;
-                  const sperrGrund = aktion || korrekturZiel ? null : stufenSperrGrund(i, stufe);
+                  const blockReason = action || correctionTarget ? null : stepsBlockReason(i, step);
                   // The one blocked step whose event is produced on another screen. Not offered in super-admin
                   // mode: there the circle sets the status directly, and sending the one person who can do
                   // that off to another screen instead would be a downgrade.
-                  const datevZiel =
-                    !aktion && !korrekturZiel && !erreicht && stufe === "handed_over"
-                      ? "/datev-uebergabe"
+                  const datevTarget =
+                    !action && !correctionTarget && !reached && step === "handed_over"
+                      ? "/datev-handover"
                       : null;
                   return {
-                    id: stufe,
-                    label: stufeLabel,
-                    reached: erreicht,
-                    current: aktuell,
+                    id: step,
+                    label: stepLabel,
+                    reached: reached,
+                    current: current,
                     // Every segment between where the invoice IS and the step it can be moved to is dotted,
                     // not just the first one: a manager approving out of review lands two nodes along.
-                    onPath:
-                      naechsteAktionStufe != null && i >= aktuelleStufe && i < naechsteAktionStufe,
-                    since: stufeSeit ?? undefined,
+                    onPath: nextActionStep != null && i >= currentStep && i < nextActionStep,
+                    since: stepSince ?? undefined,
                     // The open query, marked on the step it is holding up. The bar could never say this, and
                     // it is the reason a reader had to open a tab to find out why the invoice had stopped.
                     // Aimed at the same tab the header's own query badge opens (see `wf === "query"`
                     // above): one control, one destination, whichever of the two a reader happens to click.
                     note:
-                      aktuell && wf === "query"
+                      current && wf === "query"
                         ? {
                             icon: MessageCircleQuestion,
-                            label: t("belege.detail.rueckfrageOffen"),
-                            onClick: () => springeZu("freigabe", RUECKFRAGE_ANKER),
+                            label: t("documents.detail.rueckfrageOffen"),
+                            onClick: () => jumpZu("freigabe", QUERY_ANCHOR),
                           }
                         : undefined,
-                    interaction: aktion
+                    interaction: action
                       ? {
                           kind: "action",
                           // Named per step, not "move to X" plus the action's own name underneath: those two
                           // lines said the same move twice in different words.
-                          hint: t(`belege.detail.stufenNav.klick.${stufe}`, {
-                            defaultValue: t("belege.detail.stufenNav.tooltip", {
-                              stufe: stufeLabel,
+                          hint: t(`documents.detail.stufenNav.klick.${step}`, {
+                            defaultValue: t("documents.detail.stufenNav.tooltip", {
+                              step: stepLabel,
                             }),
                           }),
-                          onSelect: () => onApprovalAction(aktion),
+                          onSelect: () => onApprovalAction(action),
                         }
-                      : korrekturZiel
+                      : correctionTarget
                         ? {
                             kind: "correction",
-                            hint: t("belege.detail.stufenNav.korrektur"),
-                            onSelect: () => setPendingCorrection(korrekturZiel),
+                            hint: t("documents.detail.stufenNav.korrektur"),
+                            onSelect: () => setPendingCorrection(correctionTarget),
                           }
-                        : datevZiel
+                        : datevTarget
                           ? {
                               kind: "link",
-                              to: datevZiel,
-                              linkLabel: t("belege.detail.stufenNav.datevLink"),
-                              reason: sperrGrund ?? undefined,
+                              to: datevTarget,
+                              linkLabel: t("documents.detail.stufenNav.datevLink"),
+                              reason: blockReason ?? undefined,
                             }
-                          : sperrGrund
-                            ? { kind: "blocked", reason: sperrGrund }
+                          : blockReason
+                            ? { kind: "blocked", reason: blockReason }
                             : { kind: "plain" },
                   };
                 })}
@@ -3021,12 +3013,12 @@ function BelegDetail({ beleg }: { beleg: Beleg }) {
             )}
             {/* Phone only: the name of the step the invoice is actually on. The seven labels above
                 are hidden there, so without this the row is seven dots and no words. */}
-            {!abseitsDerKette && aktuelleStufe >= 0 && (
+            {!asideTheChain && currentStep >= 0 && (
               <div className="mt-3 text-center sm:hidden">
                 <div className="text-base font-medium text-foreground">
-                  {t(`belege.workflow.${WORKFLOW_STUFEN[aktuelleStufe]}`)}
+                  {t(`documents.workflow.${WORKFLOW_STEPS[currentStep]}`)}
                 </div>
-                {stufeSeit && <div className="text-sm text-muted-foreground">{stufeSeit}</div>}
+                {stepSince && <div className="text-sm text-muted-foreground">{stepSince}</div>}
               </div>
             )}
           </div>
@@ -3035,78 +3027,78 @@ function BelegDetail({ beleg }: { beleg: Beleg }) {
 
           <HeaderNotes
             labels={{
-              title: t("belege.detail.section.notizenNur"),
-              add: t("belege.detail.notiz.add"),
-              placeholder: t("belege.detail.notiz.placeholder"),
-              cancel: t("belege.detail.notiz.abbrechen"),
-              save: t("belege.detail.notiz.save"),
-              empty: t("belege.detail.notiz.keine"),
-              more: (count) => t("belege.detail.notiz.weitere", { count }),
+              title: t("documents.detail.section.notizenNur"),
+              add: t("documents.detail.notiz.add"),
+              placeholder: t("documents.detail.notiz.placeholder"),
+              cancel: t("documents.detail.notiz.abbrechen"),
+              save: t("documents.detail.notiz.save"),
+              empty: t("documents.detail.notiz.keine"),
+              more: (count) => t("documents.detail.notiz.weitere", { count }),
             }}
             notes={headerNotes.map((v) => ({
               id: v.id,
               text: v.text ?? "",
-              meta: `${v.actor ?? t("belege.detail.actorSystem")} · ${formatDateTime(v.created_at)}`,
+              meta: `${v.actor ?? t("documents.detail.actorSystem")} · ${formatDateTime(v.created_at)}`,
             }))}
             totalCount={allNotes.length}
-            loading={verlaufQ.isLoading}
-            draft={notiz}
-            onDraftChange={setNotiz}
-            onSave={notizSpeichern}
-            saving={addNotiz.isPending}
-            onMoreClick={() => springeZu("verlauf", NOTIZEN_ANKER)}
+            loading={historyQ.isLoading}
+            draft={note}
+            onDraftChange={setNote}
+            onSave={noteSave}
+            saving={addNote.isPending}
+            onMoreClick={() => jumpZu("verlauf", NOTES_ANCHOR)}
           />
         </div>
       </div>
 
       {/* Outgoing-invoice flag. Lives in ./AusgangFlag so the list screen and the other hub repos
           render the same thing from the same predicate. */}
-      <AusgangBanner beleg={beleg} className="mt-6" />
+      <OutgoingBanner doc={doc} className="mt-6" />
 
       {/* Lifecycle banners. Shown above everything because they change what the rest of the screen
           means: editing a receipt that is on its way back to the mailbox, or one that has been
           archived as wrongly ingested, is almost always a mistake. */}
-      {beleg.archived_at ? (
+      {doc.archived_at ? (
         <div className="mt-6 rounded-xl border border-amber-300 bg-amber-50 px-4 py-3 text-base text-amber-900">
           <div className="flex items-center gap-2 font-medium">
             <Archive className="size-4 shrink-0" />
-            {t("belege.detail.banner.archiviert", {
-              date: formatDateTime(beleg.archived_at),
-              by: beleg.archived_by ?? "—",
+            {t("documents.detail.banner.archiviert", {
+              date: formatDateTime(doc.archived_at),
+              by: doc.archived_by ?? "—",
             })}
           </div>
           {/* The warning note is the whole point of archiving rather than deleting: it says who has
               to deal with this receipt outside the system. */}
           <p className="mt-1">
-            {beleg.archive_note
-              ? t("belege.detail.banner.archivHinweis", { note: beleg.archive_note })
-              : t("belege.detail.banner.archivOhneHinweis")}
+            {doc.archive_note
+              ? t("documents.detail.banner.archivHinweis", { note: doc.archive_note })
+              : t("documents.detail.banner.archivOhneHinweis")}
           </p>
         </div>
       ) : null}
 
-      {beleg.not_relevant_at ? (
+      {doc.not_relevant_at ? (
         <div className="mt-6 rounded-xl border border-sky-300 bg-sky-50 px-4 py-3 text-base text-sky-900">
           <div className="flex items-center gap-2 font-medium">
             <MailQuestion className="size-4 shrink-0" />
-            {t("belege.detail.banner.nichtRelevant", {
-              date: formatDateTime(beleg.not_relevant_at),
-              by: beleg.not_relevant_by ?? "—",
+            {t("documents.detail.banner.nichtRelevant", {
+              date: formatDateTime(doc.not_relevant_at),
+              by: doc.not_relevant_by ?? "—",
             })}
           </div>
           {/* The mail move happens in the ingestion pipeline, so the honest report is "requested"
               until the pipeline stamps mailbox_reset_at. Claiming it is back in the inbox when it
               is not would send someone looking for an email that is still filed away. */}
           <p className="mt-1">
-            {beleg.mailbox_reset_at
-              ? t("belege.detail.banner.postfachZurueck", {
-                  date: formatDateTime(beleg.mailbox_reset_at),
+            {doc.mailbox_reset_at
+              ? t("documents.detail.banner.postfachZurueck", {
+                  date: formatDateTime(doc.mailbox_reset_at),
                 })
-              : t("belege.detail.banner.postfachOffen")}
+              : t("documents.detail.banner.postfachOffen")}
           </p>
-          {beleg.not_relevant_note ? (
+          {doc.not_relevant_note ? (
             <p className="mt-1">
-              {t("belege.detail.banner.nichtRelevantGrund", { note: beleg.not_relevant_note })}
+              {t("documents.detail.banner.nichtRelevantGrund", { note: doc.not_relevant_note })}
             </p>
           ) : null}
         </div>
@@ -3132,14 +3124,11 @@ function BelegDetail({ beleg }: { beleg: Beleg }) {
           className="min-w-0 space-y-4 lg:sticky lg:top-4 lg:max-h-[calc(100vh-2rem)] lg:overflow-y-auto lg:overflow-x-hidden lg:pr-1"
         >
           <div className="rounded-xl border border-border bg-card p-4">
-            <DocumentPreview belegId={beleg.id} beleg={beleg} />
+            <DocumentPreview documentId={doc.id} doc={doc} />
             {/* Where this invoice came from when it was not a document of its own: a multi-receipt
                 scan, whose complete original this is the way back to, or one attachment of a mail
                 that carried several — which has no original scan to go back to. */}
-            <SplitOriginNote
-              sourceDocumentId={beleg.source_document_id}
-              pageRange={beleg.page_range}
-            />
+            <SplitOriginNote sourceDocumentId={doc.source_document_id} pageRange={doc.page_range} />
           </div>
         </div>
 
@@ -3150,13 +3139,13 @@ function BelegDetail({ beleg }: { beleg: Beleg }) {
               rather than the amber triangle the "Braucht deine Eingabe" card uses. Saskia read the
               triangle as an error or a required action (17.09.2026); same rule as H13 in
               TriangleAlert only where the user must act. */}
-          {lastschrift && (
+          {directDebit && (
             <div className="flex items-start gap-3 rounded-xl border border-border bg-muted/40 p-4 text-base text-foreground">
               <Info className="mt-0.5 size-5 shrink-0 text-brand" />
               <div>
-                <p className="font-medium">{t("belege.detail.lastschrift.bannerTitle")}</p>
+                <p className="font-medium">{t("documents.detail.lastschrift.bannerTitle")}</p>
                 <p className="mt-0.5 text-muted-foreground">
-                  {t("belege.detail.lastschrift.bannerBody")}
+                  {t("documents.detail.lastschrift.bannerBody")}
                 </p>
               </div>
             </div>
@@ -3165,30 +3154,30 @@ function BelegDetail({ beleg }: { beleg: Beleg }) {
           {/* Review box: the checks that did NOT pass, and nothing else. Lives in hub-kit so
               the other hub repos render the same card from the same data. */}
           <ReviewCard
-            lines={pruefGruendeText}
+            lines={checkReasonsText}
             labels={{
-              title: t("belege.detail.review.title"),
-              checkCount: (count) => t("belege.detail.review.pruefungen", { count }),
-              choose: t("belege.detail.review.waehlen"),
-              fix: t("belege.detail.review.beheben"),
+              title: t("documents.detail.review.title"),
+              checkCount: (count) => t("documents.detail.review.pruefungen", { count }),
+              choose: t("documents.detail.review.waehlen"),
+              fix: t("documents.detail.review.beheben"),
             }}
-            anchorId={REVIEW_ANKER}
-            open={reviewOffen}
-            onOpenChange={setReviewOffen}
-            flash={reviewBlitz}
-            onNavigate={springeZu}
+            anchorId={REVIEW_ANCHOR}
+            open={reviewOpen}
+            onOpenChange={setReviewOpen}
+            flash={reviewFlash}
+            onNavigate={jumpZu}
           />
 
           {/* Why there is nothing to do, next to the controls that decide it, rather than inside
               the header card. Acting as is what changes this sentence, so the two belong on one
               row: the reason sits left, the pickers right, and on a narrow screen the reason wraps
               above them instead of being buried further up the page. */}
-          {(actingAsControl || zuweisungControl || keineAktionenText) && (
+          {(actingAsControl || assignmentControl || noActionsText) && (
             <div className="mb-3 flex flex-wrap items-center justify-between gap-x-4 gap-y-2">
-              <p className="min-w-0 flex-1 text-sm text-muted-foreground">{keineAktionenText}</p>
+              <p className="min-w-0 flex-1 text-sm text-muted-foreground">{noActionsText}</p>
               <div className="flex flex-wrap items-center justify-end gap-2">
                 {actingAsControl}
-                {zuweisungControl}
+                {assignmentControl}
               </div>
             </div>
           )}
@@ -3232,69 +3221,67 @@ function BelegDetail({ beleg }: { beleg: Beleg }) {
                   anyone acts on it. The two fields that actually need a decision sat ~900px down,
                   styled exactly like "Currency: EUR". This card renders ONLY when something is
                   unresolved, so on a clean invoice it does not exist. */}
-              {(gesellschaftOffen || objektOffen || kategorieOffen) && (
+              {(companyOpen || propertyOpen || categoryOpen) && (
                 <section className="rounded-xl border border-amber-300 bg-amber-50/60 p-5">
                   <div className="mb-4 flex flex-wrap items-center justify-between gap-2">
                     <h2 className="flex items-center gap-1.5 text-base font-semibold uppercase tracking-wide text-amber-900">
                       <AlertTriangle className="size-4 shrink-0" />
-                      {t("belege.detail.eingabe.titel")}
+                      {t("documents.detail.eingabe.titel")}
                     </h2>
                     <span className="text-sm text-amber-900/80">
-                      {t("belege.detail.eingabe.offen", {
+                      {t("documents.detail.eingabe.offen", {
                         count:
-                          (gesellschaftOffen ? 1 : 0) +
-                          (objektOffen ? 1 : 0) +
-                          (kategorieOffen ? 1 : 0),
+                          (companyOpen ? 1 : 0) + (propertyOpen ? 1 : 0) + (categoryOpen ? 1 : 0),
                       })}
                     </span>
                   </div>
                   <div className="grid gap-4 sm:grid-cols-2">
-                    {gesellschaftOffen && (
+                    {companyOpen && (
                       <div className="space-y-1">
                         <span className="text-sm text-amber-900/80">
-                          {t("belege.detail.field.gesellschaft")}
+                          {t("documents.detail.field.gesellschaft")}
                         </span>
                         <Combobox
-                          ariaLabel={t("belege.detail.field.gesellschaft")}
+                          ariaLabel={t("documents.detail.field.gesellschaft")}
                           value=""
                           onValueChange={(v) =>
-                            zuordnungVerknuepfen(
-                              "company_code",
-                              v === KEINE_WAHL ? GESELLSCHAFT_OHNE : v,
-                            )
+                            assignmentLink("company_code", v === NO_CHOICE ? COMPANY_WITHOUT : v)
                           }
-                          placeholder={t("belege.detail.eingabe.gesellschaftWaehlen")}
+                          placeholder={t("documents.detail.eingabe.gesellschaftWaehlen")}
                           options={[
-                            { value: KEINE_WAHL, label: t("belege.detail.eingabe.keineWahl") },
-                            ...gesellschaften.map((g) => ({
+                            { value: NO_CHOICE, label: t("documents.detail.eingabe.keineWahl") },
+                            ...companies.map((g) => ({
                               value: g.code,
                               label: `${g.code} · ${g.name}`,
                             })),
                           ]}
                         />
                         <p className="text-sm text-amber-900/80">
-                          {t("belege.detail.eingabe.gesellschaftFolge")}
+                          {t("documents.detail.eingabe.gesellschaftFolge")}
                         </p>
                       </div>
                     )}
-                    {objektOffen && (
+                    {propertyOpen && (
                       <div className="space-y-1">
                         <span className="text-sm text-amber-900/80">
-                          {t("belege.detail.field.objekt")}
+                          {t("documents.detail.field.objekt")}
                         </span>
                         <Combobox
-                          ariaLabel={t("belege.detail.field.objekt")}
+                          ariaLabel={t("documents.detail.field.objekt")}
                           value=""
                           onValueChange={(v) =>
-                            v === KEINE_WAHL
-                              ? zuordnungAlsErledigt("property_code")
-                              : zuordnungVerknuepfen("property_code", v)
+                            v === NO_CHOICE
+                              ? assignmentAlsDone("property_code")
+                              : assignmentLink("property_code", v)
                           }
-                          placeholder={t("belege.detail.eingabe.objektWaehlen")}
+                          placeholder={t("documents.detail.eingabe.objektWaehlen")}
                           options={[
-                            { value: KEINE_WAHL, label: t("belege.detail.eingabe.keineWahl") },
-                            { value: GEMEINKOSTEN, label: t("belege.detail.field.gemeinkosten") },
-                            ...objekte.map((o) => ({
+                            { value: NO_CHOICE, label: t("documents.detail.eingabe.keineWahl") },
+                            {
+                              value: OVERHEAD,
+                              label: t("documents.detail.field.gemeinkosten"),
+                            },
+                            ...properties.map((o) => ({
                               value: o.code,
                               label: `${o.code} · ${o.name}`,
                             })),
@@ -3302,34 +3289,34 @@ function BelegDetail({ beleg }: { beleg: Beleg }) {
                         />
                         {/* What happens if it stays empty, not what the field is. */}
                         <p className="text-sm text-amber-900/80">
-                          {t("belege.detail.eingabe.objektFolge")}
+                          {t("documents.detail.eingabe.objektFolge")}
                         </p>
                       </div>
                     )}
-                    {kategorieOffen && (
+                    {categoryOpen && (
                       <div className="space-y-1">
                         <span className="text-sm text-amber-900/80">
-                          {t("belege.detail.field.kategorie")}
+                          {t("documents.detail.field.kategorie")}
                         </span>
                         <Combobox
-                          ariaLabel={t("belege.detail.field.kategorie")}
+                          ariaLabel={t("documents.detail.field.kategorie")}
                           value=""
                           onValueChange={(v) => {
-                            if (v === KEINE_WAHL) {
-                              zuordnungAlsErledigt("category_id");
+                            if (v === NO_CHOICE) {
+                              assignmentAlsDone("category_id");
                               return;
                             }
-                            const ziel = categories.find((k) => k.id === v);
-                            if (ziel) kategorieVerknuepfen(ziel);
+                            const target = categories.find((k) => k.id === v);
+                            if (target) categoryLink(target);
                           }}
-                          placeholder={t("belege.detail.eingabe.kategorieWaehlen")}
+                          placeholder={t("documents.detail.eingabe.kategorieWaehlen")}
                           options={[
-                            { value: KEINE_WAHL, label: t("belege.detail.eingabe.keineWahl") },
+                            { value: NO_CHOICE, label: t("documents.detail.eingabe.keineWahl") },
                             ...categoryOptions,
                           ]}
                         />
                         <p className="text-sm text-amber-900/80">
-                          {t("belege.detail.eingabe.kategorieFolge")}
+                          {t("documents.detail.eingabe.kategorieFolge")}
                         </p>
                       </div>
                     )}
@@ -3340,16 +3327,16 @@ function BelegDetail({ beleg }: { beleg: Beleg }) {
               <SideBySide>
                 {/* 1. Rechnungsinformationen */}
                 <Section
-                  title={t("belege.detail.section.betraege")}
-                  anchorId={BETRAEGE_ANKER}
-                  hint={t("belege.detail.hint.ampel")}
+                  title={t("documents.detail.section.betraege")}
+                  anchorId={AMOUNTS_ANCHOR}
+                  hint={t("documents.detail.hint.ampel")}
                   editable
-                  editDisabled={!kannBearbeiten("betraege")}
+                  editDisabled={!canEdit("betraege")}
                   isEditing={isEdit("betraege")}
-                  saving={updateBeleg.isPending}
+                  saving={updateDocument.isPending}
                   onEdit={() => startEdit("betraege")}
-                  onCancel={abbrechen}
-                  onSave={speichern}
+                  onCancel={cancel}
+                  onSave={save}
                 >
                   {/* Net, VAT and gross as the ARITHMETIC they are, not four peer cells.
                       Four equal boxes hid the one calculation a bookkeeper opens this screen to
@@ -3359,7 +3346,7 @@ function BelegDetail({ beleg }: { beleg: Beleg }) {
                   <dl className="ml-auto w-full max-w-sm space-y-2 text-base">
                     <div className="flex items-baseline justify-between gap-4">
                       <dt className="text-muted-foreground">
-                        {t("belege.detail.field.betragNetto")}
+                        {t("documents.detail.field.betragNetto")}
                       </dt>
                       <dd className="tabular-nums text-foreground">
                         {isEdit("betraege") ? (
@@ -3371,16 +3358,16 @@ function BelegDetail({ beleg }: { beleg: Beleg }) {
                             className="h-8 w-36 text-right"
                           />
                         ) : (
-                          formatEUR(beleg.amount_net)
+                          formatEUR(doc.amount_net)
                         )}
                       </dd>
                     </div>
                     <div className="flex items-baseline justify-between gap-4">
                       <dt className="flex items-center gap-1.5 text-muted-foreground">
-                        {beleg.vat_rate != null
-                          ? t("belege.detail.ustSatzKurz", { satz: beleg.vat_rate })
-                          : t("belege.detail.field.ustBetrag")}
-                        <QuelleBadge source={beleg.vat_source} hasValue={beleg.vat_rate != null} />
+                        {doc.vat_rate != null
+                          ? t("documents.detail.ustSatzKurz", { rate: doc.vat_rate })
+                          : t("documents.detail.field.ustBetrag")}
+                        <SourceBadge source={doc.vat_source} hasValue={doc.vat_rate != null} />
                       </dt>
                       <dd className="tabular-nums text-foreground">
                         {isEdit("betraege") ? (
@@ -3392,14 +3379,14 @@ function BelegDetail({ beleg }: { beleg: Beleg }) {
                             className="h-8 w-36 text-right"
                           />
                         ) : (
-                          formatEUR(beleg.vat_amount)
+                          formatEUR(doc.vat_amount)
                         )}
                       </dd>
                     </div>
                     {/* The rule, drawn where an invoice draws it. */}
                     <div className="flex items-baseline justify-between gap-4 border-t border-border pt-2">
                       <dt className="font-medium text-foreground">
-                        {t("belege.detail.field.betragBrutto")}
+                        {t("documents.detail.field.betragBrutto")}
                       </dt>
                       <dd className="text-lg font-semibold tabular-nums text-foreground">
                         {isEdit("betraege") ? (
@@ -3411,14 +3398,14 @@ function BelegDetail({ beleg }: { beleg: Beleg }) {
                             className="h-8 w-36 text-right"
                           />
                         ) : (
-                          formatEUR(beleg.amount_gross)
+                          formatEUR(doc.amount_gross)
                         )}
                       </dd>
                     </div>
                     {isEdit("betraege") && (
                       <div className="flex items-baseline justify-between gap-4">
                         <dt className="text-muted-foreground">
-                          {t("belege.detail.field.ustSatz")}
+                          {t("documents.detail.field.ustSatz")}
                         </dt>
                         <dd>
                           <Input
@@ -3437,51 +3424,51 @@ function BelegDetail({ beleg }: { beleg: Beleg }) {
                       than four labelled cells most invoices never need. */}
                   <div className="mt-4 flex flex-wrap items-center justify-between gap-3 border-t border-border pt-3">
                     <span className="text-sm text-muted-foreground">
-                      {beleg.vat_deductible_pct != null
-                        ? t("belege.detail.betraege.abzugsfaehig", {
-                            prozent: beleg.vat_deductible_pct,
+                      {doc.vat_deductible_pct != null
+                        ? t("documents.detail.betraege.abzugsfaehig", {
+                            percent: doc.vat_deductible_pct,
                           })
-                        : t("belege.detail.betraege.abzugUnbestimmt")}
+                        : t("documents.detail.betraege.abzugUnbestimmt")}
                     </span>
-                    {!isEdit("betraege") && beleg.vat_rate != null && !regelnQ.data?.vat_rate ? (
-                      <NeueRegelDialog
+                    {!isEdit("betraege") && doc.vat_rate != null && !rulesQ.data?.vat_rate ? (
+                      <NewRuleDialog
                         fixedTarget="vat_rate"
-                        defaultVatRate={beleg.vat_rate}
+                        defaultVatRate={doc.vat_rate}
                         defaultVatTreatment={
-                          beleg.vat_treatment && VAT_TREATMENTS.includes(beleg.vat_treatment)
-                            ? beleg.vat_treatment
+                          doc.vat_treatment && VAT_TREATMENTS.includes(doc.vat_treatment)
+                            ? doc.vat_treatment
                             : null
                         }
-                        defaultVatDeductiblePct={beleg.vat_deductible_pct}
-                        defaultVatSpecialCase={beleg.vat_special_case}
+                        defaultVatDeductiblePct={doc.vat_deductible_pct}
+                        defaultVatSpecialCase={doc.vat_special_case}
                         trigger={
                           <Button size="sm" variant="outline" className="h-7 gap-1.5 text-sm">
                             <Wand2 className="size-3" />
-                            {t("belege.detail.regel.alsRegelUst", { satz: beleg.vat_rate })}
+                            {t("documents.detail.regel.alsRegelUst", { rate: doc.vat_rate })}
                           </Button>
                         }
                       />
                     ) : null}
                   </div>
 
-                  {beleg.vat_conflict_at ? (
+                  {doc.vat_conflict_at ? (
                     <div className="mt-3 flex flex-wrap items-center justify-between gap-2 rounded-md border border-amber-300 bg-amber-50 px-3 py-2 text-sm text-amber-800">
                       <span className="flex items-center gap-1.5">
                         <TriangleAlert className="size-3.5 shrink-0" />
-                        {beleg.vat_conflict_note ?? t("belege.detail.field.ustKonflikt")}
+                        {doc.vat_conflict_note ?? t("documents.detail.field.ustKonflikt")}
                       </span>
                       <Button
                         size="sm"
                         variant="outline"
                         className="h-6 gap-1 border-amber-300 px-2 text-sm text-amber-800 hover:bg-amber-100"
-                        disabled={updateBeleg.isPending}
+                        disabled={updateDocument.isPending}
                         onClick={() =>
-                          updateBeleg.mutate({
+                          updateDocument.mutate({
                             changes: { vat_conflict_at: null, vat_conflict_note: null },
                           })
                         }
                       >
-                        {t("belege.detail.field.ustKonfliktVerstanden")}
+                        {t("documents.detail.field.ustKonfliktVerstanden")}
                       </Button>
                     </div>
                   ) : null}
@@ -3498,40 +3485,40 @@ function BelegDetail({ beleg }: { beleg: Beleg }) {
                     moved to their own card on the Details tab, where a field that is looked at
                     occasionally belongs. Six fields here pushed those three into a second row. */}
                 <Section
-                  title={t("belege.detail.section.rechnungsdaten")}
-                  anchorId={RECHNUNGSDATEN_ANKER}
+                  title={t("documents.detail.section.rechnungsdaten")}
+                  anchorId={INVOICEDATA_ANCHOR}
                   editable
-                  editDisabled={!kannBearbeiten("rechnungsdaten")}
+                  editDisabled={!canEdit("rechnungsdaten")}
                   isEditing={isEdit("rechnungsdaten")}
-                  saving={updateBeleg.isPending}
+                  saving={updateDocument.isPending}
                   onEdit={() => startEdit("rechnungsdaten")}
-                  onCancel={abbrechen}
-                  onSave={speichern}
+                  onCancel={cancel}
+                  onSave={save}
                 >
                   <div className="grid gap-4 sm:grid-cols-2">
                     <Field
                       edit={isEdit("rechnungsdaten")}
-                      label={t("belege.detail.field.rechnungsnummer")}
-                      konfidenz={konf.rechnungsnummer}
+                      label={t("documents.detail.field.rechnungsnummer")}
+                      confidence={confidence.invoiceNumber}
                       copy
-                      value={beleg.invoice_number}
+                      value={doc.invoice_number}
                       formValue={form.invoice_number}
                       onChange={(v) => set("invoice_number", v)}
                     />
                     <Field
                       edit={isEdit("rechnungsdaten")}
-                      label={t("belege.detail.field.rechnungsdatum")}
+                      label={t("documents.detail.field.rechnungsdatum")}
                       type="date"
-                      konfidenz={konf.beleg_datum}
-                      value={formatDate(beleg.document_date)}
+                      confidence={confidence.beleg_datum}
+                      value={formatDate(doc.document_date)}
                       formValue={form.document_date}
                       onChange={(v) => set("document_date", v)}
                     />
                     <Field
                       edit={isEdit("rechnungsdaten")}
-                      label={t("belege.detail.field.faelligkeit")}
+                      label={t("documents.detail.field.faelligkeit")}
                       type="date"
-                      value={formatDate(beleg.due_date)}
+                      value={formatDate(doc.due_date)}
                       formValue={form.due_date}
                       onChange={(v) => set("due_date", v)}
                     />
@@ -3540,10 +3527,10 @@ function BelegDetail({ beleg }: { beleg: Beleg }) {
                         width of the column; here it has room. Read-only on purpose: the three
                         underlying dates are edited in one place, the Leistung & Auftrag card on the
                         Details tab, and a second edit site for the same columns is how they drift. */}
-                    {leistungszeitraum && (
+                    {servicePeriod && (
                       <ReadField
-                        label={t("belege.detail.field.leistungszeitraum")}
-                        value={leistungszeitraum}
+                        label={t("documents.detail.field.leistungszeitraum")}
+                        value={servicePeriod}
                       />
                     )}
                   </div>
@@ -3552,36 +3539,36 @@ function BelegDetail({ beleg }: { beleg: Beleg }) {
 
               {/* 2. Zuordnung */}
               <Section
-                title={t("belege.detail.section.beteiligte")}
-                anchorId={BETEILIGTE_ANKER}
+                title={t("documents.detail.section.beteiligte")}
+                anchorId={PARTICIPANTS_ANCHOR}
                 editable
-                editDisabled={!kannBearbeiten("booking")}
+                editDisabled={!canEdit("booking")}
                 isEditing={isEdit("booking")}
-                saving={updateBeleg.isPending}
+                saving={updateDocument.isPending}
                 onEdit={() => startEdit("booking")}
-                onCancel={abbrechen}
-                onSave={speichern}
+                onCancel={cancel}
+                onSave={save}
               >
                 <div className="grid gap-4 sm:grid-cols-2">
                   <Field
                     edit={isEdit("booking")}
-                    label={t("belege.detail.field.rechnungssteller")}
-                    konfidenz={konf.rechnungssteller}
-                    value={beleg.issuer}
+                    label={t("documents.detail.field.rechnungssteller")}
+                    confidence={confidence.invoiceIssuer}
+                    value={doc.issuer}
                     formValue={form.issuer}
                     onChange={(v) => set("issuer", v)}
                   />
                   {isEdit("booking") ? (
                     <div className="space-y-1">
                       <span className="text-sm text-muted-foreground">
-                        {t("belege.detail.field.gesellschaft")}
+                        {t("documents.detail.field.gesellschaft")}
                       </span>
                       <Combobox
                         value={form.company_code || "__none"}
                         onValueChange={(v) => set("company_code", v === "__none" ? "" : v)}
                         options={[
-                          { value: "__none", label: t("belege.detail.field.ohne") },
-                          ...gesellschaften.map((g) => ({
+                          { value: "__none", label: t("documents.detail.field.ohne") },
+                          ...companies.map((g) => ({
                             value: g.code,
                             label: `${g.code} · ${g.name}`,
                             keywords: g.name,
@@ -3592,40 +3579,36 @@ function BelegDetail({ beleg }: { beleg: Beleg }) {
                   ) : (
                     <div className="space-y-1">
                       <ReadField
-                        label={t("belege.detail.field.gesellschaft")}
-                        konfidenz={konf.gesellschaft_code}
-                        quelle={beleg.company_assignment_source}
-                        value={
-                          gesellschaft
-                            ? `${gesellschaft.code} · ${gesellschaft.name}`
-                            : beleg.company_code
-                        }
+                        label={t("documents.detail.field.gesellschaft")}
+                        confidence={confidence.gesellschaft_code}
+                        source={doc.company_assignment_source}
+                        value={company ? `${company.code} · ${company.name}` : doc.company_code}
                         // The company's overhead cost centre (1000 or 10000), next to the company
                         // it belongs to, whether or not this invoice is booked to Gemeinkosten.
                         sub={
-                          gesellschaft ? (
-                            gesellschaft.overhead_cost_centre != null ? (
-                              t("belege.detail.field.gemeinkostenNummer", {
-                                nr: gesellschaft.overhead_cost_centre,
+                          company ? (
+                            company.overhead_cost_centre != null ? (
+                              t("documents.detail.field.gemeinkostenNummer", {
+                                nr: company.overhead_cost_centre,
                               })
                             ) : (
                               <>
-                                {t("belege.detail.field.gemeinkostenNummerFehlt")}
+                                {t("documents.detail.field.gemeinkostenNummerFehlt")}
                                 <Link
-                                  to="/gesellschaften/$id"
-                                  params={{ id: gesellschaft.id }}
+                                  to="/companies/$id"
+                                  params={{ id: company.id }}
                                   className="ml-1 text-brand underline-offset-4 hover:underline"
                                 >
-                                  {t("belege.detail.field.kostenstelleBeiGesellschaft")}
+                                  {t("documents.detail.field.kostenstelleBeiGesellschaft")}
                                 </Link>
                               </>
                             )
                           ) : undefined
                         }
                         badge={
-                          <QuelleBadge
-                            source={beleg.company_assignment_source}
-                            hasValue={!!beleg.company_code}
+                          <SourceBadge
+                            source={doc.company_assignment_source}
+                            hasValue={!!doc.company_code}
                           />
                         }
                       />
@@ -3633,9 +3616,9 @@ function BelegDetail({ beleg }: { beleg: Beleg }) {
                           assignment removable without immediately setting a new one. It still has
                           to be visible, because an unassigned receipt belongs to nobody's company
                           and only shows up in the watch-all bucket. */}
-                      {!beleg.company_code ? (
+                      {!doc.company_code ? (
                         <p className="text-sm text-muted-foreground">
-                          {t("belege.detail.field.ohneGesellschaftHinweis")}
+                          {t("documents.detail.field.ohneGesellschaftHinweis")}
                         </p>
                       ) : null}
                     </div>
@@ -3644,27 +3627,30 @@ function BelegDetail({ beleg }: { beleg: Beleg }) {
                     {isEdit("booking") ? (
                       <>
                         <span className="text-sm text-muted-foreground">
-                          {t("belege.detail.field.objekt")}
+                          {t("documents.detail.field.objekt")}
                         </span>
                         <Combobox
                           value={form.property_code || "__none"}
                           onValueChange={(v) => set("property_code", v === "__none" ? "" : v)}
                           options={[
-                            { value: "__none", label: t("belege.detail.field.ohne") },
+                            { value: "__none", label: t("documents.detail.field.ohne") },
                             // Overhead sits WITH the properties, not beside them: it is the other
                             // answer to the same question, and the two are mutually exclusive.
-                            { value: GEMEINKOSTEN, label: t("belege.detail.field.gemeinkosten") },
+                            {
+                              value: OVERHEAD,
+                              label: t("documents.detail.field.gemeinkosten"),
+                            },
                             // Legacy AI-extracted code not in the master data — keep it visible/selectable
                             // so the current state is clear, but flag it (below) for correction.
-                            ...(objektUnbekannt && form.property_code === beleg.property_code
+                            ...(propertyUnknown && form.property_code === doc.property_code
                               ? [
                                   {
-                                    value: beleg.property_code as string,
-                                    label: `${beleg.property_code} (${t("belege.detail.field.objektUnbekanntKurz")})`,
+                                    value: doc.property_code as string,
+                                    label: `${doc.property_code} (${t("documents.detail.field.objektUnbekanntKurz")})`,
                                   },
                                 ]
                               : []),
-                            ...objekte.map((o) => ({
+                            ...properties.map((o) => ({
                               value: o.code,
                               label: o.name ? `${o.code} · ${o.name}` : o.code,
                               keywords: o.name ?? "",
@@ -3674,41 +3660,41 @@ function BelegDetail({ beleg }: { beleg: Beleg }) {
                       </>
                     ) : (
                       <ReadField
-                        label={t("belege.detail.field.objekt")}
-                        konfidenz={konf.objekt_code}
-                        quelle={beleg.property_assignment_source}
-                        leerAls={objektEntschieden ? <KeineWahlWert /> : undefined}
+                        label={t("documents.detail.field.objekt")}
+                        confidence={confidence.objekt_code}
+                        source={doc.property_assignment_source}
+                        leerAls={propertyDecided ? <NoChoiceValue /> : undefined}
                         value={
-                          beleg.is_overhead
-                            ? t("belege.detail.field.gemeinkosten")
-                            : objekt
-                              ? `${objekt.code}${objekt.name ? ` · ${objekt.name}` : ""}`
-                              : objektUnbekannt
-                                ? `${beleg.property_code} (${t("belege.detail.field.objektUnbekanntKurz")})`
-                                : beleg.property_code
+                          doc.is_overhead
+                            ? t("documents.detail.field.gemeinkosten")
+                            : property
+                              ? `${property.code}${property.name ? ` · ${property.name}` : ""}`
+                              : propertyUnknown
+                                ? `${doc.property_code} (${t("documents.detail.field.objektUnbekanntKurz")})`
+                                : doc.property_code
                         }
                         sub={
-                          kostenstelle ? (
-                            <KostenstelleHinweis
-                              kostenstelle={kostenstelle}
-                              objektCode={objekt?.code ?? null}
+                          costCentre ? (
+                            <CostCentreHint
+                              costCentre={costCentre}
+                              propertyCode={property?.code ?? null}
                             />
                           ) : undefined
                         }
                         badge={
-                          <QuelleBadge
-                            source={beleg.property_assignment_source}
-                            hasValue={!!beleg.property_code}
+                          <SourceBadge
+                            source={doc.property_assignment_source}
+                            hasValue={!!doc.property_code}
                           />
                         }
                       />
                     )}
                     {/* Extracted property code isn't in the master data → offer to create it. */}
-                    {objektUnbekannt ? (
+                    {propertyUnknown ? (
                       <div className="flex flex-wrap items-center gap-2 rounded-md border border-amber-300 bg-amber-50 px-2 py-1.5 text-sm text-amber-700">
                         <span className="flex items-center gap-1">
                           <TriangleAlert className="size-3 shrink-0" />
-                          {t("belege.detail.field.objektUnbekannt")}
+                          {t("documents.detail.field.objektUnbekannt")}
                         </span>
                         <Button
                           asChild
@@ -3716,38 +3702,38 @@ function BelegDetail({ beleg }: { beleg: Beleg }) {
                           variant="outline"
                           className="h-6 gap-1 border-amber-300 px-2 text-sm text-amber-800 hover:bg-amber-100"
                         >
-                          <Link to="/objekte" search={{ neu: beleg.property_code ?? undefined }}>
-                            <Plus className="size-3" /> {t("belege.detail.field.objektAnlegen")}
+                          <Link to="/properties" search={{ new: doc.property_code ?? undefined }}>
+                            <Plus className="size-3" /> {t("documents.detail.field.objektAnlegen")}
                           </Link>
                         </Button>
                       </div>
                     ) : null}
                     {/* The company follows from the property (migration 0083), so offer it instead
                         of making the reviewer look it up on the property page. */}
-                    {isEdit("booking") && companyVorschlagOffen ? (
+                    {isEdit("booking") && companySuggestionOpen ? (
                       <div className="flex flex-wrap items-center gap-2 rounded-md border border-sky-300 bg-sky-50 px-2 py-1.5 text-sm text-sky-800">
                         <span>
-                          {t("belege.detail.field.gesellschaftVorschlag", {
-                            code: companyVorschlag?.code ?? "",
+                          {t("documents.detail.field.gesellschaftVorschlag", {
+                            code: companySuggestion?.code ?? "",
                           })}
                         </span>
                         <Button
                           size="sm"
                           variant="outline"
                           className="h-6 gap-1 border-sky-300 px-2 text-sm text-sky-900 hover:bg-sky-100"
-                          onClick={() => set("company_code", companyVorschlag?.code ?? "")}
+                          onClick={() => set("company_code", companySuggestion?.code ?? "")}
                         >
                           <Check className="size-3" />
-                          {t("belege.detail.field.gesellschaftUebernehmen")}
+                          {t("documents.detail.field.gesellschaftUebernehmen")}
                         </Button>
                       </div>
-                    ) : isEdit("booking") && companyVorschlag?.mehrdeutig ? (
+                    ) : isEdit("booking") && companySuggestion?.ambiguous ? (
                       <p className="rounded-md border border-amber-300 bg-amber-50 px-2 py-1.5 text-sm text-amber-800">
-                        {t("belege.detail.field.gesellschaftMehrdeutig")}
+                        {t("documents.detail.field.gesellschaftMehrdeutig")}
                       </p>
-                    ) : isEdit("booking") && companyVorschlag?.fehlt ? (
+                    ) : isEdit("booking") && companySuggestion?.missing ? (
                       <p className="rounded-md border border-amber-300 bg-amber-50 px-2 py-1.5 text-sm text-amber-800">
-                        {t("belege.detail.field.gesellschaftKeineZuordnung")}
+                        {t("documents.detail.field.gesellschaftKeineZuordnung")}
                       </p>
                     ) : null}
                   </div>
@@ -3759,67 +3745,67 @@ function BelegDetail({ beleg }: { beleg: Beleg }) {
                     {isEdit("booking") ? (
                       <>
                         <span className="text-sm text-muted-foreground">
-                          {t("belege.detail.field.kategorie")}
+                          {t("documents.detail.field.kategorie")}
                         </span>
                         <Combobox
                           value={form.category_id || "__none"}
                           onValueChange={(v) => set("category_id", v === "__none" ? "" : v)}
                           options={[
-                            { value: "__none", label: t("belege.detail.field.ohne") },
+                            { value: "__none", label: t("documents.detail.field.ohne") },
                             ...categoryOptions,
                           ]}
                         />
                       </>
                     ) : (
                       <ReadField
-                        label={t("belege.detail.field.kategorie")}
+                        label={t("documents.detail.field.kategorie")}
                         leerAls={
-                          beleg.cost_category_source === "human" ? <KeineWahlWert /> : undefined
+                          doc.cost_category_source === "human" ? <NoChoiceValue /> : undefined
                         }
                         // Falls back to the free-text value rather than an em dash: there IS a
                         // category here, it is simply not linked to the taxonomy yet.
                         value={
                           category
                             ? categoryLabel(category)
-                            : freitextKategorie
-                              ? `${freitextKategorie} ${t("belege.detail.field.nurFreitext")}`
+                            : freeTextCategory
+                              ? `${freeTextCategory} ${t("documents.detail.field.nurFreitext")}`
                               : null
                         }
                         badge={
-                          <QuelleBadge
-                            source={beleg.cost_category_source}
-                            hasValue={!!beleg.category_id}
+                          <SourceBadge
+                            source={doc.cost_category_source}
+                            hasValue={!!doc.category_id}
                           />
                         }
                       />
                     )}
-                    {!isEdit("booking") && !beleg.category_id ? (
-                      freitextKategorie ? (
+                    {!isEdit("booking") && !doc.category_id ? (
+                      freeTextCategory ? (
                         // There IS a category on this receipt, it is just the free-text one the
                         // pipeline wrote and never linked to the taxonomy. Showing it beats
                         // showing "—": it is what the rule engine matched on, and hiding it made
                         // the screen disagree with the rule preview.
                         <div className="space-y-1">
                           <p className="text-sm text-muted-foreground">
-                            {t("belege.detail.field.freitextHinweis")}
+                            {t("documents.detail.field.freitextHinweis")}
                           </p>
-                          {passendeKategorie ? (
+                          {matchingCategory ? (
                             <Button
                               variant="outline"
                               size="sm"
                               className="mt-1"
-                              disabled={updateBeleg.isPending}
-                              onClick={() => kategorieVerknuepfen(passendeKategorie)}
+                              disabled={updateDocument.isPending}
+                              onClick={() => categoryLink(matchingCategory)}
                             >
-                              {t("belege.detail.field.verknuepfen", {
-                                name: categoryLabel(passendeKategorie),
+                              {t("documents.detail.field.verknuepfen", {
+                                name: categoryLabel(matchingCategory),
                               })}
                             </Button>
                           ) : null}
                         </div>
                       ) : (
                         <p className="text-sm text-muted-foreground">
-                          {t("belege.detail.field.ohneKategorieHinweis")}
+                          {t("documents.detail.field.ohneKategorieHinweis")}
                         </p>
                       )
                     ) : null}
@@ -3831,27 +3817,27 @@ function BelegDetail({ beleg }: { beleg: Beleg }) {
                         dialog, with the same retroactive preview as the rules screen
                         (Briefing Screen 4: "this would change N receipts"). */}
                     {!isEdit("booking") &&
-                    beleg.category_id &&
-                    beleg.supplier_id &&
-                    !regelnQ.data?.cost_category ? (
-                      <NeueRegelDialog
+                    doc.category_id &&
+                    doc.supplier_id &&
+                    !rulesQ.data?.cost_category ? (
+                      <NewRuleDialog
                         fixedTarget="cost_category"
-                        defaultSupplierId={beleg.supplier_id}
-                        defaultReferencePattern={beleg.payment_reference ?? undefined}
-                        defaultCategoryId={beleg.category_id ?? undefined}
+                        defaultSupplierId={doc.supplier_id}
+                        defaultReferencePattern={doc.payment_reference ?? undefined}
+                        defaultCategoryId={doc.category_id ?? undefined}
                         trigger={
                           <Button size="sm" variant="outline" className="h-7 gap-1.5 text-sm">
                             <Wand2 className="size-3" />
-                            {t("belege.detail.regel.alsRegel")}
+                            {t("documents.detail.regel.alsRegel")}
                           </Button>
                         }
                       />
                     ) : null}
-                    {!isEdit("booking") && regelnQ.data?.cost_category ? (
-                      <RegelHinweis
-                        belegId={beleg.id}
+                    {!isEdit("booking") && rulesQ.data?.cost_category ? (
+                      <RuleHint
+                        documentId={doc.id}
                         target="cost_category"
-                        humanOverride={beleg.cost_category_source === "human"}
+                        humanOverride={doc.cost_category_source === "human"}
                       />
                     ) : null}
                   </div>
@@ -3868,12 +3854,12 @@ function BelegDetail({ beleg }: { beleg: Beleg }) {
                   approver and no payment handoff it rendered as a bordered box with a heading and
                   nothing under it. A card that can be empty has to be able to not exist. */}
               {(responsibleApproverInactive || isOverdue) && !!responsibleApprover && (
-                <Section title={t("belege.detail.section.freigabe")}>
+                <Section title={t("documents.detail.section.freigabe")}>
                   {responsibleApproverInactive && responsibleApprover && (
                     <div className="mt-3 flex items-start gap-2 rounded-lg bg-amber-50 px-3 py-2 text-sm text-amber-800">
                       <TriangleAlert className="mt-0.5 size-4 shrink-0" />
                       <span>
-                        {t("belege.detail.workflow.verantwortlicherInaktiv", {
+                        {t("documents.detail.workflow.verantwortlicherInaktiv", {
                           name: responsibleApprover.name ?? "",
                         })}
                       </span>
@@ -3884,15 +3870,15 @@ function BelegDetail({ beleg }: { beleg: Beleg }) {
                     <div className="mt-3 flex items-start gap-2 rounded-lg bg-amber-50 px-3 py-2 text-sm text-amber-800">
                       <TriangleAlert className="mt-0.5 size-4 shrink-0" />
                       <span>
-                        {t("belege.detail.workflow.overdue", {
+                        {t("documents.detail.workflow.overdue", {
                           name: responsibleApprover.name ?? "",
                           days: Math.floor(daysSinceLastMove),
                         })}
                         {responsibleApprover.deputy_user_id && (
                           <>
                             {" "}
-                            {t("belege.detail.workflow.overdueDeputy", {
-                              name: personenName(responsibleApprover.deputy_user_id) ?? "",
+                            {t("documents.detail.workflow.overdueDeputy", {
+                              name: peopleName(responsibleApprover.deputy_user_id) ?? "",
                             })}
                           </>
                         )}
@@ -3914,14 +3900,14 @@ function BelegDetail({ beleg }: { beleg: Beleg }) {
                   the same events from two angles, in two vocabularies, running in two directions,
                   with no way to line a row in one up against a row in the other. Every fact both
                   carried belongs to a single move, so it is a single row. */}
-              <Section title={t("belege.detail.section.freigabeVerlauf")}>
-                {verlaufQ.isLoading ? (
+              <Section title={t("documents.detail.section.freigabeVerlauf")}>
+                {historyQ.isLoading ? (
                   <Skeleton className="h-16 w-full" />
                 ) : (
-                  <WorkflowVerlaufListe
-                    zeilen={workflowVerlauf}
-                    eingegangenAm={beleg.created_at}
-                    emptyText={t("belege.detail.workflow.verlaufEmpty")}
+                  <WorkflowHistoryList
+                    rows={workflowHistory}
+                    receivedAm={doc.created_at}
+                    emptyText={t("documents.detail.workflow.verlaufEmpty")}
                     t={t}
                   />
                 )}
@@ -3940,10 +3926,10 @@ function BelegDetail({ beleg }: { beleg: Beleg }) {
               <DialogContent>
                 <DialogHeader>
                   <DialogTitle>
-                    {pendingAction && t(`belege.workflow.actions.${pendingAction.id}`)}
+                    {pendingAction && t(`documents.workflow.actions.${pendingAction.id}`)}
                   </DialogTitle>
                   <DialogDescription>
-                    {t("belege.detail.workflow.commentRequired")}
+                    {t("documents.detail.workflow.commentRequired")}
                   </DialogDescription>
                 </DialogHeader>
                 <Textarea
@@ -3954,13 +3940,13 @@ function BelegDetail({ beleg }: { beleg: Beleg }) {
                 />
                 <DialogFooter>
                   <Button variant="outline" onClick={() => setPendingAction(null)}>
-                    {t("belege.detail.workflow.abbrechen")}
+                    {t("documents.detail.workflow.abbrechen")}
                   </Button>
                   <Button
-                    disabled={!actionComment.trim() || updateBeleg.isPending}
+                    disabled={!actionComment.trim() || updateDocument.isPending}
                     onClick={() => pendingAction && runApprovalAction(pendingAction, actionComment)}
                   >
-                    {t("belege.detail.workflow.bestaetigen")}
+                    {t("documents.detail.workflow.bestaetigen")}
                   </Button>
                 </DialogFooter>
               </DialogContent>
@@ -3971,58 +3957,60 @@ function BelegDetail({ beleg }: { beleg: Beleg }) {
               onOpenChange={(open) => {
                 if (!open) {
                   setPendingCorrection(null);
-                  setKorrekturGrund("");
+                  setCorrectionReason("");
                 }
               }}
             >
               <AlertDialogContent>
                 <AlertDialogHeader>
-                  <AlertDialogTitle>{t("belege.detail.workflow.korrektur.title")}</AlertDialogTitle>
+                  <AlertDialogTitle>
+                    {t("documents.detail.workflow.korrektur.title")}
+                  </AlertDialogTitle>
                   <AlertDialogDescription>
                     {pendingCorrection &&
-                      t("belege.detail.workflow.korrektur.desc", {
-                        von: t(`belege.workflow.${wf}`),
-                        nach: t(`belege.workflow.${pendingCorrection}`),
+                      t("documents.detail.workflow.korrektur.desc", {
+                        fromDate: t(`documents.workflow.${wf}`),
+                        nach: t(`documents.workflow.${pendingCorrection}`),
                       })}
                   </AlertDialogDescription>
                 </AlertDialogHeader>
-                {rueckschritt.requiresReason && (
+                {stepBack.requiresReason && (
                   <div className="space-y-1.5">
                     <Label htmlFor="korrektur-grund">
-                      {t("belege.detail.workflow.korrektur.grundLabel")}
+                      {t("documents.detail.workflow.korrektur.grundLabel")}
                     </Label>
                     <Textarea
                       id="korrektur-grund"
-                      value={korrekturGrund}
-                      onChange={(e) => setKorrekturGrund(e.target.value)}
-                      placeholder={t("belege.detail.workflow.korrektur.grundPlatzhalter")}
+                      value={correctionReason}
+                      onChange={(e) => setCorrectionReason(e.target.value)}
+                      placeholder={t("documents.detail.workflow.korrektur.grundPlatzhalter")}
                       rows={3}
                     />
                   </div>
                 )}
-                {korrekturLoestZahlung && (
+                {correctionTriggersPayment && (
                   <div className="mt-3 rounded-lg border border-amber-200 bg-amber-50 p-3 text-sm text-amber-900">
-                    {t("belege.detail.workflow.korrektur.loestZahlung", {
-                      count: bestaetigteMatches.length,
+                    {t("documents.detail.workflow.korrektur.loestZahlung", {
+                      count: confirmedMatches.length,
                     })}
                   </div>
                 )}
-                {korrekturLoestZahlung && !darfSelbstZahlen && (
-                  <p className="mt-2 text-sm text-warning">{keinZahlrechtKorrektur}</p>
+                {correctionTriggersPayment && !canSelfPay && (
+                  <p className="mt-2 text-sm text-warning">{noPaymentRightCorrection}</p>
                 )}
                 <AlertDialogFooter>
-                  <AlertDialogCancel>{t("belege.detail.workflow.abbrechen")}</AlertDialogCancel>
+                  <AlertDialogCancel>{t("documents.detail.workflow.abbrechen")}</AlertDialogCancel>
                   <AlertDialogAction
                     disabled={
-                      (rueckschritt.requiresReason && korrekturGrund.trim() === "") ||
-                      (korrekturLoestZahlung && !darfSelbstZahlen)
+                      (stepBack.requiresReason && correctionReason.trim() === "") ||
+                      (correctionTriggersPayment && !canSelfPay)
                     }
                     onClick={() =>
                       pendingCorrection &&
-                      runCorrection(pendingCorrection, korrekturGrund.trim() || null)
+                      runCorrection(pendingCorrection, correctionReason.trim() || null)
                     }
                   >
-                    {t("belege.detail.workflow.bestaetigen")}
+                    {t("documents.detail.workflow.bestaetigen")}
                   </AlertDialogAction>
                 </AlertDialogFooter>
               </AlertDialogContent>
@@ -4030,28 +4018,28 @@ function BelegDetail({ beleg }: { beleg: Beleg }) {
 
             {/* Tab: Zahlung & Abgleich — manual paid status + BANKSapi reconciliation */}
             <TabsContent value="zahlung" className="mt-4 space-y-6">
-              <Section title={t("belege.detail.section.zahlungsstatus")}>
+              <Section title={t("documents.detail.section.zahlungsstatus")}>
                 {/* The three payment axes -- paid, reconciled, handed to DATEV. This used to be a
                     card standing above the tabs, on every tab, saying the same thing the header
                     already says with its Abgleich badge. It belongs where the payment is actually
                     worked on, next to the controls that change it. */}
                 <ul className="mb-3 space-y-1 text-base text-muted-foreground">
-                  {zahlungReasons.map((g) => (
+                  {paymentReasonIds.map((g) => (
                     <li key={g} className="flex items-start gap-2">
                       <span className="mt-1.5 size-1.5 shrink-0 rounded-full bg-muted-foreground/50" />
-                      {t(`belege.detail.zahlung.grund.${g}`)}
+                      {t(`documents.detail.zahlung.grund.${g}`)}
                     </li>
                   ))}
                 </ul>
                 <div className="rounded-lg bg-muted/40 px-3 py-2">
                   <div className="flex items-center justify-between">
                     <span className="text-base text-muted-foreground">
-                      {t("belege.detail.workflow.bezahltManuell")}
+                      {t("documents.detail.workflow.bezahltManuell")}
                     </span>
                     <div className="flex items-center gap-2">
-                      {beleg.paid_at && (
+                      {doc.paid_at && (
                         <span className="text-sm text-muted-foreground">
-                          {formatDateTime(beleg.paid_at)}
+                          {formatDateTime(doc.paid_at)}
                         </span>
                       )}
                       {/* Confirmed, not applied on the flip: a manual paid mark is the one
@@ -4065,10 +4053,10 @@ function BelegDetail({ beleg }: { beleg: Beleg }) {
                           decision that has to say why and that releases the bank transactions
                           linked to the invoice, so it now lives on the workflow bar, where it is
                           confirmed, explained and written into the history. */}
-                      {!beleg.paid_at &&
+                      {!doc.paid_at &&
                         ((
-                          !darfAlsPerson(PERMISSIONS.paymentsWrite)
-                            ? t("belege.detail.zahlung.keineZahlBerechtigung")
+                          !canAlsPerson(PERMISSIONS.paymentsWrite)
+                            ? t("documents.detail.zahlung.keineZahlBerechtigung")
                             : null
                         ) ? (
                           <Tooltip>
@@ -4080,18 +4068,18 @@ function BelegDetail({ beleg }: { beleg: Beleg }) {
                               </span>
                             </TooltipTrigger>
                             <TooltipContent>
-                              {!darfAlsPerson(PERMISSIONS.paymentsWrite)
-                                ? t("belege.detail.zahlung.keineZahlBerechtigung")
+                              {!canAlsPerson(PERMISSIONS.paymentsWrite)
+                                ? t("documents.detail.zahlung.keineZahlBerechtigung")
                                 : null}
                             </TooltipContent>
                           </Tooltip>
                         ) : (
-                          <Switch checked={false} onCheckedChange={(c) => setBezahltDialog(c)} />
+                          <Switch checked={false} onCheckedChange={(c) => setPaidDialog(c)} />
                         ))}
                     </div>
                   </div>
                   <p className="mt-1 text-sm text-muted-foreground">
-                    {t("belege.detail.workflow.bezahltManuellHint")}
+                    {t("documents.detail.workflow.bezahltManuellHint")}
                   </p>
                 </div>
               </Section>
@@ -4099,33 +4087,33 @@ function BelegDetail({ beleg }: { beleg: Beleg }) {
               {/* Sibling of the switch, controlled: what is being confirmed depends on the
                   direction, so both texts live in one dialog keyed on `bezahltDialog`. */}
               <AlertDialog
-                open={bezahltDialog !== null}
-                onOpenChange={(o) => !o && setBezahltDialog(null)}
+                open={paidDialog !== null}
+                onOpenChange={(o) => !o && setPaidDialog(null)}
               >
                 <AlertDialogContent>
                   <AlertDialogHeader>
                     <AlertDialogTitle>
-                      {bezahltDialog
-                        ? t("belege.detail.zahlung.bezahltTitle")
-                        : t("belege.detail.zahlung.bezahltZurueckTitle")}
+                      {paidDialog
+                        ? t("documents.detail.zahlung.bezahltTitle")
+                        : t("documents.detail.zahlung.bezahltZurueckTitle")}
                     </AlertDialogTitle>
                     <AlertDialogDescription>
-                      {bezahltDialog
-                        ? t("belege.detail.zahlung.bezahltDesc")
-                        : t("belege.detail.zahlung.bezahltZurueckDesc")}
+                      {paidDialog
+                        ? t("documents.detail.zahlung.bezahltDesc")
+                        : t("documents.detail.zahlung.bezahltZurueckDesc")}
                     </AlertDialogDescription>
                   </AlertDialogHeader>
                   <AlertDialogFooter>
-                    <AlertDialogCancel>{t("belege.detail.action.abbrechen")}</AlertDialogCancel>
+                    <AlertDialogCancel>{t("documents.detail.action.abbrechen")}</AlertDialogCancel>
                     <AlertDialogAction
                       onClick={() => {
-                        if (bezahltDialog !== null) setBezahlt(bezahltDialog);
-                        setBezahltDialog(null);
+                        if (paidDialog !== null) setPaid(paidDialog);
+                        setPaidDialog(null);
                       }}
                     >
-                      {bezahltDialog
-                        ? t("belege.detail.zahlung.bezahltConfirm")
-                        : t("belege.detail.zahlung.bezahltZurueckConfirm")}
+                      {paidDialog
+                        ? t("documents.detail.zahlung.bezahltConfirm")
+                        : t("documents.detail.zahlung.bezahltZurueckConfirm")}
                     </AlertDialogAction>
                   </AlertDialogFooter>
                 </AlertDialogContent>
@@ -4135,16 +4123,16 @@ function BelegDetail({ beleg }: { beleg: Beleg }) {
                   lists, with the pay control under them. The transfer payload (IBAN, amount,
                   reference) is no longer restated here. It is what the pay dialog shows, right
                   before the money moves, assembled from the choices made in it. */}
-              {beleg.supplier_id && lieferant && (
-                <div id={UEBERWEISUNG_ANKER} className="scroll-mt-24">
-                  <Section title={t("belege.detail.lieferant.ueberweisung")}>
+              {doc.supplier_id && supplier && (
+                <div id={TRANSFER_ANCHOR} className="scroll-mt-24">
+                  <Section title={t("documents.detail.lieferant.ueberweisung")}>
                     {/* The account nobody has vouched for yet is called out HERE, where the
                         payment decision is made, rather than on the supplier's master data. */}
-                    {aktuellesKonto && !aktuellesKonto.confirmed_at && (
+                    {currentAccount && !currentAccount.confirmed_at && (
                       <div className="mb-3 flex items-start gap-2 rounded-lg border border-amber-300 bg-amber-50 p-3 text-amber-900">
                         <TriangleAlert className="mt-0.5 size-4 shrink-0" />
                         <span className="text-base">
-                          {t("belege.detail.lieferant.konten.neuHinweis")}
+                          {t("documents.detail.lieferant.konten.neuHinweis")}
                         </span>
                       </div>
                     )}
@@ -4153,15 +4141,15 @@ function BelegDetail({ beleg }: { beleg: Beleg }) {
                         where a new IBAN can be the one you are about to pay). This card is about
                         executing THIS payment, so it lists accounts and does not create them. */}
                     <PaymentAccounts
-                      {...zahlkontenPanel}
+                      {...paymentAccountsPanel}
                       onAdd={undefined}
                       actions={
-                        aktuellesKonto ? (
-                          <JetztBezahlenSection
-                            beleg={beleg}
-                            lieferant={lieferant}
-                            vorgeschlagenesKonto={aktuellesKonto.id}
-                            chipsFuer={kontoChips}
+                        currentAccount ? (
+                          <NowPaySection
+                            doc={doc}
+                            supplier={supplier}
+                            suggestedAccount={currentAccount.id}
+                            chipsFor={accountChips}
                           />
                         ) : null
                       }
@@ -4171,8 +4159,8 @@ function BelegDetail({ beleg }: { beleg: Beleg }) {
               )}
 
               {/* Zahlung & Abgleich (BANKSapi reconciliation) */}
-              <div id={ABGLEICH_ANKER} className="scroll-mt-24">
-                <ZahlungAbgleichSection beleg={beleg} />
+              <div id={MATCHING_ANCHOR} className="scroll-mt-24">
+                <PaymentMatchingSection doc={doc} />
               </div>
             </TabsContent>
 
@@ -4186,44 +4174,44 @@ function BelegDetail({ beleg }: { beleg: Beleg }) {
                   thing you had to scroll past three cards to reach. */}
 
               {/* 4. Positionen */}
-              {positionen.length > 0 && (
-                <Section title={t("belege.detail.section.positionen")}>
+              {lineItems.length > 0 && (
+                <Section title={t("documents.detail.section.positionen")}>
                   <div className="overflow-hidden rounded-lg border border-border">
                     <Table>
                       <TableHeader>
                         <TableRow className="bg-muted/40">
-                          <TableHead>{t("belege.detail.positionen.beschreibung")}</TableHead>
+                          <TableHead>{t("documents.detail.positionen.beschreibung")}</TableHead>
                           <TableHead className="text-right">
-                            {t("belege.detail.positionen.menge")}
+                            {t("documents.detail.positionen.menge")}
                           </TableHead>
                           <TableHead className="text-right">
-                            {t("belege.detail.positionen.einzelpreis")}
+                            {t("documents.detail.positionen.einzelpreis")}
                           </TableHead>
                           <TableHead className="text-right">
-                            {t("belege.detail.positionen.ustProzent")}
+                            {t("documents.detail.positionen.ustProzent")}
                           </TableHead>
                           <TableHead className="text-right">
-                            {t("belege.detail.positionen.betrag")}
+                            {t("documents.detail.positionen.betrag")}
                           </TableHead>
                         </TableRow>
                       </TableHeader>
                       <TableBody>
-                        {positionen.map((p, i) => (
+                        {lineItems.map((p, i) => (
                           <TableRow key={i}>
                             <TableCell className="text-base text-foreground">
-                              {p.beschreibung ?? "—"}
+                              {p.description ?? "—"}
                             </TableCell>
                             <TableCell className="text-right text-base tabular-nums">
-                              {p.menge ?? "—"}
+                              {p.quantity ?? "—"}
                             </TableCell>
                             <TableCell className="text-right text-base tabular-nums">
-                              {p.einzelpreis != null ? formatEUR(p.einzelpreis) : "—"}
+                              {p.unitPrice != null ? formatEUR(p.unitPrice) : "—"}
                             </TableCell>
                             <TableCell className="text-right text-base tabular-nums">
                               {p.ust_satz != null ? `${p.ust_satz} %` : "—"}
                             </TableCell>
                             <TableCell className="text-right text-base font-medium tabular-nums">
-                              {p.betrag != null ? formatEUR(p.betrag) : "—"}
+                              {p.amount != null ? formatEUR(p.amount) : "—"}
                             </TableCell>
                           </TableRow>
                         ))}
@@ -4240,13 +4228,13 @@ function BelegDetail({ beleg }: { beleg: Beleg }) {
                   localStorage. Here they are simply present, on the tab for the fields somebody
                   opens when they are checking something specific. */}
               <Section
-                title={t("belege.detail.section.steuerlicheBehandlung")}
+                title={t("documents.detail.section.steuerlicheBehandlung")}
                 editable
                 isEditing={isEdit("steuern")}
-                saving={updateBeleg.isPending}
+                saving={updateDocument.isPending}
                 onEdit={() => startEdit("steuern")}
-                onCancel={abbrechen}
-                onSave={speichern}
+                onCancel={cancel}
+                onSave={save}
               >
                 {/* Deductibility (Briefing Screen 5, migration 0031): decides net vs. gross cost.
                     Defaults from the business line's VAT treatment, overridden by a rule, overridden
@@ -4256,32 +4244,32 @@ function BelegDetail({ beleg }: { beleg: Beleg }) {
                 <div className="mt-4 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
                   <Field
                     edit={isEdit("steuern")}
-                    label={t("belege.detail.field.abzugsfaehigkeit")}
+                    label={t("documents.detail.field.abzugsfaehigkeit")}
                     type="number"
-                    value={beleg.vat_deductible_pct != null ? `${beleg.vat_deductible_pct} %` : "—"}
+                    value={doc.vat_deductible_pct != null ? `${doc.vat_deductible_pct} %` : "—"}
                     formValue={form.vat_deductible_pct}
-                    onChange={onAbzugProzentChange}
+                    onChange={onDeductionPercentChange}
                     badge={
-                      <QuelleBadge
-                        source={beleg.vat_deductibility_source}
-                        hasValue={beleg.vat_deductible_pct != null}
+                      <SourceBadge
+                        source={doc.vat_deductibility_source}
+                        hasValue={doc.vat_deductible_pct != null}
                       />
                     }
                   />
                   <Field
                     edit={isEdit("steuern") && liveVatAmount != null && liveVatAmount !== 0}
-                    label={t("belege.detail.field.abzugsfaehigerBetrag")}
+                    label={t("documents.detail.field.abzugsfaehigerBetrag")}
                     type="number"
                     value={
-                      beleg.vat_deductible_amount != null
-                        ? formatEUR(beleg.vat_deductible_amount)
-                        : t("belege.detail.field.nichtBestimmt")
+                      doc.vat_deductible_amount != null
+                        ? formatEUR(doc.vat_deductible_amount)
+                        : t("documents.detail.field.nichtBestimmt")
                     }
-                    formValue={abzugBetragEingabe}
-                    onChange={onAbzugBetragChange}
+                    formValue={deductionAmountInput}
+                    onChange={onDeductionAmountChange}
                   />
                   <ReadField
-                    label={t("belege.detail.field.nichtAbzugsfaehigerBetrag")}
+                    label={t("documents.detail.field.nichtAbzugsfaehigerBetrag")}
                     value={
                       isEdit("steuern") &&
                       form.vat_deductible_pct.trim() !== "" &&
@@ -4296,34 +4284,34 @@ function BelegDetail({ beleg }: { beleg: Beleg }) {
                                 100,
                             ) / 100,
                           )
-                        : beleg.vat_nondeductible_amount != null
-                          ? formatEUR(beleg.vat_nondeductible_amount)
-                          : t("belege.detail.field.nichtBestimmt")
+                        : doc.vat_nondeductible_amount != null
+                          ? formatEUR(doc.vat_nondeductible_amount)
+                          : t("documents.detail.field.nichtBestimmt")
                     }
                   />
                   {isEdit("steuern") ? (
                     <div className="space-y-1">
                       <span className="text-sm text-muted-foreground">
-                        {t("belege.detail.field.sonderfall")}
+                        {t("documents.detail.field.sonderfall")}
                       </span>
                       <Combobox
                         value={form.vat_special_case || "__none"}
                         onValueChange={(v) => set("vat_special_case", v === "__none" ? "" : v)}
                         options={[
-                          { value: "__none", label: t("belege.detail.field.ohne") },
+                          { value: "__none", label: t("documents.detail.field.ohne") },
                           ...VAT_SPECIAL_CASES.map((v) => ({
                             value: v,
-                            label: t(`belege.detail.vatSonderfall.${v}`),
+                            label: t(`documents.detail.vatSonderfall.${v}`),
                           })),
                         ]}
                       />
                     </div>
                   ) : (
                     <ReadField
-                      label={t("belege.detail.field.sonderfall")}
+                      label={t("documents.detail.field.sonderfall")}
                       value={
-                        beleg.vat_special_case
-                          ? t(`belege.detail.vatSonderfall.${beleg.vat_special_case}`)
+                        doc.vat_special_case
+                          ? t(`documents.detail.vatSonderfall.${doc.vat_special_case}`)
                           : null
                       }
                     />
@@ -4338,26 +4326,26 @@ function BelegDetail({ beleg }: { beleg: Beleg }) {
                   {isEdit("steuern") ? (
                     <div className="space-y-1">
                       <span className="text-sm text-muted-foreground">
-                        {t("belege.detail.field.einkommensteuerBehandlung")}
+                        {t("documents.detail.field.einkommensteuerBehandlung")}
                       </span>
                       <Combobox
                         value={form.income_tax_treatment || "__none"}
                         onValueChange={(v) => set("income_tax_treatment", v === "__none" ? "" : v)}
                         options={[
-                          { value: "__none", label: t("belege.detail.field.ohne") },
+                          { value: "__none", label: t("documents.detail.field.ohne") },
                           ...INCOME_TAX_TREATMENTS.map((v) => ({
                             value: v,
-                            label: t(`belege.detail.einkommensteuer.${v}`),
+                            label: t(`documents.detail.einkommensteuer.${v}`),
                           })),
                         ]}
                       />
                     </div>
                   ) : (
                     <ReadField
-                      label={t("belege.detail.field.einkommensteuerBehandlung")}
+                      label={t("documents.detail.field.einkommensteuerBehandlung")}
                       value={
-                        beleg.income_tax_treatment
-                          ? t(`belege.detail.einkommensteuer.${beleg.income_tax_treatment}`)
+                        doc.income_tax_treatment
+                          ? t(`documents.detail.einkommensteuer.${doc.income_tax_treatment}`)
                           : null
                       }
                     />
@@ -4370,45 +4358,45 @@ function BelegDetail({ beleg }: { beleg: Beleg }) {
                   invoice date, due date) into a second row. They are looked at when something
                   specific is being checked, which is what this tab is for. */}
               <Section
-                title={t("belege.detail.section.leistungsdaten")}
+                title={t("documents.detail.section.leistungsdaten")}
                 editable
-                editDisabled={!kannBearbeiten("leistungsdaten")}
+                editDisabled={!canEdit("leistungsdaten")}
                 isEditing={isEdit("leistungsdaten")}
-                saving={updateBeleg.isPending}
+                saving={updateDocument.isPending}
                 onEdit={() => startEdit("leistungsdaten")}
-                onCancel={abbrechen}
-                onSave={speichern}
+                onCancel={cancel}
+                onSave={save}
               >
                 <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
                   <Field
                     edit={isEdit("leistungsdaten")}
-                    label={t("belege.detail.field.auftragsnummer")}
-                    value={beleg.order_number}
+                    label={t("documents.detail.field.auftragsnummer")}
+                    value={doc.order_number}
                     formValue={form.order_number}
                     onChange={(v) => set("order_number", v)}
                   />
                   <Field
                     edit={isEdit("leistungsdaten")}
-                    label={t("belege.detail.field.leistungsdatum")}
+                    label={t("documents.detail.field.leistungsdatum")}
                     type="date"
-                    konfidenz={konf.leistungsdatum}
-                    value={formatDate(beleg.service_date)}
+                    confidence={confidence.serviceDate}
+                    value={formatDate(doc.service_date)}
                     formValue={form.service_date}
                     onChange={(v) => set("service_date", v)}
                   />
                   <Field
                     edit={isEdit("leistungsdaten")}
-                    label={t("belege.detail.field.leistungVon")}
+                    label={t("documents.detail.field.leistungVon")}
                     type="date"
-                    value={formatDate(beleg.service_period_from)}
+                    value={formatDate(doc.service_period_from)}
                     formValue={form.service_period_from}
                     onChange={(v) => set("service_period_from", v)}
                   />
                   <Field
                     edit={isEdit("leistungsdaten")}
-                    label={t("belege.detail.field.leistungBis")}
+                    label={t("documents.detail.field.leistungBis")}
                     type="date"
-                    value={formatDate(beleg.service_period_to)}
+                    value={formatDate(doc.service_period_to)}
                     formValue={form.service_period_to}
                     onChange={(v) => set("service_period_to", v)}
                   />
@@ -4417,64 +4405,64 @@ function BelegDetail({ beleg }: { beleg: Beleg }) {
 
               {/* Weitere Angaben (additional extracted fields — "no data loss") */}
               <Section
-                title={t("belege.detail.section.weitere")}
+                title={t("documents.detail.section.weitere")}
                 editable
-                editDisabled={!kannBearbeiten("weitere")}
+                editDisabled={!canEdit("weitere")}
                 isEditing={isEdit("weitere")}
-                saving={updateBeleg.isPending}
+                saving={updateDocument.isPending}
                 onEdit={() => startEdit("weitere")}
-                onCancel={abbrechen}
-                onSave={speichern}
+                onCancel={cancel}
+                onSave={save}
               >
                 <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
                   <Field
                     edit={isEdit("weitere")}
-                    label={t("belege.detail.field.anschriftSteller")}
-                    value={beleg.issuer_address}
+                    label={t("documents.detail.field.anschriftSteller")}
+                    value={doc.issuer_address}
                     formValue={form.issuer_address}
                     onChange={(v) => set("issuer_address", v)}
                   />
                   <Field
                     edit={isEdit("weitere")}
-                    label={t("belege.detail.field.empfaenger")}
-                    value={beleg.recipient_name}
+                    label={t("documents.detail.field.empfaenger")}
+                    value={doc.recipient_name}
                     formValue={form.recipient_name}
                     onChange={(v) => set("recipient_name", v)}
                   />
                   <Field
                     edit={isEdit("weitere")}
-                    label={t("belege.detail.field.kundennummer")}
+                    label={t("documents.detail.field.kundennummer")}
                     copy
-                    value={beleg.customer_number}
+                    value={doc.customer_number}
                     formValue={form.customer_number}
                     onChange={(v) => set("customer_number", v)}
                   />
                   <Field
                     edit={isEdit("weitere")}
-                    label={t("belege.detail.field.zahlungsart")}
-                    value={beleg.payment_method}
+                    label={t("documents.detail.field.zahlungsart")}
+                    value={doc.payment_method}
                     formValue={form.payment_method}
                     onChange={(v) => set("payment_method", v)}
                   />
                   <Field
                     edit={isEdit("weitere")}
-                    label={t("belege.detail.field.verwendungszweck")}
+                    label={t("documents.detail.field.verwendungszweck")}
                     copy
-                    value={beleg.payment_reference}
+                    value={doc.payment_reference}
                     formValue={form.payment_reference}
                     onChange={(v) => set("payment_reference", v)}
                   />
                   <Field
                     edit={isEdit("weitere")}
-                    label={t("belege.detail.field.empfaengerAnschrift")}
-                    value={beleg.recipient_address}
+                    label={t("documents.detail.field.empfaengerAnschrift")}
+                    value={doc.recipient_address}
                     formValue={form.recipient_address}
                     onChange={(v) => set("recipient_address", v)}
                   />
                   <Field
                     edit={isEdit("weitere")}
-                    label={t("belege.detail.field.steuerhinweis")}
-                    value={beleg.tax_note}
+                    label={t("documents.detail.field.steuerhinweis")}
+                    value={doc.tax_note}
                     formValue={form.tax_note}
                     onChange={(v) => set("tax_note", v)}
                   />
@@ -4487,7 +4475,7 @@ function BelegDetail({ beleg }: { beleg: Beleg }) {
                   {isEdit("weitere") ? (
                     <div className="space-y-1">
                       <span className="text-sm text-muted-foreground">
-                        {t("belege.detail.field.leistungsbeschreibung")}
+                        {t("documents.detail.field.leistungsbeschreibung")}
                       </span>
                       <Textarea
                         value={form.service_description}
@@ -4495,12 +4483,12 @@ function BelegDetail({ beleg }: { beleg: Beleg }) {
                         rows={2}
                       />
                     </div>
-                  ) : beleg.service_description ? (
+                  ) : doc.service_description ? (
                     <div>
                       <div className="text-sm text-muted-foreground">
-                        {t("belege.detail.field.leistungsbeschreibung")}
+                        {t("documents.detail.field.leistungsbeschreibung")}
                       </div>
-                      <p className="mt-1 text-base text-foreground">{beleg.service_description}</p>
+                      <p className="mt-1 text-base text-foreground">{doc.service_description}</p>
                     </div>
                   ) : null}
                 </div>
@@ -4509,32 +4497,32 @@ function BelegDetail({ beleg }: { beleg: Beleg }) {
               {/* Where this document came in. Lifted out of the sticky preview column: it is
                   provenance, looked at once when something looks wrong, and it was occupying the
                   half of the screen meant for reading the document itself. */}
-              <Section title={t("belege.detail.section.eingang")}>
+              <Section title={t("documents.detail.section.eingang")}>
                 <div className="flex items-center justify-between text-base">
                   <span className="text-muted-foreground">
-                    {t("belege.detail.meta.eingangskanal")}
+                    {t("documents.detail.meta.eingangskanal")}
                   </span>
-                  <KanalBadge kanal={beleg.intake_channel} />
+                  <ChannelBadge channel={doc.intake_channel} />
                 </div>
                 <Separator className="my-3" />
                 <div className="text-base">
                   <Meta
-                    label={t("belege.detail.meta.eingegangen")}
-                    value={formatDateTime(beleg.created_at)}
+                    label={t("documents.detail.meta.eingegangen")}
+                    value={formatDateTime(doc.created_at)}
                   />
                   <Meta
-                    label={t("belege.detail.meta.faellig")}
-                    value={formatDate(beleg.due_date)}
+                    label={t("documents.detail.meta.faellig")}
+                    value={formatDate(doc.due_date)}
                   />
                   {/* `source` is dropped, not moved. It printed the raw column -- "mailbox",
                       lowercase and untranslated -- directly under Eingangskanal, which says the
                       same thing in the reader's language. */}
                   <div className="mt-2 flex items-center justify-between">
                     <span className="text-muted-foreground">
-                      {t("belege.detail.meta.belegart")}
+                      {t("documents.detail.meta.belegart")}
                     </span>
-                    {beleg.document_type ? (
-                      <BelegartBadge belegart={beleg.document_type} />
+                    {doc.document_type ? (
+                      <DocumentTypeBadge documentType={doc.document_type} />
                     ) : (
                       <span className="text-foreground">—</span>
                     )}
@@ -4542,71 +4530,74 @@ function BelegDetail({ beleg }: { beleg: Beleg }) {
                 </div>
               </Section>
 
-              {beleg.extracted && <RohdatenDialog extracted={beleg.extracted} />}
+              {doc.extracted && <RawDataDialog extracted={doc.extracted} />}
             </TabsContent>
 
             {/* Tab: Lieferant — supplier master data & bank/transfer details */}
             <TabsContent value="lieferant" className="mt-6 space-y-8">
-              <PlainSection title={t("belege.detail.section.lieferant")}>
-                <div id={LIEFERANT_ANKER} className="scroll-mt-24">
-                  {beleg.supplier_id && lieferant ? (
+              <PlainSection title={t("documents.detail.section.lieferant")}>
+                <div id={SUPPLIER_ANCHOR} className="scroll-mt-24">
+                  {doc.supplier_id && supplier ? (
                     <div className="grid gap-x-12 gap-y-3.5 sm:grid-cols-2">
                       <FactList
                         facts={[
                           {
-                            label: t("belege.detail.lieferant.name"),
-                            value: lieferant.name,
+                            label: t("documents.detail.lieferant.name"),
+                            value: supplier.name,
                             node: (
                               <Link
-                                to="/lieferanten/$id"
-                                params={{ id: lieferant.id }}
+                                to="/suppliers/$id"
+                                params={{ id: supplier.id }}
                                 className="underline decoration-muted-foreground/40 underline-offset-4 transition-colors hover:text-brand-dark hover:decoration-brand"
                               >
-                                {lieferant.name}
+                                {supplier.name}
                               </Link>
                             ),
                           },
-                          { label: t("belege.detail.lieferant.ustId"), value: lieferant.vat_id },
+                          { label: t("documents.detail.lieferant.ustId"), value: supplier.vat_id },
                           {
-                            label: t("belege.detail.lieferant.ansprechpartner"),
-                            value: lieferant.contact_person,
+                            label: t("documents.detail.lieferant.ansprechpartner"),
+                            value: supplier.contact_person,
                           },
                         ]}
                       />
                       <FactList
                         facts={[
                           {
-                            label: t("belege.detail.lieferant.anschrift"),
-                            value: lieferant.address,
+                            label: t("documents.detail.lieferant.anschrift"),
+                            value: supplier.address,
                           },
-                          { label: t("belege.detail.lieferant.telefon"), value: lieferant.phone },
+                          {
+                            label: t("documents.detail.lieferant.telefon"),
+                            value: supplier.phone,
+                          },
                         ]}
                       />
                     </div>
                   ) : (
                     <p className="text-base text-muted-foreground">
-                      {t("belege.detail.lieferant.none")}
+                      {t("documents.detail.lieferant.none")}
                     </p>
                   )}
                 </div>
               </PlainSection>
 
-              {beleg.supplier_id && lieferant && (
-                <PlainSection title={t("belege.detail.lieferant.konten.titel")}>
+              {doc.supplier_id && supplier && (
+                <PlainSection title={t("documents.detail.lieferant.konten.titel")}>
                   {/* Master data, nothing else: this is who the supplier is and where they bank.
                       Paying is an act on THIS invoice, so the button lives on the Zahlung tab. */}
-                  <PaymentAccounts {...zahlkontenPanel} />
+                  <PaymentAccounts {...paymentAccountsPanel} />
                   {/* Somebody looking at the IBANs is often about to pay, and the button they
                       expect beside them is one tab over. Say so, and take them to it. */}
                   <p className="mt-4 text-base text-muted-foreground">
                     <Trans
-                      i18nKey="belege.detail.lieferant.konten.zahlungHinweis"
-                      values={{ tab: t("belege.detail.tab.zahlung") }}
+                      i18nKey="documents.detail.lieferant.konten.zahlungHinweis"
+                      values={{ tab: t("documents.detail.tab.zahlung") }}
                       components={{
                         tabLink: (
                           <button
                             type="button"
-                            onClick={() => springeZu("zahlung", UEBERWEISUNG_ANKER)}
+                            onClick={() => jumpZu("zahlung", TRANSFER_ANCHOR)}
                             className="cursor-pointer font-medium text-brand-dark underline decoration-brand/40 underline-offset-4 transition-colors hover:decoration-brand"
                           />
                         ),
@@ -4618,32 +4609,34 @@ function BelegDetail({ beleg }: { beleg: Beleg }) {
             </TabsContent>
 
             <BankAccountDialog
-              open={kontoWahlOffen}
-              onOpenChange={setKontoWahlOffen}
-              existingIbans={alleKonten.map((k) => k.iban)}
-              saving={neuesLieferantenKonto.isPending}
+              open={accountChoiceOpen}
+              onOpenChange={setAccountChoiceOpen}
+              existingIbans={allAccounts.map((k) => k.iban)}
+              saving={newSuppliersAccount.isPending}
               labels={{
-                title: t("lieferanten.detail.bankkonten.dialog.title"),
-                iban: t("lieferanten.detail.bankkonten.col.iban"),
-                bic: t("lieferanten.detail.bankkonten.col.bic"),
-                bank: t("lieferanten.detail.bankkonten.col.bank"),
-                cancel: t("lieferanten.detail.bankkonten.dialog.abbrechen"),
-                save: t("lieferanten.detail.bankkonten.dialog.speichern"),
-                invalidIban: t("lieferanten.detail.bankkonten.toast.ungueltig"),
-                duplicateIban: t("lieferanten.detail.bankkonten.toast.bereitsVorhanden"),
+                title: t("suppliers.detail.bankkonten.dialog.title"),
+                iban: t("suppliers.detail.bankkonten.col.iban"),
+                bic: t("suppliers.detail.bankkonten.col.bic"),
+                bank: t("suppliers.detail.bankkonten.col.bank"),
+                cancel: t("suppliers.detail.bankkonten.dialog.abbrechen"),
+                save: t("suppliers.detail.bankkonten.dialog.speichern"),
+                invalidIban: t("suppliers.detail.bankkonten.toast.ungueltig"),
+                duplicateIban: t("suppliers.detail.bankkonten.toast.bereitsVorhanden"),
               }}
               onSave={(input) =>
-                neuesLieferantenKonto.mutate(input, {
+                newSuppliersAccount.mutate(input, {
                   onSuccess: () => {
-                    setKontoWahlOffen(false);
+                    setAccountChoiceOpen(false);
                     toast.success(
-                      t("lieferanten.detail.bankkonten.toast.hinzugefuegt", {
+                      t("suppliers.detail.bankkonten.toast.hinzugefuegt", {
                         iban: formatIBAN(input.iban),
                       }),
                     );
                   },
                   onError: (e) =>
-                    toast.error(t("belege.detail.toast.fehlgeschlagen", { error: fehlerText(e) })),
+                    toast.error(
+                      t("documents.detail.toast.fehlgeschlagen", { error: errorText(e) }),
+                    ),
                 })
               }
             />
@@ -4656,18 +4649,24 @@ function BelegDetail({ beleg }: { beleg: Beleg }) {
 
               {/* E-Mail — envelope metadata of the source email (Briefing Screen 2), only for
                   mail-imported invoices with a matching processing_log entry. */}
-              {beleg.intake_channel === "email" && emailLog && (
-                <Section title={t("belege.detail.section.email")}>
-                  <Meta label={t("belege.detail.meta.betreff")} value={emailLog.subject ?? "—"} />
-                  <Meta label={t("belege.detail.meta.absender")} value={emailLog.sender ?? "—"} />
+              {doc.intake_channel === "email" && emailLog && (
+                <Section title={t("documents.detail.section.email")}>
                   <Meta
-                    label={t("belege.detail.meta.gesendetAm")}
+                    label={t("documents.detail.meta.betreff")}
+                    value={emailLog.subject ?? "—"}
+                  />
+                  <Meta
+                    label={t("documents.detail.meta.absender")}
+                    value={emailLog.sender ?? "—"}
+                  />
+                  <Meta
+                    label={t("documents.detail.meta.gesendetAm")}
                     value={formatDateTime(emailLog.sent_at)}
                   />
                   {emailLog.body && (
                     <details className="mt-3">
                       <summary className="cursor-pointer text-base text-brand-dark">
-                        {t("belege.detail.mailtextShow")}
+                        {t("documents.detail.mailtextShow")}
                       </summary>
                       <pre className="mt-3 max-h-80 overflow-auto whitespace-pre-wrap rounded-lg bg-muted/40 p-3 text-sm text-muted-foreground">
                         {emailLog.body}
@@ -4678,39 +4677,39 @@ function BelegDetail({ beleg }: { beleg: Beleg }) {
               )}
 
               {/* 7. Volltext */}
-              {volltext && (
-                <Section title={t("belege.detail.section.volltext")}>
+              {fullText && (
+                <Section title={t("documents.detail.section.volltext")}>
                   <details>
                     <summary className="cursor-pointer text-base text-brand-dark">
-                      {t("belege.detail.volltextShow")}
+                      {t("documents.detail.volltextShow")}
                     </summary>
                     <pre className="mt-3 max-h-80 overflow-auto whitespace-pre-wrap rounded-lg bg-muted/40 p-3 text-sm text-muted-foreground">
-                      {volltext}
+                      {fullText}
                     </pre>
                   </details>
                 </Section>
               )}
 
               {/* 3. Notizen & Verlauf */}
-              <Section title={t("belege.detail.section.notizen")} anchorId={NOTIZEN_ANKER}>
+              <Section title={t("documents.detail.section.notizen")} anchorId={NOTES_ANCHOR}>
                 <div className="flex flex-col gap-2 sm:flex-row">
                   <Textarea
-                    value={notiz}
-                    onChange={(e) => setNotiz(e.target.value)}
-                    placeholder={t("belege.detail.notiz.placeholder")}
+                    value={note}
+                    onChange={(e) => setNote(e.target.value)}
+                    placeholder={t("documents.detail.notiz.placeholder")}
                     rows={2}
                     className="flex-1"
                   />
                   <Button
-                    onClick={notizSpeichern}
-                    disabled={!notiz.trim() || addNotiz.isPending}
+                    onClick={noteSave}
+                    disabled={!note.trim() || addNote.isPending}
                     className="sm:self-start"
                   >
-                    {t("belege.detail.notiz.save")}
+                    {t("documents.detail.notiz.save")}
                   </Button>
                 </div>
                 <div className="mt-4">
-                  {verlaufQ.isLoading ? (
+                  {historyQ.isLoading ? (
                     <Skeleton className="h-16 w-full" />
                   ) : generalHistory.length > 0 ? (
                     <ol className="space-y-3">
@@ -4728,15 +4727,15 @@ function BelegDetail({ beleg }: { beleg: Beleg }) {
                           />
                           <div className="min-w-0">
                             <p className="text-base font-medium text-foreground">
-                              {verlaufTypLabel(v.type, t)}
+                              {historyTypeLabel(v.type, t)}
                             </p>
                             {/* Field changes are listed one per row rather than run together on a
                                 line: the point of the entry is that each value is checkable on its
                                 own. `lines` is written by the save; older entries and entries from
                                 the database triggers only have `text`, so that is the fallback. */}
-                            {verlaufZeilen(v, t).length > 0 ? (
+                            {historyRows(v, t).length > 0 ? (
                               <ul className="mt-0.5 space-y-0.5">
-                                {verlaufZeilen(v, t).map((line, i) => (
+                                {historyRows(v, t).map((line, i) => (
                                   <li key={i} className="text-base text-foreground">
                                     {line}
                                   </li>
@@ -4744,7 +4743,7 @@ function BelegDetail({ beleg }: { beleg: Beleg }) {
                               </ul>
                             ) : null}
                             <p className="mt-0.5 text-sm text-muted-foreground">
-                              {v.actor ?? t("belege.detail.actorSystem")} ·{" "}
+                              {v.actor ?? t("documents.detail.actorSystem")} ·{" "}
                               {formatDateTime(v.created_at)}
                             </p>
                           </div>
@@ -4753,7 +4752,7 @@ function BelegDetail({ beleg }: { beleg: Beleg }) {
                     </ol>
                   ) : (
                     <p className="text-base text-muted-foreground">
-                      {t("belege.detail.notiz.empty")}
+                      {t("documents.detail.notiz.empty")}
                     </p>
                   )}
                 </div>
@@ -4768,30 +4767,30 @@ function BelegDetail({ beleg }: { beleg: Beleg }) {
           invoice -- ask the same question, because from where the person is sitting they are the
           same event: the form is about to close. */}
       <AlertDialog
-        open={verwerfenFrage}
+        open={discardQuestion}
         onOpenChange={(o) => {
-          if (!o) weiterBearbeiten();
+          if (!o) nextEdit();
         }}
       >
         <AlertDialogContent>
           <AlertDialogHeader>
-            <AlertDialogTitle>{t("belege.detail.ungespeichert.title")}</AlertDialogTitle>
+            <AlertDialogTitle>{t("documents.detail.ungespeichert.title")}</AlertDialogTitle>
             <AlertDialogDescription>
-              {t("belege.detail.ungespeichert.body", {
-                count: geaenderteFelder.length,
-                felder: geaenderteFelder.join(", "),
+              {t("documents.detail.ungespeichert.body", {
+                count: changedFields.length,
+                fields: changedFields.join(", "),
               })}
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
-            <AlertDialogCancel onClick={weiterBearbeiten}>
-              {t("belege.detail.ungespeichert.weiter")}
+            <AlertDialogCancel onClick={nextEdit}>
+              {t("documents.detail.ungespeichert.weiter")}
             </AlertDialogCancel>
             <AlertDialogAction
-              onClick={aenderungenVerwerfen}
+              onClick={changesDiscard}
               className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
             >
-              {t("belege.detail.ungespeichert.verwerfen")}
+              {t("documents.detail.ungespeichert.verwerfen")}
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
@@ -4801,9 +4800,9 @@ function BelegDetail({ beleg }: { beleg: Beleg }) {
       <AlertDialog open={reassign != null} onOpenChange={(o) => !o && setReassign(null)}>
         <AlertDialogContent>
           <AlertDialogHeader>
-            <AlertDialogTitle>{t("belege.detail.zuordnung.reassignTitle")}</AlertDialogTitle>
+            <AlertDialogTitle>{t("documents.detail.zuordnung.reassignTitle")}</AlertDialogTitle>
             <AlertDialogDescription>
-              {t("belege.detail.zuordnung.reassignDesc")}
+              {t("documents.detail.zuordnung.reassignDesc")}
             </AlertDialogDescription>
           </AlertDialogHeader>
           <ul className="space-y-1 rounded-lg bg-muted/40 px-3 py-2 text-base text-foreground">
@@ -4814,20 +4813,20 @@ function BelegDetail({ beleg }: { beleg: Beleg }) {
             ))}
           </ul>
           <AlertDialogFooter>
-            <AlertDialogCancel>{t("belege.detail.action.abbrechen")}</AlertDialogCancel>
+            <AlertDialogCancel>{t("documents.detail.action.abbrechen")}</AlertDialogCancel>
             <AlertDialogAction
               onClick={() =>
                 reassign &&
-                commitSpeichern(
+                commitSave(
                   reassign.changes,
                   reassign.before,
                   reassign.labels,
                   reassign.changeLines,
-                  reassign.istZuordnung,
+                  reassign.isAssignment,
                 )
               }
             >
-              {t("belege.detail.zuordnung.reassignConfirm")}
+              {t("documents.detail.zuordnung.reassignConfirm")}
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
@@ -4856,15 +4855,15 @@ function BelegDetail({ beleg }: { beleg: Beleg }) {
  * -- otherwise the attention card stops asking while the field still looks unanswered, which reads
  * like the card gave up rather than like somebody decided.
  */
-function KeineWahlWert() {
+function NoChoiceValue() {
   const { t } = useTranslation();
   return (
     <span className="inline-flex items-center gap-1.5">
-      <span className="text-muted-foreground">{t("belege.detail.eingabe.keine")}</span>
+      <span className="text-muted-foreground">{t("documents.detail.eingabe.keine")}</span>
       {/* The provenance chip this screen already uses everywhere else, rather than a second one
           that means the same thing. `hasValue` is true on purpose: the value here IS the decision,
           and fieldSourceKey renders nothing at all when it is false. */}
-      <QuelleBadge source="human" hasValue />
+      <SourceBadge source="human" hasValue />
     </span>
   );
 }
@@ -4911,7 +4910,7 @@ function paymentOrderStatusLabel(
   t: ReturnType<typeof useTranslation>["t"],
   status: string,
 ): string {
-  return t(`belege.detail.lieferant.zahlung.statusValue.${status}`, { defaultValue: status });
+  return t(`documents.detail.lieferant.zahlung.statusValue.${status}`, { defaultValue: status });
 }
 
 // "Jetzt bezahlen" — trigger a BANKSapi payment for this invoice (docs/BANKSAPI_PAYMENT_INITIATION.md,
@@ -4919,18 +4918,18 @@ function paymentOrderStatusLabel(
 // real authorization boundary and re-checks supervisor/admin/super_admin server-side. Hidden
 // entirely (not just disabled) for anyone else, matching the existing "whoever may not approve
 // doesn't see the button" convention (Screen 6, docs/ROLES_AND_ACCESS.md).
-function JetztBezahlenSection({
-  beleg,
-  lieferant,
-  vorgeschlagenesKonto,
-  chipsFuer,
+function NowPaySection({
+  doc,
+  supplier,
+  suggestedAccount,
+  chipsFor,
 }: {
-  beleg: Beleg;
-  lieferant: Lieferant;
+  doc: Document;
+  supplier: Supplier;
   /** The account this invoice named, which is what the dialog opens on. Null falls back to the default. */
-  vorgeschlagenesKonto: string | null;
+  suggestedAccount: string | null;
   /** What is true of an account, in the host's words, so the list says which is which. */
-  chipsFuer: (id: string) => AccountChip[];
+  chipsFor: (id: string) => AccountChip[];
 }) {
   const { t } = useTranslation();
   const { appUserId } = useAuth();
@@ -4938,13 +4937,13 @@ function JetztBezahlenSection({
   // says, which is the whole point of the permission existing. Asked of the person being ACTED AS,
   // like every other gate on this screen -- this section is a separate component, so it resolves
   // that itself rather than taking it as a prop (React Query dedupes the underlying reads).
-  const { darfAlsPerson, istFremdeIdentitaet } = useActingCapabilities();
-  const canTriggerPayment = darfAlsPerson(PERMISSIONS.paymentsWrite);
+  const { canAlsPerson, isForeignIdentity } = useActingCapabilities();
+  const canTriggerPayment = canAlsPerson(PERMISSIONS.paymentsWrite);
 
-  const ordersQ = usePaymentOrders(beleg.id);
+  const ordersQ = usePaymentOrders(doc.id);
   const accountsQ = useBankAccounts();
-  const empfaengerKontenQ = useSupplierBankAccounts(lieferant.id);
-  const neuesKonto = useAddSupplierBankAccount(lieferant.id);
+  const recipientAccountsQ = useSupplierBankAccounts(supplier.id);
+  const newAccount = useAddSupplierBankAccount(supplier.id);
   const initiatePayment = useInitiatePayment();
   const cancelPayment = useCancelPaymentOrder();
 
@@ -4952,11 +4951,11 @@ function JetztBezahlenSection({
   const [bankAccountId, setBankAccountId] = useState("");
   // Which of the SUPPLIER's accounts gets paid. An id, never a typed IBAN: the choice is always
   // one of the accounts on file, so there is no path from this dialog to an arbitrary destination.
-  const [empfaengerKontoId, setEmpfaengerKontoId] = useState("");
+  const [recipientAccountId, setRecipientAccountId] = useState("");
   // The amount is editable -- a part payment, or a corrected sum where the invoice total is wrong.
   // Held as a string so a half-typed "12," is not silently rewritten while it is being entered.
-  const [betragEingabe, setBetragEingabe] = useState("");
-  const [neueIbanOffen, setNeueIbanOffen] = useState(false);
+  const [amountInput, setAmountInput] = useState("");
+  const [newIbanOpen, setNewIbanOpen] = useState(false);
   const [idempotencyKey, setIdempotencyKey] = useState("");
   // Fallback for when the synchronous-popup trick in confirm() still gets blocked (some browsers
   // block window.open("", "_blank") itself outside a "trusted" click) — kept until the attempt
@@ -4978,11 +4977,11 @@ function JetztBezahlenSection({
           <span tabIndex={0} className="inline-block">
             <Button type="button" size="sm" disabled className="pointer-events-none">
               <Send className="mr-1.5 size-4" />
-              {t("belege.detail.lieferant.zahlung.jetztBezahlen")}
+              {t("documents.detail.lieferant.zahlung.jetztBezahlen")}
             </Button>
           </span>
         </TooltipTrigger>
-        <TooltipContent>{t("belege.detail.zahlung.keineZahlBerechtigung")}</TooltipContent>
+        <TooltipContent>{t("documents.detail.zahlung.keineZahlBerechtigung")}</TooltipContent>
       </Tooltip>
     );
   }
@@ -5000,43 +4999,43 @@ function JetztBezahlenSection({
   // assigned" rows match each other, offering an unverified account as a payment source for an
   // unclassified invoice. Both sides must be a real, equal, non-null id.
   const accounts = (accountsQ.data ?? []).filter(
-    (a) => !!beleg.company_id && a.company_id === beleg.company_id && !!a.provider_account_ref,
+    (a) => !!doc.company_id && a.company_id === doc.company_id && !!a.provider_account_ref,
   );
 
   // A masked IBAN is on file so somebody can complete it, and is not a thing money can be sent to.
   // payment-initiate refuses one too; leaving it out of the list means nobody gets that far.
-  const empfaengerKontenLaedt = empfaengerKontenQ.isLoading;
-  const empfaengerKonten = (empfaengerKontenQ.data ?? []).filter(
+  const recipientAccountsLoading = recipientAccountsQ.isLoading;
+  const recipientAccounts = (recipientAccountsQ.data ?? []).filter(
     (k) => k.is_active && k.is_payable !== false,
   );
-  const empfaengerKonto = empfaengerKonten.find((k) => k.id === empfaengerKontoId) ?? null;
-  const betrag = Number(betragEingabe.replace(",", "."));
-  const betragGueltig = Number.isFinite(betrag) && betrag > 0;
+  const recipientAccount = recipientAccounts.find((k) => k.id === recipientAccountId) ?? null;
+  const amount = Number(amountInput.replace(",", "."));
+  const amountValid = Number.isFinite(amount) && amount > 0;
 
   // 'approved_final' IS the "awaiting payment" state (migration 0037/0048). UX gate
   // only — payment-initiate enforces this server-side too, since that's the real authorization
   // boundary.
-  const alreadyPaid = !!beleg.paid_at || (!!latest && latest.status === "executed");
+  const alreadyPaid = !!doc.paid_at || (!!latest && latest.status === "executed");
 
   // SOME REASONS END THE CONVERSATION. "Already paid" and "collected by direct debit" are not
   // obstacles on the way to paying, they are statements that paying is not the thing to do at all.
   // Listing them beside "must first be approved by the supervisor" produced a tooltip that
   // contradicted itself: an invoice that is already paid does not need approving, and a reader
   // cannot tell which half to believe. When one of these holds, it is the whole answer.
-  const abschliessenderGrund = alreadyPaid
-    ? t("belege.detail.lieferant.zahlung.deaktiviertGrund.bereitsBezahlt")
-    : istLastschrift(beleg.payment_method)
-      ? t("belege.detail.lieferant.zahlung.deaktiviertGrund.lastschrift")
+  const finalReason = alreadyPaid
+    ? t("documents.detail.lieferant.zahlung.deaktiviertGrund.bereitsBezahlt")
+    : isDirectDebit(doc.payment_method)
+      ? t("documents.detail.lieferant.zahlung.deaktiviertGrund.lastschrift")
       : null;
 
-  const disabledReasons = abschliessenderGrund
-    ? [abschliessenderGrund]
+  const disabledReasons = finalReason
+    ? [finalReason]
     : [
-        !empfaengerKontenLaedt &&
-          empfaengerKonten.length === 0 &&
-          t("belege.detail.lieferant.zahlung.deaktiviertGrund.keinIban"),
-        beleg.workflow_status !== "approved_final" &&
-          t("belege.detail.lieferant.zahlung.deaktiviertGrund.nichtFreigegeben"),
+        !recipientAccountsLoading &&
+          recipientAccounts.length === 0 &&
+          t("documents.detail.lieferant.zahlung.deaktiviertGrund.keinIban"),
+        doc.workflow_status !== "approved_final" &&
+          t("documents.detail.lieferant.zahlung.deaktiviertGrund.nichtFreigegeben"),
         // The two-person rule. payment-initiate and payment_orders' INSERT policy both refuse this
         // too; saying so here is what turns a refusal into an explanation.
         //
@@ -5046,26 +5045,26 @@ function JetztBezahlenSection({
         // is right, but "You approved this invoice" read as a lie while acting as Petra, who did not:
         // it named the wrong person and left the reader to guess why switching identity changed
         // nothing. The second sentence exists to answer that.
-        !!beleg.approved_by &&
-          beleg.approved_by === appUserId &&
+        !!doc.approved_by &&
+          doc.approved_by === appUserId &&
           t(
-            istFremdeIdentitaet
-              ? "belege.detail.lieferant.zahlung.deaktiviertGrund.selbstFreigegebenFremd"
-              : "belege.detail.lieferant.zahlung.deaktiviertGrund.selbstFreigegeben",
+            isForeignIdentity
+              ? "documents.detail.lieferant.zahlung.deaktiviertGrund.selbstFreigegebenFremd"
+              : "documents.detail.lieferant.zahlung.deaktiviertGrund.selbstFreigegeben",
           ),
         // While ordersQ/accountsQ are still loading, their ?? [] fallback is indistinguishable from
         // "genuinely none found" — show a neutral loading reason instead of guessing at one derived
         // from data that hasn't arrived yet (a supervisor would otherwise briefly see "no bank
         // account found" on a company that has one).
-        ordersLoading || accountsLoading || empfaengerKontenLaedt
-          ? t("belege.detail.lieferant.zahlung.deaktiviertGrund.wirdGeladen")
+        ordersLoading || accountsLoading || recipientAccountsLoading
+          ? t("documents.detail.lieferant.zahlung.deaktiviertGrund.wirdGeladen")
           : null,
         !ordersLoading &&
           hasOpenAttempt &&
-          t("belege.detail.lieferant.zahlung.deaktiviertGrund.offenerVersuch"),
+          t("documents.detail.lieferant.zahlung.deaktiviertGrund.offenerVersuch"),
         !accountsLoading &&
           accounts.length === 0 &&
-          t("belege.detail.lieferant.zahlung.deaktiviertGrund.keinKonto"),
+          t("documents.detail.lieferant.zahlung.deaktiviertGrund.keinKonto"),
       ].filter((reason): reason is string => !!reason);
 
   function openDialog() {
@@ -5073,19 +5072,18 @@ function JetztBezahlenSection({
     setBankAccountId(accounts[0]?.id ?? "");
     // Opens on the account THIS invoice named, so the common case is one click. Whoever is paying
     // can still switch to any other account the supplier has, or add one.
-    const vorgeschlagen = empfaengerKonten.find((k) => k.id === vorgeschlagenesKonto);
-    setEmpfaengerKontoId(
-      (vorgeschlagen ?? empfaengerKonten.find((k) => k.is_default) ?? empfaengerKonten[0])?.id ??
-        "",
+    const suggested = recipientAccounts.find((k) => k.id === suggestedAccount);
+    setRecipientAccountId(
+      (suggested ?? recipientAccounts.find((k) => k.is_default) ?? recipientAccounts[0])?.id ?? "",
     );
-    setBetragEingabe(beleg.amount_gross != null ? String(beleg.amount_gross) : "");
-    setNeueIbanOffen(false);
+    setAmountInput(doc.amount_gross != null ? String(doc.amount_gross) : "");
+    setNewIbanOpen(false);
     setPendingWebformUrl(null);
     setOpen(true);
   }
 
   function confirm() {
-    if (!bankAccountId || !empfaengerKontoId || !betragGueltig) return;
+    if (!bankAccountId || !recipientAccountId || !amountValid) return;
     // Open a blank tab SYNCHRONOUSLY, in the same call stack as this click (AlertDialogAction's
     // onClick), then redirect it once the webform URL comes back from the async mutation.
     // Browsers' popup-block heuristics key off "was this window.open() a direct, synchronous
@@ -5095,11 +5093,11 @@ function JetztBezahlenSection({
     const popup = window.open("", "_blank");
     initiatePayment.mutate(
       {
-        invoiceId: beleg.id,
+        invoiceId: doc.id,
         bankAccountId,
         idempotencyKey,
-        recipientAccountId: empfaengerKontoId,
-        amount: betrag,
+        recipientAccountId: recipientAccountId,
+        amount: amount,
       },
       {
         onSuccess: (data) => {
@@ -5114,19 +5112,19 @@ function JetztBezahlenSection({
               // offers a manual "open" link for as long as the attempt stays pending_sca.
               window.open(data.webformUrl, "_blank", "noopener,noreferrer");
             }
-            toast.success(t("belege.detail.lieferant.zahlung.ausgeloest"));
+            toast.success(t("documents.detail.lieferant.zahlung.ausgeloest"));
           } else {
             popup?.close(); // no webform needed (e.g. mock auto-complete) — close the blank tab
             if (data.paymentOrder.status === "executed") {
-              toast.success(t("belege.detail.lieferant.zahlung.sofortAusgefuehrt"));
+              toast.success(t("documents.detail.lieferant.zahlung.sofortAusgefuehrt"));
             } else if (data.paymentOrder.status === "failed") {
               toast.error(
-                t("belege.detail.lieferant.zahlung.sofortFehlgeschlagen", {
-                  grund: data.paymentOrder.status_reason ?? "—",
+                t("documents.detail.lieferant.zahlung.sofortFehlgeschlagen", {
+                  reason: data.paymentOrder.status_reason ?? "—",
                 }),
               );
             } else {
-              toast.success(t("belege.detail.lieferant.zahlung.ausgeloest"));
+              toast.success(t("documents.detail.lieferant.zahlung.ausgeloest"));
             }
           }
         },
@@ -5141,8 +5139,8 @@ function JetztBezahlenSection({
           // via openDialog().
           setIdempotencyKey(crypto.randomUUID());
           toast.error(
-            t("belege.detail.toast.fehlgeschlagen", {
-              error: fehlerText(e),
+            t("documents.detail.toast.fehlgeschlagen", {
+              error: errorText(e),
             }),
           );
         },
@@ -5156,17 +5154,17 @@ function JetztBezahlenSection({
   function cancelAttempt() {
     if (!latest) return;
     cancelPayment.mutate(
-      { paymentOrderId: latest.id, invoiceId: beleg.id },
+      { paymentOrderId: latest.id, invoiceId: doc.id },
       {
         onSuccess: () => {
           setCancelOpen(false);
           setPendingWebformUrl(null);
-          toast.success(t("belege.detail.lieferant.zahlung.abbrechenToast"));
+          toast.success(t("documents.detail.lieferant.zahlung.abbrechenToast"));
         },
         onError: (e) =>
           toast.error(
-            t("belege.detail.toast.fehlgeschlagen", {
-              error: fehlerText(e),
+            t("documents.detail.toast.fehlgeschlagen", {
+              error: errorText(e),
             }),
           ),
       },
@@ -5177,7 +5175,7 @@ function JetztBezahlenSection({
     <div className="mt-4 space-y-2">
       {latest && (
         <div className="flex items-center justify-between text-sm text-muted-foreground">
-          <span>{t("belege.detail.lieferant.zahlung.status")}</span>
+          <span>{t("documents.detail.lieferant.zahlung.status")}</span>
           <div className="flex items-center gap-2">
             <span className="font-medium text-foreground">
               {paymentOrderStatusLabel(t, latest.status)}
@@ -5188,7 +5186,7 @@ function JetztBezahlenSection({
                 onClick={() => setCancelOpen(true)}
                 className="text-muted-foreground underline-offset-4 hover:text-foreground hover:underline"
               >
-                {t("belege.detail.lieferant.zahlung.attemptAbbrechen")}
+                {t("documents.detail.lieferant.zahlung.attemptAbbrechen")}
               </button>
             )}
           </div>
@@ -5203,7 +5201,7 @@ function JetztBezahlenSection({
           rel="noreferrer"
           className="inline-flex items-center gap-1 text-sm text-brand-dark underline-offset-4 hover:underline"
         >
-          {t("belege.detail.lieferant.zahlung.webformOeffnen")}
+          {t("documents.detail.lieferant.zahlung.webformOeffnen")}
           <ExternalLink className="size-3" />
         </a>
       )}
@@ -5211,16 +5209,16 @@ function JetztBezahlenSection({
         <AlertDialogContent>
           <AlertDialogHeader>
             <AlertDialogTitle>
-              {t("belege.detail.lieferant.zahlung.abbrechenConfirmTitle")}
+              {t("documents.detail.lieferant.zahlung.abbrechenConfirmTitle")}
             </AlertDialogTitle>
             <AlertDialogDescription>
-              {t("belege.detail.lieferant.zahlung.abbrechenConfirmBody")}
+              {t("documents.detail.lieferant.zahlung.abbrechenConfirmBody")}
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
-            <AlertDialogCancel>{t("belege.detail.workflow.abbrechen")}</AlertDialogCancel>
+            <AlertDialogCancel>{t("documents.detail.workflow.abbrechen")}</AlertDialogCancel>
             <AlertDialogAction disabled={cancelPayment.isPending} onClick={cancelAttempt}>
-              {t("belege.detail.lieferant.zahlung.attemptAbbrechen")}
+              {t("documents.detail.lieferant.zahlung.attemptAbbrechen")}
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
@@ -5234,7 +5232,7 @@ function JetztBezahlenSection({
             <span tabIndex={0} className="inline-block">
               <Button type="button" size="sm" disabled className="pointer-events-none">
                 <Send className="mr-1.5 size-4" />
-                {t("belege.detail.lieferant.zahlung.jetztBezahlen")}
+                {t("documents.detail.lieferant.zahlung.jetztBezahlen")}
               </Button>
             </span>
           </TooltipTrigger>
@@ -5249,7 +5247,7 @@ function JetztBezahlenSection({
       ) : (
         <Button type="button" size="sm" disabled={initiatePayment.isPending} onClick={openDialog}>
           <Send className="mr-1.5 size-4" />
-          {t("belege.detail.lieferant.zahlung.jetztBezahlen")}
+          {t("documents.detail.lieferant.zahlung.jetztBezahlen")}
         </Button>
       )}
       {/* A Dialog, not an AlertDialog: this one closes on a click outside. Nothing is lost by
@@ -5258,11 +5256,11 @@ function JetztBezahlenSection({
       <Dialog open={open} onOpenChange={setOpen}>
         <DialogContent className="sm:max-w-2xl">
           <DialogHeader>
-            <DialogTitle>{t("belege.detail.lieferant.zahlung.confirmTitle")}</DialogTitle>
+            <DialogTitle>{t("documents.detail.lieferant.zahlung.confirmTitle")}</DialogTitle>
             <DialogDescription>
-              {t("belege.detail.lieferant.zahlung.confirmBody", {
-                empfaenger: lieferant.name,
-                betrag: formatEUR(betragGueltig ? betrag : (beleg.amount_gross ?? 0)),
+              {t("documents.detail.lieferant.zahlung.confirmBody", {
+                recipient: supplier.name,
+                amount: formatEUR(amountValid ? amount : (doc.amount_gross ?? 0)),
               })}
             </DialogDescription>
           </DialogHeader>
@@ -5270,16 +5268,16 @@ function JetztBezahlenSection({
           <div className="space-y-3 text-base">
             <div>
               <Label className="text-sm text-muted-foreground">
-                {t("belege.detail.lieferant.zahlung.anKonto")}
+                {t("documents.detail.lieferant.zahlung.anKonto")}
               </Label>
-              <Select value={empfaengerKontoId} onValueChange={setEmpfaengerKontoId}>
+              <Select value={recipientAccountId} onValueChange={setRecipientAccountId}>
                 {/* h-auto: the value is two lines, and the default single-line height crushed them
                     together against the edges of the control. */}
                 <SelectTrigger className="mt-1 h-auto py-2">
-                  <SelectValue placeholder={t("belege.detail.lieferant.zahlung.kontoWaehlen")} />
+                  <SelectValue placeholder={t("documents.detail.lieferant.zahlung.kontoWaehlen")} />
                 </SelectTrigger>
                 <SelectContent>
-                  {empfaengerKonten.map((k) => (
+                  {recipientAccounts.map((k) => (
                     <SelectItem key={k.id} value={k.id}>
                       {/* Two lines: an IBAN and its provenance on one line ran wider than the
                           dialog and pushed the whole modal into a horizontal scroll. */}
@@ -5289,8 +5287,8 @@ function JetztBezahlenSection({
                         <span className="flex flex-wrap items-center gap-2">
                           <span className="font-mono">{formatIBAN(k.iban)}</span>
                           <AccountChips
-                            chips={chipsFuer(k.id)}
-                            infoLabel={t("belege.detail.lieferant.zahlkonto.chip.info")}
+                            chips={chipsFor(k.id)}
+                            infoLabel={t("documents.detail.lieferant.zahlkonto.chip.info")}
                           />
                         </span>
                         {(k.bank_name || k.bic) && (
@@ -5305,10 +5303,10 @@ function JetztBezahlenSection({
               </Select>
               {/* An account nobody has vouched for yet is exactly the case this warning exists
                   for, so it is said here, where the money is about to move, not only on the panel. */}
-              {empfaengerKonto && !empfaengerKonto.confirmed_at && (
+              {recipientAccount && !recipientAccount.confirmed_at && (
                 <p className="mt-1 flex items-start gap-1.5 text-sm text-amber-800">
                   <TriangleAlert className="mt-0.5 size-3.5 shrink-0" />
-                  {t("belege.detail.lieferant.konten.neuHinweis")}
+                  {t("documents.detail.lieferant.konten.neuHinweis")}
                 </p>
               )}
 
@@ -5327,44 +5325,44 @@ function JetztBezahlenSection({
                 variant="ghost"
                 size="sm"
                 className="group mt-1 h-auto gap-0 px-0 text-sm hover:bg-transparent hover:text-brand-dark"
-                onClick={() => setNeueIbanOffen(true)}
+                onClick={() => setNewIbanOpen(true)}
               >
                 <span className="underline-offset-4 group-hover:underline">
                   <Plus className="inline size-3.5 align-[-0.15em]" />
-                  {t("belege.detail.lieferant.zahlung.neuesKonto.hinzufuegen")}
+                  {t("documents.detail.lieferant.zahlung.neuesKonto.hinzufuegen")}
                 </span>
               </Button>
               <BankAccountDialog
-                open={neueIbanOffen}
-                onOpenChange={setNeueIbanOffen}
-                existingIbans={(empfaengerKontenQ.data ?? []).map((k) => k.iban)}
-                saving={neuesKonto.isPending}
+                open={newIbanOpen}
+                onOpenChange={setNewIbanOpen}
+                existingIbans={(recipientAccountsQ.data ?? []).map((k) => k.iban)}
+                saving={newAccount.isPending}
                 labels={{
-                  title: t("lieferanten.detail.bankkonten.dialog.title"),
-                  iban: t("lieferanten.detail.bankkonten.col.iban"),
-                  bic: t("lieferanten.detail.bankkonten.col.bic"),
-                  bank: t("lieferanten.detail.bankkonten.col.bank"),
-                  cancel: t("lieferanten.detail.bankkonten.dialog.abbrechen"),
-                  save: t("lieferanten.detail.bankkonten.dialog.speichern"),
-                  invalidIban: t("lieferanten.detail.bankkonten.toast.ungueltig"),
-                  duplicateIban: t("lieferanten.detail.bankkonten.toast.bereitsVorhanden"),
+                  title: t("suppliers.detail.bankkonten.dialog.title"),
+                  iban: t("suppliers.detail.bankkonten.col.iban"),
+                  bic: t("suppliers.detail.bankkonten.col.bic"),
+                  bank: t("suppliers.detail.bankkonten.col.bank"),
+                  cancel: t("suppliers.detail.bankkonten.dialog.abbrechen"),
+                  save: t("suppliers.detail.bankkonten.dialog.speichern"),
+                  invalidIban: t("suppliers.detail.bankkonten.toast.ungueltig"),
+                  duplicateIban: t("suppliers.detail.bankkonten.toast.bereitsVorhanden"),
                 }}
                 onSave={(input) =>
-                  neuesKonto.mutate(input, {
+                  newAccount.mutate(input, {
                     onSuccess: (id) => {
                       // Adding an account here is always a step towards paying it, so it becomes
                       // the selected recipient straight away.
-                      setEmpfaengerKontoId(id);
-                      setNeueIbanOffen(false);
+                      setRecipientAccountId(id);
+                      setNewIbanOpen(false);
                       toast.success(
-                        t("lieferanten.detail.bankkonten.toast.hinzugefuegt", {
+                        t("suppliers.detail.bankkonten.toast.hinzugefuegt", {
                           iban: formatIBAN(input.iban),
                         }),
                       );
                     },
                     onError: (e) =>
                       toast.error(
-                        t("belege.detail.toast.fehlgeschlagen", { error: fehlerText(e) }),
+                        t("documents.detail.toast.fehlgeschlagen", { error: errorText(e) }),
                       ),
                   })
                 }
@@ -5373,24 +5371,24 @@ function JetztBezahlenSection({
 
             <div>
               <Label className="text-sm text-muted-foreground">
-                {t("belege.detail.lieferant.betrag")}
+                {t("documents.detail.lieferant.betrag")}
               </Label>
               <Input
                 className="mt-1 tabular-nums"
                 type="number"
                 step="0.01"
                 min="0"
-                value={betragEingabe}
-                onChange={(e) => setBetragEingabe(e.target.value)}
+                value={amountInput}
+                onChange={(e) => setAmountInput(e.target.value)}
               />
               {/* Paying something other than the invoice total is allowed, but never silently:
                   a part payment and a typo look identical until one of them is pointed out. */}
               {/* The line always occupies its row, so typing a different amount does not push the
                   summary card below it down by a line. */}
               <p className="mt-1 min-h-[1.25rem] text-sm text-amber-800">
-                {betragGueltig && beleg.amount_gross != null && betrag !== beleg.amount_gross
-                  ? t("belege.detail.lieferant.zahlung.betragWeichtAb", {
-                      betrag: formatEUR(beleg.amount_gross),
+                {amountValid && doc.amount_gross != null && amount !== doc.amount_gross
+                  ? t("documents.detail.lieferant.zahlung.betragWeichtAb", {
+                      amount: formatEUR(doc.amount_gross),
                     })
                   : null}
               </p>
@@ -5400,22 +5398,22 @@ function JetztBezahlenSection({
                 from the invoice, so the last thing read before confirming is the transfer itself. */}
             <div className="rounded-lg border border-brand-soft/50 bg-brand-wash p-3">
               <p className="mb-2 text-xs uppercase tracking-wide text-muted-foreground">
-                {t("belege.detail.lieferant.zahlung.zusammenfassung")}
+                {t("documents.detail.lieferant.zahlung.zusammenfassung")}
               </p>
               <dl className="space-y-1.5 text-base">
                 <div className="flex items-start justify-between gap-3">
                   <dt className="text-muted-foreground">
-                    {t("belege.detail.lieferant.verwendungszweck")}
+                    {t("documents.detail.lieferant.verwendungszweck")}
                   </dt>
-                  <dd className="text-right">{beleg.invoice_number ?? "—"}</dd>
+                  <dd className="text-right">{doc.invoice_number ?? "—"}</dd>
                 </div>
                 <div className="flex items-start justify-between gap-3">
-                  <dt className="text-muted-foreground">{t("belege.detail.lieferant.iban")}</dt>
+                  <dt className="text-muted-foreground">{t("documents.detail.lieferant.iban")}</dt>
                   <dd className="text-right font-mono">
-                    {empfaengerKonto ? formatIBAN(empfaengerKonto.iban) : "—"}
-                    {empfaengerKonto && (empfaengerKonto.bank_name || empfaengerKonto.bic) && (
+                    {recipientAccount ? formatIBAN(recipientAccount.iban) : "—"}
+                    {recipientAccount && (recipientAccount.bank_name || recipientAccount.bic) && (
                       <span className="block font-sans text-sm text-muted-foreground">
-                        {[empfaengerKonto.bank_name, empfaengerKonto.bic]
+                        {[recipientAccount.bank_name, recipientAccount.bic]
                           .filter(Boolean)
                           .join(" · ")}
                       </span>
@@ -5423,20 +5421,22 @@ function JetztBezahlenSection({
                   </dd>
                 </div>
                 <div className="flex items-start justify-between gap-3">
-                  <dt className="text-muted-foreground">{t("belege.detail.lieferant.betrag")}</dt>
+                  <dt className="text-muted-foreground">
+                    {t("documents.detail.lieferant.betrag")}
+                  </dt>
                   <dd className="text-right font-semibold tabular-nums">
-                    {betragGueltig ? formatEUR(betrag) : "—"}
+                    {amountValid ? formatEUR(amount) : "—"}
                   </dd>
                 </div>
               </dl>
             </div>
             <div>
               <Label className="text-sm text-muted-foreground">
-                {t("belege.detail.lieferant.zahlung.vonKonto")}
+                {t("documents.detail.lieferant.zahlung.vonKonto")}
               </Label>
               <Select value={bankAccountId} onValueChange={setBankAccountId}>
                 <SelectTrigger className="mt-1">
-                  <SelectValue placeholder={t("belege.detail.lieferant.zahlung.kontoWaehlen")} />
+                  <SelectValue placeholder={t("documents.detail.lieferant.zahlung.kontoWaehlen")} />
                 </SelectTrigger>
                 <SelectContent>
                   {accounts.map((a) => (
@@ -5452,18 +5452,18 @@ function JetztBezahlenSection({
 
           <DialogFooter>
             <Button type="button" variant="outline" onClick={() => setOpen(false)}>
-              {t("belege.detail.workflow.abbrechen")}
+              {t("documents.detail.workflow.abbrechen")}
             </Button>
             {/* Deliberately not a Close: confirm() keeps the dialog open when the call fails, so
                 whoever is paying can correct the amount or the account and try again. */}
             <Button
               type="button"
               disabled={
-                !bankAccountId || !empfaengerKontoId || !betragGueltig || initiatePayment.isPending
+                !bankAccountId || !recipientAccountId || !amountValid || initiatePayment.isPending
               }
               onClick={confirm}
             >
-              {t("belege.detail.lieferant.zahlung.bestaetigen")}
+              {t("documents.detail.lieferant.zahlung.bestaetigen")}
             </Button>
           </DialogFooter>
         </DialogContent>
@@ -5477,10 +5477,10 @@ function JetztBezahlenSection({
 // The header's reconciliation badge scrolls here, so the id lives next to both users of it
 // rather than as a string typed twice.
 
-function ZahlungAbgleichSection({ beleg }: { beleg: Beleg }) {
+function PaymentMatchingSection({ doc }: { doc: Document }) {
   const { t } = useTranslation();
-  const { mayPay, reason: keinZahlrecht } = usePaymentRight();
-  const matchesQ = useBelegMatches(beleg.id);
+  const { mayPay, reason: noPaymentRight } = usePaymentRight();
+  const matchesQ = useDocumentMatches(doc.id);
   const confirmMatch = useConfirmMatch();
   const rejectMatch = useRejectMatch();
   const unlinkMatch = useUnlinkMatch();
@@ -5490,17 +5490,17 @@ function ZahlungAbgleichSection({ beleg }: { beleg: Beleg }) {
   // one meant leaving the invoice, finding the transaction again and unlinking from the bank side,
   // which is not where anybody notices the link is wrong.
   const unlinkLabels: UnlinkMatchLabels = {
-    action: t("belege.detail.abgleich.trennen"),
-    title: t("belege.detail.abgleich.trennenDialog.title"),
-    description: t("belege.detail.abgleich.trennenDialog.desc"),
-    reasonLabel: t("belege.detail.abgleich.trennenDialog.grundLabel"),
-    reasonPlaceholder: t("belege.detail.abgleich.trennenDialog.grundPlaceholder"),
-    cancel: t("belege.detail.abgleich.trennenDialog.abbrechen"),
-    confirm: t("belege.detail.abgleich.trennenDialog.bestaetigen"),
-    running: t("belege.detail.abgleich.trennenDialog.laeuft"),
-    done: t("belege.detail.toast.zuordnungGetrennt"),
-    failed: (meldung) => t("belege.detail.toast.fehlgeschlagen", { error: meldung }),
-    unknownError: t("belege.detail.abgleich.trennenDialog.unbekannterFehler"),
+    action: t("documents.detail.abgleich.trennen"),
+    title: t("documents.detail.abgleich.trennenDialog.title"),
+    description: t("documents.detail.abgleich.trennenDialog.desc"),
+    reasonLabel: t("documents.detail.abgleich.trennenDialog.grundLabel"),
+    reasonPlaceholder: t("documents.detail.abgleich.trennenDialog.grundPlaceholder"),
+    cancel: t("documents.detail.abgleich.trennenDialog.abbrechen"),
+    confirm: t("documents.detail.abgleich.trennenDialog.bestaetigen"),
+    running: t("documents.detail.abgleich.trennenDialog.laeuft"),
+    done: t("documents.detail.toast.zuordnungGetrennt"),
+    failed: (message) => t("documents.detail.toast.fehlgeschlagen", { error: message }),
+    unknownError: t("documents.detail.abgleich.trennenDialog.unbekannterFehler"),
   };
 
   const matches = matchesQ.data ?? [];
@@ -5510,25 +5510,20 @@ function ZahlungAbgleichSection({ beleg }: { beleg: Beleg }) {
     .reduce((s, m) => s + Math.abs(m.amount_matched ?? 0), 0);
   // Invoice claims it is already paid (direct debit) AND a bank transaction was found but not yet
   // confirmed: nudge the reviewer to confirm — paid is only set once the match is confirmed.
-  const claimsPaid = istLastschrift(beleg.payment_method);
+  const claimsPaid = isDirectDebit(doc.payment_method);
   const hasOpenMatch = matches.some((m) => m.status === "candidate" || m.status === "auto");
   // `hasOpenMatch` passed, same as the header does. Without it this call could only ever return
   // 'open' or 'reconciled', so the card sat on a grey "Nicht abgeglichen" chip with the pending
   // suggestion rendered directly underneath it, while the header two cards up read "Vorschlag
   // offen" about the very same invoice.
-  const status = abgleichStatus(
-    beleg.amount_gross,
-    matchedSum,
-    hasOpenMatch,
-    Boolean(beleg.paid_at),
-  );
+  const status = matchingStatus(doc.amount_gross, matchedSum, hasOpenMatch, Boolean(doc.paid_at));
   // The gap between the invoice and what the bank actually allocated to it. `paid_at` is what
   // closing sets, so a paid invoice that still shows a gap is one whose remainder was written off.
-  const restOffen = Math.max(Math.abs(beleg.amount_gross ?? 0) - matchedSum, 0);
-  const restGeschlossen = Boolean(beleg.paid_at);
+  const restOpen = Math.max(Math.abs(doc.amount_gross ?? 0) - matchedSum, 0);
+  const restClosed = Boolean(doc.paid_at);
 
   return (
-    <Section title={t("belege.detail.section.zahlungAbgleich")}>
+    <Section title={t("documents.detail.section.zahlungAbgleich")}>
       <PaymentRightNotice className="mb-3" />
       {/* ONE ROW: the state as a chip on the left, how much of the invoice it covers on the right.
           Both labels that used to sit in front of these are gone. "Abgleich-Status: Abgeglichen"
@@ -5537,18 +5532,18 @@ function ZahlungAbgleichSection({ beleg }: { beleg: Beleg }) {
           of its own above a second, unrelated-looking label/value row. The card's own title says
           which axis this is. */}
       <div className="flex flex-wrap items-center justify-between gap-x-4 gap-y-1">
-        <AbgleichBadge status={status} />
+        <MatchingBadge status={status} />
         {/* Figures only once something is actually matched. An installment plan is only readable
             as a running total: 400 of 1.000, then 1.000 of 1.000. */}
         {matchedSum > 0 && (
           <span className="text-sm tabular-nums text-muted-foreground">
-            {t("belege.detail.abgleich.vonSumme", {
+            {t("documents.detail.abgleich.vonSumme", {
               matched: formatEUR(matchedSum),
-              total: formatEUR(Math.abs(beleg.amount_gross ?? 0)),
+              total: formatEUR(Math.abs(doc.amount_gross ?? 0)),
             })}
             {status === "partial" &&
-              ` · ${t("belege.detail.abgleich.restOffen", {
-                rest: formatEUR(Math.max(Math.abs(beleg.amount_gross ?? 0) - matchedSum, 0)),
+              ` · ${t("documents.detail.abgleich.restOffen", {
+                rest: formatEUR(Math.max(Math.abs(doc.amount_gross ?? 0) - matchedSum, 0)),
               })}`}
           </span>
         )}
@@ -5559,27 +5554,27 @@ function ZahlungAbgleichSection({ beleg }: { beleg: Beleg }) {
           keeps a remainder that nobody will ever settle. Closing it writes the difference off,
           marks the invoice paid and takes it out of the open items. The reason lands in the
           Verlauf, which is why the closed line points there rather than repeating it. */}
-      {restOffen > 0.01 && matchedSum > 0 && (
+      {restOpen > 0.01 && matchedSum > 0 && (
         <div className="mt-3 flex flex-wrap items-center justify-between gap-3 rounded-lg border border-border bg-muted/40 px-3 py-2.5 text-base">
           <span>
-            {restGeschlossen
+            {restClosed
               ? t("bank.detail.restschliessen.istAbgeschrieben")
               : t("bank.detail.restschliessen.offenRechnung", {
-                  betrag: formatEUR(restOffen),
+                  amount: formatEUR(restOpen),
                 })}
           </span>
-          {restGeschlossen
+          {restClosed
             ? mayPay && (
                 <Button
                   variant="ghost"
                   size="sm"
                   onClick={() =>
                     reopenRemainder.mutate(
-                      { belegId: beleg.id },
+                      { documentId: doc.id },
                       {
                         onSuccess: () =>
                           toast.success(t("bank.detail.restschliessen.wiederGeoeffnet")),
-                        onError: (e) => toast.error(fehlerText(e)),
+                        onError: (e) => toast.error(errorText(e)),
                       },
                     )
                   }
@@ -5588,15 +5583,15 @@ function ZahlungAbgleichSection({ beleg }: { beleg: Beleg }) {
                 </Button>
               )
             : null}
-          {!restGeschlossen && (
+          {!restClosed && (
             <CloseRemainderButton
               title={t("bank.detail.restschliessen.titelRechnung")}
               description={t("bank.detail.restschliessen.beschreibungRechnung")}
               actionLabel={t("bank.detail.restschliessen.aktionRechnung")}
-              remainderLabel={formatEUR(restOffen)}
-              disabledReason={mayPay ? null : keinZahlrecht}
+              remainderLabel={formatEUR(restOpen)}
+              disabledReason={mayPay ? null : noPaymentRight}
               onClose={async (reason) => {
-                await closeRemainder.mutateAsync({ belegId: beleg.id, reason });
+                await closeRemainder.mutateAsync({ documentId: doc.id, reason });
               }}
             />
           )}
@@ -5605,18 +5600,18 @@ function ZahlungAbgleichSection({ beleg }: { beleg: Beleg }) {
       <Separator className="my-3" />
       {claimsPaid && hasOpenMatch && (
         <div className="mb-3 rounded-lg border border-sky-200 bg-sky-50 p-3 text-base text-sky-900">
-          {t("belege.detail.abgleich.claimsPaidNudge")}
+          {t("documents.detail.abgleich.claimsPaidNudge")}
         </div>
       )}
       {matchesQ.isLoading ? (
         <Skeleton className="h-16 w-full" />
       ) : matches.length === 0 ? (
-        <p className="text-base text-muted-foreground">{t("belege.detail.abgleich.empty")}</p>
+        <p className="text-base text-muted-foreground">{t("documents.detail.abgleich.empty")}</p>
       ) : (
         <ul className="space-y-3">
           {matches.map((m) => {
             const txn = m.bank_transactions ?? null;
-            const offen = (m.status === "candidate" || m.status === "auto") && !!txn;
+            const open = (m.status === "candidate" || m.status === "auto") && !!txn;
             return (
               <li
                 key={m.id}
@@ -5626,18 +5621,18 @@ function ZahlungAbgleichSection({ beleg }: { beleg: Beleg }) {
                   <div className="flex items-center gap-2">
                     {txn ? (
                       <Link
-                        to="/banktransaktionen/$id"
+                        to="/bank-transactions/$id"
                         params={{ id: txn.id }}
                         // Underlined at rest, not only on hover. It is the one thing on this card
                         // that navigates somewhere, and a hover-only underline means the reader has
                         // to already suspect it is a link before anything tells them it is.
                         className="truncate text-base font-medium text-foreground underline decoration-muted-foreground/50 underline-offset-4 transition-colors hover:text-brand-dark hover:decoration-brand"
                       >
-                        {txn.counterparty_holder ?? t("belege.detail.abgleich.transaktion")}
+                        {txn.counterparty_holder ?? t("documents.detail.abgleich.transaktion")}
                       </Link>
                     ) : (
                       <span className="text-base text-muted-foreground">
-                        {t("belege.detail.abgleich.transaktion")}
+                        {t("documents.detail.abgleich.transaktion")}
                       </span>
                     )}
                     <MatchStatusBadge status={m.status} />
@@ -5650,8 +5645,8 @@ function ZahlungAbgleichSection({ beleg }: { beleg: Beleg }) {
                     {txn != null &&
                       Math.abs(Math.abs(txn.amount) - Math.abs(m.amount_matched ?? 0)) > 0.01 && (
                         <span className="tabular-nums font-medium text-foreground">
-                          {t("belege.detail.abgleich.davon", {
-                            betrag: formatEUR(m.amount_matched),
+                          {t("documents.detail.abgleich.davon", {
+                            amount: formatEUR(m.amount_matched),
                           })}
                         </span>
                       )}
@@ -5659,7 +5654,7 @@ function ZahlungAbgleichSection({ beleg }: { beleg: Beleg }) {
                     {m.score != null && <span>· {Math.round(m.score * 100)} %</span>}
                   </div>
                 </div>
-                {offen && txn && (
+                {open && txn && (
                   <div className="flex items-center gap-2">
                     <Button
                       size="sm"
@@ -5667,43 +5662,43 @@ function ZahlungAbgleichSection({ beleg }: { beleg: Beleg }) {
                       disabled={rejectMatch.isPending}
                       onClick={() =>
                         rejectMatch.mutate(
-                          { matchId: m.id, belegId: beleg.id },
+                          { matchId: m.id, documentId: doc.id },
                           {
                             onSuccess: () =>
-                              toast.success(t("belege.detail.toast.zuordnungAbgelehnt")),
+                              toast.success(t("documents.detail.toast.zuordnungAbgelehnt")),
                             onError: (e) =>
                               toast.error(
-                                t("belege.detail.toast.fehlgeschlagen", {
-                                  error: fehlerText(e),
+                                t("documents.detail.toast.fehlgeschlagen", {
+                                  error: errorText(e),
                                 }),
                               ),
                           },
                         )
                       }
                     >
-                      {t("belege.detail.abgleich.ablehnen")}
+                      {t("documents.detail.abgleich.ablehnen")}
                     </Button>
                     <Button
                       size="sm"
                       disabled={confirmMatch.isPending || !mayPay}
-                      title={keinZahlrecht}
+                      title={noPaymentRight}
                       onClick={() =>
                         confirmMatch.mutate(
-                          { matchId: m.id, belegId: beleg.id },
+                          { matchId: m.id, documentId: doc.id },
                           {
                             onSuccess: () =>
-                              toast.success(t("belege.detail.toast.zuordnungBestaetigt")),
+                              toast.success(t("documents.detail.toast.zuordnungBestaetigt")),
                             onError: (e) =>
                               toast.error(
-                                t("belege.detail.toast.fehlgeschlagen", {
-                                  error: fehlerText(e),
+                                t("documents.detail.toast.fehlgeschlagen", {
+                                  error: errorText(e),
                                 }),
                               ),
                           },
                         )
                       }
                     >
-                      {t("belege.detail.abgleich.zuordnen")}
+                      {t("documents.detail.abgleich.zuordnen")}
                     </Button>
                   </div>
                 )}
@@ -5711,11 +5706,11 @@ function ZahlungAbgleichSection({ beleg }: { beleg: Beleg }) {
                   <UnlinkMatchButton
                     labels={unlinkLabels}
                     disabled={unlinkMatch.isPending || !mayPay}
-                    onUnlink={async (grund) => {
+                    onUnlink={async (reason) => {
                       await unlinkMatch.mutateAsync({
                         matchId: m.id,
-                        belegId: beleg.id,
-                        grund: grund ?? undefined,
+                        documentId: doc.id,
+                        reason: reason ?? undefined,
                         // Undoing a payment: the invoice goes back to In Prüfung and the move is
                         // recorded in the Workflow-Verlauf, same as any other backwards step.
                         walkBack: true,
@@ -5798,12 +5793,12 @@ function Section({
             (isEditing ? (
               <>
                 <Button variant="ghost" size="sm" onClick={onCancel} className="h-8 gap-1.5">
-                  <X className="size-3.5" /> {t("belege.detail.action.abbrechen")}
+                  <X className="size-3.5" /> {t("documents.detail.action.abbrechen")}
                 </Button>
                 <Button size="sm" onClick={onSave} disabled={saving} className="h-8 gap-1.5">
                   {saving
-                    ? t("belege.detail.action.speichere")
-                    : t("belege.detail.action.speichern")}
+                    ? t("documents.detail.action.speichere")
+                    : t("documents.detail.action.speichern")}
                 </Button>
               </>
             ) : (
@@ -5812,11 +5807,11 @@ function Section({
                 size="sm"
                 onClick={onEdit}
                 disabled={editDisabled}
-                title={editDisabled ? t("belege.detail.action.bearbeitenGesperrt") : undefined}
+                title={editDisabled ? t("documents.detail.action.bearbeitenGesperrt") : undefined}
                 className="h-8 gap-1.5"
               >
                 <EditIcon className="size-3.5" />{" "}
-                {editLabel ?? t("belege.detail.action.bearbeiten")}
+                {editLabel ?? t("documents.detail.action.bearbeiten")}
               </Button>
             ))}
         </div>
@@ -5833,8 +5828,8 @@ function Field({
   value,
   formValue,
   onChange,
-  konfidenz,
-  quelle,
+  confidence,
+  source,
   copy,
   align = "left",
   strong,
@@ -5846,11 +5841,11 @@ function Field({
   value: string | null | undefined;
   formValue: string;
   onChange: (v: string) => void;
-  konfidenz?: number;
+  confidence?: number;
   // Who decided this value. A confidence score belongs to a value the AI READ; once a person or a
   // rule has set it, that score is about text nobody is looking at any more, and an amber dot
   // beside a value somebody typed themselves reads as doubt about their own entry.
-  quelle?: string | null;
+  source?: string | null;
   copy?: boolean;
   align?: "left" | "right";
   strong?: boolean;
@@ -5885,8 +5880,8 @@ function Field({
     <ReadField
       label={label}
       value={value}
-      konfidenz={konfidenz}
-      quelle={quelle}
+      confidence={confidence}
+      source={source}
       copy={copy}
       align={align}
       strong={strong}
@@ -5900,7 +5895,7 @@ function Field({
 //
 // Nothing is shown when the field is empty: "no value" needs no provenance, and a badge there
 // would read as a claim about a decision nobody made.
-function QuelleBadge({
+function SourceBadge({
   source,
   hasValue,
 }: {
@@ -5914,11 +5909,11 @@ function QuelleBadge({
     <span
       className={cn(
         "inline-flex items-center rounded border px-1.5 py-0 text-[11px] font-medium leading-4",
-        QUELLE_META[key].cls,
+        SOURCE_META[key].cls,
       )}
-      title={t(`belege.quelle.hint.${key}`)}
+      title={t(`documents.quelle.hint.${key}`)}
     >
-      {t(`belege.quelle.${key}`)}
+      {t(`documents.quelle.${key}`)}
     </span>
   );
 }
@@ -5927,21 +5922,21 @@ function QuelleBadge({
 // The priority itself is resolved server-side (assignment_rule_specificity, migration 0025); this
 // only makes the outcome visible — when more than one rule matches this receipt for this field, say
 // so and name the one that actually wins, instead of the previous plain "a rule applies" text.
-function RegelHinweis({
-  belegId,
+function RuleHint({
+  documentId,
   target,
   humanOverride,
 }: {
-  belegId: string;
+  documentId: string;
   target: RuleTarget;
   humanOverride: boolean;
 }) {
   const { t } = useTranslation();
-  const candidatesQ = useAssignmentRuleCandidates(belegId, target);
+  const candidatesQ = useAssignmentRuleCandidates(documentId, target);
   const rulesQ = useAssignmentRules();
-  const lieferantenQ = useLieferanten();
-  const objekteQ = useObjekte();
-  const gesellschaftenQ = useGesellschaften();
+  const suppliersQ = useSuppliers();
+  const propertiesQ = useProperties();
+  const companiesQ = useCompanies();
 
   const candidates = candidatesQ.data ?? [];
   if (candidates.length === 0) return null;
@@ -5950,8 +5945,8 @@ function RegelHinweis({
     return (
       <p className="text-sm text-muted-foreground">
         {humanOverride
-          ? t("belege.detail.regel.regelUeberstimmt")
-          : t("belege.detail.regel.regelGreift")}
+          ? t("documents.detail.regel.regelUeberstimmt")
+          : t("documents.detail.regel.regelGreift")}
       </p>
     );
   }
@@ -5966,20 +5961,20 @@ function RegelHinweis({
     const parts: string[] = [];
     if (r.supplier_id) {
       parts.push(
-        lieferantenQ.data?.find((l) => l.id === r.supplier_id)?.name ??
-          t("zuordnungsregeln.scope.lieferant"),
+        suppliersQ.data?.find((l) => l.id === r.supplier_id)?.name ??
+          t("assignmentRules.scope.lieferant"),
       );
     }
     if (r.property_id) {
       parts.push(
-        objekteQ.data?.find((o) => o.id === r.property_id)?.code ??
-          t("zuordnungsregeln.scope.objekt"),
+        propertiesQ.data?.find((o) => o.id === r.property_id)?.code ??
+          t("assignmentRules.scope.objekt"),
       );
     }
     if (r.company_id) {
       parts.push(
-        gesellschaftenQ.data?.find((g) => g.id === r.company_id)?.code ??
-          t("zuordnungsregeln.scope.gesellschaft"),
+        companiesQ.data?.find((g) => g.id === r.company_id)?.code ??
+          t("assignmentRules.scope.gesellschaft"),
       );
     }
     if (r.reference_pattern) parts.push(`"${r.reference_pattern}"`);
@@ -5990,9 +5985,9 @@ function RegelHinweis({
     <p className="text-sm text-amber-700">
       {t(
         humanOverride
-          ? "belege.detail.regel.konfliktUeberstimmt"
-          : "belege.detail.regel.konfliktGreift",
-        { count: candidates.length, gewinner: scopeLabel(winner) },
+          ? "documents.detail.regel.konfliktUeberstimmt"
+          : "documents.detail.regel.konfliktGreift",
+        { count: candidates.length, winner: scopeLabel(winner) },
       )}
     </p>
   );
@@ -6006,42 +6001,38 @@ function RegelHinweis({
  * a field left empty here. Saskia read "Keine Kostenstelle hinterlegt" as something to choose on the
  * invoice (17.09.2026).
  */
-function KostenstelleHinweis({
-  kostenstelle,
-  objektCode,
+function CostCentreHint({
+  costCentre,
+  propertyCode,
 }: {
-  kostenstelle: Kostenstelle;
-  objektCode: string | null;
+  costCentre: CostCentre;
+  propertyCode: string | null;
 }) {
   const { t } = useTranslation();
-  if (kostenstelle.nummer != null) {
-    return <>{t("belege.detail.field.kostenstelle", { nr: kostenstelle.nummer })}</>;
+  if (costCentre.number != null) {
+    return <>{t("documents.detail.field.kostenstelle", { nr: costCentre.number })}</>;
   }
   const linkClass = "ml-1 text-brand underline-offset-4 hover:underline";
-  if (kostenstelle.gemeinkosten) {
+  if (costCentre.overhead) {
     return (
       <>
-        {t("belege.detail.field.kostenstelleGemeinkostenFehlt")}
-        <Link
-          to="/gesellschaften/$id"
-          params={{ id: kostenstelle.gesellschaftId }}
-          className={linkClass}
-        >
-          {t("belege.detail.field.kostenstelleBeiGesellschaft")}
+        {t("documents.detail.field.kostenstelleGemeinkostenFehlt")}
+        <Link to="/companies/$id" params={{ id: costCentre.companyId }} className={linkClass}>
+          {t("documents.detail.field.kostenstelleBeiGesellschaft")}
         </Link>
       </>
     );
   }
   return (
     <>
-      {kostenstelle.verknuepft
-        ? t("belege.detail.field.kostenstelleFehlt")
-        : t("belege.detail.field.kostenstelleNichtZugeordnet")}
-      {objektCode && (
-        <Link to="/objekte/$code" params={{ code: objektCode }} className={linkClass}>
-          {kostenstelle.verknuepft
-            ? t("belege.detail.field.kostenstelleBeimObjekt")
-            : t("belege.detail.field.kostenstelleZuordnen")}
+      {costCentre.linked
+        ? t("documents.detail.field.kostenstelleFehlt")
+        : t("documents.detail.field.kostenstelleNichtZugeordnet")}
+      {propertyCode && (
+        <Link to="/properties/$code" params={{ code: propertyCode }} className={linkClass}>
+          {costCentre.linked
+            ? t("documents.detail.field.kostenstelleBeimObjekt")
+            : t("documents.detail.field.kostenstelleZuordnen")}
         </Link>
       )}
     </>
@@ -6051,8 +6042,8 @@ function KostenstelleHinweis({
 function ReadField({
   label,
   value,
-  konfidenz,
-  quelle,
+  confidence,
+  source,
   copy,
   align = "left",
   strong,
@@ -6063,11 +6054,11 @@ function ReadField({
 }: {
   label: string;
   value: string | null | undefined;
-  konfidenz?: number;
+  confidence?: number;
   // Who decided this value. A confidence score belongs to a value the AI READ; once a person or a
   // rule has set it, that score is about text nobody is looking at any more, and an amber dot
   // beside a value somebody typed themselves reads as doubt about their own entry.
-  quelle?: string | null;
+  source?: string | null;
   copy?: boolean;
   align?: "left" | "right";
   strong?: boolean;
@@ -6088,8 +6079,8 @@ function ReadField({
   return (
     <div className="space-y-1">
       <div className="flex items-center gap-1.5">
-        {konfidenz !== undefined && quelle !== "human" && quelle !== "rule" && (
-          <KonfidenzDot score={konfidenz} />
+        {confidence !== undefined && source !== "human" && source !== "rule" && (
+          <ConfidenceDot score={confidence} />
         )}
         <span className="text-sm text-muted-foreground">{label}</span>
         {badge}
@@ -6119,49 +6110,49 @@ function ReadField({
  * Here a multi-line string becomes multi-line text under its own key, and the braces, quotes and
  * commas that carry no meaning for a reader are gone.
  */
-function lesbarerText(value: unknown, tiefe = 0): string {
-  const pad = "  ".repeat(tiefe);
+function readableText(value: unknown, depth = 0): string {
+  const pad = "  ".repeat(depth);
   if (value == null) return `${pad}—`;
   if (Array.isArray(value)) {
     if (value.length === 0) return `${pad}—`;
     return value
       .map((v, i) =>
         v !== null && typeof v === "object"
-          ? `${pad}${i + 1}.\n${lesbarerText(v, tiefe + 1)}`
+          ? `${pad}${i + 1}.\n${readableText(v, depth + 1)}`
           : `${pad}${i + 1}. ${String(v)}`,
       )
       .join("\n");
   }
   if (typeof value === "object") {
-    const zeilen: string[] = [];
+    const rows: string[] = [];
     for (const [key, v] of Object.entries(value as Record<string, unknown>)) {
-      const label = feldLabel(key);
+      const label = fieldLabel(key);
       if (v !== null && typeof v === "object") {
-        zeilen.push(`${pad}${label}:`);
-        zeilen.push(lesbarerText(v, tiefe + 1));
+        rows.push(`${pad}${label}:`);
+        rows.push(readableText(v, depth + 1));
       } else {
         const text = v == null || v === "" ? "—" : String(v);
         // A value with its own line breaks gets the room for them, under its key.
         if (text.includes("\n")) {
-          zeilen.push(`${pad}${label}:`);
-          zeilen.push(
+          rows.push(`${pad}${label}:`);
+          rows.push(
             text
               .split("\n")
               .map((line) => `${pad}  ${line}`)
               .join("\n"),
           );
         } else {
-          zeilen.push(`${pad}${label}: ${text}`);
+          rows.push(`${pad}${label}: ${text}`);
         }
       }
     }
-    return zeilen.join("\n");
+    return rows.join("\n");
   }
   return `${pad}${String(value)}`;
 }
 
 /** snake_case as words, so the reader view reads as labels rather than as column names. */
-function feldLabel(key: string): string {
+function fieldLabel(key: string): string {
   return key.replace(/_/g, " ").replace(/^./, (c) => c.toUpperCase());
 }
 
@@ -6173,31 +6164,31 @@ function feldLabel(key: string): string {
  * thing on the screen. Now it is rendered as labelled text, the dialog gives it room, and
  * find-as-you-type gives it a way in.
  */
-function RohdatenDialog({ extracted }: { extracted: object }) {
+function RawDataDialog({ extracted }: { extracted: object }) {
   const { t } = useTranslation();
-  const [offen, setOffen] = useState(false);
-  const [suche, setSuche] = useState("");
-  const [treffer, setTreffer] = useState(0);
+  const [open, setOpen] = useState(false);
+  const [search, setSearch] = useState("");
+  const [match, setMatch] = useState(0);
   // One rendering, in words. The raw shape used to be offered next to it as a "JSON" toggle,
   // which is a question about the storage format on a screen whose reader is checking an invoice.
-  const text = useMemo(() => lesbarerText(extracted), [extracted]);
+  const text = useMemo(() => readableText(extracted), [extracted]);
   const markRefs = useRef<(HTMLElement | null)[]>([]);
 
   // A search term is about one question. Reopening the dialog is a new question, and finding the
   // last one still typed in (with the view scrolled to its hit) reads as a stuck field.
-  const schliessen = (auf: boolean) => {
-    setOffen(auf);
-    if (!auf) {
-      setSuche("");
-      setTreffer(0);
+  const close = (to: boolean) => {
+    setOpen(to);
+    if (!to) {
+      setSearch("");
+      setMatch(0);
     }
   };
 
   // Split the text on the query so every hit can be a <mark> of its own, which is what makes
   // "next match" possible at all. The query is escaped: somebody searching for "1.199,12" must not
   // have the dot treated as "any character", and an unescaped "(" would throw.
-  const teile = useMemo(() => {
-    const q = suche.trim();
+  const parts = useMemo(() => {
+    const q = search.trim();
     if (!q) return [{ text, hit: false }];
     const re = new RegExp(q.replace(/[.*+?^${}()|[\]\\]/g, "\\$&"), "gi");
     const out: { text: string; hit: boolean }[] = [];
@@ -6209,17 +6200,17 @@ function RohdatenDialog({ extracted }: { extracted: object }) {
     }
     if (last < text.length) out.push({ text: text.slice(last), hit: false });
     return out;
-  }, [text, suche]);
+  }, [text, search]);
 
-  const anzahl = teile.filter((p) => p.hit).length;
-  useEffect(() => setTreffer(0), [suche]);
+  const count = parts.filter((p) => p.hit).length;
+  useEffect(() => setMatch(0), [search]);
   useEffect(() => {
-    markRefs.current[treffer]?.scrollIntoView({ block: "center", behavior: "smooth" });
-  }, [treffer, teile]);
+    markRefs.current[match]?.scrollIntoView({ block: "center", behavior: "smooth" });
+  }, [match, parts]);
 
-  const springe = (delta: number) => {
-    if (anzahl === 0) return;
-    setTreffer((i) => (i + delta + anzahl) % anzahl);
+  const jump = (delta: number) => {
+    if (count === 0) return;
+    setMatch((i) => (i + delta + count) % count);
   };
 
   let hitIndex = -1;
@@ -6234,49 +6225,49 @@ function RohdatenDialog({ extracted }: { extracted: object }) {
         // the only control on it, and in plain outline it read as a footer note under four cards
         // instead of as the way into everything the document holds.
         className="gap-2 border-brand-soft bg-brand-wash text-brand-dark hover:border-brand hover:bg-brand-tint hover:text-brand-dark"
-        onClick={() => setOffen(true)}
+        onClick={() => setOpen(true)}
       >
         <Search className="size-4" />
-        {t("belege.detail.rohdatenShow")}
+        {t("documents.detail.rohdatenShow")}
       </Button>
-      <Dialog open={offen} onOpenChange={schliessen}>
+      <Dialog open={open} onOpenChange={close}>
         <DialogContent className="flex max-h-[85vh] max-w-3xl flex-col">
           <DialogHeader>
-            <DialogTitle>{t("belege.detail.rohdaten.titel")}</DialogTitle>
-            <DialogDescription>{t("belege.detail.rohdaten.hinweis")}</DialogDescription>
+            <DialogTitle>{t("documents.detail.rohdaten.titel")}</DialogTitle>
+            <DialogDescription>{t("documents.detail.rohdaten.hinweis")}</DialogDescription>
           </DialogHeader>
           <div className="flex items-center gap-2">
             <div className="relative flex-1">
               <Search className="absolute left-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
               <Input
                 autoFocus
-                value={suche}
-                onChange={(e) => setSuche(e.target.value)}
-                placeholder={t("belege.detail.rohdaten.suchen")}
+                value={search}
+                onChange={(e) => setSearch(e.target.value)}
+                placeholder={t("documents.detail.rohdaten.suchen")}
                 className="pl-9"
                 // Enter walks the hits, the way find-in-page does, so the keyboard alone is enough.
                 onKeyDown={(e) => {
                   if (e.key === "Enter") {
                     e.preventDefault();
-                    springe(e.shiftKey ? -1 : 1);
+                    jump(e.shiftKey ? -1 : 1);
                   }
                 }}
               />
             </div>
-            {suche.trim() !== "" && (
+            {search.trim() !== "" && (
               <div className="flex shrink-0 items-center gap-1">
                 <span className="tabular-nums text-sm text-muted-foreground">
-                  {anzahl === 0
-                    ? t("belege.detail.rohdaten.keineTreffer")
-                    : t("belege.detail.rohdaten.treffer", { n: treffer + 1, gesamt: anzahl })}
+                  {count === 0
+                    ? t("documents.detail.rohdaten.keineTreffer")
+                    : t("documents.detail.rohdaten.treffer", { n: match + 1, total: count })}
                 </span>
                 <Button
                   variant="ghost"
                   size="icon"
                   className="size-8"
-                  disabled={anzahl === 0}
-                  onClick={() => springe(-1)}
-                  aria-label={t("belege.detail.rohdaten.vorher")}
+                  disabled={count === 0}
+                  onClick={() => jump(-1)}
+                  aria-label={t("documents.detail.rohdaten.vorher")}
                 >
                   <ChevronLeft className="size-4" />
                 </Button>
@@ -6284,21 +6275,21 @@ function RohdatenDialog({ extracted }: { extracted: object }) {
                   variant="ghost"
                   size="icon"
                   className="size-8"
-                  disabled={anzahl === 0}
-                  onClick={() => springe(1)}
-                  aria-label={t("belege.detail.rohdaten.naechster")}
+                  disabled={count === 0}
+                  onClick={() => jump(1)}
+                  aria-label={t("documents.detail.rohdaten.naechster")}
                 >
                   <ChevronRight className="size-4" />
                 </Button>
               </div>
             )}
-            <CopyButton value={text} label={t("belege.detail.rohdaten.titel")} />
+            <CopyButton value={text} label={t("documents.detail.rohdaten.titel")} />
           </div>
           <pre className="min-h-0 flex-1 overflow-auto whitespace-pre-wrap rounded-lg bg-muted/40 p-3 text-sm text-muted-foreground">
-            {teile.map((teil, i) => {
-              if (!teil.hit) return <span key={i}>{teil.text}</span>;
+            {parts.map((part, i) => {
+              if (!part.hit) return <span key={i}>{part.text}</span>;
               hitIndex += 1;
-              const aktiv = hitIndex === treffer;
+              const active = hitIndex === match;
               const index = hitIndex;
               return (
                 <mark
@@ -6308,10 +6299,10 @@ function RohdatenDialog({ extracted }: { extracted: object }) {
                   }}
                   className={cn(
                     "rounded",
-                    aktiv ? "bg-brand text-white" : "bg-amber-200 text-amber-950",
+                    active ? "bg-brand text-white" : "bg-amber-200 text-amber-950",
                   )}
                 >
-                  {teil.text}
+                  {part.text}
                 </mark>
               );
             })}

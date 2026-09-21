@@ -27,7 +27,7 @@ export function useFetchNextSentinel(
   const observerRef = useRef<IntersectionObserver | null>(null);
   const nodesRef = useRef<Set<HTMLElement>>(new Set());
 
-  const beobachten = useCallback(() => {
+  const watch = useCallback(() => {
     observerRef.current?.disconnect();
     observerRef.current = null;
     if (!hasNextPage || nodesRef.current.size === 0) return;
@@ -47,13 +47,13 @@ export function useFetchNextSentinel(
     (node: HTMLElement | null) => {
       if (!node) return;
       nodesRef.current.add(node);
-      beobachten();
+      watch();
       return () => {
         nodesRef.current.delete(node);
-        beobachten();
+        watch();
       };
     },
-    [beobachten],
+    [watch],
   );
 
   useEffect(

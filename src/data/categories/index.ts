@@ -1,14 +1,14 @@
 export {
   useBulkCreateAssignmentRules,
-  useBwaAccountMapping,
-  useBwaCategories,
-  useCreateBwaCategory,
+  useCostAnalysisAccountMapping,
+  useCostAnalysisCategories,
+  useCreateCostAnalysisCategory,
   useExtractChartOfAccounts,
-  useImportBwaAccountMapping,
-  useReorderBwaCategories,
+  useImportCostAnalysisAccountMapping,
+  useReorderCostAnalysisCategories,
   useSetTransactionCategory,
-  useSoftDeleteBwaCategory,
+  useSoftDeleteCostAnalysisCategory,
   useSuggestAssignmentRules,
-  useUpdateBwaCategory,
+  useUpdateCostAnalysisCategory,
 } from "./categories";
-export type { BwaAccountMappingRow, BwaCategoryInput } from "./categories";
+export type { CostAnalysisAccountMappingRow, CostAnalysisCategoryInput } from "./categories";

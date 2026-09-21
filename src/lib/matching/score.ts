@@ -4,7 +4,7 @@
 // import from node_modules -- and that one is the exception, not the pattern.
 import { amountMatch, hasTransposedDigits, TOLERANCE_PENALTY } from "@/kit/lib/bank-matching";
 
-export interface MatchBeleg {
+export interface MatchDocument {
   id: string;
   amount_gross: number | null;
   document_date: string | null;
@@ -76,55 +76,54 @@ export function dayDiff(a: string | null, b: string | null): number | null {
   return Math.round(Math.abs(da - db) / MS_PER_DAY);
 }
 
-function relevantDate(beleg: MatchBeleg): string | null {
-  return beleg.due_date ?? beleg.document_date;
+function relevantDate(doc: MatchDocument): string | null {
+  return doc.due_date ?? doc.document_date;
 }
 
-function pairAmount(beleg: MatchBeleg, txn: MatchTransaction): number {
+function pairAmount(doc: MatchDocument, txn: MatchTransaction): number {
   const txnAmount = Math.abs(txn.amount);
-  const gross = Math.abs(beleg.amount_gross ?? 0);
+  const gross = Math.abs(doc.amount_gross ?? 0);
   const capped = gross > 0 ? Math.min(txnAmount, gross) : txnAmount;
   return Math.max(Number(capped.toFixed(2)), 0.01);
 }
 
 export function scoreMatch(
-  beleg: MatchBeleg,
+  doc: MatchDocument,
   txn: MatchTransaction,
   amountTolerance: number = 0.01,
 ): { score: number; reasons: MatchReasons } {
-  const gross = beleg.amount_gross ?? 0;
+  const gross = doc.amount_gross ?? 0;
   const txnAmount = Math.abs(txn.amount);
   const reference = normalize(txn.payment_reference);
 
   // The amount is the heaviest signal (0.45 of 1.0), so an agreement that needed the allowance is
   // scored below one that did not: see TOLERANCE_PENALTY in hub-kit.
-  const betrag = amountMatch(gross, txnAmount, amountTolerance);
-  const exactRef = !!beleg.invoice_number && reference.includes(normalize(beleg.invoice_number));
-  const transposedRef = !exactRef && hasTransposedDigits(reference, beleg.invoice_number);
+  const amount = amountMatch(gross, txnAmount, amountTolerance);
+  const exactRef = !!doc.invoice_number && reference.includes(normalize(doc.invoice_number));
+  const transposedRef = !exactRef && hasTransposedDigits(reference, doc.invoice_number);
 
   const reasons: MatchReasons = {
-    amount: betrag.matched,
-    amountTolerated: betrag.matched && !betrag.exact,
-    amountDifference: betrag.matched ? betrag.difference : null,
+    amount: amount.matched,
+    amountTolerated: amount.matched && !amount.exact,
+    amountDifference: amount.matched ? amount.difference : null,
     reference: exactRef || transposedRef,
     customerNumber:
-      !!beleg.customer_number &&
-      (reference.includes(normalize(beleg.customer_number)) ||
-        hasTransposedDigits(reference, beleg.customer_number)),
-    iban:
-      !!beleg.supplier_iban && normalize(beleg.supplier_iban) === normalize(txn.counterparty_iban),
+      !!doc.customer_number &&
+      (reference.includes(normalize(doc.customer_number)) ||
+        hasTransposedDigits(reference, doc.customer_number)),
+    iban: !!doc.supplier_iban && normalize(doc.supplier_iban) === normalize(txn.counterparty_iban),
     name:
-      !!beleg.issuer &&
+      !!doc.issuer &&
       !!txn.counterparty_holder &&
       normalize(txn.counterparty_holder).includes(
-        normalize(beleg.issuer).slice(0, NAME_PREFIX_LENGTH),
+        normalize(doc.issuer).slice(0, NAME_PREFIX_LENGTH),
       ),
-    dayDiff: dayDiff(txn.booking_date, relevantDate(beleg)),
+    dayDiff: dayDiff(txn.booking_date, relevantDate(doc)),
   };
 
   let score = 0;
-  if (betrag.matched) {
-    score += WEIGHT.amount - (betrag.exact ? 0 : TOLERANCE_PENALTY);
+  if (amount.matched) {
+    score += WEIGHT.amount - (amount.exact ? 0 : TOLERANCE_PENALTY);
   }
   if (exactRef) score += WEIGHT.reference;
   else if (transposedRef) score += WEIGHT.reference * 0.8;
@@ -140,7 +139,7 @@ export function scoreMatch(
 }
 
 export function runMatching(
-  belege: MatchBeleg[],
+  documents: MatchDocument[],
   transactions: MatchTransaction[],
   direction: MatchDirection = "incoming",
   amountTolerance: number = 0.01,
@@ -153,21 +152,21 @@ export function runMatching(
     if (direction === "incoming" && txn.amount >= 0) continue;
     if (direction === "outgoing" && txn.amount <= 0) continue;
 
-    for (const beleg of belege) {
-      const diff = dayDiff(txn.booking_date, relevantDate(beleg));
+    for (const doc of documents) {
+      const diff = dayDiff(txn.booking_date, relevantDate(doc));
       if (diff !== null && diff > DATE_WINDOW_DAYS) continue;
 
-      const { score, reasons } = scoreMatch(beleg, txn, amountTolerance);
+      const { score, reasons } = scoreMatch(doc, txn, amountTolerance);
       if (!reasons.amount && !reasons.reference) continue;
       if (score < candidateThreshold) continue;
 
       candidates.push({
-        document_id: beleg.id,
+        document_id: doc.id,
         transaction_id: txn.id,
         score: Number(score.toFixed(2)),
         status: score >= autoThreshold ? "auto" : "candidate",
         match_reasons: reasons,
-        amount_matched: pairAmount(beleg, txn),
+        amount_matched: pairAmount(doc, txn),
       });
     }
   }

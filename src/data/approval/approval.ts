@@ -5,11 +5,11 @@ import { useCallback, useEffect, useMemo, useState } from "react";
 
 import { TABLE } from "@/config/tables";
 import { STALE, actorEmail, sb } from "@/data/client";
-import { pflichtGrund } from "@/data/shared";
+import { requiredReason } from "@/data/shared";
 import { useEmployees } from "@/data/team";
 import { useAuth } from "@/lib/auth";
 import { APPROVAL_PHASE_STATUSES } from "@/lib/data/format";
-import type { ApprovalRule, Beleg, ChainPerson, WorkflowStatus } from "@/lib/data/types";
+import type { ApprovalRule, Document, ChainPerson, WorkflowStatus } from "@/lib/data/types";
 
 // ---- Approval workflow (Briefing Screen 6; migration 0035) ----
 //
@@ -200,14 +200,14 @@ export function useUpdateApprovalRule() {
 export function useSoftDeleteApprovalRule() {
   const qc = useQueryClient();
   return useMutation({
-    mutationFn: async (args: { id: string; grund: string }) => {
+    mutationFn: async (args: { id: string; reason: string }) => {
       const actor = await actorEmail();
       const { error } = await sb
         .from(TABLE.approvalRules)
         .update({
           deleted_at: new Date().toISOString(),
           deleted_by: actor,
-          delete_reason: pflichtGrund(args.grund),
+          delete_reason: requiredReason(args.reason),
           is_active: false,
         })
         .eq("id", args.id);
@@ -260,14 +260,14 @@ export function useInvoicesReturnedByType(
     // The shell shows this as a badge, so it runs on every screen.
     enabled: gated && (!!myUserId || !!myName),
     staleTime: STALE,
-    queryFn: async (): Promise<Beleg[]> => {
+    queryFn: async (): Promise<Document[]> => {
       const { data: invoices, error } = await sb
         .from(TABLE.documents)
         .select("*")
         .eq("workflow_status", workflowStatus)
         .is("deleted_at", null);
       if (error) throw error;
-      const ids = ((invoices ?? []) as Beleg[]).map((b) => b.id);
+      const ids = ((invoices ?? []) as Document[]).map((b) => b.id);
       if (ids.length === 0) return [];
 
       const { data: history, error: histError } = await sb
@@ -279,19 +279,19 @@ export function useInvoicesReturnedByType(
       if (histError) throw histError;
 
       // First occurrence per invoice wins -- history is ordered newest first.
-      type Ziel = { recipient_user_id?: string; returned_to?: string };
-      const zielProBeleg = new Map<string, Ziel>();
+      type Target = { recipient_user_id?: string; returned_to?: string };
+      const targetProDocument = new Map<string, Target>();
       for (const row of history ?? []) {
-        if (!zielProBeleg.has(row.document_id)) {
-          zielProBeleg.set(row.document_id, (row.data as Ziel | null) ?? {});
+        if (!targetProDocument.has(row.document_id)) {
+          targetProDocument.set(row.document_id, (row.data as Target | null) ?? {});
         }
       }
 
-      return (invoices as Beleg[]).filter((b) => {
-        const ziel = zielProBeleg.get(b.id);
-        if (!ziel) return false;
-        if (ziel.recipient_user_id) return ziel.recipient_user_id === myUserId;
-        return !!myName && (ziel.returned_to ?? "").toLowerCase() === myName.toLowerCase();
+      return (invoices as Document[]).filter((b) => {
+        const target = targetProDocument.get(b.id);
+        if (!target) return false;
+        if (target.recipient_user_id) return target.recipient_user_id === myUserId;
+        return !!myName && (target.returned_to ?? "").toLowerCase() === myName.toLowerCase();
       });
     },
   });
@@ -325,14 +325,14 @@ export function useInvoicesAssignedToMe(myUserId: string | null) {
     queryKey: ["belege", "zugewiesen_an_mich", myUserId],
     enabled: !!myUserId,
     staleTime: STALE,
-    queryFn: async (): Promise<Beleg[]> => {
+    queryFn: async (): Promise<Document[]> => {
       const { data, error } = await sb
         .from(TABLE.documents)
         .select("*")
         .eq("assigned_user_id", myUserId!)
         .is("deleted_at", null);
       if (error) throw error;
-      return ((data ?? []) as Beleg[]).filter((b) =>
+      return ((data ?? []) as Document[]).filter((b) =>
         APPROVAL_PHASE_STATUSES.includes((b.workflow_status ?? "received") as WorkflowStatus),
       );
     },
@@ -378,7 +378,7 @@ export function useActingAs() {
   const people = useMemo(() => peopleQ.data ?? [], [peopleQ.data]);
   // The owner/technical account, and only it. This used to be invoices.override_workflow, which
   // every Admin holds by default -- a real narrowing, and the point of the change.
-  const darfHandelnAls = role === "super_admin";
+  const canActAls = role === "super_admin";
 
   const [override, setOverride] = useState<string | null>(null);
   useEffect(() => {
@@ -397,13 +397,13 @@ export function useActingAs() {
 
   const actingAs = useMemo(() => {
     // Anybody else is themselves, whatever is left in their localStorage.
-    if (!darfHandelnAls) return me;
+    if (!canActAls) return me;
     if (override === ACTING_AS_NONE) return null;
     // An override naming somebody who has since been deleted falls back to being yourself, rather
     // than to nobody: silently having no buttons is the failure mode this whole change removes.
     if (override) return people.find((p) => p.id === override) ?? me;
     return me;
-  }, [darfHandelnAls, me, people, override]);
+  }, [canActAls, me, people, override]);
 
   function chooseActingAs(userId: string) {
     window.localStorage.setItem(ACTING_AS_STORAGE_KEY, userId);
@@ -411,7 +411,7 @@ export function useActingAs() {
     window.dispatchEvent(new Event(ACTING_AS_CHANGED_EVENT));
   }
 
-  return { actingAs, people, chooseActingAs, darfHandelnAls };
+  return { actingAs, people, chooseActingAs, canActAls };
 }
 
 /**
@@ -442,18 +442,18 @@ export function useActingCapabilities() {
   const { actingAs } = actingAsState;
   const employeesQ = useEmployees();
 
-  const istFremdeIdentitaet = !!actingAs && !!appUserId && actingAs.id !== appUserId;
-  const fremdeRechte = useMemo(
+  const isForeignIdentity = !!actingAs && !!appUserId && actingAs.id !== appUserId;
+  const foreignRights = useMemo(
     () =>
-      istFremdeIdentitaet
+      isForeignIdentity
         ? ((employeesQ.data ?? []).find((e) => e.id === actingAs?.id)?.permissions ?? null)
         : null,
-    [istFremdeIdentitaet, employeesQ.data, actingAs?.id],
+    [isForeignIdentity, employeesQ.data, actingAs?.id],
   );
-  const darfAlsPerson = useCallback(
-    (key: string) => (istFremdeIdentitaet ? (fremdeRechte?.includes(key) ?? false) : can(key)),
-    [istFremdeIdentitaet, fremdeRechte, can],
+  const canAlsPerson = useCallback(
+    (key: string) => (isForeignIdentity ? (foreignRights?.includes(key) ?? false) : can(key)),
+    [isForeignIdentity, foreignRights, can],
   );
 
-  return { ...actingAsState, istFremdeIdentitaet, darfAlsPerson };
+  return { ...actingAsState, isForeignIdentity, canAlsPerson };
 }

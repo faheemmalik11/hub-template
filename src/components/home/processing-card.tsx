@@ -10,12 +10,12 @@ import {
   useOverviewInvoices,
   usePipelineHealth,
   useRunRequests,
-  useVerarbeitungsLogStatusCounts,
+  useProcessingLogStatusCounts,
 } from "@/data";
 import { useTranslation } from "@/lib/i18n";
 
 // The pipeline's channel key, and the Postfach card that shows the same channel.
-const POSTFACH_CARD: Record<string, string> = {
+const INBOX_CARD: Record<string, string> = {
   mailbox: "mail",
   scan_folder: "filing",
   upload: "upload",
@@ -29,17 +29,20 @@ const POSTFACH_CARD: Record<string, string> = {
  */
 export function ProcessingCard() {
   const { t } = useTranslation();
-  const [zeitraum, setZeitraum] = useStoredPeriod("processing");
+  const [period, setPeriod] = useStoredPeriod("processing");
   const range = useMemo(
     () =>
-      overviewPeriodRange(zeitraum.period, new Date(), { von: zeitraum.von, bis: zeitraum.bis }),
-    [zeitraum],
+      overviewPeriodRange(period.period, new Date(), {
+        fromDate: period.fromDate,
+        toDate: period.toDate,
+      }),
+    [period],
   );
-  const logQ = useVerarbeitungsLogStatusCounts({
-    von: range.von ?? undefined,
-    bis: range.bis ?? undefined,
+  const logQ = useProcessingLogStatusCounts({
+    fromDate: range.fromDate ?? undefined,
+    toDate: range.toDate ?? undefined,
   });
-  const invoicesQ = useOverviewInvoices(range.von, range.bis);
+  const invoicesQ = useOverviewInvoices(range.fromDate, range.toDate);
   const healthQ = usePipelineHealth();
   // A request somebody made from Postfach says exactly what is being read; a scheduled run has no
   // request behind it, so the open run row is all there is to go on.
@@ -49,10 +52,10 @@ export function ProcessingCard() {
   );
   // One line per run, named as the Postfach card is: "Email · The usual folders".
   const runningLines = openRequests.map((request) => {
-    const card = POSTFACH_CARD[request.channel];
+    const card = INBOX_CARD[request.channel];
     const channel = card
       ? t(`sources.${card}.name`)
-      : t(`belege.kanal.${request.channel}`, { defaultValue: request.channel });
+      : t(`documents.kanal.${request.channel}`, { defaultValue: request.channel });
     const names = request.folder_names?.filter(Boolean) ?? [];
     return `${channel} · ${names.length > 0 ? names.join(", ") : t("sources.runNowDefault")}`;
   });
@@ -60,34 +63,34 @@ export function ProcessingCard() {
 
   const stats = useMemo(() => {
     const logCounts = logQ.data ?? {};
-    const verarbeitet = Object.values(logCounts).reduce((s, n) => s + n, 0);
-    const fehler = logCounts.fehler ?? 0;
+    const processed = Object.values(logCounts).reduce((s, n) => s + n, 0);
+    const error = logCounts.error ?? 0;
     const rows = invoicesQ.data ?? [];
-    const erkannt = rows.filter((r) => r.status === "recognised").length;
-    const zuPruefen = rows.filter((r) => r.status === "needs_review").length;
-    const kanaele = new Map<string, number>();
+    const recognised = rows.filter((r) => r.status === "recognised").length;
+    const zuCheck = rows.filter((r) => r.status === "needs_review").length;
+    const channelCounts = new Map<string, number>();
     for (const r of rows) {
       if (!r.intake_channel) continue;
-      kanaele.set(r.intake_channel, (kanaele.get(r.intake_channel) ?? 0) + 1);
+      channelCounts.set(r.intake_channel, (channelCounts.get(r.intake_channel) ?? 0) + 1);
     }
-    const channels = [...kanaele.entries()].sort((a, b) => b[1] - a[1]);
-    return { verarbeitet, fehler, erkannt, zuPruefen, channels };
+    const channels = [...channelCounts.entries()].sort((a, b) => b[1] - a[1]);
+    return { processed, error, recognised, zuCheck, channels };
   }, [logQ.data, invoicesQ.data]);
 
   if (logQ.isError && invoicesQ.isError) return null;
 
-  const laedt = logQ.isLoading || invoicesQ.isLoading;
-  const val = (n: number) => (laedt ? "—" : String(n));
+  const loading = logQ.isLoading || invoicesQ.isLoading;
+  const val = (n: number) => (loading ? "—" : String(n));
 
   return (
     <DashboardPanel
       title={t("home.processing.title")}
       headerRight={
         <>
-          <Link to="/protokoll" className="text-xs font-medium text-brand-dark hover:underline">
+          <Link to="/activity-log" className="text-xs font-medium text-brand-dark hover:underline">
             {t("home.processing.all")}
           </Link>
-          <PeriodPicker value={zeitraum} onChange={setZeitraum} />
+          <PeriodPicker value={period} onChange={setPeriod} />
         </>
       }
     >
@@ -109,28 +112,28 @@ export function ProcessingCard() {
       )}
       <div className="mt-3 grid flex-1 grid-cols-2 gap-2">
         <StatTile
-          to="/protokoll"
+          to="/activity-log"
           label={t("home.processing.verarbeitet")}
-          value={val(stats.verarbeitet)}
+          value={val(stats.processed)}
         />
         <StatTile
-          to="/eingangsrechnungen"
+          to="/incoming-invoices"
           search={{ status: "recognised" }}
           label={t("home.processing.erkannt")}
-          value={val(stats.erkannt)}
+          value={val(stats.recognised)}
         />
         <StatTile
-          to="/eingangsrechnungen"
+          to="/incoming-invoices"
           search={{ status: "needs_review" }}
           label={t("home.processing.zuPruefen")}
-          value={val(stats.zuPruefen)}
-          valueCls={stats.zuPruefen > 0 ? "text-warning" : undefined}
+          value={val(stats.zuCheck)}
+          valueCls={stats.zuCheck > 0 ? "text-warning" : undefined}
         />
         <StatTile
-          to="/protokoll"
+          to="/activity-log"
           label={t("home.processing.fehler")}
-          value={val(stats.fehler)}
-          valueCls={stats.fehler > 0 ? "text-danger" : undefined}
+          value={val(stats.error)}
+          valueCls={stats.error > 0 ? "text-danger" : undefined}
         />
       </div>
       <div className="mt-auto flex flex-wrap items-center justify-between gap-x-3 gap-y-0.5 pt-2">
@@ -138,7 +141,10 @@ export function ProcessingCard() {
           <p className="text-xs text-muted-foreground">
             {t("home.processing.kanaele")}{" "}
             {stats.channels
-              .map(([kanal, n]) => `${t(`belege.kanal.${kanal}`, { defaultValue: kanal })} ${n}`)
+              .map(
+                ([channel, n]) =>
+                  `${t(`documents.kanal.${channel}`, { defaultValue: channel })} ${n}`,
+              )
               .join(" · ")}
           </p>
         )}

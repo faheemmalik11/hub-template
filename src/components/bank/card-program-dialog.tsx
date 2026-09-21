@@ -15,10 +15,10 @@ import {
 } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { useGesellschaften, useUpdateBankAccount } from "@/data";
+import { useCompanies, useUpdateBankAccount } from "@/data";
 import type { BankAccount } from "@/lib/data/types";
 import { useTranslation } from "@/lib/i18n";
-import { fehlerText } from "@/lib/data/format";
+import { errorText } from "@/lib/data/format";
 import { cn } from "@/lib/utils";
 
 /**
@@ -27,7 +27,7 @@ import { cn } from "@/lib/utils";
  */
 export function CardProgramDialog({ account }: { account: BankAccount }) {
   const { t } = useTranslation();
-  const companiesQ = useGesellschaften();
+  const companiesQ = useCompanies();
   const update = useUpdateBankAccount();
 
   const [open, setOpen] = useState(false);
@@ -62,10 +62,10 @@ export function CardProgramDialog({ account }: { account: BankAccount }) {
       },
       {
         onSuccess: () => {
-          toast.success(t("bankkonten.karten.dialog.toastSaved"));
+          toast.success(t("bankAccounts.karten.dialog.toastSaved"));
           setOpen(false);
         },
-        onError: (e) => toast.error(t("bankkonten.dialog.toastFailed", { error: fehlerText(e) })),
+        onError: (e) => toast.error(t("bankAccounts.dialog.toastFailed", { error: errorText(e) })),
       },
     );
   }
@@ -85,19 +85,19 @@ export function CardProgramDialog({ account }: { account: BankAccount }) {
           variant="outline"
           type="button"
           className={cn("gap-2", !account.company_id && "border-warning/40 text-warning")}
-          title={t("bankkonten.karten.dialog.titel")}
+          title={t("bankAccounts.karten.dialog.titel")}
         >
           <Pencil className="size-4" />
           {account.company_id
-            ? t("bankkonten.karten.dialog.button")
-            : t("bankkonten.karten.dialog.zuordnen")}
+            ? t("bankAccounts.karten.dialog.button")
+            : t("bankAccounts.karten.dialog.zuordnen")}
         </Button>
       </DialogTrigger>
 
       <DialogContent className="max-w-md">
         <DialogHeader>
-          <DialogTitle>{t("bankkonten.karten.dialog.titel")}</DialogTitle>
-          <DialogDescription>{t("bankkonten.karten.dialog.text")}</DialogDescription>
+          <DialogTitle>{t("bankAccounts.karten.dialog.titel")}</DialogTitle>
+          <DialogDescription>{t("bankAccounts.karten.dialog.text")}</DialogDescription>
         </DialogHeader>
 
         <div className="space-y-4">
@@ -118,7 +118,7 @@ export function CardProgramDialog({ account }: { account: BankAccount }) {
               id="card-program-company"
               value={companyId}
               onValueChange={setCompanyId}
-              placeholder={t("bankkonten.karten.dialog.gesellschaftPlaceholder")}
+              placeholder={t("bankAccounts.karten.dialog.gesellschaftPlaceholder")}
               options={companies.map((c) => ({
                 value: c.id,
                 label: `${c.code} · ${c.name}`,
@@ -126,17 +126,17 @@ export function CardProgramDialog({ account }: { account: BankAccount }) {
               }))}
             />
             <p className="text-xs text-muted-foreground">
-              {t("bankkonten.karten.dialog.gesellschaftHinweis")}
+              {t("bankAccounts.karten.dialog.gesellschaftHinweis")}
             </p>
           </div>
         </div>
 
         <DialogFooter>
           <Button variant="secondary" onClick={() => setOpen(false)} type="button">
-            {t("bankkonten.dialog.cancel")}
+            {t("bankAccounts.dialog.cancel")}
           </Button>
           <Button onClick={submit} disabled={!canSubmit}>
-            {update.isPending ? t("bankkonten.dialog.saving") : t("bankkonten.dialog.save")}
+            {update.isPending ? t("bankAccounts.dialog.saving") : t("bankAccounts.dialog.save")}
           </Button>
         </DialogFooter>
       </DialogContent>

@@ -2,7 +2,7 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 
 import { TABLE } from "@/config/tables";
 import { SINGLETON_ROW_ID, STALE, actorEmail, insertChangeHistory, sb } from "@/data/client";
-import { fetchAllRows, invalidateMatchState, pflichtGrund } from "@/data/shared";
+import { fetchAllRows, invalidateMatchState, requiredReason } from "@/data/shared";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/lib/auth";
 import { useFeatureGate } from "@/data/use-feature";
@@ -10,7 +10,7 @@ import { PERMISSIONS } from "@/config/permissions";
 import { useInvoicesReturnedByType } from "@/data/approval";
 import { keepPreviousData } from "@tanstack/react-query";
 import { EDGE_FUNCTION } from "@/config/edge-functions";
-import { heuteLokal } from "@/lib/data/format";
+import { todayLocal } from "@/lib/data/format";
 import { notifyTargetPath } from "@/lib/data/notification-target";
 import {
   createEmployee as createEmployeeFn,
@@ -169,9 +169,9 @@ function effectivePermissions(
   overrides: { permission_key: string; granted: boolean }[],
   roleDefaults: Set<string>,
 ): string[] {
-  const eigene = new Map(overrides.map((o) => [o.permission_key, o.granted]));
-  const keys = new Set<string>([...roleDefaults, ...eigene.keys()]);
-  return [...keys].filter((k) => eigene.get(k) ?? roleDefaults.has(k));
+  const own = new Map(overrides.map((o) => [o.permission_key, o.granted]));
+  const keys = new Set<string>([...roleDefaults, ...own.keys()]);
+  return [...keys].filter((k) => own.get(k) ?? roleDefaults.has(k));
 }
 
 // Admin-only (RLS: app_users_admin_read).
@@ -551,62 +551,6 @@ export function usePurgeRecord() {
     onSuccess: () => invalidateTrashState(qc),
   });
 }
-export interface OverviewInvoiceRow {
-  status: string | null;
-  amount_gross: number | null;
-  // Carried so the overview can group by month without a second request. Still five narrow
-  // columns rather than the whole row.
-  document_date: string | null;
-  // For the supplier ranking and the per-company volume panel. issuer is the free-text sender the
-  // list screens show; company_code is the resolved company, null when unresolved. supplier_id
-  // lets the ranking link to the supplier's own page rather than a text search.
-  issuer: string | null;
-  company_code: string | null;
-  supplier_id: string | null;
-  // For the processing card's per-channel breakdown (email / upload / drive / ...).
-  intake_channel: string | null;
-}
-
-/**
- * The Overview's invoice figures, read narrow and scoped to the period on screen.
- *
- * `useBelege()` selects `*` across the WHOLE table and pages past the row cap, because the screens
- * that grew up on it need every column of every invoice. The Overview needs two columns of the rows
- * inside one date range, to produce three numbers. Reading it the wide way put the entire invoice
- * table through the browser on the first screen of the app, which is the page least able to afford
- * it. `useBelege` is untouched: Auswertungen still depends on its shape.
- *
- * Filtered on `document_date`, the same column the invoice list filters on, so a tile and the list
- * it links to cannot disagree. The exclusions mirror `useBelege` exactly (deleted, archived, not
- * relevant, and the container row of a split scan), because a figure here that counted rows that
- * screen refuses to show would be wrong in a way nobody could trace.
- */
-export function useOverviewInvoices(von?: string | null, bis?: string | null) {
-  return useQuery({
-    queryKey: ["overview-invoices", von ?? "", bis ?? ""],
-    staleTime: STALE,
-    // A period change swaps the query key. Without this every card and chart on the overview
-    // drops to zero for the round trip, then jumps back, which reads as the numbers fluctuating.
-    placeholderData: keepPreviousData,
-    queryFn: async (): Promise<OverviewInvoiceRow[]> =>
-      fetchAllRows<OverviewInvoiceRow>((from, to, withCount) => {
-        let query = supabase
-          .from(TABLE.documents)
-          .select(
-            "status, amount_gross, document_date, issuer, company_code, supplier_id, intake_channel",
-            withCount ? { count: "exact" } : undefined,
-          )
-          .is("deleted_at", null)
-          .is("archived_at", null)
-          .is("not_relevant_at", null)
-          .neq("status", "split");
-        if (von) query = query.gte("document_date", von);
-        if (bis) query = query.lte("document_date", bis);
-        return query.range(from, to);
-      }),
-  });
-}
-
 export interface BankMatchingCounts {
   total: number;
   open: number;
@@ -625,22 +569,22 @@ export function useBankMatchingCounts() {
     enabled,
     queryFn: async (): Promise<BankMatchingCounts> => {
       const head = { count: "exact" as const, head: true };
-      const [gesamtQ, offenQ, vorschlagQ, zugeordnetQ, ignoriertQ] = await Promise.all([
+      const [totalQ, openQ, suggestionQ, assignedQ, ignoredQ] = await Promise.all([
         sb.from(TABLE.bankTransactions).select("id", head),
         sb.from(TABLE.bankTransactions).select("id", head).eq("matching_status", "open"),
         sb.from(TABLE.vBankTransactionsList).select("id", head).eq("has_suggested_match", true),
         sb.from(TABLE.bankTransactions).select("id", head).eq("matching_status", "matched"),
         sb.from(TABLE.bankTransactions).select("id", head).eq("matching_status", "ignored"),
       ]);
-      for (const q of [gesamtQ, offenQ, vorschlagQ, zugeordnetQ, ignoriertQ]) {
+      for (const q of [totalQ, openQ, suggestionQ, assignedQ, ignoredQ]) {
         if (q.error) throw q.error;
       }
       return {
-        total: gesamtQ.count ?? 0,
-        open: Math.max((offenQ.count ?? 0) - (vorschlagQ.count ?? 0), 0),
-        suggestion: vorschlagQ.count ?? 0,
-        matched: zugeordnetQ.count ?? 0,
-        ignored: ignoriertQ.count ?? 0,
+        total: totalQ.count ?? 0,
+        open: Math.max((openQ.count ?? 0) - (suggestionQ.count ?? 0), 0),
+        suggestion: suggestionQ.count ?? 0,
+        matched: assignedQ.count ?? 0,
+        ignored: ignoredQ.count ?? 0,
       };
     },
   });
@@ -656,9 +600,9 @@ export function useBankMatchingCounts() {
  */
 export interface NotificationCounts {
   seenAt: string | null;
-  neueBelege: number;
-  zuPruefen: number;
-  faellig: number;
+  newDocuments: number;
+  zuCheck: number;
+  due: number;
 }
 
 export function useNotificationCounts(appUserId: string | null) {
@@ -679,10 +623,10 @@ export function useNotificationCounts(appUserId: string | null) {
       if (!seenQ.error) seenAt = seenQ.data?.notifications_seen_at ?? null;
       else if (seenQ.error.code !== "42703") throw seenQ.error;
 
-      const seit = seenAt ?? new Date(Date.now() - 7 * 86_400_000).toISOString();
-      const heute = heuteLokal();
+      const since = seenAt ?? new Date(Date.now() - 7 * 86_400_000).toISOString();
+      const today = todayLocal();
       const head = { count: "exact" as const, head: true };
-      const [neueQ, pruefQ, faelligQ] = await Promise.all([
+      const [newQ, checkQ, dueQ] = await Promise.all([
         sb
           .from(TABLE.documents)
           .select("id", head)
@@ -690,7 +634,7 @@ export function useNotificationCounts(appUserId: string | null) {
           .is("archived_at", null)
           .is("not_relevant_at", null)
           .neq("status", "split")
-          .gt("created_at", seit),
+          .gt("created_at", since),
         sb
           .from(TABLE.documents)
           .select("id", head)
@@ -705,16 +649,16 @@ export function useNotificationCounts(appUserId: string | null) {
           .select("id", head)
           .eq("is_open", true)
           .not("due_date", "is", null)
-          .lt("due_date", heute),
+          .lt("due_date", today),
       ]);
-      for (const q of [neueQ, pruefQ, faelligQ]) {
+      for (const q of [newQ, checkQ, dueQ]) {
         if (q.error) throw q.error;
       }
       return {
         seenAt,
-        neueBelege: neueQ.count ?? 0,
-        zuPruefen: pruefQ.count ?? 0,
-        faellig: faelligQ.count ?? 0,
+        newDocuments: newQ.count ?? 0,
+        zuCheck: checkQ.count ?? 0,
+        due: dueQ.count ?? 0,
       };
     },
   });

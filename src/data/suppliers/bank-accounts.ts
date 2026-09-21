@@ -288,14 +288,14 @@ export function useUpdateSupplierBankAccount(supplierId: string) {
 export function useDeleteSupplierBankAccount(supplierId: string) {
   const qc = useQueryClient();
   return useMutation({
-    mutationFn: async (input: { id: string; grund?: string }) => {
+    mutationFn: async (input: { id: string; reason?: string }) => {
       const actor = await actorEmail();
       const { error } = await sb
         .from(TABLE.supplierBankAccounts)
         .update({
           deleted_at: new Date().toISOString(),
           deleted_by: actor,
-          delete_reason: input.grund?.trim() || null,
+          delete_reason: input.reason?.trim() || null,
         })
         .eq("id", input.id)
         .eq("is_default", false);

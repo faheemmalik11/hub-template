@@ -20,7 +20,7 @@ export interface DatevHandoverConfig {
    * — it is marked "noch nicht aktiv" instead of hidden. Hiding it would quietly drop configuration
    * somebody deliberately entered, and an address already on file stays on file.
    */
-  aktiveRichtungen: readonly DatevDirection[];
+  activeDirections: readonly DatevDirection[];
   /**
    * Whether this Hub stores files for outgoing invoices at all.
    *
@@ -38,12 +38,12 @@ export interface DatevHandoverConfig {
    * Omit in a Hub with no detail route — the rows are then plain text rather than links that go
    * nowhere.
    */
-  onOpenBeleg?: (invoiceId: string) => void;
+  onOpenDocument?: (invoiceId: string) => void;
   /** Document title for the route, e.g. "DATEV-Übergabe · Immonetz". */
   documentTitle: string;
 }
 
 /** True when a direction is wired to a real send in this Hub. */
-export function istRichtungAktiv(config: DatevHandoverConfig, d: DatevDirection): boolean {
-  return config.aktiveRichtungen.includes(d);
+export function isDirectionActive(config: DatevHandoverConfig, d: DatevDirection): boolean {
+  return config.activeDirections.includes(d);
 }

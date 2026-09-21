@@ -32,7 +32,7 @@ import { ManualImportMappingStep } from "./manual-import-mapping-step";
 import { ManualImportPreviewStep } from "./manual-import-preview-step";
 import { ManualImportResultStep } from "./manual-import-result";
 import { ManualImportUploadStep } from "./manual-import-upload-step";
-import { fehlerText } from "@/lib/data/format";
+import { errorText } from "@/lib/data/format";
 
 type Step = "account" | "upload" | "mapping" | "preview" | "result";
 const STEPS: Step[] = ["account", "upload", "mapping", "preview", "result"];
@@ -87,7 +87,7 @@ export function ManualImportDialog() {
         onError: (e) => {
           toast.error(
             t("bank.manualImport.errors.importFailed", {
-              error: fehlerText(e),
+              error: errorText(e),
             }),
           );
         },

@@ -36,20 +36,20 @@ export function MatchScoreBreakdown({
   // "The amount agrees" and "the amount agrees to within the 50 cents you allow" are different
   // claims, and the person about to confirm the link is the one who should weigh the difference.
   // Naming the actual gap beats a bare flag: 2 cents and 49 cents get read very differently.
-  const toleriert = reasons.amountTolerated === true;
-  const differenz = typeof reasons.amountDifference === "number" ? reasons.amountDifference : null;
-  const treffer = SIGNALS.filter((k) => reasons[k] === true).map((k) =>
-    k === "amount" && toleriert
-      ? differenz != null
+  const tolerated = reasons.amountTolerated === true;
+  const difference = typeof reasons.amountDifference === "number" ? reasons.amountDifference : null;
+  const match = SIGNALS.filter((k) => reasons[k] === true).map((k) =>
+    k === "amount" && tolerated
+      ? difference != null
         ? t("bank.matchScore.signal.amountTolerated", {
-            differenz: formatEUR(differenz),
+            difference: formatEUR(difference),
           })
         : t("bank.matchScore.signal.amountToleratedPlain")
       : t(`bank.matchScore.signal.${k as string}`),
   );
-  if (dayDiff != null && dayDiff <= 7) treffer.push(t("bank.matchScore.signal.date"));
+  if (dayDiff != null && dayDiff <= 7) match.push(t("bank.matchScore.signal.date"));
 
-  if (score == null && treffer.length === 0) return null;
+  if (score == null && match.length === 0) return null;
 
   return (
     <div className="mt-2 w-full text-xs">
@@ -67,13 +67,13 @@ export function MatchScoreBreakdown({
           {t(`bank.matchScore.confidence.${confidenceKey(score)}`)}
         </span>
       )}
-      {treffer.length > 0 && (
+      {match.length > 0 && (
         <>
           <p className={cn("font-medium text-foreground", score != null && "mt-2")}>
             {t("bank.matchScore.warum")}
           </p>
           <ul className="mt-1 space-y-1 text-muted-foreground">
-            {treffer.map((label) => (
+            {match.map((label) => (
               <li key={label} className="flex items-start gap-1.5">
                 <Check className="mt-0.5 size-3 shrink-0 text-emerald-600" />
                 <span>{label}</span>

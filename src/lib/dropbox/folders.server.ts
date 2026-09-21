@@ -10,8 +10,8 @@
 //
 // .server.ts suffix: Vite excludes this from the client bundle.
 
-import type { FolderOption } from "@/lib/postfach/folder-option";
-import { channelCredential } from "@/lib/postfach/channel-credentials.server";
+import type { FolderOption } from "@/lib/inbox/folder-option";
+import { channelCredential } from "@/lib/inbox/channel-credentials.server";
 
 async function getDropboxAccessToken(): Promise<string> {
   const [appKey, appSecret, refreshToken] = await Promise.all([

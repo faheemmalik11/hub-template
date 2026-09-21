@@ -5,7 +5,7 @@
 // implied by the folder the file lives in, not by its name. See docs/FILENAME_CONVENTION.md
 // for the full spec and what this does/doesn't cover.
 
-import type { Beleg, FilenameSettings } from "@/lib/data/types";
+import type { Document, FilenameSettings } from "@/lib/data/types";
 
 const UMLAUT_MAP: Record<string, string> = {
   ä: "ae",
@@ -47,49 +47,49 @@ function formatAmountSegment(amount: number | null): string | null {
 }
 
 // "VAT-relevant" for the _VAT suffix: a positive VAT rate that isn't explicitly tax-exempt.
-function isVatRelevant(beleg: Beleg): boolean {
-  return (beleg.vat_rate ?? 0) > 0 && beleg.vat_treatment !== "exempt";
+function isVatRelevant(doc: Document): boolean {
+  return (doc.vat_rate ?? 0) > 0 && doc.vat_treatment !== "exempt";
 }
 
 function descriptionFor(
-  beleg: Beleg,
+  doc: Document,
   source: FilenameSettings["description_source"],
 ): string | null {
-  if (source === "service_description") return beleg.service_description;
-  if (source === "cost_category") return beleg.cost_category;
+  if (source === "service_description") return doc.service_description;
+  if (source === "cost_category") return doc.cost_category;
   return null;
 }
 
 // Returns null when there isn't enough data yet (e.g. still awaiting AI extraction) to build a
 // meaningful name, so callers can fall back to the original/uploaded filename instead.
 export function buildSuggestedFilename(
-  beleg: Beleg,
+  doc: Document,
   settings: FilenameSettings,
   extension = "pdf",
 ): string | null {
   const parts: string[] = [];
 
-  const date = formatDateSegment(beleg.document_date);
+  const date = formatDateSegment(doc.document_date);
   if (date) parts.push(date);
 
-  if (beleg.company_code) {
+  if (doc.company_code) {
     const vatSuffix =
-      settings.include_vat_suffix && isVatRelevant(beleg) ? `_${settings.vat_suffix}` : "";
-    parts.push(`${beleg.company_code}${vatSuffix}`);
+      settings.include_vat_suffix && isVatRelevant(doc) ? `_${settings.vat_suffix}` : "";
+    parts.push(`${doc.company_code}${vatSuffix}`);
   }
 
-  if (beleg.issuer) parts.push(sanitizeSegment(beleg.issuer));
+  if (doc.issuer) parts.push(sanitizeSegment(doc.issuer));
 
-  const description = descriptionFor(beleg, settings.description_source);
+  const description = descriptionFor(doc, settings.description_source);
   if (description) parts.push(sanitizeSegment(description));
 
   if (settings.include_amount) {
-    const amount = formatAmountSegment(beleg.amount_gross);
+    const amount = formatAmountSegment(doc.amount_gross);
     if (amount) parts.push(amount);
   }
 
-  if (settings.include_property && beleg.property_code) {
-    parts.push(sanitizeSegment(beleg.property_code));
+  if (settings.include_property && doc.property_code) {
+    parts.push(sanitizeSegment(doc.property_code));
   }
 
   if (parts.length === 0) return null;

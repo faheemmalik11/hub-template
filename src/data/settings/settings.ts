@@ -34,7 +34,7 @@ export function useUpdateFilenameSettings() {
       // Read the row BEFORE writing so the trail records what the convention WAS. This setting
       // governs the name of every document the Hub hands to a person or to DATEV, and changing it
       // used to leave nothing behind but updated_at/updated_by on a single-row table.
-      const { data: vorher } = await sb
+      const { data: before } = await sb
         .from(TABLE.filenameSettings)
         .select("*")
         .eq("id", true)
@@ -51,7 +51,7 @@ export function useUpdateFilenameSettings() {
         "00000000-0000-0000-0000-000000000000",
         "updated",
         null,
-        { vorher: vorher ?? null, nachher: changes },
+        { vorher: before ?? null, nachher: changes },
       );
     },
     onSuccess: () => qc.invalidateQueries({ queryKey: ["filename_settings"] }),

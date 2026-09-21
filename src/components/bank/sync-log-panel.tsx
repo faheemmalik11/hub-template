@@ -26,18 +26,18 @@ import { type FilterField } from "@/components/data-table/filter-fields";
 import { FilterPopover } from "@/components/data-table/filter-popover";
 import { FilterPills } from "@/components/data-table/filter-pills";
 import {
-  useZeitraumOptionen,
-  ZEITRAUM_ALLE,
-  ZEITRAUM_INDIVIDUELL,
-  zeitraumBereich,
-} from "@/components/data-table/zeitraum-optionen";
-import { EmptyState, ErrorState, TableSkeleton } from "@/components/belege/query-states";
+  usePeriodOptions,
+  PERIOD_ALL,
+  PERIOD_CUSTOM,
+  periodArea,
+} from "@/components/data-table/period-options";
+import { EmptyState, ErrorState, TableSkeleton } from "@/components/documents/query-states";
 import { cn } from "@/lib/utils";
 import { useBankConnections, useBankSyncLogFacets, useBankSyncLogsPage } from "@/data";
 import { dateLocale, formatDate, formatDateTime, syncEventLabel } from "@/lib/data/format";
 import { useTranslation } from "@/lib/i18n";
 
-const ALLE = "__alle";
+const ALL = "__alle";
 const OFF = "0";
 // Auto-refresh choices in milliseconds. 60s matches the pipeline-health widget's existing cadence.
 const REFRESH_OPTIONS = [OFF, "60000", "300000", "900000"] as const;
@@ -63,7 +63,7 @@ function countsSummary(
 ): string {
   const parts = Object.entries(counts)
     .filter(([, v]) => typeof v === "number" && Number.isFinite(v))
-    .map(([k, v]) => `${v} ${t(`bankverbindungen.counts.${k}`, { defaultValue: k })}`);
+    .map(([k, v]) => `${v} ${t(`bankConnections.counts.${k}`, { defaultValue: k })}`);
   return parts.length > 0 ? parts.join(" · ") : "—";
 }
 
@@ -106,15 +106,15 @@ function formatCountdown(ms: number): string {
 export function SyncLogPanel() {
   const { t } = useTranslation();
 
-  const [fEvent, setFEvent] = useState(ALLE);
-  const [fLevel, setFLevel] = useState(ALLE);
-  const [fConnection, setFConnection] = useState(ALLE);
-  const [fZeitraum, setFZeitraum] = useState(ZEITRAUM_ALLE);
-  const [fVon, setFVon] = useState("");
-  const [fBis, setFBis] = useState("");
-  const zeitraumOptionen = useZeitraumOptionen(ZEITRAUM_ALLE);
+  const [fEvent, setFEvent] = useState(ALL);
+  const [fLevel, setFLevel] = useState(ALL);
+  const [fConnection, setFConnection] = useState(ALL);
+  const [fPeriod, setFPeriod] = useState(PERIOD_ALL);
+  const [fFromDate, setFFromDate] = useState("");
+  const [fToDate, setFToDate] = useState("");
+  const periodOptions = usePeriodOptions(PERIOD_ALL);
   // A preset resolves to real bounds here; only the custom option carries its own.
-  const bereich = zeitraumBereich(fZeitraum, fVon, fBis);
+  const area = periodArea(fPeriod, fFromDate, fToDate);
   const [refresh, setRefresh] = useState<string>("60000");
   const [page, setPage] = useState(1);
   const [pageSize, setPageSize] = useState(25);
@@ -122,17 +122,17 @@ export function SyncLogPanel() {
   // A narrower filter reshuffles the result set, so page 4 of the old one is meaningless.
   useEffect(() => {
     setPage(1);
-  }, [fEvent, fLevel, fConnection, fZeitraum, fVon, fBis, pageSize]);
+  }, [fEvent, fLevel, fConnection, fPeriod, fFromDate, fToDate, pageSize]);
 
   const refreshMs = Number(refresh) || 0;
   const facetsQ = useBankSyncLogFacets();
   const connectionsQ = useBankConnections();
   const logsQ = useBankSyncLogsPage({
-    event: fEvent === ALLE ? undefined : fEvent,
-    level: fLevel === ALLE ? undefined : fLevel,
-    connectionId: fConnection === ALLE ? undefined : fConnection,
-    von: bereich.von ?? undefined,
-    bis: bereich.bis ?? undefined,
+    event: fEvent === ALL ? undefined : fEvent,
+    level: fLevel === ALL ? undefined : fLevel,
+    connectionId: fConnection === ALL ? undefined : fConnection,
+    fromDate: area.fromDate ?? undefined,
+    toDate: area.toDate ?? undefined,
     page,
     pageSize,
     refreshMs,
@@ -141,8 +141,8 @@ export function SyncLogPanel() {
   const logs = logsQ.data?.rows ?? [];
   const total = logsQ.data?.total ?? 0;
   const totalPages = Math.max(1, Math.ceil(total / pageSize));
-  const von = total === 0 ? 0 : (page - 1) * pageSize + 1;
-  const bis = Math.min(page * pageSize, total);
+  const fromDate = total === 0 ? 0 : (page - 1) * pageSize + 1;
+  const toDate = Math.min(page * pageSize, total);
 
   // 1s tick, only while auto-refresh is on — no point re-rendering every second otherwise.
   const [now, setNow] = useState(() => Date.now());
@@ -165,19 +165,19 @@ export function SyncLogPanel() {
     [connectionsQ.data],
   );
 
-  const felder: FilterField[] = [
+  const fields: FilterField[] = [
     {
       kind: "select",
       key: "event",
       label: t("syncLog.filter.ereignis"),
       value: fEvent,
-      defaultValue: ALLE,
+      defaultValue: ALL,
       onChange: setFEvent,
       options: [
-        { value: ALLE, label: t("syncLog.filter.allEvents") },
+        { value: ALL, label: t("syncLog.filter.allEvents") },
         ...(facetsQ.data?.events ?? []).map((e) => ({
           value: e,
-          label: t(`bankverbindungen.syncEvent.${e}`, { defaultValue: syncEventLabel(e) }),
+          label: t(`bankConnections.syncEvent.${e}`, { defaultValue: syncEventLabel(e) }),
         })),
       ],
     },
@@ -186,10 +186,10 @@ export function SyncLogPanel() {
       key: "level",
       label: t("syncLog.filter.stufe"),
       value: fLevel,
-      defaultValue: ALLE,
+      defaultValue: ALL,
       onChange: setFLevel,
       options: [
-        { value: ALLE, label: t("syncLog.filter.allLevels") },
+        { value: ALL, label: t("syncLog.filter.allLevels") },
         ...(facetsQ.data?.levels ?? []).map((l) => ({ value: l, label: l })),
       ],
     },
@@ -198,10 +198,10 @@ export function SyncLogPanel() {
       key: "connection",
       label: t("syncLog.filter.verbindung"),
       value: fConnection,
-      defaultValue: ALLE,
+      defaultValue: ALL,
       onChange: setFConnection,
       options: [
-        { value: ALLE, label: t("syncLog.filter.allConnections") },
+        { value: ALL, label: t("syncLog.filter.allConnections") },
         ...(connectionsQ.data ?? []).map((c) => ({
           value: c.id,
           label: c.provider_name ?? c.bank_name ?? c.id.slice(0, 8),
@@ -215,28 +215,28 @@ export function SyncLogPanel() {
       kind: "zeitraum",
       key: "zeitraum",
       label: t("syncLog.filter.zeitraum"),
-      value: fZeitraum,
-      defaultValue: ZEITRAUM_ALLE,
-      onChange: setFZeitraum,
-      options: zeitraumOptionen,
-      customValue: ZEITRAUM_INDIVIDUELL,
-      von: fVon,
-      bis: fBis,
+      value: fPeriod,
+      defaultValue: PERIOD_ALL,
+      onChange: setFPeriod,
+      options: periodOptions,
+      customValue: PERIOD_CUSTOM,
+      fromDate: fFromDate,
+      toDate: fToDate,
       onRangeApply: (v, b) => {
-        setFVon(v);
-        setFBis(b);
+        setFFromDate(v);
+        setFToDate(b);
       },
       locale: dateLocale(),
       formatDay: (iso) => formatDate(iso),
       backLabel: t("home.zeitraumAktion.zurueck"),
-      placeholder: t("belege.list.filter.zeitraum"),
+      placeholder: t("documents.list.filter.zeitraum"),
       rangeLabels: {
-        placeholder: t("belege.list.filter.zeitraumWaehlen"),
-        reset: t("belege.list.filter.zeitraumZuruecksetzen"),
-        apply: t("belege.list.filter.zeitraumAnwenden"),
-        previousMonth: t("belege.list.filter.monatZurueck"),
-        nextMonth: t("belege.list.filter.monatVor"),
-        pickSecond: t("belege.list.filter.zweitesDatum"),
+        placeholder: t("documents.list.filter.zeitraumWaehlen"),
+        reset: t("documents.list.filter.zeitraumZuruecksetzen"),
+        apply: t("documents.list.filter.zeitraumAnwenden"),
+        previousMonth: t("documents.list.filter.monatZurueck"),
+        nextMonth: t("documents.list.filter.monatVor"),
+        pickSecond: t("documents.list.filter.zweitesDatum"),
       },
     },
   ];
@@ -279,7 +279,7 @@ export function SyncLogPanel() {
           {t("syncLog.refreshNow")}
         </Button>
         <FilterPopover
-          fields={felder}
+          fields={fields}
           labels={{
             button: t("syncLog.filter.button"),
             title: t("syncLog.filter.title"),
@@ -287,7 +287,7 @@ export function SyncLogPanel() {
           }}
         />
       </div>
-      <FilterPills className="mt-3 shrink-0" fields={felder} />
+      <FilterPills className="mt-3 shrink-0" fields={fields} />
 
       <div className="mt-3 flex min-h-0 flex-1 flex-col">
         {logsQ.isError ? (
@@ -304,10 +304,10 @@ export function SyncLogPanel() {
                     scrolling. `bg-muted` rather than a translucent tint: rows sliding
                     under a half-transparent header show through it. */}
                 <TableRow className="sticky top-0 z-10 bg-muted">
-                  <TableHead>{t("bankverbindungen.logCol.zeitpunkt")}</TableHead>
-                  <TableHead>{t("bankverbindungen.logCol.ereignis")}</TableHead>
+                  <TableHead>{t("bankConnections.logCol.zeitpunkt")}</TableHead>
+                  <TableHead>{t("bankConnections.logCol.ereignis")}</TableHead>
                   <TableHead>{t("syncLog.col.connection")}</TableHead>
-                  <TableHead>{t("bankverbindungen.logCol.details")}</TableHead>
+                  <TableHead>{t("bankConnections.logCol.details")}</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
@@ -334,7 +334,7 @@ export function SyncLogPanel() {
                           )}
                         />
                         {l.event
-                          ? t(`bankverbindungen.syncEvent.${l.event}`, {
+                          ? t(`bankConnections.syncEvent.${l.event}`, {
                               defaultValue: syncEventLabel(l.event),
                             })
                           : "—"}
@@ -374,8 +374,8 @@ export function SyncLogPanel() {
             totalPages={totalPages}
             pageSize={pageSize}
             total={total}
-            from={von}
-            to={bis}
+            from={fromDate}
+            to={toDate}
             onPage={setPage}
             onPageSize={setPageSize}
           />

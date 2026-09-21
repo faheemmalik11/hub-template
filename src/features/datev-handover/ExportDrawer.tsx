@@ -16,9 +16,9 @@ import {
   SheetHeader,
   SheetTitle,
   downloadMonthlyBundle,
-  fehlerText,
+  errorText,
   toast,
-  useGesellschaften,
+  useCompanies,
   useTranslation,
   type BundleSummary,
 } from "./adapter";
@@ -46,22 +46,22 @@ export function ExportDrawer({
   onOpenChange: (open: boolean) => void;
 }) {
   const { t } = useTranslation();
-  const companiesQ = useGesellschaften();
+  const companiesQ = useCompanies();
   const companies = companiesQ.data ?? [];
 
   const now = new Date();
   // Defaults to the PREVIOUS month: a payment run is worked after a month closes, so the current
   // month is almost never the one being exported.
-  const vormonat = now.getMonth() === 0 ? 12 : now.getMonth();
-  const vorjahr = now.getMonth() === 0 ? now.getFullYear() - 1 : now.getFullYear();
+  const previousMonth = now.getMonth() === 0 ? 12 : now.getMonth();
+  const previousYear = now.getMonth() === 0 ? now.getFullYear() - 1 : now.getFullYear();
 
   const [companyId, setCompanyId] = useState("");
-  const [month, setMonth] = useState(vormonat);
-  const [year, setYear] = useState(vorjahr);
+  const [month, setMonth] = useState(previousMonth);
+  const [year, setYear] = useState(previousYear);
   const [busy, setBusy] = useState(false);
   const [summary, setSummary] = useState<BundleSummary | null>(null);
 
-  const jahre = Array.from({ length: 6 }, (_, i) => now.getFullYear() - i);
+  const years = Array.from({ length: 6 }, (_, i) => now.getFullYear() - i);
 
   async function run() {
     setBusy(true);
@@ -81,9 +81,9 @@ export function ExportDrawer({
       a.click();
       URL.revokeObjectURL(url);
       setSummary(s);
-      toast.success(t("datevUebergabe.export.fertig", { count: s?.included ?? 0 }));
+      toast.success(t("handover.export.fertig", { count: s?.included ?? 0 }));
     } catch (e) {
-      toast.error(fehlerText(e));
+      toast.error(errorText(e));
     }
     setBusy(false);
   }
@@ -92,16 +92,16 @@ export function ExportDrawer({
     <Sheet open={open} onOpenChange={busy ? undefined : onOpenChange}>
       <SheetContent className="flex w-full flex-col gap-0 overflow-y-auto sm:max-w-md">
         <SheetHeader>
-          <SheetTitle>{t("datevUebergabe.export.title")}</SheetTitle>
-          <SheetDescription>{t("datevUebergabe.export.desc")}</SheetDescription>
+          <SheetTitle>{t("handover.export.title")}</SheetTitle>
+          <SheetDescription>{t("handover.export.desc")}</SheetDescription>
         </SheetHeader>
 
         <div className="mt-6 flex-1 space-y-4">
           <div>
-            <Label htmlFor="export-company">{t("datevUebergabe.export.gesellschaft")}</Label>
+            <Label htmlFor="export-company">{t("handover.export.gesellschaft")}</Label>
             <Select value={companyId} onValueChange={setCompanyId}>
               <SelectTrigger id="export-company" className="mt-1.5 w-full">
-                <SelectValue placeholder={t("datevUebergabe.export.gesellschaftWaehlen")} />
+                <SelectValue placeholder={t("handover.export.gesellschaftWaehlen")} />
               </SelectTrigger>
               <SelectContent>
                 {companies.map((c) => (
@@ -115,7 +115,7 @@ export function ExportDrawer({
 
           <div className="flex gap-3">
             <div className="flex-1">
-              <Label htmlFor="export-month">{t("datevUebergabe.export.monat")}</Label>
+              <Label htmlFor="export-month">{t("handover.export.monat")}</Label>
               <Select value={String(month)} onValueChange={(v) => setMonth(Number(v))}>
                 <SelectTrigger id="export-month" className="mt-1.5 w-full">
                   <SelectValue />
@@ -123,20 +123,20 @@ export function ExportDrawer({
                 <SelectContent>
                   {Array.from({ length: 12 }, (_, i) => (
                     <SelectItem key={i + 1} value={String(i + 1)}>
-                      {t(`datevUebergabe.export.monatName.${i + 1}`)}
+                      {t(`handover.export.monatName.${i + 1}`)}
                     </SelectItem>
                   ))}
                 </SelectContent>
               </Select>
             </div>
             <div className="w-32">
-              <Label htmlFor="export-year">{t("datevUebergabe.export.jahr")}</Label>
+              <Label htmlFor="export-year">{t("handover.export.jahr")}</Label>
               <Select value={String(year)} onValueChange={(v) => setYear(Number(v))}>
                 <SelectTrigger id="export-year" className="mt-1.5 w-full">
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
-                  {jahre.map((j) => (
+                  {years.map((j) => (
                     <SelectItem key={j} value={String(j)}>
                       {j}
                     </SelectItem>
@@ -146,14 +146,14 @@ export function ExportDrawer({
             </div>
           </div>
 
-          <p className="text-xs text-muted-foreground">{t("datevUebergabe.export.hinweis")}</p>
+          <p className="text-xs text-muted-foreground">{t("handover.export.hinweis")}</p>
 
           {/* What actually came out. `included` and `total` are two numbers on purpose: an archive
               that is short has to say so here rather than look complete on disk. */}
           {summary && (
             <div className="rounded-xl border border-border bg-card p-3">
               <p className="text-sm text-foreground">
-                {t("datevUebergabe.export.ergebnis", {
+                {t("handover.export.ergebnis", {
                   included: summary.included,
                   total: summary.total,
                 })}
@@ -165,7 +165,7 @@ export function ExportDrawer({
                   ))}
                   {summary.omitted.length > 8 && (
                     <li className="text-muted-foreground">
-                      {t("datevUebergabe.export.weitere", { count: summary.omitted.length - 8 })}
+                      {t("handover.export.weitere", { count: summary.omitted.length - 8 })}
                     </li>
                   )}
                 </ul>
@@ -176,11 +176,11 @@ export function ExportDrawer({
 
         <SheetFooter className="mt-6">
           <Button variant="outline" onClick={() => onOpenChange(false)} disabled={busy}>
-            {t("datevUebergabe.aktion.abbrechen")}
+            {t("handover.aktion.abbrechen")}
           </Button>
           <Button className="gap-2" onClick={() => void run()} disabled={busy || !companyId}>
             {busy ? <Loader2 className="size-4 animate-spin" /> : <Download className="size-4" />}
-            {busy ? t("datevUebergabe.export.laeuft") : t("datevUebergabe.export.starten")}
+            {busy ? t("handover.export.laeuft") : t("handover.export.starten")}
           </Button>
         </SheetFooter>
       </SheetContent>

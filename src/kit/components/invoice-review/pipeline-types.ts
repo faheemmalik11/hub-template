@@ -19,16 +19,16 @@ export interface Validation {
   ust_satz_ok?: boolean | null;
   iban_ok?: boolean | null;
   datum_plausibel?: boolean | null;
-  kleinbetrag?: boolean;
+  smallAmount?: boolean;
   decision_reason?: string;
   [field: string]: unknown;
 }
 
 export interface Extracted {
-  konfidenz?: Confidence;
+  confidence?: Confidence;
   validation_detail?: Record<string, unknown> | null;
   validation?: Validation | null;
-  richtung?: string | null;
+  direction?: string | null;
   zwischensumme_brutto?: number | string | null;
   iban?: string | null;
   review_checks?: unknown;

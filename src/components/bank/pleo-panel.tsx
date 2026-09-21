@@ -8,7 +8,7 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { EmptyState, ErrorState, TableSkeleton } from "@/components/belege/query-states";
+import { EmptyState, ErrorState, TableSkeleton } from "@/components/documents/query-states";
 import { usePleoEmployees } from "@/data";
 import type { BankAccount } from "@/lib/data/types";
 import { useTranslation } from "@/lib/i18n";
@@ -32,32 +32,32 @@ import { useTranslation } from "@/lib/i18n";
  */
 export function PleoPanel({
   programs,
-  suche,
+  search,
 }: {
   /** The Pleo `bank_accounts` rows. Only their presence is used, to decide the tab exists at all. */
   programs: BankAccount[];
   /** Owned by the page: the search box renders on the tab row, not inside this panel. */
-  suche: string;
+  search: string;
 }) {
   const { t } = useTranslation();
   const employeesQ = usePleoEmployees(programs.length > 0);
 
-  const alle = useMemo(() => employeesQ.data ?? [], [employeesQ.data]);
+  const all = useMemo(() => employeesQ.data ?? [], [employeesQ.data]);
 
-  const gefiltert = useMemo(() => {
-    const q = suche.trim().toLowerCase();
-    if (!q) return alle;
-    return alle.filter((e) =>
+  const filtered = useMemo(() => {
+    const q = search.trim().toLowerCase();
+    if (!q) return all;
+    return all.filter((e) =>
       [e.firstName, e.lastName, e.email, e.jobTitle, e.code]
         .filter(Boolean)
         .some((v) => (v as string).toLowerCase().includes(q)),
     );
-  }, [alle, suche]);
+  }, [all, search]);
 
   // Job title and code are optional on Pleo's side, and on this company they may be set on nobody.
   // A column of dashes says less than no column, so each one appears only once something fills it.
-  const zeigeJobTitle = alle.some((e) => e.jobTitle);
-  const zeigeCode = alle.some((e) => e.code);
+  const showJobTitle = all.some((e) => e.jobTitle);
+  const showCode = all.some((e) => e.code);
 
   if (programs.length === 0) return null;
 
@@ -73,11 +73,11 @@ export function PleoPanel({
           // Named rather than swallowed: the likeliest cause is that the Pleo API key does not
           // carry the `users:read` scope this endpoint needs, and the message says which it is.
           <ErrorState error={employeesQ.error} onRetry={() => employeesQ.refetch()} />
-        ) : alle.length === 0 ? (
-          <EmptyState title={t("bankkonten.karten.keineMitarbeiter")} />
-        ) : gefiltert.length === 0 ? (
+        ) : all.length === 0 ? (
+          <EmptyState title={t("bankAccounts.karten.keineMitarbeiter")} />
+        ) : filtered.length === 0 ? (
           <div>
-            <EmptyState title={t("bankkonten.keineTreffer.title")} />
+            <EmptyState title={t("bankAccounts.keineTreffer.title")} />
             {/* No reset button: the search box that narrowed this lives on the tab row above,
                 where clearing it is one click away and visible. */}
           </div>
@@ -86,33 +86,33 @@ export function PleoPanel({
             <Table>
               <TableHeader>
                 <TableRow className="bg-muted/40">
-                  <TableHead>{t("bankkonten.karten.col.mitarbeiter")}</TableHead>
-                  <TableHead>{t("bankkonten.karten.col.email")}</TableHead>
-                  {zeigeJobTitle && <TableHead>{t("bankkonten.karten.col.position")}</TableHead>}
-                  {zeigeCode && <TableHead>{t("bankkonten.karten.col.code")}</TableHead>}
+                  <TableHead>{t("bankAccounts.karten.col.mitarbeiter")}</TableHead>
+                  <TableHead>{t("bankAccounts.karten.col.email")}</TableHead>
+                  {showJobTitle && <TableHead>{t("bankAccounts.karten.col.position")}</TableHead>}
+                  {showCode && <TableHead>{t("bankAccounts.karten.col.code")}</TableHead>}
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {gefiltert.map((e) => (
+                {filtered.map((e) => (
                   <TableRow key={e.id}>
                     <TableCell className="text-sm font-medium text-foreground">
                       {name(e) || (
                         // Pleo has the account but no name on it. Not a dash: an unnamed
                         // cardholder is a thing to fix in Pleo, not an empty cell to skim past.
                         <span className="font-normal text-muted-foreground">
-                          {t("bankkonten.karten.ohneName")}
+                          {t("bankAccounts.karten.ohneName")}
                         </span>
                       )}
                     </TableCell>
                     <TableCell className="text-sm text-muted-foreground">
                       {e.email ?? "—"}
                     </TableCell>
-                    {zeigeJobTitle && (
+                    {showJobTitle && (
                       <TableCell className="text-sm text-muted-foreground">
                         {e.jobTitle ?? "—"}
                       </TableCell>
                     )}
-                    {zeigeCode && (
+                    {showCode && (
                       <TableCell className="font-mono text-xs text-muted-foreground">
                         {e.code ?? "—"}
                       </TableCell>

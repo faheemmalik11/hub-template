@@ -4,7 +4,7 @@ import { TABLE } from "@/config/tables";
 import { STALE, sb } from "@/data/client";
 import { fetchAllRows, searchTokens, searchWasDropped } from "@/data/shared";
 import { supabase } from "@/integrations/supabase/client";
-import type { PipelineHealth, PipelineRun, RunRequest, VerarbeitungsLog } from "@/lib/data/types";
+import type { PipelineHealth, PipelineRun, RunRequest, ProcessingLog } from "@/lib/data/types";
 
 // Pipeline-Lauf-Heartbeat fürs Health-Panel (Briefing Betrieb/Monitoring: running / last run / errors).
 // Liest pipeline_runs (Migration 0013 im Pipeline-Repo). refetchInterval hält die Anzeige live.
@@ -132,12 +132,12 @@ export function useAskForARun() {
 // skewed the status counts, and processing_log only grows.
 
 /** Shared filter shape for the Protokoll screen's two reads, so they can never drift apart. */
-export type VerarbeitungsLogFilter = {
+export type ProcessingLogFilter = {
   search?: string;
   status?: string;
   /** Inclusive ISO date bounds on processed_at. Both optional. */
-  von?: string | null;
-  bis?: string | null;
+  fromDate?: string | null;
+  toDate?: string | null;
 };
 
 /**
@@ -149,7 +149,7 @@ export type VerarbeitungsLogFilter = {
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 function applyLogFilter<T extends { or: any; eq: any; gte: any; lte: any }>(
   query: T,
-  { search, status, von, bis }: VerarbeitungsLogFilter,
+  { search, status, fromDate, toDate }: ProcessingLogFilter,
 ): T {
   // Every token must match, each across subject/sender/reason. Chained .or() calls are ANDed.
   for (const token of searchTokens(search ?? "")) {
@@ -157,8 +157,8 @@ function applyLogFilter<T extends { or: any; eq: any; gte: any; lte: any }>(
   }
   if (status) query = query.eq("status", status);
   // processed_at is a timestamp, so the upper bound has to cover the whole day.
-  if (von) query = query.gte("processed_at", `${von}T00:00:00`);
-  if (bis) query = query.lte("processed_at", `${bis}T23:59:59.999`);
+  if (fromDate) query = query.gte("processed_at", `${fromDate}T00:00:00`);
+  if (toDate) query = query.lte("processed_at", `${toDate}T23:59:59.999`);
   return query;
 }
 
@@ -166,10 +166,10 @@ function applyLogFilter<T extends { or: any; eq: any; gte: any; lte: any }>(
 // which fetched a flat `.limit(500)` and filtered in the browser: no pagination, and once the log passes
 // 500 rows that cap silently hides the oldest entries AND skews the status counts. processing_log grows
 // by one row per processed mail forever, so it has to be paged on the server.
-export function useVerarbeitungsLogPage(
-  filter: VerarbeitungsLogFilter & { page: number; pageSize: number },
+export function useProcessingLogPage(
+  filter: ProcessingLogFilter & { page: number; pageSize: number },
 ) {
-  const { search, status, von, bis, page, pageSize } = filter;
+  const { search, status, fromDate, toDate, page, pageSize } = filter;
   const tokens = searchTokens(search ?? "");
   const dropped = searchWasDropped(search ?? "");
   return useQuery({
@@ -178,14 +178,14 @@ export function useVerarbeitungsLogPage(
       tokens.join("\u0000"),
       dropped,
       status ?? "",
-      von ?? "",
-      bis ?? "",
+      fromDate ?? "",
+      toDate ?? "",
       page,
       pageSize,
     ],
     staleTime: STALE,
     placeholderData: keepPreviousData,
-    queryFn: async (): Promise<{ rows: VerarbeitungsLog[]; total: number }> => {
+    queryFn: async (): Promise<{ rows: ProcessingLog[]; total: number }> => {
       // The user typed only filter delimiters. Nothing can match that, and returning the unfiltered
       // table (which is what the old code did) is the one answer that is definitely wrong.
       if (dropped) return { rows: [], total: 0 };
@@ -194,7 +194,7 @@ export function useVerarbeitungsLogPage(
       const to = from + pageSize - 1;
       const query = applyLogFilter(
         supabase.from(TABLE.processingLog).select("*", { count: "exact" }),
-        { search, status, von, bis },
+        { search, status, fromDate, toDate },
       );
       const { data, error, count } = await query
         // id breaks processed_at ties — an ingest run writes many rows within the same instant.
@@ -202,7 +202,7 @@ export function useVerarbeitungsLogPage(
         .order("id", { ascending: false })
         .range(from, to);
       if (error) throw error;
-      return { rows: (data ?? []) as unknown as VerarbeitungsLog[], total: count ?? 0 };
+      return { rows: (data ?? []) as unknown as ProcessingLog[], total: count ?? 0 };
     },
   });
 }
@@ -218,8 +218,8 @@ export function useVerarbeitungsLogPage(
  * chips summed to exactly 1000. Only `status` is selected, so even a large log is a couple of cheap
  * round trips.
  */
-export function useVerarbeitungsLogStatusCounts(filter: VerarbeitungsLogFilter = {}) {
-  const { search, von, bis } = filter;
+export function useProcessingLogStatusCounts(filter: ProcessingLogFilter = {}) {
+  const { search, fromDate, toDate } = filter;
   const tokens = searchTokens(search ?? "");
   const dropped = searchWasDropped(search ?? "");
   return useQuery({
@@ -227,8 +227,8 @@ export function useVerarbeitungsLogStatusCounts(filter: VerarbeitungsLogFilter =
       "verarbeitungs_log_status_counts",
       tokens.join("\u0000"),
       dropped,
-      von ?? "",
-      bis ?? "",
+      fromDate ?? "",
+      toDate ?? "",
     ],
     staleTime: STALE,
     queryFn: async (): Promise<Record<string, number>> => {
@@ -239,7 +239,7 @@ export function useVerarbeitungsLogStatusCounts(filter: VerarbeitungsLogFilter =
             .from(TABLE.processingLog)
             .select("status", withCount ? { count: "exact" } : undefined),
           // The status filter is deliberately NOT passed: the chips must keep showing every status.
-          { search, von, bis },
+          { search, fromDate, toDate },
         )
           .order("processed_at", { ascending: false })
           .order("id", { ascending: false })
@@ -308,19 +308,19 @@ export function useChangeHistoryPage(filter: { search?: string; page: number; pa
   });
 }
 
-export function useVerarbeitungsLogFuerBeleg(belegId: string) {
+export function useProcessingLogForDocument(documentId: string) {
   return useQuery({
-    queryKey: ["verarbeitungs_log", "beleg", belegId],
-    enabled: !!belegId,
+    queryKey: ["verarbeitungs_log", "beleg", documentId],
+    enabled: !!documentId,
     staleTime: STALE,
-    queryFn: async (): Promise<VerarbeitungsLog[]> => {
+    queryFn: async (): Promise<ProcessingLog[]> => {
       const { data, error } = await supabase
         .from(TABLE.processingLog)
         .select("*")
-        .eq("document_id", belegId)
+        .eq("document_id", documentId)
         .order("processed_at", { ascending: false });
       if (error) throw error;
-      return (data ?? []) as unknown as VerarbeitungsLog[];
+      return (data ?? []) as unknown as ProcessingLog[];
     },
   });
 }

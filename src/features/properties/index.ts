@@ -1,11 +1,11 @@
-export { ObjekteListe } from "./objekte-liste";
-export { ObjektDetail } from "./objekt-detail";
+export { PropertiesList } from "./property-list";
+export { PropertyDetail } from "./property-detail";
 export { validatePropertiesSearch } from "./config";
 export type {
-  ObjektDaten,
-  ObjektGesellschaft,
-  ObjektGesellschaftenIndex,
-  ObjektZuordnung,
+  PropertyData,
+  PropertyCompany,
+  PropertyCompaniesIndex,
+  PropertyAssignment,
   PropertiesConfig,
   PropertiesSearch,
 } from "./config";

@@ -3,13 +3,13 @@ import { toast } from "sonner";
 
 import { Button } from "@/components/ui/button";
 import type { ManualBankAccountRow } from "@/lib/api/bank-manual-import.functions";
-import { useCreateManualBankAccount, useGesellschaften } from "@/data";
+import { useCreateManualBankAccount, useCompanies } from "@/data";
 import {
   BANK_ACCOUNT_IMPORT_RULES,
   normalizeBankAccountFields,
 } from "@/lib/data/bank-account-fields";
 import { useTranslation } from "@/lib/i18n";
-import { fehlerText } from "@/lib/data/format";
+import { errorText } from "@/lib/data/format";
 import { BankAccountFormFields } from "./bank-account-form-fields";
 import { useBankAccountForm } from "./use-bank-account-form";
 
@@ -23,7 +23,7 @@ export function ManualImportAccountForm({
   onCancel?: () => void;
 }) {
   const { t } = useTranslation();
-  const companiesQ = useGesellschaften();
+  const companiesQ = useCompanies();
   const create = useCreateManualBankAccount();
   const form = useBankAccountForm(undefined, BANK_ACCOUNT_IMPORT_RULES);
 
@@ -57,7 +57,7 @@ export function ManualImportAccountForm({
         onError: (e) => {
           toast.error(
             t("bank.manualImport.errors.accountFailed", {
-              error: fehlerText(e),
+              error: errorText(e),
             }),
           );
         },

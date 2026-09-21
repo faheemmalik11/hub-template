@@ -2,8 +2,8 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 
 import { TABLE } from "@/config/tables";
 import { SINGLETON_ROW_ID, STALE, actorEmail, insertChangeHistory, sb } from "@/data/client";
-import { fetchAllRows, invalidateMatchState, pflichtGrund } from "@/data/shared";
-import { getFilingFolders, getMailboxFolders } from "@/lib/api/postfach-folders.functions";
+import { fetchAllRows, invalidateMatchState, requiredReason } from "@/data/shared";
+import { getFilingFolders, getMailboxFolders } from "@/lib/api/inbox-folders.functions";
 import { getActorDisplay, type ActorDisplay } from "@/lib/api/actor-display.functions";
 import type { Channel, ChannelFolder, ChannelFolderRole } from "@/lib/data/types";
 
@@ -24,12 +24,12 @@ import type { Channel, ChannelFolder, ChannelFolderRole } from "@/lib/data/types
 // (a person creating a new folder is an occasional, deliberate act), and every open of the
 // Postfach screen re-running a live Graph/Dropbox call would be a slow, easily-avoided round trip
 // for data that is essentially static within a session.
-const POSTFACH_FOLDERS_STALE = 5 * 60_000;
+const INBOX_FOLDERS_STALE = 5 * 60_000;
 
 export function useActorDisplay(email: string | null) {
   return useQuery({
     queryKey: ["actor_display", email],
-    staleTime: POSTFACH_FOLDERS_STALE,
+    staleTime: INBOX_FOLDERS_STALE,
     enabled: Boolean(email),
     queryFn: async (): Promise<ActorDisplay> =>
       getActorDisplay({ data: { email: email as string } }),
@@ -207,7 +207,7 @@ export function useSaveChannelFolders() {
 export function useMailboxFolders(enabled = true) {
   return useQuery({
     queryKey: ["postfach_mailbox_folders"],
-    staleTime: POSTFACH_FOLDERS_STALE,
+    staleTime: INBOX_FOLDERS_STALE,
     enabled,
     queryFn: () => getMailboxFolders(),
   });
@@ -216,7 +216,7 @@ export function useMailboxFolders(enabled = true) {
 export function useFilingFolders(enabled = true) {
   return useQuery({
     queryKey: ["postfach_filing_folders"],
-    staleTime: POSTFACH_FOLDERS_STALE,
+    staleTime: INBOX_FOLDERS_STALE,
     enabled,
     queryFn: () => getFilingFolders(),
   });

@@ -39,8 +39,8 @@ export function AccountChips({
   if (chips.length === 0) return null;
   const standard = chips.find((chip) => chip.kind === "default");
   // The star explains itself, so the list behind the receipt does not repeat it.
-  const uebrige = chips.filter((chip) => chip.kind !== "default");
-  const neu = chips.find((chip) => chip.kind === "new");
+  const remaining = chips.filter((chip) => chip.kind !== "default");
+  const newChip = chips.find((chip) => chip.kind === "new");
 
   // gap-2.5: two hover targets this small need daylight between them, or aiming at one keeps
   // opening the other.
@@ -57,20 +57,20 @@ export function AccountChips({
         </Tooltip>
       )}
 
-      {neu && (
+      {newChip && (
         <Tooltip>
           <TooltipTrigger asChild>
             <span className="inline-flex items-center gap-1 rounded border border-amber-300 bg-amber-100 px-1.5 py-0.5 text-xs font-medium text-amber-900">
               <TriangleAlert className="size-3" />
-              {neu.label}
+              {newChip.label}
             </span>
           </TooltipTrigger>
-          <TooltipContent className="max-w-[20rem]">{neu.hint}</TooltipContent>
+          <TooltipContent className="max-w-[20rem]">{newChip.hint}</TooltipContent>
         </Tooltip>
       )}
 
       {/* What is left to say about this account, once the star has spoken for itself. */}
-      {uebrige.length > 0 && (
+      {remaining.length > 0 && (
         <Tooltip>
           <TooltipTrigger asChild>
             <span
@@ -82,7 +82,7 @@ export function AccountChips({
           </TooltipTrigger>
           <TooltipContent className="max-w-[22rem]">
             <ul className="space-y-1.5">
-              {uebrige.map((chip) => (
+              {remaining.map((chip) => (
                 <li key={chip.kind}>{chip.hint}</li>
               ))}
             </ul>

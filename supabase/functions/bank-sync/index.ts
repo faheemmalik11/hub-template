@@ -6,7 +6,7 @@ import { getBanksapi, isSandboxConnection } from "../_shared/banksapi.ts";
 import { serviceClient } from "../_shared/supabase.ts";
 import { corsHeaders, jsonResponse } from "../_shared/cors.ts";
 import { accountRow, connectionRow, transactionRow } from "../_shared/mappers.ts";
-import { runMatching, type MatchBeleg, type MatchTransaction } from "../_shared/matching.ts";
+import { runMatching, type MatchDocument, type MatchTransaction } from "../_shared/matching.ts";
 import { classifyTransactionType, type TransactionType } from "../_shared/transaction-type.ts";
 import { TABLE } from "../_shared/tables.ts";
 
@@ -643,7 +643,7 @@ Deno.serve(async (req) => {
         .range(from, to),
     );
 
-    const belege: MatchBeleg[] = (belegeRows ?? []).map((b: Record<string, unknown>) => ({
+    const belege: MatchDocument[] = (belegeRows ?? []).map((b: Record<string, unknown>) => ({
       id: b.id as string,
       amount_gross: (b.amount_gross as number | null) ?? null,
       document_date: (b.document_date as string | null) ?? null,
@@ -716,7 +716,7 @@ Deno.serve(async (req) => {
         .range(from, to),
     );
 
-    const outgoingBelege: MatchBeleg[] = (outgoingRows ?? []).map((o: Record<string, unknown>) => ({
+    const outgoingBelege: MatchDocument[] = (outgoingRows ?? []).map((o: Record<string, unknown>) => ({
       id: o.id as string,
       amount_gross: (o.amount_gross as number | null) ?? null,
       document_date: (o.voucher_date as string | null) ?? null,

@@ -4,7 +4,7 @@ import { toast } from "sonner";
 import { useTranslation } from "@/lib/i18n";
 import { usePaymentRight } from "@/lib/payment-right";
 import { useLinkInvoiceTransaction, useLinkOutgoingInvoiceTransaction } from "@/data";
-import { fehlerText, formatDate, formatSignedEUR } from "@/lib/data/format";
+import { errorText, formatDate, formatSignedEUR } from "@/lib/data/format";
 import {
   MatchCard,
   MatchCardAction,
@@ -42,7 +42,7 @@ export function PossibleMatches({
   onLinked: () => void;
 }) {
   const { t } = useTranslation();
-  const { mayPay, reason: keinZahlrecht } = usePaymentRight();
+  const { mayPay, reason: noPaymentRight } = usePaymentRight();
   const linkIncoming = useLinkInvoiceTransaction();
   const linkOutgoing = useLinkOutgoingInvoiceTransaction();
   const [pendingId, setPendingId] = useState<string | null>(null);
@@ -75,7 +75,7 @@ export function PossibleMatches({
         toast.success(t("matchPanel.linked"));
         onLinked();
       },
-      onError: (e: unknown) => toast.error(t("matchPanel.linkFailed", { error: fehlerText(e) })),
+      onError: (e: unknown) => toast.error(t("matchPanel.linkFailed", { error: errorText(e) })),
       onSettled: () => {
         setPendingId(null);
         setConfirmParam(undefined);
@@ -87,7 +87,7 @@ export function PossibleMatches({
         onSettled,
       );
     } else {
-      linkIncoming.mutate({ belegId: invoiceId, transactionId, score, reasons }, onSettled);
+      linkIncoming.mutate({ documentId: invoiceId, transactionId, score, reasons }, onSettled);
     }
   }
 
@@ -115,7 +115,7 @@ export function PossibleMatches({
                 pendingLabel={t("matchPanel.linking")}
                 pending={pendingId === txn.id}
                 disabled={linking || !mayPay}
-                title={keinZahlrecht}
+                title={noPaymentRight}
                 onClick={() => setConfirmParam(txn.id)}
               />
             }

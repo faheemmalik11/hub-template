@@ -55,7 +55,7 @@ export function useProfileAdapter(): ProfileAdapter {
       const { data, error } = await sb.rpc("my_profile");
       if (error) throw error;
       const row = (data as MyProfileRow[] | null)?.[0];
-      if (!row) throw new Error(t("profil.fehler.keinKonto"));
+      if (!row) throw new Error(t("profile.fehler.keinKonto"));
       return row;
     },
   });
@@ -132,7 +132,7 @@ export function useProfileAdapter(): ProfileAdapter {
 
     changePassword: async ({ currentPassword, newPassword }) => {
       const email = user?.email;
-      if (!email) throw new Error(t("profil.fehler.keinKonto"));
+      if (!email) throw new Error(t("profile.fehler.keinKonto"));
       // Supabase sets a new password without asking for the old one. Signing in with the current
       // password first is what makes "current password" mean something: a stolen open session
       // cannot change the password without knowing it.
@@ -140,16 +140,16 @@ export function useProfileAdapter(): ProfileAdapter {
         email,
         password: currentPassword,
       });
-      if (signInError) throw new Error(t("profil.fehler.passwortFalsch"));
+      if (signInError) throw new Error(t("profile.fehler.passwortFalsch"));
 
       const result = await completePasswordChange(newPassword);
-      if (!result.ok) throw new Error(result.raw ?? t("profil.fehler.passwortAenderung"));
+      if (!result.ok) throw new Error(result.raw ?? t("profile.fehler.passwortAenderung"));
     },
 
     uploadPicture: async ({ file }) => {
       const { data: authUser } = await supabase.auth.getUser();
       const authUserId = authUser.user?.id;
-      if (!authUserId) throw new Error(t("profil.fehler.keinKonto"));
+      if (!authUserId) throw new Error(t("profile.fehler.keinKonto"));
 
       // The folder is the caller's own auth id, which is what the storage policy checks.
       const extension = file.name.split(".").pop()?.toLowerCase() || "png";

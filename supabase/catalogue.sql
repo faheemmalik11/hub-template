@@ -86,12 +86,21 @@ insert into public.permissions (key, kind, parent_key, category, label_de, label
   ('page.onboarding',          'page', 'module.admin',       'menu', 'Einrichtung',                'Setup',                       false, 820),
   ('page.notifications',       'page', 'module.admin',       'menu', 'Benachrichtigungen',         'Notifications',               false, 830),
   ('page.activity_log',        'page', 'module.admin',       'menu', 'Protokoll',                  'Activity log',                false, 840),
-  ('page.trash',               'page', 'module.admin',       'menu', 'Papierkorb',                 'Trash',                       false, 850),
-  ('page.bank_connections',    'page', 'module.admin',       'menu', 'Bankverbindungen',           'Bank connections',            false, 860)
+  ('page.trash',               'page', 'module.admin',       'menu', 'Papierkorb',                 'Trash',                       false, 850)
 on conflict (key) do update
    set kind = excluded.kind, parent_key = excluded.parent_key, category = excluded.category,
        label_de = excluded.label_de, label_en = excluded.label_en,
        locked = excluded.locked, sort_order = excluded.sort_order;
+
+-- ------------------------------------------------------------- the sections
+--
+-- Bank connections stopped being a screen when it merged into Bankkonten, but it still gates the
+-- connection controls there, so it becomes a section of that page rather than a page of its own.
+insert into public.permissions (key, kind, parent_key, category, label_de, label_en, sort_order) values
+  ('page.bank_connections', 'section', 'page.bank_accounts', 'menu', 'Bankverbindungen', 'Bank connections', 335)
+on conflict (key) do update
+   set kind = excluded.kind, parent_key = excluded.parent_key, category = excluded.category,
+       label_de = excluded.label_de, label_en = excluded.label_en, sort_order = excluded.sort_order;
 
 -- -------------------------------------------------------------- the actions
 --
@@ -152,13 +161,13 @@ on conflict (key) do update
 -- Presets, not laws: an admin edits these on the Rollen tab afterwards. `user_permissions` is what
 -- deviates from them for one person, in either direction.
 
--- Everyone signed in sees the menu they can use, so every role gets every module and page by
--- default. What they may DO is the action rows below, and that is where the roles differ.
+-- Everyone signed in sees the menu they can use, so every role gets every module, page and section
+-- by default. What they may DO is the action rows below, and that is where the roles differ.
 insert into public.role_permissions (role_id, permission_key)
 select r.id, p.key
   from public.roles r
   cross join public.permissions p
- where p.kind in ('module', 'page')
+ where p.kind in ('module', 'page', 'section')
    and not (p.key in ('page.team', 'page.bank_connections', 'page.activity_log', 'page.trash')
             and not r.administers)
 on conflict do nothing;

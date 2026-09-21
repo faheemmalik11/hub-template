@@ -2,7 +2,7 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 
 import { TABLE } from "@/config/tables";
 import { SINGLETON_ROW_ID, STALE, actorEmail, insertChangeHistory, sb } from "@/data/client";
-import { fetchAllRows, invalidateMatchState, pflichtGrund } from "@/data/shared";
+import { fetchAllRows, invalidateMatchState, requiredReason } from "@/data/shared";
 import { datevBlockReason } from "@/lib/datev/attachment-rules";
 import { triggerDatevHandover } from "@/lib/api/datev-handover.functions";
 import type { DatevAttachmentFile } from "@/lib/datev/attachment-rules";

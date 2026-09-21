@@ -2,7 +2,7 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 
 import { TABLE } from "@/config/tables";
 import { STALE, actorEmail, sb } from "@/data/client";
-import type { Lieferant, SupplierAlias, SupplierDuplicateGroup } from "@/lib/data/types";
+import type { Supplier, SupplierAlias, SupplierDuplicateGroup } from "@/lib/data/types";
 
 // ---- Known spellings (entity_aliases, migrations 0003 / 0040 / 20260824110000) ----
 //
@@ -124,7 +124,7 @@ export function useMergeSuppliers() {
         p_reason: input.reason ?? null,
       });
       if (error) throw error;
-      return data as unknown as Lieferant;
+      return data as unknown as Supplier;
     },
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ["lieferanten"] });

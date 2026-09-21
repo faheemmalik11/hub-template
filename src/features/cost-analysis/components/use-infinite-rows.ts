@@ -12,19 +12,19 @@ import { useEffect, useRef, useState } from "react";
  * rebuilding the list inline on every render resets the counter forever and "load more" never
  * advances past the first page. That bug has been shipped here once already; `useMemo` the array.
  */
-export function useInfiniteRows<T>(items: T[], erstesSeite = 5, nachladen = 20) {
-  const [sichtbar, setSichtbar] = useState(erstesSeite);
+export function useInfiniteRows<T>(items: T[], firstPage = 5, loadMore = 20) {
+  const [visible, setVisible] = useState(firstPage);
   const sentinel = useRef<HTMLElement | null>(null);
 
-  useEffect(() => setSichtbar(erstesSeite), [items, erstesSeite]);
+  useEffect(() => setVisible(firstPage), [items, firstPage]);
 
   useEffect(() => {
     const el = sentinel.current;
-    if (!el || sichtbar >= items.length) return;
+    if (!el || visible >= items.length) return;
     const io = new IntersectionObserver(
       (entries) => {
         if (entries[0]?.isIntersecting) {
-          setSichtbar((n) => Math.min(n + nachladen, items.length));
+          setVisible((n) => Math.min(n + loadMore, items.length));
         }
       },
       // Start fetching slightly before the sentinel is actually on screen, so scrolling does not
@@ -33,7 +33,7 @@ export function useInfiniteRows<T>(items: T[], erstesSeite = 5, nachladen = 20) 
     );
     io.observe(el);
     return () => io.disconnect();
-  }, [sichtbar, items.length, nachladen]);
+  }, [visible, items.length, loadMore]);
 
-  return { sichtbar, sentinel, hatMehr: sichtbar < items.length, rest: items.length - sichtbar };
+  return { visible, sentinel, hatMore: visible < items.length, rest: items.length - visible };
 }

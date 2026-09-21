@@ -12,10 +12,10 @@ import {
   useLinkInvoiceTransaction,
   useLinkOutgoingInvoiceTransaction,
   useOpenBankTransactionsInfinite,
-  useOpenBelegeInfinite,
+  useOpenDocumentsInfinite,
   useOpenOutgoingInvoicesInfinite,
 } from "@/data";
-import { fehlerText, formatDate, formatEUR, formatSignedEUR } from "@/lib/data/format";
+import { errorText, formatDate, formatEUR, formatSignedEUR } from "@/lib/data/format";
 import { SEARCH_PAGE_SIZE } from "@/components/bank/match-panel/constants";
 import {
   LinkConfirmDialog,
@@ -27,14 +27,17 @@ import type { MatchPanelTarget } from "@/components/bank/match-panel/match-panel
 // scores against.
 const DATE_WINDOW_DAYS = 60;
 
-function windowBounds(anchor: string | null): { von?: string; bis?: string } {
+function windowBounds(anchor: string | null): { fromDate?: string; toDate?: string } {
   if (!anchor) return {};
   const center = new Date(`${anchor}T00:00:00`);
-  const von = new Date(center);
-  von.setDate(von.getDate() - DATE_WINDOW_DAYS);
-  const bis = new Date(center);
-  bis.setDate(bis.getDate() + DATE_WINDOW_DAYS);
-  return { von: von.toISOString().slice(0, 10), bis: bis.toISOString().slice(0, 10) };
+  const fromDate = new Date(center);
+  fromDate.setDate(fromDate.getDate() - DATE_WINDOW_DAYS);
+  const toDate = new Date(center);
+  toDate.setDate(toDate.getDate() + DATE_WINDOW_DAYS);
+  return {
+    fromDate: fromDate.toISOString().slice(0, 10),
+    toDate: toDate.toISOString().slice(0, 10),
+  };
 }
 
 /**
@@ -60,13 +63,13 @@ export function ManualSearch({
     // Direction mirrors the retired ManualLinkTab's own convention: an incoming invoice is
     // settled by an outgoing (ausgehend) bank movement, an outgoing invoice by an incoming
     // (eingehend) one.
-    const richtung = target.type === "outgoing" ? "eingehend" : "ausgehend";
-    const { von, bis } = windowBounds(target.dueDate ?? target.documentDate);
+    const direction = target.type === "outgoing" ? "eingehend" : "ausgehend";
+    const { fromDate, toDate } = windowBounds(target.dueDate ?? target.documentDate);
     return (
       <TransactionSearchList
-        richtung={richtung}
-        von={von}
-        bis={bis}
+        direction={direction}
+        fromDate={fromDate}
+        toDate={toDate}
         search={search}
         onSearchChange={onSearchChange}
         debouncedSearch={debouncedSearch}
@@ -83,12 +86,12 @@ export function ManualSearch({
   // Same convention TransactionMatches already uses (isCredit = amount >= 0): a credit is settled
   // by an outgoing invoice, a debit by an incoming one.
   const invoiceType = target.txn.amount >= 0 ? "outgoing" : "incoming";
-  const { von, bis } = windowBounds(target.txn.booking_date);
+  const { fromDate, toDate } = windowBounds(target.txn.booking_date);
   return (
     <InvoiceSearchList
       invoiceType={invoiceType}
-      von={von}
-      bis={bis}
+      fromDate={fromDate}
+      toDate={toDate}
       search={search}
       onSearchChange={onSearchChange}
       debouncedSearch={debouncedSearch}
@@ -102,9 +105,9 @@ export function ManualSearch({
 }
 
 function TransactionSearchList({
-  richtung,
-  von,
-  bis,
+  direction,
+  fromDate,
+  toDate,
   search,
   onSearchChange,
   debouncedSearch,
@@ -115,9 +118,9 @@ function TransactionSearchList({
   invoiceGross,
   onLinked,
 }: {
-  richtung: "eingehend" | "ausgehend";
-  von?: string;
-  bis?: string;
+  direction: "eingehend" | "ausgehend";
+  fromDate?: string;
+  toDate?: string;
   search: string;
   onSearchChange: (v: string) => void;
   debouncedSearch: string;
@@ -129,7 +132,7 @@ function TransactionSearchList({
   onLinked: () => void;
 }) {
   const { t } = useTranslation();
-  const { mayPay, reason: keinZahlrecht } = usePaymentRight();
+  const { mayPay, reason: noPaymentRight } = usePaymentRight();
   const [confirmParam, setConfirmParam] = useState<string | undefined>(undefined);
   const hasQuery = debouncedSearch.trim().length > 0;
   // Two modes on one list. With no query it BROWSES: open payments in the settling direction,
@@ -140,9 +143,9 @@ function TransactionSearchList({
   const q = useOpenBankTransactionsInfinite({
     search: debouncedSearch,
     matchingStatus: "open",
-    richtung,
-    bookingDateVon: hasQuery ? undefined : von,
-    bookingDateBis: hasQuery ? undefined : bis,
+    direction,
+    bookingDateFromDate: hasQuery ? undefined : fromDate,
+    bookingDateToDate: hasQuery ? undefined : toDate,
     sort: "booking_date",
     dir: "desc",
     pageSize: SEARCH_PAGE_SIZE,
@@ -179,7 +182,7 @@ function TransactionSearchList({
         toast.success(t("matchPanel.linked"));
         onLinked();
       },
-      onError: (e: unknown) => toast.error(t("matchPanel.linkFailed", { error: fehlerText(e) })),
+      onError: (e: unknown) => toast.error(t("matchPanel.linkFailed", { error: errorText(e) })),
       onSettled: () => {
         setPendingId(null);
         setConfirmParam(undefined);
@@ -190,7 +193,7 @@ function TransactionSearchList({
     } else {
       linkIncoming.mutate(
         {
-          belegId: invoiceId,
+          documentId: invoiceId,
           transactionId,
           differenceReason: options?.differenceReason,
           closeInvoice: options?.closeInvoice,
@@ -233,7 +236,7 @@ function TransactionSearchList({
                 variant="link"
                 className="h-auto shrink-0 gap-1 px-0 py-0 font-medium"
                 disabled={linking || !mayPay}
-                title={keinZahlrecht}
+                title={noPaymentRight}
                 onClick={() => setConfirmParam(txn.id)}
               >
                 {pendingId === txn.id ? t("matchPanel.linking") : t("matchPanel.link")}
@@ -262,8 +265,8 @@ function TransactionSearchList({
 
 function InvoiceSearchList({
   invoiceType,
-  von,
-  bis,
+  fromDate,
+  toDate,
   search,
   onSearchChange,
   debouncedSearch,
@@ -274,8 +277,8 @@ function InvoiceSearchList({
   onLinked,
 }: {
   invoiceType: "incoming" | "outgoing";
-  von?: string;
-  bis?: string;
+  fromDate?: string;
+  toDate?: string;
   search: string;
   onSearchChange: (v: string) => void;
   debouncedSearch: string;
@@ -286,17 +289,17 @@ function InvoiceSearchList({
   onLinked: () => void;
 }) {
   const { t } = useTranslation();
-  const { mayPay, reason: keinZahlrecht } = usePaymentRight();
+  const { mayPay, reason: noPaymentRight } = usePaymentRight();
   const [confirmParam, setConfirmParam] = useState<string | undefined>(undefined);
   const hasQuery = debouncedSearch.trim().length > 0;
   // Both hooks are always called (rules of hooks); `enabled` keeps only the relevant one live.
   // Same browse/search split as TransactionSearchList above -- see its comment.
-  const incomingQ = useOpenBelegeInfinite(
+  const incomingQ = useOpenDocumentsInfinite(
     {
       q: debouncedSearch,
-      von: hasQuery ? undefined : von,
-      bis: hasQuery ? undefined : bis,
-      sort: "eingegangen_am",
+      fromDate: hasQuery ? undefined : fromDate,
+      toDate: hasQuery ? undefined : toDate,
+      sort: "received_at",
       dir: "desc",
       pageSize: SEARCH_PAGE_SIZE,
     },
@@ -305,8 +308,8 @@ function InvoiceSearchList({
   const outgoingQ = useOpenOutgoingInvoicesInfinite(
     {
       q: debouncedSearch,
-      von: hasQuery ? undefined : von,
-      bis: hasQuery ? undefined : bis,
+      fromDate: hasQuery ? undefined : fromDate,
+      toDate: hasQuery ? undefined : toDate,
       sort: "created_at",
       dir: "desc",
       pageSize: SEARCH_PAGE_SIZE,
@@ -332,7 +335,7 @@ function InvoiceSearchList({
         toast.success(t("matchPanel.linked"));
         onLinked();
       },
-      onError: (e: unknown) => toast.error(t("matchPanel.linkFailed", { error: fehlerText(e) })),
+      onError: (e: unknown) => toast.error(t("matchPanel.linkFailed", { error: errorText(e) })),
       onSettled: () => {
         setPendingId(null);
         setConfirmParam(undefined);
@@ -341,7 +344,7 @@ function InvoiceSearchList({
     if (isOutgoing) {
       linkOutgoing.mutate({ outgoingInvoiceId: invoiceId, transactionId }, onSettled);
     } else {
-      linkIncoming.mutate({ belegId: invoiceId, transactionId }, onSettled);
+      linkIncoming.mutate({ documentId: invoiceId, transactionId }, onSettled);
     }
   }
 
@@ -433,7 +436,7 @@ function InvoiceSearchList({
                   variant="link"
                   className="h-auto shrink-0 gap-1 px-0 py-0 font-medium"
                   disabled={linking || !mayPay}
-                  title={keinZahlrecht}
+                  title={noPaymentRight}
                   onClick={() => setConfirmParam(oi.id)}
                 >
                   {pendingId === oi.id ? t("matchPanel.linking") : t("matchPanel.link")}
@@ -469,7 +472,7 @@ function InvoiceSearchList({
                 variant="link"
                 className="h-auto shrink-0 gap-1 px-0 py-0 font-medium"
                 disabled={linking || !mayPay}
-                title={keinZahlrecht}
+                title={noPaymentRight}
                 onClick={() => setConfirmParam(b.id)}
               >
                 {pendingId === b.id ? t("matchPanel.linking") : t("matchPanel.link")}

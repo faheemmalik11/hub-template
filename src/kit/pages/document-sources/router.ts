@@ -15,7 +15,7 @@ export interface DocumentSourcesRouter {
   /** Current location hash. May or may not carry a leading '#' — the page normalizes either. */
   useHash(): string;
   /** The 'fokus' search param, if present. */
-  useFokusParam(): string | undefined;
+  useFocusParam(): string | undefined;
   /** Opens one source's settings sheet (sets the hash to its id). */
   openSource(sourceId: string): void;
   /** Closes the settings sheet (clears the hash). */

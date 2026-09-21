@@ -49,7 +49,7 @@ export {
   useConfirmedOutgoingAllocations,
   useConfirmMatch,
   useConfirmOutgoingMatch,
-  useBelegMatches,
+  useDocumentMatches,
   useLinkInvoiceTransaction,
   useLinkOutgoingInvoiceTransaction,
   useMatchAllocation,

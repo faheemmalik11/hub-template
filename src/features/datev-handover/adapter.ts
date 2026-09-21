@@ -23,7 +23,7 @@
 // ---------------------------------------------------------------------------
 // Formatting and i18n. Locale lives on this side of the seam, never inside the feature.
 // ---------------------------------------------------------------------------
-export { fehlerText, formatDate, formatDateTime, formatEUR, formatNumber } from "@/lib/data/format";
+export { errorText, formatDate, formatDateTime, formatEUR, formatNumber } from "@/lib/data/format";
 export { useTranslation } from "@/lib/i18n";
 // The monthly document export. Same signature in every Hub; only how the archive is built differs
 // (a server function here, an edge function in Eiffler).
@@ -44,7 +44,7 @@ export type {
   DatevOutgoingInvoice,
   DatevReadyInvoice,
   DatevRoute,
-  Gesellschaft,
+  Company,
 } from "@/lib/data/types";
 
 // ---------------------------------------------------------------------------
@@ -57,7 +57,7 @@ export {
   useDatevOutgoingCandidates,
   useDatevRoutes,
   useOpenDatevBounces,
-  useGesellschaften,
+  useCompanies,
   useSaveDatevRoutes,
   useTriggerDatevHandover,
 } from "@/data";
@@ -68,7 +68,7 @@ export {
 // once, in exactly that direction).
 // ---------------------------------------------------------------------------
 export { RouteStatus } from "@/components/integrations/route-status";
-export { ErrorState, TableSkeleton } from "@/components/belege/query-states";
+export { ErrorState, TableSkeleton } from "@/components/documents/query-states";
 // The list pagination every master-data screen in this app already uses.
 export { TablePagination } from "@/components/data-table/table-pagination";
 export { useTableView } from "@/lib/use-table-view";

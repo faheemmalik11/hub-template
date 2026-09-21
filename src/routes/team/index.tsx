@@ -5,7 +5,7 @@ import { toast } from "sonner";
 
 import { cn } from "@/lib/utils";
 
-import { KeinZugriff } from "@/components/layout/kein-zugriff";
+import { NoAccess } from "@/components/layout/no-access";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { MultiCombobox } from "@/components/ui/multi-combobox";
@@ -57,7 +57,7 @@ import {
 } from "@/components/ui/table";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { tabSearch, useTabParam } from "@/lib/use-tab-param";
-import { ErrorState, TableSkeleton } from "@/components/belege/query-states";
+import { ErrorState, TableSkeleton } from "@/components/documents/query-states";
 import { useAuth } from "@/lib/auth";
 import { PermissionChecklist } from "@/components/access/permission-checklist";
 import { PermissionMatrix } from "@/components/access/permission-matrix";
@@ -66,7 +66,7 @@ import { PERMISSIONS } from "@/config/permissions";
 import {
   useCreateEmployee,
   useEmployees,
-  useGesellschaften,
+  useCompanies,
   useResetEmployeePassword,
   type PermissionRow,
   usePermissionCatalogue,
@@ -85,7 +85,7 @@ import {
 import type { ApprovalArea, Employee } from "@/lib/data/types";
 import { useTranslation } from "@/lib/i18n";
 import { BRAND, pageTitle } from "@/config/brand";
-import { fehlerText } from "@/lib/data/format";
+import { errorText } from "@/lib/data/format";
 
 export const Route = createFileRoute("/team/")({
   validateSearch: tabSearch,
@@ -99,18 +99,18 @@ export const Route = createFileRoute("/team/")({
 function TeamGuard() {
   const { ready, can } = useAuth();
   if (!ready) return null;
-  if (!can(PERMISSIONS.pageTeam)) return <KeinZugriff />;
+  if (!can(PERMISSIONS.pageTeam)) return <NoAccess />;
   return <TeamPage />;
 }
 
 /** Sentinel for the "all companies" row. Not a company id, so it can never collide. */
-const ALLE_GESELLSCHAFTEN = "__alle";
+const ALL_COMPANIES = "__alle";
 // The two sentinels the approval-settings selects need. LEER is "not set"; a Select cannot carry
 // an empty-string value, so absence needs a value of its own. ALLE_BEREICHE is the one option that
 // is not an `area` at all -- it writes covers_all_areas instead, which is why the two move as a
 // pair (app_users_area_shape rejects having both).
 const LEER = "__none";
-const ALLE_BEREICHE = "__alle_bereiche";
+const ALL_AREAS = "__alle_bereiche";
 
 const ROLE_OPTIONS: AssignableRole[] = ["admin", "supervisor", "assistant"];
 
@@ -125,14 +125,14 @@ function TeamPage() {
   // only one whose access cannot be edited, so burying it mid-list under an alphabetical email
   // sort makes the one row with different rules the hardest to find. Everything else keeps
   // useEmployees' own email ordering.
-  const [suche, setSuche] = useState("");
-  const [nurInaktive, setNurInaktive] = useState(false);
+  const [search, setSearch] = useState("");
+  const [onlyInactive, setOnlyInactive] = useState(false);
 
   const employees = useMemo(() => {
-    const term = suche.trim().toLowerCase();
+    const term = search.trim().toLowerCase();
     const rows = (q.data ?? []).filter((e) => {
       // #9: no search and no filter at all — which is why a leftover test account sits unnoticed.
-      if (nurInaktive && e.is_active) return false;
+      if (onlyInactive && e.is_active) return false;
       if (!term) return true;
       return [e.name ?? "", e.email, t(`team.role.${e.role_name}`)]
         .join(" ")
@@ -144,8 +144,8 @@ function TeamPage() {
       const bSuper = b.role_name === "super_admin" ? 0 : 1;
       return aSuper - bSuper;
     });
-  }, [q.data, suche, nurInaktive, t]);
-  const companiesQ = useGesellschaften();
+  }, [q.data, search, onlyInactive, t]);
+  const companiesQ = useCompanies();
   const companies = companiesQ.data ?? [];
 
   return (
@@ -159,7 +159,7 @@ function TeamPage() {
         </div>
         <NewEmployeeDialog
           companies={companies}
-          vorhandeneEmails={(q.data ?? []).map((e) => e.email.toLowerCase())}
+          existingEmails={(q.data ?? []).map((e) => e.email.toLowerCase())}
         />
       </div>
 
@@ -179,17 +179,17 @@ function TeamPage() {
               <div className="relative min-w-0 flex-1 sm:w-[260px] sm:flex-none">
                 <Search className="absolute left-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
                 <Input
-                  value={suche}
-                  onChange={(e) => setSuche(e.target.value)}
+                  value={search}
+                  onChange={(e) => setSearch(e.target.value)}
                   placeholder={t("team.list.suche")}
                   className="h-9 pl-9"
                 />
               </div>
               <Button
-                variant={nurInaktive ? "default" : "outline"}
+                variant={onlyInactive ? "default" : "outline"}
                 size="sm"
                 className="shrink-0"
-                onClick={() => setNurInaktive((v) => !v)}
+                onClick={() => setOnlyInactive((v) => !v)}
               >
                 {t("team.list.nurInaktive")}
               </Button>
@@ -269,11 +269,11 @@ function TeamPage() {
                                 const codes = companies
                                   .filter((c) => employee.allowed_company_ids.includes(c.id))
                                   .map((c) => c.code);
-                                const sichtbar = codes.slice(0, 4);
-                                const rest = codes.length - sichtbar.length;
+                                const visible = codes.slice(0, 4);
+                                const rest = codes.length - visible.length;
                                 return (
                                   <>
-                                    {sichtbar.map((code) => (
+                                    {visible.map((code) => (
                                       <Badge key={code} variant="secondary">
                                         {code}
                                       </Badge>
@@ -369,11 +369,11 @@ function TeamPage() {
                           const codes = companies
                             .filter((c) => employee.allowed_company_ids.includes(c.id))
                             .map((c) => c.code);
-                          const sichtbar = codes.slice(0, 4);
-                          const rest = codes.length - sichtbar.length;
+                          const visible = codes.slice(0, 4);
+                          const rest = codes.length - visible.length;
                           return (
                             <>
-                              {sichtbar.map((code) => (
+                              {visible.map((code) => (
                                 <Badge key={code} variant="secondary">
                                   {code}
                                 </Badge>
@@ -453,21 +453,21 @@ function TeamPage() {
  */
 function usePermissionText() {
   const { t, i18n } = useTranslation();
-  const deutsch = i18n.language.startsWith("de");
+  const german = i18n.language.startsWith("de");
   return useCallback(
     (p: PermissionRow): AccessPermission => ({
       key: p.key,
       category: p.category,
       label: t(`permissions.${p.key}.label`, {
-        defaultValue: (deutsch ? p.label_de : p.label_en) ?? p.key,
+        defaultValue: (german ? p.label_de : p.label_en) ?? p.key,
       }),
       description: t(`permissions.${p.key}.desc`, {
         // Falls back to the German text rather than showing nothing, for a Hub whose seed has not
         // supplied the English half yet.
-        defaultValue: (deutsch ? p.description_de : p.description_en) ?? p.description_de ?? "",
+        defaultValue: (german ? p.description_de : p.description_en) ?? p.description_de ?? "",
       }),
     }),
-    [t, deutsch],
+    [t, german],
   );
 }
 
@@ -495,7 +495,7 @@ function RolePermissionMatrix() {
     [rolesQ.data, t],
   );
 
-  const rolleNach = useMemo(
+  const roleNames = useMemo(
     () => new Map((rolesQ.data ?? []).map((r) => [r.id, r.name])),
     [rolesQ.data],
   );
@@ -529,11 +529,11 @@ function RolePermissionMatrix() {
         categoryLabel={(c) => t(`team.permissions.kategorie.${c}`, { defaultValue: c })}
         onToggle={(roleId, key, next) =>
           setRolePermission.mutate(
-            { roleId, roleName: rolleNach.get(roleId) ?? "", key, value: next },
+            { roleId, roleName: roleNames.get(roleId) ?? "", key, value: next },
             {
               // A role change can move the signed-in admin without naming them.
               onSuccess: () => void refreshProfile(),
-              onError: (e) => toast.error(fehlerText(e)),
+              onError: (e) => toast.error(errorText(e)),
             },
           )
         }
@@ -556,11 +556,11 @@ const ROLE_BADGE: Record<string, string> = {
 function PermissionCount({ employee }: { employee: Employee }) {
   const { t } = useTranslation();
   const catalogueQ = usePermissionCatalogue();
-  const gesamt = catalogueQ.data?.length ?? 0;
-  if (!gesamt) return <>—</>;
+  const total = catalogueQ.data?.length ?? 0;
+  if (!total) return <>—</>;
   if (employee.role_name === "super_admin")
-    return <>{t("team.list.rechteAnzahl", { n: gesamt, gesamt })}</>;
-  return <>{t("team.list.rechteAnzahl", { n: employee.permissions.length, gesamt })}</>;
+    return <>{t("team.list.rechteAnzahl", { n: total, total })}</>;
+  return <>{t("team.list.rechteAnzahl", { n: employee.permissions.length, total })}</>;
 }
 
 /**
@@ -582,11 +582,11 @@ function PermissionsSection({
   grantable?: (key: string) => boolean;
 }) {
   const { t, i18n } = useTranslation();
-  const deutsch = i18n.language.startsWith("de");
+  const german = i18n.language.startsWith("de");
   const catalogueQ = usePermissionCatalogue();
   // The owner account holds everything unconditionally (guard_super_admin_permissions), so its
   // boxes could only ever be ones nobody may untick.
-  const gesperrt = employee.role_name === "super_admin";
+  const locked = employee.role_name === "super_admin";
 
   const permissionText = usePermissionText();
   const permissions = useMemo<AccessPermission[]>(
@@ -602,18 +602,18 @@ function PermissionsSection({
       <div className="rounded-lg border border-border p-3">
         <PermissionChecklist
           permissions={permissions}
-          held={gesperrt ? permissions.map((p) => p.key) : held}
-          disabled={gesperrt || readOnly}
+          held={locked ? permissions.map((p) => p.key) : held}
+          disabled={locked || readOnly}
           lockedNote={t("team.rights.nichtVergebbar")}
           lockedKeys={
-            gesperrt || readOnly || !grantable
+            locked || readOnly || !grantable
               ? undefined
               : permissions
                   .filter((p) => !grantable(p.key) && !held.includes(p.key))
                   .map((p) => p.key)
           }
           readOnlyNote={
-            gesperrt
+            locked
               ? t("team.rights.impliedBySuperAdmin")
               : readOnly
                 ? t("team.rights.nurAdmin")
@@ -650,17 +650,17 @@ function ApprovalSettingsSection({ employee }: { employee: Employee }) {
 
   // The escalation input is the one field that can be typed into a wrong state, so it holds local
   // text and commits on blur. The other two are selects: their value is always valid.
-  const [tage, setTage] = useState(
+  const [days, setDays] = useState(
     employee.escalation_days ? String(employee.escalation_days) : "",
   );
-  const tageZahl = tage.trim() === "" ? null : Number(tage);
-  const tageUngueltig =
-    tageZahl != null &&
-    (!Number.isFinite(tageZahl) || !Number.isInteger(tageZahl) || tageZahl <= 0);
+  const daysNumber = days.trim() === "" ? null : Number(days);
+  const daysInvalid =
+    daysNumber != null &&
+    (!Number.isFinite(daysNumber) || !Number.isInteger(daysNumber) || daysNumber <= 0);
 
   // Who can deputise: anybody active except this person themselves (app_users_deputy_not_self) and
   // except the owner account, which is technical and never part of a chain.
-  const vertretungen = useMemo(
+  const deputies = useMemo(
     () =>
       (employeesQ.data ?? [])
         .filter((e) => e.is_active && e.id !== employee.id && e.role_name !== "super_admin")
@@ -678,10 +678,10 @@ function ApprovalSettingsSection({ employee }: { employee: Employee }) {
   // a cross-table permission lookup a CHECK cannot express. Enforced here instead, at the point of
   // entry, which is where the constraint was doing its work: an area owner who cannot give the
   // final approval is a receipt routed to somebody who then sees no button.
-  const darfFinalFreigeben = employee.permissions.includes(PERMISSIONS.invoicesApproveFinal);
-  const bereichWert = employee.covers_all_areas ? ALLE_BEREICHE : (employee.area ?? LEER);
+  const canFinalApprove = employee.permissions.includes(PERMISSIONS.invoicesApproveFinal);
+  const areaValue = employee.covers_all_areas ? ALL_AREAS : (employee.area ?? LEER);
 
-  function speichern(changes: Parameters<typeof update.mutate>[0]["changes"]) {
+  function save(changes: Parameters<typeof update.mutate>[0]["changes"]) {
     update.mutate(
       { userId: employee.id, changes },
       {
@@ -689,8 +689,8 @@ function ApprovalSettingsSection({ employee }: { employee: Employee }) {
         onError: (e) =>
           toast.error(
             e instanceof AreaConflictError
-              ? t("team.chain.bereichKonflikt", { bereich: t(`freigabeRegeln.bereich.${e.area}`) })
-              : fehlerText(e),
+              ? t("team.chain.bereichKonflikt", { area: t(`approvalRules.bereich.${e.area}`) })
+              : errorText(e),
           ),
       },
     );
@@ -703,12 +703,12 @@ function ApprovalSettingsSection({ employee }: { employee: Employee }) {
         <div className="space-y-1.5">
           <Label className="text-xs text-muted-foreground">{t("team.chain.bereich")}</Label>
           <Select
-            value={bereichWert}
-            disabled={!darfFinalFreigeben || update.isPending}
+            value={areaValue}
+            disabled={!canFinalApprove || update.isPending}
             onValueChange={(v) =>
-              speichern({
-                area: v === LEER || v === ALLE_BEREICHE ? null : (v as ApprovalArea),
-                covers_all_areas: v === ALLE_BEREICHE,
+              save({
+                area: v === LEER || v === ALL_AREAS ? null : (v as ApprovalArea),
+                covers_all_areas: v === ALL_AREAS,
               })
             }
           >
@@ -716,14 +716,14 @@ function ApprovalSettingsSection({ employee }: { employee: Employee }) {
               <SelectValue />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value={LEER}>{t("freigabeRegeln.bereich.keiner")}</SelectItem>
-              <SelectItem value="hospitality">{t("freigabeRegeln.bereich.hospitality")}</SelectItem>
-              <SelectItem value="stay_re">{t("freigabeRegeln.bereich.stay_re")}</SelectItem>
-              <SelectItem value={ALLE_BEREICHE}>{t("freigabeRegeln.bereich.alle")}</SelectItem>
+              <SelectItem value={LEER}>{t("approvalRules.bereich.keiner")}</SelectItem>
+              <SelectItem value="hospitality">{t("approvalRules.bereich.hospitality")}</SelectItem>
+              <SelectItem value="stay_re">{t("approvalRules.bereich.stay_re")}</SelectItem>
+              <SelectItem value={ALL_AREAS}>{t("approvalRules.bereich.alle")}</SelectItem>
             </SelectContent>
           </Select>
           <p className="text-xs text-muted-foreground">
-            {darfFinalFreigeben ? t("team.chain.bereichHint") : t("team.chain.bereichBrauchtRecht")}
+            {canFinalApprove ? t("team.chain.bereichHint") : t("team.chain.bereichBrauchtRecht")}
           </p>
         </div>
 
@@ -732,14 +732,14 @@ function ApprovalSettingsSection({ employee }: { employee: Employee }) {
           <Select
             value={employee.deputy_user_id ?? LEER}
             disabled={update.isPending}
-            onValueChange={(v) => speichern({ deputy_user_id: v === LEER ? null : v })}
+            onValueChange={(v) => save({ deputy_user_id: v === LEER ? null : v })}
           >
             <SelectTrigger>
               <SelectValue />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value={LEER}>{t("freigabeRegeln.keineVertretung")}</SelectItem>
-              {vertretungen.map((o) => (
+              <SelectItem value={LEER}>{t("approvalRules.keineVertretung")}</SelectItem>
+              {deputies.map((o) => (
                 <SelectItem key={o.value} value={o.value}>
                   {o.label}
                 </SelectItem>
@@ -752,22 +752,22 @@ function ApprovalSettingsSection({ employee }: { employee: Employee }) {
         <div className="space-y-1.5">
           <Label className="text-xs text-muted-foreground">{t("team.chain.eskalation")}</Label>
           <Input
-            value={tage}
+            value={days}
             inputMode="numeric"
-            placeholder={t("freigabeRegeln.feld.eskalationPlaceholder")}
+            placeholder={t("approvalRules.feld.eskalationPlaceholder")}
             disabled={update.isPending}
-            onChange={(e) => setTage(e.target.value)}
+            onChange={(e) => setDays(e.target.value)}
             // Committed on blur, not per keystroke: typing "12" would otherwise write 1 on the way
             // through, and 1 is a valid escalation the person would then have to notice and undo.
             onBlur={() => {
-              if (tageUngueltig) return;
-              if ((tageZahl ?? null) === (employee.escalation_days ?? null)) return;
-              speichern({ escalation_days: tageZahl });
+              if (daysInvalid) return;
+              if ((daysNumber ?? null) === (employee.escalation_days ?? null)) return;
+              save({ escalation_days: daysNumber });
             }}
           />
-          {tageUngueltig ? (
+          {daysInvalid ? (
             <p className="text-xs text-destructive">
-              {t("freigabeRegeln.feld.eskalationUngueltig")}
+              {t("approvalRules.feld.eskalationUngueltig")}
             </p>
           ) : (
             <p className="text-xs text-muted-foreground">{t("team.chain.eskalationHint")}</p>
@@ -792,7 +792,7 @@ function EditEmployeeDialog({
   // #1: the super admin was protected three ways; a plain admin had none of that protection against
   // ITSELF — nothing compared the row being edited to the person editing it, so an admin could
   // demote or deactivate their own account and lose the screen that undoes it.
-  const istIchSelbst = !!user && user.email.toLowerCase() === employee.email.toLowerCase();
+  const isSelf = !!user && user.email.toLowerCase() === employee.email.toLowerCase();
 
   const [open, setOpen] = useState(false);
   const [name, setName] = useState(employee.name ?? "");
@@ -801,7 +801,7 @@ function EditEmployeeDialog({
     employee.role_name === "super_admin" ? "admin" : employee.role_name,
   );
   const [selected, setSelected] = useState<string[]>(employee.allowed_company_ids);
-  const [rechte, setRechte] = useState<string[]>(employee.permissions);
+  const [rights, setRights] = useState<string[]>(employee.permissions);
 
   const updateProfile = useUpdateEmployeeProfile();
   const updateRole = useUpdateEmployeeRole();
@@ -816,28 +816,28 @@ function EditEmployeeDialog({
   // a super admin (there is no super_admin entry in ROLE_OPTIONS to seed from), so without it
   // roleChanged would be TRUE on open and saving would silently DEMOTE the super admin.
   const isSuperAdmin = employee.role_name === "super_admin";
-  const rolleGesperrt = isSuperAdmin || istIchSelbst;
-  const roleChanged = !rolleGesperrt && roleName !== employee.role_name;
+  const roleLocked = isSuperAdmin || isSelf;
+  const roleChanged = !roleLocked && roleName !== employee.role_name;
   const profileChanged = name.trim() !== (employee.name ?? "") || email.trim() !== employee.email;
   const accessChanged =
     selected.length !== employee.allowed_company_ids.length ||
     selected.some((id) => !employee.allowed_company_ids.includes(id));
-  const geaenderteRechte = useMemo(() => {
-    const vorher = new Set(employee.permissions);
-    const nachher = new Set(rechte);
-    const keys = new Set([...vorher, ...nachher]);
-    return [...keys].filter((key) => vorher.has(key) !== nachher.has(key));
-  }, [employee.permissions, rechte]);
-  const rechteChanged = geaenderteRechte.length > 0;
+  const changedRights = useMemo(() => {
+    const before = new Set(employee.permissions);
+    const after = new Set(rights);
+    const keys = new Set([...before, ...after]);
+    return [...keys].filter((key) => before.has(key) !== after.has(key));
+  }, [employee.permissions, rights]);
+  const rightsChanged = changedRights.length > 0;
   // #3: an EMPTY selection means unrestricted, so removing the last company WIDENS access.
-  const weitetZugriffAus =
+  const widensAccessAus =
     accessChanged && selected.length === 0 && employee.allowed_company_ids.length > 0;
   const invalid = !name.trim() || !email.trim();
   const dirty = isSuperAdmin
     ? name.trim() !== (employee.name ?? "")
-    : profileChanged || roleChanged || accessChanged || rechteChanged;
+    : profileChanged || roleChanged || accessChanged || rightsChanged;
 
-  async function speichern() {
+  async function save() {
     try {
       if (isSuperAdmin) {
         // Name only. The email is passed back unchanged because updateEmployeeProfile takes both,
@@ -859,10 +859,10 @@ function EditEmployeeDialog({
       // new role and the old access, reported as one generic "fehlgeschlagen". They cannot be made
       // atomic from the client, so: skip writes that change nothing (access was written on EVERY
       // save), and name the step that failed so the half-applied state is legible.
-      let schritt = "";
+      let step = "";
       try {
         if (profileChanged) {
-          schritt = t("team.access.schritt.profil");
+          step = t("team.access.schritt.profil");
           await updateProfile.mutateAsync({
             employeeId: employee.id,
             name: name.trim(),
@@ -870,26 +870,26 @@ function EditEmployeeDialog({
           });
         }
         if (roleChanged) {
-          schritt = t("team.access.schritt.rolle");
+          step = t("team.access.schritt.rolle");
           await updateRole.mutateAsync({ employeeId: employee.id, roleName });
         }
         if (accessChanged) {
-          schritt = t("team.access.schritt.zugriff");
+          step = t("team.access.schritt.zugriff");
           await setAccess.mutateAsync({ employeeId: employee.id, companyIds: selected });
         }
-        if (rechteChanged) {
-          schritt = t("team.access.schritt.rechte");
-          for (const key of geaenderteRechte) {
+        if (rightsChanged) {
+          step = t("team.access.schritt.rechte");
+          for (const key of changedRights) {
             await setRight.mutateAsync({
               employeeId: employee.id,
               right: key,
-              value: rechte.includes(key),
+              value: rights.includes(key),
             });
           }
           await refreshProfile();
         }
       } catch (e) {
-        toast.error(t("team.access.toast.teilweise", { schritt, error: fehlerText(e) }));
+        toast.error(t("team.access.toast.teilweise", { step, error: errorText(e) }));
         throw e;
       }
       toast.success(t("team.access.toast.gespeichert"));
@@ -897,7 +897,7 @@ function EditEmployeeDialog({
     } catch (e) {
       toast.error(
         t("team.access.toast.fehlgeschlagen", {
-          error: fehlerText(e),
+          error: errorText(e),
         }),
       );
     }
@@ -913,7 +913,7 @@ function EditEmployeeDialog({
           setEmail(employee.email);
           setRoleName(employee.role_name === "super_admin" ? "admin" : employee.role_name);
           setSelected(employee.allowed_company_ids);
-          setRechte(employee.permissions);
+          setRights(employee.permissions);
         }
       }}
     >
@@ -952,7 +952,7 @@ function EditEmployeeDialog({
               <p className="text-xs text-muted-foreground">{t("team.edit.emailChangeHint")}</p>
             )}
           </div>
-          {istIchSelbst && !isSuperAdmin && (
+          {isSelf && !isSuperAdmin && (
             <p className="rounded-md border border-amber-300 bg-amber-50 px-3 py-2 text-xs text-amber-900">
               {t("team.edit.selbstHinweis")}
             </p>
@@ -971,7 +971,7 @@ function EditEmployeeDialog({
                 <Label className="text-xs text-muted-foreground">{t("team.new.field.role")}</Label>
                 <Select
                   value={roleName}
-                  disabled={istIchSelbst}
+                  disabled={isSelf}
                   onValueChange={(v) => setRoleName(v as AssignableRole)}
                 >
                   <SelectTrigger>
@@ -995,14 +995,14 @@ function EditEmployeeDialog({
                     stores -- allowed_company_ids = [] is unrestricted. Note that picking it WIDENS
                     access, which is why the warning below fires on exactly that transition. */}
                 <MultiCombobox
-                  values={selected.length === 0 ? [ALLE_GESELLSCHAFTEN] : selected}
+                  values={selected.length === 0 ? [ALL_COMPANIES] : selected}
                   onValuesChange={(next) => {
-                    const willAlle = next.includes(ALLE_GESELLSCHAFTEN) && selected.length > 0;
-                    setSelected(willAlle ? [] : next.filter((v) => v !== ALLE_GESELLSCHAFTEN));
+                    const willAll = next.includes(ALL_COMPANIES) && selected.length > 0;
+                    setSelected(willAll ? [] : next.filter((v) => v !== ALL_COMPANIES));
                   }}
                   options={[
                     {
-                      value: ALLE_GESELLSCHAFTEN,
+                      value: ALL_COMPANIES,
                       label: t("team.new.field.companiesAlle"),
                     },
                     ...companies.map((c) => ({
@@ -1019,9 +1019,9 @@ function EditEmployeeDialog({
 
               <PermissionsSection
                 employee={employee}
-                held={rechte}
-                onChange={setRechte}
-                readOnly={!isAdmin || istIchSelbst}
+                held={rights}
+                onChange={setRights}
+                readOnly={!isAdmin || isSelf}
                 grantable={can}
               />
             </>
@@ -1033,12 +1033,12 @@ function EditEmployeeDialog({
         {roleChanged && (
           <p className="rounded-md border border-amber-300 bg-amber-50 px-3 py-2 text-xs text-amber-900">
             {t("team.edit.rollenwechsel", {
-              von: t(`team.role.${employee.role_name}`),
+              fromDate: t(`team.role.${employee.role_name}`),
               nach: t(`team.role.${roleName}`),
             })}
           </p>
         )}
-        {weitetZugriffAus && (
+        {widensAccessAus && (
           <p className="rounded-md border border-amber-300 bg-amber-50 px-3 py-2 text-xs text-amber-900">
             {t("team.edit.zugriffAusweitung")}
           </p>
@@ -1047,7 +1047,7 @@ function EditEmployeeDialog({
           <Button variant="outline" onClick={() => setOpen(false)}>
             {t("team.access.dialog.cancel")}
           </Button>
-          <Button onClick={speichern} disabled={pending || invalid || !dirty}>
+          <Button onClick={save} disabled={pending || invalid || !dirty}>
             {pending ? t("team.access.dialog.saving") : t("team.access.dialog.save")}
           </Button>
         </SheetFooter>
@@ -1059,10 +1059,10 @@ function EditEmployeeDialog({
 function ToggleActiveDialog({ employee }: { employee: Employee }) {
   const { t } = useTranslation();
   const { user } = useAuth();
-  const istIchSelbstToggle = !!user && user.email.toLowerCase() === employee.email.toLowerCase();
+  const isSelfToggle = !!user && user.email.toLowerCase() === employee.email.toLowerCase();
   const setActive = useSetEmployeeActive();
 
-  function bestaetigen() {
+  function confirm() {
     setActive.mutate(
       { employeeId: employee.id, isActive: !employee.is_active },
       {
@@ -1073,7 +1073,7 @@ function ToggleActiveDialog({ employee }: { employee: Employee }) {
         onError: (e) =>
           toast.error(
             t("team.deactivate.toast.fehlgeschlagen", {
-              error: fehlerText(e),
+              error: errorText(e),
             }),
           ),
       },
@@ -1098,9 +1098,7 @@ function ToggleActiveDialog({ employee }: { employee: Employee }) {
           // straight to app_users via RLS rather than through a server function that could check.
           // Only the DEACTIVATE direction is blocked. The DB trigger allows false -> true, so
           // disabling both directions would leave an inactive super admin with no way back in.
-          disabled={
-            employee.is_active && (employee.role_name === "super_admin" || istIchSelbstToggle)
-          }
+          disabled={employee.is_active && (employee.role_name === "super_admin" || isSelfToggle)}
           title={
             employee.role_name === "super_admin"
               ? t("team.edit.superAdminCannotBeDeactivated")
@@ -1128,7 +1126,7 @@ function ToggleActiveDialog({ employee }: { employee: Employee }) {
         <AlertDialogFooter>
           <AlertDialogCancel>{t("team.deactivate.cancel")}</AlertDialogCancel>
           <AlertDialogAction
-            onClick={bestaetigen}
+            onClick={confirm}
             className={
               employee.is_active
                 ? "bg-destructive text-destructive-foreground hover:bg-destructive/90"
@@ -1153,7 +1151,7 @@ function ResetPasswordDialog({ employee }: { employee: Employee }) {
     null,
   );
 
-  function bestaetigen() {
+  function confirm() {
     resetPassword.mutate(
       { employeeId: employee.id },
       {
@@ -1162,7 +1160,7 @@ function ResetPasswordDialog({ employee }: { employee: Employee }) {
         onError: (e) =>
           toast.error(
             t("team.resetPassword.toast.fehlgeschlagen", {
-              error: fehlerText(e),
+              error: errorText(e),
             }),
           ),
       },
@@ -1191,7 +1189,7 @@ function ResetPasswordDialog({ employee }: { employee: Employee }) {
           </AlertDialogHeader>
           <AlertDialogFooter>
             <AlertDialogCancel>{t("team.resetPassword.cancel")}</AlertDialogCancel>
-            <AlertDialogAction onClick={bestaetigen}>
+            <AlertDialogAction onClick={confirm}>
               {t("team.resetPassword.confirm")}
             </AlertDialogAction>
           </AlertDialogFooter>
@@ -1235,13 +1233,13 @@ const IconAction = forwardRef<
 
 function NewEmployeeDialog({
   companies,
-  vorhandeneEmails,
+  existingEmails,
 }: {
   companies: { id: string; code: string; name: string }[];
-  vorhandeneEmails: string[];
+  existingEmails: string[];
 }) {
   const { t, i18n } = useTranslation();
-  const deutsch = i18n.language.startsWith("de");
+  const german = i18n.language.startsWith("de");
   const create = useCreateEmployee();
   const setRight = useSetAccountingRight();
   const catalogueQ = usePermissionCatalogue();
@@ -1254,12 +1252,12 @@ function NewEmployeeDialog({
   const [companyIds, setCompanyIds] = useState<string[]>([]);
   // Deviations from what the chosen role grants, as {key: granted}. Held locally because the
   // employee has no id until createEmployee returns one; written immediately afterwards.
-  const [abweichungen, setAbweichungen] = useState<Record<string, boolean>>({});
+  const [deviations, setDeviations] = useState<Record<string, boolean>>({});
   // The three chain settings, held locally for the same reason as the permission deviations: the
   // account has no id until createEmployee returns one. Written straight afterwards.
   const [deputyUserId, setDeputyUserId] = useState(LEER);
   const [escalationDays, setEscalationDays] = useState("");
-  const [bereich, setBereich] = useState(LEER);
+  const [area, setArea] = useState(LEER);
   const updateChain = useUpdateChainPerson();
   const employeesQ = useEmployees();
   const [createdCredentials, setCreatedCredentials] = useState<{
@@ -1269,50 +1267,52 @@ function NewEmployeeDialog({
 
   // What the chosen role grants today, and the resulting effective set with local deviations
   // applied. Recomputed when the role dropdown changes, so the list always previews reality.
-  const rollenVorgabe = useMemo(() => {
-    const rolle = (rolesQ.data ?? []).find((r) => r.name === roleName);
-    return rolle ? ((rolePermsQ.data ?? {})[rolle.id] ?? []) : [];
+  const rolesDefault = useMemo(() => {
+    const role = (rolesQ.data ?? []).find((r) => r.name === roleName);
+    return role ? ((rolePermsQ.data ?? {})[role.id] ?? []) : [];
   }, [rolesQ.data, rolePermsQ.data, roleName]);
 
   const permissionText = usePermissionText();
-  const neuePermissions = useMemo<AccessPermission[]>(
+  const newPermissions = useMemo<AccessPermission[]>(
     () => (catalogueQ.data ?? []).map(permissionText),
     [catalogueQ.data, permissionText],
   );
 
-  const neueGehalten = useMemo(() => {
-    const keys = new Set(rollenVorgabe);
-    for (const [key, granted] of Object.entries(abweichungen)) {
+  const newHeld = useMemo(() => {
+    const keys = new Set(rolesDefault);
+    for (const [key, granted] of Object.entries(deviations)) {
       if (granted) keys.add(key);
       else keys.delete(key);
     }
     return [...keys];
-  }, [rollenVorgabe, abweichungen]);
+  }, [rolesDefault, deviations]);
 
   // Live, so ticking "Endgültig freigeben" below unlocks the area select in the same breath. Same
   // rule the edit drawer enforces: an area owner who cannot give the final approval is a receipt
   // routed to somebody who then sees no button.
-  const darfFinalFreigeben = neueGehalten.includes(PERMISSIONS.invoicesApproveFinal);
-  const eskalationZahl = escalationDays.trim() === "" ? null : Number(escalationDays);
-  const eskalationUngueltig =
-    eskalationZahl != null &&
-    (!Number.isFinite(eskalationZahl) || !Number.isInteger(eskalationZahl) || eskalationZahl <= 0);
+  const canFinalApprove = newHeld.includes(PERMISSIONS.invoicesApproveFinal);
+  const escalationNumber = escalationDays.trim() === "" ? null : Number(escalationDays);
+  const escalationInvalid =
+    escalationNumber != null &&
+    (!Number.isFinite(escalationNumber) ||
+      !Number.isInteger(escalationNumber) ||
+      escalationNumber <= 0);
 
-  const emailUngueltig = email.trim().length > 0 && !EMAIL_RE.test(email.trim());
-  const bereitsVergeben = vorhandeneEmails.includes(email.trim().toLowerCase());
+  const emailInvalid = email.trim().length > 0 && !EMAIL_RE.test(email.trim());
+  const alreadyAssign = existingEmails.includes(email.trim().toLowerCase());
 
   function reset() {
     setEmail("");
     setName("");
     setRoleName("assistant");
     setCompanyIds([]);
-    setAbweichungen({});
+    setDeviations({});
     setDeputyUserId(LEER);
     setEscalationDays("");
-    setBereich(LEER);
+    setArea(LEER);
   }
 
-  function anlegen() {
+  function submit() {
     if (!email.trim()) {
       toast.error(t("team.new.toast.emailPflicht"));
       return;
@@ -1323,7 +1323,7 @@ function NewEmployeeDialog({
       toast.error(t("team.new.toast.emailUngueltig"));
       return;
     }
-    if (bereitsVergeben) {
+    if (alreadyAssign) {
       toast.error(t("team.new.toast.emailVergeben"));
       return;
     }
@@ -1339,28 +1339,28 @@ function NewEmployeeDialog({
           // failure here is reported on its own rather than folded into the create error: the
           // account exists and works at its role's defaults, which is a different situation from
           // "creating the employee failed" and needs a different next step.
-          const eintraege = Object.entries(abweichungen);
-          if (eintraege.length > 0) {
+          const entries = Object.entries(deviations);
+          if (entries.length > 0) {
             try {
               await Promise.all(
-                eintraege.map(([key, value]) =>
+                entries.map(([key, value]) =>
                   setRight.mutateAsync({ employeeId: result.employeeId, right: key, value }),
                 ),
               );
             } catch (e) {
-              toast.error(t("team.new.toast.rechteFehlgeschlagen", { error: fehlerText(e) }));
+              toast.error(t("team.new.toast.rechteFehlgeschlagen", { error: errorText(e) }));
             }
           }
           // Same reasoning as the deviations above: these need the id, and a failure here leaves a
           // working account that simply has no deputy yet, which is its own situation.
-          const tage = escalationDays.trim() === "" ? null : Number(escalationDays);
+          const days = escalationDays.trim() === "" ? null : Number(escalationDays);
           const chainChanges = {
             ...(deputyUserId !== LEER ? { deputy_user_id: deputyUserId } : {}),
-            ...(tage != null && Number.isFinite(tage) && tage > 0 ? { escalation_days: tage } : {}),
-            ...(bereich !== LEER && darfFinalFreigeben
+            ...(days != null && Number.isFinite(days) && days > 0 ? { escalation_days: days } : {}),
+            ...(area !== LEER && canFinalApprove
               ? {
-                  area: bereich === ALLE_BEREICHE ? null : (bereich as ApprovalArea),
-                  covers_all_areas: bereich === ALLE_BEREICHE,
+                  area: area === ALL_AREAS ? null : (area as ApprovalArea),
+                  covers_all_areas: area === ALL_AREAS,
                 }
               : {}),
           };
@@ -1368,7 +1368,7 @@ function NewEmployeeDialog({
             try {
               await updateChain.mutateAsync({ userId: result.employeeId, changes: chainChanges });
             } catch (e) {
-              toast.error(t("team.new.toast.rechteFehlgeschlagen", { error: fehlerText(e) }));
+              toast.error(t("team.new.toast.rechteFehlgeschlagen", { error: errorText(e) }));
             }
           }
           setCreatedCredentials({ email: result.email, tempPassword: result.tempPassword });
@@ -1378,7 +1378,7 @@ function NewEmployeeDialog({
         onError: (e) =>
           toast.error(
             t("team.new.toast.fehlgeschlagen", {
-              error: fehlerText(e),
+              error: errorText(e),
             }),
           ),
       },
@@ -1427,12 +1427,12 @@ function NewEmployeeDialog({
                 onChange={(e) => setEmail(e.target.value)}
                 placeholder={`name@${BRAND.emailDomain}`}
                 aria-required
-                aria-invalid={emailUngueltig || bereitsVergeben}
+                aria-invalid={emailInvalid || alreadyAssign}
               />
-              {emailUngueltig && (
+              {emailInvalid && (
                 <p className="text-xs text-amber-700">{t("team.new.toast.emailUngueltig")}</p>
               )}
-              {bereitsVergeben && (
+              {alreadyAssign && (
                 <p className="text-xs text-amber-700">{t("team.new.toast.emailVergeben")}</p>
               )}
             </div>
@@ -1464,14 +1464,14 @@ function NewEmployeeDialog({
                   expressed only by ticking nothing, which reads as "not filled in yet" rather than as
                   a choice. Picking it clears the specific ones; picking a company drops it. */}
               <MultiCombobox
-                values={companyIds.length === 0 ? [ALLE_GESELLSCHAFTEN] : companyIds}
+                values={companyIds.length === 0 ? [ALL_COMPANIES] : companyIds}
                 onValuesChange={(next) => {
-                  const willAlle = next.includes(ALLE_GESELLSCHAFTEN) && companyIds.length > 0;
-                  setCompanyIds(willAlle ? [] : next.filter((v) => v !== ALLE_GESELLSCHAFTEN));
+                  const willAll = next.includes(ALL_COMPANIES) && companyIds.length > 0;
+                  setCompanyIds(willAll ? [] : next.filter((v) => v !== ALL_COMPANIES));
                 }}
                 options={[
                   {
-                    value: ALLE_GESELLSCHAFTEN,
+                    value: ALL_COMPANIES,
                     label: t("team.new.field.companiesAlle"),
                   },
                   ...companies.map((c) => ({
@@ -1490,26 +1490,24 @@ function NewEmployeeDialog({
                 <div className="space-y-1.5">
                   <Label className="text-xs text-muted-foreground">{t("team.chain.bereich")}</Label>
                   <Select
-                    value={bereich}
-                    disabled={!darfFinalFreigeben || create.isPending}
-                    onValueChange={setBereich}
+                    value={area}
+                    disabled={!canFinalApprove || create.isPending}
+                    onValueChange={setArea}
                   >
                     <SelectTrigger>
                       <SelectValue />
                     </SelectTrigger>
                     <SelectContent>
-                      <SelectItem value={LEER}>{t("freigabeRegeln.bereich.keiner")}</SelectItem>
+                      <SelectItem value={LEER}>{t("approvalRules.bereich.keiner")}</SelectItem>
                       <SelectItem value="hospitality">
-                        {t("freigabeRegeln.bereich.hospitality")}
+                        {t("approvalRules.bereich.hospitality")}
                       </SelectItem>
-                      <SelectItem value="stay_re">{t("freigabeRegeln.bereich.stay_re")}</SelectItem>
-                      <SelectItem value={ALLE_BEREICHE}>
-                        {t("freigabeRegeln.bereich.alle")}
-                      </SelectItem>
+                      <SelectItem value="stay_re">{t("approvalRules.bereich.stay_re")}</SelectItem>
+                      <SelectItem value={ALL_AREAS}>{t("approvalRules.bereich.alle")}</SelectItem>
                     </SelectContent>
                   </Select>
                   <p className="text-xs text-muted-foreground">
-                    {darfFinalFreigeben
+                    {canFinalApprove
                       ? t("team.chain.bereichHint")
                       : t("team.chain.bereichBrauchtRecht")}
                   </p>
@@ -1527,7 +1525,7 @@ function NewEmployeeDialog({
                       <SelectValue />
                     </SelectTrigger>
                     <SelectContent>
-                      <SelectItem value={LEER}>{t("freigabeRegeln.keineVertretung")}</SelectItem>
+                      <SelectItem value={LEER}>{t("approvalRules.keineVertretung")}</SelectItem>
                       {(employeesQ.data ?? [])
                         .filter((e) => e.is_active && e.role_name !== "super_admin")
                         .map((e) => (
@@ -1545,13 +1543,13 @@ function NewEmployeeDialog({
                   <Input
                     value={escalationDays}
                     inputMode="numeric"
-                    placeholder={t("freigabeRegeln.feld.eskalationPlaceholder")}
+                    placeholder={t("approvalRules.feld.eskalationPlaceholder")}
                     disabled={create.isPending}
                     onChange={(e) => setEscalationDays(e.target.value)}
                   />
-                  {eskalationUngueltig ? (
+                  {escalationInvalid ? (
                     <p className="text-xs text-destructive">
-                      {t("freigabeRegeln.feld.eskalationUngueltig")}
+                      {t("approvalRules.feld.eskalationUngueltig")}
                     </p>
                   ) : (
                     <p className="text-xs text-muted-foreground">
@@ -1569,17 +1567,17 @@ function NewEmployeeDialog({
                     and re-seeds when the role changes. Ticking here records a deviation, written
                     right after the account exists -- see anlegen(). */}
                 <PermissionChecklist
-                  permissions={neuePermissions}
-                  held={neueGehalten}
+                  permissions={newPermissions}
+                  held={newHeld}
                   disabled={create.isPending || setRight.isPending}
                   categoryLabel={(c) => t(`team.permissions.kategorie.${c}`, { defaultValue: c })}
                   onToggle={(key, next) =>
-                    setAbweichungen((v) => {
-                      const vonRolle = rollenVorgabe.includes(key);
+                    setDeviations((v) => {
+                      const fromDateRole = rolesDefault.includes(key);
                       const rest = { ...v };
                       // A tick that matches the role default is not a deviation -- drop it, so the
                       // person keeps inheriting and a later change to the role still reaches them.
-                      if (next === vonRolle) delete rest[key];
+                      if (next === fromDateRole) delete rest[key];
                       else rest[key] = next;
                       return rest;
                     })
@@ -1593,14 +1591,14 @@ function NewEmployeeDialog({
               {t("team.new.cancel")}
             </Button>
             <Button
-              onClick={anlegen}
+              onClick={submit}
               disabled={
                 create.isPending ||
                 !name.trim() ||
                 !email.trim() ||
-                emailUngueltig ||
-                eskalationUngueltig ||
-                bereitsVergeben
+                emailInvalid ||
+                escalationInvalid ||
+                alreadyAssign
               }
             >
               {create.isPending ? t("team.new.saving") : t("team.new.save")}

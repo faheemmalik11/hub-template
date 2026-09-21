@@ -26,7 +26,7 @@ import {
   DialogTrigger,
 } from "@/components/ui/dialog";
 import { Skeleton } from "@/components/ui/skeleton";
-import { PdfPane } from "@/components/belege/pdf-pane";
+import { PdfPane } from "@/components/documents/pdf-pane";
 import { useTransactionDocuments } from "@/data";
 import { useTranslation } from "@/lib/i18n";
 import { cn } from "@/lib/utils";
@@ -51,21 +51,21 @@ export function TransactionDocuments({
 }) {
   const { t } = useTranslation();
   const { data, isLoading, isError } = useTransactionDocuments(transactionId);
-  const dateien = data ?? [];
+  const files = data ?? [];
 
-  const [aktivId, setAktivId] = useState<string | null>(null);
+  const [activeId, setActiveId] = useState<string | null>(null);
   // Reset when the transaction changes, so navigating between two of them cannot leave the
   // previous transaction's receipt selected on a list that no longer contains it.
   useEffect(() => {
-    setAktivId(null);
+    setActiveId(null);
   }, [transactionId]);
 
-  const aktiv = dateien.find((d) => d.id === aktivId) ?? dateien[0] ?? null;
+  const active = files.find((d) => d.id === activeId) ?? files[0] ?? null;
 
   const [frameLoaded, setFrameLoaded] = useState(false);
   useEffect(() => {
     setFrameLoaded(false);
-  }, [aktiv?.previewUrl]);
+  }, [active?.previewUrl]);
 
   if (isLoading) {
     return <Skeleton className={cn(PANE_H, "w-full rounded-lg", className)} />;
@@ -82,7 +82,7 @@ export function TransactionDocuments({
     );
   }
 
-  if (!aktiv) {
+  if (!active) {
     return (
       <div
         className={cn(
@@ -96,50 +96,52 @@ export function TransactionDocuments({
     );
   }
 
-  const istPdf = (aktiv.mime ?? "") === "application/pdf";
-  const istBild = (aktiv.mime ?? "").startsWith("image/");
-  const name = aktiv.filename ?? t("bank.detail.belege.datei");
+  const isPdf = (active.mime ?? "") === "application/pdf";
+  const isImage = (active.mime ?? "").startsWith("image/");
+  const name = active.filename ?? t("bank.detail.belege.datei");
 
   return (
     <div className={cn("space-y-3", className)}>
       <div className="overflow-hidden rounded-lg border border-border bg-muted/40">
-        {istPdf ? (
+        {isPdf ? (
           <div className={cn("relative w-full", PANE_H)}>
             {!frameLoaded && (
               <Skeleton className="absolute inset-0 z-10 h-full w-full rounded-none" />
             )}
             <PdfPane
-              url={aktiv.previewUrl}
+              url={active.previewUrl}
               onReady={() => setFrameLoaded(true)}
               className="h-full w-full"
             />
           </div>
-        ) : istBild ? (
-          <img src={aktiv.previewUrl} alt={name} className="w-full" />
+        ) : isImage ? (
+          <img src={active.previewUrl} alt={name} className="w-full" />
         ) : (
           <div className="flex flex-col items-center justify-center px-4 py-10 text-center text-sm text-muted-foreground">
             <FileWarning className="size-6" />
-            <p className="mt-2">{t("bank.detail.belege.nichtDarstellbar", { typ: aktiv.mime })}</p>
+            <p className="mt-2">
+              {t("bank.detail.belege.nichtDarstellbar", { type: active.mime })}
+            </p>
           </div>
         )}
       </div>
 
       {/* Only with something to switch BETWEEN. One receipt is the common case and a strip of one
           thumbnail is a control that does nothing. */}
-      {dateien.length > 1 && (
+      {files.length > 1 && (
         <div className="flex flex-wrap gap-2">
-          {dateien.map((d) => {
-            const gewaehlt = d.id === aktiv.id;
+          {files.map((d) => {
+            const selected = d.id === active.id;
             return (
               <button
                 key={d.id}
                 type="button"
-                onClick={() => setAktivId(d.id)}
-                aria-current={gewaehlt}
+                onClick={() => setActiveId(d.id)}
+                aria-current={selected}
                 title={d.filename ?? undefined}
                 className={cn(
                   "h-14 w-14 overflow-hidden rounded-md border transition-colors",
-                  gewaehlt ? "border-brand ring-1 ring-brand" : "border-border hover:border-brand",
+                  selected ? "border-brand ring-1 ring-brand" : "border-border hover:border-brand",
                 )}
               >
                 {(d.mime ?? "").startsWith("image/") ? (
@@ -172,12 +174,12 @@ export function TransactionDocuments({
         >
           <Paperclip className="size-3.5 shrink-0" />
           <span className="truncate">
-            {aktiv.source
-              ? t("bank.detail.belege.quelle", { quelle: aktiv.source })
+            {active.source
+              ? t("bank.detail.belege.quelle", { source: active.source })
               : t("bank.detail.belege.vorhanden")}
-            {aktiv.sizeBytes ? ` · ${formatBytes(aktiv.sizeBytes)}` : ""}
-            {dateien.length > 1
-              ? ` · ${t("bank.detail.belege.anzahl", { count: dateien.length })}`
+            {active.sizeBytes ? ` · ${formatBytes(active.sizeBytes)}` : ""}
+            {files.length > 1
+              ? ` · ${t("bank.detail.belege.anzahl", { count: files.length })}`
               : ""}
           </span>
         </span>
@@ -191,7 +193,7 @@ export function TransactionDocuments({
                 className="size-8 p-0"
                 aria-label={t("bank.detail.belege.neuerTab")}
               >
-                <a href={aktiv.previewUrl} target="_blank" rel="noreferrer">
+                <a href={active.previewUrl} target="_blank" rel="noreferrer">
                   <ExternalLink className="size-3.5" />
                 </a>
               </Button>
@@ -218,13 +220,13 @@ export function TransactionDocuments({
               <DialogHeader>
                 <DialogTitle className="font-semibold tracking-tight">{name}</DialogTitle>
               </DialogHeader>
-              {istBild ? (
+              {isImage ? (
                 <div className="max-h-[80vh] overflow-auto rounded-lg border border-border bg-muted/40 p-4">
-                  <img src={aktiv.previewUrl} alt={name} className="mx-auto w-full" />
+                  <img src={active.previewUrl} alt={name} className="mx-auto w-full" />
                 </div>
               ) : (
                 <iframe
-                  src={`${aktiv.previewUrl}#toolbar=0&navpanes=0&view=FitH`}
+                  src={`${active.previewUrl}#toolbar=0&navpanes=0&view=FitH`}
                   title={name}
                   className="h-[80vh] w-full rounded-lg border border-border"
                 />
@@ -237,7 +239,7 @@ export function TransactionDocuments({
       {/* The signed download URL carries Content-Disposition server-side, so no `download`
           attribute: it is cross-origin and the browser would ignore it anyway. */}
       <Button asChild variant="outline" size="sm" className="w-full gap-2">
-        <a href={aktiv.downloadUrl}>
+        <a href={active.downloadUrl}>
           <Download className="size-4" /> {t("bank.detail.belege.herunterladen")}
         </a>
       </Button>

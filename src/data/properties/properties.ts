@@ -2,22 +2,22 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 
 import { TABLE } from "@/config/tables";
 import { STALE, actorEmail, sb } from "@/data/client";
-import { pflichtGrund } from "@/data/shared";
-import type { Gesellschaft, Objekt, PropertyCompany } from "@/lib/data/types";
+import { requiredReason } from "@/data/shared";
+import type { Company, Property, PropertyCompany } from "@/lib/data/types";
 
 // `objekte` (Migration 0004) is newer than the generated Database type, so it isn't known to the
 // typed client — reads go through the untyped `sb` cast, like the writes.
-export function useObjekte() {
+export function useProperties() {
   return useQuery({
     queryKey: ["objekte"],
     staleTime: STALE,
-    queryFn: async (): Promise<Objekt[]> => {
+    queryFn: async (): Promise<Property[]> => {
       const { data, error } = await sb
         .from(TABLE.properties)
         .select("*")
         .order("code", { ascending: true });
       if (error) throw error;
-      return (data ?? []) as Objekt[];
+      return (data ?? []) as Property[];
     },
   });
 }
@@ -47,7 +47,7 @@ export function usePropertyCompanies() {
  * erase that explanation. There is deliberately no DELETE policy on the table (migration 0083).
  */
 /** A property/company write error, said in the reader's words rather than as a constraint name. */
-function zuordnungFehler(error: unknown): Error {
+function assignmentError(error: unknown): Error {
   const e = error as { code?: string; message?: string };
   if (e.code === "23505" && e.message?.includes("cost_center")) {
     return new Error(
@@ -88,8 +88,8 @@ export function useSavePropertyCompanyLink() {
       previousPropertyId: string | null;
       previousCompanyId: string | null;
       companyId: string;
-      nummer: number | null;
-      nummerGeaendert: boolean;
+      number: number | null;
+      numberChanged: boolean;
       actor: string | null;
     }) => {
       const now = new Date().toISOString();
@@ -100,13 +100,13 @@ export function useSavePropertyCompanyLink() {
         input.previousPropertyId === input.propertyId;
 
       if (sameRow) {
-        if (!input.nummerGeaendert) return;
+        if (!input.numberChanged) return;
         const { data, error } = await sb
           .from(TABLE.propertyCompanies)
-          .update({ cost_centre_number: input.nummer, updated_at: now })
+          .update({ cost_centre_number: input.number, updated_at: now })
           .eq("id", input.linkId)
           .select("id");
-        if (error) throw zuordnungFehler(error);
+        if (error) throw assignmentError(error);
         if (!data || data.length === 0) {
           throw new Error("Kostenstellen-Nummern dürfen nur Administratoren ändern.");
         }
@@ -118,9 +118,9 @@ export function useSavePropertyCompanyLink() {
         company_id: input.companyId,
         // Only sent when set: a non-admin adds the company without a number, and the trigger
         // refuses a number arriving from them.
-        ...(input.nummer != null ? { cost_centre_number: input.nummer } : {}),
+        ...(input.number != null ? { cost_centre_number: input.number } : {}),
       });
-      if (insertError) throw zuordnungFehler(insertError);
+      if (insertError) throw assignmentError(insertError);
 
       if (input.linkId) {
         const { data, error } = await sb
@@ -128,7 +128,7 @@ export function useSavePropertyCompanyLink() {
           .update({ deleted_at: now, deleted_by: input.actor, updated_at: now })
           .eq("id", input.linkId)
           .select("id");
-        if (error) throw zuordnungFehler(error);
+        if (error) throw assignmentError(error);
         if (!data || data.length === 0) {
           throw new Error("Die bisherige Zuordnung konnte nicht entfernt werden.");
         }
@@ -152,7 +152,7 @@ export function useRemovePropertyCompanyLink() {
         .update({ deleted_at: now, deleted_by: input.actor, updated_at: now })
         .eq("id", input.linkId)
         .select("id");
-      if (error) throw zuordnungFehler(error);
+      if (error) throw assignmentError(error);
       if (!data || data.length === 0) {
         throw new Error("Die Zuordnung konnte nicht entfernt werden.");
       }
@@ -214,36 +214,36 @@ export function useSetPropertyCompanies() {
   });
 }
 
-export function useObjekt(id: string) {
+export function useProperty(id: string) {
   return useQuery({
     queryKey: ["objekt", id],
     enabled: !!id,
     staleTime: STALE,
-    queryFn: async (): Promise<Objekt | null> => {
+    queryFn: async (): Promise<Property | null> => {
       const { data, error } = await sb
         .from(TABLE.properties)
         .select("*")
         .eq("id", id)
         .maybeSingle();
       if (error) throw error;
-      return (data as Objekt) ?? null;
+      return (data as Property) ?? null;
     },
   });
 }
 
 // Objekt (Stammdaten) anlegen. Gibt die neue Zeile zurück.
-export function useCreateObjekt() {
+export function useCreateProperty() {
   const qc = useQueryClient();
   return useMutation({
-    mutationFn: async (werte: {
+    mutationFn: async (values: {
       code: string;
       name?: string | null;
       address?: string | null;
       vat_status?: string | null;
-    }): Promise<Objekt> => {
-      const { data, error } = await sb.from(TABLE.properties).insert(werte).select("*").single();
+    }): Promise<Property> => {
+      const { data, error } = await sb.from(TABLE.properties).insert(values).select("*").single();
       if (error) throw error;
-      return data as Objekt;
+      return data as Property;
     },
     onSuccess: () => qc.invalidateQueries({ queryKey: ["objekte"] }),
   });
@@ -257,58 +257,58 @@ export function useCreateObjekt() {
  * columns were already on the table, so restore worked from the trash before anything here could
  * archive in the first place.
  */
-export function useArchiveObjekt(objektId: string) {
+export function useArchiveProperty(propertyId: string) {
   const qc = useQueryClient();
   return useMutation({
-    mutationFn: async (grund: string) => {
+    mutationFn: async (reason: string) => {
       const actor = await actorEmail();
       const { error } = await sb
         .from(TABLE.properties)
         .update({
           deleted_at: new Date().toISOString(),
           deleted_by: actor,
-          delete_reason: pflichtGrund(grund),
+          delete_reason: requiredReason(reason),
         })
-        .eq("id", objektId);
+        .eq("id", propertyId);
       if (error) throw error;
     },
     onSuccess: () => {
-      qc.invalidateQueries({ queryKey: ["objekt", objektId] });
+      qc.invalidateQueries({ queryKey: ["objekt", propertyId] });
       qc.invalidateQueries({ queryKey: ["objekte"] });
     },
   });
 }
 
-export function useUnarchiveObjekt(objektId: string) {
+export function useUnarchiveProperty(propertyId: string) {
   const qc = useQueryClient();
   return useMutation({
     mutationFn: async () => {
       const { error } = await sb
         .from(TABLE.properties)
         .update({ deleted_at: null, deleted_by: null, delete_reason: null })
-        .eq("id", objektId);
+        .eq("id", propertyId);
       if (error) throw error;
     },
     onSuccess: () => {
-      qc.invalidateQueries({ queryKey: ["objekt", objektId] });
+      qc.invalidateQueries({ queryKey: ["objekt", propertyId] });
       qc.invalidateQueries({ queryKey: ["objekte"] });
     },
   });
 }
 
 // Objekt-Stammdaten aktualisieren.
-export function useUpdateObjekt(objektId: string) {
+export function useUpdateProperty(propertyId: string) {
   const qc = useQueryClient();
   return useMutation({
-    mutationFn: async (changes: Partial<Objekt>) => {
+    mutationFn: async (changes: Partial<Property>) => {
       const { error } = await sb
         .from(TABLE.properties)
         .update({ ...changes, updated_at: new Date().toISOString() })
-        .eq("id", objektId);
+        .eq("id", propertyId);
       if (error) throw error;
     },
     onSuccess: () => {
-      qc.invalidateQueries({ queryKey: ["objekt", objektId] });
+      qc.invalidateQueries({ queryKey: ["objekt", propertyId] });
       qc.invalidateQueries({ queryKey: ["objekte"] });
     },
   });

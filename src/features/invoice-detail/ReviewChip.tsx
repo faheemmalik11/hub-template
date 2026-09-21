@@ -37,7 +37,7 @@ export function ReviewBadge({
   reasonCount = 0,
   status,
   alreadyPaid = false,
-  ungeprueft = false,
+  unchecked = false,
   className,
 }: {
   /** How many checks failed. See pruefGruende()/pruefKarte() in ./pruefung. */
@@ -46,7 +46,7 @@ export function ReviewBadge({
    * The pipeline reported no checks at all for this receipt, passed or failed. Compute it as
    * `karte.gruende.length === 0 && karte.bestanden.length === 0` from pruefKarte().
    */
-  ungeprueft?: boolean;
+  unchecked?: boolean;
   /** `invoices.status`, only for the two values that outrank the review question. Optional. */
   status?: string | null;
   /** Settled privately, so there is nothing to review, approve or pay. Optional. */
@@ -61,7 +61,7 @@ export function ReviewBadge({
         ? "ausgeschlossen"
         : alreadyPaid
           ? "bereitsBezahlt"
-          : reasonCount > 0 || (ungeprueft && status === "needs_review")
+          : reasonCount > 0 || (unchecked && status === "needs_review")
             ? "needed"
             : "none";
   return (
@@ -100,7 +100,7 @@ export function ReviewBadge({
         // Only 'needed' keeps it, which is the one state that does ask for something.
         <TriangleAlert className="size-3.5 shrink-0" />
       )}
-      {t(`belege.detail.review.${state}`)}
+      {t(`documents.detail.review.${state}`)}
       {/* Only when there IS a count. A receipt the pipeline never checked reaches "needed" through
           `ungeprueft`, where the failed-check count is zero, and printing it read as "Zu prüfen · 0"
           -- a tally of nothing, which looks like a bug rather than a state. */}

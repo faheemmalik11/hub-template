@@ -12,7 +12,7 @@
 // Must run server-side only: needs OPENAI_API_KEY, which must never reach the browser.
 import { AppError, OpenAiApiError } from "./errors";
 import { loadGrounding, type Grounding } from "./invoice-nl-grounding";
-import { tenantCredential } from "@/lib/postfach/channel-credentials.server";
+import { tenantCredential } from "@/lib/inbox/channel-credentials.server";
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 type Db = any;

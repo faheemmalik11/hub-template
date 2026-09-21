@@ -5,9 +5,9 @@ import * as React from "react";
  * provides it. It lives in its own module so `feld.tsx` exports a component and nothing else,
  * which is what fast refresh needs.
  */
-export const FeldContext = React.createContext<string | null>(null);
+export const FieldContext = React.createContext<string | null>(null);
 
 /** The generated control id for the surrounding Feld, or null outside one. */
-export function useFeldId() {
-  return React.useContext(FeldContext);
+export function useFieldId() {
+  return React.useContext(FieldContext);
 }

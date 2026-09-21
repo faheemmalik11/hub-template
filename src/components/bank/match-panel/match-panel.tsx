@@ -16,7 +16,7 @@ import { cn } from "@/lib/utils";
 import { useTranslation } from "@/lib/i18n";
 import { PaymentRightNotice } from "@/components/bank/payment-right-notice";
 import { useDebouncedValue } from "@/lib/use-debounced-value";
-import { formatDate, formatEUR, formatSignedEUR, heuteLokal } from "@/lib/data/format";
+import { formatDate, formatEUR, formatSignedEUR, todayLocal } from "@/lib/data/format";
 import { TransactionMatches } from "@/components/bank/match-candidates";
 import { NoReceiptAction } from "@/components/bank/no-receipt-action";
 import { InvoiceMatches } from "@/components/bank/match-panel/invoice-matches";
@@ -27,7 +27,7 @@ import { usePossibleInvoiceMatches } from "@/components/bank/match-panel/use-pos
 import { ManualSearch } from "@/components/bank/match-panel/manual-search";
 import { SEARCH_DEBOUNCE_MS } from "@/components/bank/match-panel/constants";
 import {
-  useBelegMatches,
+  useDocumentMatches,
   useOutgoingInvoiceMatches,
   useOutgoingTransactionMatches,
   useTransactionMatches,
@@ -97,7 +97,7 @@ export function MatchPanel({
   // COUNT (those two components only render the list, they don't report a count upward).
   const invoiceId = display?.kind === "invoice" ? display.id : "";
   const isOutgoingInvoice = display?.kind === "invoice" && display.type === "outgoing";
-  const incomingInvoiceMatchesQ = useBelegMatches(!isOutgoingInvoice ? invoiceId : "");
+  const incomingInvoiceMatchesQ = useDocumentMatches(!isOutgoingInvoice ? invoiceId : "");
   const outgoingInvoiceMatchesQ = useOutgoingInvoiceMatches(isOutgoingInvoice ? invoiceId : "");
   const transactionId = display?.kind === "transaction" ? display.txn.id : "";
   const isCreditTxn = display?.kind === "transaction" && display.txn.amount >= 0;
@@ -143,7 +143,7 @@ export function MatchPanel({
     (display?.kind === "transaction" &&
       (possibleInvoices.isLoading || possibleInvoices.matches.length > 0));
 
-  const searchOffen = showSearch || !showSuggestedSection;
+  const searchOpen = showSearch || !showSuggestedSection;
 
   // Partial payment, mirrored from the list row: the sum of CONFIRMED links against this
   // invoice. Without it the panel showed the full gross next to an "already reconciled" payment
@@ -153,14 +153,14 @@ export function MatchPanel({
     display?.kind === "invoice"
       ? ((isOutgoingInvoice ? outgoingInvoiceMatchesQ.data : incomingInvoiceMatchesQ.data) ?? [])
       : [];
-  const bezahltSumme = invoiceMatchRows
+  const paidTotal = invoiceMatchRows
     .filter((m) => m.status === "confirmed")
     .reduce((sum, m) => sum + Math.abs(m.amount_matched ?? 0), 0);
-  const teilzahlung =
+  const partialPayment =
     display?.kind === "invoice" &&
     display.amount != null &&
-    bezahltSumme > 0.005 &&
-    bezahltSumme < Math.abs(display.amount) - 0.005;
+    paidTotal > 0.005 &&
+    paidTotal < Math.abs(display.amount) - 0.005;
 
   return (
     <Sheet open={open} onOpenChange={(next) => !next && onClose()}>
@@ -210,11 +210,11 @@ export function MatchPanel({
                       : formatSignedEUR(display.txn.amount)}
                   </span>
                 </div>
-                {teilzahlung && display.kind === "invoice" && (
+                {partialPayment && display.kind === "invoice" && (
                   <div className="mt-0.5 text-xs font-medium tabular-nums text-amber-700">
-                    {t("offenePosten.belege.restOffen", {
-                      rest: formatEUR(Math.abs(display.amount ?? 0) - bezahltSumme),
-                      bezahlt: formatEUR(bezahltSumme),
+                    {t("openItems.belege.restOffen", {
+                      rest: formatEUR(Math.abs(display.amount ?? 0) - paidTotal),
+                      paid: formatEUR(paidTotal),
                     })}
                   </div>
                 )}
@@ -228,9 +228,9 @@ export function MatchPanel({
                     {display.dueDate && (
                       <span>
                         {t("matchPanel.dueDate", { datum: formatDate(display.dueDate) })}
-                        {display.dueDate < heuteLokal() && (
+                        {display.dueDate < todayLocal() && (
                           <span className="ml-1 font-medium text-red-600">
-                            · {t("offenePosten.belege.ueberfaellig")}
+                            · {t("openItems.belege.ueberfaellig")}
                           </span>
                         )}
                       </span>
@@ -241,14 +241,14 @@ export function MatchPanel({
               {/* WHAT TO DO NEXT: a partial payment leaves the reader with a number and no
                   instruction. This says the invoice stays open until the rest is matched, and
                   hands them the search directly. */}
-              {teilzahlung && display.kind === "invoice" && (
+              {partialPayment && display.kind === "invoice" && (
                 <div className="mt-3 flex flex-wrap items-center justify-between gap-x-3 gap-y-2 rounded-lg border border-amber-200 bg-amber-50 px-3 py-2">
                   <span className="min-w-0 flex-1 text-xs text-amber-900">
                     {t("matchPanel.teilzahlungHinweis", {
-                      rest: formatEUR(Math.abs(display.amount ?? 0) - bezahltSumme),
+                      rest: formatEUR(Math.abs(display.amount ?? 0) - paidTotal),
                     })}
                   </span>
-                  {!searchOffen && (
+                  {!searchOpen && (
                     <Button
                       size="sm"
                       variant="outline"
@@ -270,7 +270,7 @@ export function MatchPanel({
 
             <div className="flex min-h-0 flex-1 flex-col gap-5 overflow-y-auto px-4 py-5">
               <PaymentRightNotice />
-              {searchOffen ? (
+              {searchOpen ? (
                 <section className="flex min-h-0 flex-1 flex-col">
                   <div className="mb-2 flex items-center justify-between gap-3">
                     <h3 className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
@@ -354,7 +354,7 @@ export function MatchPanel({
               )}
             </div>
 
-            {!searchOffen && (
+            {!searchOpen && (
               <div className="shrink-0 border-t border-border px-4 pb-2 pt-3">
                 <p className="mb-2 text-center text-sm text-muted-foreground">
                   {display.kind === "invoice"
@@ -377,7 +377,7 @@ export function MatchPanel({
               <div
                 className={cn(
                   "shrink-0 px-4 pb-4",
-                  searchOffen ? "border-t border-border pt-4" : "pt-0",
+                  searchOpen ? "border-t border-border pt-4" : "pt-0",
                 )}
               >
                 <NoReceiptAction txn={display.txn} variant="button" className="w-full" />

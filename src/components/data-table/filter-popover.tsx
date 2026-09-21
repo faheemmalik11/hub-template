@@ -6,7 +6,7 @@ import { Combobox } from "@/components/ui/combobox";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from "@/components/ui/sheet";
 import { Switch } from "@/components/ui/switch";
-import { ZeitraumPicker } from "@/components/data-table/zeitraum-picker";
+import { PeriodPicker } from "@/components/data-table/period-picker";
 import { useIsMobile } from "@/hooks/use-mobile";
 import {
   clearFilters,
@@ -89,13 +89,13 @@ function FilterFields({ fields }: { fields: FilterField[] }) {
             // The app's own period control: a list of presets that turns into ONE calendar in
             // place. Two separate date fields made a single question look like two filters and let
             // a reader pick a range that runs backwards.
-            <ZeitraumPicker
+            <PeriodPicker
               value={f.value}
               onValueChange={f.onChange}
               options={f.options}
               customValue={f.customValue}
-              von={f.von}
-              bis={f.bis}
+              fromDate={f.fromDate}
+              toDate={f.toDate}
               onRangeApply={f.onRangeApply}
               locale={f.locale}
               rangeLabels={f.rangeLabels}

@@ -15,13 +15,13 @@ export interface BankAccountDraft {
   isDefault: boolean;
 }
 
-let laufendeNummer = 0;
+let sequentialNumber = 0;
 
 /** A blank account. The first one added is the default, because a supplier must have exactly one. */
 export function newBankAccountDraft(drafts: BankAccountDraft[]): BankAccountDraft {
-  laufendeNummer += 1;
+  sequentialNumber += 1;
   return {
-    key: `draft-${laufendeNummer}`,
+    key: `draft-${sequentialNumber}`,
     iban: "",
     bic: "",
     bank_name: "",
@@ -38,7 +38,7 @@ export function newBankAccountDraft(drafts: BankAccountDraft[]): BankAccountDraf
  */
 export function withSingleDefault(drafts: BankAccountDraft[]): BankAccountDraft[] {
   if (drafts.length === 0) return drafts;
-  const ersterStandard = drafts.findIndex((d) => d.isDefault);
-  const gewinner = ersterStandard === -1 ? 0 : ersterStandard;
-  return drafts.map((d, i) => ({ ...d, isDefault: i === gewinner }));
+  const firstStandard = drafts.findIndex((d) => d.isDefault);
+  const winner = firstStandard === -1 ? 0 : firstStandard;
+  return drafts.map((d, i) => ({ ...d, isDefault: i === winner }));
 }

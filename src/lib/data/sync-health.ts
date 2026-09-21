@@ -126,9 +126,9 @@ export function computeSyncHealth(rows: BankSyncLog[], nowMs: number): SyncHealt
     atMinutesAgo: minutesBetween(nowMs, iso),
   });
 
-  const nie = (): SyncHealth => ({ ...base, status: "never", at: null, atMinutesAgo: null });
+  const never = (): SyncHealth => ({ ...base, status: "never", at: null, atMinutesAgo: null });
 
-  if (!usable.length) return nie();
+  if (!usable.length) return never();
 
   // A failure newer than the last completion is the headline, whatever else is in the log. The
   // comparison is against the COMPLETION and not against "now": an error from three days ago that
@@ -145,7 +145,7 @@ export function computeSyncHealth(rows: BankSyncLog[], nowMs: number): SyncHealt
 
   // Rows exist but nothing ever completed and nothing started, e.g. only a manual run's
   // intermediate events. Treat as never rather than inventing a state.
-  if (!lastRun) return nie();
+  if (!lastRun) return never();
 
   const age = minutesBetween(nowMs, lastRun.created_at);
   if (age > STALE_AFTER_MINUTES) return at(lastRun.created_at, "stale");

@@ -1,12 +1,12 @@
 export {
-  useArchiveObjekt,
-  useCreateObjekt,
-  useObjekt,
-  useObjekte,
+  useArchiveProperty,
+  useCreateProperty,
+  useProperty,
+  useProperties,
   usePropertyCompanies,
   useRemovePropertyCompanyLink,
   useSavePropertyCompanyLink,
   useSetPropertyCompanies,
-  useUnarchiveObjekt,
-  useUpdateObjekt,
+  useUnarchiveProperty,
+  useUpdateProperty,
 } from "./properties";

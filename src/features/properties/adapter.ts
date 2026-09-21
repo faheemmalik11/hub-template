@@ -10,42 +10,42 @@
 
 import { useMemo } from "react";
 
-import { useGesellschaften, usePropertyCompanies } from "@/data";
+import { useCompanies, usePropertyCompanies } from "@/data";
 
-import type { ObjektGesellschaft, ObjektGesellschaftenIndex, ObjektZuordnung } from "./config";
+import type { PropertyCompany, PropertyCompaniesIndex, PropertyAssignment } from "./config";
 
 // ---------------------------------------------------------------------------
 // Formatting and domain types.
 // ---------------------------------------------------------------------------
 export {
   dateLocale,
-  fehlerText,
+  errorText,
   formatDate,
   formatDateTime,
   formatEUR,
-  zeitraumToRange,
+  periodToRange,
 } from "@/lib/data/format";
 
-export type { Beleg, Objekt } from "@/lib/data/types";
-export type { BelegAggregatZeile } from "@/data";
+export type { Document, Property } from "@/lib/data/types";
+export type { DocumentAggregateRow } from "@/data";
 
 export { useTranslation } from "@/lib/i18n";
 export { cn } from "@/lib/utils";
-export { feldFehler, objektSchema } from "@/lib/forms/objekt-schema";
+export { fieldError, propertySchema } from "@/lib/forms/property-schema";
 
 // ---------------------------------------------------------------------------
 // Query hooks. Same names in every Hub; only the module path can differ.
 // ---------------------------------------------------------------------------
 export {
-  useArchiveObjekt,
-  useBelegeFuerObjektSeiten,
-  useCreateObjekt,
-  useLieferanten,
-  useObjektBelegAggregat,
-  useObjektBelegSummen,
-  useObjekte,
-  useUnarchiveObjekt,
-  useUpdateObjekt,
+  useArchiveProperty,
+  useDocumentsForPropertyPages,
+  useCreateProperty,
+  useSuppliers,
+  usePropertyDocumentAggregate,
+  usePropertyDocumentTotals,
+  useProperties,
+  useUnarchiveProperty,
+  useUpdateProperty,
 } from "@/data";
 
 export { useFetchNextSentinel } from "@/lib/use-fetch-next-sentinel";
@@ -60,7 +60,7 @@ export { Input } from "@/components/ui/input";
 export { Label } from "@/components/ui/label";
 export { Skeleton } from "@/components/ui/skeleton";
 export { Combobox } from "@/components/ui/combobox";
-export { FeldFehlerText, PflichtStern } from "@/components/ui/form-field";
+export { FieldErrorText, RequiredStern } from "@/components/ui/form-field";
 export {
   Dialog,
   DialogContent,
@@ -96,9 +96,9 @@ export {
   TableRow,
 } from "@/components/ui/table";
 
-export { ErrorState, TableSkeleton } from "@/components/belege/query-states";
-export { GesellschaftChip, StatusBadge, UstBadge } from "@/components/belege/badges";
-export { CopyButton } from "@/components/belege/copy-button";
+export { ErrorState, TableSkeleton } from "@/components/documents/query-states";
+export { CompanyChip, StatusBadge, VatBadge } from "@/components/documents/badges";
+export { CopyButton } from "@/components/documents/copy-button";
 
 export { ListToolbar } from "@/components/records/list-toolbar";
 export { InvoiceSummaryCell } from "@/components/records/invoice-summary-cell";
@@ -111,13 +111,13 @@ export { FilterPills } from "@/components/data-table/filter-pills";
 export type { FilterField } from "@/components/data-table/filter-fields";
 export { SortableColumnHeader } from "@/components/data-table/sortable-column-header";
 export { TablePagination } from "@/components/data-table/table-pagination";
-export { ZeitraumPicker } from "@/components/data-table/zeitraum-picker";
+export { PeriodPicker } from "@/components/data-table/period-picker";
 export {
-  useZeitraumOptionen,
-  ZEITRAUM_ALLE,
-  ZEITRAUM_INDIVIDUELL,
-  zeitraumBereich,
-} from "@/components/data-table/zeitraum-optionen";
+  usePeriodOptions,
+  PERIOD_ALL,
+  PERIOD_CUSTOM,
+  periodArea,
+} from "@/components/data-table/period-options";
 
 // ---------------------------------------------------------------------------
 // Capabilities this Hub does not have.
@@ -146,30 +146,30 @@ export function needsMasterDataReview(_reviewedAt: string | null | undefined): b
 // once being normal rather than an error. There are no business lines in between, so every
 // assignment's `bereich` is null and the detail page renders the company alone.
 // ---------------------------------------------------------------------------
-export function useObjektGesellschaften(): ObjektGesellschaftenIndex {
-  const gesellschaftenQ = useGesellschaften();
+export function usePropertyCompanyIndex(): PropertyCompaniesIndex {
+  const companiesQ = useCompanies();
   const linksQ = usePropertyCompanies();
 
-  const bereit = gesellschaftenQ.data !== undefined && linksQ.data !== undefined;
+  const ready = companiesQ.data !== undefined && linksQ.data !== undefined;
 
   return useMemo(() => {
-    const gesellschaftById = new Map((gesellschaftenQ.data ?? []).map((g) => [g.id, g]));
-    const byProperty = new Map<string, ObjektGesellschaft[]>();
-    const zuordnungenByProperty = new Map<string, ObjektZuordnung[]>();
+    const companyById = new Map((companiesQ.data ?? []).map((g) => [g.id, g]));
+    const byProperty = new Map<string, PropertyCompany[]>();
+    const assignmentsByProperty = new Map<string, PropertyAssignment[]>();
 
     for (const link of linksQ.data ?? []) {
-      const g = gesellschaftById.get(link.company_id);
+      const g = companyById.get(link.company_id);
 
-      const zuordnungen = zuordnungenByProperty.get(link.property_id) ?? [];
-      zuordnungen.push({
+      const assignments = assignmentsByProperty.get(link.property_id) ?? [];
+      assignments.push({
         id: link.id,
-        gesellschaft: g ? { id: g.id, code: g.code, name: g.name } : null,
-        bereich: null,
+        company: g ? { id: g.id, code: g.code, name: g.name } : null,
+        area: null,
         // Null, not undefined: this client numbers its cost centres, so a pairing without a number is a
         // gap to show rather than a Hub that has no such concept.
-        kostenstelle: link.cost_centre_number ?? null,
+        costCentre: link.cost_centre_number ?? null,
       });
-      zuordnungenByProperty.set(link.property_id, zuordnungen);
+      assignmentsByProperty.set(link.property_id, assignments);
 
       if (!g) continue;
       const list = byProperty.get(link.property_id) ?? [];
@@ -180,10 +180,10 @@ export function useObjektGesellschaften(): ObjektGesellschaftenIndex {
     }
 
     for (const list of byProperty.values()) list.sort((x, y) => x.code.localeCompare(y.code));
-    for (const list of zuordnungenByProperty.values()) {
-      list.sort((x, y) => (x.gesellschaft?.code ?? "").localeCompare(y.gesellschaft?.code ?? ""));
+    for (const list of assignmentsByProperty.values()) {
+      list.sort((x, y) => (x.company?.code ?? "").localeCompare(y.company?.code ?? ""));
     }
 
-    return { bereit, byProperty, zuordnungenByProperty };
-  }, [gesellschaftenQ.data, linksQ.data, bereit]);
+    return { ready, byProperty, assignmentsByProperty };
+  }, [companiesQ.data, linksQ.data, ready]);
 }

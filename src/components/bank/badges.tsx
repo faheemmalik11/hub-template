@@ -4,12 +4,12 @@ import { cn } from "@/lib/utils";
 import { useTranslation } from "@/lib/i18n";
 import {
   RECONCILIATION_META,
-  type AbgleichStatus,
+  type MatchingStatus,
   MATCH_STATUS_META,
-  RICHTUNG_META,
+  DIRECTION_META,
   TRANSACTION_TYPE_META,
   TXN_MATCHING_STATUS_META,
-  TXN_QUELLE_META,
+  TXN_SOURCE_META,
 } from "@/lib/data/format";
 
 export function MatchStatusBadge({
@@ -36,16 +36,16 @@ export function MatchStatusBadge({
   );
 }
 
-export function RichtungBadge({
-  richtung,
+export function DirectionBadge({
+  direction,
   className,
 }: {
-  richtung: string | null | undefined;
+  direction: string | null | undefined;
   className?: string;
 }) {
   const { t } = useTranslation();
-  const meta = richtung ? RICHTUNG_META[richtung] : undefined;
-  const label = richtung ? t(`bank.richtung.${richtung}`, { defaultValue: richtung }) : "—";
+  const meta = direction ? DIRECTION_META.get(direction) : undefined;
+  const label = direction ? t(`bank.richtung.${direction}`, { defaultValue: direction }) : "—";
   return (
     <Badge
       variant="outline"
@@ -72,7 +72,7 @@ export function TransactionTypeBadge({
 }) {
   const { t } = useTranslation();
   const key = type ?? "unbekannt";
-  const meta = TRANSACTION_TYPE_META[key];
+  const meta = TRANSACTION_TYPE_META.get(key);
   const label = t(`bank.transactionType.${key}`, { defaultValue: key });
   return (
     <Badge
@@ -88,7 +88,7 @@ export function TransactionTypeBadge({
   );
 }
 
-export function QuelleBadge({
+export function SourceBadge({
   source,
   hasDocument,
   documentTitle,
@@ -107,7 +107,7 @@ export function QuelleBadge({
   className?: string;
 }) {
   const { t } = useTranslation();
-  const meta = source ? TXN_QUELLE_META[source] : undefined;
+  const meta = source ? TXN_SOURCE_META[source] : undefined;
   const label = source ? t(`bank.quelle.${source}`, { defaultValue: source }) : "—";
   return (
     <Badge
@@ -157,11 +157,11 @@ export function TxnMatchingBadge({
   );
 }
 
-export function AbgleichBadge({
+export function MatchingBadge({
   status,
   className,
 }: {
-  status: AbgleichStatus;
+  status: MatchingStatus;
   className?: string;
 }) {
   const { t } = useTranslation();

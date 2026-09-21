@@ -4,27 +4,27 @@ import { TABLE } from "@/config/tables";
 import { STALE, actorEmail, insertChangeHistory, sb } from "@/data/client";
 import {
   fetchAllRows,
-  insertVerlauf,
+  insertHistory,
   invalidateMatchState,
   invalidateRuleState,
 } from "@/data/shared";
-import type { BelegTransactionMatch, OutgoingInvoiceTransactionMatch } from "@/lib/data/types";
+import type { DocumentTransactionMatch, OutgoingInvoiceTransactionMatch } from "@/lib/data/types";
 
 // Matches for one beleg, with the embedded bank transaction (for the detail card).
-export function useBelegMatches(belegId: string) {
+export function useDocumentMatches(documentId: string) {
   return useQuery({
-    queryKey: ["beleg_matches", belegId],
-    enabled: !!belegId,
+    queryKey: ["beleg_matches", documentId],
+    enabled: !!documentId,
     staleTime: STALE,
-    queryFn: async (): Promise<BelegTransactionMatch[]> => {
+    queryFn: async (): Promise<DocumentTransactionMatch[]> => {
       const { data, error } = await sb
         .from(TABLE.documentTransactionMatches)
         .select(`*, ${TABLE.bankTransactions}(*)`)
-        .eq("document_id", belegId)
+        .eq("document_id", documentId)
         .neq("status", "rejected")
         .order("score", { ascending: false });
       if (error) throw error;
-      return (data ?? []) as unknown as BelegTransactionMatch[];
+      return (data ?? []) as unknown as DocumentTransactionMatch[];
     },
   });
 }
@@ -35,14 +35,14 @@ export function useTransactionMatches(transactionId: string) {
     queryKey: ["transaction_matches", transactionId],
     enabled: !!transactionId,
     staleTime: STALE,
-    queryFn: async (): Promise<BelegTransactionMatch[]> => {
+    queryFn: async (): Promise<DocumentTransactionMatch[]> => {
       const { data, error } = await sb
         .from(TABLE.documentTransactionMatches)
         .select(`*, ${TABLE.documents}(*)`)
         .eq("transaction_id", transactionId)
         .order("score", { ascending: false });
       if (error) throw error;
-      return (data ?? []) as unknown as BelegTransactionMatch[];
+      return (data ?? []) as unknown as DocumentTransactionMatch[];
     },
   });
 }
@@ -284,7 +284,7 @@ export function useConfirmedOutgoingAllocations() {
  * transaction detail screen showed the checkbox, took the reason, and then dropped both.
  */
 async function closeSidesAfterLink(args: {
-  belegId: string;
+  documentId: string;
   transactionId: string;
   closeInvoice?: boolean;
   closeTransaction?: boolean;
@@ -301,14 +301,14 @@ async function closeSidesAfterLink(args: {
         paid_source: "manual",
         updated_at: new Date().toISOString(),
       })
-      .eq("id", args.belegId)
+      .eq("id", args.documentId)
       .is("paid_at", null);
     if (paidError) {
       console.error("closeInvoice failed", paidError);
     } else {
       // Persisted audit text stays German; the event is what the history renders from.
-      await insertVerlauf(
-        args.belegId,
+      await insertHistory(
+        args.documentId,
         "change",
         `Als vollständig bezahlt markiert, Restbetrag abgeschrieben${
           args.differenceReason ? `. Grund: ${args.differenceReason}` : ""
@@ -342,7 +342,7 @@ export function useConfirmMatch() {
   return useMutation({
     mutationFn: async (args: {
       matchId: string;
-      belegId: string;
+      documentId: string;
       differenceReason?: string;
       /** Needed only to close the payment side; the match row already knows its transaction. */
       transactionId?: string;
@@ -362,8 +362,8 @@ export function useConfirmMatch() {
         })
         .eq("id", args.matchId);
       if (error) throw error;
-      await insertVerlauf(
-        args.belegId,
+      await insertHistory(
+        args.documentId,
         // Its own type, like 'zuordnung_getrennt', so the Workflow-Verlauf shows it. Plain
         // 'booking' is not an approval type, so a confirmed match only ever appeared there when
         // it happened to cover the invoice in full and the DB trigger added a 'bezahlt' row on top.
@@ -376,7 +376,7 @@ export function useConfirmMatch() {
       );
       if ((args.closeInvoice || args.closeTransaction) && args.transactionId) {
         await closeSidesAfterLink({
-          belegId: args.belegId,
+          documentId: args.documentId,
           transactionId: args.transactionId,
           closeInvoice: args.closeInvoice,
           closeTransaction: args.closeTransaction,
@@ -402,7 +402,7 @@ export function useConfirmMatch() {
 export function useRejectMatch() {
   const qc = useQueryClient();
   return useMutation({
-    mutationFn: async (args: { matchId: string; belegId: string; grund?: string }) => {
+    mutationFn: async (args: { matchId: string; documentId: string; reason?: string }) => {
       const actor = await actorEmail();
       const now = new Date().toISOString();
       const { error } = await sb
@@ -411,12 +411,12 @@ export function useRejectMatch() {
           status: "rejected",
           rejected_by: actor,
           rejected_at: now,
-          reject_reason: args.grund ?? null,
+          reject_reason: args.reason ?? null,
           updated_at: now,
         })
         .eq("id", args.matchId);
       if (error) throw error;
-      await insertVerlauf(args.belegId, "booking", "Transaktions-Zuordnung abgelehnt", {
+      await insertHistory(args.documentId, "booking", "Transaktions-Zuordnung abgelehnt", {
         event: "match_rejected",
       });
     },
@@ -428,7 +428,7 @@ export function useLinkInvoiceTransaction() {
   const qc = useQueryClient();
   return useMutation({
     mutationFn: async (args: {
-      belegId: string;
+      documentId: string;
       transactionId: string;
       score?: number | null;
       reasons?: Record<string, unknown> | null;
@@ -447,7 +447,7 @@ export function useLinkInvoiceTransaction() {
       closeTransaction?: boolean;
     }): Promise<string> => {
       const { data, error } = await sb.rpc("link_invoice_transaction", {
-        p_invoice_id: args.belegId,
+        p_invoice_id: args.documentId,
         p_transaction_id: args.transactionId,
         p_score: args.score ?? null,
         p_reasons: args.reasons ?? null,
@@ -457,7 +457,7 @@ export function useLinkInvoiceTransaction() {
       if (error) throw error;
 
       await closeSidesAfterLink({
-        belegId: args.belegId,
+        documentId: args.documentId,
         transactionId: args.transactionId,
         closeInvoice: args.closeInvoice,
         closeTransaction: args.closeTransaction,
@@ -483,7 +483,7 @@ export function useLinkInvoiceTransaction() {
 export function useCloseInvoiceRemainder() {
   const qc = useQueryClient();
   return useMutation({
-    mutationFn: async (args: { belegId: string; reason: string }) => {
+    mutationFn: async (args: { documentId: string; reason: string }) => {
       // paid_source 'manual' marks it a human decision, so the bank-match trigger never withdraws
       // it when coverage changes. The `is null` guard keeps an existing paid date intact.
       const { error } = await sb
@@ -493,14 +493,14 @@ export function useCloseInvoiceRemainder() {
           paid_source: "manual",
           updated_at: new Date().toISOString(),
         })
-        .eq("id", args.belegId)
+        .eq("id", args.documentId)
         .is("paid_at", null);
       if (error) throw error;
       // Persisted audit text stays German.
       // The German sentence stays as the persisted record, the event is what the history renders
       // from, so the row reads in whichever language the reader picked.
-      await insertVerlauf(
-        args.belegId,
+      await insertHistory(
+        args.documentId,
         "change",
         `Als vollständig bezahlt markiert, Restbetrag abgeschrieben. Grund: ${args.reason}`,
         { event: "remainder_written_off", grund: args.reason, kommentar: args.reason },
@@ -520,23 +520,23 @@ export function useCloseInvoiceRemainder() {
 export function useReopenInvoiceRemainder() {
   const qc = useQueryClient();
   return useMutation({
-    mutationFn: async (args: { belegId: string }) => {
-      const { data: beleg } = await sb
+    mutationFn: async (args: { documentId: string }) => {
+      const { data: doc } = await sb
         .from(TABLE.documents)
         .select("workflow_status")
-        .eq("id", args.belegId)
+        .eq("id", args.documentId)
         .maybeSingle();
       const patch: Record<string, unknown> = {
         paid_at: null,
         paid_source: null,
         updated_at: new Date().toISOString(),
       };
-      if (beleg?.workflow_status === "paid") patch.workflow_status = "in_review";
-      const { error } = await sb.from(TABLE.documents).update(patch).eq("id", args.belegId);
+      if (doc?.workflow_status === "paid") patch.workflow_status = "in_review";
+      const { error } = await sb.from(TABLE.documents).update(patch).eq("id", args.documentId);
       if (error) throw error;
       // Persisted audit text stays German; the event is what the history renders from.
-      await insertVerlauf(
-        args.belegId,
+      await insertHistory(
+        args.documentId,
         "change",
         "Restabschreibung zurückgenommen, Rechnung wieder offen.",
         { event: "remainder_reopened" },
@@ -610,7 +610,7 @@ export function useConfirmOutgoingMatch() {
       );
       if (args.closeTransaction && args.transactionId) {
         await closeSidesAfterLink({
-          belegId: args.outgoingInvoiceId,
+          documentId: args.outgoingInvoiceId,
           transactionId: args.transactionId,
           closeTransaction: true,
           differenceReason: args.differenceReason,
@@ -636,8 +636,8 @@ export function useUnlinkMatch() {
   return useMutation({
     mutationFn: async (args: {
       matchId: string;
-      belegId: string;
-      grund?: string;
+      documentId: string;
+      reason?: string;
       /**
        * Walk the invoice back out of 'bezahlt' as part of the unlink.
        *
@@ -647,7 +647,7 @@ export function useUnlinkMatch() {
        */
       walkBack?: boolean;
       /** Who the change was made as, when somebody is standing in for another person. */
-      handelndAls?: Record<string, unknown>;
+      actingAls?: Record<string, unknown>;
     }) => {
       const { error } = await sb
         .from(TABLE.documentTransactionMatches)
@@ -663,19 +663,19 @@ export function useUnlinkMatch() {
         .eq("id", args.matchId);
       if (error) throw error;
 
-      const grund = args.grund?.trim();
+      const reason = args.reason?.trim();
 
       // THE INVOICE CANNOT STAY AT 'BEZAHLT' WITH NOTHING BEHIND IT. advance_workflow_on_payment()
       // fires on paid_at null -> non-null and has no reverse, so removing the payment used to leave
       // the invoice standing at Bezahlt in the chain. Same rule and same target as the paid switch.
-      let zurueckgesetzt = false;
+      let reset = false;
       if (args.walkBack) {
-        const { data: beleg } = await sb
+        const { data: doc } = await sb
           .from(TABLE.documents)
           .select("workflow_status, paid_source")
-          .eq("id", args.belegId)
+          .eq("id", args.documentId)
           .maybeSingle();
-        if (beleg?.workflow_status === "paid") {
+        if (doc?.workflow_status === "paid") {
           const patch: Record<string, unknown> = {
             workflow_status: "in_review",
             updated_at: new Date().toISOString(),
@@ -690,22 +690,22 @@ export function useUnlinkMatch() {
           // So the test is what is left, not who wrote it. Another confirmed link still standing
           // means the paid mark keeps its basis and is untouched. 'banksapi_payment' is a payment
           // that actually left the account and stands on its own whatever the matching says.
-          const { count: verbleibende } = await sb
+          const { count: remaining } = await sb
             .from(TABLE.documentTransactionMatches)
             .select("id", { count: "exact", head: true })
-            .eq("document_id", args.belegId)
+            .eq("document_id", args.documentId)
             .eq("status", "confirmed")
             .neq("id", args.matchId);
-          if ((verbleibende ?? 0) === 0 && beleg.paid_source !== "banksapi_payment") {
+          if ((remaining ?? 0) === 0 && doc.paid_source !== "banksapi_payment") {
             patch.paid_at = null;
             patch.paid_source = null;
           }
           const { error: wfError } = await sb
             .from(TABLE.documents)
             .update(patch)
-            .eq("id", args.belegId);
+            .eq("id", args.documentId);
           if (wfError) throw wfError;
-          zurueckgesetzt = true;
+          reset = true;
         }
       }
 
@@ -714,19 +714,19 @@ export function useUnlinkMatch() {
       // "status manually corrected", and nobody corrected anything -- a payment came off and the
       // status followed it. Plain 'booking' when nothing moved.
       // Persisted audit text stays German (do not translate).
-      await insertVerlauf(
-        args.belegId,
-        zurueckgesetzt ? "zuordnung_getrennt" : "booking",
-        grund
-          ? `Banktransaktions-Zuordnung getrennt: ${grund}`
+      await insertHistory(
+        args.documentId,
+        reset ? "zuordnung_getrennt" : "booking",
+        reason
+          ? `Banktransaktions-Zuordnung getrennt: ${reason}`
           : "Banktransaktions-Zuordnung getrennt",
         {
           event: "match_unlinked",
-          ...(zurueckgesetzt ? { von: "paid", nach: "in_review" } : {}),
+          ...(reset ? { von: "paid", nach: "in_review" } : {}),
           // Both keys: `kommentar` is what the workflow timeline reads first, `grund` is what the
           // unlink flow has always written and what older rows carry.
-          ...(grund ? { grund, kommentar: grund } : {}),
-          ...(args.handelndAls ?? {}),
+          ...(reason ? { grund: reason, kommentar: reason } : {}),
+          ...(args.actingAls ?? {}),
         },
       );
     },
@@ -738,7 +738,7 @@ export function useUnlinkMatch() {
 export function useUnlinkOutgoingMatch() {
   const qc = useQueryClient();
   return useMutation({
-    mutationFn: async (args: { matchId: string; outgoingInvoiceId: string; grund?: string }) => {
+    mutationFn: async (args: { matchId: string; outgoingInvoiceId: string; reason?: string }) => {
       const { error } = await sb
         .from(TABLE.outgoingInvoiceTransactionMatches)
         .update({
@@ -752,12 +752,12 @@ export function useUnlinkOutgoingMatch() {
         })
         .eq("id", args.matchId);
       if (error) throw error;
-      const grund = args.grund?.trim();
+      const reason = args.reason?.trim();
       await insertChangeHistory(
         "outgoing_invoices",
         args.outgoingInvoiceId,
         "booking",
-        grund ? `Transaktions-Zuordnung getrennt: ${grund}` : "Transaktions-Zuordnung getrennt",
+        reason ? `Transaktions-Zuordnung getrennt: ${reason}` : "Transaktions-Zuordnung getrennt",
       );
     },
     onSuccess: () => invalidateMatchState(qc),
@@ -767,7 +767,7 @@ export function useUnlinkOutgoingMatch() {
 export function useRejectOutgoingMatch() {
   const qc = useQueryClient();
   return useMutation({
-    mutationFn: async (args: { matchId: string; outgoingInvoiceId: string; grund?: string }) => {
+    mutationFn: async (args: { matchId: string; outgoingInvoiceId: string; reason?: string }) => {
       const actor = await actorEmail();
       const now = new Date().toISOString();
       const { error } = await sb
@@ -776,7 +776,7 @@ export function useRejectOutgoingMatch() {
           status: "rejected",
           rejected_by: actor,
           rejected_at: now,
-          reject_reason: args.grund ?? null,
+          reject_reason: args.reason ?? null,
           updated_at: now,
         })
         .eq("id", args.matchId);

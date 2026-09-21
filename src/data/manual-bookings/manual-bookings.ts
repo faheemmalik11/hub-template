@@ -2,7 +2,7 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 
 import { TABLE } from "@/config/tables";
 import { SINGLETON_ROW_ID, STALE, actorEmail, insertChangeHistory, sb } from "@/data/client";
-import { fetchAllRows, invalidateMatchState, pflichtGrund } from "@/data/shared";
+import { fetchAllRows, invalidateMatchState, requiredReason } from "@/data/shared";
 import type { ManualBooking, ManualBookingExpanded } from "@/lib/data/types";
 
 // ---- Manual booking (Briefing Screen 11; migration 0033) ----
@@ -16,18 +16,18 @@ function invalidateManualBookingState(qc: ReturnType<typeof useQueryClient>) {
 // means every company (migration 0034), e.g. Auswertungen's "Alle Gesellschaften" view.
 export function useManualBookings(
   companyId: string | null,
-  von: string | null,
-  bis: string | null,
+  fromDate: string | null,
+  toDate: string | null,
 ) {
   return useQuery({
-    queryKey: ["manual_bookings", companyId, von, bis],
-    enabled: !!von && !!bis,
+    queryKey: ["manual_bookings", companyId, fromDate, toDate],
+    enabled: !!fromDate && !!toDate,
     staleTime: STALE,
     queryFn: async (): Promise<ManualBookingExpanded[]> => {
       const { data, error } = await sb.rpc("manual_bookings_expanded", {
         p_company: companyId,
-        p_von: von,
-        p_bis: bis,
+        p_von: fromDate,
+        p_bis: toDate,
       });
       if (error) throw error;
       return (data ?? []) as ManualBookingExpanded[];
@@ -101,7 +101,7 @@ export function useUpdateManualBooking() {
       const actor = await actorEmail();
       // Read the row BEFORE writing, so the trail records what the value was and not just what it
       // became. An amount that feeds the P&L could previously be rewritten leaving only updated_at.
-      const { data: vorher } = await sb
+      const { data: before } = await sb
         .from(TABLE.manualBookings)
         .select("*")
         .eq("id", args.id)
@@ -112,7 +112,7 @@ export function useUpdateManualBooking() {
         .eq("id", args.id);
       if (error) throw error;
       await insertChangeHistory("manual_bookings", args.id, "updated", null, {
-        vorher: vorher ?? null,
+        vorher: before ?? null,
         nachher: args.changes,
       });
     },
@@ -125,18 +125,18 @@ export function useUpdateManualBooking() {
 export function useSoftDeleteManualBooking() {
   const qc = useQueryClient();
   return useMutation({
-    mutationFn: async (args: { id: string; grund: string }) => {
+    mutationFn: async (args: { id: string; reason: string }) => {
       const actor = await actorEmail();
       const { error } = await sb
         .from(TABLE.manualBookings)
         .update({
           deleted_at: new Date().toISOString(),
           deleted_by: actor,
-          delete_reason: pflichtGrund(args.grund),
+          delete_reason: requiredReason(args.reason),
         })
         .eq("id", args.id);
       if (error) throw error;
-      await insertChangeHistory("manual_bookings", args.id, "deleted", args.grund || null);
+      await insertChangeHistory("manual_bookings", args.id, "deleted", args.reason || null);
     },
     onSuccess: () => invalidateManualBookingState(qc),
   });

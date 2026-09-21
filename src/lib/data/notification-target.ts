@@ -44,11 +44,11 @@ export function readNotificationTarget(
   }
   const transactionId = p.transaction_id as string | undefined;
   if (transactionId) {
-    return { kind: "transaction", id: transactionId, path: `/banktransaktionen/${transactionId}` };
+    return { kind: "transaction", id: transactionId, path: `/bank-transactions/${transactionId}` };
   }
   const invoiceId = p.document_id as string | undefined;
   if (invoiceId) {
-    return { kind: "invoice", id: invoiceId, path: `/eingangsrechnungen/${invoiceId}` };
+    return { kind: "invoice", id: invoiceId, path: `/incoming-invoices/${invoiceId}` };
   }
   return { kind: null, id: null, path: null };
 }
@@ -62,16 +62,16 @@ export function readNotificationTarget(
 export function notifyTargetPath(kind: NotificationTargetKind, id: string): string {
   switch (kind) {
     case "invoice":
-      return `/eingangsrechnungen/${id}`;
+      return `/incoming-invoices/${id}`;
     case "transaction":
-      return `/banktransaktionen/${id}`;
+      return `/bank-transactions/${id}`;
     case "supplier":
-      return `/lieferanten/${id}`;
+      return `/suppliers/${id}`;
     case "customer":
-      return `/kunden/${id}`;
+      return `/customers/${id}`;
     // Addressed by `code` rather than by id, so the caller passes the code as the id here.
     case "property":
-      return `/objekte/${id}`;
+      return `/properties/${id}`;
     case "page":
       return id;
   }

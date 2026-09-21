@@ -2,7 +2,7 @@
 // Weights and thresholds mirror docs/BANKSAPI_IMPLEMENTATION_SPEC.md §5.
 // Guard: matching only CONFIRMS collection — it never triggers a payment.
 
-export interface MatchBeleg {
+export interface MatchDocument {
   id: string;
   amount_gross: number | null;
   document_date: string | null;
@@ -49,7 +49,7 @@ export interface MatchCandidate {
 
 // A collective payment is larger than any single invoice on it, so the pair is worth at most the
 // invoice. The floor keeps the amount_matched > 0 check satisfied on a zero-amount transaction.
-function pairAmount(beleg: MatchBeleg, txn: MatchTransaction): number {
+function pairAmount(beleg: MatchDocument, txn: MatchTransaction): number {
   const txnAmount = Math.abs(txn.amount);
   const brutto = Math.abs(beleg.amount_gross ?? 0);
   const capped = brutto > 0 ? Math.min(txnAmount, brutto) : txnAmount;
@@ -104,7 +104,7 @@ function amountMatch(
 }
 
 export function scoreMatch(
-  beleg: MatchBeleg,
+  beleg: MatchDocument,
   txn: MatchTransaction,
   amountTolerance: number = 0.01,
 ): { score: number; reasons: MatchReasons } {
@@ -153,7 +153,7 @@ export function scoreMatch(
 }
 
 export function runMatching(
-  belege: MatchBeleg[],
+  belege: MatchDocument[],
   transactions: MatchTransaction[],
   direction: "incoming" | "outgoing" = "incoming",
   amountTolerance: number = 0.01,

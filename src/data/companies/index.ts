@@ -1,8 +1,8 @@
 export {
-  useCreateGesellschaft,
-  useGesellschaft,
-  useGesellschaften,
-  useRestoreGesellschaft,
-  useSoftDeleteGesellschaft,
-  useUpdateGesellschaft,
+  useCreateCompany,
+  useCompany,
+  useCompanies,
+  useRestoreCompany,
+  useSoftDeleteCompany,
+  useUpdateCompany,
 } from "./companies";

@@ -11,7 +11,7 @@
 // is the single place that has to change.
 export { scoreMatch, runMatching } from "../../../supabase/functions/_shared/matching";
 export type {
-  MatchBeleg,
+  MatchDocument,
   MatchTransaction,
   MatchReasons,
   MatchCandidate,

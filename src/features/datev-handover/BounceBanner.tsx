@@ -2,11 +2,11 @@ import { AlertTriangle } from "lucide-react";
 
 import {
   Button,
-  fehlerText,
+  errorText,
   formatDateTime,
   toast,
   useAcknowledgeDatevBounce,
-  useGesellschaften,
+  useCompanies,
   useOpenDatevBounces,
   useTranslation,
   type DatevHandoverBatch,
@@ -33,7 +33,7 @@ import {
 export function BounceBanner() {
   const { t } = useTranslation();
   const bouncesQ = useOpenDatevBounces();
-  const companiesQ = useGesellschaften();
+  const companiesQ = useCompanies();
   const acknowledge = useAcknowledgeDatevBounce();
 
   const bounces = bouncesQ.data ?? [];
@@ -48,9 +48,9 @@ export function BounceBanner() {
         <AlertTriangle className="mt-0.5 size-5 shrink-0 text-danger" aria-hidden />
         <div className="min-w-0 flex-1">
           <p className="text-sm font-medium text-foreground">
-            {t("datevUebergabe.bounce.title", { count: bounces.length })}
+            {t("handover.bounce.title", { count: bounces.length })}
           </p>
-          <p className="mt-1 text-xs text-muted-foreground">{t("datevUebergabe.bounce.body")}</p>
+          <p className="mt-1 text-xs text-muted-foreground">{t("handover.bounce.body")}</p>
 
           <ul className="mt-3 space-y-2">
             {bounces.map((batch: DatevHandoverBatch) => (
@@ -62,9 +62,9 @@ export function BounceBanner() {
                   <p className="text-sm text-foreground">
                     {codeFor(batch.company_id)}
                     {" · "}
-                    {t(`datevUebergabe.richtung.${batch.direction}`)}
+                    {t(`handover.richtung.${batch.direction}`)}
                     {" · "}
-                    {t("datevUebergabe.bounce.belege", { count: batch.invoice_count })}
+                    {t("handover.bounce.belege", { count: batch.invoice_count })}
                   </p>
                   <p className="mt-0.5 text-xs tabular-nums text-muted-foreground">
                     {formatDateTime(batch.bounced_at ?? batch.created_at)}
@@ -83,18 +83,18 @@ export function BounceBanner() {
                     acknowledge.mutate(
                       { batchId: batch.id },
                       {
-                        onSuccess: () => toast.success(t("datevUebergabe.bounce.toast.ok")),
+                        onSuccess: () => toast.success(t("handover.bounce.toast.ok")),
                         onError: (e: unknown) =>
                           toast.error(
-                            t("datevUebergabe.bounce.toast.fehlgeschlagen", {
-                              error: fehlerText(e),
+                            t("handover.bounce.toast.fehlgeschlagen", {
+                              error: errorText(e),
                             }),
                           ),
                       },
                     )
                   }
                 >
-                  {t("datevUebergabe.bounce.erledigt")}
+                  {t("handover.bounce.erledigt")}
                 </Button>
               </li>
             ))}

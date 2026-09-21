@@ -14,9 +14,9 @@ import {
   useApprovalRules,
   useChainPeople,
   useCreateApprovalRule,
-  useGesellschaften,
-  useLieferanten,
-  useObjekte,
+  useCompanies,
+  useSuppliers,
+  useProperties,
   useSoftDeleteApprovalRule,
   useUpdateApprovalRule,
   type ApprovalRuleInput,
@@ -67,9 +67,9 @@ export function useApprovalRulesAdapter(): ApprovalRulesAdapter {
   const rulesQuery = useApprovalRules();
 
   const peopleQuery = useChainPeople();
-  const companiesQuery = useGesellschaften();
-  const suppliersQuery = useLieferanten();
-  const propertiesQuery = useObjekte();
+  const companiesQuery = useCompanies();
+  const suppliersQuery = useSuppliers();
+  const propertiesQuery = useProperties();
 
   const create = useCreateApprovalRule();
   const update = useUpdateApprovalRule();
@@ -134,7 +134,7 @@ export function useApprovalRulesAdapter(): ApprovalRulesAdapter {
 
   const deleteRule = useCallback(
     async (id: string, reason: string) => {
-      await remove.mutateAsync({ id, grund: reason });
+      await remove.mutateAsync({ id, reason: reason });
     },
     [remove],
   );

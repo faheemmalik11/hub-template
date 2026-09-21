@@ -67,7 +67,7 @@ export function BankAccountDrafts({
       <p className="text-xs text-muted-foreground">{labels.hint}</p>
 
       {drafts.map((draft, index) => {
-        const ungueltig = draft.iban.trim() !== "" && !isPayable(draft.iban);
+        const invalid = draft.iban.trim() !== "" && !isPayable(draft.iban);
         return (
           <div key={draft.key} className="rounded-lg border border-border p-3">
             <div className="mb-2 flex flex-wrap items-center justify-between gap-2">
@@ -109,10 +109,10 @@ export function BankAccountDrafts({
                 <Input
                   value={draft.iban}
                   onChange={(e) => setDraft(draft.key, { iban: e.target.value })}
-                  className={ungueltig ? "border-destructive" : undefined}
-                  aria-invalid={ungueltig || undefined}
+                  className={invalid ? "border-destructive" : undefined}
+                  aria-invalid={invalid || undefined}
                 />
-                {ungueltig && <p className="text-xs text-destructive">{labels.invalidIban}</p>}
+                {invalid && <p className="text-xs text-destructive">{labels.invalidIban}</p>}
               </div>
               <div className="space-y-1">
                 <Label className="text-xs text-muted-foreground">{labels.bic}</Label>

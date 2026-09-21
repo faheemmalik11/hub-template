@@ -658,7 +658,7 @@ const en = {
       },
     },
   },
-  mehrLaden: {
+  loadMore: {
     rest_one: "… {{count}} more entry",
     rest_other: "… {{count}} more entries",
   },
@@ -701,15 +701,18 @@ const en = {
 
   // Shared wording for role-gated pages (components/layout/kein-zugriff.tsx). Papierkorb keeps its
   // own, more specific text under papierkorb.guard, which can name what is being withheld.
-  zugriff: {
-    titel: "No access to this page",
+  access: {
+    title: "No access to this page",
     textAdmin:
       "This page is for administrators only. Your account does not have that role. If you need something done here, please contact an administrator.",
     textManager:
       "This page is for supervisors and administrators. Your account does not have that role. If you need this data, please ask your supervisor.",
-    rechteNichtGeladen:
+    permissionsNotLoaded:
       "Permissions could not be loaded, so nothing is enabled as a precaution. Please reload the page, and tell an administrator if it keeps happening.",
-    zurueck: "Back to overview",
+    back: "Back to overview",
+
+    pageNotAvailable:
+      "This page is not available for your account. If you need it, please contact an administrator.",
   },
   auth: {
     error: {
@@ -826,7 +829,7 @@ const en = {
     errorsN: "{{n}} errors",
   },
 
-  einstellungen: {
+  settings: {
     titel: "Notifications",
     sub: "Choose which updates appear in the Hub and which are sent through external channels.",
     gespeichert: "Saved.",
@@ -958,7 +961,7 @@ const en = {
     // reader who does not know the system still understands why the row is there.
     msg: {
       belegOhneNummer: "with no number",
-      zuweisungEine: "Invoice {{beleg}} was assigned to you. Please take care of it.",
+      zuweisungEine: "Invoice {{doc}} was assigned to you. Please take care of it.",
       neu_one: "{{count}} new invoice has arrived. It is ready to be worked on.",
       neu_other: "{{count}} new invoices have arrived. They are ready to be worked on.",
       rueckfrage_one:
@@ -1366,7 +1369,7 @@ const en = {
     },
   },
 
-  belege: {
+  documents: {
     badge: {
       ustAbbr: "VAT",
       ustNone: "0 %",
@@ -1379,7 +1382,7 @@ const en = {
       ustUnbekanntTitle: "No VAT rate was recognized on this document.",
       ustGemischt: "VAT mixed",
       ustGemischtTitle:
-        "This document has more than one VAT rate ({{saetze}} %). The split is shown under Tax in the detail view.",
+        "This document has more than one VAT rate ({{rates}} %). The split is shown under Tax in the detail view.",
       bezahlt: "Paid",
       offen: "Open",
       bezahltTitle: "paid",
@@ -1398,9 +1401,9 @@ const en = {
       lastschriftTitle: "Collected by direct debit, do not transfer again",
       ibanErfasst: "IBAN recorded",
       ibanErfasstTitle:
-        "No IBAN was on file for this supplier. {{neu}} was taken from this invoice. Please check it before paying.",
+        "No IBAN was on file for this supplier. {{new}} was taken from this invoice. Please check it before paying.",
       ibanGeaendert: "IBAN changed",
-      ibanGeaendertTitle: "Previous IBAN: {{alt}}. New IBAN: {{neu}}. Please review.",
+      ibanGeaendertTitle: "Previous IBAN: {{alt}}. New IBAN: {{new}}. Please review.",
       unusualAmount: "Unusual amount",
       unusualAmountTitle:
         "Deviates significantly from this supplier's otherwise stable amounts. Please review.",
@@ -1624,8 +1627,8 @@ const en = {
         laeuft: "Working ...",
         fertig_one: "{{count}} receipt updated",
         fertig_other: "{{count}} receipts updated",
-        teilweise: "{{erfolg}} updated, {{fehler}} failed",
-        fehlgeschlagen: "Nothing was changed. {{meldung}}",
+        teilweise: "{{success}} updated, {{error}} failed",
+        fehlgeschlagen: "Nothing was changed. {{message}}",
         archivieren: {
           label: "Archive",
           titel_one: "Archive {{count}} receipt",
@@ -1906,7 +1909,7 @@ const en = {
     detail: {
       // One-line labels for the approval history and "time per step", worded as the STATE the
       // invoice reached rather than as the name of the event that moved it. Deliberately distinct
-      // from `belege.workflow.<status>` (which labels the ladder and the invoice list, where a
+      // from `documents.workflow.<status>` (which labels the ladder and the invoice list, where a
       // noun like "In review" is right): a history row reads as a log of what was done, so it
       // wants "Send for review", not "In review".
       historie: {
@@ -1931,14 +1934,14 @@ const en = {
           paidFromMatch: "Marked as paid, bank reconciliation confirmed",
           matchConfirmed: "Bank transaction linked",
           matchRejected: "Suggested match rejected",
-          matchRejectedGrund: "Suggested match rejected: {{grund}}",
+          matchRejectedGrund: "Suggested match rejected: {{reason}}",
           matchUnlinked: "Bank transaction unlinked",
-          matchUnlinkedGrund: "Bank transaction unlinked: {{grund}}",
+          matchUnlinkedGrund: "Bank transaction unlinked: {{reason}}",
           remainderWrittenOff: "Remainder written off, the invoice counts as paid",
           remainderReopened: "Write-off taken back, the invoice is open again",
-          remainderWrittenOffGrund: "Remainder written off, the invoice counts as paid: {{grund}}",
+          remainderWrittenOffGrund: "Remainder written off, the invoice counts as paid: {{reason}}",
           paidFromMatchSkonto:
-            "Marked as paid, bank reconciliation confirmed, {{skonto}} EUR early-payment discount",
+            "Marked as paid, bank reconciliation confirmed, {{cashDiscount}} EUR early-payment discount",
           paymentWithdrawn:
             "Payment withdrawn: the bank reconciliation now only covers {{matched}} of {{gross}} EUR",
         },
@@ -1952,7 +1955,7 @@ const en = {
       },
       rueckfrageOffen: "A query is open on this invoice, open the Workflow history tab to check",
       betraege: {
-        abzugsfaehig: "Input VAT {{prozent}} % deductible",
+        abzugsfaehig: "Input VAT {{percent}} % deductible",
         abzugUnbestimmt: "Deductibility not determined yet",
       },
       eingabe: {
@@ -1963,7 +1966,7 @@ const en = {
         gesellschaftFolge: "Without a company the invoice appears in no report.",
         keine: "None",
         keineWahl: "None, does not apply",
-        keineWahlProtokoll: "{{feld}}: manually set to \u201cnone\u201d",
+        keineWahlProtokoll: "{{field}}: manually set to \u201cnone\u201d",
         objektWaehlen: "Choose property",
         kategorieWaehlen: "Choose category",
         objektFolge: "No property code detected.",
@@ -1987,7 +1990,7 @@ const en = {
       stufenNav: {
         korrektur: "Set the status to this step",
         aria: "Approval chain",
-        tooltip: 'Click to move to "{{stufe}}"',
+        tooltip: 'Click to move to "{{step}}"',
         klick: {
           in_pruefung: "Click to send this invoice for review.",
           freigegeben_assistenz: "Click to mark this approved by the assistant.",
@@ -2016,8 +2019,8 @@ const en = {
               "Available once the invoice has been approved by the assistant.",
             abgeschlossen: "Available once the invoice has been handed over to DATEV.",
           },
-          spaeter: 'Available once the invoice has reached "{{stufe}}".',
-          uebersprungen: 'Your next step goes straight to "{{stufe}}" and skips this one.',
+          spaeter: 'Available once the invoice has reached "{{step}}".',
+          uebersprungen: 'Your next step goes straight to "{{step}}" and skips this one.',
           nichtErlaubt: "You cannot move this invoice to this step right now.",
         },
       },
@@ -2045,22 +2048,22 @@ const en = {
       },
       vorheriger: "Previous invoice",
       naechster: "Next invoice",
-      ustSatzKurz: "VAT {{satz}} %",
+      ustSatzKurz: "VAT {{rate}} %",
       seit: {
         heute: "today",
         gestern: "yesterday",
-        vorTagen: "{{tage}} days ago",
+        vorTagen: "{{days}} days ago",
       },
       faellig: {
-        ueberfaelligKurz: "{{tage}} days overdue",
-        ueberfaelligJahre: "{{jahre}} yr overdue",
-        ueberfaelligJahreMonate: "{{jahre}} yr {{monate}} mo overdue",
+        ueberfaelligKurz: "{{days}} days overdue",
+        ueberfaelligJahre: "{{years}} yr overdue",
+        ueberfaelligJahreMonate: "{{years}} yr {{months}} mo overdue",
         am: "Due {{datum}}",
         ueberfaellig: "Due {{datum}}, {{tage}} days overdue",
       },
       ungespeichert: {
         title: "Discard changes?",
-        body: "{{count}} edited field(s) have not been saved yet: {{felder}}. Leaving now loses those entries.",
+        body: "{{count}} edited field(s) have not been saved yet: {{fields}}. Leaving now loses those entries.",
         weiter: "Keep editing",
         verwerfen: "Discard changes",
       },
@@ -2107,20 +2110,20 @@ const en = {
           "The responsible approver {{name}} is deactivated. Reactivate them under Team & Roles or update the approval rule.",
         unbekannt: "Unknown person",
         dauerKurz: {
-          minuten_one: "{{count}} min",
-          minuten_other: "{{count}} min",
-          stunden_one: "{{count}} hr",
-          stunden_other: "{{count}} hrs",
-          tage_one: "{{count}} day",
-          tage_other: "{{count}} days",
+          minutes_one: "{{count}} min",
+          minutes_other: "{{count}} min",
+          hours_one: "{{count}} hr",
+          hours_other: "{{count}} hrs",
+          days_one: "{{count}} day",
+          days_other: "{{count}} days",
         },
         dauer: {
-          minuten_one: "{{count}} minute",
-          minuten_other: "{{count}} minutes",
-          stunden_one: "{{count}} hour",
-          stunden_other: "{{count}} hours",
-          tage_one: "{{count}} day",
-          tage_other: "{{count}} days",
+          minutes_one: "{{count}} minute",
+          minutes_other: "{{count}} minutes",
+          hours_one: "{{count}} hour",
+          hours_other: "{{count}} hours",
+          days_one: "{{count}} day",
+          days_other: "{{count}} days",
         },
         rueckfrageAn: "to {{name}}",
         handelndAls: "acting as {{name}}",
@@ -2137,7 +2140,7 @@ const en = {
           hint: "If the wrong status was set by accident. This bypasses the normal approval chain.",
           waehlen: "Choose status",
           title: "Correct the status?",
-          desc: 'Status will be manually changed from "{{von}}" to "{{nach}}", without going through the normal approval steps.',
+          desc: 'Status will be manually changed from "{{fromDate}}" to "{{nach}}", without going through the normal approval steps.',
         },
         nebengleis: "Special status:",
         stepperLabel: "Approval progress",
@@ -2325,7 +2328,7 @@ const en = {
         zahlungHint: "Whether it is paid, matched to a bank transaction, and ready for DATEV.",
       },
       konfidenz: {
-        prozent: "AI confidence: {{prozent}} %",
+        prozent: "AI confidence: {{percent}} %",
         hint: "How sure the AI is that it read the fields right. This is separate from the checks. A document can be read with full confidence and still need a review.",
       },
       zahlung: {
@@ -2468,7 +2471,7 @@ const en = {
           jetztBezahlen: "Pay now",
           confirmTitle: "Trigger payment?",
           confirmBody:
-            "{{betrag}} will be transferred to {{empfaenger}}. This action cannot be undone.",
+            "{{amount}} will be transferred to {{recipient}}. This action cannot be undone.",
           vonKonto: "From account",
           zusammenfassung: "This payment",
           neuesKonto: {
@@ -2476,7 +2479,7 @@ const en = {
             speichern: "Save bank account",
             ibanUngueltig: "This IBAN is incomplete or invalid.",
           },
-          betragWeichtAb: "Differs from the invoice total ({{betrag}}).",
+          betragWeichtAb: "Differs from the invoice total ({{amount}}).",
           anKonto: "To bank account",
           kontoWaehlen: "Choose account",
           keineKonten: "No connected BANKSapi account found for this company.",
@@ -2499,7 +2502,7 @@ const en = {
           bestaetigen: "Trigger payment",
           ausgeloest: "Payment triggered. Please confirm with the bank in the new tab.",
           sofortAusgefuehrt: "Payment executed.",
-          sofortFehlgeschlagen: "Payment failed: {{grund}}",
+          sofortFehlgeschlagen: "Payment failed: {{reason}}",
           webformOeffnen: "Open payment page",
           attemptAbbrechen: "Cancel payment attempt",
           abbrechenConfirmTitle: "Cancel payment attempt?",
@@ -2525,7 +2528,7 @@ const en = {
         hinweis:
           "Every detail that was picked up when this document was read in. Type a word to search for it.",
         suchen: "Search, e.g. bank details or 1.199,12",
-        treffer: "{{n}} of {{gesamt}}",
+        treffer: "{{n}} of {{total}}",
         keineTreffer: "No matches",
         vorher: "Previous match",
         naechster: "Next match",
@@ -2551,9 +2554,9 @@ const en = {
         ablehnen: "Reject",
         zuordnen: "Match",
         // Collective and partial payments (migration 0024): a link carries its own amount.
-        vonSumme: "{{zugeordnet}} of {{gesamt}}",
+        vonSumme: "{{matched}} of {{total}}",
         restOffen: "{{rest}} open",
-        davon: "of which {{betrag}}",
+        davon: "of which {{amount}}",
       },
       action: {
         mehr: "More actions",
@@ -2605,7 +2608,7 @@ const en = {
       regel: {
         anwenden: "Apply assignment rules",
         alsRegel: "Save as a rule for this supplier",
-        alsRegelUst: "Save {{satz}} % as a VAT rule",
+        alsRegelUst: "Save {{rate}} % as a VAT rule",
         gespeichert: "Rule saved.",
         schonVorhanden:
           "A rule already exists for this scope. Please adjust it under Assignment rules.",
@@ -2645,7 +2648,7 @@ const en = {
     },
   },
 
-  lieferanten: {
+  suppliers: {
     list: {
       title: "Suppliers",
       subtitle: "Creditor master data from the pipeline: basis for transfers and reports.",
@@ -2704,7 +2707,7 @@ const en = {
         bankHinweis: "Optional. A supplier can be created without one, but not paid.",
         bankHinzufuegen: "Add bank",
         bankEntfernen: "Remove bank account",
-        bankNummer: "Bank account {{nummer}}",
+        bankNummer: "Bank account {{number}}",
         alsStandard: "Make default",
         ibanUngueltig: "Please enter a complete IBAN.",
         button: "New",
@@ -2729,19 +2732,19 @@ const en = {
       action: "Merge …",
       confirm: {
         title: "Really merge?",
-        desc: '"{{von}}" will be merged into "{{ziel}}". This action cannot be directly undone.',
+        desc: '"{{fromDate}}" will be merged into "{{target}}". This action cannot be directly undone.',
         cancel: "Cancel",
         confirm: "Merge",
       },
       toast: {
-        erfolgreich: '"{{name}}" was merged into "{{ziel}}".',
+        erfolgreich: '"{{name}}" was merged into "{{target}}".',
         fehlgeschlagen: "Merge failed: {{error}}",
       },
     },
     detail: {
       back: "Suppliers",
       notFoundTitle: "Supplier not found",
-      geloeschtBanner: "This supplier was deleted on {{datum}} ({{grund}}).",
+      geloeschtBanner: "This supplier was deleted on {{datum}} ({{reason}}).",
       geloeschtOhneGrund: "no reason given",
       restore: {
         button: "Restore",
@@ -2918,7 +2921,7 @@ const en = {
 
   // Customers — Briefing Screen 15. Created directly here (migration 0086 removed the LexOffice
   // mirror); a customer is the basis for outgoing invoices.
-  kunden: {
+  customers: {
     // Field-level validation messages for the customer form, see the German file.
     validierung: {
       gesellschaft: "Please choose a company.",
@@ -3044,7 +3047,7 @@ const en = {
     },
   },
 
-  gesellschaften: {
+  companies: {
     validierung: {
       code: "Please enter a code, e.g. IMKO.",
       codeFormat: "Letters and digits only, no spaces or special characters.",
@@ -3115,7 +3118,7 @@ const en = {
         grundPlaceholder: "Reason (optional)",
         cancel: "Cancel",
         confirm: "Archive",
-        banner: "Archived on {{datum}}. Reason: {{grund}}",
+        banner: "Archived on {{datum}}. Reason: {{reason}}",
         ohneGrund: "no reason given",
       },
       back: "Companies",
@@ -3155,14 +3158,14 @@ const en = {
       objekteEmpty: "No property is assigned to this company yet.",
       objektHinzufuegen: "Add property",
       objektEntfernen: {
-        aktion: "Remove {{objekt}} from this company",
+        aktion: "Remove {{property}} from this company",
         titel: "Remove property from the company?",
         beschreibung:
-          "{{objekt}} will no longer belong to {{gesellschaft}}. Invoices already booked stay as they are, and the assignment can be added again on the property.",
+          "{{property}} will no longer belong to {{company}}. Invoices already booked stay as they are, and the assignment can be added again on the property.",
         letzte:
-          "{{objekt}} belongs only to {{gesellschaft}}. A property needs at least one company. Assign it to another company on the property first.",
+          "{{property}} belongs only to {{company}}. A property needs at least one company. Assign it to another company on the property first.",
         bestaetigen: "Remove",
-        erfolg: "{{objekt}} was removed from the company",
+        erfolg: "{{property}} was removed from the company",
       },
       objekteLink: "Properties",
       objekteCount_one: "{{count}} property",
@@ -3172,11 +3175,11 @@ const en = {
       gesamt_one: "{{count}} invoice",
       gesamt_other: "{{count}} invoices",
       fremdeObjekte_one:
-        "{{count}} document refers to a property of another company ({{summe}}). Please check the assignment.",
+        "{{count}} document refers to a property of another company ({{total}}). Please check the assignment.",
       fremdeObjekte_other:
-        "{{count}} documents refer to properties of other companies ({{summe}}). Please check the assignment.",
+        "{{count}} documents refer to properties of other companies ({{total}}). Please check the assignment.",
       fremdesObjektHinweis:
-        "Property {{objekt}} is assigned to {{gesellschaften}}, not to this company.",
+        "Property {{property}} is assigned to {{companies}}, not to this company.",
       col: {
         beleg: "Document",
         objekt: "Property",
@@ -3316,7 +3319,7 @@ const en = {
       saved: "Saved.",
     },
   },
-  postfach: {
+  documentSources: {
     title: "Mailbox & filing",
     subtitle:
       "Where documents are read from, and where an email goes after processing. This is also what makes handing a not-relevant document back to the mailbox work.",
@@ -3376,7 +3379,7 @@ const en = {
     fehlgeschlagen: "Saving failed: {{error}}",
     zuletzt: "Last changed by {{by}}",
   },
-  zuordnungsregeln: {
+  assignmentRules: {
     list: {
       title: "Assignment rules",
       subtitle: "Rules assign each document its cost category automatically.",
@@ -3421,7 +3424,7 @@ const en = {
         "First number: how many existing documents this rule would still change. Second number: how many documents fall into its scope in total. The difference is documents that are already correct or were decided by hand: zero as the first number is the healthy steady state.",
       aktiv: "Active",
       aktionen: "Actions",
-      abzugsfaehigkeit: "{{prozent}}% deductible",
+      abzugsfaehigkeit: "{{percent}}% deductible",
     },
     wirkung: "{{change}} of {{total}}",
     scope: {
@@ -3505,7 +3508,7 @@ const en = {
       loeschen: "Delete",
       loeschenTitle: "Delete rule?",
       loeschenDesc:
-        'The rule "{{wert}}" will no longer apply. It stays stored audit-proof because it shaped existing assignments. Values already set on documents remain unchanged.',
+        'The rule "{{value}}" will no longer apply. It stays stored audit-proof because it shaped existing assignments. Values already set on documents remain unchanged.',
       loeschenConfirm: "Delete rule",
       grundPlaceholder: "Reason (optional)",
       anwenden: "Apply now",
@@ -3546,7 +3549,7 @@ const en = {
       keineHinweis: "The document keeps whatever category it already has.",
     },
   },
-  ustRegeln: {
+  vatRules: {
     list: {
       title: "VAT rules",
       subtitle: "Rules that set VAT rate, tax treatment and deductibility.",
@@ -3574,8 +3577,8 @@ const en = {
       umsatzsteuer: "Output VAT (outgoing invoices)",
       ruecklage: "Recommended reserve",
       unresolved:
-        "{{count}} document(s) with {{betrag}} input VAT still have no resolved deductibility and are not counted in the reserve.",
-      unresolvedKurz: "{{count}} document(s) · {{betrag}} deductibility unresolved",
+        "{{count}} document(s) with {{amount}} input VAT still have no resolved deductibility and are not counted in the reserve.",
+      unresolvedKurz: "{{count}} document(s) · {{amount}} deductibility unresolved",
       erstattung: "Input VAT surplus, refund expected",
       leer: "No companies yet.",
     },
@@ -3586,7 +3589,7 @@ const en = {
       global: "{{count}} for all companies",
     },
   },
-  kategorien: {
+  categories: {
     list: {
       title: "Categories",
       subtitle: "Group costs and revenue into categories that the assignment rules refer to.",
@@ -3649,7 +3652,7 @@ const en = {
       geloescht: "Category deleted.",
     },
   },
-  kontenrahmen: {
+  chartOfAccounts: {
     gesellschaft: "Company",
     suche: "Search",
     suchePlaceholder: "Account, category or note …",
@@ -3680,7 +3683,7 @@ const en = {
       keineKategorie: "Choose category …",
       abbrechen: "Cancel",
       speichere: "Saving …",
-      speichernConfirm: "Import {{count}} accounts ({{jahre}} year(s))",
+      speichernConfirm: "Import {{count}} accounts ({{years}} year(s))",
       fehler: {
         title: "The file couldn't be analyzed.",
         andereDatei: "Choose a different file",
@@ -3692,13 +3695,13 @@ const en = {
         typUngueltig: "File type isn't supported.",
         keineKonten: "No accounts could be recognized in this file.",
         analyseFehlgeschlagen: "Analysis failed: {{error}}",
-        importiert: "{{count}} accounts imported (years: {{jahre}}).",
+        importiert: "{{count}} accounts imported (years: {{years}}).",
         jahrFehlgeschlagen:
-          "Import for {{jahr}} failed: {{error}}. Years already imported stay saved.",
+          "Import for {{year}} failed: {{error}}. Years already imported stay saved.",
       },
     },
   },
-  vorschlaege: {
+  suggestions: {
     suche: "Search supplier or category …",
     keineTreffer: "No suggestion matches the search.",
     keineTrefferHint: "The search covers the supplier name and the suggested category.",
@@ -3718,7 +3721,7 @@ const en = {
       regelAnlegen: "Create rule →",
     },
   },
-  ausschlussregeln: {
+  exclusionRules: {
     list: {
       title: "Exclusion rules",
       subtitle:
@@ -3762,9 +3765,9 @@ const en = {
         "The preview could not be determined. The rule can still be created, but its reach is then unchecked.",
       nichtVerfuegbar:
         "No preview for this scope: the Hub has no column that means the same thing.",
-      keine: "No match among {{gesamt}} entries processed so far.",
+      keine: "No match among {{total}} entries processed so far.",
       treffer:
-        "Would affect {{anzahl}} of {{gesamt}} entries processed so far ({{prozent}} %). Affected receipts are never created in the first place.",
+        "Would affect {{count}} of {{total}} entries processed so far ({{percent}} %). Affected receipts are never created in the first place.",
     },
     dialog: {
       neu: { title: "New exclusion rule", desc: "Scope, search term, and an optional note." },
@@ -3800,7 +3803,7 @@ const en = {
 
   // Admin-configurable uniform filename pattern (migration 20260804090000_filename_settings). "YYYYMMDD COM[_VAT] Issuer
   // Description [Amount] [Property]" — the receipt type is deliberately not part of the name.
-  profil: {
+  profile: {
     title: "My profile",
     subtitle: "Your name, your sign-in details and what your account may do.",
     bild: {
@@ -3810,12 +3813,12 @@ const en = {
       ersetzen: "Replace picture",
       entfernen: "Remove",
       laedt: "Uploading …",
-      hinweis: "A square image works best. At most {{groesse}}.",
+      hinweis: "A square image works best. At most {{size}}.",
       falscherTyp: "That file is not an image we can use.",
-      zuGross: "That picture is larger than {{groesse}}.",
+      zuGross: "That picture is larger than {{size}}.",
       gespeichert: "Profile picture updated.",
       entfernt: "Profile picture removed.",
-      fehler: "Saving the picture failed: {{fehler}}",
+      fehler: "Saving the picture failed: {{error}}",
       entfernenTitel: "Remove your profile picture?",
       entfernenText: "Your initials are shown instead. You can upload a new picture any time.",
       entfernenBestaetigen: "Remove",
@@ -3834,7 +3837,7 @@ const en = {
       speichern: "Save",
       speichert: "Saving …",
       gespeichert: "Saved.",
-      fehler: "Saving failed: {{fehler}}",
+      fehler: "Saving failed: {{error}}",
     },
     passwort: {
       title: "Password",
@@ -3844,13 +3847,13 @@ const en = {
       wiederholen: "Repeat the new password",
       anzeigen: "Show passwords",
       verbergen: "Hide passwords",
-      zuKurz: "The new password needs at least {{anzahl}} characters.",
+      zuKurz: "The new password needs at least {{count}} characters.",
       stimmtNicht: "The two new passwords are not the same.",
       wieBisher: "The new password is the same as the current one.",
       aendern: "Change password",
       aendert: "Changing …",
       geaendert: "Password changed.",
-      fehler: "Changing the password failed: {{fehler}}",
+      fehler: "Changing the password failed: {{error}}",
       gesperrt: "Your password is managed outside this app.",
     },
     zugriff: {
@@ -3869,12 +3872,12 @@ const en = {
       passwortAenderung: "The password could not be changed.",
     },
   },
-  dateibenennung: {
+  fileNaming: {
     readOnlyHint:
       "Only administrators can change these settings. Who that is: Administration › Team.",
     wirkungHinweis:
       "Applies to every company in this Hub, and takes effect from the moment you save: files already stored keep the names they were given.",
-    zuletztGeaendert: "Last changed by {{wer}} on {{wann}}.",
+    zuletztGeaendert: "Last changed by {{who}} on {{when}}.",
     unbekannt: "unknown",
     abweichung: "These settings differ from the specified naming convention.",
     standardWiederherstellen: "Restore defaults",
@@ -3929,7 +3932,7 @@ const en = {
     },
   },
 
-  objekte: {
+  properties: {
     validierung: {
       code: "Please enter a code, e.g. MA-OMS.",
       codeLaenge: "The code may be at most 32 characters long.",
@@ -4065,12 +4068,12 @@ const en = {
       zuordnungEntfernen: "Remove company",
       zuordnungEntfernenTitel: "Remove company from the property?",
       zuordnungEntfernenBeschreibung:
-        "The property will no longer belong to {{gesellschaft}}. Invoices already booked stay as they are.",
+        "The property will no longer belong to {{company}}. Invoices already booked stay as they are.",
       zuordnungEntfernenBestaetigen: "Remove",
       zuordnungLetzte: "A property needs at least one company. Add another one first.",
       reviewBanner: "Last reviewed on {{datum}}: is this still correct?",
       archivedNotice:
-        "This property is archived ({{grund}}) and no longer part of the active portfolio.",
+        "This property is archived ({{reason}}) and no longer part of the active portfolio.",
       archivedNoticeOhneGrund: "no reason given",
       archiveDialog: {
         title: "Archive this property?",
@@ -4102,9 +4105,9 @@ const en = {
         jetztAnlegen: "Create now",
       },
       gesellschaftAbweichung_one:
-        "{{count}} invoice is booked to a company this property is not assigned to (assigned: {{gesellschaften}}).",
+        "{{count}} invoice is booked to a company this property is not assigned to (assigned: {{companies}}).",
       gesellschaftAbweichung_other:
-        "{{count}} invoices are booked to companies this property is not assigned to (assigned: {{gesellschaften}}).",
+        "{{count}} invoices are booked to companies this property is not assigned to (assigned: {{companies}}).",
       gesellschaftAbweichungZeile: "Company differs from this property's assignment.",
       toast: {
         keineAenderungen: "No changes.",
@@ -4136,9 +4139,9 @@ const en = {
       search: "Search (payment reference, counterparty, amount) …",
       beleg: {
         vorhanden: "Document",
-        titel: "Document available: {{quelle}}",
+        titel: "Document available: {{source}}",
       },
-      bezahltVonKurz: "Paid by {{wer}}",
+      bezahltVonKurz: "Paid by {{who}}",
       filter: {
         beleg: "Document",
         alleBelege: "All",
@@ -4158,7 +4161,7 @@ const en = {
         title: "Filter",
         reset: "Reset filters",
       },
-      zeileOeffnen: "Open transaction: {{gegenkonto}}, {{betrag}}",
+      zeileOeffnen: "Open transaction: {{contraAccount}}, {{amount}}",
       keineTreffer: "No matches",
       keineTrefferHint:
         "No bank transaction matches the search and filters. Change the search term or reset the filters.",
@@ -4179,7 +4182,7 @@ const en = {
         abgleich: "Reconciliation",
       },
       toast: {
-        syncDone: "Sync complete: {{neu}} new movements, {{vorschlaege}} suggestions.",
+        syncDone: "Sync complete: {{added}} new movements, {{suggestions}} suggestions.",
         syncFailed: "Sync failed: {{error}}",
       },
     },
@@ -4216,17 +4219,17 @@ const en = {
         titelRechnung: "Mark the invoice as fully paid?",
         beschreibungRechnung:
           "The remainder counts as written off and the invoice leaves the open items.",
-        betrag: "{{betrag}} will be written off.",
+        betrag: "{{amount}} will be written off.",
         grund: "Reason",
         grundPlaceholder: "e.g. early-payment discount, bank fee, rounding difference",
         abbrechen: "Cancel",
         bestaetigen: "Close remainder",
         laeuft: "Saving...",
         erledigt: "Remainder closed.",
-        offenZahlung: "{{betrag}} of this payment is not assigned to an invoice yet.",
-        offenRechnung: "{{betrag}} of this invoice is not covered by a payment yet.",
+        offenZahlung: "{{amount}} of this payment is not assigned to an invoice yet.",
+        offenRechnung: "{{amount}} of this invoice is not covered by a payment yet.",
         istGeschlossen: "Remainder marked as used up.",
-        istGeschlossenGrund: "Remainder marked as used up. Reason: {{grund}}",
+        istGeschlossenGrund: "Remainder marked as used up. Reason: {{reason}}",
         istAbgeschrieben: "Remainder written off. The reason is in the history.",
         wiederOeffnen: "Reopen",
         wiederGeoeffnet: "Remainder is open again.",
@@ -4248,12 +4251,12 @@ const en = {
         anzahl_other: "{{count}} files",
         vergroessern: "Enlarge",
         vergroessernAria: "Show the document enlarged",
-        nichtDarstellbar: "This file type ({{typ}}) cannot be shown here.",
+        nichtDarstellbar: "This file type ({{type}}) cannot be shown here.",
         keine: "No document stored for this transaction.",
         fehler: "The documents could not be loaded.",
         datei: "File",
         herunterladen: "Download",
-        quelle: "Taken from {{quelle}}",
+        quelle: "Taken from {{source}}",
         zuordnen: "Link an existing invoice",
       },
       passendeBelegeHint:
@@ -4316,7 +4319,7 @@ const en = {
       },
       warum: "Why it was suggested:",
       signal: {
-        amountTolerated: "Amount (off by {{differenz}})",
+        amountTolerated: "Amount (off by {{difference}})",
         amountToleratedPlain: "Amount (within the allowed difference)",
         amount: "Same amount",
         reference: "Invoice number in reference",
@@ -4359,9 +4362,9 @@ const en = {
       nr: "No. {{nr}}",
       ohneNr: "no number",
       // Collective payment: how much of this transaction is already explained by invoices.
-      zugeordnetVon: "{{zugeordnet}} of {{gesamt}} matched",
+      zugeordnetVon: "{{matched}} of {{total}} matched",
       restOffen: "{{rest}} without an invoice",
-      davon: "of which {{betrag}}",
+      davon: "of which {{amount}}",
       gruppeAbgeglichen: "Already reconciled",
       gruppeVorschlaege: "Suggestions to review",
       gruppeAbgelehnt: "Marked as not a match",
@@ -4503,7 +4506,7 @@ const en = {
     },
   },
 
-  offenePosten: {
+  openItems: {
     due: {
       // Short forms for the list's Fällig column, where the row already carries the date.
       short: {
@@ -4523,8 +4526,8 @@ const en = {
     },
     skonto: {
       filter: "Discount deadline close",
-      badge: "Save {{betrag}} ({{prozent}} %)",
-      title: "{{prozent}} % early-payment discount if paid by {{datum}}",
+      badge: "Save {{amount}} ({{percent}} %)",
+      title: "{{percent}} % early-payment discount if paid by {{datum}}",
       panel: "Early-payment discounts",
       closing_one: "{{count}} discount deadline is close",
       closing_other: "{{count}} discount deadlines are close",
@@ -4573,7 +4576,7 @@ const en = {
         outgoing: "Outgoing invoices",
       },
       gegenparteiPlaceholder: "Search invoice / supplier",
-      restOffen: "Partially paid: {{bezahlt}} paid, {{rest}} still to pay",
+      restOffen: "Partially paid: {{paid}} paid, {{rest}} still to pay",
       emptyTitle: "No open invoices",
       emptyHint: "All invoices are fully covered by bank matches, or there are no invoices yet.",
       gefiltertEmptyTitle: "No matches",
@@ -4605,7 +4608,7 @@ const en = {
         ausgehend: "Outgoing (Debits)",
       },
       // Partly explained collective payment: stays listed until every part has a receipt.
-      restOffen: "{{rest}} without a receipt ({{zugeordnet}} matched)",
+      restOffen: "{{rest}} without a receipt ({{matched}} matched)",
       emptyTitle: "No open bank transactions",
       emptyHint:
         "Every outgoing bank debit has a matched invoice, or no movements have been imported yet.",
@@ -4678,7 +4681,7 @@ const en = {
 
   // OPOS whitelist (opos_whitelist_rules, pipeline migration 0018) — transactions that never have a
   // receipt. Without this list the open-items list is unusable after a week (Briefing Screen 10).
-  oposWhitelist: {
+  openItemWhitelist: {
     list: {
       title: "Excluded Payments",
       nurLesen:
@@ -4714,7 +4717,7 @@ const en = {
       trefferOhne: "Hiding nothing",
       zuruecksetzen: "Clear filters",
     },
-    ueberdeckt: 'Never counts: "{{regel}}" is older and matches first',
+    ueberdeckt: 'Never counts: "{{rule}}" is older and matches first',
     category: {
       salary: "Salary",
       tax_prepayment: "Tax prepayment",
@@ -4754,9 +4757,9 @@ const en = {
     vorschau: {
       laeuft: "Counting matches …",
       fehler: "Matches could not be counted.",
-      keine: "Currently matches none of the {{gesamt}} outgoing transactions.",
+      keine: "Currently matches none of the {{total}} outgoing transactions.",
       treffer:
-        "Currently hides {{anzahl}} of {{gesamt}} outgoing transactions ({{prozent}} %, estimated).",
+        "Currently hides {{count}} of {{total}} outgoing transactions ({{percent}} %, estimated).",
     },
     dialog: {
       neu: {
@@ -4784,7 +4787,7 @@ const en = {
         termPflicht: "Please enter a term.",
         termZuKurz: "The term needs at least {{min}} characters.",
         angelegt: "Rule created.",
-        angelegtBeide: 'Rule created, plus one for "{{zweite}}".',
+        angelegtBeide: 'Rule created, plus one for "{{second}}".',
         gespeichert: "Rule saved.",
         anlegenFehlgeschlagen: "Creating failed: {{error}}",
         speichernFehlgeschlagen: "Saving failed: {{error}}",
@@ -4953,7 +4956,7 @@ const en = {
       restZahlung: "Remaining on the bank transaction",
       folge: {
         bezahlt: "The invoice is paid in full.",
-        bezahltSkonto: "The invoice is paid in full. {{differenz}} counts as a discount.",
+        bezahltSkonto: "The invoice is paid in full. {{difference}} counts as a discount.",
         teilweise: "The invoice is not paid in full. {{rest}} stays unpaid.",
         transaktionVoll: "The whole bank transaction is used for this invoice.",
         transaktionAbgeschlossen:
@@ -5026,7 +5029,7 @@ const en = {
       grundWaehlen: "Pick a reason",
     },
     detail: {
-      grund: "No receipt expected: {{grund}}.",
+      grund: "No receipt expected: {{reason}}.",
       durchRegel: "Hidden by a whitelist rule.",
       manuell: "Hidden manually by {{actor}}.",
     },
@@ -5081,15 +5084,15 @@ const en = {
     },
   },
 
-  ausgangsrechnungen: {
+  outgoingInvoices: {
     title: "Outgoing invoices",
     subtitle: "Outgoing invoices are uploaded manually and read out automatically.",
     status: {
-      entwurf: "Draft",
-      offen: "Open",
-      ueberfaellig: "Overdue",
-      bezahlt: "Paid",
-      storniert: "Voided",
+      draft: "Draft",
+      open: "Open",
+      overdue: "Overdue",
+      paid: "Paid",
+      voided: "Voided",
     },
     list: {
       queue: {
@@ -5104,8 +5107,8 @@ const en = {
         ueberfaellig: "Overdue",
         volumen: "Volume (gross)",
         volumenHint: "Gross total of every invoice in this selection, voided ones excluded.",
-        volumenZeile_one: "{{count}} invoice, {{summe}} gross",
-        volumenZeile_other: "{{count}} invoices, {{summe}} gross",
+        volumenZeile_one: "{{count}} invoice, {{total}} gross",
+        volumenZeile_other: "{{count}} invoices, {{total}} gross",
         offenerBetrag: "Still outstanding",
         offenerBetragHint:
           "Gross total of the open and overdue invoices, what is still to come in.",
@@ -5180,7 +5183,7 @@ const en = {
       speichere: "Saving …",
       erfolg: {
         title: "Invoice saved",
-        desc: "Invoice {{nummer}} was recorded and is visible in the list.",
+        desc: "Invoice {{number}} was recorded and is visible in the list.",
         weitere: "Upload another invoice",
         zurListe: "Back to list",
       },
@@ -5212,7 +5215,7 @@ const en = {
 
   // Manual booking (Briefing Screen 11): personnel costs, depreciation, taxes — items with no
   // receipt and no bank transaction, entered by hand so the evaluation stays complete.
-  manuelleBuchungen: {
+  manualBookings: {
     title: "Manual bookings",
     subtitle:
       "Personnel costs, depreciation and taxes: items with no receipt and no bank transaction, entered by hand.",
@@ -5229,7 +5232,7 @@ const en = {
       betragAsc: "Amount (smallest first)",
       kategorie: "Category (A–Z)",
     },
-    jahrUngueltig: "Enter a year between {{von}} and {{bis}}. Still showing {{jahr}}.",
+    jahrUngueltig: "Enter a year between {{fromDate}} and {{toDate}}. Still showing {{year}}.",
     endeVorStart: "The end cannot be before the start month.",
     bisJahrFehlt: 'Also give an end year, or choose "open-ended".',
     betragHinweis:
@@ -5287,7 +5290,7 @@ const en = {
     },
   },
 
-  freigabeRegeln: {
+  approvalRules: {
     leiter: {
       title: "Approval rules",
       beliebig: "any",
@@ -5523,7 +5526,7 @@ const en = {
   },
 
   // DATEV handover (Briefing Screen 9).
-  datevUebergabe: {
+  handover: {
     title: "DATEV handover",
     leerGesellschaften: "No companies yet.",
     leerFilter: "No company matches this search.",
@@ -5670,7 +5673,7 @@ const en = {
     },
   },
 
-  auswertungen: {
+  reports: {
     ustUngeklaert: {
       karte_one: "{{count}} receipt worth {{amount}} still needs its VAT deductibility set.",
       karte_other: "{{count}} receipts worth {{amount}} still need their VAT deductibility set.",
@@ -5688,7 +5691,7 @@ const en = {
       spalteBeleg: "Supplier / description",
       spalteDatum: "Date",
       spalteBetrag: "Amount",
-      summe: "Total {{gruppe}}",
+      summe: "Total {{group}}",
       schliessen: "Close",
       gesamtbetrag: "Total amount",
       anzahl_one: "{{count}} entry",
@@ -5715,7 +5718,7 @@ const en = {
       labelKategorie: "Category",
       labelKonto: "Account",
       labelZeitraum: "Period",
-      zeitraumBereich: "{{von}} to {{bis}}",
+      zeitraumBereich: "{{fromDate}} to {{toDate}}",
       zeitraumOhneGrenze: "All data on record",
       imkoImgm: "IMKO + IMGM",
       alleGesellschaften: "All companies",
@@ -5962,7 +5965,7 @@ const en = {
     },
   },
 
-  bankkonten: {
+  bankAccounts: {
     emptyManuell: {
       title: "No accounts without a bank connection",
     },
@@ -6054,14 +6057,14 @@ const en = {
       zaehlenFehlgeschlagen:
         "The scope could not be determined. The accounts, transactions and log of this connection will be hidden anyway.",
       postenZugang: "The bank access at BANKSapi (deleted there)",
-      postenKonten: "{{anzahl}} accounts on this connection",
-      postenUmsaetze: "{{anzahl}} transactions on this connection",
-      postenProtokoll: "{{anzahl}} log entries for this connection",
-      zugeordnet: "{{anzahl}} of them are matched to an invoice",
+      postenKonten: "{{count}} accounts on this connection",
+      postenUmsaetze: "{{count}} transactions on this connection",
+      postenProtokoll: "{{count}} log entries for this connection",
+      zugeordnet: "{{count}} of them are matched to an invoice",
       zugeordnetHinweis:
         "The matches and the paid marks are kept. The transaction behind them is no longer viewable until the bank is reconnected.",
       wort: "REMOVE",
-      tippen: "Type “{{wort}}” to confirm",
+      tippen: "Type “{{word}}” to confirm",
       abbrechen: "Cancel",
       bestaetigen: "Disconnect",
       laeuft: "Disconnecting …",
@@ -6069,7 +6072,7 @@ const en = {
       getrenntTitle: "The access was disconnected in the Hub on {{datum}}.",
       toastOk: "Disconnected from {{bank}}.",
       toastOkHinweis:
-        "{{konten}} accounts and {{umsaetze}} transactions hidden. Reconnecting brings the accounts back.",
+        "{{accounts}} accounts and {{transactions}} transactions hidden. Reconnecting brings the accounts back.",
       toastFehler: "Could not disconnect: {{error}}",
     },
     sandbox: "Sandbox",
@@ -6108,7 +6111,7 @@ const en = {
       stalled: "Sync started {{ago}} and never finished",
       stale: "No sync has run for {{ago}} ({{when}})",
       never: "No sync has ever run",
-      detail: "{{umsaetze}} new transactions · {{zuordnungen}} automatic matches",
+      detail: "{{transactions}} new transactions · {{assignments}} automatic matches",
       uebersprungen_one: "{{count}} run skipped because the previous one was still going",
       uebersprungen_other: "{{count}} runs skipped because the previous one was still going",
       ago: {
@@ -6144,16 +6147,16 @@ const en = {
       toastFailed: "Failed: {{error}}",
     },
     entfernen: {
-      toastZuordnungen: "{{anzahl}} invoice matches undone.",
-      toastDateien: "{{anzahl}} receipt files deleted.",
+      toastZuordnungen: "{{count}} invoice matches undone.",
+      toastDateien: "{{count}} receipt files deleted.",
       zaehle: "Working out what would be deleted …",
       zaehlenFehlgeschlagen:
         "The scope could not be determined. Transactions, invoice matches and receipt files may still be affected.",
       vorschau:
-        "This deletes {{umsaetze}} transactions, {{zuordnungen}} invoice matches and {{dateien}} receipt files. It cannot be undone.",
+        "This deletes {{transactions}} transactions, {{assignments}} invoice matches and {{files}} receipt files. It cannot be undone.",
       vorschauLeer: "This account has no transactions yet. Nothing is lost.",
       button: "Remove account",
-      titel: 'Remove account "{{konto}}"?',
+      titel: 'Remove account "{{account}}"?',
       beschreibung:
         "The account disappears from the Hub and is no longer imported, even if the bank keeps delivering it. Transactions already imported for this account are deleted, together with their invoice matches. Use this for private accounts connected by mistake, and for duplicate accounts.",
       grund: "Reason (optional)",
@@ -6162,7 +6165,7 @@ const en = {
       bestaetigen: "Remove",
       laeuft: "Removing …",
       toastOk: "Account removed.",
-      toastUmsaetze: "{{anzahl}} transactions deleted.",
+      toastUmsaetze: "{{count}} transactions deleted.",
       toastFehler: "Removal failed: {{error}}",
     },
     entfernt: {
@@ -6177,7 +6180,7 @@ const en = {
       toastFehler: "Restore failed: {{error}}",
     },
   },
-  bankverbindungen: {
+  bankConnections: {
     connectDialog: {
       button: "Connect bank",
       titel: "Connect a bank account",
@@ -6237,7 +6240,7 @@ const en = {
     syncBestaetigen: {
       titel: "Sync now?",
       textLive:
-        "The sync runs for all {{anzahl}} bank connections and fetches real data from the bank. There is no way to sync a single connection.",
+        "The sync runs for all {{count}} bank connections and fetches real data from the bank. There is no way to sync a single connection.",
       textSandbox:
         "In mock/sandbox mode the sync generates SAMPLE DATA and writes it into the same tables as real accounts and transactions. Only the \u201eSandbox\u201c flag tells them apart afterwards.",
       abbrechen: "Cancel",
@@ -6280,12 +6283,12 @@ const en = {
       webformOpened: "Bank web form opened.",
       noWebform: "No web form URL received.",
       connectFailed: "Failed: {{error}}",
-      syncDone: "Sync complete: {{neu}} new movements, {{vorschlaege}} suggestions.",
+      syncDone: "Sync complete: {{added}} new movements, {{suggestions}} suggestions.",
       syncFailed: "Sync failed: {{error}}",
     },
   },
 
-  protokoll: {
+  activityLog: {
     title: "Log",
     subtitle: "Processing log of incoming documents: intake, recognition and errors.",
     search: "Search subject, sender or reason …",
@@ -6456,7 +6459,7 @@ const en = {
       selbstHinweis:
         "This is your own account. Role and active status cannot be changed here, otherwise you lock yourself out of a screen only an active administrator can reach.",
       rollenwechsel:
-        "Role change: {{von}} → {{nach}}. This changes what this person may see and modify.",
+        "Role change: {{fromDate}} → {{nach}}. This changes what this person may see and modify.",
       zugriffAusweitung:
         "No company selected means access to ALL companies, this widens access rather than removing it.",
       emailChangeHint:
@@ -6466,7 +6469,7 @@ const en = {
       superAdminCannotBeDeactivated: "The super admin cannot be deactivated.",
     },
     list: {
-      rechteAnzahl: "{{n}} of {{gesamt}}",
+      rechteAnzahl: "{{n}} of {{total}}",
       rechteAlle: "all",
       suche: "Search name, email or role …",
       nurInaktive: "Inactive only",
@@ -6513,7 +6516,7 @@ const en = {
       bereichBrauchtRecht:
         'Only for people who hold "Give the final approval". Without it, the invoice would reach somebody who cannot approve it.',
       bereichKonflikt:
-        'Somebody else is already active for the "{{bereich}}" area. Remove them from it first.',
+        'Somebody else is already active for the "{{area}}" area. Remove them from it first.',
       vertretung: "Deputy (while away)",
       vertretungHint: "Named in the overdue warning. It grants the deputy no additional rights.",
       eskalation: "Escalate after (days)",
@@ -6564,8 +6567,7 @@ const en = {
         saving: "Saving …",
       },
       toast: {
-        teilweise:
-          'Saving failed at step "{{schritt}}". Earlier steps were already saved: {{error}}',
+        teilweise: 'Saving failed at step "{{step}}". Earlier steps were already saved: {{error}}',
         gespeichert: "Company access saved.",
         fehlgeschlagen: "Could not save company access: {{error}}",
       },
@@ -6634,7 +6636,7 @@ const en = {
     },
   },
 
-  papierkorb: {
+  trash: {
     list: {
       title: "Trash",
       subtitle: "Deleted records that are restorable or permanently deletable.",

@@ -15,9 +15,9 @@ import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
 
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
-import { belegNachgeprueft } from "@/features/invoice-detail/nachpruefung";
-import { validierungDetail } from "@/features/invoice-detail/pruefung";
-import type { Beleg } from "@/lib/data/types";
+import { documentRechecked } from "@/features/invoice-detail/recheck";
+import { validationDetail } from "@/features/invoice-detail/checks";
+import type { Document } from "@/lib/data/types";
 import { NotFoundError } from "./errors";
 import { TABLE } from "@/config/tables";
 
@@ -25,22 +25,22 @@ import { TABLE } from "@/config/tables";
 // same convention as the rest of src/lib/api.
 type Db = any; // eslint-disable-line @typescript-eslint/no-explicit-any
 
-const Eingabe = z.object({ invoiceId: z.string().uuid() });
+const Input = z.object({ invoiceId: z.string().uuid() });
 
-export interface PruefErgebnis {
+export interface CheckResult {
   invoiceId: string;
   /** Every check, merged: the pipeline's verdict with the verified corrections over the top. */
   checks: Record<string, { status: string; source?: string; message?: string }>;
   /** The checks that are still a problem. Same list the review card renders. */
   open: string[];
   /** The checks that pass only because the data was corrected after ingest. */
-  korrigiert: string[];
+  corrected: string[];
 }
 
 export const validateInvoice = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
-  .validator((input: unknown) => Eingabe.parse(input))
-  .handler(async ({ data, context }): Promise<PruefErgebnis> => {
+  .validator((input: unknown) => Input.parse(input))
+  .handler(async ({ data, context }): Promise<CheckResult> => {
     // The middleware puts a service-role client on the context; typed loosely here because
     // `invoices` is not in the generated Database type.
     const db = context.supabase as unknown as Db;
@@ -52,36 +52,36 @@ export const validateInvoice = createServerFn({ method: "POST" })
       .maybeSingle();
     if (error) throw error;
     if (!row) throw new NotFoundError(`No invoice ${data.invoiceId}`);
-    const beleg = row as Beleg;
+    const doc = row as Document;
 
     // The supplier's IBAN, so the three transfer checks can run. Without it they are skipped and
     // whatever the row already recorded for them is kept: not knowing is not the same as failing.
-    let lieferantIban: string | null | undefined;
-    if (beleg.supplier_id) {
-      const { data: lieferant } = await db
+    let supplierIban: string | null | undefined;
+    if (doc.supplier_id) {
+      const { data: supplier } = await db
         .from(TABLE.suppliers)
         .select("iban")
-        .eq("id", beleg.supplier_id)
+        .eq("id", doc.supplier_id)
         .maybeSingle();
-      lieferantIban = (lieferant as { iban: string | null } | null)?.iban ?? null;
+      supplierIban = (supplier as { iban: string | null } | null)?.iban ?? null;
     }
 
-    const geprueft = belegNachgeprueft(beleg, { lieferantIban });
-    const detail = validierungDetail(geprueft) ?? {};
+    const checked = documentRechecked(doc, { supplierIban });
+    const detail = validationDetail(checked) ?? {};
 
-    const checks: PruefErgebnis["checks"] = {};
+    const checks: CheckResult["checks"] = {};
     const open: string[] = [];
-    const korrigiert: string[] = [];
-    for (const [feld, eintrag] of Object.entries(detail)) {
-      const status = (eintrag.status ?? "").trim().toLowerCase();
-      checks[feld] = { status, source: eintrag.source, message: eintrag.message };
+    const corrected: string[] = [];
+    for (const [field, entry] of Object.entries(detail)) {
+      const status = (entry.status ?? "").trim().toLowerCase();
+      checks[field] = { status, source: entry.source, message: entry.message };
       // Same allow-list the review card uses: 'ok' passed, 'not_applicable'/'skipped' never ran,
       // anything else is a problem. See detailFehlgeschlagen in pruefung.ts.
       if (status && status !== "ok" && status !== "not_applicable" && status !== "skipped") {
-        open.push(feld);
+        open.push(field);
       }
-      if (eintrag.source) korrigiert.push(feld);
+      if (entry.source) corrected.push(field);
     }
 
-    return { invoiceId: beleg.id, checks, open, korrigiert };
+    return { invoiceId: doc.id, checks, open, corrected };
   });

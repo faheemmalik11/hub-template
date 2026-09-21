@@ -13,7 +13,7 @@ import {
   previousPeriodRange,
 } from "@/lib/data/format";
 import { useOutgoingInvoices, useOverviewInvoices } from "@/data";
-import { BWA_SCOPE_ALL, useBwaScope } from "@/lib/data/use-bwa-scope";
+import { COSTANALYSIS_SCOPE_ALL, useCostAnalysisScope } from "@/lib/data/use-bwa-scope";
 import { useTranslation } from "@/lib/i18n";
 import { cn } from "@/lib/utils";
 
@@ -43,7 +43,7 @@ const CARDS: {
   {
     key: "eingang",
     icon: FileText,
-    to: "/eingangsrechnungen",
+    to: "/incoming-invoices",
     iconTint: CHIP.brand,
     // Costs rising is not good news.
     higherIsBetter: false,
@@ -51,14 +51,14 @@ const CARDS: {
   {
     key: "ausgang",
     icon: FileOutput,
-    to: "/ausgangsrechnungen",
+    to: "/outgoing-invoices",
     iconTint: CHIP.neutral,
     higherIsBetter: true,
   },
   {
     key: "grossProfit",
     icon: BarChart3,
-    to: "/auswertungen",
+    to: "/reports",
     iconTint: CHIP.brand,
     higherIsBetter: true,
   },
@@ -76,69 +76,78 @@ export function MoneyCards() {
 
 function MoneyCard({ config }: { config: (typeof CARDS)[number] }) {
   const { t } = useTranslation();
-  const [zeitraum, setZeitraum] = useStoredPeriod(`card.${config.key}`);
+  const [period, setPeriod] = useStoredPeriod(`card.${config.key}`);
   const range = useMemo(
     () =>
-      overviewPeriodRange(zeitraum.period, new Date(), { von: zeitraum.von, bis: zeitraum.bis }),
-    [zeitraum],
+      overviewPeriodRange(period.period, new Date(), {
+        fromDate: period.fromDate,
+        toDate: period.toDate,
+      }),
+    [period],
   );
-  const vorher = useMemo(() => previousPeriodRange(range), [range]);
+  const before = useMemo(() => previousPeriodRange(range), [range]);
 
-  const invoicesQ = useOverviewInvoices(range.von, range.bis);
-  const invoicesVorherQ = useOverviewInvoices(vorher.von, vorher.bis);
+  const invoicesQ = useOverviewInvoices(range.fromDate, range.toDate);
+  const invoicesBeforeQ = useOverviewInvoices(before.fromDate, before.toDate);
   const outgoingQ = useOutgoingInvoices();
-  const bwa = useBwaScope(
-    useMemo(() => ({ ...BWA_SCOPE_ALL, von: range.von, bis: range.bis }), [range]),
+  const costAnalysis = useCostAnalysisScope(
+    useMemo(
+      () => ({ ...COSTANALYSIS_SCOPE_ALL, fromDate: range.fromDate, toDate: range.toDate }),
+      [range],
+    ),
   );
   // Second scope for the period before, so gross profit can show the same trend as the invoice
   // cards. It shares the invoice cards' query cache, so this is not four more round trips.
-  const bwaVorher = useBwaScope(
-    useMemo(() => ({ ...BWA_SCOPE_ALL, von: vorher.von, bis: vorher.bis }), [vorher]),
+  const costAnalysisBefore = useCostAnalysisScope(
+    useMemo(
+      () => ({ ...COSTANALYSIS_SCOPE_ALL, fromDate: before.fromDate, toDate: before.toDate }),
+      [before],
+    ),
   );
 
   // Issued only, for the count AND the sum: a draft was never sent and a voided one was cancelled,
   // so neither is money anybody owes.
-  const ausgangRows = (von?: string | null, bis?: string | null) =>
+  const outgoingRows = (fromDate?: string | null, toDate?: string | null) =>
     (outgoingQ.data ?? []).filter(
       (r) =>
-        inDateRange(r.invoice_date, { von: von ?? null, bis: bis ?? null }) &&
+        inDateRange(r.invoice_date, { fromDate: fromDate ?? null, toDate: toDate ?? null }) &&
         r.status !== "draft" &&
         r.status !== "voided",
     );
-  const ausgangSumme = (von?: string | null, bis?: string | null) =>
-    ausgangRows(von, bis).reduce((s, r) => s + (r.amount_gross ?? 0), 0);
+  const outgoingTotal = (fromDate?: string | null, toDate?: string | null) =>
+    outgoingRows(fromDate, toDate).reduce((s, r) => s + (r.amount_gross ?? 0), 0);
 
   const rows = invoicesQ.data ?? [];
-  const rowsVorher = invoicesVorherQ.data ?? [];
+  const rowsBefore = invoicesBeforeQ.data ?? [];
   const value =
     config.key === "eingang"
       ? rows.reduce((s, r) => s + (r.amount_gross ?? 0), 0)
       : config.key === "ausgang"
-        ? ausgangSumme(range.von, range.bis)
-        : (bwa.rowByKey.get("gross_profit")?.amount ?? 0);
+        ? outgoingTotal(range.fromDate, range.toDate)
+        : (costAnalysis.rowByKey.get("gross_profit")?.amount ?? 0);
 
   // The sum answers "how much", the count answers "how many": both belong to the same card.
-  const anzahl =
+  const count =
     config.key === "eingang"
       ? rows.length
       : config.key === "ausgang"
-        ? ausgangRows(range.von, range.bis).length
+        ? outgoingRows(range.fromDate, range.toDate).length
         : undefined;
 
   const previous =
-    !vorher.von || !vorher.bis
+    !before.fromDate || !before.toDate
       ? undefined
       : config.key === "eingang"
-        ? rowsVorher.reduce((s, r) => s + (r.amount_gross ?? 0), 0)
+        ? rowsBefore.reduce((s, r) => s + (r.amount_gross ?? 0), 0)
         : config.key === "ausgang"
-          ? ausgangSumme(vorher.von, vorher.bis)
-          : (bwaVorher.rowByKey.get("gross_profit")?.amount ?? undefined);
+          ? outgoingTotal(before.fromDate, before.toDate)
+          : (costAnalysisBefore.rowByKey.get("gross_profit")?.amount ?? undefined);
 
-  const laedt =
+  const loading =
     config.key === "ausgang"
       ? outgoingQ.isLoading
       : config.key === "grossProfit"
-        ? bwa.isLoading
+        ? costAnalysis.isLoading
         : invoicesQ.isLoading;
 
   return (
@@ -147,24 +156,24 @@ function MoneyCard({ config }: { config: (typeof CARDS)[number] }) {
       iconTint={config.iconTint}
       label={t(`home.money.${config.key}`)}
       to={config.to}
-      loading={laedt}
+      loading={loading}
       value={formatEUR(value)}
       delta={
         <span className="flex flex-wrap items-center gap-x-2 gap-y-0.5">
-          {anzahl !== undefined && (
+          {count !== undefined && (
             <span className="text-[13px] font-medium tabular-nums text-muted-foreground">
-              {t("home.money.count", { n: anzahl })}
+              {t("home.money.count", { n: count })}
             </span>
           )}
           <Delta
             value={value}
             previous={previous}
             higherIsBetter={config.higherIsBetter}
-            period={zeitraum.period}
+            period={period.period}
           />
         </span>
       }
-      headerRight={<PeriodPicker value={zeitraum} onChange={setZeitraum} />}
+      headerRight={<PeriodPicker value={period} onChange={setPeriod} />}
     />
   );
 }

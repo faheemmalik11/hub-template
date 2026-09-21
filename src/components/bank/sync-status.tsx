@@ -83,23 +83,23 @@ export function SyncStatus({ className }: { className?: string }) {
 
   // Short on screen, long on hover. The compact label answers "is it working"; the title keeps the
   // exact timestamp and the failure message that the banner used to print in full.
-  const label = t(`bankkonten.sync.${health.status}`, { ago });
-  const voll = t(`bankkonten.health.${health.status}`, { when, ago });
+  const label = t(`bankAccounts.sync.${health.status}`, { ago });
+  const full = t(`bankAccounts.health.${health.status}`, { when, ago });
 
   // Counts come from the last completed run, so "0 neue Umsätze" is a real and useful answer: the
   // run worked and the bank had nothing new, which is the case most easily mistaken for a fault.
   const details: string[] = [];
   if (health.counts && (health.status === "ok" || health.status === "warn")) {
     details.push(
-      t("bankkonten.health.detail", {
-        umsaetze: health.counts.transactions_new ?? 0,
-        zuordnungen: health.counts.matches_auto ?? 0,
+      t("bankAccounts.health.detail", {
+        transactions: health.counts.transactions_new ?? 0,
+        assignments: health.counts.matches_auto ?? 0,
       }),
     );
   }
   if (health.status === "error" && health.lastErrorMessage) details.push(health.lastErrorMessage);
   if (health.skippedSinceRun > 0) {
-    details.push(t("bankkonten.health.uebersprungen", { count: health.skippedSinceRun }));
+    details.push(t("bankAccounts.health.uebersprungen", { count: health.skippedSinceRun }));
   }
 
   return (
@@ -108,7 +108,7 @@ export function SyncStatus({ className }: { className?: string }) {
       // Announced, because the interesting case is the one that appears while the reader is
       // looking at something else on the page.
       role="status"
-      title={details.length ? `${voll} · ${details.join(" · ")}` : voll}
+      title={details.length ? `${full} · ${details.join(" · ")}` : full}
     >
       {/* A dot rather than a glyph in the healthy case: an icon per state is one more thing to
           read on a row that already carries a label and two buttons. */}
@@ -139,8 +139,8 @@ function relativeAgo(
   t: (key: string, opts?: Record<string, unknown>) => string,
 ): string {
   if (minutes === null) return "—";
-  if (minutes < 2) return t("bankkonten.health.ago.jetzt");
-  if (minutes < 60) return t("bankkonten.health.ago.min", { count: minutes });
-  if (minutes < 2880) return t("bankkonten.health.ago.std", { count: Math.round(minutes / 60) });
-  return t("bankkonten.health.ago.tage", { count: Math.round(minutes / 1440) });
+  if (minutes < 2) return t("bankAccounts.health.ago.jetzt");
+  if (minutes < 60) return t("bankAccounts.health.ago.min", { count: minutes });
+  if (minutes < 2880) return t("bankAccounts.health.ago.std", { count: Math.round(minutes / 60) });
+  return t("bankAccounts.health.ago.tage", { count: Math.round(minutes / 1440) });
 }

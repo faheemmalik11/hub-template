@@ -35,12 +35,12 @@ export function PeriodPicker({
       resetLabel={t("home.zeitraumAktion.reset")}
       calendarLocale={dateLocale()}
       rangeLabels={{
-        placeholder: t("belege.list.filter.zeitraumWaehlen"),
-        reset: t("belege.list.filter.zeitraumZuruecksetzen"),
-        apply: t("belege.list.filter.zeitraumAnwenden"),
-        previousMonth: t("belege.list.filter.monatZurueck"),
-        nextMonth: t("belege.list.filter.monatVor"),
-        pickSecond: t("belege.list.filter.zweitesDatum"),
+        placeholder: t("documents.list.filter.zeitraumWaehlen"),
+        reset: t("documents.list.filter.zeitraumZuruecksetzen"),
+        apply: t("documents.list.filter.zeitraumAnwenden"),
+        previousMonth: t("documents.list.filter.monatZurueck"),
+        nextMonth: t("documents.list.filter.monatVor"),
+        pickSecond: t("documents.list.filter.zweitesDatum"),
       }}
     />
   );

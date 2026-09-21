@@ -69,7 +69,9 @@ export function buildCrumbs({
 
   if (!isLeafPage) {
     const leaf = segments[segments.length - 1];
-    crumbs.push({ label: staticLeafLabels[leaf] ?? decodeURIComponent(leaf) });
+    crumbs.push({
+      label: staticLeafLabels[pathname] ?? staticLeafLabels[leaf] ?? decodeURIComponent(leaf),
+    });
   }
 
   return crumbs;

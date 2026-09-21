@@ -49,10 +49,10 @@ export type FilterField =
       onChange: (value: string) => void;
       options: FilterOption[];
       /** The custom bounds, ISO `yyyy-mm-dd` or "". Only meaningful under `customValue`. */
-      von: string;
-      bis: string;
+      fromDate: string;
+      toDate: string;
       /** Both ends at once. Reset sends two empty strings. */
-      onRangeApply: (von: string, bis: string) => void;
+      onRangeApply: (fromDate: string, toDate: string) => void;
       /** The option that opens the calendar rather than applying itself. */
       customValue: string;
       /**
@@ -102,7 +102,7 @@ export function clearFilters(fields: FilterField[]): void {
 }
 
 /** One active filter, resolved to what a chip needs to show and how to switch it off. */
-export interface AktiverFilter {
+export interface ActiveFilter {
   key: string;
   /** The field's name, e.g. "Gesellschaft". */
   label: string;
@@ -119,8 +119,8 @@ export interface AktiverFilter {
  * and the control it mirrors can never disagree, which is the same reason the count lives in this
  * file rather than being recomputed by each screen.
  */
-export function activeFilters(fields: FilterField[]): AktiverFilter[] {
-  const out: AktiverFilter[] = [];
+export function activeFilters(fields: FilterField[]): ActiveFilter[] {
+  const out: ActiveFilter[] = [];
   for (const f of fields) {
     if (f.kind === "toggle") {
       if (f.value) out.push({ key: f.key, label: f.label, clear: () => f.onChange(false) });
@@ -129,12 +129,12 @@ export function activeFilters(fields: FilterField[]): AktiverFilter[] {
     if (f.kind === "zeitraum") {
       if (f.value !== f.defaultValue) {
         // A custom range names its own dates; a preset is named by its option.
-        const bereich = [f.von, f.bis].filter(Boolean).map(f.formatDay).join(" - ");
+        const area = [f.fromDate, f.toDate].filter(Boolean).map(f.formatDay).join(" - ");
         out.push({
           key: f.key,
           label: f.label,
           valueLabel:
-            (f.value === f.customValue && bereich) ||
+            (f.value === f.customValue && area) ||
             f.options.find((o) => o.value === f.value)?.label ||
             f.value,
           clear: () => {

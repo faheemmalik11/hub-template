@@ -26,11 +26,14 @@ function Index() {
   const { t } = useTranslation();
   // Every section owns its period and remembers it across reloads (see useStoredPeriod). This one
   // belongs to the trend chart; the cards, the stages and the ranked panels each carry their own.
-  const [zeitraum, setZeitraum] = useStoredPeriod("chart");
+  const [period, setPeriod] = useStoredPeriod("chart");
   const range = useMemo(
     () =>
-      overviewPeriodRange(zeitraum.period, new Date(), { von: zeitraum.von, bis: zeitraum.bis }),
-    [zeitraum],
+      overviewPeriodRange(period.period, new Date(), {
+        fromDate: period.fromDate,
+        toDate: period.toDate,
+      }),
+    [period],
   );
 
   return (
@@ -47,11 +50,11 @@ function Index() {
         <div data-tour="overview-trend-chart" className="min-w-0">
           <DashboardPanel
             title={t("home.chart.title")}
-            headerRight={<PeriodPicker value={zeitraum} onChange={setZeitraum} />}
+            headerRight={<PeriodPicker value={period} onChange={setPeriod} />}
             className="overflow-hidden"
           >
             <div className="mt-2">
-              <VolumeChart von={range.von} bis={range.bis} />
+              <VolumeChart fromDate={range.fromDate} toDate={range.toDate} />
             </div>
           </DashboardPanel>
         </div>

@@ -1,5 +1,5 @@
 import { useMemo, useState } from "react";
-import { useFokus } from "@/lib/use-fokus";
+import { useFocus } from "@/lib/use-focus";
 import { Download, Search, Send } from "lucide-react";
 
 import {
@@ -19,7 +19,7 @@ import {
   useDatevHandoverStatus,
   useDatevOutgoingCandidates,
   useDatevRoutes,
-  useGesellschaften,
+  useCompanies,
   useTranslation,
 } from "./adapter";
 import type { DatevHandoverConfig } from "./config";
@@ -62,14 +62,14 @@ import {
  * email cannot be recalled and DATEV has no return channel to tell anybody it went wrong.
  */
 export function DatevHandoverPage({ config }: { config: DatevHandoverConfig }) {
-  useFokus();
+  useFocus();
   const { t } = useTranslation();
-  const companiesQ = useGesellschaften();
+  const companiesQ = useCompanies();
   const routesQ = useDatevRoutes();
   const statusQ = useDatevHandoverStatus();
   const batchesQ = useDatevHandoverBatches();
 
-  const [suche, setSuche] = useState("");
+  const [search, setSearch] = useState("");
   const [status, setStatus] = useState<StatusFilter>("alle");
   const [setupRow, setSetupRow] = useState<CompanyRow | null>(null);
   const [historyRow, setHistoryRow] = useState<CompanyRow | null>(null);
@@ -103,7 +103,7 @@ export function DatevHandoverPage({ config }: { config: DatevHandoverConfig }) {
   }, [sendIds, rows, outgoingQ.data]);
 
   const summary = useMemo(() => fleetSummary(rows), [rows]);
-  const sichtbar = useMemo(() => filterRows(rows, suche, status), [rows, suche, status]);
+  const visible = useMemo(() => filterRows(rows, search, status), [rows, search, status]);
 
   /**
    * The same pagination every master-data list on this app uses, so the controls and the page-size
@@ -117,22 +117,22 @@ export function DatevHandoverPage({ config }: { config: DatevHandoverConfig }) {
    * `resetKey` carries the filters, so narrowing the list returns to page one instead of leaving
    * the reader on a page that no longer exists.
    */
-  const view = useTableView(sichtbar, {
+  const view = useTableView(visible, {
     sortValue: () => 0,
     initialSort: "rang",
-    resetKey: `${suche}:${status}`,
+    resetKey: `${search}:${status}`,
   });
 
   // Batches are part of the load, not an afterthought: a row's rank and its last-sent date both
   // depend on them, so letting them land after the table is drawn would re-sort the list under the
   // reader's cursor.
-  const laedt = companiesQ.isLoading || statusQ.isLoading || batchesQ.isLoading;
+  const loading = companiesQ.isLoading || statusQ.isLoading || batchesQ.isLoading;
 
   // Any of the three failing leaves the table lying rather than empty: a failed company query would
   // render "Keine Gesellschaften vorhanden", and a failed routes query would show every company as
   // "Nicht eingerichtet" — an invitation to overwrite addresses that are actually on file.
-  const fehler = statusQ.error ?? companiesQ.error ?? routesQ.error ?? batchesQ.error;
-  const neuLaden = () => {
+  const error = statusQ.error ?? companiesQ.error ?? routesQ.error ?? batchesQ.error;
+  const newLaden = () => {
     if (companiesQ.isError) void companiesQ.refetch();
     if (routesQ.isError) void routesQ.refetch();
     if (statusQ.isError) void statusQ.refetch();
@@ -145,16 +145,16 @@ export function DatevHandoverPage({ config }: { config: DatevHandoverConfig }) {
     onHistory: setHistoryRow,
   };
 
-  const statusOptionen = STATUS_FILTERS.map((s) => ({
+  const statusOptions = STATUS_FILTERS.map((s) => ({
     value: s,
-    label: t(`datevUebergabe.filter.${s}`),
+    label: t(`handover.filter.${s}`),
   }));
 
   return (
     <div>
       <div data-tour="export-header" className="flex flex-wrap items-start justify-between gap-4">
         <h1 className="mt-2 text-2xl font-semibold tracking-tight text-foreground">
-          {t("datevUebergabe.title")}
+          {t("handover.title")}
         </h1>
         {/* No greyed-out primary. A page-level action that cannot run is not a button somebody
             should have to test by clicking — when nothing is eligible the summary line below says
@@ -165,15 +165,15 @@ export function DatevHandoverPage({ config }: { config: DatevHandoverConfig }) {
               itself. Secondary, because sending is what this page is for. */}
           <Button variant="outline" className="gap-2" onClick={() => setExportOpen(true)}>
             <Download className="size-4" />
-            {t("datevUebergabe.aktion.monatsexport")}
+            {t("handover.aktion.monatsexport")}
           </Button>
-          {!fehler && summary.sendable.length > 0 && (
+          {!error && summary.sendable.length > 0 && (
             <Button
               className="gap-2"
               onClick={() => setSendIds(summary.sendable.map((r) => r.company.id))}
             >
               <Send className="size-4" />
-              {t("datevUebergabe.aktion.sammelversand")}
+              {t("handover.aktion.sammelversand")}
             </Button>
           )}
         </div>
@@ -187,22 +187,22 @@ export function DatevHandoverPage({ config }: { config: DatevHandoverConfig }) {
       {/* The counts on the left, the controls that narrow them on the right. One line rather than
           four cards: these are numbers somebody reads once on the way to the table, and as tiles
           they took a third of the first screen and pushed the actual content below the fold. */}
-      {!fehler && (
+      {!error && (
         <div className="mt-4 flex flex-wrap items-center justify-between gap-x-6 gap-y-3">
-          {laedt ? (
+          {loading ? (
             <span />
           ) : (
             <p className="text-base text-muted-foreground">
               <span className="text-foreground">
-                {t("datevUebergabe.summary.gesellschaften", { count: summary.companies })}
+                {t("handover.summary.gesellschaften", { count: summary.companies })}
               </span>
               {" · "}
               <span className={summary.filesReady > 0 ? "font-medium text-foreground" : undefined}>
-                {t("datevUebergabe.summary.bereit", { count: summary.filesReady })}
-                {summary.filesReady > 0 && ` (${formatEUR(summary.readySumme)})`}
+                {t("handover.summary.bereit", { count: summary.filesReady })}
+                {summary.filesReady > 0 && ` (${formatEUR(summary.readyTotal)})`}
               </span>
               {" · "}
-              {t("datevUebergabe.summary.gesendet", { count: summary.alreadySent })}
+              {t("handover.summary.gesendet", { count: summary.alreadySent })}
               {summary.needSetup > 0 && (
                 <>
                   {" · "}
@@ -216,7 +216,7 @@ export function DatevHandoverPage({ config }: { config: DatevHandoverConfig }) {
                     aria-pressed={status === "open"}
                     className="text-warning underline underline-offset-2 hover:no-underline focus-visible:ring-ring rounded-sm focus-visible:ring-2 focus-visible:outline-none"
                   >
-                    {t("datevUebergabe.summary.offen", { count: summary.needSetup })}
+                    {t("handover.summary.offen", { count: summary.needSetup })}
                   </button>
                 </>
               )}
@@ -234,21 +234,21 @@ export function DatevHandoverPage({ config }: { config: DatevHandoverConfig }) {
             <div className="relative min-w-0 flex-1 sm:w-56 sm:flex-none">
               <Search className="absolute top-1/2 left-3 size-4 -translate-y-1/2 text-muted-foreground" />
               <Input
-                value={suche}
-                onChange={(e) => setSuche(e.target.value)}
-                placeholder={t("datevUebergabe.suche")}
+                value={search}
+                onChange={(e) => setSearch(e.target.value)}
+                placeholder={t("handover.suche")}
                 className="pl-9"
               />
             </div>
             <Select value={status} onValueChange={(v) => setStatus(v as StatusFilter)}>
               <SelectTrigger
                 className="w-[150px] shrink-0 sm:w-[170px]"
-                aria-label={t("datevUebergabe.spalte.einrichtung")}
+                aria-label={t("handover.spalte.einrichtung")}
               >
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>
-                {statusOptionen.map((o) => (
+                {statusOptions.map((o) => (
                   <SelectItem key={o.value} value={o.value}>
                     {o.label}
                   </SelectItem>
@@ -259,18 +259,18 @@ export function DatevHandoverPage({ config }: { config: DatevHandoverConfig }) {
         </div>
       )}
 
-      <div data-tour="export-list" data-fokus="liste" className="mt-5">
-        {fehler ? (
-          <ErrorState error={fehler} onRetry={neuLaden} />
-        ) : laedt ? (
+      <div data-tour="export-list" data-focus="list" className="mt-5">
+        {error ? (
+          <ErrorState error={error} onRetry={newLaden} />
+        ) : loading ? (
           <TableSkeleton rows={5} cols={6} />
         ) : rows.length === 0 ? (
           <p className="rounded-xl border border-dashed border-border p-8 text-center text-sm text-muted-foreground">
-            {t("datevUebergabe.leerGesellschaften")}
+            {t("handover.leerGesellschaften")}
           </p>
-        ) : sichtbar.length === 0 ? (
+        ) : visible.length === 0 ? (
           <p className="rounded-xl border border-dashed border-border p-8 text-center text-sm text-muted-foreground">
-            {t("datevUebergabe.leerFilter")}
+            {t("handover.leerFilter")}
           </p>
         ) : (
           <>

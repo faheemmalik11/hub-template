@@ -12,7 +12,7 @@ import {
   SheetHeader,
   SheetTitle,
   Switch,
-  fehlerText,
+  errorText,
   toast,
   useSaveDatevRoutes,
   useTranslation,
@@ -52,8 +52,8 @@ export function SetupDrawer({
   onOpenChange: (open: boolean) => void;
 }) {
   const { t } = useTranslation();
-  const save = useSaveDatevRoutes();
-  const [draft, setDraft] = useState<Draft>(() => leererEntwurf({}));
+  const saveRoutes = useSaveDatevRoutes();
+  const [draft, setDraft] = useState<Draft>(() => emptyDraft({}));
 
   const routes = (row?.routes ?? {}) as Record<DatevDirection, DatevRoute | undefined>;
 
@@ -61,18 +61,18 @@ export function SetupDrawer({
   // so without this it would open on the previous company's switches.
   useEffect(() => {
     if (open) {
-      setDraft(leererEntwurf(routes));
+      setDraft(emptyDraft(routes));
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [open, row?.company.id]);
 
   if (!row) return null;
 
-  const eingerichtet = row.setup !== "missing";
+  const setUp = row.setup !== "missing";
 
   // Nothing to save when no address was typed and no existing row's switch moved. Checked so Save
   // cannot fire a round of no-op RPCs and report success.
-  const nichtsZuSpeichern = DATEV_DIRECTIONS.every((d) => {
+  const nothingZuSave = DATEV_DIRECTIONS.every((d) => {
     const existing = routes[d];
     const entry = draft[d];
     if (entry.address.trim()) return false;
@@ -84,8 +84,8 @@ export function SetupDrawer({
     setDraft((prev) => ({ ...prev, [d]: { ...prev[d], ...changes } }));
   }
 
-  function speichern() {
-    save.mutate(
+  function save() {
+    saveRoutes.mutate(
       {
         company_id: row!.company.id,
         entries: DATEV_DIRECTIONS.map((d) => ({
@@ -102,11 +102,11 @@ export function SetupDrawer({
       },
       {
         onSuccess: () => {
-          toast.success(t("datevUebergabe.setup.gespeichert"));
+          toast.success(t("handover.setup.gespeichert"));
           onOpenChange(false);
         },
         onError: (e: unknown) =>
-          toast.error(t("datevUebergabe.setup.fehlgeschlagen", { error: fehlerText(e) })),
+          toast.error(t("handover.setup.fehlgeschlagen", { error: errorText(e) })),
       },
     );
   }
@@ -116,15 +116,15 @@ export function SetupDrawer({
       <SheetContent className="flex w-full flex-col gap-0 overflow-y-auto sm:max-w-md">
         <SheetHeader>
           <SheetTitle>
-            {eingerichtet ? t("datevUebergabe.setup.titleEdit") : t("datevUebergabe.setup.title")}
+            {setUp ? t("handover.setup.titleEdit") : t("handover.setup.title")}
           </SheetTitle>
-          <SheetDescription>{t("datevUebergabe.setup.desc")}</SheetDescription>
+          <SheetDescription>{t("handover.setup.desc")}</SheetDescription>
         </SheetHeader>
 
         <div className="mt-6 flex-1 space-y-6">
           <div>
             <Label className="text-xs text-muted-foreground">
-              {t("datevUebergabe.setup.gesellschaft")}
+              {t("handover.setup.gesellschaft")}
             </Label>
             <p className="mt-1 font-medium text-foreground">
               {row.company.code}
@@ -142,7 +142,7 @@ export function SetupDrawer({
               would quietly strand configuration somebody deliberately entered. */}
           <div className="space-y-3">
             {DATEV_DIRECTIONS.map((d) => (
-              <AdressFeld
+              <AddressField
                 key={d}
                 direction={d}
                 companyId={row.company.id}
@@ -155,11 +155,15 @@ export function SetupDrawer({
         </div>
 
         <SheetFooter className="mt-6">
-          <Button variant="outline" onClick={() => onOpenChange(false)} disabled={save.isPending}>
-            {t("datevUebergabe.aktion.abbrechen")}
+          <Button
+            variant="outline"
+            onClick={() => onOpenChange(false)}
+            disabled={saveRoutes.isPending}
+          >
+            {t("handover.aktion.abbrechen")}
           </Button>
-          <Button onClick={speichern} disabled={nichtsZuSpeichern || save.isPending}>
-            {t("datevUebergabe.setup.speichern")}
+          <Button onClick={save} disabled={nothingZuSave || saveRoutes.isPending}>
+            {t("handover.setup.speichern")}
           </Button>
         </SheetFooter>
       </SheetContent>
@@ -174,7 +178,7 @@ export function SetupDrawer({
  * and the other two are an afterthought. The only difference on screen is the "noch nicht aktiv"
  * mark, which is a fact about this Hub's send paths rather than about the address.
  */
-function AdressFeld({
+function AddressField({
   direction,
   companyId,
   draft,
@@ -188,52 +192,48 @@ function AdressFeld({
   onChange: (changes: Partial<Draft[DatevDirection]>) => void;
 }) {
   const { t } = useTranslation();
-  const feldId = `datev-${companyId}-${direction}`;
-  const schalterId = `${feldId}-aktiv`;
+  const fieldId = `datev-${companyId}-${direction}`;
+  const switchId = `${fieldId}-aktiv`;
 
   return (
     <div className="rounded-lg border border-border p-3">
       <div className="flex flex-wrap items-center justify-between gap-2">
-        <Label htmlFor={feldId} className="text-sm font-medium text-foreground">
-          {t(`datevUebergabe.setup.adresseFuer.${direction}`)}
+        <Label htmlFor={fieldId} className="text-sm font-medium text-foreground">
+          {t(`handover.setup.adresseFuer.${direction}`)}
         </Label>
         {/* Per address, not per company: the send checks `is_enabled` on the row it is about to
             use, so one company can have a live incoming address and a paused outgoing one. */}
         <div className="flex items-center gap-2">
           <Switch
-            id={schalterId}
+            id={switchId}
             checked={draft.isEnabled}
             onCheckedChange={(v) => onChange({ isEnabled: v })}
           />
-          <Label htmlFor={schalterId} className="text-xs font-normal text-muted-foreground">
-            {t("datevUebergabe.setup.aktivKurz")}
+          <Label htmlFor={switchId} className="text-xs font-normal text-muted-foreground">
+            {t("handover.setup.aktivKurz")}
           </Label>
         </div>
       </div>
       <Input
-        id={feldId}
+        id={fieldId}
         type="email"
         className="mt-2"
         value={draft.address}
         onChange={(e) => onChange({ address: e.target.value })}
-        placeholder={
-          existing ? t("datevUebergabe.setup.adresseVorhanden") : "name@uploadmail.datev.de"
-        }
+        placeholder={existing ? t("handover.setup.adresseVorhanden") : "name@uploadmail.datev.de"}
       />
       {/* One line, under the address that actually sends. The "•••• hinterlegt" placeholder is what
           says an address is already on file — and, by standing in the field rather than beside it,
           what says leaving the field alone leaves the stored address alone. */}
       {direction === "incoming" && (
-        <p className="mt-1.5 text-xs text-muted-foreground">
-          {t("datevUebergabe.setup.adresseHilfe")}
-        </p>
+        <p className="mt-1.5 text-xs text-muted-foreground">{t("handover.setup.adresseHilfe")}</p>
       )}
     </div>
   );
 }
 
 /** Switches seeded from what is stored; addresses always blank (see the component's note). */
-function leererEntwurf(routes: Partial<Record<DatevDirection, DatevRoute | undefined>>): Draft {
+function emptyDraft(routes: Partial<Record<DatevDirection, DatevRoute | undefined>>): Draft {
   return Object.fromEntries(
     DATEV_DIRECTIONS.map((d) => [d, { address: "", isEnabled: routes[d]?.is_enabled ?? true }]),
   ) as Draft;

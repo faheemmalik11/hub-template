@@ -161,11 +161,11 @@ export interface PleoSpender {
   key: string;
   name: string | null;
   email: string | null;
-  anzahl: number;
+  count: number;
   /** Sum of the signed amounts, so card spend is negative and a refund reduces it, exactly as on
    *  the statement. `signedAmount()` in _shared/pleo.ts negates Pleo's own positive "spent". */
-  summe: number;
-  letzteBuchung: string | null;
+  total: number;
+  lastBooking: string | null;
 }
 
 /** One person with a Pleo account, as the `pleo-employees` function returns them. */
@@ -281,7 +281,7 @@ export function useBankAccountPurgePreview(accountId: string, enabled: boolean) 
     // Deliberately uncached across openings: the point is to state what is true right now.
     staleTime: 0,
     queryFn: async (): Promise<{ transactions: number; matches: number; files: number }> => {
-      const zaehle = async (table: string): Promise<number> => {
+      const count = async (table: string): Promise<number> => {
         const { count, error } = await sb
           .from(table)
           .select(`transaction_id, ${TABLE.bankTransactions}!inner(account_id)`, {
@@ -301,11 +301,11 @@ export function useBankAccountPurgePreview(accountId: string, enabled: boolean) 
           if (error) throw error;
           return count ?? 0;
         })(),
-        zaehle(TABLE.documentTransactionMatches),
-        zaehle(TABLE.outgoingInvoiceTransactionMatches),
+        count(TABLE.documentTransactionMatches),
+        count(TABLE.outgoingInvoiceTransactionMatches),
         // document_files cascades off bank_transactions here (migration 0003) -- unlike the Immonetz
         // Hub, where no such FK exists. Attached receipt files really do go with the movements.
-        zaehle(TABLE.documentFiles),
+        count(TABLE.documentFiles),
       ]);
       return { transactions, matches: matches + outgoing, files };
     },
@@ -360,12 +360,12 @@ export function useSetBankAccountActive() {
 export interface BankTransactionFilter {
   search?: string;
   matchingStatus?: string;
-  richtung?: string;
+  direction?: string;
   accountId?: string;
   transactionType?: string;
   /** Booking-date range, inclusive. Only the paginated list screen uses these. */
-  bookingDateVon?: string;
-  bookingDateBis?: string;
+  bookingDateFromDate?: string;
+  bookingDateToDate?: string;
   /** A company id, or null for "no company assigned". Undefined means every company. */
   companyId?: string | null;
   /** Provenance of the row ('banksapi', 'pleo', …). */
@@ -374,7 +374,7 @@ export interface BankTransactionFilter {
    * Whether a DOCUMENT hangs off the transaction itself (invoice_files.transaction_id, migration
    * 0074) -- the Pleo card receipt, not a matched invoice. "mit" | "ohne"; undefined means both.
    */
-  beleg?: string;
+  doc?: string;
   sort?: BankTransactionSort;
   dir?: "asc" | "desc";
   /**
@@ -410,18 +410,18 @@ export function useBankTransactions(
   filter: BankTransactionFilter = {},
   opts?: { enabled?: boolean },
 ) {
-  const { search, matchingStatus, richtung, accountId, transactionType } = filter;
-  const spalten = filter.select ?? "*";
+  const { search, matchingStatus, direction, accountId, transactionType } = filter;
+  const columns = filter.select ?? "*";
   const q = (search ?? "").trim();
   return useQuery({
     queryKey: [
       "bank_transactions",
       q,
       matchingStatus ?? "",
-      richtung ?? "",
+      direction ?? "",
       accountId ?? "",
       transactionType ?? "",
-      spalten,
+      columns,
     ],
     enabled: opts?.enabled ?? true,
     staleTime: STALE,
@@ -430,7 +430,7 @@ export function useBankTransactions(
       // A plain number searches the amount -- fts only ever covers counterparty/reference/
       // booking-text, never the numeric amount, so a numeric-looking query goes to
       // amountQueryFilter instead of textSearch (which would find nothing).
-      const betragFilter = q ? amountQueryFilter(q) : null;
+      const amountFilter = q ? amountQueryFilter(q) : null;
       // fetchAllRows works around the platform's per-request row cap (see its own comment) — this
       // hook is Offene Posten's "unpaginated, whole open scope" source, so a silent partial result
       // here reads as a wrong total/count, exactly the discrepancy that surfaced this bug: this tab
@@ -438,15 +438,15 @@ export function useBankTransactions(
       const rows = await fetchAllRows<BankTransaction>((from, to, withCount) => {
         let query = sb
           .from(TABLE.bankTransactions)
-          .select(spalten, withCount ? { count: "exact" } : undefined);
-        if (betragFilter) {
-          query = query.or(betragFilter);
+          .select(columns, withCount ? { count: "exact" } : undefined);
+        if (amountFilter) {
+          query = query.or(amountFilter);
         } else if (q) {
           const tsq = prefixTsQuery(q);
           if (tsq) query = query.or(bankSearchFilter(q, tsq));
         }
         if (matchingStatus) query = query.eq("matching_status", matchingStatus);
-        if (richtung) query = query.eq("direction", richtung);
+        if (direction) query = query.eq("direction", direction);
         if (accountId) query = query.eq("account_id", accountId);
         // See the paginated variant: "unbekannt" covers null as well.
         if (transactionType === "unbekannt") {
@@ -493,12 +493,12 @@ export function useBankTransactions(
  * turns a search for "Meier, Anna" into a filter list and a 400.
  */
 function bankSearchFilter(q: string, tsq: string): string {
-  const roh = q
+  const raw = q
     .trim()
     .replace(/[(),.*:"\\]/g, " ")
     .trim();
   const terms = [`fts.fts(german).${tsq}`];
-  if (roh) terms.push(`spender_name.ilike.*${roh}*`, `spender_email.ilike.*${roh}*`);
+  if (raw) terms.push(`spender_name.ilike.*${raw}*`, `spender_email.ilike.*${raw}*`);
   return terms.join(",");
 }
 
@@ -508,14 +508,14 @@ export function useBankTransactionsPage(
   const {
     search,
     matchingStatus,
-    richtung,
+    direction,
     accountId,
     transactionType,
-    bookingDateVon,
-    bookingDateBis,
+    bookingDateFromDate,
+    bookingDateToDate,
     companyId,
     source,
-    beleg,
+    doc,
     sort,
     dir,
     page,
@@ -527,14 +527,14 @@ export function useBankTransactionsPage(
       "bank_transactions_page",
       q,
       matchingStatus ?? "",
-      richtung ?? "",
+      direction ?? "",
       accountId ?? "",
       transactionType ?? "",
-      bookingDateVon ?? "",
-      bookingDateBis ?? "",
+      bookingDateFromDate ?? "",
+      bookingDateToDate ?? "",
       companyId === undefined ? "" : (companyId ?? "__null"),
       source ?? "",
-      beleg ?? "",
+      doc ?? "",
       sort ?? "",
       dir ?? "",
       page,
@@ -551,18 +551,18 @@ export function useBankTransactionsPage(
       // Verified against live data: 1975 with + 1033 without = 3008 total, so neither direction
       // silently drops or double-counts a row. The embed is dropped entirely when no document
       // filter is active, so the ordinary list pays nothing for it.
-      const belegEmbed =
-        beleg === "mit"
+      const documentEmbed =
+        doc === "mit"
           ? `,${TABLE.documentFiles}!inner(id)`
-          : beleg === "ohne"
+          : doc === "ohne"
             ? `,${TABLE.documentFiles}(id)`
             : "";
-      let query = sb.from(TABLE.bankTransactions).select(`*${belegEmbed}`, { count: "exact" });
-      if (beleg === "mit") query = query.is(`${TABLE.documentFiles}.deleted_at`, null);
-      else if (beleg === "ohne") query = query.is(TABLE.documentFiles, null);
+      let query = sb.from(TABLE.bankTransactions).select(`*${documentEmbed}`, { count: "exact" });
+      if (doc === "mit") query = query.is(`${TABLE.documentFiles}.deleted_at`, null);
+      else if (doc === "ohne") query = query.is(TABLE.documentFiles, null);
       // Number typed -> amount search, anything else -> full text (see amountQueryFilter).
-      const betragFilter = q ? amountQueryFilter(q) : null;
-      if (betragFilter) query = query.or(betragFilter);
+      const amountFilter = q ? amountQueryFilter(q) : null;
+      if (amountFilter) query = query.or(amountFilter);
       else if (q) {
         const tsq = prefixTsQuery(q);
         if (tsq) query = query.or(bankSearchFilter(q, tsq));
@@ -587,7 +587,7 @@ export function useBankTransactionsPage(
       } else if (matchingStatus) {
         query = query.eq("matching_status", matchingStatus);
       }
-      if (richtung) query = query.eq("direction", richtung);
+      if (direction) query = query.eq("direction", direction);
       if (accountId) query = query.eq("account_id", accountId);
       // "unbekannt" has to include NULL too: rows imported before the classifier existed carry
       // null until the next sync fills them, and to the user both mean the same thing, namely
@@ -597,8 +597,8 @@ export function useBankTransactionsPage(
       } else if (transactionType) {
         query = query.eq("transaction_type", transactionType);
       }
-      if (bookingDateVon) query = query.gte("booking_date", bookingDateVon);
-      if (bookingDateBis) query = query.lte("booking_date", bookingDateBis);
+      if (bookingDateFromDate) query = query.gte("booking_date", bookingDateFromDate);
+      if (bookingDateToDate) query = query.lte("booking_date", bookingDateToDate);
       // Company and source are real columns, so Bank reconciliation's two dropdowns narrow the
       // query rather than the array afterwards. That is what lets this hook replace the
       // fetch-everything variant on that tab: filter, sort, count and page all happen server-side.
@@ -610,9 +610,9 @@ export function useBankTransactionsPage(
       // that happen to be on screen. `amount` sorts by the signed value: a mixed list has debits and
       // credits in it, and ordering by magnitude would need an expression PostgREST cannot express;
       // combine it with the Richtung filter to read one direction by size.
-      const sortSpalte = sort ?? "booking_date";
+      const sortColumn = sort ?? "booking_date";
       const { data, error, count } = await query
-        .order(sortSpalte, { ascending: dir === "asc", nullsFirst: false })
+        .order(sortColumn, { ascending: dir === "asc", nullsFirst: false })
         // Deterministic tiebreak: booking_date has many ties (a bank posts a whole day at once), and
         // without it Postgres may order tied rows differently per request, so the same transaction can
         // appear on two pages or on none.
@@ -645,7 +645,7 @@ export function useBankTransactionsPage(
       // THIS PAGE's ids rather than a view rebuild. `source` comes back with it so the row can say
       // WHERE the document came from -- "a receipt exists" and "an employee photographed it in
       // Pleo" are different degrees of evidence to a reviewer.
-      const dokumentQuelle = new Map<string, string | null>();
+      const documentSource = new Map<string, string | null>();
       if (pageRows.length > 0) {
         const { data: docs, error: dErr } = await sb
           .from(TABLE.documentFiles)
@@ -657,8 +657,8 @@ export function useBankTransactionsPage(
           );
         if (dErr) throw dErr;
         for (const d of (docs ?? []) as { transaction_id: string; source: string | null }[]) {
-          if (!dokumentQuelle.has(d.transaction_id)) {
-            dokumentQuelle.set(d.transaction_id, d.source);
+          if (!documentSource.has(d.transaction_id)) {
+            documentSource.set(d.transaction_id, d.source);
           }
         }
       }
@@ -667,8 +667,8 @@ export function useBankTransactionsPage(
         rows: pageRows.map((r) => ({
           ...r,
           has_suggested_match: suggestedIds.has(r.id),
-          has_document: dokumentQuelle.has(r.id),
-          document_source: dokumentQuelle.get(r.id) ?? null,
+          has_document: documentSource.has(r.id),
+          document_source: documentSource.get(r.id) ?? null,
         })),
         total: count ?? 0,
       };
@@ -679,11 +679,11 @@ export function useBankTransactionsPage(
 export interface OpenBankTransactionsInfiniteFilter {
   search?: string;
   matchingStatus?: string;
-  richtung?: string;
-  bookingDateVon?: string;
-  bookingDateBis?: string;
-  valueDateVon?: string;
-  valueDateBis?: string;
+  direction?: string;
+  bookingDateFromDate?: string;
+  bookingDateToDate?: string;
+  valueDateFromDate?: string;
+  valueDateToDate?: string;
   sort?: "booking_date" | "value_date" | "amount" | "name";
   dir?: "asc" | "desc";
   pageSize: number;
@@ -710,32 +710,32 @@ export function amountQueryFilter(q: string): string | null {
   let cents = "";
   if (/^\d{1,3}(\.\d{3})+(,\d{1,2})?$/.test(negativeAllowed)) {
     // German grouping: 9.304 / 9.304,15
-    const [ganz, dez = ""] = negativeAllowed.split(",");
-    euros = ganz.replace(/\./g, "");
-    cents = dez;
+    const [whole, decimals = ""] = negativeAllowed.split(",");
+    euros = whole.replace(/\./g, "");
+    cents = decimals;
   } else if (/^\d{1,3}(,\d{3})+(\.\d{1,2})?$/.test(negativeAllowed)) {
     // English grouping: 9,304 / 9,304.15
-    const [ganz, dez = ""] = negativeAllowed.split(".");
-    euros = ganz.replace(/,/g, "");
-    cents = dez;
+    const [whole, decimals = ""] = negativeAllowed.split(".");
+    euros = whole.replace(/,/g, "");
+    cents = decimals;
   } else if (/^\d+([.,]\d{1,2})?$/.test(negativeAllowed)) {
     // One separator and no grouping: it is the decimal one. 12.34 / 12,34 / 12
-    const [ganz, dez = ""] = negativeAllowed.split(/[.,]/);
-    euros = ganz;
-    cents = dez;
+    const [whole, decimals = ""] = negativeAllowed.split(/[.,]/);
+    euros = whole;
+    cents = decimals;
   } else {
     return null; // "1.2.3", "abc", "4x" -> leave it to the text search
   }
-  const wert = Number(cents ? `${euros}.${cents}` : euros);
-  if (!Number.isFinite(wert)) return null;
+  const value = Number(cents ? `${euros}.${cents}` : euros);
+  if (!Number.isFinite(value)) return null;
   if (cents) {
     // A full amount was typed: match it exactly, in either direction.
-    return wert === 0 ? "amount.eq.0" : `amount.eq.${wert},amount.eq.${-wert}`;
+    return value === 0 ? "amount.eq.0" : `amount.eq.${value},amount.eq.${-value}`;
   }
   // Euros only: every amount whose euro part is this number, in either direction.
-  const obere = wert + 1;
+  const upper = value + 1;
   return (
-    `and(amount.gte.${wert},amount.lt.${obere}),` + `and(amount.gt.${-obere},amount.lte.${-wert})`
+    `and(amount.gte.${value},amount.lt.${upper}),` + `and(amount.gt.${-upper},amount.lte.${-value})`
   );
 }
 
@@ -751,11 +751,11 @@ export function useOpenBankTransactionsInfinite(
   const {
     search,
     matchingStatus,
-    richtung,
-    bookingDateVon,
-    bookingDateBis,
-    valueDateVon,
-    valueDateBis,
+    direction,
+    bookingDateFromDate,
+    bookingDateToDate,
+    valueDateFromDate,
+    valueDateToDate,
     sort = "booking_date",
     dir = "desc",
     pageSize,
@@ -767,11 +767,11 @@ export function useOpenBankTransactionsInfinite(
       "open-bank-transactions-infinite",
       q,
       matchingStatus ?? "",
-      richtung ?? "",
-      bookingDateVon ?? "",
-      bookingDateBis ?? "",
-      valueDateVon ?? "",
-      valueDateBis ?? "",
+      direction ?? "",
+      bookingDateFromDate ?? "",
+      bookingDateToDate ?? "",
+      valueDateFromDate ?? "",
+      valueDateToDate ?? "",
       sort,
       dir,
       pageSize,
@@ -786,11 +786,11 @@ export function useOpenBankTransactionsInfinite(
       // booking-text. amountQueryFilter expresses the amount match as a DB filter, so this
       // branch no longer has to fetch the whole open+direction scope and page it in memory: it
       // ranges and counts exactly like the text branch.
-      const betragFilter = q ? amountQueryFilter(q) : null;
+      const amountFilter = q ? amountQueryFilter(q) : null;
 
       let query = sb.from(TABLE.bankTransactions).select("*", { count: "exact" });
-      if (betragFilter) {
-        query = query.or(betragFilter);
+      if (amountFilter) {
+        query = query.or(amountFilter);
       } else if (q) {
         for (const token of searchTokens(q)) {
           query = query.or(
@@ -799,11 +799,11 @@ export function useOpenBankTransactionsInfinite(
         }
       }
       if (matchingStatus) query = query.eq("matching_status", matchingStatus);
-      if (richtung) query = query.eq("direction", richtung);
-      if (bookingDateVon) query = query.gte("booking_date", bookingDateVon);
-      if (bookingDateBis) query = query.lte("booking_date", bookingDateBis);
-      if (valueDateVon) query = query.gte("value_date", valueDateVon);
-      if (valueDateBis) query = query.lte("value_date", valueDateBis);
+      if (direction) query = query.eq("direction", direction);
+      if (bookingDateFromDate) query = query.gte("booking_date", bookingDateFromDate);
+      if (bookingDateToDate) query = query.lte("booking_date", bookingDateToDate);
+      if (valueDateFromDate) query = query.gte("value_date", valueDateFromDate);
+      if (valueDateToDate) query = query.lte("value_date", valueDateToDate);
 
       const column = sort === "name" ? "counterparty_holder" : sort === "amount" ? "amount" : sort;
       let ascending = dir === "asc";
@@ -811,7 +811,7 @@ export function useOpenBankTransactionsInfinite(
       // "bigger" than a €50 one, not smaller) — see manual-link-tab.tsx's compare() for the client
       // equivalent this replaces. Every row here shares one sign (this picker always sets richtung),
       // so flipping the raw order for a negative (ausgehend) set reproduces magnitude order exactly.
-      if (sort === "amount" && richtung === "ausgehend") ascending = !ascending;
+      if (sort === "amount" && direction === "ausgehend") ascending = !ascending;
       query = query
         .order(column, { ascending, nullsFirst: false })
         .order("id", { ascending: true });
@@ -872,21 +872,21 @@ export function useBankSyncLogsPage(filter: {
    *  way to jump to a date the older entries are unreachable in practice: an hourly cron writes
    *  ~4 rows a run whether or not anything happened (201 runs / 804 rows on the Immonetz Hub, all
    *  counters zero), which buries the runs that did something behind pages of no-ops. */
-  von?: string;
-  bis?: string;
+  fromDate?: string;
+  toDate?: string;
   page: number;
   pageSize: number;
   refreshMs?: number;
 }) {
-  const { event, level, connectionId, von, bis, page, pageSize, refreshMs } = filter;
+  const { event, level, connectionId, fromDate, toDate, page, pageSize, refreshMs } = filter;
   return useQuery({
     queryKey: [
       "bank_sync_logs_page",
       event ?? "",
       level ?? "",
       connectionId ?? "",
-      von ?? "",
-      bis ?? "",
+      fromDate ?? "",
+      toDate ?? "",
       page,
       pageSize,
     ],
@@ -905,8 +905,8 @@ export function useBankSyncLogsPage(filter: {
       // local ones -- at UTC+5 an upper bound of "18 Aug" still kept rows the screen labels 19 Aug.
       // Parsing without a Z gives local midnight, and toISOString converts it, so the bounds mean
       // the day the reader actually sees.
-      if (von) query = query.gte("created_at", new Date(`${von}T00:00:00`).toISOString());
-      if (bis) query = query.lte("created_at", new Date(`${bis}T23:59:59.999`).toISOString());
+      if (fromDate) query = query.gte("created_at", new Date(`${fromDate}T00:00:00`).toISOString());
+      if (toDate) query = query.lte("created_at", new Date(`${toDate}T23:59:59.999`).toISOString());
       const { data, error, count } = await query
         // id is a bigint sequence, so it breaks created_at ties deterministically — several log rows
         // routinely share a timestamp (a sync writes them in one burst).
@@ -979,10 +979,10 @@ export function useTriggerSync() {
  * the app until the bank is reconnected. That is worth saying out loud rather than discovering.
  */
 export interface DisconnectPreview {
-  konten: number;
-  umsaetze: number;
-  umsaetzeZugeordnet: number;
-  protokoll: number;
+  accounts: number;
+  transactions: number;
+  transactionsAssigned: number;
+  activityLog: number;
 }
 
 export function useDisconnectPreview(connectionId: string, enabled: boolean) {
@@ -991,7 +991,7 @@ export function useDisconnectPreview(connectionId: string, enabled: boolean) {
     enabled: enabled && !!connectionId,
     staleTime: 0,
     queryFn: async (): Promise<DisconnectPreview> => {
-      const zaehle = async (table: string): Promise<number> => {
+      const count = async (table: string): Promise<number> => {
         const { count, error } = await sb
           .from(table)
           .select("id", { count: "exact", head: true })
@@ -1019,10 +1019,10 @@ export function useDisconnectPreview(connectionId: string, enabled: boolean) {
         return rows.map((r) => r.transaction_id);
       };
 
-      const [konten, umsaetze, protokoll, eingang, ausgang] = await Promise.all([
-        zaehle(TABLE.bankAccounts),
-        zaehle(TABLE.bankTransactions),
-        zaehle(TABLE.bankSyncLogs),
+      const [accounts, transactions, activityLog, incoming, outgoing] = await Promise.all([
+        count(TABLE.bankAccounts),
+        count(TABLE.bankTransactions),
+        count(TABLE.bankSyncLogs),
         matchIds("invoice_transaction_matches"),
         matchIds("outgoing_invoice_transaction_matches"),
       ]);
@@ -1030,10 +1030,10 @@ export function useDisconnectPreview(connectionId: string, enabled: boolean) {
       // Deduped across the two tables: one movement can be matched to an incoming and an outgoing
       // invoice, and counting it twice would overstate the figure.
       return {
-        konten,
-        umsaetze,
-        umsaetzeZugeordnet: new Set([...eingang, ...ausgang]).size,
-        protokoll,
+        accounts,
+        transactions,
+        transactionsAssigned: new Set([...incoming, ...outgoing]).size,
+        activityLog,
       };
     },
   });

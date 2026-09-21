@@ -13,7 +13,7 @@ import { Landmark } from "lucide-react";
 import { cn } from "@/lib/utils";
 import type { BankAccount } from "@/lib/data/types";
 
-export function KontoSwitcher({
+export function AccountSwitcher({
   accounts,
   value,
   onChange,

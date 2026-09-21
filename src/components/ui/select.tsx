@@ -5,7 +5,7 @@ import * as SelectPrimitive from "@radix-ui/react-select";
 import { Check, ChevronDown, ChevronUp } from "lucide-react";
 
 import { cn } from "@/lib/utils";
-import { useFeldId } from "@/components/ui/feld-context";
+import { useFieldId } from "@/components/ui/feld-context";
 
 const Select = SelectPrimitive.Root;
 
@@ -22,11 +22,11 @@ const SelectTrigger = React.forwardRef<
   React.ComponentPropsWithoutRef<typeof SelectPrimitive.Trigger>
 >(({ className, children, id, ...props }, ref) => {
   // Inside a Feld the trigger carries the id the sibling Label points at.
-  const feldId = useFeldId();
+  const fieldId = useFieldId();
   return (
     <SelectPrimitive.Trigger
       ref={ref}
-      id={id ?? feldId ?? undefined}
+      id={id ?? fieldId ?? undefined}
       className={cn(
         "flex h-9 w-full items-center justify-between whitespace-nowrap rounded-md border border-input bg-transparent px-3 py-2 text-sm ring-offset-background cursor-pointer data-[placeholder]:text-muted-foreground focus:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-50 [&>span]:line-clamp-1",
         className,

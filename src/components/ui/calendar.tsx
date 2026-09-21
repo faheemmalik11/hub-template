@@ -25,7 +25,7 @@ function Calendar({
   // language it is in, not the app: with German selected on an en-US machine the calendar read
   // "Jan, Feb, Mar" inside an otherwise German screen. The caller's date-fns locale carries the
   // right answer, so use its code and fall back to the app's default language, not the browser's.
-  const monatsSprache = locale?.code ?? "de-DE";
+  const monthLanguage = locale?.code ?? "de-DE";
 
   return (
     <DayPicker
@@ -39,7 +39,7 @@ function Calendar({
       captionLayout={captionLayout}
       locale={locale}
       formatters={{
-        formatMonthDropdown: (date) => date.toLocaleString(monatsSprache, { month: "short" }),
+        formatMonthDropdown: (date) => date.toLocaleString(monthLanguage, { month: "short" }),
         ...formatters,
       }}
       classNames={{

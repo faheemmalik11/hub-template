@@ -1,6 +1,6 @@
 import * as React from "react";
 
-import { FeldContext } from "@/components/ui/feld-context";
+import { FieldContext } from "@/components/ui/feld-context";
 
 /**
  * One form field: its label and its control, plus any hint or error text below them.
@@ -14,18 +14,18 @@ import { FeldContext } from "@/components/ui/feld-context";
  * what they did before when they are not inside a Feld, and an explicit `id`/`htmlFor` always
  * wins, so wrapping one field is a local change and can never alter another screen.
  */
-const Feld = React.forwardRef<HTMLDivElement, React.ComponentProps<"div">>(function Feld(
+const Field = React.forwardRef<HTMLDivElement, React.ComponentProps<"div">>(function Field(
   { children, ...props },
   ref,
 ) {
   const id = React.useId();
   return (
-    <FeldContext.Provider value={id}>
+    <FieldContext.Provider value={id}>
       <div ref={ref} {...props}>
         {children}
       </div>
-    </FeldContext.Provider>
+    </FieldContext.Provider>
   );
 });
 
-export { Feld };
+export { Field };

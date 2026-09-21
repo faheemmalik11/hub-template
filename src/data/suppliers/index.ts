@@ -11,11 +11,11 @@ export {
   useSetDefaultSupplierIban,
 } from "./bank-accounts";
 export {
-  useBulkSetLieferantenGeloescht,
-  useCreateLieferant,
-  useLieferant,
-  useLieferanten,
-  useRestoreLieferant,
-  useSoftDeleteLieferant,
-  useUpdateLieferant,
+  useBulkSetSuppliersDeleted,
+  useCreateSupplier,
+  useSupplier,
+  useSuppliers,
+  useRestoreSupplier,
+  useSoftDeleteSupplier,
+  useUpdateSupplier,
 } from "./suppliers";

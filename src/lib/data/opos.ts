@@ -41,7 +41,7 @@ export function oposNorm(term: string): string {
   return term.toLowerCase().replace(/\s+/g, " ").trim();
 }
 
-const UMLAUT_PAARE: readonly (readonly [RegExp, string])[] = [
+const UMLAUT_PAIRS: readonly (readonly [RegExp, string])[] = [
   [/ä/g, "ae"],
   [/ö/g, "oe"],
   [/ü/g, "ue"],
@@ -66,8 +66,11 @@ const UMLAUT_PAARE: readonly (readonly [RegExp, string])[] = [
  * so changing its matching semantics from a Hub migration would put the two copies out of step.
  * Offering the second spelling does the same job through data the pipeline already understands.
  */
-export function asciiSchreibweise(term: string): string | null {
-  const ascii = UMLAUT_PAARE.reduce((text, [muster, ersatz]) => text.replace(muster, ersatz), term);
+export function asciiSpelling(term: string): string | null {
+  const ascii = UMLAUT_PAIRS.reduce(
+    (text, [muster, replacement]) => text.replace(muster, replacement),
+    term,
+  );
   return ascii === term ? null : ascii;
 }
 
@@ -85,7 +88,7 @@ export function asciiSchreibweise(term: string): string | null {
  * in this one's and it reads the same field (or "any", which reads every field concatenated), then
  * every text this rule matches contains the older term too, so the older rule always wins.
  */
-export function ueberdeckendeRegel<
+export function coveringRule<
   T extends {
     id: string;
     term: string;
@@ -93,22 +96,22 @@ export function ueberdeckendeRegel<
     is_active: boolean;
     created_at: string;
   },
->(regel: T, alle: readonly T[]): T | null {
-  const meiner = oposNorm(regel.term);
-  if (!meiner || !regel.is_active) return null;
+>(rule: T, all: readonly T[]): T | null {
+  const mine = oposNorm(rule.term);
+  if (!mine || !rule.is_active) return null;
 
   // Same tie-break as the matcher's ORDER BY, so "which one wins" is answered the same way here.
-  const aelter = (a: T, b: T) =>
+  const older = (a: T, b: T) =>
     a.created_at !== b.created_at ? a.created_at < b.created_at : a.term < b.term;
 
-  let gewinner: T | null = null;
-  for (const andere of alle) {
-    if (andere.id === regel.id || !andere.is_active) continue;
-    if (andere.scope !== regel.scope && andere.scope !== "any") continue;
-    const seiner = oposNorm(andere.term);
-    if (!seiner || !meiner.includes(seiner)) continue;
-    if (!aelter(andere, regel)) continue;
-    if (!gewinner || aelter(andere, gewinner)) gewinner = andere;
+  let winner: T | null = null;
+  for (const other of all) {
+    if (other.id === rule.id || !other.is_active) continue;
+    if (other.scope !== rule.scope && other.scope !== "any") continue;
+    const theirs = oposNorm(other.term);
+    if (!theirs || !mine.includes(theirs)) continue;
+    if (!older(other, rule)) continue;
+    if (!winner || older(other, winner)) winner = other;
   }
-  return gewinner;
+  return winner;
 }

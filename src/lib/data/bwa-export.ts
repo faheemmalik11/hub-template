@@ -8,7 +8,7 @@
 // Excel on a German locale opens a comma-separated file with every row crammed into column A, and
 // writes 1.234,56 rather than 1234.56 — a "correct" RFC 4180 file is the one that arrives broken.
 
-export interface BwaExportRow {
+export interface CostAnalysisExportRow {
   key: string;
   label: string;
   kind: "line" | "subtotal";
@@ -17,7 +17,7 @@ export interface BwaExportRow {
   compareAmount?: number | null;
 }
 
-export interface BwaExportMeta {
+export interface CostAnalysisExportMeta {
   // Human-readable filter state, already localized by the caller — the export has to record what
   // the numbers were filtered by, or a saved file is unattributable a week later.
   filters: { label: string; value: string }[];
@@ -41,7 +41,10 @@ function csvAmount(value: number | null | undefined): string {
 /**
  * Render the P&L skeleton as a German-Excel CSV, with the active filters recorded above the table.
  */
-export function buildBwaCsv(rows: BwaExportRow[], meta: BwaExportMeta): string {
+export function buildCostAnalysisCsv(
+  rows: CostAnalysisExportRow[],
+  meta: CostAnalysisExportMeta,
+): string {
   const lines: string[] = [];
 
   for (const f of meta.filters) {
@@ -112,11 +115,11 @@ export function downloadCsv(filename: string, content: string): void {
  * the equally long window ending the day before it starts, which is the only defensible reading of
  * "the period before" for an arbitrary span.
  */
-export function previousZeitraumRange(
-  zeitraum: string,
-  von: string,
-  bis: string,
-): { von: string; bis: string; label: string } | null {
+export function previousPeriodRange(
+  period: string,
+  fromDate: string,
+  toDate: string,
+): { fromDate: string; toDate: string; label: string } | null {
   const iso = (d: Date) =>
     `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
   // The range values stay ISO (they are query bounds); only the LABEL is German, because it is the
@@ -124,48 +127,48 @@ export function previousZeitraumRange(
   const de = (d: Date) =>
     `${String(d.getDate()).padStart(2, "0")}.${String(d.getMonth() + 1).padStart(2, "0")}.${d.getFullYear()}`;
 
-  if (zeitraum.startsWith("jahr-")) {
-    const y = Number(zeitraum.slice("jahr-".length)) - 1;
-    return { von: `${y}-01-01`, bis: `${y}-12-31`, label: String(y) };
+  if (period.startsWith("jahr-")) {
+    const y = Number(period.slice("jahr-".length)) - 1;
+    return { fromDate: `${y}-01-01`, toDate: `${y}-12-31`, label: String(y) };
   }
 
-  if (zeitraum.startsWith("quartal-")) {
-    const [y, q] = zeitraum.slice("quartal-".length).split("-").map(Number);
+  if (period.startsWith("quartal-")) {
+    const [y, q] = period.slice("quartal-".length).split("-").map(Number);
     const prevQ = q === 1 ? 4 : q - 1;
     const prevY = q === 1 ? y - 1 : y;
     const startMonth = (prevQ - 1) * 3 + 1;
     const lastDay = new Date(prevY, startMonth + 2, 0).getDate();
     return {
-      von: `${prevY}-${String(startMonth).padStart(2, "0")}-01`,
-      bis: `${prevY}-${String(startMonth + 2).padStart(2, "0")}-${String(lastDay).padStart(2, "0")}`,
+      fromDate: `${prevY}-${String(startMonth).padStart(2, "0")}-01`,
+      toDate: `${prevY}-${String(startMonth + 2).padStart(2, "0")}-${String(lastDay).padStart(2, "0")}`,
       label: `Q${prevQ} ${prevY}`,
     };
   }
 
-  if (zeitraum.startsWith("monat-")) {
-    const [y, m] = zeitraum.slice("monat-".length).split("-").map(Number);
+  if (period.startsWith("monat-")) {
+    const [y, m] = period.slice("monat-".length).split("-").map(Number);
     const prevM = m === 1 ? 12 : m - 1;
     const prevY = m === 1 ? y - 1 : y;
     const lastDay = new Date(prevY, prevM, 0).getDate();
     const mm = String(prevM).padStart(2, "0");
     return {
-      von: `${prevY}-${mm}-01`,
-      bis: `${prevY}-${mm}-${String(lastDay).padStart(2, "0")}`,
+      fromDate: `${prevY}-${mm}-01`,
+      toDate: `${prevY}-${mm}-${String(lastDay).padStart(2, "0")}`,
       label: `${mm}.${prevY}`,
     };
   }
 
-  if (zeitraum === "individuell" && von && bis) {
-    const start = new Date(`${von}T00:00:00`);
-    const end = new Date(`${bis}T00:00:00`);
+  if (period === "individuell" && fromDate && toDate) {
+    const start = new Date(`${fromDate}T00:00:00`);
+    const end = new Date(`${toDate}T00:00:00`);
     if (Number.isNaN(start.getTime()) || Number.isNaN(end.getTime()) || end < start) return null;
     // Inclusive span, so a single day compares against the single day before it.
     const days = Math.round((end.getTime() - start.getTime()) / 86400000) + 1;
     const prevEnd = new Date(start.getTime() - 86400000);
     const prevStart = new Date(prevEnd.getTime() - (days - 1) * 86400000);
     return {
-      von: iso(prevStart),
-      bis: iso(prevEnd),
+      fromDate: iso(prevStart),
+      toDate: iso(prevEnd),
       label: `${de(prevStart)} – ${de(prevEnd)}`,
     };
   }

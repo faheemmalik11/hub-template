@@ -2,10 +2,10 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 
 import { TABLE } from "@/config/tables";
 import { STALE, actorEmail, sb } from "@/data/client";
-import { fetchAllRows, pflichtGrund } from "@/data/shared";
+import { fetchAllRows, requiredReason } from "@/data/shared";
 import { supabase } from "@/integrations/supabase/client";
 import { compactIBAN, isPayableIBAN } from "@/lib/data/format";
-import type { Lieferant } from "@/lib/data/types";
+import type { Supplier } from "@/lib/data/types";
 
 /**
  * Every supplier.
@@ -20,19 +20,19 @@ import type { Lieferant } from "@/lib/data/types";
  * limit rather than an oversight: moving it server-side means the duplicate panel, the totals join
  * and the sort all have to move with it, which is a larger change than this one.
  */
-export function useLieferanten(opts?: { includeDeleted?: boolean }) {
+export function useSuppliers(opts?: { includeDeleted?: boolean }) {
   const includeDeleted = opts?.includeDeleted ?? false;
   return useQuery({
     queryKey: ["lieferanten", { includeDeleted }],
     staleTime: STALE,
-    queryFn: async (): Promise<Lieferant[]> => {
-      return fetchAllRows<Lieferant>((from, to, withCount) => {
+    queryFn: async (): Promise<Supplier[]> => {
+      return fetchAllRows<Supplier>((from, to, withCount) => {
         let query = supabase
           .from(TABLE.suppliers)
           .select("*", withCount ? { count: "exact" } : undefined);
         if (!includeDeleted) query = query.is("deleted_at", null);
         return query.order("name", { ascending: true }).range(from, to) as unknown as Promise<{
-          data: Lieferant[] | null;
+          data: Supplier[] | null;
           error: unknown;
           count?: number | null;
         }>;
@@ -41,19 +41,19 @@ export function useLieferanten(opts?: { includeDeleted?: boolean }) {
   });
 }
 
-export function useLieferant(id: string) {
+export function useSupplier(id: string) {
   return useQuery({
     queryKey: ["lieferant", id],
     enabled: !!id,
     staleTime: STALE,
-    queryFn: async (): Promise<Lieferant | null> => {
+    queryFn: async (): Promise<Supplier | null> => {
       const { data, error } = await supabase
         .from(TABLE.suppliers)
         .select("*")
         .eq("id", id)
         .maybeSingle();
       if (error) throw error;
-      return (data as unknown as Lieferant) ?? null;
+      return (data as unknown as Supplier) ?? null;
     },
   });
 }
@@ -118,10 +118,10 @@ async function mirrorIbanToBankAccount(
 
 // Lieferant (Kreditor) manuell anlegen. `normalized_name` stays pipeline-owned (single-source in
 // Python), so it is not written here. Returns the new row.
-export function useCreateLieferant() {
+export function useCreateSupplier() {
   const qc = useQueryClient();
   return useMutation({
-    mutationFn: async (werte: {
+    mutationFn: async (values: {
       name: string;
       address?: string | null;
       vat_id?: string | null;
@@ -136,36 +136,38 @@ export function useCreateLieferant() {
        * as well, because `suppliers.iban` stays authoritative; the rest become plain account rows.
        */
       bankAccounts?: { iban: string; bic?: string | null; bank_name?: string | null }[];
-    }): Promise<Lieferant> => {
-      const { bankAccounts = [], ...supplierWerte } = werte;
+    }): Promise<Supplier> => {
+      const { bankAccounts = [], ...supplierValues } = values;
       const { data, error } = await sb
         .from(TABLE.suppliers)
-        .insert(supplierWerte)
+        .insert(supplierValues)
         .select("*")
         .single();
       if (error) throw error;
-      const lieferant = data as unknown as Lieferant;
+      const supplier = data as unknown as Supplier;
       // The new supplier's IBAN has to exist as an account row too, or the default points at
       // nothing and the Bankverbindungen section opens empty on a supplier that plainly has one.
       // Skipped when the value is not payable-shaped: suppliers.iban accepts anything a reader
       // printed, supplier_bank_accounts does not, and a CHECK error here would lose the supplier
       // that was just created successfully.
       await mirrorIbanToBankAccount(
-        lieferant.id,
-        supplierWerte.iban,
-        supplierWerte.bic,
-        supplierWerte.bank_name,
+        supplier.id,
+        supplierValues.iban,
+        supplierValues.bic,
+        supplierValues.bank_name,
       );
       // The additional accounts, written AFTER the default so the single-default trigger never has
       // to demote anything: each of these arrives with is_default left at its column default.
-      const weitere = bankAccounts
+      const further = bankAccounts
         .map((k) => ({ ...k, iban: compactIBAN(k.iban) }))
-        .filter((k) => isPayableIBAN(k.iban) && k.iban !== compactIBAN(supplierWerte.iban ?? null));
-      if (weitere.length > 0) {
+        .filter(
+          (k) => isPayableIBAN(k.iban) && k.iban !== compactIBAN(supplierValues.iban ?? null),
+        );
+      if (further.length > 0) {
         const actor = await actorEmail();
-        const { error: kontenError } = await sb.from(TABLE.supplierBankAccounts).upsert(
-          weitere.map((k) => ({
-            supplier_id: lieferant.id,
+        const { error: accountsError } = await sb.from(TABLE.supplierBankAccounts).upsert(
+          further.map((k) => ({
+            supplier_id: supplier.id,
             iban: k.iban,
             bic: k.bic || null,
             bank_name: k.bank_name || null,
@@ -181,9 +183,9 @@ export function useCreateLieferant() {
         );
         // Logged, not thrown: the supplier and its default account already exist, and failing the
         // mutation here would say the whole thing did not save when most of it did.
-        if (kontenError) console.error("supplier_bank_accounts insert failed", kontenError);
+        if (accountsError) console.error("supplier_bank_accounts insert failed", accountsError);
       }
-      return lieferant;
+      return supplier;
     },
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ["lieferanten"] });
@@ -195,24 +197,24 @@ export function useCreateLieferant() {
 }
 
 // Lieferant-Stammdaten aktualisieren.
-export function useUpdateLieferant(lieferantId: string) {
+export function useUpdateSupplier(supplierId: string) {
   const qc = useQueryClient();
   return useMutation({
-    mutationFn: async (changes: Partial<Lieferant>) => {
+    mutationFn: async (changes: Partial<Supplier>) => {
       const { error } = await sb
         .from(TABLE.suppliers)
         .update({ ...changes, updated_at: new Date().toISOString() })
-        .eq("id", lieferantId);
+        .eq("id", supplierId);
       if (error) throw error;
       // Editing the IBAN by hand is still a way to set the default, so it has to leave the same
       // trail as useSetDefaultSupplierIban would. Only when the field was actually part of this
       // edit -- a change to the phone number must not resurrect a deactivated account.
       if ("iban" in changes) {
-        await mirrorIbanToBankAccount(lieferantId, changes.iban, changes.bic, changes.bank_name);
+        await mirrorIbanToBankAccount(supplierId, changes.iban, changes.bic, changes.bank_name);
       }
     },
     onSuccess: () => {
-      qc.invalidateQueries({ queryKey: ["lieferant", lieferantId] });
+      qc.invalidateQueries({ queryKey: ["lieferant", supplierId] });
       qc.invalidateQueries({ queryKey: ["lieferanten"] });
       qc.invalidateQueries({ queryKey: ["supplier-bank-accounts"] });
       qc.invalidateQueries({ queryKey: ["invoice-bank-accounts"] });
@@ -235,34 +237,34 @@ export function useUpdateLieferant(lieferantId: string) {
 async function softDeleteBankAccounts(
   supplierIds: string[],
   actor: string | null,
-  grund: string | null,
-  zeitpunkt: string | null,
+  reason: string | null,
+  moment: string | null,
 ): Promise<void> {
   if (supplierIds.length === 0) return;
   const { error } = await sb
     .from(TABLE.supplierBankAccounts)
-    .update({ deleted_at: zeitpunkt, deleted_by: actor, delete_reason: grund })
+    .update({ deleted_at: moment, deleted_by: actor, delete_reason: reason })
     .in("supplier_id", supplierIds);
   if (error) console.error("supplier_bank_accounts soft delete failed", error);
 }
 
 // Lieferant löschen (Soft-Delete).
-export function useSoftDeleteLieferant(lieferantId: string) {
+export function useSoftDeleteSupplier(supplierId: string) {
   const qc = useQueryClient();
   return useMutation({
-    mutationFn: async (grund: string) => {
+    mutationFn: async (reason: string) => {
       const actor = await actorEmail();
-      const jetzt = new Date().toISOString();
+      const now = new Date().toISOString();
       const { error } = await sb
         .from(TABLE.suppliers)
         .update({
-          deleted_at: jetzt,
+          deleted_at: now,
           deleted_by: actor,
-          delete_reason: pflichtGrund(grund),
+          delete_reason: requiredReason(reason),
         })
-        .eq("id", lieferantId);
+        .eq("id", supplierId);
       if (error) throw error;
-      await softDeleteBankAccounts([lieferantId], actor, pflichtGrund(grund), jetzt);
+      await softDeleteBankAccounts([supplierId], actor, requiredReason(reason), now);
     },
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ["lieferanten"] });
@@ -282,21 +284,21 @@ export function useSoftDeleteLieferant(lieferantId: string) {
  * group, and "merge everything selected into one" is a different, lossier operation than what the
  * duplicates panel already does per group. Both of these are reversible; a bulk merge would not be.
  */
-export function useBulkSetLieferantenGeloescht() {
+export function useBulkSetSuppliersDeleted() {
   const qc = useQueryClient();
   return useMutation({
-    mutationFn: async (args: { ids: string[]; loeschen: boolean; grund?: string }) => {
+    mutationFn: async (args: { ids: string[]; delete: boolean; reason?: string }) => {
       if (args.ids.length === 0) return;
       const actor = await actorEmail();
-      const zeitpunkt = args.loeschen ? new Date().toISOString() : null;
-      const grund = args.loeschen ? pflichtGrund(args.grund) : null;
-      const changes = args.loeschen
-        ? { deleted_at: zeitpunkt, deleted_by: actor, delete_reason: grund }
+      const moment = args.delete ? new Date().toISOString() : null;
+      const reason = args.delete ? requiredReason(args.reason) : null;
+      const changes = args.delete
+        ? { deleted_at: moment, deleted_by: actor, delete_reason: reason }
         : { deleted_at: null, deleted_by: null, delete_reason: null };
       const { error } = await sb.from(TABLE.suppliers).update(changes).in("id", args.ids);
       if (error) throw error;
       // The accounts follow the suppliers, in both directions.
-      await softDeleteBankAccounts(args.ids, args.loeschen ? actor : null, grund, zeitpunkt);
+      await softDeleteBankAccounts(args.ids, args.delete ? actor : null, reason, moment);
     },
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ["lieferanten"] });
@@ -315,20 +317,20 @@ export function useBulkSetLieferantenGeloescht() {
  * `delete_reason` and `deleted_by` are cleared as well, so a later deletion cannot inherit the
  * reason from an earlier, undone one.
  */
-export function useRestoreLieferant(lieferantId: string) {
+export function useRestoreSupplier(supplierId: string) {
   const qc = useQueryClient();
   return useMutation({
     mutationFn: async () => {
       const { error } = await sb
         .from(TABLE.suppliers)
         .update({ deleted_at: null, deleted_by: null, delete_reason: null })
-        .eq("id", lieferantId);
+        .eq("id", supplierId);
       if (error) throw error;
-      await softDeleteBankAccounts([lieferantId], null, null, null);
+      await softDeleteBankAccounts([supplierId], null, null, null);
     },
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ["lieferanten"] });
-      qc.invalidateQueries({ queryKey: ["lieferant", lieferantId] });
+      qc.invalidateQueries({ queryKey: ["lieferant", supplierId] });
       qc.invalidateQueries({ queryKey: ["supplier-bank-accounts"] });
       qc.invalidateQueries({ queryKey: ["invoice-bank-accounts"] });
       qc.invalidateQueries({ queryKey: ["supplier-duplicates"] });

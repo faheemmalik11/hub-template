@@ -26,7 +26,7 @@ import {
   useSaveChannelFolders,
   useUpdateChannel,
 } from "@/data";
-import type { FolderOption } from "@/lib/postfach/folder-option";
+import type { FolderOption } from "@/lib/inbox/folder-option";
 import {
   processedRoleFor,
   type ChannelFolderRole,
@@ -135,17 +135,17 @@ function sourceRuns(runs: PipelineRun[], source: string, t: Translate): SourceRu
     .filter((run) => run.source === source)
     .slice(0, 5)
     .map((run) => {
-      const teile = [formatDateTime(run.started_at)];
+      const parts = [formatDateTime(run.started_at)];
       if (run.status === "running") {
-        teile.push(t("sources.runs.running"));
+        parts.push(t("sources.runs.running"));
       } else {
-        teile.push(t("sources.runs.processed", { count: run.processed_count }));
+        parts.push(t("sources.runs.processed", { count: run.processed_count }));
         if (run.error_count > 0) {
-          teile.push(t("sources.runs.errors", { count: run.error_count }));
+          parts.push(t("sources.runs.errors", { count: run.error_count }));
         }
       }
       return {
-        text: teile.join(" · "),
+        text: parts.join(" · "),
         ok: run.status === "ok" && run.error_count === 0,
         running: run.status === "running",
       };
@@ -311,7 +311,7 @@ function uploadSource(
     icon: Upload,
     status: "connected",
     statusDetail: t("sources.upload.status"),
-    link: "/eingangsrechnungen/upload",
+    link: "/incoming-invoices/upload",
     runs: sourceRuns(runs, PIPELINE_CHANNEL.upload, t),
     runRequest,
     // Uploading IS the request — invoice-upload.functions.ts asks as the rows are written, so a

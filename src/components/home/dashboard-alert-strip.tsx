@@ -22,7 +22,7 @@ export function DashboardAlertStrip() {
     <AlertStrip
       items={items}
       max={3}
-      seeAllTo="/benachrichtigungen"
+      seeAllTo="/notifications"
       seeAllLabel={t("notifications.alleAnsehen")}
       className="mb-4"
     />

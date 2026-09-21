@@ -2,16 +2,16 @@ import { useCallback, useMemo } from "react";
 
 import {
   useAssignmentRules,
-  useBwaCategories,
+  useCostAnalysisCategories,
   useCreateAssignmentRule,
-  useGesellschaften,
-  useLieferanten,
-  useObjekte,
+  useCompanies,
+  useSuppliers,
+  useProperties,
   useSoftDeleteAssignmentRule,
   useUpdateAssignmentRule,
   type AssignmentRuleInput,
 } from "@/data";
-import type { AssignmentRule, BwaCategory } from "@/lib/data/types";
+import type { AssignmentRule, CostAnalysisCategory } from "@/lib/data/types";
 
 import type {
   AssignmentRuleDraft,
@@ -27,7 +27,10 @@ export const ASSIGNMENT_RULES_CONFIG: AssignmentRulesConfig = {
   dimensions: ["company", "supplier", "property"],
 };
 
-function categoryDisplayLabel(category: BwaCategory, categoryById: Map<string, BwaCategory>) {
+function categoryDisplayLabel(
+  category: CostAnalysisCategory,
+  categoryById: Map<string, CostAnalysisCategory>,
+) {
   const parent = category.parent_id ? categoryById.get(category.parent_id) : null;
   return parent ? `${parent.name} › ${category.name}` : category.name;
 }
@@ -45,10 +48,10 @@ function toInput(draft: AssignmentRuleDraft): AssignmentRuleInput {
 
 export function useAssignmentRulesAdapter(): AssignmentRulesAdapter {
   const rulesQuery = useAssignmentRules();
-  const categoriesQuery = useBwaCategories();
-  const companiesQuery = useGesellschaften();
-  const suppliersQuery = useLieferanten();
-  const propertiesQuery = useObjekte();
+  const categoriesQuery = useCostAnalysisCategories();
+  const companiesQuery = useCompanies();
+  const suppliersQuery = useSuppliers();
+  const propertiesQuery = useProperties();
 
   const create = useCreateAssignmentRule();
   const update = useUpdateAssignmentRule();
@@ -139,7 +142,7 @@ export function useAssignmentRulesAdapter(): AssignmentRulesAdapter {
 
   const deleteRule = useCallback(
     async (id: string, reason: string) => {
-      await remove.mutateAsync({ id, grund: reason });
+      await remove.mutateAsync({ id, reason: reason });
     },
     [remove],
   );

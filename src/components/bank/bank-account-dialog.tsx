@@ -12,7 +12,7 @@ import {
   DialogTitle,
   DialogTrigger,
 } from "@/components/ui/dialog";
-import { useCreateBankAccount, useGesellschaften, useUpdateBankAccount } from "@/data";
+import { useCreateBankAccount, useCompanies, useUpdateBankAccount } from "@/data";
 import type { BankAccount } from "@/lib/data/types";
 import {
   BANK_ACCOUNT_DIALOG_RULES,
@@ -21,7 +21,7 @@ import {
   type BankAccountFields,
 } from "@/lib/data/bank-account-fields";
 import { useTranslation } from "@/lib/i18n";
-import { fehlerText } from "@/lib/data/format";
+import { errorText } from "@/lib/data/format";
 import { BankAccountFormFields } from "./bank-account-form-fields";
 import { useBankAccountForm } from "./use-bank-account-form";
 
@@ -60,7 +60,7 @@ export function BankAccountDialog({
   variant?: "default" | "outline";
 }) {
   const { t } = useTranslation();
-  const companiesQ = useGesellschaften();
+  const companiesQ = useCompanies();
   const create = useCreateBankAccount();
   const update = useUpdateBankAccount();
   const isEdit = !!account;
@@ -87,12 +87,12 @@ export function BankAccountDialog({
 
     const onSuccess = () => {
       toast.success(
-        isEdit ? t("bankkonten.dialog.toastUpdated") : t("bankkonten.dialog.toastCreated"),
+        isEdit ? t("bankAccounts.dialog.toastUpdated") : t("bankAccounts.dialog.toastCreated"),
       );
       setOpen(false);
     };
     const onError = (e: unknown) =>
-      toast.error(t("bankkonten.dialog.toastFailed", { error: fehlerText(e) }));
+      toast.error(t("bankAccounts.dialog.toastFailed", { error: errorText(e) }));
 
     if (isEdit && account) {
       update.mutate({ ...payload, accountId: account.id }, { onSuccess, onError });
@@ -110,14 +110,14 @@ export function BankAccountDialog({
             size="icon"
             type="button"
             className="size-7 text-muted-foreground hover:text-foreground"
-            title={t("bankkonten.dialog.editTitle")}
+            title={t("bankAccounts.dialog.editTitle")}
           >
             <Pencil className="size-4" />
           </Button>
         ) : (
           <Button variant={variant} className="gap-2">
             <Plus className="size-4" />
-            {t("bankkonten.dialog.createButton")}
+            {t("bankAccounts.dialog.createButton")}
           </Button>
         )}
       </DialogTrigger>
@@ -125,9 +125,9 @@ export function BankAccountDialog({
       <DialogContent className="max-w-lg">
         <DialogHeader>
           <DialogTitle>
-            {isEdit ? t("bankkonten.dialog.editTitle") : t("bankkonten.dialog.createTitle")}
+            {isEdit ? t("bankAccounts.dialog.editTitle") : t("bankAccounts.dialog.createTitle")}
           </DialogTitle>
-          <DialogDescription>{t("bankkonten.dialog.description")}</DialogDescription>
+          <DialogDescription>{t("bankAccounts.dialog.description")}</DialogDescription>
         </DialogHeader>
 
         <BankAccountFormFields
@@ -138,10 +138,10 @@ export function BankAccountDialog({
 
         <DialogFooter>
           <Button variant="secondary" onClick={() => setOpen(false)} type="button">
-            {t("bankkonten.dialog.cancel")}
+            {t("bankAccounts.dialog.cancel")}
           </Button>
           <Button onClick={submit} disabled={!canSubmit}>
-            {pending ? t("bankkonten.dialog.saving") : t("bankkonten.dialog.save")}
+            {pending ? t("bankAccounts.dialog.saving") : t("bankAccounts.dialog.save")}
           </Button>
         </DialogFooter>
       </DialogContent>

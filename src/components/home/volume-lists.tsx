@@ -7,7 +7,7 @@ import {
   type RankedBarRow,
 } from "@/components/dashboard/ranked-bars";
 import { PeriodPicker, useStoredPeriod } from "@/components/home/period-picker";
-import { formatEURCompact, GESELLSCHAFT_OHNE, overviewPeriodRange } from "@/lib/data/format";
+import { formatEURCompact, COMPANY_WITHOUT, overviewPeriodRange } from "@/lib/data/format";
 import { useOverviewInvoices } from "@/data";
 import { useTranslation } from "@/lib/i18n";
 
@@ -20,13 +20,16 @@ import { useTranslation } from "@/lib/i18n";
 
 export function TopSuppliers() {
   const { t } = useTranslation();
-  const [zeitraum, setZeitraum] = useStoredPeriod("suppliers");
+  const [period, setPeriod] = useStoredPeriod("suppliers");
   const range = useMemo(
     () =>
-      overviewPeriodRange(zeitraum.period, new Date(), { von: zeitraum.von, bis: zeitraum.bis }),
-    [zeitraum],
+      overviewPeriodRange(period.period, new Date(), {
+        fromDate: period.fromDate,
+        toDate: period.toDate,
+      }),
+    [period],
   );
-  const invoicesQ = useOverviewInvoices(range.von, range.bis);
+  const invoicesQ = useOverviewInvoices(range.fromDate, range.toDate);
 
   const { rows, total } = useMemo(() => {
     const data = invoicesQ.data ?? [];
@@ -49,9 +52,9 @@ export function TopSuppliers() {
         valueText: formatEURCompact(v.sum),
         sharePct: absTotal > 0 ? (Math.abs(v.sum) / absTotal) * 100 : 0,
         link: v.supplierId
-          ? { to: "/lieferanten/$id", params: { id: v.supplierId } }
+          ? { to: "/suppliers/$id", params: { id: v.supplierId } }
           : issuer
-            ? { to: "/eingangsrechnungen", search: { q: issuer } }
+            ? { to: "/incoming-invoices", search: { q: issuer } }
             : undefined,
       }));
     return { rows, total };
@@ -63,7 +66,7 @@ export function TopSuppliers() {
     <DashboardPanel
       title={t("home.top.title", { count: rows.length })}
       titleExtra={t("home.rank.total", { sum: formatEURCompact(total) })}
-      headerRight={<PeriodPicker value={zeitraum} onChange={setZeitraum} />}
+      headerRight={<PeriodPicker value={period} onChange={setPeriod} />}
       className="overflow-hidden"
     >
       {invoicesQ.isLoading ? <RankedBarsSkeleton /> : <RankedBars rows={rows} />}
@@ -73,13 +76,16 @@ export function TopSuppliers() {
 
 export function CompanyVolume() {
   const { t } = useTranslation();
-  const [zeitraum, setZeitraum] = useStoredPeriod("companies");
+  const [period, setPeriod] = useStoredPeriod("companies");
   const range = useMemo(
     () =>
-      overviewPeriodRange(zeitraum.period, new Date(), { von: zeitraum.von, bis: zeitraum.bis }),
-    [zeitraum],
+      overviewPeriodRange(period.period, new Date(), {
+        fromDate: period.fromDate,
+        toDate: period.toDate,
+      }),
+    [period],
   );
-  const invoicesQ = useOverviewInvoices(range.von, range.bis);
+  const invoicesQ = useOverviewInvoices(range.fromDate, range.toDate);
 
   const { rows, total } = useMemo(() => {
     const data = invoicesQ.data ?? [];
@@ -88,7 +94,7 @@ export function CompanyVolume() {
       let key = (r.company_code ?? "").trim();
       // NZO is the catch-all "assigned to none" code; to the reader it is the same bucket as a
       // missing company, and the invoice list's "ohne Gesellschaft" filter treats it that way too.
-      if (key === GESELLSCHAFT_OHNE) key = "";
+      if (key === COMPANY_WITHOUT) key = "";
       byCompany.set(key, (byCompany.get(key) ?? 0) + (r.amount_gross ?? 0));
     }
     const total = data.reduce((s, r) => s + (r.amount_gross ?? 0), 0);
@@ -102,8 +108,8 @@ export function CompanyVolume() {
         valueText: formatEURCompact(sum),
         sharePct: absTotal > 0 ? (Math.abs(sum) / absTotal) * 100 : 0,
         link: {
-          to: "/eingangsrechnungen",
-          search: { gesellschaft: code || GESELLSCHAFT_OHNE },
+          to: "/incoming-invoices",
+          search: { company: code || COMPANY_WITHOUT },
         },
       }));
     return { rows, total };
@@ -115,7 +121,7 @@ export function CompanyVolume() {
     <DashboardPanel
       title={t("home.companies.title", { count: rows.length })}
       titleExtra={t("home.rank.total", { sum: formatEURCompact(total) })}
-      headerRight={<PeriodPicker value={zeitraum} onChange={setZeitraum} />}
+      headerRight={<PeriodPicker value={period} onChange={setPeriod} />}
       className="overflow-hidden"
     >
       {invoicesQ.isLoading ? <RankedBarsSkeleton /> : <RankedBars rows={rows} />}

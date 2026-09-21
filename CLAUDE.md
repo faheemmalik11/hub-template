@@ -21,6 +21,26 @@ below still describes how the code works, because the code is that Hub's code.
 - `planning/07-hub-template.md` records what was stripped out of the clone and what a new client
   still needs: its own Supabase project and `.env`, its own brand and locale, its own catalogue seed.
 
+### English only, everywhere a developer types (HARD RULE)
+
+No German in identifiers, function or component names, variables, types, filenames, directory
+names, i18n keys, column names, status values or config keys. English, always.
+
+German survives in exactly two places, and nowhere else:
+
+- **UI display strings** — the VALUES in `src/lib/i18n/locales/*.ts`. The audience is German.
+- **Live client data** — what is already in a client's database. It stays as it is.
+
+URLs are English here too. The template has no users, so it has no bookmarks to break, and a client
+merging this gets a redirect from their old path rather than a broken link.
+
+The trap is the middle ground, and it is how German keeps arriving: a new key added to an existing
+German block. `access.pageNotAvailable`, never `zugriff.textPage`. If the surrounding namespace is
+German, open an English one rather than extend it.
+
+Existing German identifiers are not grandfathered. When you work in a file that has them, rename
+them in the same pass. A rename always beats a comment explaining the German word.
+
 ### Code explains itself. Comments are the exception (HARD RULE)
 
 Name things so the code reads without help: `unpaidInvoiceCount`, `hasConfirmedBankAccount`,

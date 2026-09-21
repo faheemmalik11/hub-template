@@ -26,7 +26,7 @@ export const CHAIN_ACTION_IDS: ApprovalActionId[] = [
 // payment or a DATEV handover is confirmed, never by a person picking the step. Those circles
 // stay inert, and nothing draws an arrow at them. Named rather than "everything from 'bezahlt'
 // onwards": 'closed' sits in that tail and is NOT trigger-driven.
-export const AUTO_STUFEN: WorkflowStatus[] = ["paid", "handed_over"];
+export const AUTO_STEPS: WorkflowStatus[] = ["paid", "handed_over"];
 
 // Manual correction targets (see runCorrection above): every status except 'not_relevant',
 // which has its own dedicated flow (useSetNotRelevant/useClearNotRelevant) that also touches the
@@ -46,7 +46,7 @@ export const CORRECTABLE_STATUSES: WorkflowStatus[] = [
 // The approval-workflow invoice_history types (migration 0035) live in their own section on the
 // Freigabe tab, not mixed into the general Verlauf tab — kept as one list so both places filter
 // on exactly the same set.
-export const APPROVAL_VERLAUF_TYPES = [
+export const APPROVAL_HISTORY_TYPES = [
   "approval_first",
   "approval_final",
   "query",
@@ -90,7 +90,7 @@ export const LEGACY_ACTION_IDS: ApprovalActionId[] = [
 ];
 
 /** Where each action lands. Only for legacy rows; live ones carry `nach` from the action itself. */
-export const AKTION_ZIELSTATUS: Partial<Record<ApprovalActionId, string>> = {
+export const ACTION_TARGETSTATUS: Partial<Record<ApprovalActionId, string>> = {
   send_for_review: "in_review",
   approve: "approved_first",
   final_approve: "approved_final",
@@ -119,49 +119,49 @@ export const LADDER_THEME = {
 // page. A check with no entry here renders as plain text in the review card rather than as a
 // button that goes nowhere.
 
-export const ABGLEICH_ANKER = "zahlung-abgleich";
-export const UEBERWEISUNG_ANKER = "zahlung-ueberweisung";
-export const BETRAEGE_ANKER = "uebersicht-betraege";
-export const RECHNUNGSDATEN_ANKER = "uebersicht-rechnungsdaten";
-export const BETEILIGTE_ANKER = "uebersicht-beteiligte";
-export const LIEFERANT_ANKER = "lieferant-stammdaten";
+export const MATCHING_ANCHOR = "zahlung-abgleich";
+export const TRANSFER_ANCHOR = "zahlung-ueberweisung";
+export const AMOUNTS_ANCHOR = "uebersicht-betraege";
+export const INVOICEDATA_ANCHOR = "uebersicht-rechnungsdaten";
+export const PARTICIPANTS_ANCHOR = "uebersicht-beteiligte";
+export const SUPPLIER_ANCHOR = "lieferant-stammdaten";
 
-export const FELD_SPRUNGZIEL: Record<string, { tab: string; anker: string }> = {
+export const FIELD_JUMPTARGET: Record<string, { tab: string; anchor: string }> = {
   // The `validation_detail` column's check names. Same destinations as the German keys below.
-  gross_present: { tab: "uebersicht", anker: BETRAEGE_ANKER },
-  sum_matches: { tab: "uebersicht", anker: BETRAEGE_ANKER },
-  vat_rate_valid: { tab: "uebersicht", anker: BETRAEGE_ANKER },
-  invoice_number_present: { tab: "uebersicht", anker: RECHNUNGSDATEN_ANKER },
-  date_present: { tab: "uebersicht", anker: RECHNUNGSDATEN_ANKER },
-  date_not_future: { tab: "uebersicht", anker: RECHNUNGSDATEN_ANKER },
-  issuer_present: { tab: "uebersicht", anker: BETEILIGTE_ANKER },
-  recipient_present: { tab: "uebersicht", anker: BETEILIGTE_ANKER },
-  assignment_resolved: { tab: "uebersicht", anker: BETEILIGTE_ANKER },
-  iban_checksum_valid: { tab: "lieferant", anker: LIEFERANT_ANKER },
-  iban_unambiguous: { tab: "lieferant", anker: LIEFERANT_ANKER },
-  payable_iban_present: { tab: "lieferant", anker: LIEFERANT_ANKER },
-  brutto_vorhanden: { tab: "uebersicht", anker: BETRAEGE_ANKER },
-  summe_ok: { tab: "uebersicht", anker: BETRAEGE_ANKER },
-  ust_satz_ok: { tab: "uebersicht", anker: BETRAEGE_ANKER },
-  rechnungsnr_vorhanden: { tab: "uebersicht", anker: RECHNUNGSDATEN_ANKER },
-  datum_vorhanden: { tab: "uebersicht", anker: RECHNUNGSDATEN_ANKER },
-  datum_plausibel: { tab: "uebersicht", anker: RECHNUNGSDATEN_ANKER },
-  steller_vorhanden: { tab: "uebersicht", anker: BETEILIGTE_ANKER },
-  empfaenger_name: { tab: "uebersicht", anker: BETEILIGTE_ANKER },
-  assignment: { tab: "uebersicht", anker: BETEILIGTE_ANKER },
-  iban_ok: { tab: "lieferant", anker: LIEFERANT_ANKER },
-  iban_anzahl: { tab: "lieferant", anker: LIEFERANT_ANKER },
+  gross_present: { tab: "uebersicht", anchor: AMOUNTS_ANCHOR },
+  sum_matches: { tab: "uebersicht", anchor: AMOUNTS_ANCHOR },
+  vat_rate_valid: { tab: "uebersicht", anchor: AMOUNTS_ANCHOR },
+  invoice_number_present: { tab: "uebersicht", anchor: INVOICEDATA_ANCHOR },
+  date_present: { tab: "uebersicht", anchor: INVOICEDATA_ANCHOR },
+  date_not_future: { tab: "uebersicht", anchor: INVOICEDATA_ANCHOR },
+  issuer_present: { tab: "uebersicht", anchor: PARTICIPANTS_ANCHOR },
+  recipient_present: { tab: "uebersicht", anchor: PARTICIPANTS_ANCHOR },
+  assignment_resolved: { tab: "uebersicht", anchor: PARTICIPANTS_ANCHOR },
+  iban_checksum_valid: { tab: "lieferant", anchor: SUPPLIER_ANCHOR },
+  iban_unambiguous: { tab: "lieferant", anchor: SUPPLIER_ANCHOR },
+  payable_iban_present: { tab: "lieferant", anchor: SUPPLIER_ANCHOR },
+  brutto_vorhanden: { tab: "uebersicht", anchor: AMOUNTS_ANCHOR },
+  summe_ok: { tab: "uebersicht", anchor: AMOUNTS_ANCHOR },
+  ust_satz_ok: { tab: "uebersicht", anchor: AMOUNTS_ANCHOR },
+  rechnungsnr_vorhanden: { tab: "uebersicht", anchor: INVOICEDATA_ANCHOR },
+  datum_vorhanden: { tab: "uebersicht", anchor: INVOICEDATA_ANCHOR },
+  datum_plausibel: { tab: "uebersicht", anchor: INVOICEDATA_ANCHOR },
+  steller_vorhanden: { tab: "uebersicht", anchor: PARTICIPANTS_ANCHOR },
+  empfaenger_name: { tab: "uebersicht", anchor: PARTICIPANTS_ANCHOR },
+  assignment: { tab: "uebersicht", anchor: PARTICIPANTS_ANCHOR },
+  iban_ok: { tab: "lieferant", anchor: SUPPLIER_ANCHOR },
+  iban_anzahl: { tab: "lieferant", anchor: SUPPLIER_ANCHOR },
 };
 
 // The header's review chip scrolls here and flashes it.
-export const REVIEW_ANKER = "review-box";
+export const REVIEW_ANCHOR = "review-box";
 
 // How many notes the header card shows before "see all" sends the reader to the History tab.
 export const HEADER_NOTE_COUNT = 3;
 
 // The header's "see all notes" link scrolls here and flashes it.
-export const NOTIZEN_ANKER = "notizen-verlauf";
+export const NOTES_ANCHOR = "notizen-verlauf";
 
 // The workflow history row for the currently open query -- always the newest row while one is
 // open, since nothing can happen to the invoice after a query until it is answered.
-export const RUECKFRAGE_ANKER = "offene-rueckfrage";
+export const QUERY_ANCHOR = "offene-rueckfrage";

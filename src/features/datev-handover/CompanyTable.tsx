@@ -43,13 +43,13 @@ export function CompanyTable({ rows, handlers }: { rows: CompanyRow[]; handlers:
         <Table>
           <TableHeader>
             <TableRow className="bg-muted/40">
-              <TableHead>{t("datevUebergabe.spalte.gesellschaft")}</TableHead>
-              <TableHead>{t("datevUebergabe.spalte.einrichtung")}</TableHead>
-              <TableHead className="text-right">{t("datevUebergabe.spalte.bereit")}</TableHead>
-              <TableHead className="text-right">{t("datevUebergabe.spalte.gesendet")}</TableHead>
-              <TableHead>{t("datevUebergabe.spalte.zuletzt")}</TableHead>
+              <TableHead>{t("handover.spalte.gesellschaft")}</TableHead>
+              <TableHead>{t("handover.spalte.einrichtung")}</TableHead>
+              <TableHead className="text-right">{t("handover.spalte.bereit")}</TableHead>
+              <TableHead className="text-right">{t("handover.spalte.gesendet")}</TableHead>
+              <TableHead>{t("handover.spalte.zuletzt")}</TableHead>
               <TableHead className="w-[1%] text-right whitespace-nowrap">
-                {t("datevUebergabe.spalte.aktionen")}
+                {t("handover.spalte.aktionen")}
               </TableHead>
             </TableRow>
           </TableHeader>
@@ -68,13 +68,13 @@ export function CompanyTable({ rows, handlers }: { rows: CompanyRow[]; handlers:
                   <SetupStatus row={row} />
                 </TableCell>
                 <TableCell className="text-right">
-                  <BereitZelle row={row} />
+                  <ReadyCell row={row} />
                 </TableCell>
                 <TableCell className="text-right tabular-nums text-muted-foreground">
                   {row.sent}
                 </TableCell>
                 <TableCell>
-                  <ZuletztZelle row={row} />
+                  <LastCell row={row} />
                 </TableCell>
                 <TableCell className="text-right">
                   <RowActions row={row} handlers={handlers} />
@@ -101,19 +101,19 @@ export function CompanyTable({ rows, handlers }: { rows: CompanyRow[]; handlers:
             </div>
             <dl className="mt-3 space-y-1.5 border-t border-border pt-3 text-sm">
               <div className="flex items-baseline justify-between gap-3">
-                <dt className="text-muted-foreground">{t("datevUebergabe.spalte.bereit")}</dt>
+                <dt className="text-muted-foreground">{t("handover.spalte.bereit")}</dt>
                 <dd className="text-right">
-                  <BereitZelle row={row} />
+                  <ReadyCell row={row} />
                 </dd>
               </div>
               <div className="flex items-baseline justify-between gap-3">
-                <dt className="text-muted-foreground">{t("datevUebergabe.spalte.gesendet")}</dt>
+                <dt className="text-muted-foreground">{t("handover.spalte.gesendet")}</dt>
                 <dd className="tabular-nums text-muted-foreground">{row.sent}</dd>
               </div>
               <div className="flex items-baseline justify-between gap-3">
-                <dt className="text-muted-foreground">{t("datevUebergabe.spalte.zuletzt")}</dt>
+                <dt className="text-muted-foreground">{t("handover.spalte.zuletzt")}</dt>
                 <dd className="text-right">
-                  <ZuletztZelle row={row} />
+                  <LastCell row={row} />
                 </dd>
               </div>
             </dl>
@@ -133,9 +133,9 @@ function SetupStatus({ row }: { row: CompanyRow }) {
     <RouteStatus
       configured={row.setup !== "missing"}
       enabled={row.setup === "ready"}
-      configuredLabel={t("datevUebergabe.status.eingerichtet")}
-      notConfiguredLabel={t("datevUebergabe.status.nichtEingerichtet")}
-      disabledLabel={t("datevUebergabe.status.pausiert")}
+      configuredLabel={t("handover.status.eingerichtet")}
+      notConfiguredLabel={t("handover.status.nichtEingerichtet")}
+      disabledLabel={t("handover.status.pausiert")}
     />
   );
 }
@@ -147,7 +147,7 @@ function SetupStatus({ row }: { row: CompanyRow }) {
  * every paid receipt including those whose stored file DATEV refuses; the send then dropped those
  * and reported it only in a response the screen discarded, so a row promising 7 could deliver 5.
  */
-function BereitZelle({ row }: { row: CompanyRow }) {
+function ReadyCell({ row }: { row: CompanyRow }) {
   const { t } = useTranslation();
   return (
     <div>
@@ -157,33 +157,33 @@ function BereitZelle({ row }: { row: CompanyRow }) {
           row.ready.length > 0 ? "font-medium text-foreground" : "text-muted-foreground",
         )}
       >
-        {t("datevUebergabe.dateien", { count: row.ready.length })}
+        {t("handover.dateien", { count: row.ready.length })}
       </span>
       {row.ready.length > 0 && (
-        <div className="text-xs text-muted-foreground">{formatEUR(row.readySumme)}</div>
+        <div className="text-xs text-muted-foreground">{formatEUR(row.readyTotal)}</div>
       )}
       {row.blocked.length > 0 && (
         <div className="text-xs text-warning">
-          {t("datevUebergabe.uebersprungenKurz", { count: row.blocked.length })}
+          {t("handover.uebersprungenKurz", { count: row.blocked.length })}
         </div>
       )}
     </div>
   );
 }
 
-function ZuletztZelle({ row }: { row: CompanyRow }) {
+function LastCell({ row }: { row: CompanyRow }) {
   const { t } = useTranslation();
   return (
     <div className="text-sm">
       <span className="tabular-nums text-muted-foreground">
-        {row.lastSent ? formatDateTime(row.lastSent.created_at) : t("datevUebergabe.nie")}
+        {row.lastSent ? formatDateTime(row.lastSent.created_at) : t("handover.nie")}
       </span>
       {/* A failed attempt is not a handover, so it never dates this column — but it must not vanish
           either. The mark leads to the same history the overflow menu opens. */}
       {row.lastAttemptFailed && (
         <div className="inline-flex items-center gap-1 text-xs text-danger">
           <AlertTriangle className="size-3 shrink-0" aria-hidden />
-          {t("datevUebergabe.letzterVersuchFehler")}
+          {t("handover.letzterVersuchFehler")}
         </div>
       )}
     </div>
@@ -210,20 +210,20 @@ function RowActions({ row, handlers }: { row: CompanyRow; handlers: RowHandlers 
           onClick={() => handlers.onConfigure(row)}
         >
           <Settings2 className="size-4" />
-          {t("datevUebergabe.aktion.einrichten")}
+          {t("handover.aktion.einrichten")}
         </Button>
       )}
       {row.action === "send" && (
         <Button size="sm" className="gap-1.5" onClick={() => handlers.onSend(row)}>
           <Send className="size-4" />
-          {t("datevUebergabe.aktion.senden")}
+          {t("handover.aktion.senden")}
         </Button>
       )}
       <DropdownMenu>
         <DropdownMenuTrigger asChild>
           <Button variant="ghost" size="icon" className="size-8">
             <MoreHorizontal className="size-4" />
-            <span className="sr-only">{t("datevUebergabe.spalte.aktionen")}</span>
+            <span className="sr-only">{t("handover.spalte.aktionen")}</span>
           </Button>
         </DropdownMenuTrigger>
         <DropdownMenuContent align="end">
@@ -234,12 +234,12 @@ function RowActions({ row, handlers }: { row: CompanyRow; handlers: RowHandlers 
           {row.action !== "configure" && (
             <DropdownMenuItem onSelect={() => handlers.onConfigure(row)}>
               <Settings2 className="size-4" />
-              {t("datevUebergabe.aktion.einrichtungBearbeiten")}
+              {t("handover.aktion.einrichtungBearbeiten")}
             </DropdownMenuItem>
           )}
           <DropdownMenuItem onSelect={() => handlers.onHistory(row)}>
             <History className="size-4" />
-            {t("datevUebergabe.aktion.verlaufAnzeigen")}
+            {t("handover.aktion.verlaufAnzeigen")}
           </DropdownMenuItem>
         </DropdownMenuContent>
       </DropdownMenu>

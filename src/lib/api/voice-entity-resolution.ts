@@ -30,7 +30,7 @@
 // correction pass.
 import { callOpenAiJsonSchema } from "./invoice-nl-retrieval.functions";
 import type { Grounding } from "./invoice-nl-grounding";
-import { tenantCredentialOrNull } from "@/lib/postfach/channel-credentials.server";
+import { tenantCredentialOrNull } from "@/lib/inbox/channel-credentials.server";
 
 const DEFAULT_MODEL = "gpt-4o-mini";
 

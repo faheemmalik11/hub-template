@@ -2,10 +2,14 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 
 import { TABLE } from "@/config/tables";
 import { SINGLETON_ROW_ID, STALE, actorEmail, insertChangeHistory, sb } from "@/data/client";
-import { fetchAllRows, invalidateMatchState, pflichtGrund } from "@/data/shared";
+import { fetchAllRows, invalidateMatchState, requiredReason } from "@/data/shared";
 import { invalidateRuleState } from "@/data/shared";
 import { extractChartOfAccounts } from "@/lib/api/chart-of-accounts-extraction.functions";
-import type { BwaAccountMapping, BwaCategory, RuleSuggestion } from "@/lib/data/types";
+import type {
+  CostAnalysisAccountMapping,
+  CostAnalysisCategory,
+  RuleSuggestion,
+} from "@/lib/data/types";
 import type { AssignmentRuleInput } from "@/data/rules";
 
 // ---- Category taxonomy, account mapping & rule suggestions (migration 0030) ----
@@ -21,11 +25,11 @@ function invalidateCategoryState(qc: ReturnType<typeof useQueryClient>) {
 // The full taxonomy, both levels together (soft-deleted rows excluded). Small (~87 rows) and
 // changed rarely, so one query backs every consumer: the Kategorien tab's tree, the Regeln tab's
 // category Combobox, and the Vorschläge tab's per-row dropdown.
-export function useBwaCategories() {
+export function useCostAnalysisCategories() {
   return useQuery({
     queryKey: ["bwa_categories"],
     staleTime: STALE,
-    queryFn: async (): Promise<BwaCategory[]> => {
+    queryFn: async (): Promise<CostAnalysisCategory[]> => {
       const { data, error } = await sb
         .from(TABLE.categories)
         .select("*")
@@ -35,26 +39,26 @@ export function useBwaCategories() {
         .order("sort_order", { ascending: true })
         .order("name", { ascending: true });
       if (error) throw error;
-      return (data ?? []) as BwaCategory[];
+      return (data ?? []) as CostAnalysisCategory[];
     },
   });
 }
 
-export type BwaCategoryInput = {
+export type CostAnalysisCategoryInput = {
   code: string;
   name: string;
   name_en: string;
   parent_id?: string | null;
-  report_block: BwaCategory["report_block"];
+  report_block: CostAnalysisCategory["report_block"];
   report_line: string;
-  direction: BwaCategory["direction"];
+  direction: CostAnalysisCategory["direction"];
   note?: string | null;
 };
 
-export function useCreateBwaCategory() {
+export function useCreateCostAnalysisCategory() {
   const qc = useQueryClient();
   return useMutation({
-    mutationFn: async (input: BwaCategoryInput): Promise<BwaCategory> => {
+    mutationFn: async (input: CostAnalysisCategoryInput): Promise<CostAnalysisCategory> => {
       const actor = await actorEmail();
       const { data, error } = await sb
         .from(TABLE.categories)
@@ -62,16 +66,16 @@ export function useCreateBwaCategory() {
         .select("*")
         .single();
       if (error) throw error;
-      return data as BwaCategory;
+      return data as CostAnalysisCategory;
     },
     onSuccess: () => invalidateCategoryState(qc),
   });
 }
 
-export function useUpdateBwaCategory() {
+export function useUpdateCostAnalysisCategory() {
   const qc = useQueryClient();
   return useMutation({
-    mutationFn: async (args: { id: string; changes: Partial<BwaCategoryInput> }) => {
+    mutationFn: async (args: { id: string; changes: Partial<CostAnalysisCategoryInput> }) => {
       const { error } = await sb
         .from(TABLE.categories)
         .update({ ...args.changes, updated_at: new Date().toISOString() })
@@ -84,17 +88,17 @@ export function useUpdateBwaCategory() {
 
 // Soft delete only: "every category remains changeable and deletable at any time" (briefing), but
 // a rule or receipt that already references this category must keep resolving its name.
-export function useSoftDeleteBwaCategory() {
+export function useSoftDeleteCostAnalysisCategory() {
   const qc = useQueryClient();
   return useMutation({
-    mutationFn: async (args: { id: string; grund: string }) => {
+    mutationFn: async (args: { id: string; reason: string }) => {
       const actor = await actorEmail();
       const { error } = await sb
         .from(TABLE.categories)
         .update({
           deleted_at: new Date().toISOString(),
           deleted_by: actor,
-          delete_reason: pflichtGrund(args.grund),
+          delete_reason: requiredReason(args.reason),
           is_active: false,
         })
         .eq("id", args.id);
@@ -112,7 +116,7 @@ export function useSoftDeleteBwaCategory() {
  * write per row and cannot leave two siblings sharing a position, which is what would make the
  * order jump around on the next render. Steps of 10 keep room to insert without renumbering.
  */
-export function useReorderBwaCategories() {
+export function useReorderCostAnalysisCategories() {
   const qc = useQueryClient();
   return useMutation({
     mutationFn: async (orderedIds: string[]) => {
@@ -133,12 +137,12 @@ export function useReorderBwaCategories() {
 
 // Category-to-account mapping for one fiscal year. DATEV rebuilds the chart of accounts every
 // year, so the mapping is read one year at a time rather than as one global list.
-export function useBwaAccountMapping(fiscalYear: number, companyId: string | null) {
+export function useCostAnalysisAccountMapping(fiscalYear: number, companyId: string | null) {
   return useQuery({
     queryKey: ["bwa_account_mapping", fiscalYear, companyId],
     staleTime: STALE,
     enabled: !!companyId,
-    queryFn: async (): Promise<BwaAccountMapping[]> => {
+    queryFn: async (): Promise<CostAnalysisAccountMapping[]> => {
       const { data, error } = await sb
         .from(TABLE.categoryAccountMapping)
         .select("*")
@@ -147,24 +151,28 @@ export function useBwaAccountMapping(fiscalYear: number, companyId: string | nul
         .is("deleted_at", null)
         .order("account", { ascending: true });
       if (error) throw error;
-      return (data ?? []) as BwaAccountMapping[];
+      return (data ?? []) as CostAnalysisAccountMapping[];
     },
   });
 }
 
-export type BwaAccountMappingRow = { account: string; category_id: string; note?: string | null };
+export type CostAnalysisAccountMappingRow = {
+  account: string;
+  category_id: string;
+  note?: string | null;
+};
 
 // Imports a parsed CSV (fiscal_year, account, category_id) as a batch upsert, scoped to one
 // company. The caller is expected to have already shown a preview (which rows are new vs.
 // changed vs. unchanged) — this mutation just commits it, matching the same preview-before-apply
 // pattern already used for assignment rules.
-export function useImportBwaAccountMapping() {
+export function useImportCostAnalysisAccountMapping() {
   const qc = useQueryClient();
   return useMutation({
     mutationFn: async (args: {
       fiscalYear: number;
       companyId: string;
-      rows: BwaAccountMappingRow[];
+      rows: CostAnalysisAccountMappingRow[];
     }) => {
       const actor = await actorEmail();
       const { error } = await sb.from(TABLE.categoryAccountMapping).upsert(

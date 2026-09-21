@@ -7,7 +7,7 @@ import { cn } from "@/lib/utils";
 import { useTranslation } from "@/lib/i18n";
 import { Button } from "@/components/ui/button";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
-import { useFeldId } from "@/components/ui/feld-context";
+import { useFieldId } from "@/components/ui/feld-context";
 import {
   Command,
   CommandEmpty,
@@ -77,7 +77,7 @@ export function Combobox({
   const [open, setOpen] = React.useState(false);
   // The trigger IS the control here, so it carries the id the sibling Label points at. Without it
   // a screen reader reads this dropdown as an unnamed combobox.
-  const feldId = useFeldId();
+  const fieldId = useFieldId();
 
   // Scrolling the option list inside a Dialog.
   //
@@ -121,7 +121,7 @@ export function Combobox({
       <PopoverTrigger asChild>
         <Button
           ref={triggerRef}
-          id={id ?? feldId ?? undefined}
+          id={id ?? fieldId ?? undefined}
           type="button"
           variant="outline"
           role="combobox"

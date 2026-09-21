@@ -1,7 +1,7 @@
 export {
-  useArchiveBeleg,
+  useArchiveDocument,
   useBulkInvoiceActions,
   useClearNotRelevant,
   useSetNotRelevant,
-  useUnarchiveBeleg,
+  useUnarchiveDocument,
 } from "./review";

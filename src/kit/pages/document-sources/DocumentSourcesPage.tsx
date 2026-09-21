@@ -24,7 +24,7 @@ import { cn } from "../../lib/class-names";
 import { SourceIconBadge, StatusChip } from "./source-visuals";
 import { RunNowDialog } from "./RunNowDialog";
 import { SourceSettingsSheet } from "./SourceSettingsSheet";
-import { FilingStatusCard, SourceList, useFokusHighlight } from "../../widgets/document-sources";
+import { FilingStatusCard, SourceList, useFocusHighlight } from "../../widgets/document-sources";
 import { englishDocumentSourcesLabels, type DocumentSourcesLabels } from "./labels";
 import type { DocumentSourcesRouter } from "./router";
 
@@ -53,8 +53,8 @@ export function DocumentSourcesPage({
   const openSourceId = (hash ?? "").replace(/^#/, "");
   const openSource = sources.find((source) => source.id === openSourceId) ?? null;
 
-  const fokus = router.useFokusParam();
-  useFokusHighlight(fokus, openSource?.id);
+  const focus = router.useFocusParam();
+  useFocusHighlight(focus, openSource?.id);
 
   const openSourceSheet = (sourceId: string) => router.openSource(sourceId);
   const closeSourceSheet = () => router.closeSource();

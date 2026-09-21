@@ -13,12 +13,12 @@ import {
   FILE_URL_STALE,
   fetchAllRows,
   hasNextInfinitePage,
-  insertVerlauf,
-  pflichtGrund,
+  insertHistory,
+  requiredReason,
   searchTokens,
   type InfinitePage,
 } from "@/data/shared";
-import { belegNachgeprueft } from "@/features/invoice-detail/nachpruefung";
+import { documentRechecked } from "@/features/invoice-detail/recheck";
 import { supabase } from "@/integrations/supabase/client";
 import { getInvoiceFileUrl } from "@/lib/api/invoice-files.functions";
 import {
@@ -29,19 +29,19 @@ import { createUploadedInvoices } from "@/lib/api/invoice-upload.functions";
 import { getTransactionFileUrls } from "@/lib/api/transaction-files.functions";
 import type { VoiceRecordingMime } from "@/lib/api/voice-transcription-shared";
 import { transcribeVoiceQuery } from "@/lib/api/voice-transcription.functions";
-import { GESELLSCHAFT_OHNE, OBJEKT_OHNE, heuteLokal } from "@/lib/data/format";
+import { COMPANY_WITHOUT, PROPERTY_WITHOUT, todayLocal } from "@/lib/data/format";
 import { OPEN_ITEM_COLUMNS } from "@/lib/data/types";
 import type {
-  Beleg,
-  BelegDatei,
-  BelegeFacets,
-  BelegeFilter,
-  BelegeKpis,
-  BelegeListeParams,
-  BelegeSeite,
-  BelegListeRow,
-  BelegSortKey,
-  BelegVerlauf,
+  Document,
+  DocumentFile,
+  DocumentsFacets,
+  DocumentsFilter,
+  DocumentsKpis,
+  DocumentsListParams,
+  DocumentsPage,
+  DocumentListRow,
+  DocumentSortKey,
+  DocumentHistory,
   OpenItemRow,
 } from "@/lib/data/types";
 
@@ -68,11 +68,11 @@ import type {
 // pages: a column added to a table cell and not to this list renders as undefined, not as an error.
 
 /** What a company's and a supplier's invoice table render. */
-const BELEG_ZEILE_SPALTEN =
+const DOCUMENT_ROW_COLUMNS =
   "id,invoice_number,issuer,supplier_id,company_code,property_code,document_date,amount_gross,status,payment_method";
 
 /** The property page additionally shows a VAT badge, which needs the rate and the tax lines. */
-const BELEG_ZEILE_SPALTEN_UST = `${BELEG_ZEILE_SPALTEN},vat_rate,tax`;
+const DOCUMENT_ROW_COLUMNS_VAT = `${DOCUMENT_ROW_COLUMNS},vat_rate,tax`;
 
 /**
  * The columns the page-level figures are computed from, and nothing else.
@@ -87,11 +87,11 @@ const BELEG_ZEILE_SPALTEN_UST = `${BELEG_ZEILE_SPALTEN},vat_rate,tax`;
  * with a code fallback, so its totals would disagree with the rows underneath). Until then this is
  * the cheap version of the same answer.
  */
-const BELEG_AGGREGAT_SPALTEN =
+const DOCUMENT_AGGREGATE_COLUMNS =
   "id,document_date,amount_gross,company_code,property_code,payment_method";
 
-export type BelegAggregatZeile = Pick<
-  Beleg,
+export type DocumentAggregateRow = Pick<
+  Document,
   | "id"
   | "document_date"
   | "amount_gross"
@@ -105,7 +105,7 @@ export type BelegAggregatZeile = Pick<
 >;
 
 /** How many rows a detail page's invoice table fetches per scroll. */
-export const BELEG_SEITEN_GROESSE = 50;
+export const DOCUMENT_PAGES_SIZE = 50;
 
 /**
  * The company-matching rule, written once.
@@ -116,9 +116,9 @@ export const BELEG_SEITEN_GROESSE = 50;
  * code match alone is never enough. The paged query and the aggregate query both call this, so the
  * total in the header cannot come to describe a different set than the rows below it.
  */
-function gesellschaftBelegFilter(companyId: string, companyCode: string | null | undefined) {
-  const codeTeil = companyCode ? `,and(company_id.is.null,company_code.eq.${companyCode})` : "";
-  return `company_id.eq.${companyId}${codeTeil}`;
+function companyDocumentFilter(companyId: string, companyCode: string | null | undefined) {
+  const codePart = companyCode ? `,and(company_id.is.null,company_code.eq.${companyCode})` : "";
+  return `company_id.eq.${companyId}${codePart}`;
 }
 
 /**
@@ -127,39 +127,39 @@ function gesellschaftBelegFilter(companyId: string, companyCode: string | null |
  * The date range is a SERVER filter, not a client one: picking a quarter in the period picker now
  * narrows the query rather than fetching everything and hiding most of it.
  */
-export function useBelegeFuerGesellschaftSeiten(
+export function useDocumentsForCompanyPages(
   companyId: string,
   companyCode: string | null | undefined,
-  range: { von?: string | null; bis?: string | null } = {},
+  range: { fromDate?: string | null; toDate?: string | null } = {},
   /**
    * Whether the company row has settled. Without it this fires once by id alone -- while the
    * company, and therefore its code, is still loading -- and then a second time with the code, two
    * round trips per page load for one answer. Same guard useBelegeByProperty carries.
    */
-  bereit = true,
+  ready = true,
 ) {
-  const von = range.von || null;
-  const bis = range.bis || null;
+  const fromDate = range.fromDate || null;
+  const toDate = range.toDate || null;
   return useInfiniteQuery({
     placeholderData: keepPreviousData,
-    queryKey: ["belege-gesellschaft-seiten", companyId, companyCode ?? null, von, bis],
-    enabled: !!companyId && bereit,
+    queryKey: ["belege-gesellschaft-seiten", companyId, companyCode ?? null, fromDate, toDate],
+    enabled: !!companyId && ready,
     staleTime: STALE,
     initialPageParam: 0,
-    getNextPageParam: (_lastPage: InfinitePage<Beleg>, allPages) =>
+    getNextPageParam: (_lastPage: InfinitePage<Document>, allPages) =>
       hasNextInfinitePage(allPages) ? allPages.length : undefined,
-    queryFn: async ({ pageParam }): Promise<InfinitePage<Beleg>> => {
+    queryFn: async ({ pageParam }): Promise<InfinitePage<Document>> => {
       let query = supabase
         .from(TABLE.documents)
-        .select(BELEG_ZEILE_SPALTEN, { count: "exact" })
+        .select(DOCUMENT_ROW_COLUMNS, { count: "exact" })
         .is("deleted_at", null)
         .is("archived_at", null)
         .is("not_relevant_at", null)
         .neq("status", "split")
-        .or(gesellschaftBelegFilter(companyId, companyCode));
-      if (von) query = query.gte("document_date", von);
-      if (bis) query = query.lte("document_date", bis);
-      const from = pageParam * BELEG_SEITEN_GROESSE;
+        .or(companyDocumentFilter(companyId, companyCode));
+      if (fromDate) query = query.gte("document_date", fromDate);
+      if (toDate) query = query.lte("document_date", toDate);
+      const from = pageParam * DOCUMENT_PAGES_SIZE;
       const { data, error, count } = await query
         // A second, unique ordering key. `document_date` alone is not stable -- a company with
         // several invoices on the same date has no defined order between them, and Postgres is
@@ -167,41 +167,41 @@ export function useBelegeFuerGesellschaftSeiten(
         // range() boundary.
         .order("document_date", { ascending: false, nullsFirst: false })
         .order("id", { ascending: true })
-        .range(from, from + BELEG_SEITEN_GROESSE - 1);
+        .range(from, from + DOCUMENT_PAGES_SIZE - 1);
       if (error) throw error;
-      return { rows: (data ?? []) as unknown as Beleg[], total: count ?? 0 };
+      return { rows: (data ?? []) as unknown as Document[], total: count ?? 0 };
     },
   });
 }
 
 /** The narrow, complete set a company's page-level figures are computed from. */
-export function useGesellschaftBelegAggregat(
+export function useCompanyDocumentAggregate(
   companyId: string,
   companyCode: string | null | undefined,
   /** See useBelegeFuerGesellschaftSeiten. */
-  bereit = true,
+  ready = true,
 ) {
   return useQuery({
     queryKey: ["belege-gesellschaft-aggregat", companyId, companyCode ?? null],
-    enabled: !!companyId && bereit,
+    enabled: !!companyId && ready,
     staleTime: STALE,
-    queryFn: async (): Promise<BelegAggregatZeile[]> =>
-      fetchAllRows<BelegAggregatZeile>(
+    queryFn: async (): Promise<DocumentAggregateRow[]> =>
+      fetchAllRows<DocumentAggregateRow>(
         (from, to, withCount) =>
           supabase
             .from(TABLE.documents)
-            .select(BELEG_AGGREGAT_SPALTEN, withCount ? { count: "exact" } : undefined)
+            .select(DOCUMENT_AGGREGATE_COLUMNS, withCount ? { count: "exact" } : undefined)
             .is("deleted_at", null)
             .is("archived_at", null)
             .is("not_relevant_at", null)
             .neq("status", "split")
-            .or(gesellschaftBelegFilter(companyId, companyCode))
+            .or(companyDocumentFilter(companyId, companyCode))
             // Same reason as the paged query: fetchAllRows issues parallel ranges, so without a
             // unique tie-breaker rows can repeat and go missing across a page boundary.
             .order("document_date", { ascending: false })
             .order("id", { ascending: true })
             .range(from, to) as unknown as Promise<{
-            data: BelegAggregatZeile[] | null;
+            data: DocumentAggregateRow[] | null;
             error: unknown;
             count?: number | null;
           }>,
@@ -212,18 +212,18 @@ export function useGesellschaftBelegAggregat(
 // Per-supplier invoice totals, aggregated by Postgres (view v_supplier_invoice_totals).
 // Replaces grouping every invoice in the browser. See the migration for why the filter is an exact
 // copy of useBelege()'s.
-export function useLieferantBelegSummen() {
+export function useSupplierDocumentTotals() {
   return useQuery({
     queryKey: ["lieferant-beleg-summen"],
     staleTime: STALE,
     queryFn: async (): Promise<
-      Map<string, { summe: number; anzahl: number; avgTage: number | null }>
+      Map<string, { total: number; count: number; avgDays: number | null }>
     > => {
       const { data, error } = await sb
         .from(TABLE.vSupplierDocumentTotals)
         .select("supplier_id, document_count, document_total, avg_days_between");
       if (error) throw error;
-      const map = new Map<string, { summe: number; anzahl: number; avgTage: number | null }>();
+      const map = new Map<string, { total: number; count: number; avgDays: number | null }>();
       for (const r of (data ?? []) as {
         supplier_id: string;
         document_count: number;
@@ -231,11 +231,11 @@ export function useLieferantBelegSummen() {
         avg_days_between: number | null;
       }[]) {
         map.set(r.supplier_id, {
-          summe: Number(r.document_total ?? 0),
-          anzahl: Number(r.document_count ?? 0),
+          total: Number(r.document_total ?? 0),
+          count: Number(r.document_count ?? 0),
           // Same rule as computeInvoiceFrequency(): null when there are fewer than two dated
           // invoices, which the view already encodes.
-          avgTage: r.avg_days_between == null ? null : Number(r.avg_days_between),
+          avgDays: r.avg_days_between == null ? null : Number(r.avg_days_between),
         });
       }
       return map;
@@ -256,9 +256,9 @@ export function useLieferantBelegSummen() {
  *
  * The code is quoted so a code containing a PostgREST separator cannot break out of the or().
  */
-function objektBelegFilter(propertyId: string | null, propertyCode: string) {
-  const codeTeil = `property_code.eq."${propertyCode}"`;
-  return propertyId ? `property_id.eq.${propertyId},${codeTeil}` : codeTeil;
+function propertyDocumentFilter(propertyId: string | null, propertyCode: string) {
+  const codePart = `property_code.eq."${propertyCode}"`;
+  return propertyId ? `property_id.eq.${propertyId},${codePart}` : codePart;
 }
 
 /**
@@ -267,39 +267,39 @@ function objektBelegFilter(propertyId: string | null, propertyCode: string) {
  * Same shape and same reasoning as useBelegeFuerGesellschaftSeiten above: narrow columns, the date
  * range as a SERVER filter, and a unique tie-breaker in the ordering.
  */
-export function useBelegeFuerObjektSeiten(
+export function useDocumentsForPropertyPages(
   propertyId: string | null,
   propertyCode: string,
-  range: { von?: string | null; bis?: string | null } = {},
+  range: { fromDate?: string | null; toDate?: string | null } = {},
   /**
    * Whether the property lookup has settled. Without it this fires once by code alone -- while the
    * properties list is still loading, so `propertyId` is still null -- and then a second time with
    * the id, two round trips per page load for one answer.
    */
-  bereit = true,
+  ready = true,
 ) {
-  const von = range.von || null;
-  const bis = range.bis || null;
+  const fromDate = range.fromDate || null;
+  const toDate = range.toDate || null;
   return useInfiniteQuery({
     placeholderData: keepPreviousData,
-    queryKey: ["belege-objekt-seiten", propertyId, propertyCode, von, bis],
-    enabled: !!propertyCode && bereit,
+    queryKey: ["belege-objekt-seiten", propertyId, propertyCode, fromDate, toDate],
+    enabled: !!propertyCode && ready,
     staleTime: STALE,
     initialPageParam: 0,
-    getNextPageParam: (_lastPage: InfinitePage<Beleg>, allPages) =>
+    getNextPageParam: (_lastPage: InfinitePage<Document>, allPages) =>
       hasNextInfinitePage(allPages) ? allPages.length : undefined,
-    queryFn: async ({ pageParam }): Promise<InfinitePage<Beleg>> => {
+    queryFn: async ({ pageParam }): Promise<InfinitePage<Document>> => {
       let query = supabase
         .from(TABLE.documents)
-        .select(BELEG_ZEILE_SPALTEN_UST, { count: "exact" })
+        .select(DOCUMENT_ROW_COLUMNS_VAT, { count: "exact" })
         .is("deleted_at", null)
         .is("archived_at", null)
         .is("not_relevant_at", null)
         .neq("status", "split")
-        .or(objektBelegFilter(propertyId, propertyCode));
-      if (von) query = query.gte("document_date", von);
-      if (bis) query = query.lte("document_date", bis);
-      const from = pageParam * BELEG_SEITEN_GROESSE;
+        .or(propertyDocumentFilter(propertyId, propertyCode));
+      if (fromDate) query = query.gte("document_date", fromDate);
+      if (toDate) query = query.lte("document_date", toDate);
+      const from = pageParam * DOCUMENT_PAGES_SIZE;
       const { data, error, count } = await query
         // A second, unique ordering key. `document_date` alone is not stable -- a property with
         // several invoices on the same date has no defined order between them, and Postgres is
@@ -307,41 +307,41 @@ export function useBelegeFuerObjektSeiten(
         // range() boundary.
         .order("document_date", { ascending: false, nullsFirst: false })
         .order("id", { ascending: true })
-        .range(from, from + BELEG_SEITEN_GROESSE - 1);
+        .range(from, from + DOCUMENT_PAGES_SIZE - 1);
       if (error) throw error;
-      return { rows: (data ?? []) as unknown as Beleg[], total: count ?? 0 };
+      return { rows: (data ?? []) as unknown as Document[], total: count ?? 0 };
     },
   });
 }
 
 /** The narrow, complete set a property's page-level figures are computed from. */
-export function useObjektBelegAggregat(
+export function usePropertyDocumentAggregate(
   propertyId: string | null,
   propertyCode: string,
   /** See useBelegeFuerObjektSeiten. */
-  bereit = true,
+  ready = true,
 ) {
   return useQuery({
     queryKey: ["belege-objekt-aggregat", propertyId, propertyCode],
-    enabled: !!propertyCode && bereit,
+    enabled: !!propertyCode && ready,
     staleTime: STALE,
-    queryFn: async (): Promise<BelegAggregatZeile[]> =>
-      fetchAllRows<BelegAggregatZeile>(
+    queryFn: async (): Promise<DocumentAggregateRow[]> =>
+      fetchAllRows<DocumentAggregateRow>(
         (from, to, withCount) =>
           supabase
             .from(TABLE.documents)
-            .select(BELEG_AGGREGAT_SPALTEN, withCount ? { count: "exact" } : undefined)
+            .select(DOCUMENT_AGGREGATE_COLUMNS, withCount ? { count: "exact" } : undefined)
             .is("deleted_at", null)
             .is("archived_at", null)
             .is("not_relevant_at", null)
             .neq("status", "split")
-            .or(objektBelegFilter(propertyId, propertyCode))
+            .or(propertyDocumentFilter(propertyId, propertyCode))
             // Same reason as the paged query: fetchAllRows issues parallel ranges, so without a
             // unique tie-breaker rows can repeat and go missing across a page boundary.
             .order("document_date", { ascending: false })
             .order("id", { ascending: true })
             .range(from, to) as unknown as Promise<{
-            data: BelegAggregatZeile[] | null;
+            data: DocumentAggregateRow[] | null;
             error: unknown;
             count?: number | null;
           }>,
@@ -349,24 +349,24 @@ export function useObjektBelegAggregat(
   });
 }
 
-export function useObjektBelegSummen() {
+export function usePropertyDocumentTotals() {
   return useQuery({
     queryKey: ["objekt-beleg-summen"],
     staleTime: STALE,
-    queryFn: async (): Promise<Map<string, { summe: number; anzahl: number }>> => {
+    queryFn: async (): Promise<Map<string, { total: number; count: number }>> => {
       const { data, error } = await sb
         .from(TABLE.vPropertyDocumentTotals)
         .select("property_id, document_count, document_total");
       if (error) throw error;
-      const map = new Map<string, { summe: number; anzahl: number }>();
+      const map = new Map<string, { total: number; count: number }>();
       for (const r of (data ?? []) as {
         property_id: string;
         document_count: number;
         document_total: number | string;
       }[]) {
         map.set(r.property_id, {
-          summe: Number(r.document_total ?? 0),
-          anzahl: Number(r.document_count ?? 0),
+          total: Number(r.document_total ?? 0),
+          count: Number(r.document_count ?? 0),
         });
       }
       return map;
@@ -379,18 +379,16 @@ export function useObjektBelegSummen() {
 // The view already applies both of this screen's rules, so the browser no longer re-derives them:
 // cancellations and drafts are excluded from the money, and the overdue count is computed in
 // Postgres against current_date.
-export function useKundeRechnungSummen() {
+export function useCustomerInvoiceTotals() {
   return useQuery({
     queryKey: ["kunde-rechnung-summen"],
     staleTime: STALE,
-    queryFn: async (): Promise<
-      Map<string, { summe: number; anzahl: number; ueberfaellig: number }>
-    > => {
+    queryFn: async (): Promise<Map<string, { total: number; count: number; overdue: number }>> => {
       const { data, error } = await sb
         .from(TABLE.vCustomerInvoiceTotals)
         .select("customer_id, invoice_count, invoice_total, overdue_count");
       if (error) throw error;
-      const map = new Map<string, { summe: number; anzahl: number; ueberfaellig: number }>();
+      const map = new Map<string, { total: number; count: number; overdue: number }>();
       for (const r of (data ?? []) as {
         customer_id: string;
         invoice_count: number;
@@ -398,9 +396,9 @@ export function useKundeRechnungSummen() {
         overdue_count: number;
       }[]) {
         map.set(r.customer_id, {
-          summe: Number(r.invoice_total ?? 0),
-          anzahl: Number(r.invoice_count ?? 0),
-          ueberfaellig: Number(r.overdue_count ?? 0),
+          total: Number(r.invoice_total ?? 0),
+          count: Number(r.invoice_count ?? 0),
+          overdue: Number(r.overdue_count ?? 0),
         });
       }
       return map;
@@ -408,24 +406,24 @@ export function useKundeRechnungSummen() {
   });
 }
 
-export function useGesellschaftBelegSummen() {
+export function useCompanyDocumentTotals() {
   return useQuery({
     queryKey: ["gesellschaft-beleg-summen"],
     staleTime: STALE,
-    queryFn: async (): Promise<Map<string, { summe: number; anzahl: number }>> => {
+    queryFn: async (): Promise<Map<string, { total: number; count: number }>> => {
       const { data, error } = await sb
         .from(TABLE.vCompanyDocumentTotals)
         .select("company_id, document_count, document_total");
       if (error) throw error;
-      const map = new Map<string, { summe: number; anzahl: number }>();
+      const map = new Map<string, { total: number; count: number }>();
       for (const row of (data ?? []) as {
         company_id: string;
         document_count: number;
         document_total: number | string;
       }[]) {
         map.set(row.company_id, {
-          summe: Number(row.document_total ?? 0),
-          anzahl: Number(row.document_count ?? 0),
+          total: Number(row.document_total ?? 0),
+          count: Number(row.document_count ?? 0),
         });
       }
       return map;
@@ -452,7 +450,7 @@ export function useGesellschaftBelegSummen() {
  * whole open set, so a silently truncated response would read as a wrong figure rather than as an
  * error.
  */
-export function useOffeneBelege() {
+export function useOpenDocuments() {
   return useQuery({
     queryKey: ["open_items", "open"],
     staleTime: STALE,
@@ -476,7 +474,7 @@ export function useOffeneBelege() {
  * rule this screen already follows for whitelisted transactions. There are 13 such rows on the this client
  * Hub and 0 on Immonetz, so this costs nothing.
  */
-export function useNichtAbgleichbareBelege() {
+export function useNotMatchableDocuments() {
   return useQuery({
     queryKey: ["open_items", "blockiert"],
     staleTime: STALE,
@@ -509,7 +507,7 @@ export function useNichtAbgleichbareBelege() {
  * nobody has created yet has no row to have an id -- that is exactly the case the "not in the
  * master data" notice on this page covers, and those invoices still have to be listed.
  */
-export function useBelegeByProperty(
+export function useDocumentsByProperty(
   propertyId: string | null,
   propertyCode: string,
   /**
@@ -517,24 +515,24 @@ export function useBelegeByProperty(
    * properties list is still loading, so `propertyId` is still null) and then a second time with
    * the id -- two round trips per page load for one answer.
    */
-  bereit = true,
+  ready = true,
 ) {
   return useQuery({
     queryKey: ["belege", "byProperty", propertyId, propertyCode],
     staleTime: STALE,
-    enabled: !!propertyCode && bereit,
-    queryFn: async (): Promise<Beleg[]> => {
+    enabled: !!propertyCode && ready,
+    queryFn: async (): Promise<Document[]> => {
       // Quoted so a code containing a PostgREST separator cannot break out of the or() expression.
       const oder = propertyId
         ? `property_id.eq.${propertyId},property_code.eq."${propertyCode}"`
         : `property_code.eq."${propertyCode}"`;
-      return fetchAllRows<Beleg>(
+      return fetchAllRows<Document>(
         (from, to, withCount) =>
           supabase
             .from(TABLE.documents)
             // Narrow, for the reason spelled out above BELEG_ZEILE_SPALTEN: `select("*")` here was
             // moving this property's entire OCR text and embedding vectors to render five columns.
-            .select(BELEG_ZEILE_SPALTEN_UST, withCount ? { count: "exact" } : undefined)
+            .select(DOCUMENT_ROW_COLUMNS_VAT, withCount ? { count: "exact" } : undefined)
             .is("deleted_at", null)
             .is("archived_at", null)
             .is("not_relevant_at", null)
@@ -542,7 +540,7 @@ export function useBelegeByProperty(
             .or(oder)
             .order("document_date", { ascending: false })
             .range(from, to) as unknown as Promise<{
-            data: Beleg[] | null;
+            data: Document[] | null;
             error: unknown;
             count?: number | null;
           }>,
@@ -552,7 +550,7 @@ export function useBelegeByProperty(
 }
 
 /** The invoice columns the BWA scope actually reads. Nothing else is fetched for it. */
-export const BWA_BELEG_COLUMNS = [
+export const COSTANALYSIS_DOCUMENT_COLUMNS = [
   "id",
   "amount_gross",
   "amount_net",
@@ -570,7 +568,7 @@ export const BWA_BELEG_COLUMNS = [
   "vat_nondeductible_amount",
 ] as const;
 
-export type BwaBeleg = Pick<Beleg, (typeof BWA_BELEG_COLUMNS)[number]>;
+export type CostAnalysisDocument = Pick<Document, (typeof COSTANALYSIS_DOCUMENT_COLUMNS)[number]>;
 
 /**
  * The invoices the Cost Analysis reads, and only the columns it reads.
@@ -587,23 +585,26 @@ export type BwaBeleg = Pick<Beleg, (typeof BWA_BELEG_COLUMNS)[number]>;
  * of a split scan (status='split') is not an invoice, and an archived or not-relevant receipt
  * has been handed back. If those diverge, this screen's totals diverge from every other screen's.
  */
-export function useBelegeForBwa() {
+export function useDocumentsForCostAnalysis() {
   return useQuery({
     queryKey: ["belege-bwa"],
     staleTime: STALE,
-    queryFn: async (): Promise<BwaBeleg[]> =>
-      fetchAllRows<BwaBeleg>(
+    queryFn: async (): Promise<CostAnalysisDocument[]> =>
+      fetchAllRows<CostAnalysisDocument>(
         (from, to, withCount) =>
           supabase
             .from(TABLE.documents)
-            .select(BWA_BELEG_COLUMNS.join(","), withCount ? { count: "exact" } : undefined)
+            .select(
+              COSTANALYSIS_DOCUMENT_COLUMNS.join(","),
+              withCount ? { count: "exact" } : undefined,
+            )
             .is("deleted_at", null)
             .is("archived_at", null)
             .is("not_relevant_at", null)
             .neq("status", "split")
             .order("created_at", { ascending: false })
             .range(from, to) as unknown as Promise<{
-            data: BwaBeleg[] | null;
+            data: CostAnalysisDocument[] | null;
             error: unknown;
             count?: number | null;
           }>,
@@ -611,12 +612,12 @@ export function useBelegeForBwa() {
   });
 }
 
-export function useBelege(search?: string) {
+export function useDocuments(search?: string) {
   const q = (search ?? "").trim();
   return useQuery({
     queryKey: ["belege", q],
     staleTime: STALE,
-    queryFn: async (): Promise<Beleg[]> => {
+    queryFn: async (): Promise<Document[]> => {
       // Container rows of a split multi-receipt scan (status='split', document_type='Sammelscan')
       // are NOT invoices — they hold the original of the scan for the audit trail while their children
       // carry the actual data (pipeline migrations 0009/0020). Without this they turn up as extra
@@ -625,7 +626,7 @@ export function useBelege(search?: string) {
       // fetchAllRows works around the platform's per-request row cap (see its own comment) — this
       // hook is read everywhere as "the whole invoices table", so a silent partial result here would
       // be wrong on the dashboard, Auswertungen, and Offene Posten all at once, not just here.
-      return fetchAllRows<Beleg>((from, to, withCount) => {
+      return fetchAllRows<Document>((from, to, withCount) => {
         let query = supabase
           .from(TABLE.documents)
           .select("*", withCount ? { count: "exact" } : undefined)
@@ -645,7 +646,7 @@ export function useBelege(search?: string) {
         return query
           .order("created_at", { ascending: false })
           .range(from, to) as unknown as Promise<{
-          data: Beleg[] | null;
+          data: Document[] | null;
           error: unknown;
           count?: number | null;
         }>;
@@ -671,7 +672,7 @@ export function useBelege(search?: string) {
  * invoice is actually paid to, and a reviewer who enters it on the supplier's screen has answered
  * exactly what those checks were asking. Only the suppliers these rows reference are read.
  */
-async function nachgeprueft<T extends Beleg>(rows: T[]): Promise<T[]> {
+async function rechecked<T extends Document>(rows: T[]): Promise<T[]> {
   const ids = Array.from(new Set(rows.map((r) => r.supplier_id).filter((v): v is string => !!v)));
   let ibans = new Map<string, string | null>();
   if (ids.length > 0) {
@@ -681,7 +682,7 @@ async function nachgeprueft<T extends Beleg>(rows: T[]): Promise<T[]> {
     );
   }
   return rows.map((r) =>
-    belegNachgeprueft(r, { lieferantIban: ibans.get(r.supplier_id ?? "") ?? null }),
+    documentRechecked(r, { supplierIban: ibans.get(r.supplier_id ?? "") ?? null }),
   );
 }
 
@@ -702,7 +703,7 @@ async function nachgeprueft<T extends Beleg>(rows: T[]): Promise<T[]> {
 // Columns used only to FILTER or SORT are deliberately absent: PostgREST applies `order` and the
 // query filters server-side, so `property_code`, `archived_at` and `not_relevant_at` never have to
 // travel. Add a column here the moment the screen starts reading one, or it arrives undefined.
-const BELEGE_LISTE_SPALTEN = [
+const DOCUMENTS_LIST_COLUMNS = [
   "id",
   "issuer",
   "issuer_sort",
@@ -754,28 +755,28 @@ const BELEGE_LISTE_SPALTEN = [
 // Migration 20260910120000 makes the review columns prunable, after which both views cost the
 // same for the column list this file asks for. This split is what makes the list fast before that
 // migration is applied, and it stays correct afterwards.
-function listenQuelle(
-  f: BelegeFilter,
+function listenSource(
+  f: DocumentsFilter,
 ): typeof TABLE.vDocumentsList | typeof TABLE.vDocumentsReview {
   return f.q ? TABLE.vDocumentsReview : TABLE.vDocumentsList;
 }
 
 // Sort key → view column.
-const SORT_COLUMN: Record<BelegSortKey, string> = {
-  steller: "issuer_sort",
-  gesellschaft: "company_code",
-  objekt: "property_code",
-  betrag: "amount_gross",
-  beleg_datum: "document_date",
-  faellig: "due_date",
-  eingegangen_am: "created_at",
+const SORT_COLUMN: Record<DocumentSortKey, string> = {
+  issuer: "issuer_sort",
+  company: "company_code",
+  property: "property_code",
+  amount: "amount_gross",
+  document_date: "document_date",
+  due: "due_date",
+  received_at: "created_at",
   status: "status",
-  pruefung: "review_score",
+  check: "review_score",
 };
 
 // Apply the shared filters to a v_belege_list query builder (server-side).
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
-function applyBelegeFilter(query: any, f: BelegeFilter) {
+function applyDocumentsFilter(query: any, f: DocumentsFilter) {
   // AI search result set (askInvoiceQuestion). An empty array must still narrow to zero rows —
   // see the `ids` field's own comment in types.ts.
   if (f.ids) query = f.ids.length > 0 ? query.in("id", f.ids) : query.is("id", null);
@@ -789,18 +790,18 @@ function applyBelegeFilter(query: any, f: BelegeFilter) {
   // GESELLSCHAFT_OHNE is not an ordinary code: it means "no company assigned", which the pipeline
   // writes as NULL and which the companies table also has a row for. Both have to match, or the
   // filter finds a handful of rows while the list plainly shows hundreds reading "ohne".
-  if (f.gesellschaft === GESELLSCHAFT_OHNE)
-    query = query.or(`company_code.is.null,company_code.eq.${GESELLSCHAFT_OHNE}`);
-  else if (f.gesellschaft) query = query.eq("company_code", f.gesellschaft);
+  if (f.company === COMPANY_WITHOUT)
+    query = query.or(`company_code.is.null,company_code.eq.${COMPANY_WITHOUT}`);
+  else if (f.company) query = query.eq("company_code", f.company);
   // Same idea as GESELLSCHAFT_OHNE above: a filter for the rows that have nothing assigned, which
   // is the state most of this queue is actually in.
-  if (f.objekt === OBJEKT_OHNE) query = query.is("property_code", null);
-  else if (f.objekt) query = query.eq("property_code", f.objekt);
+  if (f.property === PROPERTY_WITHOUT) query = query.is("property_code", null);
+  else if (f.property) query = query.eq("property_code", f.property);
   if (f.status) query = query.eq("status", f.status);
   if (f.workflow) query = query.eq("workflow_status", f.workflow);
-  if (f.belegart) query = query.eq("document_type", f.belegart);
-  if (f.zahlung === "paid") query = query.not("paid_at", "is", null);
-  else if (f.zahlung === "open") query = query.is("paid_at", null);
+  if (f.documentType) query = query.eq("document_type", f.documentType);
+  if (f.payment === "paid") query = query.not("paid_at", "is", null);
+  else if (f.payment === "open") query = query.is("paid_at", null);
   if (f.paymentType === "direct_debit") query = query.eq("is_direct_debit", true);
   else if (f.paymentType === "transfer") query = query.eq("is_direct_debit", false);
   if (f.datev === "uebergeben") query = query.not("handed_over_at", "is", null);
@@ -824,23 +825,24 @@ function applyBelegeFilter(query: any, f: BelegeFilter) {
   // Recognition traffic light — an axis of its own, not a `status` value. 'auffaellig' is the
   // review queue the briefing actually describes: yellow ("have it confirmed") and red ("to be
   // checked") are both cases where a human has to look, and they are useless as separate lists.
-  if (f.ampel === "auffaellig") query = query.in("traffic_light", ["yellow", "red"]);
-  else if (f.ampel) query = query.eq("traffic_light", f.ampel);
+  if (f.trafficLight === "auffaellig") query = query.in("traffic_light", ["yellow", "red"]);
+  else if (f.trafficLight) query = query.eq("traffic_light", f.trafficLight);
   // Archived receipts (migration 0025) leave the everyday list unless explicitly asked for.
   // The KPI/facet RPCs (invoices_kpis, invoices_facets, migration 0042) apply the same
   // `archived_at is null` / `not_relevant_at is null` exclusion server-side, so the tiles and the
   // list always agree.
-  query = f.archiv === "nur" ? query.not("archived_at", "is", null) : query.is("archived_at", null);
+  query =
+    f.archive === "only" ? query.not("archived_at", "is", null) : query.is("archived_at", null);
   // "Nicht relevant" receipts are not receipts. They belong in neither the everyday list nor the
   // archive view, which is for wrongly ingested ones. The detail screen stays reachable by URL, so
   // the undo is still available; only the queue hides them.
   query = query.is("not_relevant_at", null);
-  if (f.von) query = query.gte("document_date", f.von);
-  if (f.bis) query = query.lte("document_date", f.bis);
-  if (f.faelligUnbekannt) query = query.is("due_date", null);
+  if (f.fromDate) query = query.gte("document_date", f.fromDate);
+  if (f.toDate) query = query.lte("document_date", f.toDate);
+  if (f.dueUnknown) query = query.is("due_date", null);
   else {
-    if (f.faelligVon) query = query.gte("due_date", f.faelligVon);
-    if (f.faelligBis) query = query.lte("due_date", f.faelligBis);
+    if (f.dueFromDate) query = query.gte("due_date", f.dueFromDate);
+    if (f.dueToDate) query = query.lte("due_date", f.dueToDate);
   }
   return query;
 }
@@ -858,21 +860,21 @@ function isRangeNotSatisfiable(error: unknown): boolean {
 // Paginated, filtered, sorted invoice list from v_belege_list. Returns the page rows +
 // the exact total count. Deterministic secondary sort (created_at desc, id asc) keeps
 // rows from jumping between pages on tied primary values.
-export function useBelegeListe(params: BelegeListeParams, opts?: { enabled?: boolean }) {
+export function useDocumentsList(params: DocumentsListParams, opts?: { enabled?: boolean }) {
   return useQuery({
     queryKey: ["belege-liste", params],
     enabled: opts?.enabled ?? true,
     staleTime: STALE,
     placeholderData: keepPreviousData, // smooth page/filter transitions
-    queryFn: async (): Promise<BelegeSeite> => {
+    queryFn: async (): Promise<DocumentsPage> => {
       const from = (params.page - 1) * params.pageSize;
       const to = from + params.pageSize - 1;
       // v_invoices_review was the name this app queried from migration 0025 to 0042, when it was
       // still a plain passthrough of v_invoices_list. Migration 20260909150000 gave it real work
       // to do per row, so the read now picks its view: see listenQuelle above. v_documents_list
       // itself selects `i.*` and so can never go stale/frozen on a new invoices column.
-      let query = sb.from(listenQuelle(params)).select(BELEGE_LISTE_SPALTEN, { count: "exact" });
-      query = applyBelegeFilter(query, params);
+      let query = sb.from(listenSource(params)).select(DOCUMENTS_LIST_COLUMNS, { count: "exact" });
+      query = applyDocumentsFilter(query, params);
       query = query
         .order(SORT_COLUMN[params.sort], { ascending: params.dir === "asc", nullsFirst: false })
         .order("created_at", { ascending: false })
@@ -880,7 +882,7 @@ export function useBelegeListe(params: BelegeListeParams, opts?: { enabled?: boo
         .range(from, to);
       const { data, error, count } = await query;
       if (!error) {
-        return { rows: await nachgeprueft((data ?? []) as BelegListeRow[]), total: count ?? 0 };
+        return { rows: await rechecked((data ?? []) as DocumentListRow[]), total: count ?? 0 };
       }
       // PostgREST refuses a range that starts past the end of the result set (PGRST103,
       // "Requested range not satisfiable") rather than returning an empty page. A bookmarked or
@@ -888,28 +890,26 @@ export function useBelegeListe(params: BelegeListeParams, opts?: { enabled?: boo
       // got smaller, and Retry re-sent the same impossible request. Ask what does exist and serve
       // the last real page instead; the caller corrects the URL from `angepassteSeite`.
       if (!isRangeNotSatisfiable(error)) throw error;
-      let zaehler = sb.from(listenQuelle(params)).select("id", { count: "exact", head: true });
-      zaehler = applyBelegeFilter(zaehler, params);
-      const { count: gesamt, error: zaehlerFehler } = await zaehler;
-      if (zaehlerFehler) throw zaehlerFehler;
-      const total = gesamt ?? 0;
-      const letzteSeite = Math.max(1, Math.ceil(total / params.pageSize));
-      if (letzteSeite === params.page) throw error; // not a paging problem after all
-      const letzteVon = (letzteSeite - 1) * params.pageSize;
-      let nachschlag = sb
-        .from(listenQuelle(params))
-        .select(BELEGE_LISTE_SPALTEN, { count: "exact" });
-      nachschlag = applyBelegeFilter(nachschlag, params);
-      const { data: letzteZeilen, error: letzterFehler } = await nachschlag
+      let counter = sb.from(listenSource(params)).select("id", { count: "exact", head: true });
+      counter = applyDocumentsFilter(counter, params);
+      const { count: countedTotal, error: counterError } = await counter;
+      if (counterError) throw counterError;
+      const total = countedTotal ?? 0;
+      const lastPage = Math.max(1, Math.ceil(total / params.pageSize));
+      if (lastPage === params.page) throw error; // not a paging problem after all
+      const lastFrom = (lastPage - 1) * params.pageSize;
+      let lookup = sb.from(listenSource(params)).select(DOCUMENTS_LIST_COLUMNS, { count: "exact" });
+      lookup = applyDocumentsFilter(lookup, params);
+      const { data: lastRows, error: lastError } = await lookup
         .order(SORT_COLUMN[params.sort], { ascending: params.dir === "asc", nullsFirst: false })
         .order("created_at", { ascending: false })
         .order("id", { ascending: true })
-        .range(letzteVon, letzteVon + params.pageSize - 1);
-      if (letzterFehler) throw letzterFehler;
+        .range(lastFrom, lastFrom + params.pageSize - 1);
+      if (lastError) throw lastError;
       return {
-        rows: await nachgeprueft((letzteZeilen ?? []) as BelegListeRow[]),
+        rows: await rechecked((lastRows ?? []) as DocumentListRow[]),
         total,
-        angepassteSeite: letzteSeite,
+        adjustedPage: lastPage,
       };
     },
   });
@@ -918,15 +918,15 @@ export function useBelegeListe(params: BelegeListeParams, opts?: { enabled?: boo
 // One page of an infinite-scroll list, carrying the exact total alongside it so the caller can
 // show a real count (not just "how many are loaded so far") without a separate query.
 
-export interface OpenBelegeInfiniteFilter {
+export interface OpenDocumentsInfiniteFilter {
   q?: string;
   /** document_date range */
-  von?: string;
-  bis?: string;
+  fromDate?: string;
+  toDate?: string;
   /** created_at range — independent of document_date, both may be set at once */
-  createdAtVon?: string;
-  createdAtBis?: string;
-  sort: BelegSortKey;
+  createdAtFromDate?: string;
+  createdAtToDate?: string;
+  sort: DocumentSortKey;
   dir: "asc" | "desc";
   pageSize: number;
 }
@@ -938,20 +938,20 @@ export interface OpenBelegeInfiniteFilter {
 // Infinite/paginated (not the single unpaginated useBelege) because this tab used to load every
 // open invoice up front to let the client search/sort/scroll it, which was the actual source of
 // the tab feeling slow — not the network round trip itself.
-export function useOpenBelegeInfinite(
-  filter: OpenBelegeInfiniteFilter,
+export function useOpenDocumentsInfinite(
+  filter: OpenDocumentsInfiniteFilter,
   opts?: { enabled?: boolean },
 ) {
-  const { q, von, bis, createdAtVon, createdAtBis, sort, dir, pageSize } = filter;
+  const { q, fromDate, toDate, createdAtFromDate, createdAtToDate, sort, dir, pageSize } = filter;
   return useInfiniteQuery({
     placeholderData: keepPreviousData,
     queryKey: [
       "open-belege-infinite",
       q ?? "",
-      von ?? "",
-      bis ?? "",
-      createdAtVon ?? "",
-      createdAtBis ?? "",
+      fromDate ?? "",
+      toDate ?? "",
+      createdAtFromDate ?? "",
+      createdAtToDate ?? "",
       sort,
       dir,
       pageSize,
@@ -959,20 +959,20 @@ export function useOpenBelegeInfinite(
     enabled: opts?.enabled ?? true,
     staleTime: STALE,
     initialPageParam: 0,
-    getNextPageParam: (_lastPage: InfinitePage<BelegListeRow>, allPages) =>
+    getNextPageParam: (_lastPage: InfinitePage<DocumentListRow>, allPages) =>
       hasNextInfinitePage(allPages) ? allPages.length : undefined,
-    queryFn: async ({ pageParam }): Promise<InfinitePage<BelegListeRow>> => {
+    queryFn: async ({ pageParam }): Promise<InfinitePage<DocumentListRow>> => {
       const from = pageParam * pageSize;
       const to = from + pageSize - 1;
-      let query = sb.from(TABLE.vDocumentsList).select(BELEGE_LISTE_SPALTEN, { count: "exact" });
-      query = applyBelegeFilter(query, { zahlung: "open", von, bis });
-      const suche = (q ?? "").trim();
-      if (suche) {
-        const betragFilter = amountQueryFilter(suche);
-        if (betragFilter) {
-          query = query.or(betragFilter.replaceAll("amount.", "amount_gross."));
+      let query = sb.from(TABLE.vDocumentsList).select(DOCUMENTS_LIST_COLUMNS, { count: "exact" });
+      query = applyDocumentsFilter(query, { payment: "open", fromDate, toDate });
+      const search = (q ?? "").trim();
+      if (search) {
+        const amountFilter = amountQueryFilter(search);
+        if (amountFilter) {
+          query = query.or(amountFilter.replaceAll("amount.", "amount_gross."));
         } else {
-          for (const token of searchTokens(suche)) {
+          for (const token of searchTokens(search)) {
             query = query.or(`issuer.ilike.%${token}%,invoice_number.ilike.%${token}%`);
           }
         }
@@ -986,17 +986,17 @@ export function useOpenBelegeInfinite(
       // split amount comes out as 0 and the button stays disabled, so it was only ever noise in a
       // list somebody is scrolling to find one counterpart.
       query = query.gt("amount_gross", 0).or("already_paid.is.null,already_paid.eq.false");
-      if (createdAtVon) query = query.gte("created_at", createdAtVon);
+      if (createdAtFromDate) query = query.gte("created_at", createdAtFromDate);
       // Inclusive of the whole end day — created_at is a timestamptz, so a bare date bound would
       // cut off at midnight and silently drop everything from later that same day.
-      if (createdAtBis) query = query.lte("created_at", `${createdAtBis}T23:59:59.999`);
+      if (createdAtToDate) query = query.lte("created_at", `${createdAtToDate}T23:59:59.999`);
       const { data, error, count } = await query
         .order(SORT_COLUMN[sort], { ascending: dir === "asc", nullsFirst: false })
         .order("created_at", { ascending: false })
         .order("id", { ascending: true })
         .range(from, to);
       if (error) throw error;
-      return { rows: (data ?? []) as BelegListeRow[], total: count ?? 0 };
+      return { rows: (data ?? []) as DocumentListRow[], total: count ?? 0 };
     },
   });
 }
@@ -1013,19 +1013,19 @@ function isMissingRpcSignature(error: unknown): boolean {
 }
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
-function readKpiRow(data: any): Omit<BelegeKpis, "partial"> {
+function readKpiRow(data: any): Omit<DocumentsKpis, "partial"> {
   const row = Array.isArray(data) ? data[0] : data;
   return {
     total: Number(row?.total ?? 0),
-    recognised: Number(row?.erkannt ?? 0),
+    recognised: Number(row?.recognised ?? 0),
     needs_review: Number(row?.zu_pruefen ?? 0),
-    volumen: Number(row?.volumen ?? 0),
+    volume: Number(row?.volume ?? 0),
     // Only present since migration 20260815210000, and `partial` cannot stand in for its absence:
     // that migration changed the function's RETURN TYPE, not its signature, so PostgREST resolves
     // the call normally and the column is simply missing from the row. null means "this database
     // cannot answer that yet" and the page leaves the tile out, rather than printing a made-up
     // "Noch zu zahlen: 0,00 €" next to a volume that is plainly not zero.
-    open: row && typeof row === "object" && "open" in row ? Number(row.offen ?? 0) : null,
+    open: row && typeof row === "object" && "open" in row ? Number(row.open ?? 0) : null,
   };
 }
 
@@ -1040,7 +1040,7 @@ export function useInvoiceQueueKpis() {
     queryKey: ["invoice-queue-kpis"],
     staleTime: STALE,
     queryFn: async (): Promise<QueueKpiRowData[]> => {
-      const { data, error } = await sb.rpc("invoice_queue_kpis", { p_today: heuteLokal() });
+      const { data, error } = await sb.rpc("invoice_queue_kpis", { p_today: todayLocal() });
       if (error) {
         if (error.code === "PGRST202" || error.code === "42883") return [];
         throw error;
@@ -1057,20 +1057,20 @@ export function useInvoiceQueueKpis() {
 // KPI aggregates via RPC. Filter-aware: the caller passes every filter the list applies EXCEPT
 // status, which stays out so the tiles keep working as status toggles. Includes the gross-volume
 // sum.
-export function useBelegeKpis(filter: Omit<BelegeFilter, "status">) {
+export function useDocumentsKpis(filter: Omit<DocumentsFilter, "status">) {
   return useQuery({
     queryKey: ["belege-kpis", filter],
     staleTime: STALE,
     placeholderData: keepPreviousData,
-    queryFn: async (): Promise<BelegeKpis> => {
+    queryFn: async (): Promise<DocumentsKpis> => {
       const args = {
         p_q: filter.q || null,
-        p_gesellschaft: filter.gesellschaft || null,
-        p_objekt: filter.objekt || null,
-        p_belegart: filter.belegart || null,
-        p_zahlung: filter.zahlung || null,
-        p_von: filter.von || null,
-        p_bis: filter.bis || null,
+        p_gesellschaft: filter.company || null,
+        p_objekt: filter.property || null,
+        p_belegart: filter.documentType || null,
+        p_zahlung: filter.payment || null,
+        p_von: filter.fromDate || null,
+        p_bis: filter.toDate || null,
         p_datev: filter.datev || null,
         p_workflow: filter.workflow || null,
         // Keeps the KPI tiles in step with the list's bank-match filter (migration
@@ -1082,12 +1082,12 @@ export function useBelegeKpis(filter: Omit<BelegeFilter, "status">) {
       // for an AI search's id set, for the traffic light or for the archive switch, so the tiles
       // counted a wider set than the rows underneath whenever one of them was on.
       const lateFilters = {
-        p_ampel: filter.ampel || null,
-        p_archiv: filter.archiv || null,
+        p_ampel: filter.trafficLight || null,
+        p_archiv: filter.archive || null,
         p_ids: filter.ids ?? null,
-        p_faellig_von: filter.faelligVon || null,
-        p_faellig_bis: filter.faelligBis || null,
-        p_faellig_unbekannt: filter.faelligUnbekannt ?? null,
+        p_faellig_von: filter.dueFromDate || null,
+        p_faellig_bis: filter.dueToDate || null,
+        p_faellig_unbekannt: filter.dueUnknown ?? null,
         p_direct_debit:
           filter.paymentType === "direct_debit"
             ? true
@@ -1111,15 +1111,18 @@ export function useBelegeKpis(filter: Omit<BelegeFilter, "status">) {
 // field on invoices_kpis: the tiles' RPC counts one filtered set, and this counts what a different
 // company filter would return, which is not the same question. `head: true` means no rows travel,
 // only the count.
-export function useBelegeOhneGesellschaftCount(filter: BelegeFilter, opts?: { enabled?: boolean }) {
-  const ohneFilter = { ...filter, gesellschaft: GESELLSCHAFT_OHNE };
+export function useDocumentsWithoutCompanyCount(
+  filter: DocumentsFilter,
+  opts?: { enabled?: boolean },
+) {
+  const withoutFilter = { ...filter, company: COMPANY_WITHOUT };
   return useQuery({
-    queryKey: ["belege-ohne-gesellschaft", ohneFilter],
+    queryKey: ["belege-ohne-gesellschaft", withoutFilter],
     enabled: opts?.enabled ?? true,
     staleTime: STALE,
     queryFn: async (): Promise<number> => {
-      let query = sb.from(listenQuelle(ohneFilter)).select("id", { count: "exact", head: true });
-      query = applyBelegeFilter(query, ohneFilter);
+      let query = sb.from(listenSource(withoutFilter)).select("id", { count: "exact", head: true });
+      query = applyDocumentsFilter(query, withoutFilter);
       const { count, error } = await query;
       if (error) throw error;
       return count ?? 0;
@@ -1128,17 +1131,17 @@ export function useBelegeOhneGesellschaftCount(filter: BelegeFilter, opts?: { en
 }
 
 // Distinct filter-option lists over the whole non-deleted table (one cached RPC call).
-export function useBelegeFacets() {
+export function useDocumentsFacets() {
   return useQuery({
     queryKey: ["belege-facets"],
     staleTime: 5 * STALE,
-    queryFn: async (): Promise<BelegeFacets> => {
+    queryFn: async (): Promise<DocumentsFacets> => {
       const { data, error } = await sb.rpc("invoices_facets");
       if (error) throw error;
-      const f = (data ?? {}) as Partial<BelegeFacets>;
+      const f = (data ?? {}) as Partial<DocumentsFacets>;
       return {
         objekt_codes: f.objekt_codes ?? [],
-        belegarten: f.belegarten ?? [],
+        documentTypes: f.documentTypes ?? [],
         months: f.months ?? [],
         years: f.years ?? [],
       };
@@ -1149,7 +1152,7 @@ export function useBelegeFacets() {
 // Kanban loads ALL matching rows up to a safety cap (no per-column lazy loading yet).
 // `capped` is true when the filtered total exceeds the cap, so the board can warn the user.
 /** Cards fetched per scroll step in a Kanban column. */
-export const KANBAN_SEITE = 25;
+export const KANBAN_PAGE = 25;
 
 /**
  * How many receipts each workflow column holds, for the whole filter and with no cap.
@@ -1163,15 +1166,15 @@ export const KANBAN_SEITE = 25;
  * It is also what keeps the request count down: only columns this reports as non-empty go on to
  * fetch cards.
  */
-export function useBelegeKanbanCounts(filter: BelegeFilter, opts?: { enabled?: boolean }) {
+export function useDocumentsKanbanCounts(filter: DocumentsFilter, opts?: { enabled?: boolean }) {
   return useQuery({
     queryKey: ["belege-kanban-counts", filter],
     enabled: opts?.enabled ?? true,
     staleTime: STALE,
     placeholderData: keepPreviousData,
     queryFn: async (): Promise<Record<string, number>> => {
-      let query = sb.from(listenQuelle(filter)).select("workflow_status");
-      query = applyBelegeFilter(query, filter);
+      let query = sb.from(listenSource(filter)).select("workflow_status");
+      query = applyDocumentsFilter(query, filter);
       const { data, error } = await query;
       if (error) throw error;
       const counts: Record<string, number> = {};
@@ -1194,8 +1197,8 @@ export function useBelegeKanbanCounts(filter: BelegeFilter, opts?: { enabled?: b
  * (a pipeline run inserts a batch in the same instant), and without a stable second key the same
  * receipt can appear on two pages while another never appears at all.
  */
-export function useBelegeKanbanSpalte(
-  filter: BelegeFilter,
+export function useDocumentsKanbanColumn(
+  filter: DocumentsFilter,
   workflow: string,
   opts?: { enabled?: boolean },
 ) {
@@ -1204,19 +1207,19 @@ export function useBelegeKanbanSpalte(
     enabled: opts?.enabled ?? true,
     staleTime: STALE,
     initialPageParam: 0,
-    getNextPageParam: (_lastPage: InfinitePage<BelegListeRow>, allPages) =>
+    getNextPageParam: (_lastPage: InfinitePage<DocumentListRow>, allPages) =>
       hasNextInfinitePage(allPages) ? allPages.length : undefined,
-    queryFn: async ({ pageParam }): Promise<InfinitePage<BelegListeRow>> => {
-      const from = pageParam * KANBAN_SEITE;
-      let query = sb.from(listenQuelle(filter)).select(BELEGE_LISTE_SPALTEN, { count: "exact" });
-      query = applyBelegeFilter(query, filter);
+    queryFn: async ({ pageParam }): Promise<InfinitePage<DocumentListRow>> => {
+      const from = pageParam * KANBAN_PAGE;
+      let query = sb.from(listenSource(filter)).select(DOCUMENTS_LIST_COLUMNS, { count: "exact" });
+      query = applyDocumentsFilter(query, filter);
       query = query.eq("workflow_status", workflow);
       const { data, error, count } = await query
         .order("created_at", { ascending: false })
         .order("id", { ascending: true })
-        .range(from, from + KANBAN_SEITE - 1);
+        .range(from, from + KANBAN_PAGE - 1);
       if (error) throw error;
-      return { rows: (data ?? []) as BelegListeRow[], total: count ?? 0 };
+      return { rows: (data ?? []) as DocumentListRow[], total: count ?? 0 };
     },
   });
 }
@@ -1244,12 +1247,12 @@ export function useTranscribeVoiceQuery() {
   });
 }
 
-export function useBeleg(id: string) {
+export function useDocument(id: string) {
   return useQuery({
     queryKey: ["beleg", id],
     enabled: !!id,
     staleTime: STALE,
-    queryFn: async (): Promise<Beleg | null> => {
+    queryFn: async (): Promise<Document | null> => {
       const { data, error } = await supabase
         .from(TABLE.documents)
         .select("*")
@@ -1258,18 +1261,18 @@ export function useBeleg(id: string) {
         .maybeSingle();
       if (error) throw error;
       if (!data) return null;
-      return (await nachgeprueft([data as unknown as Beleg]))[0] ?? null;
+      return (await rechecked([data as unknown as Document]))[0] ?? null;
     },
   });
 }
 
 // Original-Datei (bytea) eines Belegs. Wird nur im Detail geladen.
-export function useBelegDatei(belegId: string) {
+export function useDocumentFile(documentId: string) {
   return useQuery({
-    queryKey: ["beleg_datei", belegId],
-    enabled: !!belegId,
+    queryKey: ["beleg_datei", documentId],
+    enabled: !!documentId,
     staleTime: STALE,
-    queryFn: async (): Promise<BelegDatei | null> => {
+    queryFn: async (): Promise<DocumentFile | null> => {
       // invoice_files ist seit Migration 0011 mehrzeilig je Beleg (role 'original' | 'xml' | …).
       // Für die Vorschau NUR das Original holen, sonst würde .maybeSingle() bei mehreren Zeilen werfen
       // bzw. versehentlich die XML statt des PDFs liefern.
@@ -1278,11 +1281,11 @@ export function useBelegDatei(belegId: string) {
       const { data, error } = await sb
         .from(TABLE.documentFiles)
         .select("*")
-        .eq("document_id", belegId)
+        .eq("document_id", documentId)
         .eq("role", "original")
         .maybeSingle();
       if (error) throw error;
-      return (data as unknown as BelegDatei) ?? null;
+      return (data as unknown as DocumentFile) ?? null;
     },
   });
 }
@@ -1293,17 +1296,17 @@ export function useBelegDatei(belegId: string) {
 // shorter than STALE: the signed URL itself expires server-side too
 
 export function useInvoiceFileUrl(
-  belegId: string,
+  documentId: string,
   opts: { downloadFilename?: string | null; enabled?: boolean } = {},
 ) {
   return useQuery({
-    queryKey: ["invoice_file_url", belegId, opts.downloadFilename ?? null],
-    enabled: (opts.enabled ?? true) && !!belegId,
+    queryKey: ["invoice_file_url", documentId, opts.downloadFilename ?? null],
+    enabled: (opts.enabled ?? true) && !!documentId,
     staleTime: FILE_URL_STALE,
     placeholderData: keepPreviousData,
     queryFn: () =>
       getInvoiceFileUrl({
-        data: { invoiceId: belegId, downloadFilename: opts.downloadFilename ?? undefined },
+        data: { invoiceId: documentId, downloadFilename: opts.downloadFilename ?? undefined },
       }),
   });
 }
@@ -1326,19 +1329,19 @@ export function useTransactionDocuments(transactionId: string, opts: { enabled?:
 }
 
 // ---- Verlauf / Notizen (beleg_verlauf) ----
-export function useBelegVerlauf(belegId: string) {
+export function useDocumentHistory(documentId: string) {
   return useQuery({
-    queryKey: ["beleg_verlauf", belegId],
-    enabled: !!belegId,
+    queryKey: ["beleg_verlauf", documentId],
+    enabled: !!documentId,
     staleTime: STALE,
-    queryFn: async (): Promise<BelegVerlauf[]> => {
+    queryFn: async (): Promise<DocumentHistory[]> => {
       const { data, error } = await supabase
         .from(TABLE.documentHistory)
         .select("*")
-        .eq("document_id", belegId)
+        .eq("document_id", documentId)
         .order("created_at", { ascending: false });
       if (error) throw error;
-      return (data ?? []) as unknown as BelegVerlauf[];
+      return (data ?? []) as unknown as DocumentHistory[];
     },
   });
 }
@@ -1347,12 +1350,12 @@ export function useBelegVerlauf(belegId: string) {
 
 // Beleg-Felder aktualisieren. `changes` = nur die geänderten Spalten.
 // `protokoll` (optional) erzeugt zusätzlich einen Verlaufseintrag.
-export function useUpdateBeleg(belegId: string) {
+export function useUpdateDocument(documentId: string) {
   const qc = useQueryClient();
   return useMutation({
     mutationFn: async (args: {
-      changes: Partial<Beleg>;
-      protokoll?: { typ: string; text: string; daten?: Record<string, unknown> | null };
+      changes: Partial<Document>;
+      activityLog?: { type: string; text: string; data?: Record<string, unknown> | null };
     }) => {
       // Postgres/PostgREST does NOT error when an UPDATE's RLS policy filters it down to zero
       // matching rows — it just quietly updates nothing (bit us live: 20260812141500's own
@@ -1375,31 +1378,31 @@ export function useUpdateBeleg(belegId: string) {
        * it loses is the stored record of who corrected what, and `validateInvoice` in
        * src/lib/api/invoice-validation.functions.ts is the endpoint for repairing that.
        */
-      const vollstaendig = { ...args.changes, updated_at: new Date().toISOString() } as Record<
+      const complete = { ...args.changes, updated_at: new Date().toISOString() } as Record<
         string,
         unknown
       >;
-      const { data: aktuell } = await sb
+      const { data: current } = await sb
         .from(TABLE.documents)
         .select("*")
-        .eq("id", belegId)
+        .eq("id", documentId)
         .maybeSingle();
-      if (aktuell) {
-        const zusammen = { ...(aktuell as Beleg), ...args.changes } as Beleg;
-        let lieferantIban: string | null = null;
-        if (zusammen.supplier_id) {
-          const { data: lieferant } = await sb
+      if (current) {
+        const together = { ...(current as Document), ...args.changes } as Document;
+        let supplierIban: string | null = null;
+        if (together.supplier_id) {
+          const { data: supplier } = await sb
             .from(TABLE.suppliers)
             .select("iban")
-            .eq("id", zusammen.supplier_id)
+            .eq("id", together.supplier_id)
             .maybeSingle();
-          lieferantIban = (lieferant as { iban: string | null } | null)?.iban ?? null;
+          supplierIban = (supplier as { iban: string | null } | null)?.iban ?? null;
         }
         // Writes both halves back: the pipeline's own entries copied through untouched, the
         // corrections under `user_edits`. A row still carrying the older flat map is split by
         // this write, which is the same shape the backfill script produces.
-        vollstaendig.validation_detail = belegNachgeprueft(zusammen, {
-          lieferantIban,
+        complete.validation_detail = documentRechecked(together, {
+          supplierIban,
         }).validation_detail;
       }
       // Postgres/PostgREST does NOT error when an UPDATE's RLS policy filters it down to zero
@@ -1408,8 +1411,8 @@ export function useUpdateBeleg(belegId: string) {
       // leaving the row untouched.
       const { data, error } = await sb
         .from(TABLE.documents)
-        .update(vollstaendig)
-        .eq("id", belegId)
+        .update(complete)
+        .eq("id", documentId)
         .select("id");
       if (error) throw error;
       if (!data || data.length === 0) {
@@ -1417,12 +1420,12 @@ export function useUpdateBeleg(belegId: string) {
           "Update did not affect any row — likely blocked by a database permission (RLS).",
         );
       }
-      if (args.protokoll) {
-        await insertVerlauf(
-          belegId,
-          args.protokoll.typ,
-          args.protokoll.text,
-          args.protokoll.daten ?? null,
+      if (args.activityLog) {
+        await insertHistory(
+          documentId,
+          args.activityLog.type,
+          args.activityLog.text,
+          args.activityLog.data ?? null,
         );
       }
     },
@@ -1439,48 +1442,48 @@ export function useUpdateBeleg(belegId: string) {
       // Only the single-invoice read is awaited. The list, the history and the resolved rule do not
       // decide what the ladder offers, and holding the button until a full list refetch settles
       // would make every approval feel slow for no extra safety.
-      const frisch = qc.invalidateQueries({ queryKey: ["beleg", belegId] });
+      const fresh = qc.invalidateQueries({ queryKey: ["beleg", documentId] });
       qc.invalidateQueries({ queryKey: ["belege"] });
-      qc.invalidateQueries({ queryKey: ["beleg_verlauf", belegId] });
+      qc.invalidateQueries({ queryKey: ["beleg_verlauf", documentId] });
       // Editing the supplier, company, property or gross amount by hand can change which approval
       // rule wins, exactly as applying the assignment rules can.
-      qc.invalidateQueries({ queryKey: ["approval_rule_resolved", belegId] });
-      return frisch;
+      qc.invalidateQueries({ queryKey: ["approval_rule_resolved", documentId] });
+      return fresh;
     },
   });
 }
 
 // Notiz hinzufügen.
-export function useAddNotiz(belegId: string) {
+export function useAddNote(documentId: string) {
   const qc = useQueryClient();
   return useMutation({
     mutationFn: async (text: string) => {
-      await insertVerlauf(belegId, "note", text);
+      await insertHistory(documentId, "note", text);
     },
-    onSuccess: () => qc.invalidateQueries({ queryKey: ["beleg_verlauf", belegId] }),
+    onSuccess: () => qc.invalidateQueries({ queryKey: ["beleg_verlauf", documentId] }),
   });
 }
 
 // Beleg löschen (Soft-Delete, revisionssicher) — setzt deleted_at + Verlauf.
-export function useSoftDeleteBeleg(belegId: string) {
+export function useSoftDeleteDocument(documentId: string) {
   const qc = useQueryClient();
   return useMutation({
-    mutationFn: async (grund: string) => {
+    mutationFn: async (reason: string) => {
       const actor = await actorEmail();
       const { error } = await sb
         .from(TABLE.documents)
         .update({
           deleted_at: new Date().toISOString(),
           deleted_by: actor,
-          delete_reason: pflichtGrund(grund),
+          delete_reason: requiredReason(reason),
         })
-        .eq("id", belegId);
+        .eq("id", documentId);
       if (error) throw error;
-      await insertVerlauf(belegId, "deletion", grund || "Beleg gelöscht");
+      await insertHistory(documentId, "deletion", reason || "Beleg gelöscht");
     },
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ["belege"] });
-      qc.invalidateQueries({ queryKey: ["beleg", belegId] });
+      qc.invalidateQueries({ queryKey: ["beleg", documentId] });
     },
   });
 }
@@ -1501,7 +1504,7 @@ export interface UploadInput {
   checksumSha256: string | null;
 }
 
-export function useCreateUploadBelege() {
+export function useCreateUploadDocuments() {
   const qc = useQueryClient();
   return useMutation({
     mutationFn: async (args: {
@@ -1548,54 +1551,54 @@ export function useCreateUploadBelege() {
  * period as a server filter, and a stable secondary sort key so a range() boundary cannot
  * duplicate or drop rows.
  */
-export function useBelegeBySupplierSeiten(
+export function useDocumentsBySupplierPages(
   supplierId: string,
-  range: { von?: string | null; bis?: string | null } = {},
+  range: { fromDate?: string | null; toDate?: string | null } = {},
 ) {
-  const von = range.von || null;
-  const bis = range.bis || null;
+  const fromDate = range.fromDate || null;
+  const toDate = range.toDate || null;
   return useInfiniteQuery({
     placeholderData: keepPreviousData,
-    queryKey: ["belege-lieferant-seiten", supplierId, von, bis],
+    queryKey: ["belege-lieferant-seiten", supplierId, fromDate, toDate],
     enabled: !!supplierId,
     staleTime: STALE,
     initialPageParam: 0,
-    getNextPageParam: (_lastPage: InfinitePage<Beleg>, allPages) =>
+    getNextPageParam: (_lastPage: InfinitePage<Document>, allPages) =>
       hasNextInfinitePage(allPages) ? allPages.length : undefined,
-    queryFn: async ({ pageParam }): Promise<InfinitePage<Beleg>> => {
+    queryFn: async ({ pageParam }): Promise<InfinitePage<Document>> => {
       let query = supabase
         .from(TABLE.documents)
-        .select(BELEG_ZEILE_SPALTEN, { count: "exact" })
+        .select(DOCUMENT_ROW_COLUMNS, { count: "exact" })
         .is("deleted_at", null)
         .is("archived_at", null)
         .is("not_relevant_at", null)
         .neq("status", "split")
         .eq("supplier_id", supplierId);
-      if (von) query = query.gte("document_date", von);
-      if (bis) query = query.lte("document_date", bis);
-      const from = pageParam * BELEG_SEITEN_GROESSE;
+      if (fromDate) query = query.gte("document_date", fromDate);
+      if (toDate) query = query.lte("document_date", toDate);
+      const from = pageParam * DOCUMENT_PAGES_SIZE;
       const { data, error, count } = await query
         .order("document_date", { ascending: false, nullsFirst: false })
         .order("id", { ascending: true })
-        .range(from, from + BELEG_SEITEN_GROESSE - 1);
+        .range(from, from + DOCUMENT_PAGES_SIZE - 1);
       if (error) throw error;
-      return { rows: (data ?? []) as unknown as Beleg[], total: count ?? 0 };
+      return { rows: (data ?? []) as unknown as Document[], total: count ?? 0 };
     },
   });
 }
 
 /** The narrow, complete set a supplier's page-level figures are computed from. */
-export function useLieferantBelegAggregat(supplierId: string) {
+export function useSupplierDocumentAggregate(supplierId: string) {
   return useQuery({
     queryKey: ["belege-lieferant-aggregat", supplierId],
     staleTime: STALE,
     enabled: !!supplierId,
-    queryFn: async (): Promise<BelegAggregatZeile[]> =>
-      fetchAllRows<BelegAggregatZeile>(
+    queryFn: async (): Promise<DocumentAggregateRow[]> =>
+      fetchAllRows<DocumentAggregateRow>(
         (from, to, withCount) =>
           supabase
             .from(TABLE.documents)
-            .select(BELEG_AGGREGAT_SPALTEN, withCount ? { count: "exact" } : undefined)
+            .select(DOCUMENT_AGGREGATE_COLUMNS, withCount ? { count: "exact" } : undefined)
             .is("deleted_at", null)
             .is("archived_at", null)
             .is("not_relevant_at", null)
@@ -1604,7 +1607,7 @@ export function useLieferantBelegAggregat(supplierId: string) {
             .order("document_date", { ascending: false })
             .order("id", { ascending: true })
             .range(from, to) as unknown as Promise<{
-            data: BelegAggregatZeile[] | null;
+            data: DocumentAggregateRow[] | null;
             error: unknown;
             count?: number | null;
           }>,
@@ -1626,10 +1629,10 @@ export function hexToUint8Array(hex: string): Uint8Array {
 
 // MIME ermitteln: octet-stream auf Dateiendung zurückführen, damit PDFs/Bilder
 // korrekt im Browser angezeigt werden.
-export function resolveMime(datei: Pick<BelegDatei, "mime" | "filename">): string {
-  const mime = datei.mime ?? "";
+export function resolveMime(file: Pick<DocumentFile, "mime" | "filename">): string {
+  const mime = file.mime ?? "";
   if (mime && mime !== "application/octet-stream") return mime;
-  const name = (datei.filename ?? "").toLowerCase();
+  const name = (file.filename ?? "").toLowerCase();
   if (name.endsWith(".pdf")) return "application/pdf";
   if (name.endsWith(".png")) return "image/png";
   if (name.endsWith(".jpg") || name.endsWith(".jpeg")) return "image/jpeg";
@@ -1637,4 +1640,60 @@ export function resolveMime(datei: Pick<BelegDatei, "mime" | "filename">): strin
   if (name.endsWith(".webp")) return "image/webp";
   if (name.endsWith(".xml")) return "application/xml";
   return mime || "application/octet-stream";
+}
+
+export interface OverviewInvoiceRow {
+  status: string | null;
+  amount_gross: number | null;
+  // Carried so the overview can group by month without a second request. Still five narrow
+  // columns rather than the whole row.
+  document_date: string | null;
+  // For the supplier ranking and the per-company volume panel. issuer is the free-text sender the
+  // list screens show; company_code is the resolved company, null when unresolved. supplier_id
+  // lets the ranking link to the supplier's own page rather than a text search.
+  issuer: string | null;
+  company_code: string | null;
+  supplier_id: string | null;
+  // For the processing card's per-channel breakdown (email / upload / drive / ...).
+  intake_channel: string | null;
+}
+
+/**
+ * The Overview's invoice figures, read narrow and scoped to the period on screen.
+ *
+ * `useBelege()` selects `*` across the WHOLE table and pages past the row cap, because the screens
+ * that grew up on it need every column of every invoice. The Overview needs two columns of the rows
+ * inside one date range, to produce three numbers. Reading it the wide way put the entire invoice
+ * table through the browser on the first screen of the app, which is the page least able to afford
+ * it. `useBelege` is untouched: Auswertungen still depends on its shape.
+ *
+ * Filtered on `document_date`, the same column the invoice list filters on, so a tile and the list
+ * it links to cannot disagree. The exclusions mirror `useBelege` exactly (deleted, archived, not
+ * relevant, and the container row of a split scan), because a figure here that counted rows that
+ * screen refuses to show would be wrong in a way nobody could trace.
+ */
+export function useOverviewInvoices(from?: string | null, toDate?: string | null) {
+  return useQuery({
+    queryKey: ["overview-invoices", from ?? "", toDate ?? ""],
+    staleTime: STALE,
+    // A period change swaps the query key. Without this every card and chart on the overview
+    // drops to zero for the round trip, then jumps back, which reads as the numbers fluctuating.
+    placeholderData: keepPreviousData,
+    queryFn: async (): Promise<OverviewInvoiceRow[]> =>
+      fetchAllRows<OverviewInvoiceRow>((from, to, withCount) => {
+        let query = supabase
+          .from(TABLE.documents)
+          .select(
+            "status, amount_gross, document_date, issuer, company_code, supplier_id, intake_channel",
+            withCount ? { count: "exact" } : undefined,
+          )
+          .is("deleted_at", null)
+          .is("archived_at", null)
+          .is("not_relevant_at", null)
+          .neq("status", "split");
+        if (from) query = query.gte("document_date", from);
+        if (toDate) query = query.lte("document_date", toDate);
+        return query.range(from, to);
+      }),
+  });
 }

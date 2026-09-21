@@ -11,7 +11,7 @@ import { fileToBase64 } from "@/lib/bank-import/file-to-base64";
 import type { ParsedTable } from "@/lib/bank-import/types";
 import { useTranslation } from "@/lib/i18n";
 import { cn } from "@/lib/utils";
-import { fehlerText } from "@/lib/data/format";
+import { errorText } from "@/lib/data/format";
 
 export function ManualImportUploadStep({
   onParsed,
@@ -38,7 +38,7 @@ export function ManualImportUploadStep({
         });
         onAiExtracted(result.rows, result.statementNotes, file.name);
       } catch (e) {
-        setError(fehlerText(e));
+        setError(errorText(e));
       } finally {
         setStatus("idle");
       }
@@ -50,7 +50,7 @@ export function ManualImportUploadStep({
       const { table } = await parseBankFile(file);
       onParsed(table, file.name);
     } catch (e) {
-      setError(fehlerText(e));
+      setError(errorText(e));
     } finally {
       setStatus("idle");
     }

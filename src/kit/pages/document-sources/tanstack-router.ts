@@ -13,9 +13,9 @@ export function useTanstackDocumentSourcesRouter(): DocumentSourcesRouter {
   return {
     Link,
     useHash: () => useRouterState({ select: (state) => state.location.hash }),
-    useFokusParam: () =>
+    useFocusParam: () =>
       useRouterState({
-        select: (state) => (state.location.search as { fokus?: string }).fokus,
+        select: (state) => (state.location.search as { focus?: string }).focus,
       }),
     openSource: (sourceId) => void navigate({ to: ".", hash: sourceId }),
     closeSource: () => void navigate({ to: ".", hash: "", replace: true }),

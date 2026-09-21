@@ -12,7 +12,7 @@ import {
   SheetHeader,
   SheetTitle,
   cn,
-  fehlerText,
+  errorText,
   formatDate,
   formatEUR,
   useTranslation,
@@ -63,18 +63,18 @@ export function SendDrawer({
   const trigger = useTriggerDatevHandover();
   const [phase, setPhase] = useState<"review" | "sending" | "result">("review");
   const [outcomes, setOutcomes] = useState<CompanyOutcome[]>([]);
-  const [laeuft, setLaeuft] = useState<string | null>(null);
+  const [running, setRunning] = useState<string | null>(null);
   /**
    * The receipts that will actually go, by id. Everything sendable starts ticked — the common case
    * is "send what is ready", and making somebody tick five boxes to do the obvious thing is a tax
    * on the normal path. Unticking is the exception, and an unticked receipt is not skipped so much
    * as postponed: nothing marks it handed over, so it is still eligible and comes back next time.
    */
-  const [gewaehlt, setGewaehlt] = useState<Set<string>>(new Set());
+  const [selected, setSelected] = useState<Set<string>>(new Set());
 
   // Both directions, and only the rows that can actually go. A blocked row is never pre-ticked
   // and can never be ticked, so it can never be counted into what the Send button promises.
-  const alleSendbar = useMemo(
+  const allSendable = useMemo(
     () =>
       targets.flatMap((x) => [
         ...x.ready.map((i) => i.id),
@@ -87,19 +87,19 @@ export function SendDrawer({
     if (open) {
       setPhase("review");
       setOutcomes([]);
-      setLaeuft(null);
-      setGewaehlt(new Set(alleSendbar));
+      setRunning(null);
+      setSelected(new Set(allSendable));
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [open]);
 
-  const einzeln = targets.length === 1;
-  const sendCount = gewaehlt.size;
-  const gesamtBereit = alleSendbar.length;
+  const single = targets.length === 1;
+  const sendCount = selected.size;
+  const totalReady = allSendable.length;
   const skipCount = targets.reduce((n, x) => n + x.blocked.length, 0);
 
-  function umschalten(id: string) {
-    setGewaehlt((prev) => {
+  function toggle(id: string) {
+    setSelected((prev) => {
       const next = new Set(prev);
       if (next.has(id)) next.delete(id);
       else next.add(id);
@@ -107,8 +107,8 @@ export function SendDrawer({
     });
   }
 
-  function alleUmschalten(ids: string[], an: boolean) {
-    setGewaehlt((prev) => {
+  function allToggle(ids: string[], an: boolean) {
+    setSelected((prev) => {
       const next = new Set(prev);
       for (const id of ids) {
         if (an) next.add(id);
@@ -123,9 +123,9 @@ export function SendDrawer({
    * partial failure impossible to attribute and would fire N concurrent Gmail sends from one click.
    * The company in flight is named on screen so a slow fleet-wide run does not look frozen.
    */
-  async function senden() {
+  async function send() {
     setPhase("sending");
-    const gesammelt: CompanyOutcome[] = [];
+    const collected: CompanyOutcome[] = [];
     for (const target of targets) {
       // ONE CALL PER DIRECTION. DATEV files by the address a document arrives at, so incoming and
       // outgoing go to two different inboxes and can never share an email. A company with both
@@ -133,11 +133,11 @@ export function SendDrawer({
       const perDirection: { direction: "incoming" | "outgoing"; ids: string[] }[] = [
         {
           direction: "incoming",
-          ids: target.ready.filter((i) => gewaehlt.has(i.id)).map((i) => i.id),
+          ids: target.ready.filter((i) => selected.has(i.id)).map((i) => i.id),
         },
         {
           direction: "outgoing",
-          ids: target.outgoing.filter((i) => gewaehlt.has(i.id)).map((i) => i.id),
+          ids: target.outgoing.filter((i) => selected.has(i.id)).map((i) => i.id),
         },
       ];
 
@@ -145,32 +145,32 @@ export function SendDrawer({
         // Nothing ticked for this direction is skipped outright rather than called with an empty
         // list, which would do nothing and still write a batch row saying so.
         if (ids.length === 0) continue;
-        setLaeuft(target.code);
+        setRunning(target.code);
         try {
           const res = await trigger.mutateAsync({
             companyId: target.id,
             direction,
             invoiceIds: ids,
           });
-          gesammelt.push({
+          collected.push({
             code: target.code,
             direction,
             batches: res.batches,
             blocked: res.blockedInvoices,
           });
         } catch (e) {
-          gesammelt.push({
+          collected.push({
             code: target.code,
             direction,
             batches: [],
             blocked: [],
-            error: fehlerText(e),
+            error: errorText(e),
           });
         }
-        setOutcomes([...gesammelt]);
+        setOutcomes([...collected]);
       }
     }
-    setLaeuft(null);
+    setRunning(null);
     setPhase("result");
   }
 
@@ -179,27 +179,25 @@ export function SendDrawer({
       <SheetContent className="flex w-full flex-col gap-0 overflow-y-auto sm:max-w-lg">
         <SheetHeader>
           <SheetTitle>
-            {phase === "result"
-              ? t("datevUebergabe.senden.resultTitle")
-              : t("datevUebergabe.senden.title")}
+            {phase === "result" ? t("handover.senden.resultTitle") : t("handover.senden.title")}
           </SheetTitle>
           <SheetDescription>
             {phase === "result"
-              ? t("datevUebergabe.senden.resultDesc")
-              : einzeln
-                ? t("datevUebergabe.senden.descEine", {
+              ? t("handover.senden.resultDesc")
+              : single
+                ? t("handover.senden.descEine", {
                     // Both directions. It read the incoming count while the total below counted
                     // both, so a company with 5 of each announced 5 and then offered 10.
-                    count: gesamtBereit,
+                    count: totalReady,
                     company: targets[0]?.name ?? targets[0]?.code ?? "",
                   })
-                : t("datevUebergabe.senden.desc")}
+                : t("handover.senden.desc")}
           </SheetDescription>
         </SheetHeader>
 
         <div className="mt-6 flex-1">
           {phase === "result" ? (
-            <Ergebnis outcomes={outcomes} />
+            <Result outcomes={outcomes} />
           ) : (
             <>
               {/* No "Company / Files" header strip and no per-company count. With the description
@@ -211,27 +209,27 @@ export function SendDrawer({
                   (x) => x.ready.length + x.blocked.length + x.outgoing.length === 0,
                 ) && (
                   <p className="rounded-xl border border-dashed border-border p-4 text-center text-sm text-muted-foreground">
-                    {t("datevUebergabe.senden.leer")}
+                    {t("handover.senden.leer")}
                   </p>
                 )}
                 {targets.map((target) => (
                   <TargetBlock
                     key={target.id}
                     target={target}
-                    mehrere={!einzeln}
-                    gewaehlt={gewaehlt}
-                    onToggle={umschalten}
-                    onToggleAlle={alleUmschalten}
+                    several={!single}
+                    selected={selected}
+                    onToggle={toggle}
+                    onToggleAll={allToggle}
                   />
                 ))}
               </div>
 
               <p className="mt-4 text-sm font-medium text-foreground">
-                {sendCount === gesamtBereit
-                  ? t("datevUebergabe.senden.summe", { count: sendCount })
-                  : t("datevUebergabe.senden.auswahl", {
+                {sendCount === totalReady
+                  ? t("handover.senden.summe", { count: sendCount })
+                  : t("handover.senden.auswahl", {
                       count: sendCount,
-                      total: gesamtBereit,
+                      total: totalReady,
                     })}
               </p>
 
@@ -240,7 +238,7 @@ export function SendDrawer({
                   sending, and this is the moment. */}
               {skipCount > 0 && (
                 <p className="mt-1 text-sm text-warning">
-                  {t("datevUebergabe.senden.uebersprungen", { count: skipCount })}
+                  {t("handover.senden.uebersprungen", { count: skipCount })}
                 </p>
               )}
             </>
@@ -249,9 +247,7 @@ export function SendDrawer({
 
         <SheetFooter className="mt-6">
           {phase === "result" ? (
-            <Button onClick={() => onOpenChange(false)}>
-              {t("datevUebergabe.aktion.schliessen")}
-            </Button>
+            <Button onClick={() => onOpenChange(false)}>{t("handover.aktion.schliessen")}</Button>
           ) : (
             <>
               <Button
@@ -259,19 +255,19 @@ export function SendDrawer({
                 onClick={() => onOpenChange(false)}
                 disabled={phase === "sending"}
               >
-                {t("datevUebergabe.aktion.abbrechen")}
+                {t("handover.aktion.abbrechen")}
               </Button>
               <Button
                 className="gap-2"
-                onClick={() => void senden()}
+                onClick={() => void send()}
                 disabled={sendCount === 0 || phase === "sending"}
               >
                 {phase === "sending" && <Loader2 className="size-4 animate-spin" />}
                 {phase === "sending"
-                  ? laeuft
-                    ? t("datevUebergabe.senden.laeuftCompany", { company: laeuft })
-                    : t("datevUebergabe.senden.laeuft")
-                  : t("datevUebergabe.aktion.anDatevSenden")}
+                  ? running
+                    ? t("handover.senden.laeuftCompany", { company: running })
+                    : t("handover.senden.laeuft")
+                  : t("handover.aktion.anDatevSenden")}
               </Button>
             </>
           )}
@@ -296,20 +292,20 @@ export function SendDrawer({
  */
 function TargetBlock({
   target,
-  mehrere,
-  gewaehlt,
+  several,
+  selected,
   onToggle,
-  onToggleAlle,
+  onToggleAll,
 }: {
   target: SendTarget;
-  mehrere: boolean;
-  gewaehlt: Set<string>;
+  several: boolean;
+  selected: Set<string>;
   onToggle: (id: string) => void;
-  onToggleAlle: (ids: string[], an: boolean) => void;
+  onToggleAll: (ids: string[], an: boolean) => void;
 }) {
   return (
     <div className="space-y-3">
-      {mehrere && (
+      {several && (
         <p className="text-sm">
           <span className="font-medium text-foreground">{target.code}</span>
           {target.name && <span className="ml-1.5 text-muted-foreground">{target.name}</span>}
@@ -323,67 +319,65 @@ function TargetBlock({
           direction on the grounds that no outgoing invoice on this database had a file, which was a
           fleet-wide observation standing in for a per-row rule and stopped being true the moment
           one of them did. Whether a receipt can go is a question about that receipt's own file. */}
-      <RichtungsBlock
-        titel="incoming"
+      <DirectionBlock
+        title="incoming"
         rows={[...target.ready, ...target.blocked]}
-        gewaehlt={gewaehlt}
+        selected={selected}
         onToggle={onToggle}
-        onToggleAlle={onToggleAlle}
+        onToggleAll={onToggleAll}
       />
-      <RichtungsBlock
-        titel="outgoing"
+      <DirectionBlock
+        title="outgoing"
         rows={target.outgoing}
-        gewaehlt={gewaehlt}
+        selected={selected}
         onToggle={onToggle}
-        onToggleAlle={onToggleAlle}
+        onToggleAll={onToggleAll}
       />
     </div>
   );
 }
 
 /** One direction's receipts, with a select-all covering exactly the ones that can go. */
-function RichtungsBlock({
-  titel,
+function DirectionBlock({
+  title,
   rows,
-  gewaehlt,
+  selected,
   onToggle,
-  onToggleAlle,
+  onToggleAll,
 }: {
-  titel: "incoming" | "outgoing";
+  title: "incoming" | "outgoing";
   rows: (DatevReadyInvoice | DatevOutgoingInvoice)[];
-  gewaehlt: Set<string>;
+  selected: Set<string>;
   onToggle: (id: string) => void;
-  onToggleAlle: (ids: string[], an: boolean) => void;
+  onToggleAll: (ids: string[], an: boolean) => void;
 }) {
   const { t } = useTranslation();
   if (rows.length === 0) return null;
 
-  const sendbar = rows.filter((r) => !r.blockReason).map((r) => r.id);
-  const alleAn = sendbar.length > 0 && sendbar.every((id) => gewaehlt.has(id));
+  const sendable = rows.filter((r) => !r.blockReason).map((r) => r.id);
+  const allAn = sendable.length > 0 && sendable.every((id) => selected.has(id));
 
   return (
     <section className="overflow-hidden rounded-xl border border-border">
       <div className="flex items-center gap-3 border-b border-border bg-muted/40 px-3 py-2">
-        {sendbar.length > 0 && (
+        {sendable.length > 0 && (
           <Checkbox
-            checked={alleAn}
-            onCheckedChange={(v: boolean | "indeterminate") => onToggleAlle(sendbar, v === true)}
-            aria-label={t("datevUebergabe.senden.alleWaehlen")}
+            checked={allAn}
+            onCheckedChange={(v: boolean | "indeterminate") => onToggleAll(sendable, v === true)}
+            aria-label={t("handover.senden.alleWaehlen")}
           />
         )}
-        <h3 className="text-sm font-medium text-foreground">
-          {t(`datevUebergabe.richtung.${titel}`)}
-        </h3>
+        <h3 className="text-sm font-medium text-foreground">{t(`handover.richtung.${title}`)}</h3>
         <span className="ml-auto text-xs text-muted-foreground">
-          {t("datevUebergabe.dateien", { count: sendbar.length })}
+          {t("handover.dateien", { count: sendable.length })}
         </span>
       </div>
       <ul className="divide-y divide-border">
         {rows.map((inv) => (
-          <BelegZeile
+          <DocumentRow
             key={inv.id}
             inv={inv}
-            gewaehlt={gewaehlt.has(inv.id)}
+            selected={selected.has(inv.id)}
             onToggle={() => onToggle(inv.id)}
           />
         ))}
@@ -393,30 +387,30 @@ function RichtungsBlock({
 }
 
 /** One receipt line, shared by both directions so they cannot drift apart visually. */
-function BelegZeile({
+function DocumentRow({
   inv,
-  gewaehlt,
+  selected,
   onToggle,
 }: {
   inv: DatevReadyInvoice | DatevOutgoingInvoice;
-  gewaehlt: boolean;
+  selected: boolean;
   onToggle: () => void;
 }) {
   const { t } = useTranslation();
-  const sperr = !!inv.blockReason;
+  const block = !!inv.blockReason;
   return (
     <li>
       <Label
         htmlFor={`inv-${inv.id}`}
         className={cn(
           "flex items-center gap-3 px-3 py-2 text-sm font-normal",
-          sperr ? "cursor-default opacity-70" : "cursor-pointer hover:bg-muted/30",
+          block ? "cursor-default opacity-70" : "cursor-pointer hover:bg-muted/30",
         )}
       >
         <Checkbox
           id={`inv-${inv.id}`}
-          checked={!sperr && gewaehlt}
-          disabled={sperr}
+          checked={!block && selected}
+          disabled={block}
           onCheckedChange={onToggle}
         />
         <span className="min-w-0 flex-1 truncate">
@@ -433,7 +427,7 @@ function BelegZeile({
         <span className="shrink-0 tabular-nums">
           {inv.blockReason ? (
             <span className="text-xs text-warning">
-              {t(`datevUebergabe.blockGrund.${inv.blockReason}`)}
+              {t(`handover.blockGrund.${inv.blockReason}`)}
             </span>
           ) : (
             <span className="text-muted-foreground">{formatEUR(inv.amount_gross)}</span>
@@ -445,25 +439,25 @@ function BelegZeile({
 }
 
 /** What actually happened, per company. Never a claim the backend did not make. */
-function Ergebnis({ outcomes }: { outcomes: CompanyOutcome[] }) {
+function Result({ outcomes }: { outcomes: CompanyOutcome[] }) {
   const { t } = useTranslation();
   return (
     <div className="space-y-3">
       {outcomes.map((o) => {
         const ok = o.batches.filter((b) => b.status === "success");
         const failed = o.batches.filter((b) => b.status === "error");
-        const gesendet = ok.reduce((n, b) => n + b.invoiceCount, 0);
-        const schlimm = !!o.error || failed.length > 0;
+        const sent = ok.reduce((n, b) => n + b.invoiceCount, 0);
+        const severe = !!o.error || failed.length > 0;
         return (
           <div
             key={`${o.code}:${o.direction}`}
             className={cn(
               "rounded-xl border p-3",
-              schlimm ? "border-danger/40 bg-danger-soft/40" : "border-border bg-card",
+              severe ? "border-danger/40 bg-danger-soft/40" : "border-border bg-card",
             )}
           >
             <div className="flex flex-wrap items-center gap-2">
-              {schlimm ? (
+              {severe ? (
                 <AlertTriangle className="size-4 shrink-0 text-danger" aria-hidden />
               ) : (
                 <CheckCircle2 className="size-4 shrink-0 text-success" aria-hidden />
@@ -472,12 +466,12 @@ function Ergebnis({ outcomes }: { outcomes: CompanyOutcome[] }) {
               {/* Named, because a company can appear twice: the two directions go to two different
                   DATEV inboxes and either can fail on its own. */}
               <span className="text-xs text-muted-foreground">
-                {t(`datevUebergabe.richtung.${o.direction}`)}
+                {t(`handover.richtung.${o.direction}`)}
               </span>
               <span className="text-sm text-muted-foreground">
                 {o.error
-                  ? t("datevUebergabe.senden.result.fehlgeschlagen")
-                  : t("datevUebergabe.senden.result.gesendet", { count: gesendet })}
+                  ? t("handover.senden.result.fehlgeschlagen")
+                  : t("handover.senden.result.gesendet", { count: sent })}
               </span>
             </div>
 
@@ -489,13 +483,13 @@ function Ergebnis({ outcomes }: { outcomes: CompanyOutcome[] }) {
                 and any paraphrase loses it. */}
             {failed.map((b, i) => (
               <p key={i} className="mt-2 text-sm break-words text-danger">
-                {b.error ?? t("datevUebergabe.senden.result.fehlgeschlagen")}
+                {b.error ?? t("handover.senden.result.fehlgeschlagen")}
               </p>
             ))}
 
             {ok.length > 1 && (
               <p className="mt-1 text-xs text-muted-foreground">
-                {t("datevUebergabe.senden.result.mails", {
+                {t("handover.senden.result.mails", {
                   count: ok.length,
                   size: formatBytes(ok.reduce((n, b) => n + b.totalBytes, 0)),
                 })}
@@ -504,7 +498,7 @@ function Ergebnis({ outcomes }: { outcomes: CompanyOutcome[] }) {
 
             {o.blocked.length > 0 && (
               <p className="mt-2 border-t border-border pt-2 text-xs text-muted-foreground">
-                {t("datevUebergabe.senden.result.uebersprungen", { count: o.blocked.length })}
+                {t("handover.senden.result.uebersprungen", { count: o.blocked.length })}
               </p>
             )}
           </div>

@@ -2,8 +2,8 @@ import type { ComponentType } from "react";
 import { Building2, CheckCircle2, Clock, FileWarning, Wallet } from "lucide-react";
 
 import type { QueueTone } from "@/components/invoice-queue/queue-kpi-card";
-import { GESELLSCHAFT_OHNE } from "@/lib/data/format";
-import type { BelegSortKey } from "@/lib/data/types";
+import { COMPANY_WITHOUT } from "@/lib/data/format";
+import type { DocumentSortKey } from "@/lib/data/types";
 
 export interface QueueCardSpec {
   key: string;
@@ -11,7 +11,7 @@ export interface QueueCardSpec {
   icon: ComponentType<{ className?: string }>;
   to: string;
   search: Record<string, unknown>;
-  sort?: BelegSortKey;
+  sort?: DocumentSortKey;
   dir?: "asc" | "desc";
 }
 
@@ -19,11 +19,11 @@ export interface QueueCardSpec {
  *  active at once, and the highlight can be decided by comparing exactly these. */
 export const CARD_FILTER_KEYS = [
   "status",
-  "gesellschaft",
+  "company",
   "workflow",
-  "zahlung",
+  "payment",
   "paymentType",
-  "faellig",
+  "due",
 ] as const;
 
 export type NextAction = "review" | "approve" | "pay" | "match" | "none";
@@ -48,37 +48,37 @@ export const QUEUE_CARDS: QueueCardSpec[] = [
     key: "needs_action",
     tone: "warning",
     icon: FileWarning,
-    to: "/eingangsrechnungen",
+    to: "/incoming-invoices",
     search: { status: "needs_review" },
   },
   {
     key: "missing_assignment",
     tone: "warning",
     icon: Building2,
-    to: "/eingangsrechnungen",
-    search: { gesellschaft: GESELLSCHAFT_OHNE },
+    to: "/incoming-invoices",
+    search: { company: COMPANY_WITHOUT },
   },
   {
     key: "ready_for_payment",
     tone: "success",
     icon: Wallet,
-    to: "/eingangsrechnungen",
-    search: { workflow: "approved_final", zahlung: "open" },
+    to: "/incoming-invoices",
+    search: { workflow: "approved_final", payment: "open" },
   },
   {
     key: "pay_now",
     tone: "danger",
     icon: Clock,
-    to: "/eingangsrechnungen",
-    search: { faellig: "due_now", zahlung: "open", paymentType: "transfer" },
-    sort: "faellig",
+    to: "/incoming-invoices",
+    search: { due: "due_now", payment: "open", paymentType: "transfer" },
+    sort: "due",
     dir: "asc",
   },
   {
     key: "completed",
     tone: "neutral",
     icon: CheckCircle2,
-    to: "/eingangsrechnungen",
-    search: { zahlung: "paid" },
+    to: "/incoming-invoices",
+    search: { payment: "paid" },
   },
 ];

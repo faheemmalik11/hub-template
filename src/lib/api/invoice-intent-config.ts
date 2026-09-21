@@ -10,7 +10,7 @@ import {
 
 import { AppError } from "./errors";
 import { TABLE } from "@/config/tables";
-import { tenantCredential } from "@/lib/postfach/channel-credentials.server";
+import { tenantCredential } from "@/lib/inbox/channel-credentials.server";
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 type Db = any;

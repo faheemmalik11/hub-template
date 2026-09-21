@@ -26,7 +26,7 @@ import { useTranslation } from "@/lib/i18n";
  *
  * Deliberately free of per-Hub vocabulary beyond its labels, so a sibling Hub can drop it in.
  */
-export type KontoGruppe = {
+export type AccountGroup = {
   key: string;
   /** Null for manually created accounts and for accounts on a connection this user cannot read. */
   connectionId: string | null;
@@ -39,11 +39,11 @@ export type KontoGruppe = {
   /** Set = the BANKSapi access was detached from the Hub. The group stays, switched off. */
   disconnectedAt: string | null;
   /** Who connected it, so whose consent it is to renew. Null when that was never recorded. */
-  verbundenVon: string | null;
+  connectedFromDate: string | null;
   /** Accounts after search and filters, i.e. what will actually be rendered under this row. */
-  anzahl: number;
+  count: number;
   /** Accounts before search and filters. A connection with zero of these delivers nothing. */
-  anzahlGesamt: number;
+  countTotal: number;
 };
 
 /**
@@ -62,25 +62,25 @@ const STATUS_CHIP: Record<string, string> = {
 };
 
 export function ConnectionGroupRow({
-  gruppe,
+  group,
   open,
   onToggle,
   colSpan,
-  darfTrennen,
+  canUnlink,
 }: {
-  gruppe: KontoGruppe;
+  group: AccountGroup;
   open: boolean;
   onToggle: () => void;
   colSpan: number;
   /** Whether to offer Trennen. Same right as switching a single account off. */
-  darfTrennen: boolean;
+  canUnlink: boolean;
 }) {
   const { t } = useTranslation();
-  const istVerbindung = gruppe.connectionId !== null;
+  const isConnection = group.connectionId !== null;
   // A connection that delivers nothing is the whole reason this row is interesting, so it says so
   // rather than showing a bare zero. Read from the unfiltered count: a search that happens to hide
   // every account is not the same fact.
-  const leer = istVerbindung && gruppe.anzahlGesamt === 0;
+  const leer = isConnection && group.countTotal === 0;
 
   return (
     <TableRow className="cursor-pointer bg-muted/30 hover:bg-muted/50" onClick={onToggle}>
@@ -95,41 +95,41 @@ export function ConnectionGroupRow({
             />
             <div className="min-w-0">
               <div className="flex flex-wrap items-center gap-2">
-                <span className="text-base font-semibold text-foreground">{gruppe.label}</span>
+                <span className="text-base font-semibold text-foreground">{group.label}</span>
                 {/* Detached wins over the status column. `status` is 'expired' after a
                     disconnect, which is true but reads as "the bank withdrew the consent" -- a
                     thing that happens TO you and that re-authorising fixes. This one was done on
                     purpose and re-authorising is not the answer, so it says so. */}
-                {istVerbindung && gruppe.disconnectedAt ? (
+                {isConnection && group.disconnectedAt ? (
                   <span
                     className="inline-flex shrink-0 items-center rounded-md bg-muted px-2 py-0.5 text-xs font-medium text-muted-foreground"
-                    title={t("bankkonten.trennen.getrenntTitle", {
-                      datum: formatDateTime(gruppe.disconnectedAt),
+                    title={t("bankAccounts.trennen.getrenntTitle", {
+                      datum: formatDateTime(group.disconnectedAt),
                     })}
                   >
-                    {t("bankkonten.trennen.getrennt")}
+                    {t("bankAccounts.trennen.getrennt")}
                   </span>
                 ) : (
-                  istVerbindung &&
-                  gruppe.status && (
+                  isConnection &&
+                  group.status && (
                     <span
                       className={cn(
                         "inline-flex shrink-0 items-center rounded-md px-2 py-0.5 text-xs font-medium",
-                        STATUS_CHIP[gruppe.status] ?? "bg-muted text-muted-foreground",
+                        STATUS_CHIP[group.status] ?? "bg-muted text-muted-foreground",
                       )}
                     >
-                      {t(`bank.syncStatus.${gruppe.status}`, { defaultValue: gruppe.status })}
+                      {t(`bank.syncStatus.${group.status}`, { defaultValue: group.status })}
                     </span>
                   )
                 )}
                 {/* Not a degree of health but "these figures are fabricated", which no amount of
                     muted text says loudly enough. */}
-                {gruppe.sandbox && (
+                {group.sandbox && (
                   <span
                     className="inline-flex shrink-0 items-center rounded-md bg-warning-soft px-1.5 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-warning"
-                    title={t("bankkonten.sandboxTitle")}
+                    title={t("bankAccounts.sandboxTitle")}
                   >
-                    {t("bankkonten.sandbox")}
+                    {t("bankAccounts.sandbox")}
                   </span>
                 )}
               </div>
@@ -138,38 +138,38 @@ export function ConnectionGroupRow({
                   connections, and not on one whose subject is the accounts. */}
               <p className="mt-0.5 text-sm text-muted-foreground">
                 {leer ? (
-                  <span className="text-warning" title={t("bankverbindungen.keineKontenTitle")}>
-                    {t("bankverbindungen.keineKonten")}
+                  <span className="text-warning" title={t("bankConnections.keineKontenTitle")}>
+                    {t("bankConnections.keineKonten")}
                   </span>
                 ) : (
-                  t("bankkonten.gruppe.konten", { count: gruppe.anzahl })
+                  t("bankAccounts.gruppe.konten", { count: group.count })
                 )}
                 {/* Whose consent this is. A BANKSapi consent belongs to whoever authorised it at
                     their own bank, and an expired one can only be renewed by that person, so the
                     row names them. Connections from before this was recorded say so rather than
                     guessing. */}
-                {istVerbindung && (
+                {isConnection && (
                   <>
                     {" · "}
-                    {gruppe.verbundenVon
-                      ? t("bankkonten.gruppe.verbundenVon", { name: gruppe.verbundenVon })
-                      : t("bankkonten.gruppe.verbundenVonUnbekannt")}
+                    {group.connectedFromDate
+                      ? t("bankAccounts.gruppe.verbundenVon", { name: group.connectedFromDate })
+                      : t("bankAccounts.gruppe.verbundenVonUnbekannt")}
                   </>
                 )}
               </p>
             </div>
           </div>
-          {istVerbindung && (
+          {isConnection && (
             <div className="flex shrink-0 items-center gap-2">
               <span className="text-sm tabular-nums text-muted-foreground">
-                {t("bankkonten.gruppe.letzterSync", {
-                  datum: gruppe.lastSyncAt ? formatDateTime(gruppe.lastSyncAt) : "—",
+                {t("bankAccounts.gruppe.letzterSync", {
+                  datum: group.lastSyncAt ? formatDateTime(group.lastSyncAt) : "—",
                 })}
               </span>
               {/* Offered per CONNECTION and nowhere else: DELETE /customer/v2/bankzugaenge/{id} is
                   the only removal BANKSapi has, and it takes a whole bank. */}
-              {darfTrennen && !gruppe.disconnectedAt && gruppe.connectionId && (
-                <DisconnectBankDialog connectionId={gruppe.connectionId} bank={gruppe.label} />
+              {canUnlink && !group.disconnectedAt && group.connectionId && (
+                <DisconnectBankDialog connectionId={group.connectionId} bank={group.label} />
               )}
             </div>
           )}

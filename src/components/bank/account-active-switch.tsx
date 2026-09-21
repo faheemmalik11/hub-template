@@ -3,7 +3,7 @@ import { toast } from "sonner";
 import { Switch } from "@/components/ui/switch";
 import { useSetBankAccountActive } from "@/data";
 import type { BankAccount } from "@/lib/data/types";
-import { fehlerText } from "@/lib/data/format";
+import { errorText } from "@/lib/data/format";
 import { useTranslation } from "@/lib/i18n";
 
 /**
@@ -32,25 +32,25 @@ export function AccountActiveSwitch({ account }: { account: BankAccount }) {
   const setActive = useSetBankAccountActive();
   // Only an explicit false counts as off. A null or undefined on an older row means "never set",
   // which is on.
-  const aktiv = account.is_active !== false;
+  const active = account.is_active !== false;
 
   return (
     <Switch
-      checked={aktiv}
+      checked={active}
       disabled={setActive.isPending}
-      aria-label={t("bankkonten.aktiv.label")}
-      title={aktiv ? t("bankkonten.aktiv.ausschalten") : t("bankkonten.aktiv.einschalten")}
+      aria-label={t("bankAccounts.aktiv.label")}
+      title={active ? t("bankAccounts.aktiv.ausschalten") : t("bankAccounts.aktiv.einschalten")}
       onCheckedChange={(v) =>
         setActive.mutate(
           { accountId: account.id, isActive: v },
           {
             onSuccess: () =>
               toast.success(
-                v ? t("bankkonten.aktiv.toastAn") : t("bankkonten.aktiv.toastAus"),
-                v ? undefined : { description: t("bankkonten.aktiv.toastAusHinweis") },
+                v ? t("bankAccounts.aktiv.toastAn") : t("bankAccounts.aktiv.toastAus"),
+                v ? undefined : { description: t("bankAccounts.aktiv.toastAusHinweis") },
               ),
             onError: (e) =>
-              toast.error(t("bankkonten.aktiv.toastFehler", { error: fehlerText(e) })),
+              toast.error(t("bankAccounts.aktiv.toastFehler", { error: errorText(e) })),
           },
         )
       }

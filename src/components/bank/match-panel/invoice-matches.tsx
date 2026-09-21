@@ -20,7 +20,7 @@ import { useTranslation } from "@/lib/i18n";
 import { usePaymentRight } from "@/lib/payment-right";
 import { PaymentRightNotice } from "@/components/bank/payment-right-notice";
 import {
-  useBelegMatches,
+  useDocumentMatches,
   useConfirmMatch,
   useConfirmOutgoingMatch,
   useOutgoingInvoiceMatches,
@@ -29,7 +29,7 @@ import {
   useUnlinkMatch,
   useUnlinkOutgoingMatch,
 } from "@/data";
-import { fehlerText, formatDate, formatEUR, formatSignedEUR } from "@/lib/data/format";
+import { errorText, formatDate, formatEUR, formatSignedEUR } from "@/lib/data/format";
 import { MatchStatusBadge } from "@/components/bank/badges";
 import { MatchCard, MatchCardAction } from "@/components/bank/match-panel/match-card";
 import {
@@ -38,7 +38,7 @@ import {
 } from "@/components/bank/match-panel/link-confirm-dialog";
 import type { MatchReasons } from "@/lib/data/types";
 
-function gruppe(status: string): "reconciled" | "suggestions" | "rejected" {
+function group(status: string): "reconciled" | "suggestions" | "rejected" {
   if (status === "confirmed") return "reconciled";
   if (status === "rejected") return "rejected";
   return "suggestions";
@@ -79,14 +79,14 @@ export function InvoiceMatches({
   invoiceGross: number | null;
 }) {
   const { t } = useTranslation();
-  const { mayPay, reason: keinZahlrecht } = usePaymentRight();
+  const { mayPay, reason: noPaymentRight } = usePaymentRight();
   const [confirmParam, setConfirmParam] = useState<string | undefined>(undefined);
   const isOutgoing = invoiceType === "outgoing";
 
   // Both directions' queries/mutations are always called unconditionally (react-hooks forbids a
   // conditional hook call) -- only the RESULT selected below depends on invoiceType. Harmless: an
   // incoming invoice's id never appears in outgoing_invoice_transaction_matches and vice versa.
-  const incomingMatchesQ = useBelegMatches(invoiceId);
+  const incomingMatchesQ = useDocumentMatches(invoiceId);
   const outgoingMatchesQ = useOutgoingInvoiceMatches(invoiceId);
   const confirmMatch = useConfirmMatch();
   const rejectMatch = useRejectMatch();
@@ -95,14 +95,14 @@ export function InvoiceMatches({
   const unlinkMatch = useUnlinkMatch();
   const unlinkOutgoingMatch = useUnlinkOutgoingMatch();
 
-  const rohMatches = useMemo(
+  const rawMatches = useMemo(
     () => (isOutgoing ? (outgoingMatchesQ.data ?? []) : (incomingMatchesQ.data ?? [])),
     [isOutgoing, outgoingMatchesQ.data, incomingMatchesQ.data],
   );
 
   const pair = useMemo((): PendingConfirm | null => {
     if (!confirmParam) return null;
-    const hit = rohMatches.find((m) => m.bank_transactions?.id === confirmParam);
+    const hit = rawMatches.find((m) => m.bank_transactions?.id === confirmParam);
     const txn = hit?.bank_transactions;
     if (!hit || !txn) return null;
     return {
@@ -120,13 +120,13 @@ export function InvoiceMatches({
         fixedAmount: hit.amount_matched,
       },
     };
-  }, [confirmParam, rohMatches, invoiceType, invoiceId, invoiceLabel, invoiceNr, invoiceGross]);
+  }, [confirmParam, rawMatches, invoiceType, invoiceId, invoiceLabel, invoiceNr, invoiceGross]);
 
   const isLoading = isOutgoing ? outgoingMatchesQ.isLoading : incomingMatchesQ.isLoading;
   if (isLoading) return <Skeleton className="h-24 w-full" />;
 
   const raw = isOutgoing ? (outgoingMatchesQ.data ?? []) : (incomingMatchesQ.data ?? []);
-  const alleMatches: DisplayMatch[] = raw.map((m) => {
+  const allMatches: DisplayMatch[] = raw.map((m) => {
     const txn = m.bank_transactions ?? null;
     return {
       id: m.id,
@@ -144,8 +144,8 @@ export function InvoiceMatches({
   // A rejected suggestion stays listed, last and muted, with its own badge -- see
   // TransactionMatches's identical comment on why it is not simply filtered out.
 
-  const matches = [...alleMatches].sort(
-    (a, b) => GROUP_ORDER[gruppe(a.status)] - GROUP_ORDER[gruppe(b.status)],
+  const matches = [...allMatches].sort(
+    (a, b) => GROUP_ORDER[group(a.status)] - GROUP_ORDER[group(b.status)],
   );
 
   if (matches.length === 0) {
@@ -161,12 +161,12 @@ export function InvoiceMatches({
       <PaymentRightNotice className="mb-3" />
       <ul className="space-y-3">
         {matches.map((m, i) => {
-          const offen = m.status === "candidate" || m.status === "auto";
-          const g = gruppe(m.status);
-          const neueGruppe = i === 0 || gruppe(matches[i - 1].status) !== g;
+          const open = m.status === "candidate" || m.status === "auto";
+          const g = group(m.status);
+          const newGroup = i === 0 || group(matches[i - 1].status) !== g;
           return (
             <Fragment key={m.id}>
-              {neueGruppe && (
+              {newGroup && (
                 <li className="pt-1 text-xs font-semibold uppercase tracking-wide text-muted-foreground">
                   {t(`bank.matches.gruppe${g.charAt(0).toUpperCase()}${g.slice(1)}`)}
                 </li>
@@ -177,7 +177,7 @@ export function InvoiceMatches({
                   title={
                     m.entityId ? (
                       <Link
-                        to="/banktransaktionen/$id"
+                        to="/bank-transactions/$id"
                         params={{ id: m.entityId }}
                         className="truncate text-sm font-medium text-foreground underline-offset-4 hover:underline"
                       >
@@ -198,7 +198,7 @@ export function InvoiceMatches({
                       {m.amount != null &&
                         Math.abs(Math.abs(m.amount) - Math.abs(m.amount_matched ?? 0)) > 0.01 && (
                           <span className="tabular-nums font-medium text-foreground">
-                            {t("bank.matches.davon", { betrag: formatEUR(m.amount_matched) })}
+                            {t("bank.matches.davon", { amount: formatEUR(m.amount_matched) })}
                           </span>
                         )}
                       <span>·</span>
@@ -208,7 +208,7 @@ export function InvoiceMatches({
                   reasons={m.match_reasons}
                   score={m.score}
                   actions={
-                    offen && m.entityId ? (
+                    open && m.entityId ? (
                       <>
                         <MatchCardAction
                           label={t("bank.matches.bestaetigenZahlung")}
@@ -217,7 +217,7 @@ export function InvoiceMatches({
                               ? confirmOutgoingMatch.isPending
                               : confirmMatch.isPending) || !mayPay
                           }
-                          title={keinZahlrecht}
+                          title={noPaymentRight}
                           onClick={() => setConfirmParam(m.entityId as string)}
                         />
                         <MatchCardAction
@@ -231,7 +231,7 @@ export function InvoiceMatches({
                               onSuccess: () => toast.success(t("bank.matches.toast.abgelehnt")),
                               onError: (e: unknown) =>
                                 toast.error(
-                                  t("bank.matches.toast.fehlgeschlagen", { error: fehlerText(e) }),
+                                  t("bank.matches.toast.fehlgeschlagen", { error: errorText(e) }),
                                 ),
                             };
                             if (isOutgoing) {
@@ -240,7 +240,10 @@ export function InvoiceMatches({
                                 onSettled,
                               );
                             } else {
-                              rejectMatch.mutate({ matchId: m.id, belegId: invoiceId }, onSettled);
+                              rejectMatch.mutate(
+                                { matchId: m.id, documentId: invoiceId },
+                                onSettled,
+                              );
                             }
                           }}
                         />
@@ -272,7 +275,7 @@ export function InvoiceMatches({
                 setConfirmParam(undefined);
               },
               onError: (e: unknown) =>
-                toast.error(t("bank.matches.toast.fehlgeschlagen", { error: fehlerText(e) })),
+                toast.error(t("bank.matches.toast.fehlgeschlagen", { error: errorText(e) })),
             };
             if (isOutgoing) {
               confirmOutgoingMatch.mutate(
@@ -287,7 +290,7 @@ export function InvoiceMatches({
               confirmMatch.mutate(
                 {
                   matchId: pair.matchId,
-                  belegId: invoiceId,
+                  documentId: invoiceId,
                   differenceReason: options?.differenceReason,
                 },
                 onSettled,
@@ -318,39 +321,39 @@ function UnlinkInvoiceMatchButton({
   unlinkOutgoingMatch: ReturnType<typeof useUnlinkOutgoingMatch>;
 }) {
   const { t } = useTranslation();
-  const { mayPay, reason: keinZahlrecht } = usePaymentRight();
-  const [grund, setGrund] = useState("");
+  const { mayPay, reason: noPaymentRight } = usePaymentRight();
+  const [reason, setReason] = useState("");
   const pending = isOutgoing ? unlinkOutgoingMatch.isPending : unlinkMatch.isPending;
 
   function unlink() {
     const onSettled = {
       onSuccess: () => toast.success(t("bank.matches.toast.getrennt")),
       onError: (e: unknown) =>
-        toast.error(t("bank.matches.toast.fehlgeschlagen", { error: fehlerText(e) })),
+        toast.error(t("bank.matches.toast.fehlgeschlagen", { error: errorText(e) })),
     };
     if (isOutgoing) {
       unlinkOutgoingMatch.mutate(
-        { matchId, outgoingInvoiceId: invoiceId, grund: grund.trim() },
+        { matchId, outgoingInvoiceId: invoiceId, reason: reason.trim() },
         onSettled,
       );
     } else {
       unlinkMatch.mutate(
         // walkBack, same as the other two unlink buttons: an invoice with its only payment removed
         // cannot stand at 'bezahlt', and this screen was the one path that left it there.
-        { matchId, belegId: invoiceId, grund: grund.trim(), walkBack: true },
+        { matchId, documentId: invoiceId, reason: reason.trim(), walkBack: true },
         onSettled,
       );
     }
   }
 
   return (
-    <AlertDialog onOpenChange={(open) => !open && setGrund("")}>
+    <AlertDialog onOpenChange={(open) => !open && setReason("")}>
       <AlertDialogTrigger asChild>
         <MatchCardAction
           tone="quiet"
           label={t("bank.matches.trennen")}
           disabled={pending || !mayPay}
-          title={keinZahlrecht}
+          title={noPaymentRight}
         />
       </AlertDialogTrigger>
       <AlertDialogContent>
@@ -369,8 +372,8 @@ function UnlinkInvoiceMatchButton({
           </Label>
           <Input
             id="unlink-grund-panel"
-            value={grund}
-            onChange={(e) => setGrund(e.target.value)}
+            value={reason}
+            onChange={(e) => setReason(e.target.value)}
             placeholder={t("bank.matches.trennenDialog.grundPlaceholder")}
           />
         </div>
@@ -378,7 +381,7 @@ function UnlinkInvoiceMatchButton({
           <AlertDialogCancel>{t("bank.matches.trennenDialog.abbrechen")}</AlertDialogCancel>
           <AlertDialogAction
             className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
-            disabled={grund.trim() === ""}
+            disabled={reason.trim() === ""}
             onClick={unlink}
           >
             {t("bank.matches.trennenDialog.bestaetigen")}

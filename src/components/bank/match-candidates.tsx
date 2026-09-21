@@ -29,7 +29,7 @@ import {
   useUnlinkOutgoingMatch,
   useTransactionMatches,
 } from "@/data";
-import { fehlerText, formatEUR } from "@/lib/data/format";
+import { errorText, formatEUR } from "@/lib/data/format";
 import { MatchStatusBadge } from "@/components/bank/badges";
 import { MatchCard, MatchCardAction } from "@/components/bank/match-panel/match-card";
 import {
@@ -38,7 +38,7 @@ import {
 } from "@/components/bank/match-panel/link-confirm-dialog";
 import type { MatchReasons } from "@/lib/data/types";
 
-function gruppe(status: string): "reconciled" | "suggestions" | "rejected" {
+function group(status: string): "reconciled" | "suggestions" | "rejected" {
   if (status === "confirmed") return "reconciled";
   if (status === "rejected") return "rejected";
   return "suggestions";
@@ -77,7 +77,7 @@ export function TransactionMatches({
   transactionAmount?: number | null;
 }) {
   const { t } = useTranslation();
-  const { mayPay, reason: keinZahlrecht } = usePaymentRight();
+  const { mayPay, reason: noPaymentRight } = usePaymentRight();
   const [confirmParam, setConfirmParam] = useState<string | undefined>(undefined);
   const isCredit = (transactionAmount ?? -1) >= 0;
 
@@ -92,14 +92,14 @@ export function TransactionMatches({
   const unlinkMatch = useUnlinkMatch();
   const unlinkOutgoingMatch = useUnlinkOutgoingMatch();
 
-  const rohMatches = useMemo(
+  const rawMatches = useMemo(
     () => (isCredit ? (outgoingMatchesQ.data ?? []) : (incomingMatchesQ.data ?? [])),
     [isCredit, outgoingMatchesQ.data, incomingMatchesQ.data],
   );
 
   const pair = useMemo((): PendingConfirm | null => {
     if (!confirmParam) return null;
-    for (const m of rohMatches) {
+    for (const m of rawMatches) {
       const entity = isCredit
         ? ((m as { outgoing_invoices?: { id: string } | null }).outgoing_invoices ?? null)
         : ((m as { documents?: { id: string } | null }).documents ?? null);
@@ -129,12 +129,12 @@ export function TransactionMatches({
       };
     }
     return null;
-  }, [confirmParam, rohMatches, isCredit, transactionId, transactionAmount, t]);
+  }, [confirmParam, rawMatches, isCredit, transactionId, transactionAmount, t]);
 
   const isLoading = isCredit ? outgoingMatchesQ.isLoading : incomingMatchesQ.isLoading;
   if (isLoading) return <Skeleton className="h-24 w-full" />;
 
-  const alleMatches: DisplayMatch[] = isCredit
+  const allMatches: DisplayMatch[] = isCredit
     ? (outgoingMatchesQ.data ?? []).map((m) => {
         const oi = m.outgoing_invoices ?? null;
         return {
@@ -172,8 +172,8 @@ export function TransactionMatches({
   // the screen: the panel then said no candidates had been proposed at all. They stay listed now,
   // last and muted, with their own badge -- the rejection is a decision somebody made, and the
   // screen is where you would look to see that it happened.
-  const matches = [...alleMatches].sort(
-    (a, b) => GROUP_ORDER[gruppe(a.status)] - GROUP_ORDER[gruppe(b.status)],
+  const matches = [...allMatches].sort(
+    (a, b) => GROUP_ORDER[group(a.status)] - GROUP_ORDER[group(b.status)],
   );
 
   if (matches.length === 0) {
@@ -202,12 +202,12 @@ export function TransactionMatches({
       )}
       <ul className="space-y-3">
         {matches.map((m, i) => {
-          const offen = m.status === "candidate" || m.status === "auto";
-          const g = gruppe(m.status);
-          const neueGruppe = i === 0 || gruppe(matches[i - 1].status) !== g;
+          const open = m.status === "candidate" || m.status === "auto";
+          const g = group(m.status);
+          const newGroup = i === 0 || group(matches[i - 1].status) !== g;
           return (
             <Fragment key={m.id}>
-              {neueGruppe && (
+              {newGroup && (
                 <li className="pt-1 text-xs font-semibold uppercase tracking-wide text-muted-foreground">
                   {t(`bank.matches.gruppe${g.charAt(0).toUpperCase()}${g.slice(1)}`)}
                 </li>
@@ -218,7 +218,7 @@ export function TransactionMatches({
                   title={
                     m.link?.kind === "internal" ? (
                       <Link
-                        to="/eingangsrechnungen/$nr"
+                        to="/incoming-invoices/$nr"
                         params={{ nr: m.link.nr }}
                         className="truncate text-sm font-medium text-foreground underline-offset-4 hover:underline"
                       >
@@ -247,7 +247,7 @@ export function TransactionMatches({
                         Math.abs(Math.abs(m.amountGross ?? 0) - Math.abs(m.amount_matched ?? 0)) >
                           0.01 && (
                           <span className="tabular-nums font-medium text-foreground">
-                            {t("bank.matches.davon", { betrag: formatEUR(m.amount_matched) })}
+                            {t("bank.matches.davon", { amount: formatEUR(m.amount_matched) })}
                           </span>
                         )}
                     </>
@@ -255,7 +255,7 @@ export function TransactionMatches({
                   reasons={m.match_reasons}
                   score={m.score}
                   actions={
-                    offen && m.entityId ? (
+                    open && m.entityId ? (
                       <>
                         <MatchCardAction
                           label={t("bank.matches.bestaetigenBeleg")}
@@ -263,7 +263,7 @@ export function TransactionMatches({
                             (isCredit ? confirmOutgoingMatch.isPending : confirmMatch.isPending) ||
                             !mayPay
                           }
-                          title={keinZahlrecht}
+                          title={noPaymentRight}
                           onClick={() => setConfirmParam(m.entityId as string)}
                         />
                         <MatchCardAction
@@ -278,7 +278,7 @@ export function TransactionMatches({
                               onError: (e: unknown) =>
                                 toast.error(
                                   t("bank.matches.toast.fehlgeschlagen", {
-                                    error: fehlerText(e),
+                                    error: errorText(e),
                                   }),
                                 ),
                             };
@@ -289,7 +289,7 @@ export function TransactionMatches({
                               );
                             } else {
                               rejectMatch.mutate(
-                                { matchId: m.id, belegId: m.entityId as string },
+                                { matchId: m.id, documentId: m.entityId as string },
                                 onSettled,
                               );
                             }
@@ -324,7 +324,7 @@ export function TransactionMatches({
               setConfirmParam(undefined);
             },
             onError: (e: unknown) =>
-              toast.error(t("bank.matches.toast.fehlgeschlagen", { error: fehlerText(e) })),
+              toast.error(t("bank.matches.toast.fehlgeschlagen", { error: errorText(e) })),
           };
           if (isCredit) {
             confirmOutgoingMatch.mutate(
@@ -341,7 +341,7 @@ export function TransactionMatches({
             confirmMatch.mutate(
               {
                 matchId: pair.matchId,
-                belegId: pair.entityId,
+                documentId: pair.entityId,
                 differenceReason: options?.differenceReason,
                 // The dialog asks whether to close a side; dropping the answer here left the
                 // checkbox ticked, the reason typed, and the remainder still open.
@@ -374,8 +374,8 @@ function UnlinkMatchButton({
   unlinkOutgoingMatch: ReturnType<typeof useUnlinkOutgoingMatch>;
 }) {
   const { t } = useTranslation();
-  const { mayPay, reason: keinZahlrecht } = usePaymentRight();
-  const [grund, setGrund] = useState("");
+  const { mayPay, reason: noPaymentRight } = usePaymentRight();
+  const [reason, setReason] = useState("");
   const pending = isCredit ? unlinkOutgoingMatch.isPending : unlinkMatch.isPending;
 
   function unlink() {
@@ -384,7 +384,7 @@ function UnlinkMatchButton({
       onError: (e: unknown) =>
         toast.error(
           t("bank.matches.toast.fehlgeschlagen", {
-            error: fehlerText(e),
+            error: errorText(e),
           }),
         ),
     };
@@ -393,25 +393,25 @@ function UnlinkMatchButton({
     // returned -- reported from the live app.
     if (isCredit) {
       unlinkOutgoingMatch.mutate(
-        { matchId, outgoingInvoiceId: entityId, grund: grund.trim() },
+        { matchId, outgoingInvoiceId: entityId, reason: reason.trim() },
         onSettled,
       );
     } else {
       unlinkMatch.mutate(
-        { matchId, belegId: entityId, grund: grund.trim(), walkBack: true },
+        { matchId, documentId: entityId, reason: reason.trim(), walkBack: true },
         onSettled,
       );
     }
   }
 
   return (
-    <AlertDialog onOpenChange={(open) => !open && setGrund("")}>
+    <AlertDialog onOpenChange={(open) => !open && setReason("")}>
       <AlertDialogTrigger asChild>
         <MatchCardAction
           tone="quiet"
           label={t("bank.matches.trennen")}
           disabled={pending || !mayPay}
-          title={keinZahlrecht}
+          title={noPaymentRight}
         />
       </AlertDialogTrigger>
       <AlertDialogContent>
@@ -432,8 +432,8 @@ function UnlinkMatchButton({
           </Label>
           <Input
             id="unlink-grund"
-            value={grund}
-            onChange={(e) => setGrund(e.target.value)}
+            value={reason}
+            onChange={(e) => setReason(e.target.value)}
             placeholder={t("bank.matches.trennenDialog.grundPlaceholder")}
           />
         </div>
@@ -441,7 +441,7 @@ function UnlinkMatchButton({
           <AlertDialogCancel>{t("bank.matches.trennenDialog.abbrechen")}</AlertDialogCancel>
           <AlertDialogAction
             className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
-            disabled={grund.trim() === ""}
+            disabled={reason.trim() === ""}
             onClick={unlink}
           >
             {t("bank.matches.trennenDialog.bestaetigen")}

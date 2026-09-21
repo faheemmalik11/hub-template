@@ -12,24 +12,28 @@ import { useMemo } from "react";
 
 import { useTranslation } from "@/lib/i18n";
 import {
-  useBelegeForBwa,
-  type BwaBeleg,
-  useBwaCategories,
+  useDocumentsForCostAnalysis,
+  type CostAnalysisDocument,
+  useCostAnalysisCategories,
   useConfirmedAllocations,
   useConfirmedMatchAccounts,
   useConfirmedOutgoingAllocations,
-  useGesellschaften,
+  useCompanies,
   useManualBookings,
-  useObjekte,
+  useProperties,
   useOutgoingInvoices,
 } from "@/data";
 import { coveredAmount, isFullyCovered } from "@/lib/data/format";
 import {
-  computeBwaSkeleton,
-  type BwaLineInput,
-  type BwaSkeletonComputed,
+  computeCostAnalysisSkeleton,
+  type CostAnalysisLineInput,
+  type CostAnalysisSkeletonComputed,
 } from "@/lib/data/bwa-skeleton";
-import type { BwaCategory, OutgoingInvoice, OutgoingVoucherStatus } from "@/lib/data/types";
+import type {
+  CostAnalysisCategory,
+  OutgoingInvoice,
+  OutgoingVoucherStatus,
+} from "@/lib/data/types";
 
 export type BookingBasis = "invoice_date" | "payment_date";
 
@@ -46,7 +50,10 @@ export function bookingBasisForCode(
 // surplus-accounting ones (migration 0041). Null means "can't be bucketed under the active basis"
 // (e.g. a payment-date company whose invoice, despite being fully matched, has no paid_at yet) —
 // never silently defaulted to a different date.
-export function bookingDateFor(b: BwaBeleg, basisByCode: Map<string, BookingBasis>): string | null {
+export function bookingDateFor(
+  b: CostAnalysisDocument,
+  basisByCode: Map<string, BookingBasis>,
+): string | null {
   const basis = bookingBasisForCode(b.company_code, basisByCode);
   if (basis === "invoice_date") return b.document_date ?? b.service_date ?? null;
   return b.paid_at ? b.paid_at.slice(0, 10) : null;
@@ -73,7 +80,7 @@ export function outgoingBookingDateFor(
 // categoryCodes actually key on (fine tags share their parent's report_line, not their own code).
 export function coarseCategoryCode(
   categoryId: string | null,
-  categoriesById: Map<string, BwaCategory>,
+  categoriesById: Map<string, CostAnalysisCategory>,
 ): string | null {
   if (!categoryId) return null;
   const cat = categoriesById.get(categoryId);
@@ -86,8 +93,8 @@ export function coarseCategoryCode(
 // outgoing invoice (revenue, migration 0045), already resolved to its evaluation amount and
 // category. A revenue item never has belegId/categoryId (outgoing invoices carry no fine
 // category); it carries the LexOffice voucher instead, since there is no in-app detail page.
-export interface BwaScopeItem {
-  belegId?: string;
+export interface CostAnalysisScopeItem {
+  documentId?: string;
   manualBookingSourceId?: string;
   outgoingInvoiceId?: string;
   // null for source='upload' outgoing invoices (migration 20260806120000) — no LexOffice voucher
@@ -114,17 +121,17 @@ export interface BwaScopeItem {
  * Net already adds back the share of VAT that is NOT deductible (migration 0031's generated
  * columns resolve that per invoice), so "net" is not a blanket 19% haircut.
  */
-export type BwaAmountBasis = "net" | "gross";
+export type CostAnalysisAmountBasis = "net" | "gross";
 
-export interface BwaScopeFilter {
+export interface CostAnalysisScopeFilter {
   companyCodes: string[] | null;
   propertyCode: string | null;
   categoryId: string | null;
   accountId: string | null;
-  von: string | null;
-  bis: string | null;
+  fromDate: string | null;
+  toDate: string | null;
   /** Defaults to "net" when omitted, so every existing caller keeps the standard treatment. */
-  basis?: BwaAmountBasis;
+  basis?: CostAnalysisAmountBasis;
 }
 
 // The default, unfiltered scope — every company, every property/category/account, all time. This
@@ -132,16 +139,16 @@ export interface BwaScopeFilter {
 // dashboard tile that also uses this default is guaranteed to agree with a freshly opened Cost
 // Analysis page, not an independently chosen "current year" or similar that the page doesn't
 // default to.
-export const BWA_SCOPE_ALL: BwaScopeFilter = {
+export const COSTANALYSIS_SCOPE_ALL: CostAnalysisScopeFilter = {
   companyCodes: null,
   propertyCode: null,
   categoryId: null,
   accountId: null,
-  von: null,
-  bis: null,
+  fromDate: null,
+  toDate: null,
 };
 
-export interface BwaScopeResult {
+export interface CostAnalysisScopeResult {
   isLoading: boolean;
   // Whether ANY query behind the figures failed. Without this a caller cannot tell a real 0,00 €
   // from "the request failed and the reducers ran over empty arrays", which is how the Overview tile
@@ -152,11 +159,11 @@ export interface BwaScopeResult {
   // so a caller can render one honest ErrorState instead of picking one query to speak for all nine.
   error: unknown;
   refetch: () => void;
-  belegItems: BwaScopeItem[];
+  documentItems: CostAnalysisScopeItem[];
   notBucketedCount: number;
   vatUnresolvedCount: number;
   /** Those same receipts, so the disclosure can list and open them. */
-  vatUnresolvedItems: BwaScopeItem[];
+  vatUnresolvedItems: CostAnalysisScopeItem[];
   // EUR total of the VAT sitting on receipts whose deductibility is still unresolved, so the card can
   // account for its own headline instead of implying a 0/0 split (see the counter's own comment).
   vatUnresolvedAmount: number;
@@ -166,11 +173,11 @@ export interface BwaScopeResult {
   vatAmountTotal: number;
   vatDeductibleTotal: number;
   vatNondeductibleTotal: number;
-  revenueItems: BwaScopeItem[];
+  revenueItems: CostAnalysisScopeItem[];
   revenueNotBucketedCount: number;
   revenueExcludedByDimensionFilter: number;
   revenueNetUnknownCount: number;
-  manualItems: BwaScopeItem[];
+  manualItems: CostAnalysisScopeItem[];
   manualExcludedByAccountFilter: number;
   // Distinct manual-booking months (YYYY-MM-DD), unaffected by the active filters — for building a
   // period picker that reflects all the data, not just the receipts.
@@ -180,52 +187,46 @@ export interface BwaScopeResult {
   // ALL revenue — which turns "Rohertrag" into a cost-only figure while it keeps its name. Callers
   // must not present gross profit as a gross profit while this is true.
   revenueSuppressedByFilter: boolean;
-  combined: BwaScopeItem[];
-  computed: BwaSkeletonComputed;
-  rowByKey: Map<string, BwaSkeletonComputed["rows"][number]>;
-  categoriesById: Map<string, BwaCategory>;
+  combined: CostAnalysisScopeItem[];
+  computed: CostAnalysisSkeletonComputed;
+  rowByKey: Map<string, CostAnalysisSkeletonComputed["rows"][number]>;
+  categoriesById: Map<string, CostAnalysisCategory>;
 }
 
 // Everything src/routes/auswertungen/index.tsx needs to compute its P&L skeleton (Gross Profit,
 // Operating Gross Profit, etc.), parameterized by scope instead of hardcoded to that page's own
 // filter state. Matched-and-fully-covered receipts/outgoing-invoices only ("no figure without a
 // match", Briefing Screen 10), bucketed by each company's own booking-date basis (migration 0041).
-export function useBwaScope(filter: BwaScopeFilter): BwaScopeResult {
+export function useCostAnalysisScope(filter: CostAnalysisScopeFilter): CostAnalysisScopeResult {
   const { t } = useTranslation();
-  const belegeQ = useBelegeForBwa();
-  const gesellschaftenQ = useGesellschaften();
-  const objekteQ = useObjekte();
-  const categoriesQ = useBwaCategories();
+  const documentsQ = useDocumentsForCostAnalysis();
+  const companiesQ = useCompanies();
+  const propertiesQ = useProperties();
+  const categoriesQ = useCostAnalysisCategories();
   const allocationsQ = useConfirmedAllocations();
   const matchAccountsQ = useConfirmedMatchAccounts();
   const outgoingInvoicesQ = useOutgoingInvoices();
   const outgoingAllocationsQ = useConfirmedOutgoingAllocations();
 
-  const alleBelege = useMemo(() => belegeQ.data ?? [], [belegeQ.data]);
-  const gesellschaften = useMemo(() => gesellschaftenQ.data ?? [], [gesellschaftenQ.data]);
-  const alleAusgangsrechnungen = useMemo(
-    () => outgoingInvoicesQ.data ?? [],
-    [outgoingInvoicesQ.data],
-  );
+  const allDocuments = useMemo(() => documentsQ.data ?? [], [documentsQ.data]);
+  const companies = useMemo(() => companiesQ.data ?? [], [companiesQ.data]);
+  const allOutgoingInvoices = useMemo(() => outgoingInvoicesQ.data ?? [], [outgoingInvoicesQ.data]);
 
   const basisByCode = useMemo(
     () =>
       new Map<string, BookingBasis>(
-        gesellschaften.map((g) => [g.code, g.booking_basis ?? "payment_date"]),
+        companies.map((g) => [g.code, g.booking_basis ?? "payment_date"]),
       ),
-    [gesellschaften],
+    [companies],
   );
-  const companyCodeById = useMemo(
-    () => new Map(gesellschaften.map((g) => [g.id, g.code])),
-    [gesellschaften],
-  );
+  const companyCodeById = useMemo(() => new Map(companies.map((g) => [g.id, g.code])), [companies]);
   const categoriesById = useMemo(
     () => new Map((categoriesQ.data ?? []).map((c) => [c.id, c])),
     [categoriesQ.data],
   );
-  const objekteByCode = useMemo(
-    () => new Map((objekteQ.data ?? []).map((o) => [o.code, o])),
-    [objekteQ.data],
+  const propertiesByCode = useMemo(
+    () => new Map((propertiesQ.data ?? []).map((o) => [o.code, o])),
+    [propertiesQ.data],
   );
   const matchedByInvoice = useMemo(
     () => allocationsQ.data?.byInvoice ?? new Map<string, number>(),
@@ -245,13 +246,13 @@ export function useBwaScope(filter: BwaScopeFilter): BwaScopeResult {
   );
 
   // Omitted means net, which is what every caller but the Cost Analysis screen wants.
-  const basis: BwaAmountBasis = filter.basis ?? "net";
+  const basis: CostAnalysisAmountBasis = filter.basis ?? "net";
 
   const companyMatches = (code: string | null) =>
     filter.companyCodes == null ? true : !!code && filter.companyCodes.includes(code);
 
   const scoped = useMemo(() => {
-    const belegItems: BwaScopeItem[] = [];
+    const documentItems: CostAnalysisScopeItem[] = [];
     let notBucketedCount = 0;
     let vatUnresolvedCount = 0;
     let vatUnresolvedAmount = 0;
@@ -264,7 +265,7 @@ export function useBwaScope(filter: BwaScopeFilter): BwaScopeResult {
     let vatNondeductibleTotal = 0;
     let costNetUnknownCount = 0;
 
-    for (const b of alleBelege) {
+    for (const b of allDocuments) {
       if (
         !isFullyCovered(
           b.amount_gross,
@@ -292,8 +293,8 @@ export function useBwaScope(filter: BwaScopeFilter): BwaScopeResult {
         notBucketedCount++;
         continue;
       }
-      if (filter.von && date < filter.von) continue;
-      if (filter.bis && date > filter.bis) continue;
+      if (filter.fromDate && date < filter.fromDate) continue;
+      if (filter.toDate && date > filter.toDate) continue;
 
       // VAT is tracked as its own metric, independent of the P&L flow below (Briefing Screen 10:
       // "track VAT separately from costs") — every matched, in-scope receipt counts here, even a
@@ -332,8 +333,8 @@ export function useBwaScope(filter: BwaScopeFilter): BwaScopeResult {
       const costNetKnown = b.amount_net != null;
       if (!costNetKnown) costNetUnknownCount++;
 
-      belegItems.push({
-        belegId: b.id,
+      documentItems.push({
+        documentId: b.id,
         // Net by default, gross where VAT isn't deductible (Briefing Screen 10) — mechanically
         // just net + whatever share of the VAT is NOT reclaimable (migration 0031's generated
         // columns already resolve that share per invoice, including partial deductibility).
@@ -352,11 +353,13 @@ export function useBwaScope(filter: BwaScopeFilter): BwaScopeResult {
     }
 
     return {
-      belegItems,
+      documentItems,
       notBucketedCount,
       vatUnresolvedCount,
       vatUnresolvedAmount,
-      vatUnresolvedItems: belegItems.filter((i) => i.belegId && vatUnresolvedIds.has(i.belegId)),
+      vatUnresolvedItems: documentItems.filter(
+        (i) => i.documentId && vatUnresolvedIds.has(i.documentId),
+      ),
       costNetUnknownCount,
       vatAmountTotal,
       vatDeductibleTotal,
@@ -364,14 +367,14 @@ export function useBwaScope(filter: BwaScopeFilter): BwaScopeResult {
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [
-    alleBelege,
+    allDocuments,
     matchedByInvoice,
     filter.companyCodes,
     filter.propertyCode,
     filter.categoryId,
     filter.accountId,
-    filter.von,
-    filter.bis,
+    filter.fromDate,
+    filter.toDate,
     basisByCode,
     categoriesById,
     matchAccountsByInvoice,
@@ -394,12 +397,12 @@ export function useBwaScope(filter: BwaScopeFilter): BwaScopeResult {
   // are treated the same way manual bookings already are under an active account filter: excluded
   // and the exclusion counted, never silently dropped.
   const scopedRevenue = useMemo(() => {
-    const items: BwaScopeItem[] = [];
+    const items: CostAnalysisScopeItem[] = [];
     let notBucketedCount = 0;
     let excludedByDimensionFilter = 0;
     let netUnknownCount = 0;
 
-    for (const oi of alleAusgangsrechnungen) {
+    for (const oi of allOutgoingInvoices) {
       if (
         !isFullyCovered(
           oi.amount_gross,
@@ -435,8 +438,8 @@ export function useBwaScope(filter: BwaScopeFilter): BwaScopeResult {
         notBucketedCount++;
         continue;
       }
-      if (filter.von && date < filter.von) continue;
-      if (filter.bis && date > filter.bis) continue;
+      if (filter.fromDate && date < filter.fromDate) continue;
+      if (filter.toDate && date > filter.toDate) continue;
 
       // Net, same convention as costs: VAT collected on the customer's behalf is a liability, not
       // revenue (Briefing Screen 10's "VAT is a pass-through item" applied symmetrically here).
@@ -458,14 +461,14 @@ export function useBwaScope(filter: BwaScopeFilter): BwaScopeResult {
     return { items, notBucketedCount, excludedByDimensionFilter, netUnknownCount };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [
-    alleAusgangsrechnungen,
+    allOutgoingInvoices,
     outgoingMatchedByInvoice,
     filter.companyCodes,
     filter.propertyCode,
     filter.categoryId,
     filter.accountId,
-    filter.von,
-    filter.bis,
+    filter.fromDate,
+    filter.toDate,
     companyCodeById,
     basisByCode,
     outgoingConfirmedAtByInvoice,
@@ -487,11 +490,11 @@ export function useBwaScope(filter: BwaScopeFilter): BwaScopeResult {
   // This span is what the unfiltered case already used, so it is not a new worst case — and one
   // stable range means every caller shares a single React Query key instead of refetching per
   // filter change.
-  const { effVon, effBis } = useMemo(
-    () => ({ effVon: `${currentYear - 15}-01-01`, effBis: `${currentYear + 5}-12-31` }),
+  const { effFromDate, effToDate } = useMemo(
+    () => ({ effFromDate: `${currentYear - 15}-01-01`, effToDate: `${currentYear + 5}-12-31` }),
     [currentYear],
   );
-  const manualBookingsQ = useManualBookings(null, effVon, effBis);
+  const manualBookingsQ = useManualBookings(null, effFromDate, effToDate);
 
   // Every distinct month a manual booking falls in, unfiltered — the period picker is built from
   // this alongside the receipt/revenue dates, so a manual-booking-only Hub still gets real periods.
@@ -504,14 +507,14 @@ export function useBwaScope(filter: BwaScopeFilter): BwaScopeResult {
   // the match gate (they never bypass it, they simply never need it: they aren't receipts) and
   // minus the account/IBAN dimension, which they don't carry at all.
   const manualScoped = useMemo(() => {
-    const items: BwaScopeItem[] = [];
+    const items: CostAnalysisScopeItem[] = [];
     let excludedByAccountFilter = 0;
     for (const m of manualBookingsQ.data ?? []) {
       const code = companyCodeById.get(m.company_id) ?? null;
       if (!companyMatches(code)) continue;
 
       if (filter.propertyCode != null) {
-        const wantedId = objekteByCode.get(filter.propertyCode)?.id ?? null;
+        const wantedId = propertiesByCode.get(filter.propertyCode)?.id ?? null;
         if (!wantedId || m.property_id !== wantedId) continue;
       }
 
@@ -533,8 +536,8 @@ export function useBwaScope(filter: BwaScopeFilter): BwaScopeResult {
       // RPC, manual_bookings_expanded(null, '2026-08-20', '2026-08-31') returns the 2026-08-01
       // booking. Receipts on the same screen are filtered to the exact day, so without this a custom
       // range mixed exact-date receipts with whole-month manual bookings in one P&L.
-      if (filter.von && m.period < filter.von) continue;
-      if (filter.bis && m.period > filter.bis) continue;
+      if (filter.fromDate && m.period < filter.fromDate) continue;
+      if (filter.toDate && m.period > filter.toDate) continue;
 
       items.push({
         manualBookingSourceId: m.source_id,
@@ -543,7 +546,7 @@ export function useBwaScope(filter: BwaScopeFilter): BwaScopeResult {
         // Prefix the company code: the default view is ALL companies, and a manual booking with no
         // note fell back to a bare "Manuelle Buchung", so two of them in the same bucket rendered as
         // two identical rows with nothing to tell them apart.
-        label: [code, m.note ?? t("auswertungen.manuelleBuchung")].filter(Boolean).join(" · "),
+        label: [code, m.note ?? t("reports.manuelleBuchung")].filter(Boolean).join(" · "),
         date: m.period,
       });
     }
@@ -559,31 +562,31 @@ export function useBwaScope(filter: BwaScopeFilter): BwaScopeResult {
     // list is computed once and never re-filtered when only the period changes — a custom range
     // narrowed from 01.–31.08. to 20.–31.08. went on reporting the 01.08. booking. The
     // exhaustive-deps rule is disabled on this memo, so nothing else would have caught it.
-    filter.von,
-    filter.bis,
+    filter.fromDate,
+    filter.toDate,
     companyCodeById,
-    objekteByCode,
+    propertiesByCode,
     categoriesById,
     t,
   ]);
 
   const combined = useMemo(
-    () => [...scoped.belegItems, ...manualScoped.items, ...scopedRevenue.items],
-    [scoped.belegItems, manualScoped.items, scopedRevenue.items],
+    () => [...scoped.documentItems, ...manualScoped.items, ...scopedRevenue.items],
+    [scoped.documentItems, manualScoped.items, scopedRevenue.items],
   );
 
   const computed = useMemo(() => {
-    const input: BwaLineInput[] = combined.map((i) => ({
+    const input: CostAnalysisLineInput[] = combined.map((i) => ({
       // A revenue item has no fine category of its own — it always routes to the fixed "REVENUE"
       // code (bwa-skeleton.ts), never through the category lookup the other two sources use.
       categoryCode: i.outgoingInvoiceId
         ? "REVENUE"
         : coarseCategoryCode(i.categoryId, categoriesById),
       amount: i.amount,
-      belegId: i.belegId,
+      documentId: i.documentId,
       manualBookingSourceId: i.manualBookingSourceId,
     }));
-    return computeBwaSkeleton(input);
+    return computeCostAnalysisSkeleton(input);
   }, [combined, categoriesById]);
 
   const rowByKey = useMemo(() => new Map(computed.rows.map((r) => [r.key, r])), [computed.rows]);
@@ -597,9 +600,9 @@ export function useBwaScope(filter: BwaScopeFilter): BwaScopeResult {
   // query left the reducers running over an empty array and the page stating a total it had no basis
   // for. Both lists are now exhaustive; adding a query to this hook means adding it here too.
   const allQueries = [
-    belegeQ,
-    gesellschaftenQ,
-    objekteQ,
+    documentsQ,
+    companiesQ,
+    propertiesQ,
     categoriesQ,
     allocationsQ,
     matchAccountsQ,
@@ -619,7 +622,7 @@ export function useBwaScope(filter: BwaScopeFilter): BwaScopeResult {
     isError,
     error,
     refetch,
-    belegItems: scoped.belegItems,
+    documentItems: scoped.documentItems,
     notBucketedCount: scoped.notBucketedCount,
     vatUnresolvedCount: scoped.vatUnresolvedCount,
     vatUnresolvedItems: scoped.vatUnresolvedItems,

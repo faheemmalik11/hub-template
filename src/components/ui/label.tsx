@@ -5,7 +5,7 @@ import * as LabelPrimitive from "@radix-ui/react-label";
 import { cva, type VariantProps } from "class-variance-authority";
 
 import { cn } from "@/lib/utils";
-import { useFeldId } from "@/components/ui/feld-context";
+import { useFieldId } from "@/components/ui/feld-context";
 
 const labelVariants = cva(
   "text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70",
@@ -16,11 +16,11 @@ const Label = React.forwardRef<
   React.ComponentPropsWithoutRef<typeof LabelPrimitive.Root> & VariantProps<typeof labelVariants>
 >(({ className, htmlFor, ...props }, ref) => {
   // Inside a Feld the label points at that field's control. An explicit htmlFor still wins.
-  const feldId = useFeldId();
+  const fieldId = useFieldId();
   return (
     <LabelPrimitive.Root
       ref={ref}
-      htmlFor={htmlFor ?? feldId ?? undefined}
+      htmlFor={htmlFor ?? fieldId ?? undefined}
       className={cn(labelVariants(), className)}
       {...props}
     />

@@ -33,20 +33,20 @@ export function useSetupAlerts(): { items: NotificationItem[]; dismiss: () => vo
           });
         }
       } else if (step.key === "bank") {
-        result.push({ key: "bank", count: step.problemCount, link: { to: "/bankkonten" } });
+        result.push({ key: "bank", count: step.problemCount, link: { to: "/bank-accounts" } });
       } else if (step.key === "companies") {
         result.push({
           key: "companies",
           count: step.problemCount,
-          link: { to: "/gesellschaften" },
+          link: { to: "/companies" },
         });
       } else if (step.key === "properties") {
-        result.push({ key: "properties", count: step.problemCount, link: { to: "/objekte" } });
+        result.push({ key: "properties", count: step.problemCount, link: { to: "/properties" } });
       } else if (step.key === "datev") {
         result.push({
           key: "datev",
           count: step.problemCount,
-          link: { to: "/datev-uebergabe" },
+          link: { to: "/datev-handover" },
         });
       }
     }

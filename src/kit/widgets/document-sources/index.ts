@@ -5,7 +5,7 @@ export {
   type FilingStatusCardProps,
   type FilingStatus,
 } from "./filing-status-card";
-export { useFokusHighlight } from "./use-fokus-highlight";
+export { useFocusHighlight } from "./use-focus-highlight";
 export { useSourceForm, sameValue, type SourceForm } from "./use-source-form";
 export { useConnectionTest, type ConnectionTest } from "./use-connection-test";
 export { useDependentFieldOptions } from "./use-dependent-field-options";

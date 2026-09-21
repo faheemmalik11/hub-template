@@ -264,7 +264,7 @@ function FieldRow({
 
   if (field.kind === "toggle") {
     return (
-      <StepShell stepNumber={stepNumber} isLastStep={isLastStep} dataFokus={field.key}>
+      <StepShell stepNumber={stepNumber} isLastStep={isLastStep} dataFocus={field.key}>
         <div className="flex items-center justify-between gap-4">
           <div className="min-w-0">
             <Label className="text-sm font-semibold text-foreground">{field.label}</Label>
@@ -279,7 +279,7 @@ function FieldRow({
   }
 
   return (
-    <StepShell stepNumber={stepNumber} isLastStep={isLastStep} dataFokus={field.key}>
+    <StepShell stepNumber={stepNumber} isLastStep={isLastStep} dataFocus={field.key}>
       <div className="flex items-center justify-between gap-2">
         <Label className="flex items-center gap-1.5 text-sm font-semibold text-foreground">
           {field.icon && <FieldGlyph icon={field.icon} />}
@@ -345,19 +345,19 @@ function FieldRow({
 function StepShell({
   stepNumber,
   isLastStep,
-  dataFokus,
+  dataFocus,
   children,
 }: {
   stepNumber?: number;
   isLastStep?: boolean;
-  dataFokus?: string;
+  dataFocus?: string;
   children: ReactNode;
 }) {
   if (stepNumber === undefined) {
-    return <div data-fokus={dataFokus}>{children}</div>;
+    return <div data-focus={dataFocus}>{children}</div>;
   }
   return (
-    <div className="flex gap-4" data-fokus={dataFokus}>
+    <div className="flex gap-4" data-focus={dataFocus}>
       <div className="flex flex-col items-center">
         <span className="flex size-6 shrink-0 items-center justify-center rounded-full border border-border bg-muted text-xs font-semibold text-foreground">
           {stepNumber}

@@ -38,23 +38,23 @@ export function PermissionMatrix({
   categoryLabel?: (category: string) => string;
   className?: string;
 }) {
-  const gruppen = useMemo(() => {
-    const nach = new Map<string, AccessPermission[]>();
+  const groups = useMemo(() => {
+    const byCategory = new Map<string, AccessPermission[]>();
     for (const p of permissions) {
-      if (!nach.has(p.category)) nach.set(p.category, []);
-      nach.get(p.category)!.push(p);
+      if (!byCategory.has(p.category)) byCategory.set(p.category, []);
+      byCategory.get(p.category)!.push(p);
     }
-    return [...nach.entries()];
+    return [...byCategory.entries()];
   }, [permissions]);
 
-  if (gruppen.length === 0 || roles.length === 0) return null;
+  if (groups.length === 0 || roles.length === 0) return null;
 
   return (
     <div className={cn("max-w-4xl space-y-5", className)}>
-      {gruppen.map(([kategorie, eintraege], gruppenIndex) => (
+      {groups.map(([category, entries], groupsIndex) => (
         <section
-          key={kategorie}
-          data-tour={`permission-group-${kategorie}`}
+          key={category}
+          data-tour={`permission-group-${category}`}
           className="overflow-hidden rounded-xl border border-border bg-card"
         >
           {/* The role columns are a fixed 28rem-plus wide, and the section clips. Below that width
@@ -64,12 +64,12 @@ export function PermissionMatrix({
               <header className="flex items-end gap-4 border-b border-border bg-muted/40 px-4 py-3">
                 <div className="min-w-0 flex-1">
                   <div className="text-base font-semibold text-foreground">
-                    {categoryLabel(kategorie)}
+                    {categoryLabel(category)}
                   </div>
                   {/* Only the first group needs to say what the left column is; repeating it under every
                   heading would be noise, but the ROLE names do have to repeat, or a column six rows
                   down is unidentifiable without scrolling back up. */}
-                  {gruppenIndex === 0 && (
+                  {groupsIndex === 0 && (
                     <div className="text-sm text-muted-foreground">{permissionColumnLabel}</div>
                   )}
                 </div>
@@ -84,12 +84,10 @@ export function PermissionMatrix({
               </header>
 
               <div className="divide-y divide-border">
-                {eintraege.map((p, zeilenIndex) => (
+                {entries.map((p, rowsIndex) => (
                   <div
                     key={p.key}
-                    data-tour={
-                      gruppenIndex === 0 && zeilenIndex === 0 ? "permission-row" : undefined
-                    }
+                    data-tour={groupsIndex === 0 && rowsIndex === 0 ? "permission-row" : undefined}
                     className="flex items-center gap-4 px-4 py-3 transition-colors hover:bg-muted/40"
                   >
                     <div className="min-w-0 flex-1">

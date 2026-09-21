@@ -5,8 +5,8 @@
 // App-only auth and the credential env hint both live in auth.server.ts, shared with the DATEV
 // handover send (send-mail.server.ts).
 
-import type { FolderOption } from "@/lib/postfach/folder-option";
-import { channelMailbox } from "@/lib/postfach/channel-credentials.server";
+import type { FolderOption } from "@/lib/inbox/folder-option";
+import { channelMailbox } from "@/lib/inbox/channel-credentials.server";
 import { getGraphAccessToken } from "./auth.server";
 
 async function graphGet(url: string, token: string): Promise<unknown> {

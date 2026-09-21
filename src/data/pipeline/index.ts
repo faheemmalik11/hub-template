@@ -4,8 +4,8 @@ export {
   usePipelineHealth,
   useRunNowEnabled,
   useRunRequests,
-  useVerarbeitungsLogFuerBeleg,
-  useVerarbeitungsLogPage,
-  useVerarbeitungsLogStatusCounts,
+  useProcessingLogForDocument,
+  useProcessingLogPage,
+  useProcessingLogStatusCounts,
 } from "./pipeline";
-export type { ChangeHistoryEntry, VerarbeitungsLogFilter } from "./pipeline";
+export type { ChangeHistoryEntry, ProcessingLogFilter } from "./pipeline";

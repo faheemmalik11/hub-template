@@ -2,7 +2,7 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 
 import { TABLE } from "@/config/tables";
 import { STALE, actorEmail, sb } from "@/data/client";
-import { invalidateRuleState, pflichtGrund } from "@/data/shared";
+import { invalidateRuleState, requiredReason } from "@/data/shared";
 import type {
   AssignmentRule,
   RuleBulkApplyResult,
@@ -92,14 +92,14 @@ export function useUpdateAssignmentRule() {
 export function useSoftDeleteAssignmentRule() {
   const qc = useQueryClient();
   return useMutation({
-    mutationFn: async (args: { id: string; grund: string }) => {
+    mutationFn: async (args: { id: string; reason: string }) => {
       const actor = await actorEmail();
       const { error } = await sb
         .from(TABLE.assignmentRules)
         .update({
           deleted_at: new Date().toISOString(),
           deleted_by: actor,
-          delete_reason: pflichtGrund(args.grund),
+          delete_reason: requiredReason(args.reason),
           is_active: false,
         })
         .eq("id", args.id);
@@ -175,15 +175,15 @@ export function useRulePreviewScope(input: AssignmentRuleInput | null, excludeRu
 // Which rule currently wins for this receipt, per target. Used to show "a rule would set X" next
 // to a field, including when the field is human-set and therefore protected — seeing the rule you
 // are overriding is the point.
-export function useResolvedRules(belegId: string | null) {
+export function useResolvedRules(documentId: string | null) {
   return useQuery({
-    queryKey: ["resolved_rules", belegId],
-    enabled: !!belegId,
+    queryKey: ["resolved_rules", documentId],
+    enabled: !!documentId,
     staleTime: 0,
     queryFn: async (): Promise<Record<RuleTarget, string | null>> => {
       const [cat, vat] = await Promise.all([
-        sb.rpc("resolve_assignment_rule", { p_invoice: belegId, p_target: "cost_category" }),
-        sb.rpc("resolve_assignment_rule", { p_invoice: belegId, p_target: "vat_rate" }),
+        sb.rpc("resolve_assignment_rule", { p_invoice: documentId, p_target: "cost_category" }),
+        sb.rpc("resolve_assignment_rule", { p_invoice: documentId, p_target: "vat_rate" }),
       ]);
       if (cat.error) throw cat.error;
       if (vat.error) throw vat.error;
@@ -200,14 +200,14 @@ export function useResolvedRules(belegId: string | null) {
 // silently applying one of several candidates (Briefing Screen 4: "a clear priority is needed").
 export type RuleCandidate = { rule_id: string; specificity: number; is_winner: boolean };
 
-export function useAssignmentRuleCandidates(belegId: string | null, target: RuleTarget) {
+export function useAssignmentRuleCandidates(documentId: string | null, target: RuleTarget) {
   return useQuery({
-    queryKey: ["resolved_rule_candidates", belegId, target],
-    enabled: !!belegId,
+    queryKey: ["resolved_rule_candidates", documentId, target],
+    enabled: !!documentId,
     staleTime: 0,
     queryFn: async (): Promise<RuleCandidate[]> => {
       const { data, error } = await sb.rpc("resolve_assignment_rule_candidates", {
-        p_invoice: belegId,
+        p_invoice: documentId,
         p_target: target,
       });
       if (error) throw error;
@@ -227,10 +227,10 @@ export interface RuleApplyResult {
 export function useApplyAssignmentRules() {
   const qc = useQueryClient();
   return useMutation({
-    mutationFn: async (belegId: string): Promise<RuleApplyResult> => {
+    mutationFn: async (documentId: string): Promise<RuleApplyResult> => {
       const actor = await actorEmail();
       const { data, error } = await sb.rpc("apply_assignment_rules", {
-        p_invoice: belegId,
+        p_invoice: documentId,
         p_actor: actor,
       });
       if (error) throw error;

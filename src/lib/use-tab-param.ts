@@ -60,9 +60,9 @@ export function useTabParam<T extends string>(
  * Merges `tab` into a route's `validateSearch`. Use as the whole validator on a route that has no
  * other search params, or spread alongside the existing ones.
  */
-export function tabSearch(input: Record<string, unknown>): { tab?: string; fokus?: string } {
+export function tabSearch(input: Record<string, unknown>): { tab?: string; focus?: string } {
   return {
     tab: typeof input.tab === "string" ? input.tab : undefined,
-    fokus: typeof input.fokus === "string" ? input.fokus : undefined,
+    focus: typeof input.focus === "string" ? input.focus : undefined,
   };
 }

@@ -2,7 +2,7 @@
 // Strings here must stay byte-identical to the previous hard-coded German so the German UI
 // looks unchanged. DB values, DB column names, and persisted audit text are NOT translated.
 //
-// NOTE: keys under `belege.workflow.*` are ALSO used (via a fixed-German translator) to build
+// NOTE: keys under `documents.workflow.*` are ALSO used (via a fixed-German translator) to build
 // persisted audit text — see workflowLabelDe() in format.ts. Keep them accurate German.
 
 const de = {
@@ -661,7 +661,7 @@ const de = {
       },
     },
   },
-  mehrLaden: {
+  loadMore: {
     rest_one: "… {{count}} weiterer Eintrag",
     rest_other: "… {{count}} weitere Einträge",
   },
@@ -749,15 +749,18 @@ const de = {
   // Top navigation (header). Group labels + page links.
   // Shared wording for role-gated pages (components/layout/kein-zugriff.tsx). Papierkorb keeps its
   // own, more specific text under papierkorb.guard, which can name what is being withheld.
-  zugriff: {
-    titel: "Kein Zugriff auf diese Seite",
+  access: {
+    title: "Kein Zugriff auf diese Seite",
     textAdmin:
       "Diese Seite ist nur für Administratoren. Ihr Konto hat diese Rolle nicht. Wenn Sie hier etwas erledigen müssen, wenden Sie sich an eine Administratorin oder einen Administrator.",
     textManager:
       "Diese Seite ist für Vorgesetzte und Administratoren. Ihr Konto hat diese Rolle nicht. Wenn Sie diese Daten brauchen, wenden Sie sich an Ihre Vorgesetzte oder Ihren Vorgesetzten.",
-    rechteNichtGeladen:
+    permissionsNotLoaded:
       "Die Berechtigungen konnten nicht geladen werden. Vorsichtshalber ist nichts freigeschaltet. Bitte laden Sie die Seite neu und informieren Sie eine Administratorin oder einen Administrator, wenn es bestehen bleibt.",
-    zurueck: "Zur Übersicht",
+    back: "Zur Übersicht",
+
+    pageNotAvailable:
+      "Diese Seite steht Ihrem Konto nicht zur Verfügung. Wenn Sie sie brauchen, wenden Sie sich an eine Administratorin oder einen Administrator.",
   },
   auth: {
     error: {
@@ -879,7 +882,7 @@ const de = {
   },
 
   // Start page ("/") — the module launcher + recent invoices.
-  einstellungen: {
+  settings: {
     titel: "Benachrichtigungen",
     sub: "Legen Sie fest, welche Meldungen im Hub erscheinen und welche über externe Kanäle gehen.",
     gespeichert: "Gespeichert.",
@@ -1010,7 +1013,7 @@ const de = {
     // reader who does not know the system still understands why the row is there.
     msg: {
       belegOhneNummer: "ohne Nummer",
-      zuweisungEine: "Rechnung {{beleg}} wurde Ihnen zugewiesen. Bitte kümmern Sie sich darum.",
+      zuweisungEine: "Rechnung {{doc}} wurde Ihnen zugewiesen. Bitte kümmern Sie sich darum.",
       neu_one: "{{count}} neue Rechnung ist eingegangen. Sie kann bearbeitet werden.",
       neu_other: "{{count}} neue Rechnungen sind eingegangen. Sie können bearbeitet werden.",
       rueckfrage_one:
@@ -1384,7 +1387,7 @@ const de = {
     },
   },
 
-  belege: {
+  documents: {
     // ---- badges / shared ----
     badge: {
       ustAbbr: "USt",
@@ -1398,7 +1401,7 @@ const de = {
       ustUnbekanntTitle: "Auf dem Beleg wurde kein Umsatzsteuersatz erkannt.",
       ustGemischt: "USt gemischt",
       ustGemischtTitle:
-        "Auf diesem Beleg gelten mehrere Umsatzsteuersätze ({{saetze}} %). Die Aufteilung steht im Detail unter Steuer.",
+        "Auf diesem Beleg gelten mehrere Umsatzsteuersätze ({{rates}} %). Die Aufteilung steht im Detail unter Steuer.",
       bezahlt: "Bezahlt",
       offen: "Offen",
       bezahltTitle: "bezahlt",
@@ -1419,9 +1422,9 @@ const de = {
       lastschriftTitle: "Wird per Lastschrift eingezogen, nicht erneut überweisen",
       ibanErfasst: "IBAN erfasst",
       ibanErfasstTitle:
-        "Für diesen Lieferanten war bisher keine IBAN hinterlegt. Aus dieser Rechnung wurde {{neu}} übernommen. Bitte prüfen, bevor gezahlt wird.",
+        "Für diesen Lieferanten war bisher keine IBAN hinterlegt. Aus dieser Rechnung wurde {{new}} übernommen. Bitte prüfen, bevor gezahlt wird.",
       ibanGeaendert: "IBAN geändert",
-      ibanGeaendertTitle: "Bisherige IBAN: {{alt}}. Neue IBAN: {{neu}}. Bitte prüfen.",
+      ibanGeaendertTitle: "Bisherige IBAN: {{alt}}. Neue IBAN: {{new}}. Bitte prüfen.",
       unusualAmount: "Ungewöhnlicher Betrag",
       unusualAmountTitle:
         "Weicht deutlich von den sonst stabilen Beträgen dieses Lieferanten ab. Bitte prüfen.",
@@ -1673,8 +1676,8 @@ const de = {
         laeuft: "Wird ausgeführt ...",
         fertig_one: "{{count}} Beleg aktualisiert",
         fertig_other: "{{count}} Belege aktualisiert",
-        teilweise: "{{erfolg}} aktualisiert, {{fehler}} fehlgeschlagen",
-        fehlgeschlagen: "Es wurde nichts geändert. {{meldung}}",
+        teilweise: "{{success}} aktualisiert, {{error}} fehlgeschlagen",
+        fehlgeschlagen: "Es wurde nichts geändert. {{message}}",
         archivieren: {
           label: "Archivieren",
           titel_one: "{{count}} Beleg archivieren",
@@ -1968,7 +1971,7 @@ const de = {
     detail: {
       // Einzeilige Labels für Freigabe-Verlauf und "Dauer je Stufe" — benannt nach dem ZUSTAND,
       // den der Beleg erreicht hat, nicht nach dem Ereignis. Bewusst getrennt von
-      // `belege.workflow.<status>` (Leiter und Belegliste), wo ein Substantiv wie "In Prüfung"
+      // `documents.workflow.<status>` (Leiter und Belegliste), wo ein Substantiv wie "In Prüfung"
       // richtig ist: eine Verlaufszeile liest sich als Protokoll einer Handlung.
       historie: {
         pruefungBehoben: "Prüfung behoben: {{pruefung}}",
@@ -1991,15 +1994,15 @@ const de = {
           paidFromMatch: "Als bezahlt markiert, bestätigter Bankabgleich",
           matchConfirmed: "Banktransaktion zugeordnet",
           matchRejected: "Zuordnungsvorschlag abgelehnt",
-          matchRejectedGrund: "Zuordnungsvorschlag abgelehnt: {{grund}}",
+          matchRejectedGrund: "Zuordnungsvorschlag abgelehnt: {{reason}}",
           matchUnlinked: "Zuordnung zur Banktransaktion getrennt",
-          matchUnlinkedGrund: "Zuordnung zur Banktransaktion getrennt: {{grund}}",
+          matchUnlinkedGrund: "Zuordnung zur Banktransaktion getrennt: {{reason}}",
           remainderWrittenOff: "Restbetrag abgeschrieben, Rechnung gilt als bezahlt",
           remainderReopened: "Restabschreibung zurückgenommen, Rechnung wieder offen",
           remainderWrittenOffGrund:
-            "Restbetrag abgeschrieben, Rechnung gilt als bezahlt: {{grund}}",
+            "Restbetrag abgeschrieben, Rechnung gilt als bezahlt: {{reason}}",
           paidFromMatchSkonto:
-            "Als bezahlt markiert, bestätigter Bankabgleich, Skonto {{skonto}} EUR",
+            "Als bezahlt markiert, bestätigter Bankabgleich, Skonto {{cashDiscount}} EUR",
           paymentWithdrawn:
             "Zahlung zurückgenommen: der Bankabgleich deckt nur noch {{matched}} von {{gross}} EUR",
         },
@@ -2013,7 +2016,7 @@ const de = {
       },
       rueckfrageOffen: "Zu diesem Beleg ist eine Rückfrage offen, im Workflow-Verlauf-Tab prüfen",
       betraege: {
-        abzugsfaehig: "Vorsteuer zu {{prozent}} % abzugsfähig",
+        abzugsfaehig: "Vorsteuer zu {{percent}} % abzugsfähig",
         abzugUnbestimmt: "Abzugsfähigkeit noch nicht bestimmt",
       },
       eingabe: {
@@ -2024,7 +2027,7 @@ const de = {
         gesellschaftFolge: "Ohne Gesellschaft taucht der Beleg in keiner Auswertung auf.",
         keine: "Keine",
         keineWahl: "Keine, trifft nicht zu",
-        keineWahlProtokoll: "{{feld}}: manuell auf „keine“ gesetzt",
+        keineWahlProtokoll: "{{field}}: manuell auf „keine“ gesetzt",
         objektWaehlen: "Objekt wählen",
         kategorieWaehlen: "Kategorie wählen",
         objektFolge: "Kein Objektcode erkannt.",
@@ -2049,7 +2052,7 @@ const de = {
       stufenNav: {
         korrektur: "Status auf diesen Schritt setzen",
         aria: "Freigabelauf",
-        tooltip: "Klicken, um zu „{{stufe}}“ zu wechseln",
+        tooltip: "Klicken, um zu „{{step}}“ zu wechseln",
         // One sentence per step, saying what the click DOES. The generic
         // "move to X" above stays as the fallback for a step with no wording yet.
         klick: {
@@ -2092,8 +2095,8 @@ const de = {
               "Erst möglich, wenn der Beleg von der Assistenz freigegeben wurde.",
             abgeschlossen: "Erst möglich, wenn der Beleg an DATEV übergeben wurde.",
           },
-          spaeter: "Erst möglich, wenn der Beleg bei „{{stufe}}“ angekommen ist.",
-          uebersprungen: "Ihr nächster Schritt führt direkt zu „{{stufe}}“ und überspringt diesen.",
+          spaeter: "Erst möglich, wenn der Beleg bei „{{step}}“ angekommen ist.",
+          uebersprungen: "Ihr nächster Schritt führt direkt zu „{{step}}“ und überspringt diesen.",
           nichtErlaubt: "Sie können den Beleg gerade nicht auf diesen Schritt setzen.",
         },
       },
@@ -2122,23 +2125,23 @@ const de = {
       },
       vorheriger: "Vorheriger Beleg",
       naechster: "Nächster Beleg",
-      ustSatzKurz: "USt {{satz}} %",
+      ustSatzKurz: "USt {{rate}} %",
       seit: {
         heute: "heute",
         gestern: "gestern",
-        vorTagen: "vor {{tage}} Tagen",
+        vorTagen: "vor {{days}} Tagen",
       },
       faellig: {
-        ueberfaelligKurz: "{{tage}} Tage überfällig",
-        ueberfaelligJahre: "{{jahre}} J. überfällig",
-        ueberfaelligJahreMonate: "{{jahre}} J. {{monate}} Mon. überfällig",
+        ueberfaelligKurz: "{{days}} Tage überfällig",
+        ueberfaelligJahre: "{{years}} J. überfällig",
+        ueberfaelligJahreMonate: "{{years}} J. {{months}} Mon. überfällig",
         am: "Fällig {{datum}}",
         ueberfaellig: "Fällig {{datum}}, {{tage}} Tage überfällig",
       },
       ungespeichert: {
         title: "Änderungen verwerfen?",
         // Nennt die Felder: „Bist du sicher?" beantwortet niemand informiert, eine Liste schon.
-        body: "{{count}} bearbeitete(s) Feld(er) ist/sind noch nicht gespeichert: {{felder}}. Beim Verlassen gehen diese Eingaben verloren.",
+        body: "{{count}} bearbeitete(s) Feld(er) ist/sind noch nicht gespeichert: {{fields}}. Beim Verlassen gehen diese Eingaben verloren.",
         weiter: "Weiter bearbeiten",
         verwerfen: "Änderungen verwerfen",
       },
@@ -2186,20 +2189,20 @@ const de = {
           "Verantwortlicher {{name}} ist deaktiviert. Bitte unter „Team & Rollen“ reaktivieren oder die Freigabe-Regel anpassen.",
         unbekannt: "Unbekannte Person",
         dauerKurz: {
-          minuten_one: "{{count}} Min.",
-          minuten_other: "{{count}} Min.",
-          stunden_one: "{{count}} Std.",
-          stunden_other: "{{count}} Std.",
-          tage_one: "{{count}} Tag",
-          tage_other: "{{count}} Tage",
+          minutes_one: "{{count}} Min.",
+          minutes_other: "{{count}} Min.",
+          hours_one: "{{count}} Std.",
+          hours_other: "{{count}} Std.",
+          days_one: "{{count}} Tag",
+          days_other: "{{count}} Tage",
         },
         dauer: {
-          minuten_one: "{{count}} Minute",
-          minuten_other: "{{count}} Minuten",
-          stunden_one: "{{count}} Stunde",
-          stunden_other: "{{count}} Stunden",
-          tage_one: "{{count}} Tag",
-          tage_other: "{{count}} Tage",
+          minutes_one: "{{count}} Minute",
+          minutes_other: "{{count}} Minuten",
+          hours_one: "{{count}} Stunde",
+          hours_other: "{{count}} Stunden",
+          days_one: "{{count}} Tag",
+          days_other: "{{count}} Tage",
         },
         rueckfrageAn: "an {{name}}",
         handelndAls: "handelnd als {{name}}",
@@ -2216,7 +2219,7 @@ const de = {
           hint: "Falls versehentlich der falsche Status gesetzt wurde. Dies übergeht die normale Freigabe-Kette.",
           waehlen: "Status wählen",
           title: "Status korrigieren?",
-          desc: "Status wird manuell von „{{von}}“ auf „{{nach}}“ geändert, ohne die normalen Freigabe-Schritte zu durchlaufen.",
+          desc: "Status wird manuell von „{{fromDate}}“ auf „{{nach}}“ geändert, ohne die normalen Freigabe-Schritte zu durchlaufen.",
         },
         nebengleis: "Sonderstatus:",
         stepperLabel: "Freigabe-Fortschritt",
@@ -2417,7 +2420,7 @@ const de = {
         zahlungHint: "Ob er bezahlt ist, mit einer Bankbuchung abgeglichen und bereit für DATEV.",
       },
       konfidenz: {
-        prozent: "KI-Konfidenz: {{prozent}} %",
+        prozent: "KI-Konfidenz: {{percent}} %",
         hint: "Wie sicher die KI ist, dass sie die Felder richtig gelesen hat. Das ist unabhängig von den Prüfungen. Ein Beleg kann sicher gelesen sein und trotzdem eine Prüfung brauchen.",
       },
       zahlung: {
@@ -2562,7 +2565,7 @@ const de = {
           jetztBezahlen: "Jetzt bezahlen",
           confirmTitle: "Zahlung auslösen?",
           confirmBody:
-            "Es werden {{betrag}} an {{empfaenger}} überwiesen. Diese Aktion kann nicht rückgängig gemacht werden.",
+            "Es werden {{amount}} an {{recipient}} überwiesen. Diese Aktion kann nicht rückgängig gemacht werden.",
           vonKonto: "Von Konto",
           zusammenfassung: "Diese Zahlung",
           neuesKonto: {
@@ -2570,7 +2573,7 @@ const de = {
             speichern: "Bankverbindung speichern",
             ibanUngueltig: "Diese IBAN ist unvollständig oder ungültig.",
           },
-          betragWeichtAb: "Weicht vom Rechnungsbetrag ab ({{betrag}}).",
+          betragWeichtAb: "Weicht vom Rechnungsbetrag ab ({{amount}}).",
           anKonto: "An Bankverbindung",
           kontoWaehlen: "Konto wählen",
           keineKonten: "Kein verbundenes BANKSapi-Konto für diese Gesellschaft gefunden.",
@@ -2593,7 +2596,7 @@ const de = {
           bestaetigen: "Zahlung auslösen",
           ausgeloest: "Zahlung ausgelöst. Bitte im neuen Tab bei der Bank bestätigen.",
           sofortAusgefuehrt: "Zahlung ausgeführt.",
-          sofortFehlgeschlagen: "Zahlung fehlgeschlagen: {{grund}}",
+          sofortFehlgeschlagen: "Zahlung fehlgeschlagen: {{reason}}",
           webformOeffnen: "Zahlungsseite öffnen",
           attemptAbbrechen: "Zahlungsversuch abbrechen",
           abbrechenConfirmTitle: "Zahlungsversuch abbrechen?",
@@ -2619,7 +2622,7 @@ const de = {
         hinweis:
           "Jede Angabe, die beim Einlesen von diesem Beleg erkannt wurde. Tippen Sie einen Begriff ein, um danach zu suchen.",
         suchen: "Suchen, z. B. Bankverbindung oder 1.199,12",
-        treffer: "{{n}} von {{gesamt}}",
+        treffer: "{{n}} von {{total}}",
         keineTreffer: "Keine Treffer",
         vorher: "Vorheriger Treffer",
         naechster: "Nächster Treffer",
@@ -2645,9 +2648,9 @@ const de = {
         ablehnen: "Ablehnen",
         zuordnen: "Zuordnen",
         // Sammel- und Teilzahlungen (Migration 0024): eine Verknüpfung trägt ihren eigenen Betrag.
-        vonSumme: "{{zugeordnet}} von {{gesamt}}",
+        vonSumme: "{{matched}} von {{total}}",
         restOffen: "{{rest}} offen",
-        davon: "davon {{betrag}}",
+        davon: "davon {{amount}}",
       },
       action: {
         mehr: "Weitere Aktionen",
@@ -2699,7 +2702,7 @@ const de = {
       regel: {
         anwenden: "Zuordnungsregeln anwenden",
         alsRegel: "Als Regel für diesen Lieferanten speichern",
-        alsRegelUst: "{{satz}} % als USt-Regel speichern",
+        alsRegelUst: "{{rate}} % als USt-Regel speichern",
         gespeichert: "Regel gespeichert.",
         schonVorhanden:
           "Für diesen Geltungsbereich gibt es bereits eine Regel. Bitte in den Zuordnungsregeln anpassen.",
@@ -2741,7 +2744,7 @@ const de = {
   },
 
   // Suppliers (Lieferanten) — list + detail pages.
-  lieferanten: {
+  suppliers: {
     list: {
       title: "Lieferanten",
       subtitle: "Kreditorenstamm aus der Pipeline: Basis für Überweisungen und Auswertungen.",
@@ -2802,7 +2805,7 @@ const de = {
           "Optional. Ohne Bankverbindung lässt sich der Lieferant anlegen, aber nicht bezahlen.",
         bankHinzufuegen: "Bank hinzufügen",
         bankEntfernen: "Bankverbindung entfernen",
-        bankNummer: "Bankverbindung {{nummer}}",
+        bankNummer: "Bankverbindung {{number}}",
         alsStandard: "Als Standard",
         ibanUngueltig: "Bitte eine vollständige IBAN eingeben.",
         button: "Neu",
@@ -2827,19 +2830,19 @@ const de = {
       action: "Zusammenführen …",
       confirm: {
         title: "Wirklich zusammenführen?",
-        desc: "„{{von}}“ wird in „{{ziel}}“ zusammengeführt. Diese Aktion kann nicht direkt rückgängig gemacht werden.",
+        desc: "„{{fromDate}}“ wird in „{{target}}“ zusammengeführt. Diese Aktion kann nicht direkt rückgängig gemacht werden.",
         cancel: "Abbrechen",
         confirm: "Zusammenführen",
       },
       toast: {
-        erfolgreich: "„{{name}}“ wurde in „{{ziel}}“ zusammengeführt.",
+        erfolgreich: "„{{name}}“ wurde in „{{target}}“ zusammengeführt.",
         fehlgeschlagen: "Zusammenführen fehlgeschlagen: {{error}}",
       },
     },
     detail: {
       back: "Lieferanten",
       notFoundTitle: "Lieferant nicht gefunden",
-      geloeschtBanner: "Dieser Lieferant wurde am {{datum}} gelöscht ({{grund}}).",
+      geloeschtBanner: "Dieser Lieferant wurde am {{datum}} gelöscht ({{reason}}).",
       geloeschtOhneGrund: "kein Grund angegeben",
       restore: {
         button: "Wiederherstellen",
@@ -3017,7 +3020,7 @@ const de = {
 
   // Customers (Kunden) — Briefing Screen 15. Created directly here (migration 0086 removed the
   // LexOffice mirror); a customer is the basis for outgoing invoices.
-  kunden: {
+  customers: {
     // Field-level validation messages for the customer form. Each one names a fix, and the
     // formats carry an example: a rule you can act on beats a rule that only says "invalid".
     validierung: {
@@ -3151,7 +3154,7 @@ const de = {
   },
 
   // Companies (Gesellschaften) — list + detail pages.
-  gesellschaften: {
+  companies: {
     // Field-level validation for the company dialog, in the same shape as kunden.validierung.
     // Each message names a fix rather than only saying that something is wrong.
     validierung: {
@@ -3227,7 +3230,7 @@ const de = {
         grundPlaceholder: "Grund (optional)",
         cancel: "Abbrechen",
         confirm: "Archivieren",
-        banner: "Archiviert am {{datum}}. Grund: {{grund}}",
+        banner: "Archiviert am {{datum}}. Grund: {{reason}}",
         ohneGrund: "kein Grund angegeben",
       },
       back: "Gesellschaften",
@@ -3267,14 +3270,14 @@ const de = {
       objekteEmpty: "Dieser Gesellschaft ist noch kein Objekt zugeordnet.",
       objektHinzufuegen: "Objekt hinzufügen",
       objektEntfernen: {
-        aktion: "{{objekt}} von dieser Gesellschaft entfernen",
+        aktion: "{{property}} von dieser Gesellschaft entfernen",
         titel: "Objekt von der Gesellschaft entfernen?",
         beschreibung:
-          "{{objekt}} gehört danach nicht mehr zu {{gesellschaft}}. Bereits gebuchte Belege bleiben unverändert, und die Zuordnung lässt sich beim Objekt wieder hinzufügen.",
+          "{{property}} gehört danach nicht mehr zu {{company}}. Bereits gebuchte Belege bleiben unverändert, und die Zuordnung lässt sich beim Objekt wieder hinzufügen.",
         letzte:
-          "{{objekt}} gehört nur zu {{gesellschaft}}. Ein Objekt braucht mindestens eine Gesellschaft. Ordne es zuerst beim Objekt einer anderen Gesellschaft zu.",
+          "{{property}} gehört nur zu {{company}}. Ein Objekt braucht mindestens eine Gesellschaft. Ordne es zuerst beim Objekt einer anderen Gesellschaft zu.",
         bestaetigen: "Entfernen",
-        erfolg: "{{objekt}} wurde von der Gesellschaft entfernt",
+        erfolg: "{{property}} wurde von der Gesellschaft entfernt",
       },
       objekteLink: "Objekte",
       objekteCount_one: "{{count}} Objekt",
@@ -3284,11 +3287,11 @@ const de = {
       gesamt_one: "{{count}} Beleg",
       gesamt_other: "{{count}} Belege",
       fremdeObjekte_one:
-        "{{count}} Beleg verweist auf ein Objekt einer anderen Gesellschaft ({{summe}}). Bitte die Zuordnung prüfen.",
+        "{{count}} Beleg verweist auf ein Objekt einer anderen Gesellschaft ({{total}}). Bitte die Zuordnung prüfen.",
       fremdeObjekte_other:
-        "{{count}} Belege verweisen auf Objekte anderer Gesellschaften ({{summe}}). Bitte die Zuordnung prüfen.",
+        "{{count}} Belege verweisen auf Objekte anderer Gesellschaften ({{total}}). Bitte die Zuordnung prüfen.",
       fremdesObjektHinweis:
-        "Objekt {{objekt}} ist {{gesellschaften}} zugeordnet, nicht dieser Gesellschaft.",
+        "Objekt {{property}} ist {{companies}} zugeordnet, nicht dieser Gesellschaft.",
       col: {
         beleg: "Beleg",
         objekt: "Objekt",
@@ -3431,7 +3434,7 @@ const de = {
       saved: "Gespeichert.",
     },
   },
-  postfach: {
+  documentSources: {
     title: "Postfach & Ablage",
     subtitle:
       "Woher Belege gelesen werden und wohin eine E-Mail nach der Verarbeitung wandert. Damit funktioniert auch die Rückgabe eines nicht relevanten Belegs ins Postfach.",
@@ -3493,7 +3496,7 @@ const de = {
     fehlgeschlagen: "Speichern fehlgeschlagen: {{error}}",
     zuletzt: "Zuletzt geändert von {{by}}",
   },
-  zuordnungsregeln: {
+  assignmentRules: {
     list: {
       title: "Zuordnungsregeln",
       subtitle: "Regeln ordnen Belegen ihre Kostenkategorie automatisch zu.",
@@ -3540,7 +3543,7 @@ const de = {
         "Erste Zahl: wie viele bestehende Belege diese Regel jetzt noch ändern würde. Zweite Zahl: wie viele Belege insgesamt in ihren Geltungsbereich fallen. Die Differenz sind Belege, die schon richtig stehen oder von Hand entschieden wurden: Null als erste Zahl ist der gesunde Normalzustand.",
       aktiv: "Aktiv",
       aktionen: "Aktionen",
-      abzugsfaehigkeit: "{{prozent}} % abzugsfähig",
+      abzugsfaehigkeit: "{{percent}} % abzugsfähig",
     },
     wirkung: "{{change}} von {{total}}",
     scope: {
@@ -3630,7 +3633,7 @@ const de = {
       loeschen: "Löschen",
       loeschenTitle: "Regel löschen?",
       loeschenDesc:
-        'Die Regel „{{wert}}" greift danach nicht mehr. Sie bleibt revisionssicher gespeichert, weil sie bestehende Zuordnungen geprägt hat. Bereits gesetzte Werte auf Belegen bleiben unverändert.',
+        'Die Regel „{{value}}" greift danach nicht mehr. Sie bleibt revisionssicher gespeichert, weil sie bestehende Zuordnungen geprägt hat. Bereits gesetzte Werte auf Belegen bleiben unverändert.',
       loeschenConfirm: "Regel löschen",
       grundPlaceholder: "Grund (optional)",
       anwenden: "Jetzt anwenden",
@@ -3671,7 +3674,7 @@ const de = {
       keineHinweis: "Der Beleg behält die Kategorie, die er bereits hat.",
     },
   },
-  ustRegeln: {
+  vatRules: {
     list: {
       title: "USt-Regeln",
       subtitle:
@@ -3703,10 +3706,10 @@ const de = {
       umsatzsteuer: "Umsatzsteuer (Ausgang)",
       ruecklage: "Empfohlene Rücklage",
       unresolved:
-        "{{count}} Beleg(e) mit {{betrag}} Vorsteuer noch ohne bestimmte Abzugsfähigkeit, nicht in der Rücklage berücksichtigt.",
+        "{{count}} Beleg(e) mit {{amount}} Vorsteuer noch ohne bestimmte Abzugsfähigkeit, nicht in der Rücklage berücksichtigt.",
       // Same fact as `unresolved`, short enough to sit visibly in a table row instead of inside a
       // hover tooltip no touchscreen can open.
-      unresolvedKurz: "{{count}} Beleg(e) · {{betrag}} noch ohne Abzugsfähigkeit",
+      unresolvedKurz: "{{count}} Beleg(e) · {{amount}} noch ohne Abzugsfähigkeit",
       // A negative reserve is the OPPOSITE of every other figure here. Everything else is money
       // the company owes; this is money it is owed.
       erstattung: "Vorsteuerüberhang, Erstattung zu erwarten",
@@ -3719,7 +3722,7 @@ const de = {
       global: "{{count}} für alle Gesellschaften",
     },
   },
-  kategorien: {
+  categories: {
     list: {
       title: "Kategorien",
       subtitle: "Kosten und Erlöse in Kategorien bündeln, auf die Zuordnungsregeln verweisen.",
@@ -3782,7 +3785,7 @@ const de = {
       geloescht: "Kategorie gelöscht.",
     },
   },
-  kontenrahmen: {
+  chartOfAccounts: {
     gesellschaft: "Gesellschaft",
     suche: "Suche",
     suchePlaceholder: "Konto, Kategorie oder Notiz …",
@@ -3813,7 +3816,7 @@ const de = {
       keineKategorie: "Kategorie wählen …",
       abbrechen: "Abbrechen",
       speichere: "Speichert …",
-      speichernConfirm: "{{count}} Konten importieren ({{jahre}} Jahr(e))",
+      speichernConfirm: "{{count}} Konten importieren ({{years}} Jahr(e))",
       fehler: {
         title: "Datei konnte nicht ausgewertet werden.",
         andereDatei: "Andere Datei wählen",
@@ -3825,13 +3828,13 @@ const de = {
         typUngueltig: "Dateityp wird nicht unterstützt.",
         keineKonten: "In dieser Datei konnten keine Konten erkannt werden.",
         analyseFehlgeschlagen: "Analyse fehlgeschlagen: {{error}}",
-        importiert: "{{count}} Konten importiert (Jahre: {{jahre}}).",
+        importiert: "{{count}} Konten importiert (Jahre: {{years}}).",
         jahrFehlgeschlagen:
-          "Import für {{jahr}} fehlgeschlagen: {{error}}. Bereits importierte Jahre bleiben gespeichert.",
+          "Import für {{year}} fehlgeschlagen: {{error}}. Bereits importierte Jahre bleiben gespeichert.",
       },
     },
   },
-  vorschlaege: {
+  suggestions: {
     suche: "Lieferant oder Kategorie suchen …",
     keineTreffer: "Kein Vorschlag passt zur Suche.",
     keineTrefferHint: "Die Suche prüft Lieferantenname und vorgeschlagene Kategorie.",
@@ -3851,7 +3854,7 @@ const de = {
       regelAnlegen: "Regel anlegen →",
     },
   },
-  ausschlussregeln: {
+  exclusionRules: {
     list: {
       title: "Ausschlussregeln",
       subtitle:
@@ -3895,9 +3898,9 @@ const de = {
         "Die Vorschau konnte nicht ermittelt werden. Die Regel kann trotzdem angelegt werden, ihre Reichweite ist dann aber ungeprüft.",
       nichtVerfuegbar:
         "Für diesen Bereich gibt es keine Vorschau: es existiert im Hub keine Spalte, die dasselbe bedeutet.",
-      keine: "Kein Treffer unter {{gesamt}} bisher verarbeiteten Einträgen.",
+      keine: "Kein Treffer unter {{total}} bisher verarbeiteten Einträgen.",
       treffer:
-        "Würde {{anzahl}} von {{gesamt}} bisher verarbeiteten Einträgen betreffen ({{prozent}} %). Betroffene Belege entstehen gar nicht erst.",
+        "Würde {{count}} von {{total}} bisher verarbeiteten Einträgen betreffen ({{percent}} %). Betroffene Belege entstehen gar nicht erst.",
     },
     dialog: {
       neu: { title: "Neue Ausschlussregel", desc: "Bereich, Suchbegriff und optional eine Notiz." },
@@ -3933,7 +3936,7 @@ const de = {
 
   // Admin-configurable uniform filename pattern (migration 20260804090000_filename_settings). "YYYYMMDD COM[_VAT] Issuer
   // Description [Amount] [Property]" — the receipt type is deliberately not part of the name.
-  profil: {
+  profile: {
     title: "Mein Profil",
     subtitle: "Ihr Name, Ihre Anmeldedaten und was Ihr Konto darf.",
     bild: {
@@ -3943,12 +3946,12 @@ const de = {
       ersetzen: "Bild ersetzen",
       entfernen: "Entfernen",
       laedt: "Wird hochgeladen …",
-      hinweis: "Ein quadratisches Bild passt am besten. Höchstens {{groesse}}.",
+      hinweis: "Ein quadratisches Bild passt am besten. Höchstens {{size}}.",
       falscherTyp: "Diese Datei ist kein Bild, das wir verwenden können.",
-      zuGross: "Dieses Bild ist größer als {{groesse}}.",
+      zuGross: "Dieses Bild ist größer als {{size}}.",
       gespeichert: "Profilbild aktualisiert.",
       entfernt: "Profilbild entfernt.",
-      fehler: "Das Bild konnte nicht gespeichert werden: {{fehler}}",
+      fehler: "Das Bild konnte nicht gespeichert werden: {{error}}",
       entfernenTitel: "Profilbild entfernen?",
       entfernenText:
         "Stattdessen werden Ihre Initialen angezeigt. Sie können jederzeit ein neues Bild hochladen.",
@@ -3969,7 +3972,7 @@ const de = {
       speichern: "Speichern",
       speichert: "Wird gespeichert …",
       gespeichert: "Gespeichert.",
-      fehler: "Speichern fehlgeschlagen: {{fehler}}",
+      fehler: "Speichern fehlgeschlagen: {{error}}",
     },
     passwort: {
       title: "Passwort",
@@ -3979,13 +3982,13 @@ const de = {
       wiederholen: "Neues Passwort wiederholen",
       anzeigen: "Passwörter anzeigen",
       verbergen: "Passwörter verbergen",
-      zuKurz: "Das neue Passwort braucht mindestens {{anzahl}} Zeichen.",
+      zuKurz: "Das neue Passwort braucht mindestens {{count}} Zeichen.",
       stimmtNicht: "Die beiden neuen Passwörter sind nicht gleich.",
       wieBisher: "Das neue Passwort ist dasselbe wie das aktuelle.",
       aendern: "Passwort ändern",
       aendert: "Wird geändert …",
       geaendert: "Passwort geändert.",
-      fehler: "Das Passwort konnte nicht geändert werden: {{fehler}}",
+      fehler: "Das Passwort konnte nicht geändert werden: {{error}}",
       gesperrt: "Ihr Passwort wird außerhalb dieser Anwendung verwaltet.",
     },
     zugriff: {
@@ -4005,12 +4008,12 @@ const de = {
       passwortAenderung: "Das Passwort konnte nicht geändert werden.",
     },
   },
-  dateibenennung: {
+  fileNaming: {
     readOnlyHint:
       "Nur Administratoren können diese Einstellungen ändern. Wer das darf, steht unter Verwaltung › Team.",
     wirkungHinweis:
       "Gilt für alle Gesellschaften dieses Hubs und wirkt ab dem Speichern: bereits abgelegte Dateien behalten ihren bisherigen Namen.",
-    zuletztGeaendert: "Zuletzt geändert von {{wer}} am {{wann}}.",
+    zuletztGeaendert: "Zuletzt geändert von {{who}} am {{when}}.",
     unbekannt: "unbekannt",
     abweichung: "Diese Einstellungen weichen vom vorgegebenen Namensschema ab.",
     standardWiederherstellen: "Standard wiederherstellen",
@@ -4067,7 +4070,7 @@ const de = {
 
   // Properties (Objekte) — list + detail pages. ust_status enum values are DB-derived
   // and shown as-is (steuerpflichtig / steuerfrei / gemischt), not translated.
-  objekte: {
+  properties: {
     // Feldbezogene Prüfung für den Objekt-Dialog, gleiche Form wie gesellschaften.validierung.
     // Kein Format-Hinweis: Objektcodes enthalten hier Bindestriche und Umlaute.
     validierung: {
@@ -4211,13 +4214,13 @@ const de = {
       zuordnungEntfernen: "Gesellschaft entfernen",
       zuordnungEntfernenTitel: "Gesellschaft vom Objekt entfernen?",
       zuordnungEntfernenBeschreibung:
-        "Das Objekt gehört danach nicht mehr zu {{gesellschaft}}. Bereits gebuchte Belege bleiben unverändert.",
+        "Das Objekt gehört danach nicht mehr zu {{company}}. Bereits gebuchte Belege bleiben unverändert.",
       zuordnungEntfernenBestaetigen: "Entfernen",
       zuordnungLetzte:
         "Ein Objekt braucht mindestens eine Gesellschaft. Füge zuerst eine andere hinzu.",
       // Für die Capabilities, die this client nicht einschaltet (Archiv, Prüfung, Ordner-Link).
       reviewBanner: "Zuletzt geprüft am {{datum}}: Sind diese Angaben noch korrekt?",
-      archivedNotice: "Dieses Objekt ist archiviert ({{grund}}), nicht mehr im aktiven Bestand.",
+      archivedNotice: "Dieses Objekt ist archiviert ({{reason}}), nicht mehr im aktiven Bestand.",
       archivedNoticeOhneGrund: "kein Grund angegeben",
       archiveDialog: {
         title: "Objekt archivieren?",
@@ -4250,9 +4253,9 @@ const de = {
       },
       // Beleg-Gesellschaft passt nicht zur hinterlegten Zuordnung des Objekts.
       gesellschaftAbweichung_one:
-        "{{count}} Beleg ist auf eine Gesellschaft gebucht, der dieses Objekt nicht zugeordnet ist (zugeordnet: {{gesellschaften}}).",
+        "{{count}} Beleg ist auf eine Gesellschaft gebucht, der dieses Objekt nicht zugeordnet ist (zugeordnet: {{companies}}).",
       gesellschaftAbweichung_other:
-        "{{count}} Belege sind auf Gesellschaften gebucht, denen dieses Objekt nicht zugeordnet ist (zugeordnet: {{gesellschaften}}).",
+        "{{count}} Belege sind auf Gesellschaften gebucht, denen dieses Objekt nicht zugeordnet ist (zugeordnet: {{companies}}).",
       gesellschaftAbweichungZeile: "Gesellschaft weicht von der Zuordnung dieses Objekts ab.",
       toast: {
         keineAenderungen: "Keine Änderungen.",
@@ -4287,9 +4290,9 @@ const de = {
       search: "Suche (Verwendungszweck, Gegenkonto, Betrag) …",
       beleg: {
         vorhanden: "Beleg",
-        titel: "Beleg vorhanden: {{quelle}}",
+        titel: "Beleg vorhanden: {{source}}",
       },
-      bezahltVonKurz: "Bezahlt von {{wer}}",
+      bezahltVonKurz: "Bezahlt von {{who}}",
       filter: {
         beleg: "Beleg",
         alleBelege: "Alle",
@@ -4309,7 +4312,7 @@ const de = {
         title: "Filter",
         reset: "Filter zurücksetzen",
       },
-      zeileOeffnen: "Transaktion öffnen: {{gegenkonto}}, {{betrag}}",
+      zeileOeffnen: "Transaktion öffnen: {{contraAccount}}, {{amount}}",
       keineTreffer: "Keine Treffer",
       keineTrefferHint:
         "Keine Banktransaktion passt zu Suche und Filtern. Suchbegriff ändern oder Filter zurücksetzen.",
@@ -4330,7 +4333,7 @@ const de = {
         abgleich: "Abgleich",
       },
       toast: {
-        syncDone: "Sync abgeschlossen: {{neu}} neue Umsätze, {{vorschlaege}} Vorschläge.",
+        syncDone: "Sync abgeschlossen: {{added}} neue Umsätze, {{suggestions}} Vorschläge.",
         syncFailed: "Sync fehlgeschlagen: {{error}}",
       },
     },
@@ -4372,17 +4375,17 @@ const de = {
         titelRechnung: "Rechnung als vollständig bezahlt markieren?",
         beschreibungRechnung:
           "Der Restbetrag gilt danach als abgeschrieben und die Rechnung verschwindet aus den offenen Posten.",
-        betrag: "Es werden {{betrag}} abgeschrieben.",
+        betrag: "Es werden {{amount}} abgeschrieben.",
         grund: "Grund",
         grundPlaceholder: "z. B. Skonto, Bankgebühr, Rundungsdifferenz",
         abbrechen: "Abbrechen",
         bestaetigen: "Rest abschließen",
         laeuft: "Wird gespeichert …",
         erledigt: "Restbetrag abgeschlossen.",
-        offenZahlung: "Von dieser Zahlung sind {{betrag}} noch keiner Rechnung zugeordnet.",
-        offenRechnung: "Von dieser Rechnung sind {{betrag}} noch durch keine Zahlung gedeckt.",
+        offenZahlung: "Von dieser Zahlung sind {{amount}} noch keiner Rechnung zugeordnet.",
+        offenRechnung: "Von dieser Rechnung sind {{amount}} noch durch keine Zahlung gedeckt.",
         istGeschlossen: "Restbetrag als verbraucht markiert.",
-        istGeschlossenGrund: "Restbetrag als verbraucht markiert. Grund: {{grund}}",
+        istGeschlossenGrund: "Restbetrag als verbraucht markiert. Grund: {{reason}}",
         istAbgeschrieben: "Restbetrag abgeschrieben. Der Grund steht im Verlauf.",
         wiederOeffnen: "Wieder öffnen",
         wiederGeoeffnet: "Restbetrag wieder offen.",
@@ -4405,12 +4408,12 @@ const de = {
         anzahl_other: "{{count}} Dateien",
         vergroessern: "Vergrößern",
         vergroessernAria: "Beleg vergrößert anzeigen",
-        nichtDarstellbar: "Dieser Dateityp ({{typ}}) kann hier nicht angezeigt werden.",
+        nichtDarstellbar: "Dieser Dateityp ({{type}}) kann hier nicht angezeigt werden.",
         keine: "Kein Beleg zu dieser Transaktion hinterlegt.",
         fehler: "Die Belege konnten nicht geladen werden.",
         datei: "Datei",
         herunterladen: "Herunterladen",
-        quelle: "Aus {{quelle}} übernommen",
+        quelle: "Aus {{source}} übernommen",
         zuordnen: "Vorhandene Rechnung zuordnen",
       },
       passendeBelegeHint:
@@ -4475,7 +4478,7 @@ const de = {
       },
       warum: "Warum vorgeschlagen:",
       signal: {
-        amountTolerated: "Betrag (Abweichung {{differenz}})",
+        amountTolerated: "Betrag (Abweichung {{difference}})",
         amountToleratedPlain: "Betrag (innerhalb der erlaubten Abweichung)",
         amount: "Gleicher Betrag",
         reference: "Rechnungsnummer im Verwendungszweck",
@@ -4520,9 +4523,9 @@ const de = {
       nr: "Nr. {{nr}}",
       ohneNr: "ohne Nr.",
       // Sammelzahlung: wie viel dieser Transaktion schon durch Belege erklärt ist (Migration 0024).
-      zugeordnetVon: "{{zugeordnet}} von {{gesamt}} zugeordnet",
+      zugeordnetVon: "{{matched}} von {{total}} zugeordnet",
       restOffen: "{{rest}} ohne Beleg",
-      davon: "davon {{betrag}}",
+      davon: "davon {{amount}}",
       gruppeAbgeglichen: "Bereits abgeglichen",
       gruppeVorschlaege: "Vorschläge zur Prüfung",
       gruppeAbgelehnt: "Als kein Treffer markiert",
@@ -4665,7 +4668,7 @@ const de = {
   },
 
   // Open items (Offene Posten) — invoices without a confirmed bank match + unmatched debits.
-  offenePosten: {
+  openItems: {
     due: {
       // Short forms for the list's Fällig column, where the row already carries the date.
       short: {
@@ -4685,8 +4688,8 @@ const de = {
     },
     skonto: {
       filter: "Skonto-Frist läuft bald ab",
-      badge: "{{betrag}} sparen ({{prozent}} %)",
-      title: "{{prozent}} % Skonto bei Zahlung bis {{datum}}",
+      badge: "{{amount}} sparen ({{percent}} %)",
+      title: "{{percent}} % Skonto bei Zahlung bis {{datum}}",
       panel: "Skonto-Fristen",
       closing_one: "{{count}} Skonto-Frist läuft bald ab",
       closing_other: "{{count}} Skonto-Fristen laufen bald ab",
@@ -4750,7 +4753,7 @@ const de = {
       // the placeholder names the common case, the search itself stays as capable as before.
       gegenparteiPlaceholder: "Rechnung oder Lieferant suchen",
       // Teilzahlung: die Rechnung bleibt offen, bis die Summe stimmt.
-      restOffen: "Teilweise bezahlt: {{bezahlt}} bezahlt, {{rest}} noch zu zahlen",
+      restOffen: "Teilweise bezahlt: {{paid}} bezahlt, {{rest}} noch zu zahlen",
       emptyTitle: "Keine offenen Belege",
       emptyHint:
         "Alle Belege sind vollständig per Bankabgleich gedeckt, oder es sind noch keine Belege vorhanden.",
@@ -4793,7 +4796,7 @@ const de = {
         ausgehend: "Ausgehend (Abgänge)",
       },
       // Teilweise erklärte Sammelzahlung: bleibt in der Liste, bis alles belegt ist.
-      restOffen: "{{rest}} ohne Beleg ({{zugeordnet}} zugeordnet)",
+      restOffen: "{{rest}} ohne Beleg ({{matched}} zugeordnet)",
       emptyTitle: "Keine offenen Banktransaktionen",
       emptyHint:
         "Zu allen ausgehenden Bankabgängen gibt es einen zugeordneten Beleg, oder es sind noch keine Umsätze importiert.",
@@ -4873,7 +4876,7 @@ const de = {
   // OPOS-Whitelist (opos_whitelist_rules, Pipeline-Migration 0018) — Buchungen, zu denen es NIE
   // einen Beleg gibt. Ohne diese Liste ist die Offene-Posten-Liste nach einer Woche unbrauchbar
   // (Briefing Screen 10).
-  oposWhitelist: {
+  openItemWhitelist: {
     list: {
       title: "Ausgeschlossene Zahlungen",
       nurLesen:
@@ -4909,7 +4912,7 @@ const de = {
       trefferOhne: "Blendet nichts aus",
       zuruecksetzen: "Filter zurücksetzen",
     },
-    ueberdeckt: "Zählt nie: „{{regel}}“ ist älter und greift zuerst",
+    ueberdeckt: "Zählt nie: „{{rule}}“ ist älter und greift zuerst",
     category: {
       salary: "Lohn/Gehalt",
       tax_prepayment: "Steuervorauszahlung",
@@ -4949,9 +4952,9 @@ const de = {
     vorschau: {
       laeuft: "Treffer werden gezählt …",
       fehler: "Treffer konnten nicht gezählt werden.",
-      keine: "Trifft aktuell keine der {{gesamt}} ausgehenden Buchungen.",
+      keine: "Trifft aktuell keine der {{total}} ausgehenden Buchungen.",
       treffer:
-        "Blendet aktuell {{anzahl}} von {{gesamt}} ausgehenden Buchungen aus ({{prozent}} %, geschätzt).",
+        "Blendet aktuell {{count}} von {{total}} ausgehenden Buchungen aus ({{percent}} %, geschätzt).",
     },
     dialog: {
       neu: {
@@ -4978,7 +4981,7 @@ const de = {
         termPflicht: "Bitte einen Suchbegriff eingeben.",
         termZuKurz: "Der Suchbegriff braucht mindestens {{min}} Zeichen.",
         angelegt: "Regel angelegt.",
-        angelegtBeide: "Regel angelegt, zusätzlich für „{{zweite}}“.",
+        angelegtBeide: "Regel angelegt, zusätzlich für „{{second}}“.",
         gespeichert: "Regel gespeichert.",
         anlegenFehlgeschlagen: "Anlegen fehlgeschlagen: {{error}}",
         speichernFehlgeschlagen: "Speichern fehlgeschlagen: {{error}}",
@@ -5154,7 +5157,7 @@ const de = {
       folge: {
         bezahlt: "Die Rechnung ist damit vollständig bezahlt.",
         bezahltSkonto:
-          "Die Rechnung ist damit vollständig bezahlt. {{differenz}} gelten als Skonto.",
+          "Die Rechnung ist damit vollständig bezahlt. {{difference}} gelten als Skonto.",
         teilweise: "Die Rechnung ist damit nicht vollständig bezahlt. {{rest}} bleiben unbezahlt.",
         transaktionVoll: "Die gesamte Banktransaktion wird für diese Rechnung verwendet.",
         transaktionAbgeschlossen:
@@ -5229,7 +5232,7 @@ const de = {
       grundWaehlen: "Grund wählen",
     },
     detail: {
-      grund: "Kein Beleg zu erwarten: {{grund}}.",
+      grund: "Kein Beleg zu erwarten: {{reason}}.",
       durchRegel: "Ausgeblendet durch eine Whitelist-Regel.",
       manuell: "Manuell ausgeblendet von {{actor}}.",
     },
@@ -5289,15 +5292,15 @@ const de = {
   },
 
   // Outgoing invoices (Ausgangsrechnungen) — placeholder page.
-  ausgangsrechnungen: {
+  outgoingInvoices: {
     title: "Ausgangsrechnungen",
     subtitle: "Ausgangsrechnungen werden manuell hochgeladen und automatisch ausgelesen.",
     status: {
-      entwurf: "Entwurf",
-      offen: "Offen",
-      ueberfaellig: "Überfällig",
-      bezahlt: "Bezahlt",
-      storniert: "Storniert",
+      draft: "Entwurf",
+      open: "Offen",
+      overdue: "Überfällig",
+      paid: "Bezahlt",
+      voided: "Storniert",
     },
     list: {
       queue: {
@@ -5313,8 +5316,8 @@ const de = {
         volumen: "Volumen (Brutto)",
         volumenHint: "Brutto-Summe aller Rechnungen in dieser Auswahl, stornierte ausgenommen.",
         // The line under the KPI row. Not a fourth card: a card is a filter, and this is a total.
-        volumenZeile_one: "{{count}} Rechnung, {{summe}} brutto",
-        volumenZeile_other: "{{count}} Rechnungen, {{summe}} brutto",
+        volumenZeile_one: "{{count}} Rechnung, {{total}} brutto",
+        volumenZeile_other: "{{count}} Rechnungen, {{total}} brutto",
         offenerBetrag: "Noch offen",
         offenerBetragHint:
           "Brutto-Summe der offenen und überfälligen Rechnungen, also was noch hereinkommen muss.",
@@ -5389,7 +5392,7 @@ const de = {
       speichere: "Speichere …",
       erfolg: {
         title: "Rechnung gespeichert",
-        desc: "Rechnung {{nummer}} wurde erfasst und ist in der Liste sichtbar.",
+        desc: "Rechnung {{number}} wurde erfasst und ist in der Liste sichtbar.",
         weitere: "Weitere Rechnung hochladen",
         zurListe: "Zur Liste",
       },
@@ -5421,7 +5424,7 @@ const de = {
 
   // Manual booking (Briefing Screen 11): personnel costs, depreciation, taxes — items with no
   // receipt and no bank transaction, entered by hand so the evaluation stays complete.
-  manuelleBuchungen: {
+  manualBookings: {
     title: "Manuelle Buchungen",
     subtitle:
       "Personalkosten, Abschreibungen und Steuern: Posten ohne Beleg und ohne Banktransaktion, die von Hand erfasst werden.",
@@ -5441,7 +5444,7 @@ const de = {
     // Das Jahr wird in ein Datum eingesetzt (`JJJJ-01-01`); eine ein- bis dreistellige Zahl lehnt
     // Postgres rundweg ab, was vorher als roher 22008-Fehler auf dem Bildschirm landete.
     jahrUngueltig:
-      "Bitte ein Jahr zwischen {{von}} und {{bis}} eingeben. Angezeigt wird weiterhin {{jahr}}.",
+      "Bitte ein Jahr zwischen {{fromDate}} und {{toDate}} eingeben. Angezeigt wird weiterhin {{year}}.",
     // Ein Ende vor dem Start ergibt null Monate — die Buchung wäre gespeichert, aber auf keinem
     // Bildschirm sichtbar und damit weder änderbar noch löschbar.
     endeVorStart: "Das Ende darf nicht vor dem Startmonat liegen.",
@@ -5504,7 +5507,7 @@ const de = {
   },
 
   // Approval workflow admin (Briefing Screen 6): approvers + dynamic assignment-chain rules.
-  freigabeRegeln: {
+  approvalRules: {
     leiter: {
       title: "Freigabe-Regeln",
       beliebig: "beliebig",
@@ -5742,7 +5745,7 @@ const de = {
   },
 
   // DATEV handover (Briefing Screen 9).
-  datevUebergabe: {
+  handover: {
     title: "DATEV-Übergabe",
     leerGesellschaften: "Keine Gesellschaften vorhanden.",
     leerFilter: "Keine Gesellschaft passt zu dieser Suche.",
@@ -5891,7 +5894,7 @@ const de = {
   },
 
   // Reports (Auswertungen).
-  auswertungen: {
+  reports: {
     ustUngeklaert: {
       karte_one:
         "{{count}} Beleg über {{amount}} braucht noch die Angabe, ob die Vorsteuer abziehbar ist.",
@@ -5911,7 +5914,7 @@ const de = {
       spalteBeleg: "Lieferant / Beschreibung",
       spalteDatum: "Datum",
       spalteBetrag: "Betrag",
-      summe: "Summe {{gruppe}}",
+      summe: "Summe {{group}}",
       schliessen: "Schließen",
       gesamtbetrag: "Gesamtbetrag",
       anzahl_one: "{{count}} Beleg",
@@ -5940,7 +5943,7 @@ const de = {
       labelKategorie: "Kategorie",
       labelKonto: "Konto",
       labelZeitraum: "Zeitraum",
-      zeitraumBereich: "{{von}} bis {{bis}}",
+      zeitraumBereich: "{{fromDate}} bis {{toDate}}",
       zeitraumOhneGrenze: "Gesamter erfasster Zeitraum",
       imkoImgm: "IMKO + IMGM",
       alleGesellschaften: "Alle Gesellschaften",
@@ -6229,7 +6232,7 @@ const de = {
   },
 
   // Bank connections (Bankverbindungen).
-  bankkonten: {
+  bankAccounts: {
     // The "Manuell angelegt" tab with nothing in it. Not a fault: most Hubs get every account
     // through a bank connection, and this tab exists so one can be added without one.
     emptyManuell: {
@@ -6346,14 +6349,14 @@ const de = {
       zaehlenFehlgeschlagen:
         "Der Umfang konnte nicht ermittelt werden. Konten, Umsätze und Protokoll dieser Verbindung werden trotzdem ausgeblendet.",
       postenZugang: "Der Bankzugang bei BANKSapi (wird dort gelöscht)",
-      postenKonten: "{{anzahl}} Konten dieser Verbindung",
-      postenUmsaetze: "{{anzahl}} Umsätze dieser Verbindung",
-      postenProtokoll: "{{anzahl}} Protokolleinträge dieser Verbindung",
-      zugeordnet: "{{anzahl}} davon sind einem Beleg zugeordnet",
+      postenKonten: "{{count}} Konten dieser Verbindung",
+      postenUmsaetze: "{{count}} Umsätze dieser Verbindung",
+      postenProtokoll: "{{count}} Protokolleinträge dieser Verbindung",
+      zugeordnet: "{{count}} davon sind einem Beleg zugeordnet",
       zugeordnetHinweis:
         "Die Zuordnungen und die Bezahlt-Markierungen bleiben bestehen. Der Umsatz dahinter ist bis zum erneuten Verbinden aber nicht mehr einsehbar.",
       wort: "ENTFERNEN",
-      tippen: "Zum Bestätigen „{{wort}}“ eingeben",
+      tippen: "Zum Bestätigen „{{word}}“ eingeben",
       abbrechen: "Abbrechen",
       bestaetigen: "Verbindung trennen",
       laeuft: "Trenne …",
@@ -6361,7 +6364,7 @@ const de = {
       getrenntTitle: "Der Zugang wurde am {{datum}} im Hub getrennt.",
       toastOk: "Verbindung zu {{bank}} getrennt.",
       toastOkHinweis:
-        "{{konten}} Konten und {{umsaetze}} Umsätze ausgeblendet. Beim erneuten Verbinden kommen die Konten zurück.",
+        "{{accounts}} Konten und {{transactions}} Umsätze ausgeblendet. Beim erneuten Verbinden kommen die Konten zurück.",
       toastFehler: "Trennen fehlgeschlagen: {{error}}",
     },
     sandbox: "Sandbox",
@@ -6407,7 +6410,7 @@ const de = {
       stalled: "Abgleich seit {{ago}} gestartet und nie beendet",
       stale: "Seit {{ago}} kein Abgleich mehr gelaufen ({{when}})",
       never: "Es ist noch nie ein Abgleich gelaufen",
-      detail: "{{umsaetze}} neue Umsätze · {{zuordnungen}} automatische Zuordnungen",
+      detail: "{{transactions}} neue Umsätze · {{assignments}} automatische Zuordnungen",
       uebersprungen_one: "{{count}} Lauf übersprungen, weil der vorige noch lief",
       uebersprungen_other: "{{count}} Läufe übersprungen, weil der vorige noch lief",
       ago: {
@@ -6443,16 +6446,16 @@ const de = {
       toastFailed: "Fehlgeschlagen: {{error}}",
     },
     entfernen: {
-      toastZuordnungen: "{{anzahl}} Belegzuordnungen aufgehoben.",
-      toastDateien: "{{anzahl}} Belegdateien gelöscht.",
+      toastZuordnungen: "{{count}} Belegzuordnungen aufgehoben.",
+      toastDateien: "{{count}} Belegdateien gelöscht.",
       zaehle: "Ermittle, was gelöscht würde …",
       zaehlenFehlgeschlagen:
         "Der Umfang konnte nicht ermittelt werden. Es können trotzdem Umsätze, Belegzuordnungen und Belegdateien betroffen sein.",
       vorschau:
-        "Gelöscht werden: {{umsaetze}} Umsätze, {{zuordnungen}} Belegzuordnungen und {{dateien}} Belegdateien. Das lässt sich nicht rückgängig machen.",
+        "Gelöscht werden: {{transactions}} Umsätze, {{assignments}} Belegzuordnungen und {{files}} Belegdateien. Das lässt sich nicht rückgängig machen.",
       vorschauLeer: "Dieses Konto hat noch keine Umsätze. Es geht nichts verloren.",
       button: "Konto entfernen",
-      titel: "Konto „{{konto}}“ entfernen?",
+      titel: "Konto „{{account}}“ entfernen?",
       beschreibung:
         "Das Konto verschwindet aus dem Hub und wird nicht mehr importiert, auch wenn die Bank es weiterhin liefert. Bereits importierte Umsätze dieses Kontos werden gelöscht, samt ihrer Zuordnungen zu Belegen. Gedacht für private Konten, die versehentlich mitverbunden wurden, und für doppelte Konten.",
       grund: "Grund (optional)",
@@ -6461,7 +6464,7 @@ const de = {
       bestaetigen: "Entfernen",
       laeuft: "Entferne …",
       toastOk: "Konto entfernt.",
-      toastUmsaetze: "{{anzahl}} Umsätze gelöscht.",
+      toastUmsaetze: "{{count}} Umsätze gelöscht.",
       toastFehler: "Entfernen fehlgeschlagen: {{error}}",
     },
     entfernt: {
@@ -6476,7 +6479,7 @@ const de = {
       toastFehler: "Wiederherstellen fehlgeschlagen: {{error}}",
     },
   },
-  bankverbindungen: {
+  bankConnections: {
     connectDialog: {
       button: "Bank verbinden",
       titel: "Bankkonto verbinden",
@@ -6539,7 +6542,7 @@ const de = {
     syncBestaetigen: {
       titel: "Jetzt synchronisieren?",
       textLive:
-        "Der Abgleich läuft für alle {{anzahl}} Bankverbindungen und ruft dabei echte Daten bei der Bank ab. Es gibt keine Möglichkeit, nur eine einzelne Verbindung zu synchronisieren.",
+        "Der Abgleich läuft für alle {{count}} Bankverbindungen und ruft dabei echte Daten bei der Bank ab. Es gibt keine Möglichkeit, nur eine einzelne Verbindung zu synchronisieren.",
       textSandbox:
         "Im Mock-/Sandbox-Modus erzeugt der Abgleich BEISPIELDATEN und schreibt sie in dieselben Tabellen wie echte Konten und Umsätze. Nur das Kennzeichen „Sandbox“ unterscheidet sie danach.",
       abbrechen: "Abbrechen",
@@ -6582,13 +6585,13 @@ const de = {
       webformOpened: "Bank-Webform geöffnet.",
       noWebform: "Keine Webform-URL erhalten.",
       connectFailed: "Fehlgeschlagen: {{error}}",
-      syncDone: "Abgleich abgeschlossen: {{neu}} neue Umsätze, {{vorschlaege}} Vorschläge.",
+      syncDone: "Abgleich abgeschlossen: {{added}} neue Umsätze, {{suggestions}} Vorschläge.",
       syncFailed: "Sync fehlgeschlagen: {{error}}",
     },
   },
 
   // Processing log (Protokoll). status.* keyed by DB status value.
-  protokoll: {
+  activityLog: {
     title: "Protokoll",
     subtitle: "Verarbeitungs-Log der eingehenden Belege: Eingang, Erkennung und Fehler.",
     search: "Betreff, Absender oder Grund suchen …",
@@ -6767,7 +6770,7 @@ const de = {
       selbstHinweis:
         "Das ist Ihr eigenes Konto. Rolle und Aktiv-Status lassen sich hier nicht ändern, sonst sperren Sie sich aus einem Bereich aus, den nur ein aktiver Administrator erreicht.",
       rollenwechsel:
-        "Rollenwechsel: {{von}} → {{nach}}. Damit ändern sich die Bereiche, die diese Person sehen und ändern darf.",
+        "Rollenwechsel: {{fromDate}} → {{nach}}. Damit ändern sich die Bereiche, die diese Person sehen und ändern darf.",
       zugriffAusweitung:
         "Keine Gesellschaft ausgewählt bedeutet Zugriff auf ALLE Gesellschaften, das erweitert den Zugriff, statt ihn zu entziehen.",
       emailChangeHint:
@@ -6777,7 +6780,7 @@ const de = {
       superAdminCannotBeDeactivated: "Der Super-Admin kann nicht deaktiviert werden.",
     },
     list: {
-      rechteAnzahl: "{{n}} von {{gesamt}}",
+      rechteAnzahl: "{{n}} von {{total}}",
       rechteAlle: "alle",
       suche: "Name, E-Mail oder Rolle suchen …",
       nurInaktive: "Nur inaktive",
@@ -6825,7 +6828,7 @@ const de = {
       bereichBrauchtRecht:
         "Nur für Personen mit dem Recht „Endgültig freigeben“. Ohne dieses Recht würde die Rechnung bei jemandem landen, der sie nicht freigeben kann.",
       bereichKonflikt:
-        "Für den Bereich „{{bereich}}“ ist bereits eine andere aktive Person zuständig. Bitte diese zuerst entfernen.",
+        "Für den Bereich „{{area}}“ ist bereits eine andere aktive Person zuständig. Bitte diese zuerst entfernen.",
       vertretung: "Vertretung (bei Abwesenheit)",
       vertretungHint:
         "Wird in der Überfälligkeits-Warnung genannt. Die Vertretung erhält dadurch keine zusätzlichen Rechte.",
@@ -6881,7 +6884,7 @@ const de = {
       },
       toast: {
         teilweise:
-          "Speichern fehlgeschlagen beim Schritt „{{schritt}}“. Vorherige Schritte wurden bereits gespeichert: {{error}}",
+          "Speichern fehlgeschlagen beim Schritt „{{step}}“. Vorherige Schritte wurden bereits gespeichert: {{error}}",
         gespeichert: "Firmenzugriff gespeichert.",
         fehlgeschlagen: "Firmenzugriff konnte nicht gespeichert werden: {{error}}",
       },
@@ -6951,7 +6954,7 @@ const de = {
   },
 
   // Papierkorb (Briefing Screen 18)
-  papierkorb: {
+  trash: {
     list: {
       title: "Papierkorb",
       subtitle: "Gelöschte Datensätze: wiederherstellbar oder endgültig löschbar.",

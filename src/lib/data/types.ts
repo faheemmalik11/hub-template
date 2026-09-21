@@ -7,7 +7,7 @@ import type { DatevBlockReason } from "@/lib/datev/attachment-rules";
 
 // Extraction status. The DB column has NO CHECK constraint (only DEFAULT 'recognised'),
 // but in practice only 'recognised' | 'needs_review' are written. The UI filters on these two.
-export type BelegStatus = "recognised" | "needs_review";
+export type DocumentStatus = "recognised" | "needs_review";
 
 // Workflow status (approval chain) — separate `workflow_status` column, independent of the
 // extraction `status`. Values per the DB CHECK (migrations 0002/0025/0035/0036). `paid_at` (+
@@ -35,7 +35,7 @@ export type WorkflowStatus =
 // "booking" = company/property (Gesellschaft/Objekt) assignment change; also used for bank matches.
 // "rule" = a rule applied a value (written by apply_assignment_rules, migration 0025).
 // "not_relevant" / "archived" = review decisions that take the receipt out of processing.
-export type VerlaufTyp =
+export type HistoryType =
   | "note"
   | "status_change"
   | "change"
@@ -65,10 +65,10 @@ export type VerlaufTyp =
   // moment handed_over_at is set, the same shape as 'bezahlt' above.
   | "handed_over";
 
-export interface BelegVerlauf {
+export interface DocumentHistory {
   id: number;
   document_id: string;
-  type: VerlaufTyp | string;
+  type: HistoryType | string;
   text: string | null;
   data: Record<string, unknown> | null;
   actor: string | null;
@@ -76,23 +76,23 @@ export interface BelegVerlauf {
 }
 
 // Konfidenz je Feld aus der KI-Extraktion (0..1). Nicht jedes Feld ist immer da.
-export interface Konfidenz {
-  rechnungssteller?: number;
-  rechnungsnummer?: number;
+export interface Confidence {
+  invoiceIssuer?: number;
+  invoiceNumber?: number;
   beleg_datum?: number;
   betrag_netto?: number;
   ust_betrag?: number;
   betrag_brutto?: number;
   gesellschaft_code?: number;
   objekt_code?: number;
-  [feld: string]: number | undefined;
+  [field: string]: number | undefined;
 }
 
-export interface BelegPosition {
-  beschreibung?: string | null;
-  menge?: number | null;
-  einzelpreis?: number | null;
-  betrag?: number | null;
+export interface DocumentPosition {
+  description?: string | null;
+  quantity?: number | null;
+  unitPrice?: number | null;
+  amount?: number | null;
   ust_satz?: number | null;
   // Reserved for the parked "split booking" feature (one category/property per line item, e.g. a
   // hardware-store receipt covering two properties). Decided: the split UI comes later, but the
@@ -105,28 +105,28 @@ export interface BelegPosition {
   property_id?: string | null;
 }
 
-export interface BelegSteuer {
-  satz?: number | null;
-  netto?: number | null;
-  ust?: number | null;
+export interface DocumentTax {
+  rate?: number | null;
+  net?: number | null;
+  vat?: number | null;
 }
 
 // Vollständiges KI-Extraktions-JSON (lose typisiert — wir lesen nur Einzelfelder).
 export interface Extracted {
-  konfidenz?: Konfidenz;
+  confidence?: Confidence;
   // The pipeline's per-check validation map, and the older flat gate object it replaces. Both are
   // read through validierungDetail() / validierungFlach() in format.ts, never directly: a receipt
   // ingested before either existed still has to render, and the fallback order lives in one place.
   validation_detail?: Record<string, unknown> | null;
-  validation?: Validierung | null;
-  zusammenfassung?: string | null;
-  volltext?: string | null;
+  validation?: Validation | null;
+  summary?: string | null;
+  fullText?: string | null;
   rechnungssteller_ustid?: string | null;
-  steuer_aufschluesselung?: BelegSteuer[] | null;
-  [feld: string]: unknown;
+  steuer_aufschluesselung?: DocumentTax[] | null;
+  [field: string]: unknown;
 }
 
-export interface Validierung {
+export interface Validation {
   summe_ok?: boolean;
   datum_vorhanden?: boolean;
   brutto_vorhanden?: boolean;
@@ -135,12 +135,12 @@ export interface Validierung {
   ust_satz_ok?: boolean | null;
   iban_ok?: boolean | null;
   datum_plausibel?: boolean | null;
-  kleinbetrag?: boolean;
+  smallAmount?: boolean;
   decision_reason?: string;
-  [feld: string]: unknown;
+  [field: string]: unknown;
 }
 
-export interface Gesellschaft {
+export interface Company {
   id: string;
   code: string;
   name: string;
@@ -171,7 +171,7 @@ export interface Gesellschaft {
 // Objekt (Immobilie/Projekt) — Stammdaten-Tabelle `objekte`. belege.objekt_id referenziert diese
 // Tabelle. Es gibt KEINE company-Spalte mehr (migration 0007): die Gesellschaft(en) eines Objekts
 // ergeben sich aus `property_companies` (direct property↔company assignment, migration 0083).
-export interface Objekt {
+export interface Property {
   id: string;
   code: string;
   name: string | null;
@@ -291,7 +291,7 @@ export interface OposWhitelistRule {
   created_by: string | null;
 }
 
-export interface Lieferant {
+export interface Supplier {
   id: string;
   name: string;
   vat_id: string | null;
@@ -428,7 +428,7 @@ export interface SupplierDuplicateGroup {
   ids: string[];
 }
 
-export interface Beleg {
+export interface Document {
   id: string;
   company_id: string | null;
   company_code: string | null;
@@ -463,8 +463,8 @@ export interface Beleg {
   // categorization decision, one structured and one free text, kept in sync by apply_assignment_rules.
   category_id: string | null;
   service_description: string | null;
-  line_items: BelegPosition[] | null;
-  tax: BelegSteuer[] | null;
+  line_items: DocumentPosition[] | null;
+  tax: DocumentTax[] | null;
   ocr_fulltext: string | null;
   status: string | null;
   // Erkennungs-Ampel aus der Pipeline (Briefing A2/A6): server-berechnetes, gedeckeltes
@@ -474,7 +474,7 @@ export interface Beleg {
   confidence_score: number | null;
   already_paid: boolean | null;
   extracted: Extracted | null;
-  validation: Validierung | null;
+  validation: Validation | null;
   // The pipeline's per-check map, one column of its own since migration 0007 (before that it lived
   // only inside `extracted`). Read through validierungDetail() in format.ts, never directly: both
   // homes have to stay readable. Keys are the check names, values ValidierungDetailEintrag.
@@ -754,8 +754,8 @@ export interface RuleBulkApplyResult {
 // separately, never folded into 0% or 100%.
 export interface VatReserve {
   company_id: string;
-  von: string | null;
-  bis: string | null;
+  fromDate: string | null;
+  toDate: string | null;
   input_vat_total: number;
   input_vat_deductible: number;
   input_vat_nondeductible: number;
@@ -770,7 +770,7 @@ export interface VatReserve {
 // Two-level: `parent_id` null = coarse group (~20, e.g. "Personalkosten"), non-null = fine tag
 // (~87, e.g. "Energie" under "Raumkosten"). Both levels are valid category_id targets — the
 // briefing allows an even coarser assignment when that is all that is known.
-export interface BwaCategory {
+export interface CostAnalysisCategory {
   id: string;
   code: string;
   name: string;
@@ -798,7 +798,7 @@ export interface BwaCategory {
 }
 
 // Free-text spelling -> category_id (table bwa_category_aliases), mirrors entity_aliases.
-export interface BwaCategoryAlias {
+export interface CostAnalysisCategoryAlias {
   id: string;
   category_id: string;
   alias: string;
@@ -810,7 +810,7 @@ export interface BwaCategoryAlias {
 
 // (fiscal_year, account) -> category_id (table bwa_account_mapping). Year-keyed because DATEV
 // rebuilds the chart of accounts every year. Seeded empty; populated via the Kontenrahmen import.
-export interface BwaAccountMapping {
+export interface CostAnalysisAccountMapping {
   id: string;
   fiscal_year: number;
   account: string;
@@ -1180,19 +1180,19 @@ export interface ChannelFolder {
 
 // ---- Server-side list pagination (views v_documents_list/v_documents_review plus RPCs) ----
 
-export type BelegSortKey =
-  | "steller"
-  | "gesellschaft"
-  | "objekt"
-  | "betrag"
-  | "beleg_datum"
-  | "faellig"
-  | "eingegangen_am"
+export type DocumentSortKey =
+  | "issuer"
+  | "company"
+  | "property"
+  | "amount"
+  | "document_date"
+  | "due"
+  | "received_at"
   | "status"
-  | "pruefung";
+  | "check";
 
 // Row from v_belege_list: all Beleg columns + two computed helpers.
-export interface BelegListeRow extends Beleg {
+export interface DocumentListRow extends Document {
   issuer_sort: string | null; // coalesce(supplier.name, issuer) — display + sort
   review_score: number | null; // server-computed review priority (mirrors pruefScore)
   // Bank-reconciliation flags (migration 20260813170000). Undecided ('candidate' or 'auto') counts
@@ -1204,17 +1204,17 @@ export interface BelegListeRow extends Beleg {
 
 // All list controls resolved to server-ready values. `von`/`bis` are the beleg_datum
 // range already derived from the period selection.
-export interface BelegeListeParams {
+export interface DocumentsListParams {
   q?: string;
   // Ids matched by the AI natural-language search (askInvoiceQuestion). Undefined = no AI search
   // active. An empty array is deliberately NOT "no filter" — it means the AI search found nothing,
   // so the list must show nothing, not silently fall back to the unfiltered set.
   ids?: string[];
-  gesellschaft?: string;
-  objekt?: string;
+  company?: string;
+  property?: string;
   status?: string;
-  belegart?: string;
-  zahlung?: string;
+  documentType?: string;
+  payment?: string;
   // Approval-chain stage (workflow_status, migration 0035/0036) — a separate axis from `status`
   // (AI review) and `zahlung` (paid or not): a receipt can be fully recognized and unpaid while
   // sitting at any step from "received" through "closed".
@@ -1226,7 +1226,7 @@ export interface BelegeListeParams {
   // Recognition traffic light (traffic_light column): 'green' | 'yellow' | 'red'. Separate axis from
   // `status`, and the reason yellow receipts were unreachable before: the AI flags them for a
   // human nod but the pipeline still leaves status='recognised', so no status filter ever showed them.
-  ampel?: string;
+  trafficLight?: string;
   // Whether a bank transaction has been reconciled against this invoice, and whether that match is
   // still open. 'suggestion' = a suggestion (status kandidat or auto) nobody has decided on yet,
   // 'matched' = confirmed. Its own axis, separate from `zahlung`: an invoice can be marked paid
@@ -1235,39 +1235,39 @@ export interface BelegeListeParams {
   paymentType?: string;
   // Archived receipts (wrongly ingested, kept with a warning note) are out of everyday lists.
   // 'nur' shows only the archive; undefined excludes it.
-  archiv?: "nur";
-  von?: string;
-  bis?: string;
+  archive?: "only";
+  fromDate?: string;
+  toDate?: string;
   // due_date band, already resolved to dates by dueFilterRange(). faelligUnbekannt is the
   // "no due date at all" band, which no range can express.
-  faelligVon?: string;
-  faelligBis?: string;
-  faelligUnbekannt?: boolean;
-  sort: BelegSortKey;
+  dueFromDate?: string;
+  dueToDate?: string;
+  dueUnknown?: boolean;
+  sort: DocumentSortKey;
   dir: "asc" | "desc";
   page: number;
   pageSize: number;
 }
 
 // Filters only (for KPIs / Kanban) — no sort/paging.
-export type BelegeFilter = Omit<BelegeListeParams, "sort" | "dir" | "page" | "pageSize">;
+export type DocumentsFilter = Omit<DocumentsListParams, "sort" | "dir" | "page" | "pageSize">;
 
-export interface BelegeSeite {
-  rows: BelegListeRow[];
+export interface DocumentsPage {
+  rows: DocumentListRow[];
   total: number;
   /**
    * Set when the requested page was past the end and the query fell back to the last page that
    * exists. The list uses it to correct the URL, so a bookmarked `?page=9` from back when there
    * were more results lands on the last real page instead of a database error.
    */
-  angepassteSeite?: number;
+  adjustedPage?: number;
 }
 
-export interface BelegeKpis {
+export interface DocumentsKpis {
   total: number;
   recognised: number;
   needs_review: number;
-  volumen: number;
+  volume: number;
   /**
    * Gross sum of the rows in view that are NOT paid yet. What is still going out the door.
    *
@@ -1285,14 +1285,14 @@ export interface BelegeKpis {
   partial: boolean;
 }
 
-export interface BelegeFacets {
+export interface DocumentsFacets {
   objekt_codes: string[];
-  belegarten: string[];
+  documentTypes: string[];
   months: string[];
   years: string[];
 }
 
-export interface BelegDatei {
+export interface DocumentFile {
   id: string;
   document_id: string;
   role: "original" | "xml" | "rendered" | string;
@@ -1308,7 +1308,7 @@ export interface BelegDatei {
   created_at: string;
 }
 
-export interface VerarbeitungsLog {
+export interface ProcessingLog {
   id: number;
   source_item_id: string | null;
   subject: string | null;
@@ -1366,10 +1366,10 @@ export interface PipelineHealth {
 
 export type BankConnectionStatus = "pending" | "active" | "error" | "expired";
 export type TransactionMatchingStatus = "open" | "matched" | "ignored";
-export type TransactionRichtung = "eingehend" | "ausgehend";
+export type TransactionDirection = "eingehend" | "ausgehend";
 export type MatchStatus = "candidate" | "auto" | "confirmed" | "rejected";
 // Derived per-beleg reconciliation summary (computed from matches — NOT stored on belege).
-export type AbgleichStatus = "open" | "partial" | "reconciled";
+export type MatchingStatus = "open" | "partial" | "reconciled";
 
 export interface BankConnection {
   id: string;
@@ -1583,10 +1583,10 @@ export interface MatchReasons {
   name?: boolean;
   dayDiff?: number | null;
   manual?: boolean;
-  [feld: string]: unknown;
+  [field: string]: unknown;
 }
 
-export interface BelegTransactionMatch {
+export interface DocumentTransactionMatch {
   id: string;
   document_id: string;
   transaction_id: string;
@@ -1611,7 +1611,7 @@ export interface BelegTransactionMatch {
   // Optional PostgREST-embedded relations (select "*, bank_transactions(*)" / "*, documents(*)").
   // An embedded row arrives under its TABLE name, so this key moved with the rename to documents.
   bank_transactions?: BankTransaction | null;
-  documents?: Beleg | null;
+  documents?: Document | null;
 }
 
 export interface MatchingSettings {

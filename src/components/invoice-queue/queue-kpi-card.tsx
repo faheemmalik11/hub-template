@@ -52,7 +52,7 @@ export function QueueKpiCard({
   onSelect?: () => void;
   active?: boolean;
 }) {
-  const inhalt = (
+  const content = (
     <>
       <div className="flex items-center gap-2">
         <span className={cn("grid size-7 shrink-0 place-items-center rounded-lg", TONE_ICON[tone])}>
@@ -84,14 +84,14 @@ export function QueueKpiCard({
   if (onSelect) {
     return (
       <button type="button" onClick={onSelect} aria-pressed={active} className={cls}>
-        {inhalt}
+        {content}
       </button>
     );
   }
 
   return (
     <Link to={to ?? ""} search={search as never} aria-pressed={active} className={cls}>
-      {inhalt}
+      {content}
     </Link>
   );
 }

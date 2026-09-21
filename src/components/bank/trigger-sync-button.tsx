@@ -15,7 +15,7 @@ import {
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import { useTriggerSync } from "@/data";
-import { fehlerText } from "@/lib/data/format";
+import { errorText } from "@/lib/data/format";
 import type { BankConnection } from "@/lib/data/types";
 import { useTranslation } from "@/lib/i18n";
 
@@ -48,18 +48,18 @@ export function TriggerSyncButton({
   const triggerSync = useTriggerSync();
 
   // With no connections at all there is no live consent to contact, so the mock wording applies.
-  const nurSandbox = connections.length === 0 || connections.every((c) => c.is_sandbox);
+  const onlySandbox = connections.length === 0 || connections.every((c) => c.is_sandbox);
 
   function syncNow() {
     triggerSync.mutate(undefined, {
       onSuccess: (res) =>
         toast.success(
-          t("bankverbindungen.toast.syncDone", {
-            neu: res.transactions_new ?? 0,
+          t("bankConnections.toast.syncDone", {
+            added: res.transactions_new ?? 0,
             suggestions: res.matches_candidate ?? 0,
           }),
         ),
-      onError: (e) => toast.error(t("bankverbindungen.toast.syncFailed", { error: fehlerText(e) })),
+      onError: (e) => toast.error(t("bankConnections.toast.syncFailed", { error: errorText(e) })),
     });
   }
 
@@ -73,21 +73,21 @@ export function TriggerSyncButton({
           className={cn("gap-2", className)}
         >
           <RefreshCw className={cn("size-4", triggerSync.isPending && "animate-spin")} />
-          {triggerSync.isPending ? t("bankverbindungen.syncing") : t("bankverbindungen.sync")}
+          {triggerSync.isPending ? t("bankConnections.syncing") : t("bankConnections.sync")}
         </Button>
       </AlertDialogTrigger>
       <AlertDialogContent>
         <AlertDialogHeader>
-          <AlertDialogTitle>{t("bankverbindungen.syncBestaetigen.titel")}</AlertDialogTitle>
+          <AlertDialogTitle>{t("bankConnections.syncBestaetigen.titel")}</AlertDialogTitle>
           <AlertDialogDescription>
-            {nurSandbox
-              ? t("bankverbindungen.syncBestaetigen.textSandbox", { anzahl: connections.length })
-              : t("bankverbindungen.syncBestaetigen.textLive", { anzahl: connections.length })}
+            {onlySandbox
+              ? t("bankConnections.syncBestaetigen.textSandbox", { count: connections.length })
+              : t("bankConnections.syncBestaetigen.textLive", { count: connections.length })}
           </AlertDialogDescription>
         </AlertDialogHeader>
         <AlertDialogFooter>
           <AlertDialogCancel disabled={triggerSync.isPending}>
-            {t("bankverbindungen.syncBestaetigen.abbrechen")}
+            {t("bankConnections.syncBestaetigen.abbrechen")}
           </AlertDialogCancel>
           <AlertDialogAction
             onClick={(e) => {
@@ -97,8 +97,8 @@ export function TriggerSyncButton({
             disabled={triggerSync.isPending}
           >
             {triggerSync.isPending
-              ? t("bankverbindungen.syncing")
-              : t("bankverbindungen.syncBestaetigen.starten")}
+              ? t("bankConnections.syncing")
+              : t("bankConnections.syncBestaetigen.starten")}
           </AlertDialogAction>
         </AlertDialogFooter>
       </AlertDialogContent>

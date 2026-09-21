@@ -10,7 +10,7 @@
 // shows is read straight off the skeleton's own subtotal row rather than recomputed. Change a
 // number here and it will disagree with the DATEV structure; that is what makes this file safe.
 
-import { BWA_SKELETON, type BwaSkeletonComputed } from "./adapter";
+import { COSTANALYSIS_SKELETON, type CostAnalysisSkeletonComputed } from "./adapter";
 
 /** Rows above the operating result that are INCOME. Everything the result adds. */
 const INCOME_KEYS = [
@@ -71,11 +71,11 @@ export type ReportRowKind =
 /** The arithmetic sign in front of a row, so the column reads as a sum rather than as a list. */
 export type ReportOperator = "plus" | "minus" | "equals";
 
-export interface BwaReportRow {
+export interface CostAnalysisReportRow {
   /** Skeleton row key, or a synthetic group id. Drilldown keys off this. */
   key: string;
   kind: ReportRowKind;
-  /** i18n key suffix under `auswertungen.zeile.` */
+  /** i18n key suffix under `reports.zeile.` */
   labelKey: string;
   /**
    * What the row shows in the amount column.
@@ -100,8 +100,8 @@ export interface BwaReportRow {
   emphasis?: boolean;
 }
 
-export interface BwaReport {
-  rows: BwaReportRow[];
+export interface CostAnalysisReport {
+  rows: CostAnalysisReportRow[];
   /** The three summary figures. `revenue - totalCosts === operatingResult`, exactly. */
   revenue: number;
   totalCosts: number;
@@ -109,7 +109,7 @@ export interface BwaReport {
   /** Cost lines with an amount, biggest first, for the breakdown chart. Positive magnitudes. */
 }
 
-const SIGN_BY_KEY = new Map(BWA_SKELETON.map((r) => [r.key, r.sign]));
+const SIGN_BY_KEY = new Map(COSTANALYSIS_SKELETON.map((r) => [r.key, r.sign]));
 
 /**
  * Group the computed skeleton into the report.
@@ -117,10 +117,10 @@ const SIGN_BY_KEY = new Map(BWA_SKELETON.map((r) => [r.key, r.sign]));
  * `alleZeilen` keeps every line including the zero ones; false drops lines that are zero in BOTH
  * the current and the comparison period, so a line that just fell to zero still shows its movement.
  */
-export function buildBwaReport(
-  computed: BwaSkeletonComputed,
-  opts: { alleZeilen: boolean; compareAmountFor?: (key: string) => number },
-): BwaReport {
+export function buildCostAnalysisReport(
+  computed: CostAnalysisSkeletonComputed,
+  opts: { allRows: boolean; compareAmountFor?: (key: string) => number },
+): CostAnalysisReport {
   const byKey = new Map(computed.rows.map((r) => [r.key, r]));
   const raw = (key: string) => byKey.get(key)?.amount ?? 0;
   // The signed contribution, the way the skeleton itself applies it to the running total.
@@ -129,7 +129,7 @@ export function buildBwaReport(
     return a === 0 ? 0 : (SIGN_BY_KEY.get(key) ?? 1) * a;
   };
   const compare = (key: string) => opts.compareAmountFor?.(key) ?? 0;
-  const keep = (key: string) => opts.alleZeilen || raw(key) !== 0 || compare(key) !== 0;
+  const keep = (key: string) => opts.allRows || raw(key) !== 0 || compare(key) !== 0;
 
   const sum = (keys: readonly string[]) => keys.reduce((s, k) => s + signed(k), 0);
 
@@ -139,7 +139,7 @@ export function buildBwaReport(
   // Straight off the skeleton's own subtotal, never recomputed from the groups above.
   const operatingResult = raw("operating_result");
 
-  const rows: BwaReportRow[] = [];
+  const rows: CostAnalysisReportRow[] = [];
 
   // "Show all categories" is not a longer version of the compact report — it is the DATEV Form 01
   // value statement, every line, in its own order, including the two lines the compact view has no
@@ -152,8 +152,8 @@ export function buildBwaReport(
   // operating income; whoever pulls them together still lands on the right operating result but
   // reports a wrong Rohertrag, which is precisely the intermediate figure the client checks
   // against his own BWA. So the full view renders the skeleton verbatim rather than re-deriving it.
-  if (opts.alleZeilen) {
-    for (const row of BWA_SKELETON) {
+  if (opts.allRows) {
+    for (const row of COSTANALYSIS_SKELETON) {
       const subtotal = row.kind === "subtotal";
       rows.push({
         key: row.key,
@@ -178,7 +178,7 @@ export function buildBwaReport(
    * block collapses to just that line; a group total only earns its row once there is more than one
    * thing to total.
    */
-  const pushKosten = (groupKey: string, keys: readonly string[]) => {
+  const pushCost = (groupKey: string, keys: readonly string[]) => {
     const lines = keys.filter(keep);
     if (lines.length === 0) return;
     if (lines.length === 1) {
@@ -215,10 +215,10 @@ export function buildBwaReport(
   // Revenue always opens the calculation, even at zero: a reader looking at an all-negative result
   // has to see that nothing came in. Its own detail lines appear only if more than one of them
   // carries an amount, for the same reason a one-line cost block collapses.
-  const umsatzZeilen = INCOME_KEYS.filter(keep);
+  const revenueRows = INCOME_KEYS.filter(keep);
   rows.push({ key: "group_revenue", kind: "group", labelKey: "group_revenue", amount: revenue });
-  if (umsatzZeilen.length > 1) {
-    for (const k of umsatzZeilen) {
+  if (revenueRows.length > 1) {
+    for (const k of revenueRows) {
       rows.push({
         key: k,
         kind: "line",
@@ -230,7 +230,7 @@ export function buildBwaReport(
     }
   }
 
-  pushKosten("group_direct_costs", DIRECT_COST_KEYS);
+  pushCost("group_direct_costs", DIRECT_COST_KEYS);
   rows.push({
     key: "gross_profit",
     kind: "result",
@@ -241,7 +241,7 @@ export function buildBwaReport(
     caption: true,
   });
 
-  pushKosten("group_operating_costs", OPERATING_COST_KEYS);
+  pushCost("group_operating_costs", OPERATING_COST_KEYS);
   rows.push({
     key: "operating_result",
     kind: "result",
@@ -255,8 +255,8 @@ export function buildBwaReport(
 
   // Only when there is something below the line, or when the reader asked for everything. An empty
   // "interest, neutral items and taxes" section is an accounting heading with nothing under it.
-  if (opts.alleZeilen || BELOW_RESULT_KEYS.some((k) => raw(k) !== 0 || compare(k) !== 0)) {
-    pushKosten("group_below_result", BELOW_RESULT_KEYS);
+  if (opts.allRows || BELOW_RESULT_KEYS.some((k) => raw(k) !== 0 || compare(k) !== 0)) {
+    pushCost("group_below_result", BELOW_RESULT_KEYS);
     // And the preliminary result only when it is actually a different figure. With every line
     // between the two at zero it repeats the operating result verbatim, and two identical totals
     // one under the other read as a mistake rather than as a second result.

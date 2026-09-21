@@ -9,7 +9,7 @@ import {
   fetchAllRows,
   hasNextInfinitePage,
   invalidateMatchState,
-  pflichtGrund,
+  requiredReason,
   type InfinitePage,
 } from "@/data/shared";
 import { getOutgoingInvoiceFileUrl } from "@/lib/api/outgoing-invoice-files.functions";
@@ -152,14 +152,14 @@ export function useUpdateCustomer(customerId: string) {
 export function useSoftDeleteCustomer(customerId: string) {
   const qc = useQueryClient();
   return useMutation({
-    mutationFn: async (grund: string) => {
+    mutationFn: async (reason: string) => {
       const actor = await actorEmail();
       const { error } = await sb
         .from(TABLE.customers)
         .update({
           deleted_at: new Date().toISOString(),
           deleted_by: actor,
-          delete_reason: pflichtGrund(grund),
+          delete_reason: requiredReason(reason),
         })
         .eq("id", customerId);
       if (error) throw error;
@@ -208,10 +208,10 @@ export function useOutgoingInvoices(filter?: OutgoingInvoiceFilter) {
 export interface OpenOutgoingInvoicesInfiniteFilter {
   q?: string;
   /** invoice_date range — the outgoing equivalent of document_date. */
-  von?: string;
-  bis?: string;
-  createdAtVon?: string;
-  createdAtBis?: string;
+  fromDate?: string;
+  toDate?: string;
+  createdAtFromDate?: string;
+  createdAtToDate?: string;
   sort?: "document_date" | "created_at" | "amount" | "name";
   dir?: "asc" | "desc";
   pageSize: number;
@@ -228,10 +228,10 @@ export function useOpenOutgoingInvoicesInfinite(
 ) {
   const {
     q,
-    von,
-    bis,
-    createdAtVon,
-    createdAtBis,
+    fromDate,
+    toDate,
+    createdAtFromDate,
+    createdAtToDate,
     sort = "created_at",
     dir = "desc",
     pageSize,
@@ -242,10 +242,10 @@ export function useOpenOutgoingInvoicesInfinite(
     queryKey: [
       "open-outgoing-invoices-infinite",
       search,
-      von ?? "",
-      bis ?? "",
-      createdAtVon ?? "",
-      createdAtBis ?? "",
+      fromDate ?? "",
+      toDate ?? "",
+      createdAtFromDate ?? "",
+      createdAtToDate ?? "",
       sort,
       dir,
       pageSize,
@@ -284,12 +284,12 @@ export function useOpenOutgoingInvoicesInfinite(
             ? query.or(`invoice_number.ilike.%${search}%,customer_id.in.(${customerIds.join(",")})`)
             : query.ilike("invoice_number", `%${search}%`);
       }
-      if (von) query = query.gte("invoice_date", von);
-      if (bis) query = query.lte("invoice_date", bis);
-      if (createdAtVon) query = query.gte("created_at", createdAtVon);
+      if (fromDate) query = query.gte("invoice_date", fromDate);
+      if (toDate) query = query.lte("invoice_date", toDate);
+      if (createdAtFromDate) query = query.gte("created_at", createdAtFromDate);
       // Inclusive of the whole end day — created_at is a timestamptz, a bare date bound would cut
       // off at midnight and silently drop everything from later that same day.
-      if (createdAtBis) query = query.lte("created_at", `${createdAtBis}T23:59:59.999`);
+      if (createdAtToDate) query = query.lte("created_at", `${createdAtToDate}T23:59:59.999`);
 
       const ascending = dir === "asc";
       if (sort === "name") {
@@ -337,14 +337,14 @@ export function useOutgoingInvoice(id: string) {
 export function useSoftDeleteOutgoingInvoice(invoiceId: string) {
   const qc = useQueryClient();
   return useMutation({
-    mutationFn: async (grund: string) => {
+    mutationFn: async (reason: string) => {
       const actor = await actorEmail();
       const { error } = await sb
         .from(TABLE.outgoingInvoices)
         .update({
           deleted_at: new Date().toISOString(),
           deleted_by: actor,
-          delete_reason: pflichtGrund(grund),
+          delete_reason: requiredReason(reason),
         })
         .eq("id", invoiceId);
       if (error) throw error;
@@ -352,7 +352,7 @@ export function useSoftDeleteOutgoingInvoice(invoiceId: string) {
         "outgoing_invoices",
         invoiceId,
         "deletion",
-        grund || "Ausgangsrechnung gelöscht",
+        reason || "Ausgangsrechnung gelöscht",
       );
     },
     onSuccess: () => {

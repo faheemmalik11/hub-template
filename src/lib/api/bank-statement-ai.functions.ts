@@ -18,7 +18,7 @@ import { z } from "zod";
 
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 import { AppError, OpenAiApiError, ValidationError } from "./errors";
-import { tenantCredential } from "@/lib/postfach/channel-credentials.server";
+import { tenantCredential } from "@/lib/inbox/channel-credentials.server";
 
 // Every field a transaction row can carry. Used both in the schema below and as the vocabulary
 // for `missing_fields`, so "this row is missing X" always names something the UI can point at.

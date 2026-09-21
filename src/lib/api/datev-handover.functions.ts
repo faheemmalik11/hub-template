@@ -389,9 +389,9 @@ export const triggerDatevHandover = createServerFn({ method: "POST" })
     // Intersect rather than trust: `invoiceIds` narrows the eligible set and can never widen it.
     // Anything the operator unticked simply never gets `handed_over_at`, so it stays eligible
     // and comes back in the next send, which is the whole point of being able to exclude one.
-    const auswahl = invoiceIds ? new Set(invoiceIds) : null;
-    const readyInvoices: ReadyInvoice[] = auswahl
-      ? eligible.filter((c) => auswahl.has(c.id))
+    const selection = invoiceIds ? new Set(invoiceIds) : null;
+    const readyInvoices: ReadyInvoice[] = selection
+      ? eligible.filter((c) => selection.has(c.id))
       : eligible;
 
     if (readyInvoices.length === 0) {

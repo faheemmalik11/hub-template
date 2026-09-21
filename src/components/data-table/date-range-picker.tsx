@@ -60,17 +60,17 @@ export function DateRangePicker({
   align?: "start" | "center" | "end";
 }) {
   const [open, setOpen] = useState(false);
-  const angewendetVonLabel = parse(from);
-  const angewendetBisLabel = parse(to);
+  const appliedFromDateLabel = parse(from);
+  const appliedToDateLabel = parse(to);
 
   return (
     <Popover open={open} onOpenChange={setOpen}>
       <PopoverTrigger asChild>
         <Button variant="outline" className={cn("justify-start gap-2 font-normal", className)}>
           <CalendarDays className="size-4 shrink-0 text-muted-foreground" />
-          {angewendetVonLabel || angewendetBisLabel ? (
+          {appliedFromDateLabel || appliedToDateLabel ? (
             <span className="tabular-nums">
-              {kurz(angewendetVonLabel, locale)} – {kurz(angewendetBisLabel, locale)}
+              {short(appliedFromDateLabel, locale)} – {short(appliedToDateLabel, locale)}
             </span>
           ) : (
             <span className="text-muted-foreground">{labels.placeholder}</span>
@@ -120,48 +120,48 @@ export function DateRangeCalendar({
   footerExtra?: ReactNode;
 }) {
   // The range being drawn, which is not the applied one until Apply is pressed.
-  const [entwurfVon, setEntwurfVon] = useState<Date | null>(null);
-  const [entwurfBis, setEntwurfBis] = useState<Date | null>(null);
-  const [monat, setMonat] = useState(() => monatsAnfang(parse(from) ?? new Date()));
+  const [draftFromDate, setDraftFromDate] = useState<Date | null>(null);
+  const [draftToDate, setDraftToDate] = useState<Date | null>(null);
+  const [month, setMonth] = useState(() => monthStart(parse(from) ?? new Date()));
 
   // Opening starts a fresh selection and shows the applied range as context.
   useEffect(() => {
     if (!open) return;
-    setEntwurfVon(null);
-    setEntwurfBis(null);
-    setMonat(monatsAnfang(parse(from) ?? parse(to) ?? new Date()));
+    setDraftFromDate(null);
+    setDraftToDate(null);
+    setMonth(monthStart(parse(from) ?? parse(to) ?? new Date()));
   }, [open, from, to]);
 
-  const angewendetVon = parse(from);
-  const angewendetBis = parse(to);
+  const appliedFromDate = parse(from);
+  const appliedToDate = parse(to);
   // While a range is being drawn it is what the grid shows; otherwise the applied one is.
-  const zeigtVon = entwurfVon ?? (entwurfBis ? null : angewendetVon);
-  const zeigtBis = entwurfBis ?? (entwurfVon ? null : angewendetBis);
-  const halbFertig = !!entwurfVon !== !!entwurfBis;
+  const showsFromDate = draftFromDate ?? (draftToDate ? null : appliedFromDate);
+  const showsToDate = draftToDate ?? (draftFromDate ? null : appliedToDate);
+  const halfDone = !!draftFromDate !== !!draftToDate;
 
-  const tage = useMemo(() => rasterFuer(monat), [monat]);
-  const wochentage = useMemo(() => wochentagsNamen(locale), [locale]);
-  const monatsName = useMemo(
-    () => new Intl.DateTimeFormat(locale, { month: "long", year: "numeric" }).format(monat),
-    [monat, locale],
+  const days = useMemo(() => rasterFor(month), [month]);
+  const weekdays = useMemo(() => weekdayNames(locale), [locale]);
+  const monthName = useMemo(
+    () => new Intl.DateTimeFormat(locale, { month: "long", year: "numeric" }).format(month),
+    [month, locale],
   );
 
-  function waehle(tag: Date) {
+  function choose(tag: Date) {
     // First click anchors, second completes. Ordered here so either end may be clicked first.
-    if (!entwurfVon || entwurfBis) {
-      setEntwurfVon(tag);
-      setEntwurfBis(null);
+    if (!draftFromDate || draftToDate) {
+      setDraftFromDate(tag);
+      setDraftToDate(null);
       return;
     }
-    if (tag < entwurfVon) {
-      setEntwurfBis(entwurfVon);
-      setEntwurfVon(tag);
+    if (tag < draftFromDate) {
+      setDraftToDate(draftFromDate);
+      setDraftFromDate(tag);
     } else {
-      setEntwurfBis(tag);
+      setDraftToDate(tag);
     }
   }
 
-  const kannAnwenden = !!entwurfVon && !!entwurfBis;
+  const canApply = !!draftFromDate && !!draftToDate;
 
   return (
     <div>
@@ -172,25 +172,25 @@ export function DateRangeCalendar({
           size="icon"
           className="size-7"
           aria-label={labels.previousMonth}
-          onClick={() => setMonat(monatVerschieben(monat, -1))}
+          onClick={() => setMonth(monthMove(month, -1))}
         >
           <ChevronLeft className="size-4" />
         </Button>
-        <span className="text-sm font-medium text-foreground">{monatsName}</span>
+        <span className="text-sm font-medium text-foreground">{monthName}</span>
         <Button
           type="button"
           variant="ghost"
           size="icon"
           className="size-7"
           aria-label={labels.nextMonth}
-          onClick={() => setMonat(monatVerschieben(monat, 1))}
+          onClick={() => setMonth(monthMove(month, 1))}
         >
           <ChevronRight className="size-4" />
         </Button>
       </div>
 
       <div className="grid grid-cols-7 gap-0.5">
-        {wochentage.map((name) => (
+        {weekdays.map((name) => (
           <div
             key={name}
             className="flex h-7 items-center justify-center text-xs font-medium text-muted-foreground"
@@ -198,26 +198,27 @@ export function DateRangeCalendar({
             {name}
           </div>
         ))}
-        {tage.map((tag) => {
-          const imMonat = tag.getMonth() === monat.getMonth();
-          const start = gleicherTag(tag, zeigtVon);
-          const ende = gleicherTag(tag, zeigtBis);
-          const dazwischen = !!zeigtVon && !!zeigtBis && tag > zeigtVon && tag < zeigtBis;
-          const rand = start || ende;
+        {days.map((tag) => {
+          const imMonth = tag.getMonth() === month.getMonth();
+          const start = sameTag(tag, showsFromDate);
+          const end = sameTag(tag, showsToDate);
+          const between =
+            !!showsFromDate && !!showsToDate && tag > showsFromDate && tag < showsToDate;
+          const rand = start || end;
           return (
             <button
               key={tag.toISOString()}
               type="button"
-              onClick={() => waehle(tag)}
+              onClick={() => choose(tag)}
               className={cn(
                 "flex h-8 w-8 cursor-pointer items-center justify-center rounded-md text-sm transition-colors",
-                !imMonat && "text-muted-foreground/40",
-                imMonat && !rand && !dazwischen && "hover:bg-accent",
-                dazwischen && "bg-accent text-accent-foreground",
+                !imMonth && "text-muted-foreground/40",
+                imMonth && !rand && !between && "hover:bg-accent",
+                between && "bg-accent text-accent-foreground",
                 rand && "bg-primary font-medium text-primary-foreground",
-                heute(tag) && !rand && "ring-1 ring-inset ring-border",
+                today(tag) && !rand && "ring-1 ring-inset ring-border",
               )}
-              aria-pressed={rand || dazwischen}
+              aria-pressed={rand || between}
             >
               {tag.getDate()}
             </button>
@@ -228,7 +229,7 @@ export function DateRangeCalendar({
       {/* Says what the second click is for, so a half-drawn range does not look like a dead
             Apply button. */}
       <p className="mt-2 min-h-[1.25rem] text-xs text-muted-foreground">
-        {halbFertig ? labels.pickSecond : null}
+        {halfDone ? labels.pickSecond : null}
       </p>
 
       <div className="mt-1 flex items-center justify-between gap-2">
@@ -240,10 +241,10 @@ export function DateRangeCalendar({
           <Button
             type="button"
             size="sm"
-            disabled={!kannAnwenden}
+            disabled={!canApply}
             onClick={() => {
-              if (!entwurfVon || !entwurfBis) return;
-              onApply(iso(entwurfVon), iso(entwurfBis));
+              if (!draftFromDate || !draftToDate) return;
+              onApply(iso(draftFromDate), iso(draftToDate));
             }}
           >
             {labels.apply}
@@ -256,9 +257,9 @@ export function DateRangeCalendar({
 
 // Local noon, not midnight: a date built at midnight and formatted in a timezone behind UTC lands
 // on the previous day, which is how a range quietly shifts by one.
-function parse(wert: IsoDay): Date | null {
-  if (!wert) return null;
-  const [j, m, t] = wert.split("-").map(Number);
+function parse(value: IsoDay): Date | null {
+  if (!value) return null;
+  const [j, m, t] = value.split("-").map(Number);
   if (!j || !m || !t) return null;
   const d = new Date(j, m - 1, t, 12);
   return Number.isNaN(d.getTime()) ? null : d;
@@ -270,21 +271,21 @@ function iso(d: Date): IsoDay {
   return `${d.getFullYear()}-${m}-${t}`;
 }
 
-function kurz(d: Date | null, locale: string): string {
+function short(d: Date | null, locale: string): string {
   return d
     ? new Intl.DateTimeFormat(locale, { day: "numeric", month: "short", year: "numeric" }).format(d)
     : "—";
 }
 
-function monatsAnfang(d: Date): Date {
+function monthStart(d: Date): Date {
   return new Date(d.getFullYear(), d.getMonth(), 1, 12);
 }
 
-function monatVerschieben(d: Date, um: number): Date {
+function monthMove(d: Date, um: number): Date {
   return new Date(d.getFullYear(), d.getMonth() + um, 1, 12);
 }
 
-function gleicherTag(a: Date, b: Date | null): boolean {
+function sameTag(a: Date, b: Date | null): boolean {
   return (
     !!b &&
     a.getFullYear() === b.getFullYear() &&
@@ -293,14 +294,14 @@ function gleicherTag(a: Date, b: Date | null): boolean {
   );
 }
 
-function heute(d: Date): boolean {
-  return gleicherTag(d, new Date());
+function today(d: Date): boolean {
+  return sameTag(d, new Date());
 }
 
 /** Six weeks, so the grid does not change height from month to month and move the buttons. */
-function rasterFuer(monat: Date): Date[] {
-  const ersterWochentag = (new Date(monat.getFullYear(), monat.getMonth(), 1, 12).getDay() + 6) % 7;
-  const start = new Date(monat.getFullYear(), monat.getMonth(), 1 - ersterWochentag, 12);
+function rasterFor(month: Date): Date[] {
+  const firstWeekday = (new Date(month.getFullYear(), month.getMonth(), 1, 12).getDay() + 6) % 7;
+  const start = new Date(month.getFullYear(), month.getMonth(), 1 - firstWeekday, 12);
   return Array.from(
     { length: 42 },
     (_, i) => new Date(start.getFullYear(), start.getMonth(), start.getDate() + i, 12),
@@ -308,7 +309,7 @@ function rasterFuer(monat: Date): Date[] {
 }
 
 /** Monday first, which is what every locale these Hubs run in expects. */
-function wochentagsNamen(locale: string): string[] {
+function weekdayNames(locale: string): string[] {
   const fmt = new Intl.DateTimeFormat(locale, { weekday: "short" });
   return Array.from({ length: 7 }, (_, i) => fmt.format(new Date(2024, 0, 1 + i, 12)));
 }

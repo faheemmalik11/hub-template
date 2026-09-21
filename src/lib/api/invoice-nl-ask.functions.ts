@@ -20,7 +20,7 @@ import {
   type InvoiceMatch,
   type SumField,
 } from "./invoice-nl-retrieval.functions";
-import { tenantCredential } from "@/lib/postfach/channel-credentials.server";
+import { tenantCredential } from "@/lib/inbox/channel-credentials.server";
 
 const DEFAULT_SYNTHESIS_MODEL = "gpt-4o-mini";
 

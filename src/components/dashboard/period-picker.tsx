@@ -25,8 +25,8 @@ import { cn } from "@/lib/utils";
  */
 export interface PeriodValue {
   period: OverviewPeriod;
-  von?: string;
-  bis?: string;
+  fromDate?: string;
+  toDate?: string;
 }
 
 const PRESETS = OVERVIEW_PERIODS.filter((p) => p !== "benutzerdefiniert");
@@ -46,7 +46,7 @@ export function useStoredPeriod(key: string): [PeriodValue, (v: PeriodValue) => 
       if (raw) {
         const parsed = JSON.parse(raw) as Partial<PeriodValue>;
         if (isOverviewPeriod(parsed?.period)) {
-          return { period: parsed.period, von: parsed.von, bis: parsed.bis };
+          return { period: parsed.period, fromDate: parsed.fromDate, toDate: parsed.toDate };
         }
       }
     } catch {
@@ -109,8 +109,8 @@ export function PeriodPicker({
 
   const custom = value.period === "benutzerdefiniert";
   const label =
-    custom && value.von && value.bis
-      ? `${formatDay(value.von)} – ${formatDay(value.bis)}`
+    custom && value.fromDate && value.toDate
+      ? `${formatDay(value.fromDate)} – ${formatDay(value.toDate)}`
       : labelFor(value.period);
 
   return (
@@ -120,7 +120,7 @@ export function PeriodPicker({
         setOpen(o);
         if (o) {
           setCustomOpen(custom);
-          setRange({ from: fromIso(value.von), to: fromIso(value.bis) });
+          setRange({ from: fromIso(value.fromDate), to: fromIso(value.toDate) });
         }
       }}
     >
@@ -145,8 +145,8 @@ export function PeriodPicker({
                 before, which made a mis-click a query nobody asked for. */}
             <DateRangeCalendar
               open={open}
-              from={value.von ?? ""}
-              to={value.bis ?? ""}
+              from={value.fromDate ?? ""}
+              to={value.toDate ?? ""}
               locale={calendarLocale}
               labels={rangeLabels}
               footerExtra={
@@ -159,11 +159,15 @@ export function PeriodPicker({
                   {backLabel}
                 </button>
               }
-              onApply={(von, bis) => {
-                if (!von || !bis) {
-                  onChange({ period: OVERVIEW_PERIOD_DEFAULT, von: undefined, bis: undefined });
+              onApply={(fromDate, toDate) => {
+                if (!fromDate || !toDate) {
+                  onChange({
+                    period: OVERVIEW_PERIOD_DEFAULT,
+                    fromDate: undefined,
+                    toDate: undefined,
+                  });
                 } else {
-                  onChange({ period: "benutzerdefiniert", von, bis });
+                  onChange({ period: "benutzerdefiniert", fromDate, toDate });
                 }
                 setOpen(false);
               }}
@@ -176,7 +180,7 @@ export function PeriodPicker({
                 key={p}
                 type="button"
                 onClick={() => {
-                  onChange({ period: p, von: undefined, bis: undefined });
+                  onChange({ period: p, fromDate: undefined, toDate: undefined });
                   setOpen(false);
                 }}
                 className={cn(

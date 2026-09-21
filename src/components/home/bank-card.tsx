@@ -17,22 +17,22 @@ export function BankCard() {
 
   if (countsQ.isError) return null;
 
-  const laedt = countsQ.isLoading;
+  const loading = countsQ.isLoading;
   const c = countsQ.data;
-  const val = (n: number | undefined) => (laedt || n === undefined ? "—" : String(n));
+  const val = (n: number | undefined) => (loading || n === undefined ? "—" : String(n));
 
   return (
     <DashboardPanel title={t("home.bank.title")}>
       <div className="mt-3 flex flex-1 flex-col gap-1.5">
         <StatRow
-          to="/banktransaktionen"
+          to="/bank-transactions"
           icon={Landmark}
           iconCls={CHIP.brand}
           label={t("home.bank.gesamt")}
           value={val(c?.total)}
         />
         <StatRow
-          to="/banktransaktionen"
+          to="/bank-transactions"
           search={{ matching: "open" }}
           icon={Link2Off}
           iconCls={c && c.open > 0 ? CHIP.warning : CHIP.neutral}
@@ -40,7 +40,7 @@ export function BankCard() {
           value={val(c?.open)}
         />
         <StatRow
-          to="/banktransaktionen"
+          to="/bank-transactions"
           search={{ matching: "suggestion" }}
           icon={Search}
           iconCls={c && c.suggestion > 0 ? CHIP.brand : CHIP.neutral}
@@ -48,7 +48,7 @@ export function BankCard() {
           value={val(c?.suggestion)}
         />
         <StatRow
-          to="/banktransaktionen"
+          to="/bank-transactions"
           search={{ matching: "matched" }}
           icon={CheckCircle2}
           iconCls={CHIP.success}
@@ -56,7 +56,7 @@ export function BankCard() {
           value={val(c?.matched)}
         />
         <StatRow
-          to="/banktransaktionen"
+          to="/bank-transactions"
           search={{ matching: "ignored" }}
           icon={EyeOff}
           iconCls={CHIP.neutral}
@@ -65,7 +65,7 @@ export function BankCard() {
         />
       </div>
       <Link
-        to="/banktransaktionen"
+        to="/bank-transactions"
         className="mt-auto pt-2 text-sm font-medium text-brand-dark hover:underline"
       >
         {t("home.bank.all")}

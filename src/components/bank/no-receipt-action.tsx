@@ -23,7 +23,7 @@ import { useClearNoReceipt, useSetNoReceipt } from "@/data";
 import { OPOS_CATEGORIES } from "@/lib/data/opos";
 import { useTranslation } from "@/lib/i18n";
 import type { BankTransaction, OposCategory } from "@/lib/data/types";
-import { fehlerText } from "@/lib/data/format";
+import { errorText } from "@/lib/data/format";
 import { cn } from "@/lib/utils";
 
 export function NoReceiptAction({
@@ -51,7 +51,7 @@ export function NoReceiptAction({
         onError: (e) =>
           toast.error(
             t("noReceipt.toast.fehlgeschlagen", {
-              error: fehlerText(e),
+              error: errorText(e),
             }),
           ),
       },
@@ -73,7 +73,7 @@ export function NoReceiptAction({
             onError: (err) =>
               toast.error(
                 t("noReceipt.toast.fehlgeschlagen", {
-                  error: fehlerText(err),
+                  error: errorText(err),
                 }),
               ),
           });
@@ -103,7 +103,7 @@ export function NoReceiptAction({
         <DropdownMenuLabel>{t("noReceipt.action.grundWaehlen")}</DropdownMenuLabel>
         {OPOS_CATEGORIES.map((c) => (
           <DropdownMenuItem key={c} onClick={() => hide(c)}>
-            {t(`oposWhitelist.category.${c}`)}
+            {t(`openItemWhitelist.category.${c}`)}
           </DropdownMenuItem>
         ))}
       </DropdownMenuContent>

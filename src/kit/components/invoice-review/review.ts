@@ -262,7 +262,7 @@ export function reviewReasonsDetail(
 
   const flat = validationFlat(invoice);
   const reasons: ReviewReason[] = [];
-  const smallAmount = flat.kleinbetrag === true;
+  const smallAmount = flat.smallAmount === true;
   const push = (field: string) => reasons.push({ id: VALIDATION_FIELD_REASON[field], field });
 
   if (flat.brutto_vorhanden === false) push("brutto_vorhanden");
@@ -361,7 +361,7 @@ export function reviewScore(
 ): number {
   let score = reviewReasonIds(invoice).length * 10;
   if (invoice.status === "zu_pruefen") score += 5;
-  const confidence = invoice.extracted?.konfidenz;
+  const confidence = invoice.extracted?.confidence;
   if (confidence) {
     const values = Object.values(confidence).filter((n): n is number => typeof n === "number");
     if (values.length > 0) {

@@ -48,7 +48,7 @@ export function HistoryDrawer({
     <Sheet open={open} onOpenChange={onOpenChange}>
       <SheetContent className="flex w-full flex-col gap-0 overflow-y-auto sm:max-w-md">
         <SheetHeader>
-          <SheetTitle>{t("datevUebergabe.verlauf.title")}</SheetTitle>
+          <SheetTitle>{t("handover.verlauf.title")}</SheetTitle>
           <SheetDescription>
             {row
               ? row.company.name
@@ -69,10 +69,10 @@ export function HistoryDrawer({
             <section>
               <h3 className="flex items-center gap-1.5 text-sm font-medium text-warning">
                 <FileX2 className="size-4 shrink-0" aria-hidden />
-                {t("datevUebergabe.verlauf.uebersprungenTitel", { count: row.blocked.length })}
+                {t("handover.verlauf.uebersprungenTitel", { count: row.blocked.length })}
               </h3>
               <p className="mt-1 text-xs text-muted-foreground">
-                {t("datevUebergabe.verlauf.uebersprungenHilfe")}
+                {t("handover.verlauf.uebersprungenHilfe")}
               </p>
               <ul className="mt-2 divide-y divide-border overflow-hidden rounded-xl border border-warning/40">
                 {row.blocked.map((inv) => (
@@ -100,7 +100,7 @@ export function HistoryDrawer({
                       </span>
                     </div>
                     <p className="text-xs text-warning">
-                      {t(`datevUebergabe.blockGrund.${inv.blockReason}`)}
+                      {t(`handover.blockGrund.${inv.blockReason}`)}
                     </p>
                   </li>
                 ))}
@@ -110,7 +110,7 @@ export function HistoryDrawer({
 
           <section>
             <h3 className="mb-2 text-sm font-medium text-foreground">
-              {t("datevUebergabe.verlauf.gesendetTitel")}
+              {t("handover.verlauf.gesendetTitel")}
             </h3>
             {batchesQ.isError ? (
               <ErrorState error={batchesQ.error} onRetry={() => void batchesQ.refetch()} />
@@ -122,12 +122,12 @@ export function HistoryDrawer({
               </div>
             ) : (batchesQ.data ?? []).length === 0 ? (
               <p className="rounded-xl border border-dashed border-border p-6 text-center text-sm text-muted-foreground">
-                {t("datevUebergabe.verlauf.leer")}
+                {t("handover.verlauf.leer")}
               </p>
             ) : (
               <ol className="space-y-2">
                 {(batchesQ.data ?? []).map((b) => (
-                  <BatchZeile key={b.id} batch={b} />
+                  <BatchRow key={b.id} batch={b} />
                 ))}
               </ol>
             )}
@@ -138,16 +138,16 @@ export function HistoryDrawer({
   );
 }
 
-function BatchZeile({ batch }: { batch: DatevHandoverBatch }) {
+function BatchRow({ batch }: { batch: DatevHandoverBatch }) {
   const { t } = useTranslation();
   // A bounce reads as a failure here even though the send itself succeeded: from this screen's
   // point of view the receipts did not arrive, which is the same outcome.
-  const fehler = batch.status !== "success";
+  const error = batch.status !== "success";
   return (
     <li
       className={cn(
         "rounded-xl border p-3",
-        fehler ? "border-danger/40 bg-danger-soft/40" : "border-border bg-card",
+        error ? "border-danger/40 bg-danger-soft/40" : "border-border bg-card",
       )}
     >
       <div className="flex items-baseline justify-between gap-3">
@@ -157,26 +157,26 @@ function BatchZeile({ batch }: { batch: DatevHandoverBatch }) {
         <span
           className={cn(
             "inline-flex shrink-0 items-center gap-1.5 text-xs",
-            fehler ? "text-danger" : "text-success",
+            error ? "text-danger" : "text-success",
           )}
         >
-          {fehler ? (
+          {error ? (
             <AlertTriangle className="size-3.5" aria-hidden />
           ) : (
             <CheckCircle2 className="size-3.5" aria-hidden />
           )}
-          {t(`datevUebergabe.verlauf.status.${batch.status}`)}
+          {t(`handover.verlauf.status.${batch.status}`)}
         </span>
       </div>
       <p className="mt-0.5 text-sm text-muted-foreground">
-        {t("datevUebergabe.verlauf.zeile", {
+        {t("handover.verlauf.zeile", {
           count: batch.invoice_count,
           size: formatBytes(batch.total_bytes),
         })}
       </p>
       {batch.sent_by && (
         <p className="text-xs text-muted-foreground">
-          {t("datevUebergabe.verlauf.von", { who: batch.sent_by })}
+          {t("handover.verlauf.von", { who: batch.sent_by })}
         </p>
       )}
       {/* Never truncated: see the send function's post-send bookkeeping failure. */}

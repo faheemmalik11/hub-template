@@ -16,7 +16,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { useDisconnectBank, useDisconnectPreview } from "@/data";
-import { fehlerText } from "@/lib/data/format";
+import { errorText } from "@/lib/data/format";
 import { useTranslation } from "@/lib/i18n";
 
 /**
@@ -41,21 +41,21 @@ export function DisconnectBankDialog({
   const { t } = useTranslation();
   const disconnect = useDisconnectBank();
   const [open, setOpen] = useState(false);
-  const [eingabe, setEingabe] = useState("");
-  const vorschau = useDisconnectPreview(connectionId, open);
+  const [input, setInput] = useState("");
+  const preview = useDisconnectPreview(connectionId, open);
 
   // A fresh dialog every time. Leaving the word typed in would turn the second use into one click,
   // which is the whole thing this control is trying not to be.
   useEffect(() => {
-    if (open) setEingabe("");
+    if (open) setInput("");
   }, [open]);
 
-  const wort = t("bankkonten.trennen.wort");
+  const word = t("bankAccounts.trennen.wort");
   // Case-sensitive on purpose. The label shows the word in capitals, so typing it in capitals is
   // what was asked for; accepting "remove" would make the caps decorative. Still trimmed, because
   // a trailing space from a paste is not a different answer.
-  const passt = eingabe.trim() === wort;
-  const p = vorschau.data;
+  const matches = input.trim() === word;
+  const p = preview.data;
 
   return (
     <AlertDialog open={open} onOpenChange={setOpen}>
@@ -73,39 +73,39 @@ export function DisconnectBankDialog({
           ) : (
             <Unlink className="size-3.5" />
           )}
-          {t("bankkonten.trennen.button")}
+          {t("bankAccounts.trennen.button")}
         </Button>
       </AlertDialogTrigger>
 
       <AlertDialogContent onClick={(e) => e.stopPropagation()}>
         <AlertDialogHeader>
-          <AlertDialogTitle>{t("bankkonten.trennen.titel", { bank })}</AlertDialogTitle>
-          <AlertDialogDescription>{t("bankkonten.trennen.text")}</AlertDialogDescription>
+          <AlertDialogTitle>{t("bankAccounts.trennen.titel", { bank })}</AlertDialogTitle>
+          <AlertDialogDescription>{t("bankAccounts.trennen.text")}</AlertDialogDescription>
         </AlertDialogHeader>
 
         <div className="space-y-4">
           <div className="rounded-lg border border-danger/25 bg-danger-soft px-3 py-2.5">
             <p className="flex items-center gap-1.5 text-sm font-medium text-danger">
               <AlertTriangle className="size-4 shrink-0" />
-              {t("bankkonten.trennen.wirdEntfernt")}
+              {t("bankAccounts.trennen.wirdEntfernt")}
             </p>
-            {vorschau.isLoading ? (
+            {preview.isLoading ? (
               <p className="mt-1.5 text-sm text-muted-foreground">
-                {t("bankkonten.trennen.zaehle")}
+                {t("bankAccounts.trennen.zaehle")}
               </p>
-            ) : vorschau.isError ? (
+            ) : preview.isError ? (
               // A failed count must not read as "nothing to lose". The action stays available,
               // because refusing to disconnect because a COUNT failed would be the wrong refusal.
               <p className="mt-1.5 text-sm text-danger">
-                {t("bankkonten.trennen.zaehlenFehlgeschlagen")}
+                {t("bankAccounts.trennen.zaehlenFehlgeschlagen")}
               </p>
             ) : (
               p && (
                 <ul className="mt-1.5 space-y-0.5 text-sm text-foreground">
-                  <li>{t("bankkonten.trennen.postenZugang")}</li>
-                  <li>{t("bankkonten.trennen.postenKonten", { anzahl: p.konten })}</li>
-                  <li>{t("bankkonten.trennen.postenUmsaetze", { anzahl: p.umsaetze })}</li>
-                  <li>{t("bankkonten.trennen.postenProtokoll", { anzahl: p.protokoll })}</li>
+                  <li>{t("bankAccounts.trennen.postenZugang")}</li>
+                  <li>{t("bankAccounts.trennen.postenKonten", { count: p.accounts })}</li>
+                  <li>{t("bankAccounts.trennen.postenUmsaetze", { count: p.transactions })}</li>
+                  <li>{t("bankAccounts.trennen.postenProtokoll", { count: p.activityLog })}</li>
                 </ul>
               )
             )}
@@ -114,24 +114,26 @@ export function DisconnectBankDialog({
           {/* Only when movements on this bank back an invoice match. They are not destroyed and the
               invoices stay paid, but the movement behind the mark stops being readable until the
               bank is reconnected, which is worth saying rather than leaving to be discovered. */}
-          {p && p.umsaetzeZugeordnet > 0 && (
+          {p && p.transactionsAssigned > 0 && (
             <div className="rounded-lg border border-warning/25 bg-warning-soft px-3 py-2.5">
               <p className="text-sm font-medium text-warning">
-                {t("bankkonten.trennen.zugeordnet", { anzahl: p.umsaetzeZugeordnet })}
+                {t("bankAccounts.trennen.zugeordnet", { count: p.transactionsAssigned })}
               </p>
               <p className="mt-0.5 text-sm text-muted-foreground">
-                {t("bankkonten.trennen.zugeordnetHinweis")}
+                {t("bankAccounts.trennen.zugeordnetHinweis")}
               </p>
             </div>
           )}
 
           <div className="space-y-1.5">
-            <Label htmlFor="trennen-bestaetigung">{t("bankkonten.trennen.tippen", { wort })}</Label>
+            <Label htmlFor="trennen-bestaetigung">
+              {t("bankAccounts.trennen.tippen", { word })}
+            </Label>
             <Input
               id="trennen-bestaetigung"
-              value={eingabe}
-              onChange={(e) => setEingabe(e.target.value)}
-              placeholder={wort}
+              value={input}
+              onChange={(e) => setInput(e.target.value)}
+              placeholder={word}
               autoComplete="off"
               spellCheck={false}
             />
@@ -140,36 +142,36 @@ export function DisconnectBankDialog({
 
         <AlertDialogFooter>
           <AlertDialogCancel disabled={disconnect.isPending}>
-            {t("bankkonten.trennen.abbrechen")}
+            {t("bankAccounts.trennen.abbrechen")}
           </AlertDialogCancel>
           {/* A plain Button, not AlertDialogAction: the action element closes the dialog on click,
               which would dismiss it while the request is still in flight and while the typed word
               is the only thing standing between a stray Enter and a deleted bank access. */}
           <Button
             variant="destructive"
-            disabled={!passt || disconnect.isPending}
+            disabled={!matches || disconnect.isPending}
             onClick={() =>
               disconnect.mutate(
                 { connectionId },
                 {
                   onSuccess: (res) => {
                     setOpen(false);
-                    toast.success(t("bankkonten.trennen.toastOk", { bank }), {
-                      description: t("bankkonten.trennen.toastOkHinweis", {
-                        konten: res.accountsHidden ?? 0,
-                        umsaetze: res.transactionsHidden ?? 0,
+                    toast.success(t("bankAccounts.trennen.toastOk", { bank }), {
+                      description: t("bankAccounts.trennen.toastOkHinweis", {
+                        accounts: res.accountsHidden ?? 0,
+                        transactions: res.transactionsHidden ?? 0,
                       }),
                     });
                   },
                   onError: (e) =>
-                    toast.error(t("bankkonten.trennen.toastFehler", { error: fehlerText(e) })),
+                    toast.error(t("bankAccounts.trennen.toastFehler", { error: errorText(e) })),
                 },
               )
             }
           >
             {disconnect.isPending
-              ? t("bankkonten.trennen.laeuft")
-              : t("bankkonten.trennen.bestaetigen")}
+              ? t("bankAccounts.trennen.laeuft")
+              : t("bankAccounts.trennen.bestaetigen")}
           </Button>
         </AlertDialogFooter>
       </AlertDialogContent>

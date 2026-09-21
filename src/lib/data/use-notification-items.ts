@@ -60,7 +60,7 @@ export function useNotificationItems(): {
   // straight to the receipt it is about. The list is naturally short -- it only holds receipts
   // still in the approval phase, and it empties itself as they move on.
   const assigned = useMemo(() => assignedQ.data ?? [], [assignedQ.data]);
-  const fehler = healthQ.data?.errorCount ?? 0;
+  const error = healthQ.data?.errorCount ?? 0;
   const bellEvents = useMemo(() => settingsQ.data?.bell_events ?? {}, [settingsQ.data]);
   const bellAck = useMemo(() => settingsQ.data?.bell_ack ?? {}, [settingsQ.data]);
   const pingAckAt = bellAck[PING_ACK_KEY] ?? 0;
@@ -81,74 +81,74 @@ export function useNotificationItems(): {
     const all: NotificationItem[] = [
       {
         key: "neu",
-        label: t("einstellungen.event.neu"),
-        message: t("notifications.msg.neu", { count: counts?.neueBelege ?? 0 }),
-        count: counts?.neueBelege ?? 0,
+        label: t("settings.event.neu"),
+        message: t("notifications.msg.neu", { count: counts?.newDocuments ?? 0 }),
+        count: counts?.newDocuments ?? 0,
         tone: "default",
-        link: { to: "/eingangsrechnungen" },
+        link: { to: "/incoming-invoices" },
       },
       {
         key: "query",
-        label: t("einstellungen.event.rueckfrage"),
+        label: t("settings.event.rueckfrage"),
         message: t("notifications.msg.rueckfrage", { count: returned }),
         count: returned,
         tone: "warn",
-        link: { to: "/eingangsrechnungen", search: { workflow: "query" } },
+        link: { to: "/incoming-invoices", search: { workflow: "query" } },
       },
       {
         key: "rejected",
-        label: t("einstellungen.event.abgelehnt"),
+        label: t("settings.event.abgelehnt"),
         message: t("notifications.msg.abgelehnt", { count: rejected }),
         count: rejected,
         tone: "danger",
-        link: { to: "/eingangsrechnungen", search: { workflow: "rejected" } },
+        link: { to: "/incoming-invoices", search: { workflow: "rejected" } },
       },
       {
         key: "zuPruefen",
-        label: t("einstellungen.event.zuPruefen"),
-        message: t("notifications.msg.zuPruefen", { count: counts?.zuPruefen ?? 0 }),
-        count: counts?.zuPruefen ?? 0,
+        label: t("settings.event.zuPruefen"),
+        message: t("notifications.msg.zuPruefen", { count: counts?.zuCheck ?? 0 }),
+        count: counts?.zuCheck ?? 0,
         tone: "warn",
-        link: { to: "/eingangsrechnungen", search: { status: "needs_review" } },
+        link: { to: "/incoming-invoices", search: { status: "needs_review" } },
       },
       {
         key: "faellig",
-        label: t("einstellungen.event.faellig"),
-        message: t("notifications.msg.faellig", { count: counts?.faellig ?? 0 }),
-        count: counts?.faellig ?? 0,
+        label: t("settings.event.faellig"),
+        message: t("notifications.msg.faellig", { count: counts?.due ?? 0 }),
+        count: counts?.due ?? 0,
         tone: "danger",
-        link: { to: "/offene-posten", search: { typ: "incoming", due: "ueberfaellig" } },
+        link: { to: "/open-items", search: { type: "incoming", due: "ueberfaellig" } },
       },
       {
         key: "suggestions",
-        label: t("einstellungen.event.vorschlaege"),
+        label: t("settings.event.vorschlaege"),
         message: t("notifications.msg.vorschlaege", { count: bankQ.data?.suggestion ?? 0 }),
         count: bankQ.data?.suggestion ?? 0,
         tone: "warn",
-        link: { to: "/banktransaktionen", search: { matching: "suggestion" } },
+        link: { to: "/bank-transactions", search: { matching: "suggestion" } },
       },
       {
         key: "fehler",
-        label: t("einstellungen.event.fehler"),
-        message: t("notifications.msg.fehler", { count: fehler }),
-        count: fehler,
+        label: t("settings.event.fehler"),
+        message: t("notifications.msg.fehler", { count: error }),
+        count: error,
         tone: "danger",
-        link: { to: "/protokoll" },
+        link: { to: "/activity-log" },
       },
     ];
-    for (const beleg of assigned) {
-      const nummer = beleg.invoice_number?.trim();
+    for (const doc of assigned) {
+      const number = doc.invoice_number?.trim();
       all.push({
-        key: `${ASSIGNED_KEY_PREFIX}${beleg.id}`,
-        label: t("einstellungen.event.zuweisung"),
+        key: `${ASSIGNED_KEY_PREFIX}${doc.id}`,
+        label: t("settings.event.zuweisung"),
         message: t("notifications.msg.zuweisungEine", {
-          beleg: nummer || t("notifications.belegOhneNummer"),
+          doc: number || t("notifications.belegOhneNummer"),
         }),
         count: 1,
         tone: "warn",
-        highlight: nummer || undefined,
+        highlight: number || undefined,
         icon: UserPlus,
-        link: { to: `/eingangsrechnungen/${beleg.id}` },
+        link: { to: `/incoming-invoices/${doc.id}` },
       });
     }
     for (const ping of recentPings) {
@@ -158,13 +158,11 @@ export function useNotificationItems(): {
       // what the thing IS, so a row in the bell reads the same whether it points at an invoice, a
       // supplier or a payment. Resolved from the target rather than from a column per record type
       // (migration 20260911100000), and it reads the legacy shape too.
-      const ziel = readNotificationTarget(ping.payload as Record<string, unknown>);
-      const zielName = ziel.kind ? t(targetLabelKey(ziel.kind)) : null;
+      const target = readNotificationTarget(ping.payload as Record<string, unknown>);
+      const targetName = target.kind ? t(targetLabelKey(target.kind)) : null;
       all.push({
         key: `${PING_KEY_PREFIX}${ping.id}`,
-        label: sender
-          ? t("notifications.pingFrom", { name: sender })
-          : t("einstellungen.event.ping"),
+        label: sender ? t("notifications.pingFrom", { name: sender }) : t("settings.event.ping"),
         message: sender
           ? note
             ? t("notifications.pingFromWithNote", { name: sender, note })
@@ -174,16 +172,16 @@ export function useNotificationItems(): {
         tone: "warn",
         // The screen, not the sender: the name is already in the message, and saying it twice
         // costs the row the one fact it was missing.
-        highlight: zielName ?? sender,
+        highlight: targetName ?? sender,
         icon: MessageSquare,
         at: ping.created_at,
         atLabel: formatRelativeTime(ping.created_at),
         dateLabel: formatDateTimeShort(ping.created_at),
         ack: { key: PING_ACK_KEY, value: Date.parse(ping.created_at) },
         // One path, whatever it points at. Nothing here has to know what an invoice is any more.
-        link: ziel.path
-          ? { to: ziel.path }
-          : { to: "/benachrichtigungen", search: { tab: "meldungen" } },
+        link: target.path
+          ? { to: target.path }
+          : { to: "/notifications", search: { tab: "meldungen" } },
       });
     }
     for (const ping of sentPings) {
@@ -206,10 +204,10 @@ export function useNotificationItems(): {
         link: ping.payload.transaction_id
           ? // A ping about a payment with no document behind it: the row to look at is the
             // transaction, not an invoice, and there may be no invoice at all.
-            { to: `/banktransaktionen/${ping.payload.transaction_id}` }
+            { to: `/bank-transactions/${ping.payload.transaction_id}` }
           : ping.payload.document_id
-            ? { to: `/eingangsrechnungen/${ping.payload.document_id}` }
-            : { to: "/benachrichtigungen", search: { tab: "meldungen" } },
+            ? { to: `/incoming-invoices/${ping.payload.document_id}` }
+            : { to: "/notifications", search: { tab: "meldungen" } },
       });
     }
     return all.filter((i) => {
@@ -226,7 +224,7 @@ export function useNotificationItems(): {
     returned,
     rejected,
     bankQ.data,
-    fehler,
+    error,
     assigned,
     recentPings,
     sentPings,

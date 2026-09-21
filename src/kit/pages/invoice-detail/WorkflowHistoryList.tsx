@@ -20,15 +20,15 @@ export interface WorkflowHistoryLabels {
   reason: string;
   arrivedLabel: string;
   formatDateTime: (iso: string) => string;
-  durationShort: (value: number, unit: "minuten" | "stunden" | "tage") => string;
+  durationShort: (value: number, unit: "minutes" | "hours" | "days") => string;
 }
 
-function durationParts(ms: number): { value: number; unit: "minuten" | "stunden" | "tage" } {
+function durationParts(ms: number): { value: number; unit: "minutes" | "hours" | "days" } {
   const minutes = ms / 60_000;
-  if (minutes < 60) return { value: Math.max(1, Math.round(minutes)), unit: "minuten" };
+  if (minutes < 60) return { value: Math.max(1, Math.round(minutes)), unit: "minutes" };
   const hours = minutes / 60;
-  if (hours < 24) return { value: Math.round(hours), unit: "stunden" };
-  return { value: Math.round(hours / 24), unit: "tage" };
+  if (hours < 24) return { value: Math.round(hours), unit: "hours" };
+  return { value: Math.round(hours / 24), unit: "days" };
 }
 
 export function WorkflowHistoryList({

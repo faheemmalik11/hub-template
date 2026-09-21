@@ -7,13 +7,13 @@ const EMAIL = process.env.HUB_EMAIL ?? "owner@example.com";
 const PASSWORD = process.env.HUB_PASSWORD ?? "local-dev-password";
 
 const ROUTES = [
-  "/", "/eingangsrechnungen", "/ausgangsrechnungen", "/manuelle-buchungen",
-  "/offene-posten", "/banktransaktionen", "/bankkonten", "/opos-whitelist",
-  "/lieferanten", "/kunden", "/gesellschaften", "/objekte", "/kategorien",
-  "/zuordnungsregeln", "/freigabe-regeln", "/ausschlussregeln",
-  "/ust-regeln", "/steuerruecklage", "/datev-uebergabe",
-  "/auswertungen", "/team", "/onboarding", "/protokoll", "/papierkorb",
-  "/postfach", "/dateibenennung", "/bank-einstellungen", "/benachrichtigungen", "/profil",
+  "/", "/incoming-invoices", "/outgoing-invoices", "/manual-bookings",
+  "/open-items", "/bank-transactions", "/bank-accounts", "/opos-whitelist",
+  "/suppliers", "/customers", "/companies", "/properties", "/categories",
+  "/assignment-rules", "/approval-rules", "/exclusion-rules",
+  "/vat-rules", "/vat-reserve", "/datev-handover",
+  "/reports", "/team", "/onboarding", "/activity-log", "/trash",
+  "/inbox", "/file-naming", "/bank-settings", "/notifications", "/profile",
 ];
 
 const browser = await chromium.launch({ channel: "chrome" });

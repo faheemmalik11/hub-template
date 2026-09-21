@@ -2,10 +2,10 @@ import { useMemo } from "react";
 
 import {
   useMatchingSettings,
-  useOpenBelegeInfinite,
+  useOpenDocumentsInfinite,
   useOpenOutgoingInvoicesInfinite,
 } from "@/data";
-import { scoreMatch, type MatchBeleg, type MatchTransaction } from "@/lib/data/matching";
+import { scoreMatch, type MatchDocument, type MatchTransaction } from "@/lib/data/matching";
 import type { MatchReasons } from "@/lib/data/types";
 
 // Mirrors _shared/matching.ts's own DATE_WINDOW_DAYS: outside this window an invoice isn't treated
@@ -29,14 +29,17 @@ export interface ScoredInvoiceMatch {
   reasons: MatchReasons;
 }
 
-function windowBounds(anchor: string | null): { von?: string; bis?: string } {
+function windowBounds(anchor: string | null): { fromDate?: string; toDate?: string } {
   if (!anchor) return {};
   const center = new Date(`${anchor}T00:00:00`);
-  const von = new Date(center);
-  von.setDate(von.getDate() - DATE_WINDOW_DAYS);
-  const bis = new Date(center);
-  bis.setDate(bis.getDate() + DATE_WINDOW_DAYS);
-  return { von: von.toISOString().slice(0, 10), bis: bis.toISOString().slice(0, 10) };
+  const fromDate = new Date(center);
+  fromDate.setDate(fromDate.getDate() - DATE_WINDOW_DAYS);
+  const toDate = new Date(center);
+  toDate.setDate(toDate.getDate() + DATE_WINDOW_DAYS);
+  return {
+    fromDate: fromDate.toISOString().slice(0, 10),
+    toDate: toDate.toISOString().slice(0, 10),
+  };
 }
 
 /**
@@ -57,20 +60,20 @@ export function usePossibleInvoiceMatches(txn: {
   counterpartyHolder: string | null;
 }): { isLoading: boolean; matches: ScoredInvoiceMatch[] } {
   const isCredit = txn.amount >= 0;
-  const { von, bis } = windowBounds(txn.bookingDate);
+  const { fromDate, toDate } = windowBounds(txn.bookingDate);
 
-  const incomingQ = useOpenBelegeInfinite(
-    { von, bis, sort: "eingegangen_am", dir: "desc", pageSize: CANDIDATE_FETCH_SIZE },
+  const incomingQ = useOpenDocumentsInfinite(
+    { fromDate, toDate, sort: "received_at", dir: "desc", pageSize: CANDIDATE_FETCH_SIZE },
     { enabled: !!txn.id && !isCredit },
   );
   const outgoingQ = useOpenOutgoingInvoicesInfinite(
-    { von, bis, sort: "created_at", dir: "desc", pageSize: CANDIDATE_FETCH_SIZE },
+    { fromDate, toDate, sort: "created_at", dir: "desc", pageSize: CANDIDATE_FETCH_SIZE },
     { enabled: !!txn.id && isCredit },
   );
 
   // THE SAME TOLERANCE THE BACKGROUND SYNC USES -- see use-possible-matches.ts for why running
   // this scorer on the default while bank-sync runs it on the setting is the one outcome to avoid.
-  const toleranz = useMatchingSettings().data?.amount_tolerance;
+  const tolerance = useMatchingSettings().data?.amount_tolerance;
 
   const matches = useMemo(() => {
     const matchTxn: MatchTransaction = {
@@ -84,7 +87,7 @@ export function usePossibleInvoiceMatches(txn: {
 
     const scored: ScoredInvoiceMatch[] = isCredit
       ? (outgoingQ.data?.pages.flatMap((p) => p.rows) ?? []).map((oi) => {
-          const beleg: MatchBeleg = {
+          const doc: MatchDocument = {
             id: oi.id,
             amount_gross: oi.amount_gross,
             document_date: oi.invoice_date,
@@ -96,7 +99,7 @@ export function usePossibleInvoiceMatches(txn: {
             // why amount + reference alone are enough to anchor a real candidate.
             supplier_iban: null,
           };
-          const { score, reasons } = scoreMatch(beleg, matchTxn, toleranz);
+          const { score, reasons } = scoreMatch(doc, matchTxn, tolerance);
           return {
             id: oi.id,
             type: "outgoing",
@@ -108,7 +111,7 @@ export function usePossibleInvoiceMatches(txn: {
           };
         })
       : (incomingQ.data?.pages.flatMap((p) => p.rows) ?? []).map((b) => {
-          const beleg: MatchBeleg = {
+          const doc: MatchDocument = {
             id: b.id,
             amount_gross: b.amount_gross,
             document_date: b.document_date,
@@ -118,7 +121,7 @@ export function usePossibleInvoiceMatches(txn: {
             issuer: b.issuer,
             supplier_iban: null,
           };
-          const { score, reasons } = scoreMatch(beleg, matchTxn, toleranz);
+          const { score, reasons } = scoreMatch(doc, matchTxn, tolerance);
           return {
             id: b.id,
             type: "incoming",
@@ -144,7 +147,7 @@ export function usePossibleInvoiceMatches(txn: {
     txn.paymentReference,
     txn.counterpartyIban,
     txn.counterpartyHolder,
-    toleranz,
+    tolerance,
   ]);
 
   return { isLoading: isCredit ? outgoingQ.isLoading : incomingQ.isLoading, matches };

@@ -59,6 +59,8 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { SidebarMenu } from "@/components/ui/sidebar";
+import { NoAccess } from "@/components/layout/no-access";
+import { featureKeyForPath } from "@/config/routes";
 import { useAuth } from "@/lib/auth";
 import { PERMISSIONS, type PermissionKey } from "@/config/permissions";
 import { useActingAs, useInvoicesReturnedToMe } from "@/data";
@@ -100,16 +102,16 @@ const nav: NavEntry[] = [
     tourId: "shell-nav-rechnungen",
     icon: Files,
     items: [
-      { labelKey: "nav.eingangsrechnungen", to: "/eingangsrechnungen", icon: FileInput },
-      { labelKey: "nav.ausgangsrechnungen", to: "/ausgangsrechnungen", icon: FileOutput },
-      { labelKey: "nav.manuelleBuchungen", to: "/manuelle-buchungen", icon: Banknote },
+      { labelKey: "nav.eingangsrechnungen", to: "/incoming-invoices", icon: FileInput },
+      { labelKey: "nav.ausgangsrechnungen", to: "/outgoing-invoices", icon: FileOutput },
+      { labelKey: "nav.manuelleBuchungen", to: "/manual-bookings", icon: Banknote },
       {
         labelKey: "nav.dateibenennung",
-        to: "/dateibenennung",
+        to: "/file-naming",
         icon: Receipt,
         permission: PERMISSIONS.pageFileNaming,
       },
-      { labelKey: "nav.postfach", to: "/postfach", icon: Settings },
+      { labelKey: "nav.postfach", to: "/inbox", icon: Settings },
     ],
   },
   {
@@ -117,8 +119,8 @@ const nav: NavEntry[] = [
     tourId: "shell-nav-zahlungen",
     icon: Wallet,
     items: [
-      { labelKey: "nav.offenePosten", to: "/offene-posten", icon: Coins },
-      { labelKey: "nav.banktransaktionen", to: "/banktransaktionen", icon: ArrowLeftRight },
+      { labelKey: "nav.offenePosten", to: "/open-items", icon: Coins },
+      { labelKey: "nav.banktransaktionen", to: "/bank-transactions", icon: ArrowLeftRight },
       // Bank connections used to be a second entry here. They are now the group headers of the
       // accounts table on /bankkonten, together with the sync controls and the sync log, so the
       // menu no longer offers two routes to the same subject. The connection layer is still gated
@@ -126,12 +128,12 @@ const nav: NavEntry[] = [
       // was: bank_connections and bank_sync_logs carry the BANKSapi access handles and the banking
       // relationship, neither has a company_id to scope by, and migration 20260819160000 denies
       // both to the assistant role at the database.
-      { labelKey: "nav.bankkonten", to: "/bankkonten", icon: Landmark },
+      { labelKey: "nav.bankkonten", to: "/bank-accounts", icon: Landmark },
       { labelKey: "nav.oposWhitelist", to: "/opos-whitelist", icon: ListChecks },
       // Readable by everyone, writable by an admin. The one setting on it explains behaviour the
       // whole team meets daily -- how far a payment may miss an invoice and still be suggested --
       // so hiding the page from non-admins would make that behaviour look arbitrary.
-      { labelKey: "nav.bankEinstellungen", to: "/bank-einstellungen", icon: Settings2 },
+      { labelKey: "nav.bankEinstellungen", to: "/bank-settings", icon: Settings2 },
     ],
   },
   {
@@ -139,11 +141,11 @@ const nav: NavEntry[] = [
     tourId: "shell-nav-stammdaten",
     icon: Database,
     items: [
-      { labelKey: "nav.lieferanten", to: "/lieferanten", icon: Users },
-      { labelKey: "nav.kunden", to: "/kunden", icon: Users },
-      { labelKey: "nav.gesellschaften", to: "/gesellschaften", icon: Building2 },
-      { labelKey: "nav.objekte", to: "/objekte", icon: Folder },
-      { labelKey: "nav.kategorien", to: "/kategorien", icon: FolderTree },
+      { labelKey: "nav.lieferanten", to: "/suppliers", icon: Users },
+      { labelKey: "nav.kunden", to: "/customers", icon: Users },
+      { labelKey: "nav.gesellschaften", to: "/companies", icon: Building2 },
+      { labelKey: "nav.objekte", to: "/properties", icon: Folder },
+      { labelKey: "nav.kategorien", to: "/categories", icon: FolderTree },
     ],
   },
   {
@@ -151,16 +153,16 @@ const nav: NavEntry[] = [
     tourId: "shell-nav-regeln",
     icon: ClipboardList,
     items: [
-      { labelKey: "nav.zuordnungsregeln", to: "/zuordnungsregeln", icon: Tags },
+      { labelKey: "nav.zuordnungsregeln", to: "/assignment-rules", icon: Tags },
       // Admin-only: approvers/approval_rules writes are RLS-gated to is_admin() -- hiding the
       // link keeps the menu honest.
       {
         labelKey: "nav.freigabeRegeln",
-        to: "/freigabe-regeln",
+        to: "/approval-rules",
         icon: ShieldCheck,
         permission: PERMISSIONS.pageApprovalRules,
       },
-      { labelKey: "nav.ausschlussregeln", to: "/ausschlussregeln", icon: Trash2 },
+      { labelKey: "nav.ausschlussregeln", to: "/exclusion-rules", icon: Trash2 },
     ],
   },
   {
@@ -168,14 +170,14 @@ const nav: NavEntry[] = [
     tourId: "shell-nav-steuern",
     icon: HandCoins,
     items: [
-      { labelKey: "nav.ustRegeln", to: "/ust-regeln", icon: Percent },
-      { labelKey: "nav.steuerruecklage", to: "/steuerruecklage", icon: PiggyBank },
-      { labelKey: "nav.datevUebergabe", to: "/datev-uebergabe", icon: FileText },
+      { labelKey: "nav.ustRegeln", to: "/vat-rules", icon: Percent },
+      { labelKey: "nav.steuerruecklage", to: "/vat-reserve", icon: PiggyBank },
+      { labelKey: "nav.datevUebergabe", to: "/datev-handover", icon: FileText },
     ],
   },
   {
     labelKey: "nav.auswertungen",
-    to: "/auswertungen",
+    to: "/reports",
     tourId: "shell-nav-auswertungen",
     icon: PieChart,
     permission: PERMISSIONS.pageReports,
@@ -190,19 +192,19 @@ const adminNav: NavGroup = {
     { labelKey: "nav.onboarding", to: "/onboarding", icon: ListChecks },
     {
       labelKey: "nav.benachrichtigungen",
-      to: "/benachrichtigungen",
+      to: "/notifications",
       icon: BellRing,
       permission: PERMISSIONS.settingsManage,
     },
     {
       labelKey: "nav.protokoll",
-      to: "/protokoll",
+      to: "/activity-log",
       icon: ScrollText,
       permission: PERMISSIONS.pageActivityLog,
     },
     {
       labelKey: "nav.papierkorb",
-      to: "/papierkorb",
+      to: "/trash",
       icon: Trash2,
       permission: PERMISSIONS.pageTrash,
     },
@@ -229,6 +231,9 @@ export function AppShell({ children }: { children: ReactNode }) {
   const { user, role, pictureUrl, can, permissionsUnavailable, logout } = useAuth();
   const { t } = useTranslation();
   const pathname = useRouterState({ select: (state) => state.location.pathname });
+  const pageFeature = featureKeyForPath(pathname);
+  const pageIsLiveForThisPerson = pageFeature === null || can(pageFeature);
+  const showDenied = !permissionsUnavailable && !pageIsLiveForThisPerson;
   const shellNav = useMemo<ShellNavEntry[]>(
     () =>
       nav
@@ -290,8 +295,8 @@ export function AppShell({ children }: { children: ReactNode }) {
   const staticLeafLabels = useMemo(
     () => ({
       upload: t("breadcrumb.upload"),
-      neu: t("breadcrumb.ausgangsrechnungNeu"),
-      hochladen: t("breadcrumb.ausgangsrechnungHochladen"),
+      new: t("breadcrumb.ausgangsrechnungNeu"),
+      "/outgoing-invoices/upload": t("breadcrumb.ausgangsrechnungHochladen"),
       // The Administration rail lives in the footer, outside the nav the crumb builder walks, so
       // its pages' names have to come from this map.
       ...Object.fromEntries(adminNav.items.map((item) => [item.to.slice(1), t(item.labelKey)])),
@@ -360,7 +365,7 @@ export function AppShell({ children }: { children: ReactNode }) {
                   </DropdownMenuLabel>
                   <DropdownMenuSeparator />
                   <DropdownMenuItem asChild className="cursor-pointer">
-                    <Link to="/profil">
+                    <Link to="/profile">
                       <UserRound className="size-4" />
                       {t("nav.meinProfil")}
                     </Link>
@@ -381,10 +386,10 @@ export function AppShell({ children }: { children: ReactNode }) {
         {permissionsUnavailable && (
           <div className="mb-4 flex items-start gap-2 rounded-lg border border-amber-300 bg-amber-50 px-3 py-2 text-sm text-amber-900">
             <TriangleAlert className="mt-0.5 size-4 shrink-0 text-amber-600" />
-            <span>{t("zugriff.rechteNichtGeladen")}</span>
+            <span>{t("access.permissionsNotLoaded")}</span>
           </div>
         )}
-        {children}
+        {showDenied ? <NoAccess variant="page" /> : children}
       </Shell>
     </TourProvider>
   );
