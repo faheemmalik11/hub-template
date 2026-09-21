@@ -31,14 +31,12 @@ psql "$DB" -f supabase/catalogue.sql                # then the project data
 The catalogue is deliberately not part of the baseline: the schema is the same for every client, and
 the catalogue is the one file each client replaces.
 
-## What is in migrations-archive
+## Where the history went
 
-The 248 migrations of the Hub this template was copied from, up to 17.09.2026. They are kept because
-a question about why a column exists is answered there and nowhere else. They are never applied
-again, and `supabase start` no longer sees them.
-
-Do not read them to learn what the schema is. The rename of 16.09.2026 alone rewrote 35 function
-bodies and 11 views, so the files no longer describe their own result.
+The 248 migrations of the Hub this template was copied from are not here. They were never applied
+by this template and did not describe their own result: the rename of 16.09.2026 alone rewrote 35
+function bodies and 11 views. A question about why a column exists is answered by
+`git log` on this repository, at commit 415caa8 and before it.
 
 ## Proving a change
 

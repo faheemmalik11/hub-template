@@ -17,7 +17,7 @@ That is a fork, and a fork costs every future fix, once per client.
 The same shape the pipeline already reached: **one shared codebase, and what makes a client
 different is data rather than code.**
 
-- `@hub-kit/core` is the shared package: pages, components, the shell, the theme system. It never
+- `src/kit/` holds the shared parts: pages, components, the shell, the theme system. It never
   talks to a database, never holds a rendered string, never hard-codes a colour or a brand.
 - This template is what a client's repository starts as. Over time it gets **thinner**, as more of it
   moves into the kit.

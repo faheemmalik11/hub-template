@@ -55,14 +55,31 @@ create table if not exists public.channel_state (
 
 -- A source's own keys, sealed before they arrive here. The database never sees a plain value, and
 -- nothing in the app reads one back: a value goes out only through an audited reveal.
+-- `channel_key` is '' for a credential the whole client uses rather than one source: the model key,
+-- the file store. That is the pipeline's own convention, so there is no foreign key here; a key
+-- belonging to nothing would have nothing to point at. The trigger below does the cascade instead.
 create table if not exists public.credentials (
-    channel_key text not null references public.channels(key) on delete cascade,
-    name text not null,
+    channel_key text not null default '',
+    name text not null check (length(btrim(name)) > 0),
     value text not null,
     updated_at timestamptz not null default now(),
     updated_by text,
     primary key (channel_key, name)
 );
+
+create or replace function public.forget_credentials_of_removed_channel() returns trigger
+language plpgsql security definer set search_path to 'public'
+as $$
+begin
+    delete from public.credentials where channel_key = old.key;
+    return old;
+end;
+$$;
+
+drop trigger if exists channels_forget_credentials on public.channels;
+create trigger channels_forget_credentials
+    after delete on public.channels
+    for each row execute function public.forget_credentials_of_removed_channel();
 
 create table if not exists public.credential_reads (
     id bigserial primary key,
@@ -86,7 +103,10 @@ create table if not exists public.read_cursors (
 
 -- Everything seen, whether or not it became a document. This is what stops the same item being read
 -- twice, and what lets a permanently broken one retire instead of returning every run.
+-- `id` is carried for the pipeline, which names a row by it. The key stays the pair, because that
+-- pair is what makes reading the same item twice harmless.
 create table if not exists public.imported_items (
+    id uuid not null default gen_random_uuid(),
     source_item_id text not null,
     attachment_id text not null default '',
     document_id uuid references public.documents(id) on delete set null,
@@ -94,6 +114,7 @@ create table if not exists public.imported_items (
     content_hash text,
     content_anchor text,
     imported_at timestamptz not null default now(),
+    created_at timestamptz not null default now(),
     primary key (source_item_id, attachment_id)
 );
 
@@ -106,10 +127,29 @@ create table if not exists public.pipeline_runs (
     status text,
     started_at timestamptz not null default now(),
     finished_at timestamptz,
+    trigger text,
+    request_id uuid,
     processed_count integer not null default 0,
     error_count integer not null default 0,
+    filed_count integer,
+    skipped_count integer,
+    duplicate_count integer,
+    discarded_count integer,
+    relinked_count integer,
+
+    -- Which folders a run got through, and which it did not, so a partial run says where it stopped.
+    folders_read text[],
+    folders_skipped jsonb,
+    folders_left_unfinished text[],
+
     ai_calls integer not null default 0,
-    note text
+    llm_model text,
+    input_tokens integer,
+    cached_input_tokens integer,
+    output_tokens integer,
+    ai_cost numeric(12, 6),
+    note text,
+    notes text[]
 );
 
 -- One line per item a run touched, including the ones it decided not to keep, with the reason.
@@ -121,10 +161,16 @@ create table if not exists public.processing_log (
     subject text,
     sender text,
     body text,
+    attachment_name text,
+    source text,
+    folder text,
     status text,
     reason text,
     sent_at timestamptz,
-    processed_at timestamptz not null default now()
+    processed_at timestamptz not null default now(),
+    input_tokens integer,
+    output_tokens integer,
+    ai_cost numeric(12, 6)
 );
 
 create index if not exists processing_log_run on public.processing_log (run_id);
@@ -213,12 +259,12 @@ create table if not exists public.filename_settings (
 -- The panel writes it, the pipeline reads it, and the Hub shows parts of it. Secrets are sealed
 -- before they arrive, so a plain value is never stored here and never returned to a screen.
 create table if not exists public.tenant_settings (
-    id boolean primary key default true,
+    single_row boolean primary key default true,
     config jsonb not null default '{}'::jsonb,
     secrets jsonb not null default '{}'::jsonb,
     updated_at timestamptz not null default now(),
     updated_by text,
-    constraint tenant_settings_one_row check (id),
+    constraint tenant_settings_one_row check (single_row),
     constraint tenant_settings_config_is_object check (jsonb_typeof(config) = 'object'),
     constraint tenant_settings_secrets_is_object check (jsonb_typeof(secrets) = 'object')
 );
@@ -255,6 +301,17 @@ create trigger tenant_settings_audit before update or delete on public.tenant_se
 -- The one row each of these tables is meant to hold, with everything at its default. A screen that
 -- asks for THE settings row must find one.
 insert into public.filename_settings (id) values (true) on conflict (id) do nothing;
-insert into public.tenant_settings (id) values (true) on conflict (id) do nothing;
+insert into public.tenant_settings (single_row) values (true) on conflict (single_row) do nothing;
+
+
+create index if not exists credential_reads_read_idx on public.credential_reads (read_at desc);
+
+-- The pipeline's own copy of this index is not partial. Here it has to be: a term withdrawn is
+-- soft deleted rather than removed, and a plain unique index would refuse to add it back.
+create unique index if not exists ingest_exclusions_term_scope_uniq
+    on public.ingest_exclusions (lower(term), scope)
+    where deleted_at is null;
+
+
 
 commit;

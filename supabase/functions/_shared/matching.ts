@@ -86,7 +86,7 @@ function hasTransposedNumber(reference: string, target: string | null | undefine
 }
 
 /**
- * Mirror of amountMatch in @hub-kit/core/bank-matching. KEEP THE TWO IDENTICAL: this file runs in
+ * Mirror of amountMatch in src/kit/lib/bank-matching. KEEP THE TWO IDENTICAL: this file runs in
  * Deno and cannot import from node_modules, so the shared rule has to exist twice. If you change
  * one, change the other, or the nightly sync and the screen will disagree about the same pair.
  */

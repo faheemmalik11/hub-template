@@ -29,7 +29,7 @@ export function TourCard({ step, stepIndex, stepCount, labels, onNext, onSkip }:
           design — hidden cross-browser. Firefox/IE take a style prop; Chrome/Safari only listen
           to the ::-webkit-scrollbar pseudo-element, which needs an actual style rule, so this
           carries its own scoped <style> rather than depending on a consumer's Tailwind build or
-          hub-kit's theme CSS being imported (confirmed not every Hub does either). */}
+          the kit's theme CSS being imported (confirmed not every Hub does either). */}
       <style>{".tour-card-scroll::-webkit-scrollbar { display: none; }"}</style>
       <div
         className="tour-card-scroll mt-2 max-h-[max(8rem,min(70vh,calc(var(--radix-popover-content-available-height,70vh)-6rem)))] space-y-2 overflow-y-auto pr-3 pb-1"

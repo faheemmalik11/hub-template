@@ -115,6 +115,18 @@ create table if not exists public.documents (
     handed_over_at timestamptz,
     handover_batch_id uuid,
 
+    -- What the pipeline spent reading it, and under which rules
+    llm_model text,
+    llm_calls integer,
+    llm_input_tokens integer,
+    llm_output_tokens integer,
+    ai_cost numeric(12, 6),
+    rules_version text,
+    document_types text[],
+    drive_named_at timestamptz,
+    note text,
+    private_hold boolean not null default false,
+
     -- Set aside rather than deleted
     not_relevant_at timestamptz,
     not_relevant_by text,
@@ -172,6 +184,9 @@ create table if not exists public.document_files (
     checksum_sha256 text,
     external_id text,
     source text,
+    -- Where the provider keeps it, and the bytes themselves when there is nowhere else to keep them.
+    web_url text,
+    content bytea,
     transaction_id uuid,
     created_at timestamptz not null default now(),
     updated_at timestamptz not null default now(),
@@ -230,7 +245,9 @@ create table if not exists public.document_bank_accounts (
     position integer not null default 1,
     origin text,
     first_seen_at timestamptz not null default now(),
+    created_at timestamptz not null default now(),
     primary key (document_id, supplier_bank_account_id)
 );
+
 
 commit;

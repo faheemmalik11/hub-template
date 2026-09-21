@@ -19,7 +19,7 @@ const ROUTES = [
 const browser = await chromium.launch({ channel: "chrome" });
 const page = await browser.newPage();
 const problems = [];
-// A list nested inside a list, from the sidebar in @hub-kit/core. Cosmetic, pre-existing, and not
+// A list nested inside a list, from the sidebar in src/kit. Cosmetic, pre-existing, and not
 // fixable from this repository, so it is named rather than counted.
 const KNOWN = [/cannot be a descendant of/, /cannot contain a nested/, /hydration error/];
 const known = (text) => KNOWN.some((r) => r.test(text));

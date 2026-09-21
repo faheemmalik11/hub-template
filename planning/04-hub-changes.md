@@ -38,7 +38,7 @@ It hides the section when the client does not use it and when the role may not s
 second check, because both already arrive through `can()`. This is the shape react-admin and CASL
 both settled on.
 
-It belongs in `@hub-kit/core`, which is the only way every Hub gets it without copying.
+It belongs in `src/kit/`, which is how every Hub gets it without copying.
 
 ## What does not change
 

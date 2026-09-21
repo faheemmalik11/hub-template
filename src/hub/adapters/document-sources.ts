@@ -328,7 +328,7 @@ export function useDocumentSourcesAdapter(): DocumentSourcesAdapter {
   // hub_upload here) belong to the admin panel and must never be hardcoded.
   const channelsQuery = useChannels();
   const folderRowsQuery = useChannelFolders();
-  // MEMOISED ON PURPOSE. hub-kit's settings sheet re-seeds its form from `source.fields` whenever
+  // MEMOISED ON PURPOSE. the kit's settings sheet re-seeds its form from `source.fields` whenever
   // that array's identity changes (useEffect on initialValues). Rebuilding the views on every
   // render handed it a new array each time, so any re-render, including the one a folder selection
   // itself causes, reset the unsaved selection back to the saved value: none. The views are now
@@ -354,10 +354,10 @@ export function useDocumentSourcesAdapter(): DocumentSourcesAdapter {
   }, [channelRows, folderRows]);
   const mailboxFoldersQuery = useMailboxFolders();
   const filingFoldersQuery = useFilingFolders();
-  // Which listing somebody asked to reload. hub-kit already draws a loader for a field whose
+  // Which listing somebody asked to reload. the kit already draws a loader for a field whose
   // options are loading (spinning Refresh icon, "loading" placeholder, disabled picker), but
   // React Query's isLoading is only true on the very first fetch, so pressing Refresh showed
-  // nothing. isFetching would, but it also flips on background refetches, and hub-kit resets
+  // nothing. isFetching would, but it also flips on background refetches, and the kit resets
   // unsaved edits whenever a field's props change, so a tab regaining focus could throw a
   // selection away. This flag moves only when a person presses Refresh.
   const [refreshing, setRefreshing] = useState<"mail" | "filing" | null>(null);
@@ -416,7 +416,7 @@ export function useDocumentSourcesAdapter(): DocumentSourcesAdapter {
     return new Date(base + slots * RUN_INTERVAL_MS);
   })();
 
-  // The array hub-kit receives. It must keep its identity until something in it really changes;
+  // The array the kit receives. It must keep its identity until something in it really changes;
   // see the note on the memoised views above for what happens when it does not.
   const runRequests = runRequestsQuery.data;
   const sources = useMemo(
@@ -489,7 +489,7 @@ export function useDocumentSourcesAdapter(): DocumentSourcesAdapter {
      * `channel_folders`. Both are what the pipeline reads and what the admin panel edits, so a
      * change here shows there and the other way round.
      *
-     * Only keys the caller actually sent are written. hub-kit sends the whole field set on save,
+     * Only keys the caller actually sent are written. the kit sends the whole field set on save,
      * but an absent key still has to mean "leave it alone" rather than "clear it", or opening the
      * advanced section once would be enough to wipe the return folder.
      */

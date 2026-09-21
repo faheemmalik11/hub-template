@@ -49,7 +49,7 @@ done quietly.
 
 ## Why this repository is not the shared package
 
-This template is copied. `@hub-kit/core` is installed and upgraded. The direction is that more of
+This template is copied whole, `src/kit/` included. The direction is that more of
 the template moves into the kit and the clone gets thinner, which is the last section of
 `06-phases.md`. Until the navigation itself is driven by the catalogue, a clone still carries its own
 menu file, and that is the fork this plan works to remove.

@@ -25,7 +25,7 @@ function InboxPage() {
   const mailboxFolders = useMailboxFolders();
   const filingFolders = useFilingFolders();
   const foldersLoading = mailboxFolders.isLoading || filingFolders.isLoading;
-  // The chips are rendered inside the hub-kit sheet and its label is typed to a plain string, so a
+  // The chips are rendered inside the kit's sheet and its label is typed to a plain string, so a
   // real skeleton element cannot be passed in. Flag the document instead and let styles.css draw
   // one over the placeholder text.
   useEffect(() => {
@@ -59,7 +59,7 @@ function InboxPage() {
     runNowFound: (count: number) =>
       count === 1 ? t("sources.runNowFoundOne") : t("sources.runNowFound", { count }),
     runNowFailed: t("sources.runNowFailed"),
-    // The folders a run asked for, shown as they were picked. Without this label hub-kit falls back
+    // The folders a run asked for, shown as they were picked. Without this label the kit falls back
     // to "the usual folders" for every run, so a run on chosen folders read as a normal one.
     runNowReadingFolders: (names: string) => names,
     runNowDialog: {

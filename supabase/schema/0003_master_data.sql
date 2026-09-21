@@ -18,8 +18,11 @@ create table if not exists public.companies (
     name text not null,
     -- Whether this company books on the invoice date or on the payment date.
     booking_basis text not null default 'invoice_date',
-    -- Where a filed copy of this company's documents lands, as a path in the client's own drive.
+    -- Where a filed copy of this company's documents lands: the path, the provider's own id for
+    -- that folder, and how the two were bound together.
     filing_folder text,
+    drive_folder_id text,
+    filing_binding text,
     -- What a client calls its parts of the business, if it has any. The names are that client's data.
     area text,
     overhead_cost_centre integer,
@@ -41,7 +44,10 @@ create table if not exists public.properties (
     address text,
     -- How VAT is handled for this property, which the rules read when they decide deductibility.
     vat_status text,
+    -- Where a filed copy lands: the path, the provider's own id for that folder, and the binding.
     filing_folder text,
+    drive_folder_id text,
+    filing_binding text,
     created_at timestamptz not null default now(),
     updated_at timestamptz not null default now(),
     deleted_at timestamptz,
@@ -82,6 +88,8 @@ create table if not exists public.suppliers (
     iban text,
     bic text,
     bank_name text,
+    fax text,
+    website text,
     created_at timestamptz not null default now(),
     updated_at timestamptz not null default now(),
     deleted_at timestamptz,
@@ -112,6 +120,7 @@ create table if not exists public.supplier_bank_accounts (
     deleted_at timestamptz,
     deleted_by text,
     delete_reason text,
+    created_at timestamptz not null default now(),
     constraint supplier_bank_accounts_source_known check (source in ('pipeline', 'human', 'import')),
     -- Masked digits are allowed, since a document often shows only the last four.
     constraint supplier_bank_accounts_iban_shape check (iban ~ '^[A-Z]{2}[0-9*]{2}[A-Z0-9*]{11,30}$'),
@@ -245,5 +254,13 @@ create table if not exists public.vat_rates (
 
 create unique index if not exists vat_rates_country_rate on public.vat_rates (country, rate)
     where deleted_at is null;
+
+
+-- Columns the ingestion pipeline writes. Declared here so a Hub database is one the pipeline can
+-- run against: a column it writes and this schema lacks fails the whole run.
+-- scripts/check-pipeline-columns.mjs holds this file and the pipeline's registry to each other.
+
+
+
 
 commit;

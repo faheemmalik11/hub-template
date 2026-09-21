@@ -2026,7 +2026,7 @@ function DocumentDetail({ doc }: { doc: Document }) {
   // reversal -- otherwise the invoice reads as unpaid while the bank transaction still reads as
   // reconciled against it, and the next import has nothing left to match.
   //
-  // The rule lives in hub-kit so all four hubs answer it the same way; the chain differs per repo
+  // The rule lives in src/kit so every Hub answers it the same way; the chain differs per repo
   // (Immonetz has an extra approval step), which is why it takes WORKFLOW_REIHENFOLGE as an
   // argument rather than assuming one.
   const correctionUnlinkMatch = useUnlinkMatch();
@@ -2038,7 +2038,7 @@ function DocumentDetail({ doc }: { doc: Document }) {
     releasesPaymentLink(wf, pendingCorrection, WORKFLOW_ORDER);
 
   // Moving an invoice back down the bar (client meeting 09.09.2026). Two different decisions wear
-  // the same gesture, and hub-kit keeps them apart so all four hubs answer identically:
+  // the same gesture, and the kit keeps them apart so every Hub answers identically:
   //
   //   before payment  an approval is taken back. Anyone who may approve; nothing else happens.
   //   at "Bezahlt"    a payment is undone. Only somebody who may move money, it has to say why,
@@ -2199,7 +2199,7 @@ function DocumentDetail({ doc }: { doc: Document }) {
     // own. The confirmed bank transaction has to come off with it: leaving it linked means the
     // invoice reads as unpaid while the transaction still reads as reconciled against it, and the
     // next bank import has nothing left to match. Same rule as the super-admin correction, which
-    // is why both ask hub-kit rather than each deciding for itself.
+    // is why both ask the kit rather than each deciding for itself.
     if (withdrawal && releasesPaymentLink(wf, "in_review", WORKFLOW_ORDER)) {
       try {
         for (const match of confirmedMatches) {
@@ -3151,7 +3151,7 @@ function DocumentDetail({ doc }: { doc: Document }) {
             </div>
           )}
 
-          {/* Review box: the checks that did NOT pass, and nothing else. Lives in hub-kit so
+          {/* Review box: the checks that did NOT pass, and nothing else. Lives in src/kit so
               the other hub repos render the same card from the same data. */}
           <ReviewCard
             lines={checkReasonsText}

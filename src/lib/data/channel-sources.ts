@@ -17,7 +17,7 @@ import {
  * One source card's worth of configuration, read out of `channels` + `channel_folders`.
  *
  * The card fields keep the names they had when this screen read mail_settings, because those
- * names are the contract with hub-kit and with the German labels. Only where the values come
+ * names are the contract with the kit and with the German labels. Only where the values come
  * from has changed.
  */
 export type SourceView = {

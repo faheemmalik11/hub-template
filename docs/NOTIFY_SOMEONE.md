@@ -14,13 +14,13 @@ nobody holds the record afterwards and there is no second state to clear, which 
 
 | Part | Where |
 | --- | --- |
-| The dialog and the banner | `@hub-kit/core/notify-someone` |
+| The dialog and the banner | `src/kit/components/notify-someone/` |
 | The data | each hub's own `queries.ts` |
 | Target validation, acknowledgement, instant delivery | migration `20260911100000` |
 
 ## 1. The UI is shared, the data is not
 
-`@hub-kit/core/notify-someone` exports:
+`src/kit/components/notify-someone/` exports:
 
 | Export | What |
 | --- | --- |

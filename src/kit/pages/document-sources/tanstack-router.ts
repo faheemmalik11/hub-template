@@ -6,7 +6,7 @@ import type { DocumentSourcesRouter } from "./router";
  * `DocumentSourcesRouter` on TanStack Router — the behavior `DocumentSourcesPage` had before its
  * router was made injectable. Import from `@/kit/pages/document-sources/tanstack-router`
  * explicitly and pass `router={useTanstackDocumentSourcesRouter()}`; not re-exported from
- * `@hub-kit/core/pages`, so hosts without TanStack Router never resolve this import.
+ * the kit's page index, so a Hub without TanStack Router never resolves this import.
  */
 export function useTanstackDocumentSourcesRouter(): DocumentSourcesRouter {
   const navigate = useNavigate();

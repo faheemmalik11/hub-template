@@ -15,7 +15,7 @@ where each step is done, so leaving mid-tour is the ordinary path through it.
 
 ## Engine
 
-- `@hub-kit/core/tour` provides `TourProvider`, `TourButton`, the seen-store contract, and the
+- `src/kit/components/tour/` provides `TourProvider`, `TourButton`, the seen-store contract, and the
   `data-tour` target resolver. The kit's `Shell` renders the sidebar anchors itself
   (`data-tour="shell-nav"` on the nav body, plus one per nav group from the `tourId` prop).
 - `src/components/layout/app-shell.tsx` wires it up: `tourId="shell-nav-*"` on each nav group,

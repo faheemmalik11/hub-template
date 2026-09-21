@@ -42,7 +42,7 @@ URL, and switching it back restores it with its data intact.
 
 - [ ] Port the mechanism to the other Hubs that already have the permission model, each with its
       own catalogue seed.
-- [ ] `IfAllowed` into `@hub-kit/core`.
+- [ ] `IfAllowed` into `src/kit/`.
 - [ ] `docs/PAGE_VISIBILITY.md` in each Hub, as those repos' own rules require.
 
 **Done when** every Hub that has the permission model can be shaped from the panel.

@@ -6,8 +6,8 @@ One template, cloned per client. What differs between clients is **data**, not c
 
 ```
   ┌──────────────────────────────────────────────────────────────────────────┐
-  │  @hub-kit/core          installed, upgraded, shared by every Hub         │
-  │  pages · shell · data-table · ui · tour · checklist                      │
+  │  src/kit/               the shared parts, carried by every Hub           │
+  │  pages · shell · data-table · ui · tour · checklist · widgets            │
   │  Knows no database, no brand, no language. Takes adapters and labels.    │
   └──────────────────────────────────────────────────────────────────────────┘
                                      ▲
@@ -46,7 +46,7 @@ table name; a name is not invented anywhere but `config/`.
 | It is | It goes in |
 |---|---|
 | A screen | `src/routes/<path>/index.tsx`, thin: read the adapter, render the page |
-| Shared by every Hub | `@hub-kit/core`, fed by copying working code in from a project |
+| Shared by every Hub | `src/kit/`, kept free of this client's names and wording |
 | This Hub's own UI | `src/components/` |
 | A unit carried between Hubs as a whole | `src/features/<name>/`, with its own `PORTING.md` |
 | What the kit needs from this app | `src/hub/adapters/` |
@@ -81,9 +81,6 @@ Thirteen numbered files in `supabase/schema/`, concatenated by `scripts/build-ba
 one migration the CLI applies. Order is not a preference: functions before views, because a view
 cannot be created without the function it calls, while a function may read a view that does not
 exist yet.
-
-`supabase/migrations-archive/` holds the 248 migrations of the Hub this template came from. Kept for
-the questions only history answers, never applied, and never read as a description of the schema.
 
 ## Proving a change
 

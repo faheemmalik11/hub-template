@@ -64,8 +64,8 @@ The same rule in SQL: a table, column or function named for what it holds needs 
    under them when the template moves forward.
 
 The direction is the one the pipeline already reached: one shared codebase, and what makes a client
-different is data rather than code. `@hub-kit/core` is the shared package and grows; this template is
-copied and should get thinner.
+different is data rather than code. There is no separate package: `src/kit/` holds the shared parts
+and every client carries the whole thing, switching off what they do not use from the panel.
 
 **Open, and it bites a new client on day one:** two migrations hard-code the source Hub's project
 host in a cron job, `20260827130000_notification_dispatch_cron.sql:51` and

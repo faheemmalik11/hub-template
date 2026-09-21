@@ -39,8 +39,8 @@ The amount is the heaviest signal at **0.45** of 1.0 (`WEIGHT` in `src/lib/match
 reference 0.25, IBAN 0.2, name 0.1, customer number 0.05, plus a 0.03 date bonus). Gates: 0.60 to
 suggest, 0.90 for the top band.
 
-`amountMatch(invoiceGross, transactionAmount, tolerance)` lives in **hub-kit**
-(`@hub-kit/core/bank-matching`, `src/lib/bank-matching/fuzzy.ts`) and returns
+`amountMatch(invoiceGross, transactionAmount, tolerance)` lives in **the kit**
+(`src/kit/lib/bank-matching/`) and returns
 `{ matched, exact, difference }`. When a pair matches only because of the allowance, the scorer
 deducts `TOLERANCE_PENALTY` (**0.05**), so 0.45 becomes 0.40 — an exact hit always outranks a
 tolerated one, but a tolerated one still clears 0.60 on amount plus invoice number, which is the
@@ -154,7 +154,7 @@ that has already been made.
 | `supabase/functions/bank-sync/index.ts` | reads the tolerance from the DB per run |
 | `src/components/bank/match-panel/link-confirm-dialog.tsx` | the two checkboxes and the reason |
 | `src/components/bank/close-remainder.tsx` | the same decision on either detail page, after the fact |
-| `hub-kit` `src/lib/bank-matching/` | `amountMatch`, `TOLERANCE_PENALTY`, `normalizeReference`, `hasTransposedDigits` |
+| `src/kit/lib/bank-matching/` | `amountMatch`, `TOLERANCE_PENALTY`, `normalizeReference`, `hasTransposedDigits` |
 
 ## Open
 
@@ -163,5 +163,5 @@ that has already been made.
 - The **close-remainder half** is now in all four Hubs: the same component, the same two placements,
   and `20260911230000_close_sides_manually.sql` in a sister Hub, another Hub and another client2 (the same
   file as this Hub's `20260910190000`, renumbered).
-- The **tolerance half** is still this Hub only. The other three have the hub-kit part
-  (`@hub-kit/core`) but not `matching_settings`, the settings page or the link-confirm dialog.
+- The **tolerance half** is still this Hub only. The other three have the shared part
+  (`src/kit/`) but not `matching_settings`, the settings page or the link-confirm dialog.

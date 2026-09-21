@@ -90,3 +90,38 @@ bill whose real VAT was 7.1% blended. The pipeline persists both `tax` and `line
 So this is not a duplication to clean up here. Either the tables get wired up and the jsonb becomes
 a cache, or the tables go, and that decision belongs with whoever owns the pipeline's persistence.
 Do not delete either side without settling it there first.
+
+## A provider's name is in a shared column, and it should not be
+
+`companies.drive_folder_id` and `properties.drive_folder_id` hold the folder a document is filed
+into, in whatever storage this client runs: Dropbox, Google Drive or Graph. The pipeline reads the
+column generically. Only the name says Drive.
+
+That is the rule against provider names in shared code, broken in the one place it is hardest to
+see, and it is the same mistake as `imported_items`'s `gmail_message_id` in the pipeline.
+
+The name should be `folder_id`. It is **not** renamed here, deliberately: the pipeline queries
+`e.drive_folder_id` literally, so a Hub database on the new name and a pipeline on the old one
+would fail that read on the first run. It is one rename on two sides, plus a migration for the
+clients already holding values in it, and it belongs with whoever owns the pipeline's persistence.
+
+Until then `scripts/check-pipeline-columns.mjs` holds the two sides to the same spelling.
+
+## The panel asks the ledger, when it means to ask the database
+
+`0016_pipeline_ledger.sql` records the pipeline's setup steps because the admin panel decides a
+client's database is ready by reading `schema_migrations`, not by looking at the tables.
+
+The reading is `one.recorded && one.missingTables.length === 0` in the panel's onboarding tab. A
+database built from this schema has every table and column those steps create, so the second half
+is already true; only the first half was false, and the whole of `sourceTablesReady` turned on it.
+The panel then declined to read credentials that were stored, and reported sources as unfinished.
+
+Recording the steps is the narrow fix and it is honest, because
+`scripts/check-pipeline-columns.mjs` proves the tables really do hold what the pipeline writes.
+
+The real fix is on the panel's side: ask whether the tables and columns are there, which is the
+question it actually wants answered, and let the ledger be a record rather than the authority. Then
+a database built any way at all is judged on what it holds. That belongs with whoever owns the
+panel's provisioning, and until it happens, a client whose database was built by hand without this
+file will be reported as unfinished no matter what it contains.

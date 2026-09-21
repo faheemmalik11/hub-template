@@ -84,12 +84,30 @@ create table if not exists public.notification_channels (
 
 -- What a notification can point at, so a message can link back to the thing it is about without
 -- the notifier knowing every table.
+-- What a notification can point at. `send_notification` refuses a kind that is not here, so this
+-- is reference data rather than a client's own: an empty table means no notification can name a
+-- record at all.
+--
+-- `source_table` is null for a kind with no record behind it, which is what lets a notification
+-- point at a screen. The existence check in `send_notification` skips those on purpose.
 create table if not exists public.notification_target_kinds (
     kind text primary key,
-    source_table text not null,
+    source_table text,
     id_column text not null default 'id',
     is_active boolean not null default true
 );
+
+insert into public.notification_target_kinds (kind, source_table, id_column) values
+  ('invoice',     'documents',         'id'),
+  ('transaction', 'bank_transactions', 'id'),
+  ('supplier',    'suppliers',         'id'),
+  ('customer',    'customers',         'id'),
+  -- A property is addressed by its code, here and in its URL.
+  ('property',    'properties',        'code'),
+  -- A page is a path, not a row, so there is nothing to look up.
+  ('page',        null,                'id')
+on conflict (kind) do update
+   set source_table = excluded.source_table, id_column = excluded.id_column;
 
 create table if not exists public.notification_events (
     id uuid primary key default gen_random_uuid(),

@@ -23,32 +23,7 @@
     "paths": {
       "@/*": ["./src/*"],
       "lucide-react": ["./node_modules/lucide-react"],
-      // hub-kit is typechecked from its own source, mirroring the aliases in vite.config.ts.
       // Keep the two lists in step: a subpath missing here is checked against the older
-      // installed @hub-kit/core package while vite loads the newer source.
-      "@hub-kit/core/ui": ["../hub-kit/src/ui/index.ts"],
-      "@hub-kit/core/pages": ["../hub-kit/src/pages/index.ts"],
-      "@hub-kit/core/pages/document-sources": ["../hub-kit/src/pages/document-sources/index.ts"],
-      "@hub-kit/core/pages/document-sources/tanstack": ["../hub-kit/src/pages/document-sources/tanstack-router.ts"],
-      "@hub-kit/core/adapters": ["../hub-kit/src/adapters/index.ts"],
-      "@hub-kit/core/i18n": ["../hub-kit/src/i18n/index.ts"],
-      "@hub-kit/core/lib": ["../hub-kit/src/lib/index.ts"],
-      "@hub-kit/core/notifications": ["../hub-kit/src/components/notifications/index.ts"],
-      "@hub-kit/core/invoice-queue": ["../hub-kit/src/components/invoice-queue/index.ts"],
-      "@hub-kit/core/feedback": ["../hub-kit/src/components/feedback/index.ts"],
-      "@hub-kit/core/access": ["../hub-kit/src/components/access/index.ts"],
-      "@hub-kit/core/dashboard": ["../hub-kit/src/components/dashboard/index.ts"],
-      "@hub-kit/core/data-table": ["../hub-kit/src/components/data-table/index.ts"],
-      "@hub-kit/core/checklist": ["../hub-kit/src/components/checklist/index.ts"],
-      "@hub-kit/core/checklist/tanstack": ["../hub-kit/src/components/checklist/tanstack-link.tsx"],
-      "@hub-kit/core/approval-rules": ["../hub-kit/src/pages/approval-rules/index.ts"],
-      "@hub-kit/core/assignment-rules": ["../hub-kit/src/pages/assignment-rules/index.ts"],
-      "@hub-kit/core/shell": ["../hub-kit/src/components/shell/index.ts"],
-      "@hub-kit/core/tour": ["../hub-kit/src/components/tour/index.ts"],
-      "@hub-kit/core/ai-search-sql": ["../hub-kit/src/lib/ai-search-sql/index.ts"],
-      "@hub-kit/core/ai-search-sql/ui": ["../hub-kit/src/components/ai-search-sql/index.ts"],
-      "@hub-kit/core/ai-search/ui": ["../hub-kit/src/components/ai-search/index.ts"],
-      "@hub-kit/core/filters": ["../hub-kit/src/components/filters/index.ts"]
     }
   }
 }

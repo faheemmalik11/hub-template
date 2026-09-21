@@ -1,7 +1,5 @@
 @import "tailwindcss" source(none);
 @source "../src";
-@source "../node_modules/@hub-kit/core/dist";
-@source "../../hub-kit/src/**/*.{ts,tsx}";
 @import "tw-animate-css";
 
 @custom-variant dark (&:is(.dark *));

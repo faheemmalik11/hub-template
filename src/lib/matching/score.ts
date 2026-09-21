@@ -97,7 +97,7 @@ export function scoreMatch(
   const reference = normalize(txn.payment_reference);
 
   // The amount is the heaviest signal (0.45 of 1.0), so an agreement that needed the allowance is
-  // scored below one that did not: see TOLERANCE_PENALTY in hub-kit.
+  // scored below one that did not: see TOLERANCE_PENALTY in src/kit.
   const amount = amountMatch(gross, txnAmount, amountTolerance);
   const exactRef = !!doc.invoice_number && reference.includes(normalize(doc.invoice_number));
   const transposedRef = !exactRef && hasTransposedDigits(reference, doc.invoice_number);
