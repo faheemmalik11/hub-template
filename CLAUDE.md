@@ -15,6 +15,9 @@ below still describes how the code works, because the code is that Hub's code.
 - `planning/` holds where this is going: **`planning/00-direction.md` first**, then the decisions in
   `planning/01-decisions.md` and the phases in `planning/06-phases.md`. The `ui-features` skill is
   the working summary of it.
+- **One skill per module**, under `.claude/skills/module-*`: what it is, the keys a client switches,
+  its screens, the files it alone owns, the tables and functions it touches, and the order to port
+  it in. Start at the `modules` skill for the map, then load the one for the module you are in.
 - `planning/07-hub-template.md` records what was stripped out of the clone and what a new client
   still needs: its own Supabase project and `.env`, its own brand and locale, its own catalogue seed.
 
