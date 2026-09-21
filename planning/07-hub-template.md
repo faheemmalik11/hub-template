@@ -21,24 +21,15 @@ Every one is read from the environment, and `supabase/config.toml` takes the pro
 `env(SUPABASE_PROJECT_ID)`. The migration that sets up the ingest cron's shared secret carries
 placeholders only, with the real value in the vault.
 
-## Open, and it matters
+## Closed: the host a clone would have called
 
-**Two migrations still hard-code the source project's host**, and both run against a new client's
-database:
+The two migrations that hard-coded the source project's host are gone with the rest of the old
+history. A clone no longer carries them, so a new client's notifications cannot be posted to another
+client's Edge Function.
 
-- `supabase/migrations/20260827130000_notification_dispatch_cron.sql:51`
-- `supabase/migrations/20260911100000_notify_about_any_record.sql:323`
-
-Each builds a cron job calling that host's `functions/v1/notify-dispatch`. Applied as they stand, a
-new client's notifications would be posted to **another client's** Edge Function.
-
-Eight further files name the old project ref in text only: `supabase/schema.sql`, four files under
-`docs/`, and two one-off scripts.
-
-Before this template is used for a real client, that host has to come from a database setting or the
-vault rather than a literal, and the old migrations either rewritten or replaced by a squashed
-baseline. That is a decision about how a client's repository begins, so it is recorded rather than
-done quietly.
+`supabase/schema/0013_scheduled_jobs.sql` reads the project URL and the service key from the vault
+at run time instead. A deployment that has not been given them runs with its scheduled jobs off,
+which is what the catalogue ships anyway.
 
 ## What a new client needs on top of the clone
 
