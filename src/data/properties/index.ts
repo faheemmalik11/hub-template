@@ -10,3 +10,5 @@ export {
   useUnarchiveProperty,
   useUpdateProperty,
 } from "./properties";
+export { usePropertyCrmData, usePropertyListings, useSyncPropertyListings } from "./listings";
+export type { ListedProperty } from "./listings";

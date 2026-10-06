@@ -455,6 +455,23 @@ CREATE OR REPLACE FUNCTION public.approval_rule_specificity(p_supplier_id uuid, 
     + (case when p_company_id  is not null then 1 else 0 end);
 $$;
 
+-- Runs as the caller, so the deals policies decide who may approve. Only a complete deal can be.
+CREATE OR REPLACE FUNCTION public.approve_deal(p_deal_id uuid) RETURNS void
+    LANGUAGE plpgsql SECURITY INVOKER
+    SET search_path TO 'public'
+    AS $$
+begin
+  update public.deals
+     set status = 'approved', approved_by = public.current_app_user_id(), approved_at = now()
+   where id = p_deal_id and status = 'ready' and deleted_at is null;
+  if not found then
+    raise exception 'approve_deal: deal % is not ready to approve', p_deal_id
+      using errcode = 'check_violation';
+  end if;
+end;
+$$;
+
+
 CREATE OR REPLACE FUNCTION public.assignment_rule_preview(p_rule uuid) RETURNS TABLE(matches bigint, would_change bigint)
     LANGUAGE plpgsql STABLE
     SET search_path TO 'public'
@@ -733,7 +750,7 @@ begin
       using errcode = 'check_violation';
   end if;
 
-  select abs(amount_gross) into v_inv_gross
+  select abs(public.amount_paid_out(amount_gross, tip_amount)) into v_inv_gross
     from public.documents where id = new.document_id;
   select coalesce(sum(amount_matched), 0) into v_inv_other
     from public.document_transaction_matches
@@ -1080,6 +1097,19 @@ CREATE OR REPLACE FUNCTION public.invoice_is_fully_covered(p_gross numeric, p_ma
          end;
 $$;
 
+CREATE OR REPLACE FUNCTION public.is_a_reminder(p_document uuid) RETURNS boolean
+    LANGUAGE sql STABLE
+    SET search_path TO 'public'
+    AS $$
+  select exists (select 1 from public.document_links where document_id = p_document and kind = 'reminder_of');
+$$;
+
+CREATE OR REPLACE FUNCTION public.amount_paid_out(p_gross numeric, p_tip numeric) RETURNS numeric
+    LANGUAGE sql IMMUTABLE
+    AS $$
+  select case when p_gross > 0 then p_gross + coalesce(p_tip, 0) else p_gross end;
+$$;
+
 CREATE OR REPLACE FUNCTION public.invoice_matched_sum(p_invoice uuid) RETURNS numeric
     LANGUAGE sql STABLE
     SET search_path TO 'public'
@@ -1100,9 +1130,9 @@ CREATE OR REPLACE FUNCTION public.invoice_queue_kpis(p_today date DEFAULT CURREN
       union all
       select 'missing_assignment'::text, count(*), coalesce(sum(amount_gross), 0) from base where company_id is null
       union all
-      select 'ready_for_payment'::text, count(*), coalesce(sum(amount_gross), 0) from base  where workflow_status in ('approved_first', 'approved_final')    and paid_at is null
+      select 'ready_for_payment'::text, count(*), coalesce(sum(amount_gross), 0) from base  where workflow_status in ('approved_first', 'approved_final')    and paid_at is null and not public.is_a_reminder(id)
       union all
-      select 'pay_now'::text, count(*), coalesce(sum(amount_gross), 0) from base where due_date <= p_today and paid_at is null and not public.is_direct_debit(payment_method)
+      select 'pay_now'::text, count(*), coalesce(sum(amount_gross), 0) from base where due_date <= p_today and paid_at is null and not public.is_direct_debit(payment_method) and not public.is_a_reminder(id)
       union all
       select 'completed'::text, count(*), coalesce(sum(amount_gross), 0) from base where paid_at is not null or workflow_status = 'closed';
     $$;
@@ -1584,6 +1614,33 @@ begin
   returning id into v_rule_id;
   return v_rule_id;
 end $$;
+
+-- Matches people to the CRM's brokers by email. Never overwrites a link somebody set, and skips an
+-- email the CRM gives to two brokers or a broker who is already linked to somebody else.
+CREATE OR REPLACE FUNCTION public.link_brokers_to_users() RETURNS integer
+    LANGUAGE plpgsql SECURITY DEFINER
+    SET search_path TO 'public'
+    AS $$
+declare
+  v_linked integer;
+begin
+  update public.app_users u
+     set crm_external_id = b.broker_external_id
+    from (select lower(broker_email) as email, min(broker_external_id) as broker_external_id
+            from public.properties
+           where broker_email is not null and broker_external_id is not null and deleted_at is null
+           group by lower(broker_email)
+          having count(distinct broker_external_id) = 1) b
+   where lower(u.email) = b.email
+     and u.crm_external_id is null
+     and not exists (select 1 from public.app_users o where o.crm_external_id = b.broker_external_id);
+  get diagnostics v_linked = row_count;
+  return v_linked;
+end;
+$$;
+
+revoke execute on function public.link_brokers_to_users() from public, anon, authenticated;
+grant execute on function public.link_brokers_to_users() to service_role;
 
 CREATE OR REPLACE FUNCTION public.link_invoice_transaction(p_invoice_id uuid, p_transaction_id uuid, p_score numeric DEFAULT NULL::numeric, p_reasons jsonb DEFAULT NULL::jsonb, p_amount numeric DEFAULT NULL::numeric, p_difference_reason text DEFAULT NULL::text) RETURNS uuid
     LANGUAGE plpgsql SECURITY DEFINER
@@ -2877,6 +2934,69 @@ CREATE OR REPLACE FUNCTION public.run_now_enabled() RETURNS boolean
     select coalesce((select (config -> 'run' ->> 'run_now_enabled')::boolean
                        from public.tenant_settings where single_row), false)
 $$;
+
+-- Saves a deal with its sides and payers in one transaction, as the caller. Any edit withdraws an
+-- approval, because what was approved is no longer what is saved.
+CREATE OR REPLACE FUNCTION public.save_deal(p_deal_id uuid, p_deal jsonb, p_sides jsonb, p_status text) RETURNS void
+    LANGUAGE plpgsql SECURITY INVOKER
+    SET search_path TO 'public'
+    AS $$
+declare
+  v_side jsonb;
+  v_side_id uuid;
+  v_party jsonb;
+  v_position integer;
+begin
+  if p_status not in ('incomplete', 'ready') then
+    raise exception 'save_deal: a saved deal is incomplete or ready, not %', p_status
+      using errcode = 'check_violation';
+  end if;
+
+  update public.deals
+     set company_id = nullif(p_deal->>'company_id', '')::uuid,
+         notarised_on = nullif(p_deal->>'notarised_on', '')::date,
+         purchase_price = (p_deal->>'purchase_price')::numeric,
+         vat_rate = coalesce((p_deal->>'vat_rate')::numeric, 19),
+         note = nullif(p_deal->>'note', ''),
+         status = p_status,
+         approved_by = null,
+         approved_at = null
+   where id = p_deal_id and deleted_at is null;
+  if not found then
+    raise exception 'save_deal: deal % not found', p_deal_id using errcode = 'no_data_found';
+  end if;
+
+  delete from public.deal_sides
+   where deal_id = p_deal_id
+     and side not in (select value->>'side' from jsonb_array_elements(p_sides));
+
+  for v_side in select value from jsonb_array_elements(p_sides) loop
+    insert into public.deal_sides
+        (deal_id, side, fee_kind, fee_net_rate, fee_net_amount, discount_gross, discount_reason)
+    values
+        (p_deal_id, v_side->>'side', v_side->>'fee_kind', (v_side->>'fee_net_rate')::numeric,
+         (v_side->>'fee_net_amount')::numeric, coalesce((v_side->>'discount_gross')::numeric, 0),
+         nullif(v_side->>'discount_reason', ''))
+    on conflict (deal_id, side) do update
+       set fee_kind = excluded.fee_kind,
+           fee_net_rate = excluded.fee_net_rate,
+           fee_net_amount = excluded.fee_net_amount,
+           discount_gross = excluded.discount_gross,
+           discount_reason = excluded.discount_reason
+    returning id into v_side_id;
+
+    delete from public.deal_parties where deal_side_id = v_side_id;
+    v_position := 0;
+    for v_party in select value from jsonb_array_elements(coalesce(v_side->'parties', '[]'::jsonb)) loop
+      insert into public.deal_parties (deal_side_id, customer_id, share_percent, position)
+      values (v_side_id, (v_party->>'customer_id')::uuid, (v_party->>'share_percent')::numeric,
+              v_position);
+      v_position := v_position + 1;
+    end loop;
+  end loop;
+end;
+$$;
+
 
 CREATE OR REPLACE FUNCTION public.send_notification(p_recipient uuid, p_note text DEFAULT NULL::text, p_target_kind text DEFAULT NULL::text, p_target_id text DEFAULT NULL::text, p_target_path text DEFAULT NULL::text) RETURNS bigint
     LANGUAGE plpgsql SECURITY DEFINER

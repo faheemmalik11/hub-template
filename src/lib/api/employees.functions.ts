@@ -43,7 +43,14 @@ async function requireActiveAdmin(db: Db, callerEmail: string): Promise<{ id: st
 const CreateEmployeeSchema = z.object({
   email: z.string().email(),
   name: z.string().trim().min(1), // display name -- used everywhere an approver/actor is shown by name, not email
-  roleName: z.enum(["admin", "supervisor", "assistant"]), // super_admin is never assignable here (A7: invisible to client)
+  // Any role the database holds and marks assignable, looked up below, except super_admin: the owner
+  // account stays out of reach. A fixed list of the built-in names would refuse every role a client
+  // adds, such as a broker.
+  roleName: z
+    .string()
+    .trim()
+    .min(1)
+    .refine((name) => name !== "super_admin", { message: "super_admin is not assignable" }),
   companyIds: z.array(z.string().uuid()), // empty = unrestricted (mirrors has_company_access's "no grants" default)
 });
 
@@ -62,6 +69,7 @@ export const createEmployee = createServerFn({ method: "POST" })
       .from(TABLE.roles)
       .select("id")
       .eq("name", data.roleName)
+      .eq("assignable", true)
       .maybeSingle();
     if (!role) throw new AppError(`Role ${data.roleName} not found`, 500, "ROLE_NOT_FOUND");
 

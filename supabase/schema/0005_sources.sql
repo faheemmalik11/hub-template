@@ -37,6 +37,8 @@ create table if not exists public.channel_folders (
     display_name text,
     -- A folder the provider names itself, such as an inbox, as opposed to one somebody picked.
     well_known_name text,
+    -- Whether a run also reads the folders inside this one, such as a folder per month.
+    include_children boolean not null default false,
     position integer not null default 100,
     added_at timestamptz not null default now(),
     added_by text,
@@ -222,6 +224,9 @@ create table if not exists public.filing_placements (
     folder_label text,
     -- A copy may be filed into a folder per month, but only where the target is a fixed folder.
     month_partition boolean not null default false,
+    -- A nested layout instead, from the document date: {yyyy}/{mm}_{yyyy} files into 2026/09_2026.
+    -- Takes the place of month_partition where it is set.
+    partition_pattern text,
     -- Whether the folder is chosen by the document's company, its property, or neither.
     routing text not null default 'fixed',
     is_active boolean not null default true,
@@ -230,10 +235,23 @@ create table if not exists public.filing_placements (
     updated_at timestamptz not null default now(),
     updated_by text,
     constraint filing_placements_routing_known check (routing in ('fixed', 'company', 'property')),
-    constraint filing_placements_month_needs_fixed check (routing = 'fixed' or not month_partition),
+    constraint filing_placements_month_needs_fixed
+        check (routing = 'fixed' or (not month_partition and partition_pattern is null)),
+    constraint filing_placements_partition_pattern_shape check (
+        partition_pattern is null
+        or (partition_pattern ~ '\{(yyyy|mm)\}' and partition_pattern !~ '(^/|/$|//|\.\.)')),
     constraint filing_placements_status_known check (workflow_status in (
         'received', 'in_review', 'query', 'approved_first', 'approved_final',
         'paid', 'handed_over', 'closed', 'rejected', 'not_relevant'))
+);
+
+create table if not exists public.filing_attempts (
+    document_id uuid not null references public.documents(id) on delete cascade,
+    purpose text not null,
+    attempts integer not null default 0,
+    last_error text,
+    last_tried_at timestamptz not null default now(),
+    primary key (document_id, purpose)
 );
 
 -- How a filed copy is named. Every part is a choice, because every client names differently.

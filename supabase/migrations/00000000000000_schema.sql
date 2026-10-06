@@ -99,6 +99,8 @@ create table if not exists public.app_users (
     area text,
     covers_all_areas boolean not null default false,
     slack_user_id text,
+    -- Who this person is in the CRM, so they see only what the CRM says is theirs.
+    crm_external_id text,
     notifications_seen_at timestamptz,
     created_by uuid,
     created_at timestamptz not null default now(),
@@ -110,6 +112,8 @@ create table if not exists public.app_users (
 
 create unique index if not exists app_users_email_lower_idx on public.app_users (lower(email));
 create index if not exists app_users_role_id_idx on public.app_users (role_id);
+create unique index if not exists app_users_crm_external_id_idx on public.app_users (crm_external_id)
+    where crm_external_id is not null;
 create unique index if not exists app_users_one_active_per_area on public.app_users (area)
     where area is not null and is_active;
 
@@ -627,13 +631,43 @@ create table if not exists public.properties (
     filing_folder text,
     drive_folder_id text,
     filing_binding text,
+    -- Where the row came from, and its id there, for a property kept in step with a CRM.
+    source text not null default 'app',
+    external_id text,
+    -- What the CRM says about the property, for a client whose property list is the CRM's. Left empty
+    -- everywhere else. The crm_ names keep it apart from the Hub's own status and archive.
+    crm_status text,
+    crm_status_id text,
+    marketing_type text,
+    property_type text,
+    usage_type text,
+    asking_price numeric(14, 2),
+    sold_price numeric(14, 2),
+    sold_on date,
+    living_space numeric(10, 2),
+    plot_area numeric(12, 2),
+    room_count numeric(5, 1),
+    commission_note text,
+    broker_external_id text,
+    broker_name text,
+    broker_email text,
+    parties jsonb not null default '[]'::jsonb,
+    archived_in_crm boolean not null default false,
+    crm_updated_at timestamptz,
+    crm_synced_at timestamptz,
+    -- The CRM's own record, exactly as it sent it. The columns above are copies taken from it.
+    crm_data jsonb,
     created_at timestamptz not null default now(),
     updated_at timestamptz not null default now(),
     deleted_at timestamptz,
     deleted_by text,
     delete_reason text,
-    constraint properties_filing_folder_shape check (public.is_folder_path(filing_folder))
+    constraint properties_filing_folder_shape check (public.is_folder_path(filing_folder)),
+    constraint properties_source_external_id unique (source, external_id)
 );
+
+create index if not exists properties_crm_status on public.properties (crm_status)
+    where crm_status is not null;
 
 -- A property can belong to more than one company, and carries its own cost centre in each.
 create table if not exists public.property_companies (
@@ -741,13 +775,22 @@ create table if not exists public.customers (
     vat_id text,
     customer_number text,
     source text not null default 'app',
+    -- The same person in the CRM and in the accounting tool, so neither is created twice.
+    crm_external_id text,
+    accounting_external_id text,
     created_at timestamptz not null default now(),
     updated_at timestamptz not null default now(),
     deleted_at timestamptz,
     deleted_by text,
     delete_reason text,
-    constraint customers_source_known check (source in ('app', 'upload'))
+    constraint customers_source_known check (source in ('app', 'upload', 'crm'))
 );
+
+create unique index if not exists customers_crm_external_id
+    on public.customers (crm_external_id) where crm_external_id is not null and deleted_at is null;
+create unique index if not exists customers_accounting_external_id
+    on public.customers (accounting_external_id)
+    where accounting_external_id is not null and deleted_at is null;
 
 -- What a cost is booked as. A tree, so a client can group its own way.
 create table if not exists public.categories (
@@ -901,6 +944,12 @@ create table if not exists public.documents (
     payment_method text,
     tax_note text,
 
+    -- Written on a receipt by hand, which the printed figures do not say. The tip is on top of the
+    -- printed total, so what left the account is amount_gross + tip_amount.
+    tip_amount numeric(14, 2),
+    occasion text,
+    participants text,
+
     -- What it is booked against
     company_id uuid references public.companies(id),
     company_code text,
@@ -956,6 +1005,7 @@ create table if not exists public.documents (
     early_payment_discount_amount numeric(14, 2),
     paid_at timestamptz,
     filed_at timestamptz,
+    published_at timestamptz,
     storage_path text,
     uploaded_for_transaction_id uuid,
 
@@ -1008,7 +1058,8 @@ create table if not exists public.documents (
     constraint documents_income_tax_treatment_known
         check (income_tax_treatment is null or income_tax_treatment in ('capital_expense', 'maintenance_expense')),
     -- Overhead belongs to the company as a whole, so it cannot also sit on one property.
-    constraint documents_overhead_has_no_property check (not (is_overhead and property_id is not null))
+    constraint documents_overhead_has_no_property check (not (is_overhead and property_id is not null)),
+    constraint documents_tip_not_negative check (tip_amount is null or tip_amount >= 0)
 );
 
 create index if not exists documents_status on public.documents (status) where deleted_at is null;
@@ -1045,6 +1096,23 @@ create table if not exists public.document_files (
 
 create unique index if not exists document_files_one_per_role
     on public.document_files (document_id, role) where deleted_at is null;
+
+-- One document pointing at another it is about. A reminder letter names the bill it chases, so the
+-- two are never paid separately; a credit note names the bill it reduces; a corrected bill names the
+-- one it replaces.
+create table if not exists public.document_links (
+    id uuid primary key default gen_random_uuid(),
+    document_id uuid not null references public.documents(id) on delete cascade,
+    related_document_id uuid not null references public.documents(id) on delete cascade,
+    kind text not null,
+    created_by text,
+    created_at timestamptz not null default now(),
+    constraint document_links_kind_known check (kind in ('reminder_of', 'credit_for', 'replaces')),
+    constraint document_links_not_itself check (document_id <> related_document_id),
+    constraint document_links_unique unique (document_id, related_document_id, kind)
+);
+
+create index if not exists document_links_related on public.document_links (related_document_id);
 
 -- What happened to this document, in order. The trail a person reads on the detail screen.
 create table if not exists public.document_history (
@@ -1141,6 +1209,8 @@ create table if not exists public.channel_folders (
     display_name text,
     -- A folder the provider names itself, such as an inbox, as opposed to one somebody picked.
     well_known_name text,
+    -- Whether a run also reads the folders inside this one, such as a folder per month.
+    include_children boolean not null default false,
     position integer not null default 100,
     added_at timestamptz not null default now(),
     added_by text,
@@ -1326,6 +1396,9 @@ create table if not exists public.filing_placements (
     folder_label text,
     -- A copy may be filed into a folder per month, but only where the target is a fixed folder.
     month_partition boolean not null default false,
+    -- A nested layout instead, from the document date: {yyyy}/{mm}_{yyyy} files into 2026/09_2026.
+    -- Takes the place of month_partition where it is set.
+    partition_pattern text,
     -- Whether the folder is chosen by the document's company, its property, or neither.
     routing text not null default 'fixed',
     is_active boolean not null default true,
@@ -1334,10 +1407,23 @@ create table if not exists public.filing_placements (
     updated_at timestamptz not null default now(),
     updated_by text,
     constraint filing_placements_routing_known check (routing in ('fixed', 'company', 'property')),
-    constraint filing_placements_month_needs_fixed check (routing = 'fixed' or not month_partition),
+    constraint filing_placements_month_needs_fixed
+        check (routing = 'fixed' or (not month_partition and partition_pattern is null)),
+    constraint filing_placements_partition_pattern_shape check (
+        partition_pattern is null
+        or (partition_pattern ~ '\{(yyyy|mm)\}' and partition_pattern !~ '(^/|/$|//|\.\.)')),
     constraint filing_placements_status_known check (workflow_status in (
         'received', 'in_review', 'query', 'approved_first', 'approved_final',
         'paid', 'handed_over', 'closed', 'rejected', 'not_relevant'))
+);
+
+create table if not exists public.filing_attempts (
+    document_id uuid not null references public.documents(id) on delete cascade,
+    purpose text not null,
+    attempts integer not null default 0,
+    last_error text,
+    last_tried_at timestamptz not null default now(),
+    primary key (document_id, purpose)
 );
 
 -- How a filed copy is named. Every part is a choice, because every client names differently.
@@ -1535,6 +1621,9 @@ create table if not exists public.bank_transactions (
     spender_email text,
     transaction_type text,
     transaction_type_source text,
+    -- What a direct debit carries, so a debit is tied to its creditor and never paid a second time.
+    creditor_id text,
+    mandate_reference text,
     category_id uuid references public.categories(id),
     category_source text,
     -- Deliberately expected to have no receipt, with the rule that said so.
@@ -1905,11 +1994,97 @@ commit;
 
 begin;
 
+-- A brokered sale, from which one commission invoice per paying party is drafted.
+create table if not exists public.deals (
+    id uuid primary key default gen_random_uuid(),
+    company_id uuid references public.companies(id),
+    property_id uuid references public.properties(id),
+    property_label text,
+    source text not null default 'app',
+    external_id text,
+    status text not null default 'incomplete',
+    notarised_on date,
+    purchase_price numeric(14, 2),
+    vat_rate numeric(5, 2) not null default 19.00,
+    acquired_by uuid references public.app_users(id),
+    handled_by uuid references public.app_users(id),
+    -- What a broker's bonus depends on, ticked by the broker or read from the CRM.
+    own_lead boolean not null default false,
+    from_viewing boolean not null default false,
+    costs_closed_at timestamptz,
+    ready_for_bookkeeping_at timestamptz,
+    referrer_customer_id uuid references public.customers(id),
+    note text,
+    approved_by uuid references public.app_users(id),
+    approved_at timestamptz,
+    created_by text,
+    created_at timestamptz not null default now(),
+    updated_at timestamptz not null default now(),
+    deleted_at timestamptz,
+    deleted_by text,
+    delete_reason text,
+    constraint deals_status_known
+        check (status in ('incomplete', 'ready', 'approved', 'invoiced', 'cancelled')),
+    constraint deals_purchase_price_positive check (purchase_price is null or purchase_price > 0),
+    constraint deals_approval_complete check ((approved_by is null) = (approved_at is null))
+);
+
+create unique index if not exists deals_source_external_id on public.deals (source, external_id)
+    where external_id is not null;
+create index if not exists deals_company on public.deals (company_id) where deleted_at is null;
+
+drop trigger if exists deals_touch on public.deals;
+create trigger deals_touch before update on public.deals
+    for each row execute function public.set_updated_at();
+
+-- What one side of a deal pays: a net percentage of the price, or a fixed net amount.
+create table if not exists public.deal_sides (
+    id uuid primary key default gen_random_uuid(),
+    deal_id uuid not null references public.deals(id) on delete cascade,
+    side text not null,
+    fee_kind text not null,
+    fee_net_rate numeric(6, 3),
+    fee_net_amount numeric(14, 2),
+    discount_gross numeric(14, 2) not null default 0,
+    discount_reason text,
+    created_at timestamptz not null default now(),
+    updated_at timestamptz not null default now(),
+    unique (deal_id, side),
+    constraint deal_sides_side_known check (side in ('buyer', 'seller')),
+    -- The fee may still be missing on an incomplete deal, but never belong to the other kind.
+    constraint deal_sides_fee_shape check (
+        (fee_kind = 'percent' and fee_net_amount is null and (fee_net_rate is null or fee_net_rate > 0))
+        or (fee_kind = 'fixed' and fee_net_rate is null and (fee_net_amount is null or fee_net_amount > 0))),
+    constraint deal_sides_discount_not_negative check (discount_gross >= 0)
+);
+
+drop trigger if exists deal_sides_touch on public.deal_sides;
+create trigger deal_sides_touch before update on public.deal_sides
+    for each row execute function public.set_updated_at();
+
+-- Who pays on a side. No share on any party of a side means they split it equally.
+create table if not exists public.deal_parties (
+    id uuid primary key default gen_random_uuid(),
+    deal_side_id uuid not null references public.deal_sides(id) on delete cascade,
+    customer_id uuid not null references public.customers(id),
+    share_percent numeric(6, 3),
+    position integer not null default 0,
+    created_at timestamptz not null default now(),
+    unique (deal_side_id, customer_id),
+    constraint deal_parties_share_in_range
+        check (share_percent is null or (share_percent > 0 and share_percent <= 100))
+);
+
 -- What this business billed, as opposed to what it was billed.
 create table if not exists public.outgoing_invoices (
     id uuid primary key default gen_random_uuid(),
     company_id uuid references public.companies(id),
     customer_id uuid references public.customers(id),
+    deal_party_id uuid references public.deal_parties(id),
+    -- Null is an ordinary invoice. A referral credit is paid out to whoever recommended the customer,
+    -- so it names the deal that earned it rather than another invoice.
+    kind text,
+    deal_id uuid references public.deals(id),
     invoice_number text,
     status text not null default 'draft',
     status_source text,
@@ -1923,6 +2098,11 @@ create table if not exists public.outgoing_invoices (
     -- How far the chasing has gone, and when the next step is due.
     reminder_level integer not null default 0,
     reminder_due_date date,
+    -- When the money is expected, where there is no due date: a seller pays once the purchase price
+    -- has reached them, weeks after the invoice.
+    expected_payment_on date,
+    sent_at timestamptz,
+    accounting_external_id text,
     handed_over_at timestamptz,
     handover_batch_id uuid references public.handover_batches(id),
     last_synced_at timestamptz,
@@ -1934,11 +2114,16 @@ create table if not exists public.outgoing_invoices (
     delete_reason text,
     constraint outgoing_invoices_status_known
         check (status in ('draft', 'sent', 'paid', 'overdue', 'cancelled')),
+    constraint outgoing_invoices_kind_known
+        check (kind is null or kind in ('commission', 'coaching', 'referral_credit')),
     constraint outgoing_invoices_reminder_level_sane check (reminder_level >= 0)
 );
 
 create index if not exists outgoing_invoices_company on public.outgoing_invoices (company_id)
     where deleted_at is null;
+create unique index if not exists outgoing_invoices_accounting_external_id
+    on public.outgoing_invoices (accounting_external_id)
+    where accounting_external_id is not null and deleted_at is null;
 
 create table if not exists public.outgoing_invoice_files (
     id uuid primary key default gen_random_uuid(),
@@ -1949,6 +2134,9 @@ create table if not exists public.outgoing_invoice_files (
     storage_bucket text,
     storage_path text,
     checksum_sha256 text,
+    -- Where the filed copy sits, when it was filed to a drive as well.
+    external_id text,
+    web_url text,
     created_by text,
     created_at timestamptz not null default now()
 );
@@ -2209,6 +2397,53 @@ $$;
 revoke execute on function public.has_company_access(uuid) from public, anon;
 grant execute on function public.has_company_access(uuid) to authenticated;
 
+create or replace function public.current_crm_external_id() returns text
+language sql stable security definer set search_path to 'public'
+as $$
+  select crm_external_id from public.app_users where id = public.current_app_user_id();
+$$;
+
+create or replace function public.owns_deal(p_deal_id uuid) returns boolean
+language sql stable security definer set search_path to 'public'
+as $$
+  select exists (
+    select 1
+      from public.deals d
+      left join public.properties p on p.id = d.property_id
+     where d.id = p_deal_id
+       and d.deleted_at is null
+       and (d.acquired_by = public.current_app_user_id()
+            or d.handled_by = public.current_app_user_id()
+            or (p.broker_external_id is not null
+                and p.broker_external_id = public.current_crm_external_id()))
+  );
+$$;
+
+create or replace function public.owns_deal_side(p_side_id uuid) returns boolean
+language sql stable security definer set search_path to 'public'
+as $$
+  select exists (select 1 from public.deal_sides s
+                  where s.id = p_side_id and public.owns_deal(s.deal_id));
+$$;
+
+create or replace function public.owns_customer_through_a_deal(p_customer_id uuid) returns boolean
+language sql stable security definer set search_path to 'public'
+as $$
+  select exists (select 1
+                   from public.deal_parties dp
+                   join public.deal_sides s on s.id = dp.deal_side_id
+                  where dp.customer_id = p_customer_id and public.owns_deal(s.deal_id));
+$$;
+
+revoke execute on function public.current_crm_external_id() from public, anon;
+revoke execute on function public.owns_deal(uuid) from public, anon;
+revoke execute on function public.owns_deal_side(uuid) from public, anon;
+revoke execute on function public.owns_customer_through_a_deal(uuid) from public, anon;
+grant execute on function public.current_crm_external_id() to authenticated;
+grant execute on function public.owns_deal(uuid) to authenticated;
+grant execute on function public.owns_deal_side(uuid) to authenticated;
+grant execute on function public.owns_customer_through_a_deal(uuid) to authenticated;
+
 -- An administering role holds everything, so a client can never lock themselves out of their own
 -- data by mis-editing a role. It does NOT hold what this client has switched off: a feature that is
 -- off is off for everybody, which is the difference between a hidden screen and a feature a client
@@ -2257,9 +2492,9 @@ begin
                 'categories', 'category_aliases', 'entity_aliases', 'vat_rates']),
             ('documents.read', 'documents.write', array[
                 'documents', 'document_files', 'document_history', 'document_line_items',
-                'document_taxes', 'document_bank_accounts', 'outgoing_invoices',
+                'document_taxes', 'document_bank_accounts', 'document_links', 'outgoing_invoices',
                 'outgoing_invoice_files', 'outgoing_invoice_transaction_matches',
-                'manual_bookings']),
+                'manual_bookings', 'deals', 'deal_sides', 'deal_parties']),
             ('bank.read', 'bank.write', array[
                 'bank_accounts', 'bank_connections', 'bank_transactions', 'bank_providers',
                 'bank_sync_logs', 'document_transaction_matches', 'open_item_whitelist_rules']),
@@ -2270,7 +2505,7 @@ begin
             ('documents.read', 'settings.manage', array[
                 'channels', 'channel_folders', 'channel_state', 'read_cursors',
                 'imported_items', 'pipeline_runs', 'processing_log', 'ai_usage',
-                'ingest_exclusions', 'filing_placements', 'filename_settings',
+                'ingest_exclusions', 'filing_placements', 'filing_attempts', 'filename_settings',
                 'matching_settings', 'tenant_settings', 'tenant_settings_history',
                 'notification_channels', 'notification_target_kinds',
                 'notification_dispatch_log', 'assistant_usage'])
@@ -2299,7 +2534,8 @@ declare
     t text;
 begin
     foreach t in array array['documents', 'bank_accounts', 'bank_transactions',
-                             'outgoing_invoices', 'manual_bookings', 'payment_orders'] loop
+                             'outgoing_invoices', 'manual_bookings', 'payment_orders',
+                             'deals'] loop
         execute format('drop policy if exists %I on public.%I', t || '_company_scope', t);
         execute format(
             'create policy %I on public.%I as restrictive for all to authenticated using (public.has_company_access(company_id)) with check (public.has_company_access(company_id))',
@@ -2307,6 +2543,30 @@ begin
     end loop;
 end
 $$;
+
+-- What the CRM says is a person's own, whatever their role may read: the properties they are the
+-- broker of, the sales those belong to, and the customers on them. Read only, and added to what a
+-- role already grants, so it widens nothing for anyone who may read everything.
+drop policy if exists properties_own_broker_read on public.properties;
+create policy properties_own_broker_read on public.properties for select to authenticated
+    using (deleted_at is null and broker_external_id is not null
+           and broker_external_id = public.current_crm_external_id());
+
+drop policy if exists deals_own_read on public.deals;
+create policy deals_own_read on public.deals for select to authenticated
+    using (public.owns_deal(id));
+
+drop policy if exists deal_sides_own_read on public.deal_sides;
+create policy deal_sides_own_read on public.deal_sides for select to authenticated
+    using (public.owns_deal(deal_id));
+
+drop policy if exists deal_parties_own_read on public.deal_parties;
+create policy deal_parties_own_read on public.deal_parties for select to authenticated
+    using (public.owns_deal_side(deal_side_id));
+
+drop policy if exists customers_own_deals_read on public.customers;
+create policy customers_own_deals_read on public.customers for select to authenticated
+    using (public.owns_customer_through_a_deal(id));
 
 -- A person's own rows, regardless of capability: their notification settings, their tour progress,
 -- and what was sent to them.
@@ -2809,6 +3069,23 @@ CREATE OR REPLACE FUNCTION public.approval_rule_specificity(p_supplier_id uuid, 
     + (case when p_company_id  is not null then 1 else 0 end);
 $$;
 
+-- Runs as the caller, so the deals policies decide who may approve. Only a complete deal can be.
+CREATE OR REPLACE FUNCTION public.approve_deal(p_deal_id uuid) RETURNS void
+    LANGUAGE plpgsql SECURITY INVOKER
+    SET search_path TO 'public'
+    AS $$
+begin
+  update public.deals
+     set status = 'approved', approved_by = public.current_app_user_id(), approved_at = now()
+   where id = p_deal_id and status = 'ready' and deleted_at is null;
+  if not found then
+    raise exception 'approve_deal: deal % is not ready to approve', p_deal_id
+      using errcode = 'check_violation';
+  end if;
+end;
+$$;
+
+
 CREATE OR REPLACE FUNCTION public.assignment_rule_preview(p_rule uuid) RETURNS TABLE(matches bigint, would_change bigint)
     LANGUAGE plpgsql STABLE
     SET search_path TO 'public'
@@ -3087,7 +3364,7 @@ begin
       using errcode = 'check_violation';
   end if;
 
-  select abs(amount_gross) into v_inv_gross
+  select abs(public.amount_paid_out(amount_gross, tip_amount)) into v_inv_gross
     from public.documents where id = new.document_id;
   select coalesce(sum(amount_matched), 0) into v_inv_other
     from public.document_transaction_matches
@@ -3434,6 +3711,19 @@ CREATE OR REPLACE FUNCTION public.invoice_is_fully_covered(p_gross numeric, p_ma
          end;
 $$;
 
+CREATE OR REPLACE FUNCTION public.is_a_reminder(p_document uuid) RETURNS boolean
+    LANGUAGE sql STABLE
+    SET search_path TO 'public'
+    AS $$
+  select exists (select 1 from public.document_links where document_id = p_document and kind = 'reminder_of');
+$$;
+
+CREATE OR REPLACE FUNCTION public.amount_paid_out(p_gross numeric, p_tip numeric) RETURNS numeric
+    LANGUAGE sql IMMUTABLE
+    AS $$
+  select case when p_gross > 0 then p_gross + coalesce(p_tip, 0) else p_gross end;
+$$;
+
 CREATE OR REPLACE FUNCTION public.invoice_matched_sum(p_invoice uuid) RETURNS numeric
     LANGUAGE sql STABLE
     SET search_path TO 'public'
@@ -3454,9 +3744,9 @@ CREATE OR REPLACE FUNCTION public.invoice_queue_kpis(p_today date DEFAULT CURREN
       union all
       select 'missing_assignment'::text, count(*), coalesce(sum(amount_gross), 0) from base where company_id is null
       union all
-      select 'ready_for_payment'::text, count(*), coalesce(sum(amount_gross), 0) from base  where workflow_status in ('approved_first', 'approved_final')    and paid_at is null
+      select 'ready_for_payment'::text, count(*), coalesce(sum(amount_gross), 0) from base  where workflow_status in ('approved_first', 'approved_final')    and paid_at is null and not public.is_a_reminder(id)
       union all
-      select 'pay_now'::text, count(*), coalesce(sum(amount_gross), 0) from base where due_date <= p_today and paid_at is null and not public.is_direct_debit(payment_method)
+      select 'pay_now'::text, count(*), coalesce(sum(amount_gross), 0) from base where due_date <= p_today and paid_at is null and not public.is_direct_debit(payment_method) and not public.is_a_reminder(id)
       union all
       select 'completed'::text, count(*), coalesce(sum(amount_gross), 0) from base where paid_at is not null or workflow_status = 'closed';
     $$;
@@ -3938,6 +4228,33 @@ begin
   returning id into v_rule_id;
   return v_rule_id;
 end $$;
+
+-- Matches people to the CRM's brokers by email. Never overwrites a link somebody set, and skips an
+-- email the CRM gives to two brokers or a broker who is already linked to somebody else.
+CREATE OR REPLACE FUNCTION public.link_brokers_to_users() RETURNS integer
+    LANGUAGE plpgsql SECURITY DEFINER
+    SET search_path TO 'public'
+    AS $$
+declare
+  v_linked integer;
+begin
+  update public.app_users u
+     set crm_external_id = b.broker_external_id
+    from (select lower(broker_email) as email, min(broker_external_id) as broker_external_id
+            from public.properties
+           where broker_email is not null and broker_external_id is not null and deleted_at is null
+           group by lower(broker_email)
+          having count(distinct broker_external_id) = 1) b
+   where lower(u.email) = b.email
+     and u.crm_external_id is null
+     and not exists (select 1 from public.app_users o where o.crm_external_id = b.broker_external_id);
+  get diagnostics v_linked = row_count;
+  return v_linked;
+end;
+$$;
+
+revoke execute on function public.link_brokers_to_users() from public, anon, authenticated;
+grant execute on function public.link_brokers_to_users() to service_role;
 
 CREATE OR REPLACE FUNCTION public.link_invoice_transaction(p_invoice_id uuid, p_transaction_id uuid, p_score numeric DEFAULT NULL::numeric, p_reasons jsonb DEFAULT NULL::jsonb, p_amount numeric DEFAULT NULL::numeric, p_difference_reason text DEFAULT NULL::text) RETURNS uuid
     LANGUAGE plpgsql SECURITY DEFINER
@@ -5232,6 +5549,69 @@ CREATE OR REPLACE FUNCTION public.run_now_enabled() RETURNS boolean
                        from public.tenant_settings where single_row), false)
 $$;
 
+-- Saves a deal with its sides and payers in one transaction, as the caller. Any edit withdraws an
+-- approval, because what was approved is no longer what is saved.
+CREATE OR REPLACE FUNCTION public.save_deal(p_deal_id uuid, p_deal jsonb, p_sides jsonb, p_status text) RETURNS void
+    LANGUAGE plpgsql SECURITY INVOKER
+    SET search_path TO 'public'
+    AS $$
+declare
+  v_side jsonb;
+  v_side_id uuid;
+  v_party jsonb;
+  v_position integer;
+begin
+  if p_status not in ('incomplete', 'ready') then
+    raise exception 'save_deal: a saved deal is incomplete or ready, not %', p_status
+      using errcode = 'check_violation';
+  end if;
+
+  update public.deals
+     set company_id = nullif(p_deal->>'company_id', '')::uuid,
+         notarised_on = nullif(p_deal->>'notarised_on', '')::date,
+         purchase_price = (p_deal->>'purchase_price')::numeric,
+         vat_rate = coalesce((p_deal->>'vat_rate')::numeric, 19),
+         note = nullif(p_deal->>'note', ''),
+         status = p_status,
+         approved_by = null,
+         approved_at = null
+   where id = p_deal_id and deleted_at is null;
+  if not found then
+    raise exception 'save_deal: deal % not found', p_deal_id using errcode = 'no_data_found';
+  end if;
+
+  delete from public.deal_sides
+   where deal_id = p_deal_id
+     and side not in (select value->>'side' from jsonb_array_elements(p_sides));
+
+  for v_side in select value from jsonb_array_elements(p_sides) loop
+    insert into public.deal_sides
+        (deal_id, side, fee_kind, fee_net_rate, fee_net_amount, discount_gross, discount_reason)
+    values
+        (p_deal_id, v_side->>'side', v_side->>'fee_kind', (v_side->>'fee_net_rate')::numeric,
+         (v_side->>'fee_net_amount')::numeric, coalesce((v_side->>'discount_gross')::numeric, 0),
+         nullif(v_side->>'discount_reason', ''))
+    on conflict (deal_id, side) do update
+       set fee_kind = excluded.fee_kind,
+           fee_net_rate = excluded.fee_net_rate,
+           fee_net_amount = excluded.fee_net_amount,
+           discount_gross = excluded.discount_gross,
+           discount_reason = excluded.discount_reason
+    returning id into v_side_id;
+
+    delete from public.deal_parties where deal_side_id = v_side_id;
+    v_position := 0;
+    for v_party in select value from jsonb_array_elements(coalesce(v_side->'parties', '[]'::jsonb)) loop
+      insert into public.deal_parties (deal_side_id, customer_id, share_percent, position)
+      values (v_side_id, (v_party->>'customer_id')::uuid, (v_party->>'share_percent')::numeric,
+              v_position);
+      v_position := v_position + 1;
+    end loop;
+  end loop;
+end;
+$$;
+
+
 CREATE OR REPLACE FUNCTION public.send_notification(p_recipient uuid, p_note text DEFAULT NULL::text, p_target_kind text DEFAULT NULL::text, p_target_id text DEFAULT NULL::text, p_target_path text DEFAULT NULL::text) RETURNS bigint
     LANGUAGE plpgsql SECURITY DEFINER
     SET search_path TO 'public'
@@ -6244,16 +6624,17 @@ create or replace view public.v_open_items with (security_invoker = true) as
 select d.*,
        coalesce(m.matched_sum, 0) as matched_sum,
        public.invoice_is_fully_covered(
-           d.amount_gross,
-           case when d.paid_at is not null then abs(coalesce(d.amount_gross, 0))
+           public.amount_paid_out(d.amount_gross, d.tip_amount),
+           case when d.paid_at is not null then abs(coalesce(public.amount_paid_out(d.amount_gross, d.tip_amount), 0))
                 else coalesce(m.matched_sum, 0) end) as is_covered,
        -- One word naming what stops this being chased, for the app to translate. Null means nothing
        -- does, which is the normal case for something genuinely open.
        case
          when public.invoice_is_fully_covered(
-                d.amount_gross,
-                case when d.paid_at is not null then abs(coalesce(d.amount_gross, 0))
+                public.amount_paid_out(d.amount_gross, d.tip_amount),
+                case when d.paid_at is not null then abs(coalesce(public.amount_paid_out(d.amount_gross, d.tip_amount), 0))
                      else coalesce(m.matched_sum, 0) end) then null
+         when public.is_a_reminder(d.id) then 'reminder_letter'
          when coalesce(d.amount_gross, 0) = 0 then 'no_amount'
          when d.amount_gross < 0 then 'credit_note'
          when coalesce(d.already_paid, false) then 'paid_privately'
@@ -6261,11 +6642,12 @@ select d.*,
        end as open_blocker,
        -- The one flag the open items screen filters on.
        not public.invoice_is_fully_covered(
-             d.amount_gross,
-             case when d.paid_at is not null then abs(coalesce(d.amount_gross, 0))
+             public.amount_paid_out(d.amount_gross, d.tip_amount),
+             case when d.paid_at is not null then abs(coalesce(public.amount_paid_out(d.amount_gross, d.tip_amount), 0))
                   else coalesce(m.matched_sum, 0) end)
          and coalesce(d.amount_gross, 0) > 0
-         and coalesce(d.already_paid, false) = false as is_open
+         and coalesce(d.already_paid, false) = false
+         and not public.is_a_reminder(d.id) as is_open
   from public.documents d
   left join (
         select document_id, sum(coalesce(amount_matched, 0)) as matched_sum
@@ -6623,7 +7005,7 @@ begin
         'documents', 'suppliers', 'customers', 'outgoing_invoices', 'manual_bookings',
         'approval_rules', 'assignment_rules', 'ingest_exclusions', 'open_item_whitelist_rules',
         'categories', 'properties', 'companies', 'approvers', 'supplier_bank_accounts',
-        'entity_aliases', 'vat_rates', 'property_companies'] loop
+        'entity_aliases', 'vat_rates', 'property_companies', 'deals'] loop
         execute format('drop trigger if exists trash_require_delete_reason on public.%I', t);
         execute format(
             'create trigger trash_require_delete_reason before update on public.%I '
@@ -6909,5 +7291,330 @@ insert into public.schema_migrations (id) values
   ('0004_documents'),
   ('0005_credentials')
 on conflict (id) do nothing;
+
+commit;
+
+-- ===================================================================== 0017_broker_commissions.sql
+
+-- A broker enters their own commissions, and an administrator reviews and approves them.
+--
+-- Everything here is inert until a role holds `deals.submit`, which no role does by default: the
+-- permission is off in the catalogue, and a policy that asks for it denies everyone who lacks it.
+-- Re-runnable, so the same file builds a new database and upgrades one that already exists.
+--
+-- A person holding `deals.submit` may create a deal on a property the CRM says is theirs, and edit it
+-- while it is incomplete or ready. They may not approve it, change what it is about to somebody
+-- else's property, or touch it once it is approved: approving is `documents.write`, as before.
+
+begin;
+
+-- Who created a customer, so a person can read back the customers they entered and nobody else's.
+alter table public.customers
+    add column if not exists created_by uuid references public.app_users(id)
+        default public.current_app_user_id();
+
+create or replace function public.is_own_property(p_property_id uuid) returns boolean
+language sql stable security definer set search_path to 'public'
+as $$
+  select exists (
+    select 1 from public.properties p
+     where p.id = p_property_id
+       and p.deleted_at is null
+       and p.broker_external_id is not null
+       and p.broker_external_id = public.current_crm_external_id()
+  );
+$$;
+
+create or replace function public.may_edit_own_deal(p_deal_id uuid) returns boolean
+language sql stable security definer set search_path to 'public'
+as $$
+  select public.has_permission('deals.submit')
+     and exists (
+       select 1 from public.deals d
+        where d.id = p_deal_id
+          and d.deleted_at is null
+          and d.status in ('incomplete', 'ready')
+          and public.owns_deal(d.id)
+     );
+$$;
+
+create or replace function public.may_edit_own_deal_side(p_side_id uuid) returns boolean
+language sql stable security definer set search_path to 'public'
+as $$
+  select exists (select 1 from public.deal_sides s
+                  where s.id = p_side_id and public.may_edit_own_deal(s.deal_id));
+$$;
+
+revoke execute on function public.is_own_property(uuid) from public, anon;
+revoke execute on function public.may_edit_own_deal(uuid) from public, anon;
+revoke execute on function public.may_edit_own_deal_side(uuid) from public, anon;
+grant execute on function public.is_own_property(uuid) to authenticated;
+grant execute on function public.may_edit_own_deal(uuid) to authenticated;
+grant execute on function public.may_edit_own_deal_side(uuid) to authenticated;
+
+drop policy if exists deals_submit_insert on public.deals;
+create policy deals_submit_insert on public.deals for insert to authenticated
+    with check (public.has_permission('deals.submit')
+                and public.is_own_property(property_id)
+                and status = 'incomplete'
+                and approved_by is null and approved_at is null
+                and deleted_at is null);
+
+-- Read from the row's own property, not through a function that looks the deal up again: a row being
+-- inserted cannot be seen by a second query in the same statement, so the insert would be refused
+-- when it tries to hand the new row back.
+drop policy if exists deals_submit_read on public.deals;
+create policy deals_submit_read on public.deals for select to authenticated
+    using (public.has_permission('deals.submit') and public.is_own_property(property_id));
+
+drop policy if exists deals_submit_update on public.deals;
+create policy deals_submit_update on public.deals for update to authenticated
+    using (public.may_edit_own_deal(id))
+    with check (public.has_permission('deals.submit')
+                and public.is_own_property(property_id)
+                and status in ('incomplete', 'ready')
+                and approved_by is null and approved_at is null
+                and deleted_at is null);
+
+drop policy if exists deal_sides_submit on public.deal_sides;
+create policy deal_sides_submit on public.deal_sides for all to authenticated
+    using (public.may_edit_own_deal(deal_id))
+    with check (public.may_edit_own_deal(deal_id));
+
+-- A payer must be a customer the person can themselves see, so somebody else's customer cannot be
+-- attached by knowing its id.
+drop policy if exists deal_parties_submit on public.deal_parties;
+create policy deal_parties_submit on public.deal_parties for all to authenticated
+    using (public.may_edit_own_deal_side(deal_side_id))
+    with check (public.may_edit_own_deal_side(deal_side_id)
+                and exists (select 1 from public.customers c where c.id = customer_id));
+
+drop policy if exists customers_submit_insert on public.customers;
+create policy customers_submit_insert on public.customers for insert to authenticated
+    with check (public.has_permission('deals.submit')
+                and source = 'app'
+                and created_by = public.current_app_user_id());
+
+drop policy if exists customers_submit_read on public.customers;
+create policy customers_submit_read on public.customers for select to authenticated
+    using (public.has_permission('deals.submit')
+           and created_by = public.current_app_user_id());
+
+commit;
+
+-- ===================================================================== 0018_broker_bonuses.sql
+
+-- A broker's bonus claims, entered by the broker and approved by an administrator.
+--
+-- Inert until a role holds `bonuses.submit` or `bonuses.review`, which no role does by default.
+-- Re-runnable, so the same file builds a new database and upgrades one that already exists.
+
+begin;
+
+create table if not exists public.broker_bonuses (
+    id uuid primary key default gen_random_uuid(),
+    broker_user_id uuid not null references public.app_users(id) default public.current_app_user_id(),
+    bonus_type text not null,
+    earned_on date not null,
+    amount numeric(12, 2) not null,
+    property_id uuid references public.properties(id),
+    note text,
+    status text not null default 'submitted',
+    reviewed_by uuid references public.app_users(id),
+    reviewed_at timestamptz,
+    review_note text,
+    created_at timestamptz not null default now(),
+    updated_at timestamptz not null default now(),
+    constraint broker_bonuses_type_known check (bonus_type in (
+        'notary', 'google_review', 'viewing_new_job', 'company_lead_share',
+        'own_job_share', 'financing_referral', 'other')),
+    constraint broker_bonuses_status_known check (status in ('submitted', 'approved', 'rejected', 'paid')),
+    constraint broker_bonuses_amount_positive check (amount > 0),
+    constraint broker_bonuses_review_complete check ((reviewed_by is null) = (reviewed_at is null))
+);
+
+create index if not exists broker_bonuses_broker on public.broker_bonuses (broker_user_id, earned_on desc);
+create index if not exists broker_bonuses_status on public.broker_bonuses (status);
+
+drop trigger if exists broker_bonuses_touch on public.broker_bonuses;
+create trigger broker_bonuses_touch before update on public.broker_bonuses
+    for each row execute function public.set_updated_at();
+
+create or replace function public.stamp_bonus_review() returns trigger
+language plpgsql set search_path to 'public'
+as $$
+begin
+  if new.status <> old.status and new.status <> 'submitted' then
+    new.reviewed_by := public.current_app_user_id();
+    new.reviewed_at := now();
+  end if;
+  return new;
+end;
+$$;
+
+drop trigger if exists broker_bonuses_stamp_review on public.broker_bonuses;
+create trigger broker_bonuses_stamp_review before update on public.broker_bonuses
+    for each row execute function public.stamp_bonus_review();
+
+alter table public.broker_bonuses enable row level security;
+
+drop policy if exists broker_bonuses_review on public.broker_bonuses;
+create policy broker_bonuses_review on public.broker_bonuses for all to authenticated
+    using (public.has_permission('bonuses.review'))
+    with check (public.has_permission('bonuses.review'));
+
+drop policy if exists broker_bonuses_own_read on public.broker_bonuses;
+create policy broker_bonuses_own_read on public.broker_bonuses for select to authenticated
+    using (public.has_permission('bonuses.submit') and broker_user_id = public.current_app_user_id());
+
+drop policy if exists broker_bonuses_own_insert on public.broker_bonuses;
+create policy broker_bonuses_own_insert on public.broker_bonuses for insert to authenticated
+    with check (public.has_permission('bonuses.submit')
+                and broker_user_id = public.current_app_user_id()
+                and status = 'submitted'
+                and reviewed_by is null and reviewed_at is null);
+
+drop policy if exists broker_bonuses_own_update on public.broker_bonuses;
+create policy broker_bonuses_own_update on public.broker_bonuses for update to authenticated
+    using (public.has_permission('bonuses.submit')
+           and broker_user_id = public.current_app_user_id() and status = 'submitted')
+    with check (public.has_permission('bonuses.submit')
+                and broker_user_id = public.current_app_user_id() and status = 'submitted'
+                and reviewed_by is null and reviewed_at is null);
+
+drop policy if exists broker_bonuses_own_delete on public.broker_bonuses;
+create policy broker_bonuses_own_delete on public.broker_bonuses for delete to authenticated
+    using (public.has_permission('bonuses.submit')
+           and broker_user_id = public.current_app_user_id() and status = 'submitted');
+
+grant select, insert, update, delete on public.broker_bonuses to authenticated;
+
+commit;
+
+-- ===================================================================== 0019_deals_from_crm.sql
+
+-- A property the CRM marks as sold opens a deal, for the broker to complete and an administrator to approve.
+--
+-- Runs after each CRM sync. Inert until `deals.from_crm` is switched on. The CRM's own sold date is
+-- usually empty, so what counts is the moment the sync saw the status become sold, and only a change seen
+-- after the switch opens a deal: the CRM's history never becomes a pile of deals. Re-runnable.
+
+begin;
+
+alter table public.properties add column if not exists became_sold_at timestamptz;
+
+create or replace function public.stamp_became_sold() returns trigger
+language plpgsql set search_path to 'public'
+as $$
+begin
+  if new.crm_status = 'Verkauft' and old.crm_status is distinct from 'Verkauft' then
+    new.became_sold_at := now();
+  end if;
+  return new;
+end;
+$$;
+
+drop trigger if exists properties_stamp_became_sold on public.properties;
+create trigger properties_stamp_became_sold before update of crm_status on public.properties
+    for each row execute function public.stamp_became_sold();
+
+create or replace function public.crm_rate(p_text text) returns numeric
+language sql immutable
+as $$ select case when p_text ~ '^[0-9]+(\.[0-9]+)?$' then p_text::numeric end $$;
+
+create or replace function public.crm_net_rate(p_rate numeric, p_vat_rate numeric) returns numeric
+language sql immutable
+as $$
+  select case
+    when p_rate is null or p_rate <= 0 then null
+    when abs(p_rate / (1 + p_vat_rate / 100) * 2 - round(p_rate / (1 + p_vat_rate / 100) * 2)) < 0.002
+      then round(p_rate / (1 + p_vat_rate / 100) * 2) / 2
+    else p_rate
+  end
+$$;
+
+create or replace function public.create_deals_for_sold_properties(p_sold_status text default 'Verkauft')
+returns integer
+language plpgsql security definer set search_path to 'public'
+as $$
+declare
+  v_switched_on timestamptz;
+  v_created integer := 0;
+  v_deal record;
+  v_recipient uuid;
+begin
+  if not exists (select 1 from public.live_features() f where f.key = 'deals.from_crm') then
+    return 0;
+  end if;
+
+  select updated_at into v_switched_on
+    from public.feature_settings where feature_key = 'deals.from_crm' and enabled;
+  if v_switched_on is null then
+    return 0;
+  end if;
+
+  for v_deal in
+    with opened as (
+      insert into public.deals (
+          company_id, property_id, property_label, source, external_id, status,
+          notarised_on, purchase_price, acquired_by, handled_by, created_by)
+      select (select c.id from public.companies c where c.deleted_at is null order by c.created_at limit 1),
+             p.id,
+             concat_ws(', ', coalesce(p.name, p.code), p.address),
+             p.source, p.external_id, 'incomplete',
+             p.sold_on, nullif(p.sold_price, 0),
+             b.id, b.id, 'crm'
+        from public.properties p
+        left join public.app_users b
+               on b.crm_external_id = p.broker_external_id and b.is_active
+       where p.deleted_at is null
+         and p.crm_status = p_sold_status
+         and p.became_sold_at >= v_switched_on
+         and p.external_id is not null
+      on conflict (source, external_id) where external_id is not null do nothing
+      returning id, property_id, property_label, acquired_by
+    )
+    select * from opened
+  loop
+    v_created := v_created + 1;
+
+    insert into public.deal_sides (deal_id, side, fee_kind, fee_net_rate)
+    select v_deal.id, side.name, 'percent',
+           public.crm_net_rate(side.gross_rate, d.vat_rate)
+      from public.deals d
+      join public.properties p on p.id = v_deal.property_id
+      cross join lateral (values
+        ('buyer',  public.crm_rate(p.crm_data ->> 'external_commission_percentage')),
+        ('seller', public.crm_rate(p.crm_data ->> 'internal_commission_percentage'))
+      ) as side(name, gross_rate)
+     where d.id = v_deal.id;
+
+    update public.deals
+       set note = 'Provisionssätze aus dem CRM übernommen (Bruttosätze auf netto umgerechnet). Bitte prüfen.'
+     where id = v_deal.id;
+
+    for v_recipient in
+      select u.id
+        from public.app_users u
+        left join public.roles r on r.id = u.role_id
+       where u.is_active and (u.id = v_deal.acquired_by or (r.administers and r.name <> 'super_admin'))
+    loop
+      insert into public.notification_events (type, payload, recipient_user_id, created_by)
+      values ('ping',
+              jsonb_build_object(
+                'from_name', 'Hub',
+                'note', 'Verkauft im CRM: ' || coalesce(v_deal.property_label, 'Objekt')
+                        || '. Die Provision wartet auf Vervollständigung.',
+                'target', jsonb_build_object('kind', 'page', 'path', '/commission-deals/' || v_deal.id)),
+              v_recipient, 'crm');
+    end loop;
+  end loop;
+
+  return v_created;
+end;
+$$;
+
+revoke execute on function public.create_deals_for_sold_properties(text) from public, anon, authenticated;
+grant execute on function public.create_deals_for_sold_properties(text) to service_role;
 
 commit;

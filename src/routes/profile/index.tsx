@@ -9,6 +9,7 @@ import { pageTitle } from "@/config/brand";
 
 export const Route = createFileRoute("/profile/")({
   head: () => ({ meta: [{ title: pageTitle("Mein Profil") }] }),
+  staticData: { titleKey: "profile" },
   component: ProfileRoute,
 });
 

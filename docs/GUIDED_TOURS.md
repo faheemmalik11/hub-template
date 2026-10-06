@@ -24,9 +24,13 @@ where each step is done, so leaving mid-tour is the ordinary path through it.
 - `src/lib/tour/tours.ts` — every tour spec plus `useTours()`, which maps a route path (or a
   detail-path regex) to a built `TourDefinition`. `useTourLabels()` supplies the button/nav copy.
 - `src/lib/tour/use-tour-seen-store.ts` — reads/writes per-user progress via React Query.
-- `supabase/migrations/20260904130000_tour_progress.sql` — `tour_progress` table
-  (`user_id, tour_id, version, status, last_step`), RLS policy `tour_progress_own_rows`
-  (`user_id = auth.uid()`), and a `touch_tour_progress` trigger. Applied to the live DB.
+- `supabase/schema/0008_workspace.sql`: `tour_progress` table
+  (`user_id, tour_id, version, status, last_step`). In the template `user_id` is the **app user**
+  (`app_users.id`), and the policy `tour_progress_own` in `0010_access.sql` checks
+  `user_id = current_app_user_id()`. `status` allows `open`, `seen`, `done`, `skipped`.
+- `src/lib/tour/use-tour-seen-store.ts` saves `useAuth().appUserId` and stores a completed tour as
+  `done`. Until 01.10.2026 it saved the auth user id and the status `completed`, so every save was
+  refused and every tour reopened on each visit.
 
 ## How a spec works
 

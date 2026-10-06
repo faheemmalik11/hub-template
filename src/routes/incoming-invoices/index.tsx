@@ -135,6 +135,7 @@ import type { DocumentsSearch, NormalizedSearch, PageSize } from "@/lib/document
 export const Route = createFileRoute("/incoming-invoices/")({
   validateSearch,
   head: () => ({ meta: [{ title: pageTitle("Eingangsrechnungen") }] }),
+  staticData: { titleKey: "incomingInvoices" },
   component: IncomingInvoicesPage,
 });
 

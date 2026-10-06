@@ -111,6 +111,9 @@ create table if not exists public.bank_transactions (
     spender_email text,
     transaction_type text,
     transaction_type_source text,
+    -- What a direct debit carries, so a debit is tied to its creditor and never paid a second time.
+    creditor_id text,
+    mandate_reference text,
     category_id uuid references public.categories(id),
     category_source text,
     -- Deliberately expected to have no receipt, with the rule that said so.

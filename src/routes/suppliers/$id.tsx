@@ -120,6 +120,7 @@ const ALL_PERIODS = PERIOD_ALL;
 
 export const Route = createFileRoute("/suppliers/$id")({
   head: () => ({ meta: [{ title: pageTitle("Lieferant") }] }),
+  staticData: { titleKey: "supplier" },
   component: SupplierDetailPage,
 });
 

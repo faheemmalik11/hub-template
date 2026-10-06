@@ -16,6 +16,7 @@ import { pageTitle } from "@/config/brand";
  */
 export const Route = createFileRoute("/datev-handover/")({
   head: () => ({ meta: [{ title: pageTitle("DATEV-Übergabe") }] }),
+  staticData: { titleKey: "datevHandover" },
   component: DatevHandoverRoute,
 });
 

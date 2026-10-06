@@ -30,6 +30,7 @@ import { pageTitle } from "@/config/brand";
 
 export const Route = createFileRoute("/bank-accounts/")({
   head: () => ({ meta: [{ title: pageTitle("Bankkonten") }] }),
+  staticData: { titleKey: "bankAccounts" },
   // ?bank=connected|error is set by the bank-callback Edge Function when the customer
   // returns from the BANKSapi webform. Only those two values mean anything: the param arrives
   // from outside the app, so anything else (a truncated redirect, a hand-edited URL) used to be

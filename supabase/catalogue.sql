@@ -92,6 +92,14 @@ on conflict (key) do update
        label_de = excluded.label_de, label_en = excluded.label_en,
        locked = excluded.locked, sort_order = excluded.sort_order;
 
+-- Pages that ship switched off, for a client whose business has them.
+insert into public.permissions (key, kind, parent_key, category, label_de, label_en, locked, default_enabled, sort_order) values
+  ('page.commission_deals',    'page', 'module.invoices',    'menu', 'Provisionen',                'Commissions',                 false, false, 225)
+on conflict (key) do update
+   set kind = excluded.kind, parent_key = excluded.parent_key, category = excluded.category,
+       label_de = excluded.label_de, label_en = excluded.label_en, locked = excluded.locked,
+       default_enabled = excluded.default_enabled, sort_order = excluded.sort_order;
+
 -- ------------------------------------------------------------- the sections
 --
 -- Bank connections stopped being a screen when it merged into Bankkonten, but it still gates the
@@ -101,6 +109,51 @@ insert into public.permissions (key, kind, parent_key, category, label_de, label
 on conflict (key) do update
    set kind = excluded.kind, parent_key = excluded.parent_key, category = excluded.category,
        label_de = excluded.label_de, label_en = excluded.label_en, sort_order = excluded.sort_order;
+
+-- Properties kept in a CRM: the list becomes the CRM's, with a sync and no manual create. Off until a
+-- client has a CRM and its key in the credentials.
+insert into public.permissions (key, kind, parent_key, category, label_de, label_en, default_enabled, sort_order) values
+  ('properties.crm_sync', 'section', 'page.properties', 'menu', 'Objekte aus dem CRM', 'Properties from the CRM', false, 445)
+on conflict (key) do update
+   set kind = excluded.kind, parent_key = excluded.parent_key, category = excluded.category,
+       label_de = excluded.label_de, label_en = excluded.label_en,
+       default_enabled = excluded.default_enabled, sort_order = excluded.sort_order;
+
+-- Broker bonuses: a broker enters the bonuses they earned and an administrator approves them. Off by
+-- default; see supabase/presets/broker-role.sql.
+insert into public.permissions (key, kind, parent_key, category, label_de, label_en, description_de, description_en, default_enabled, sort_order) values
+  ('page.broker_bonuses', 'page', 'module.invoices', 'menu', 'Boni', 'Bonuses', null, null, false, 936),
+  ('bonuses.submit', 'action', 'page.broker_bonuses', 'documents', 'Eigene Boni erfassen', 'Enter own bonuses',
+   'Eigene Boni mit Datum, Art und Betrag erfassen, bis die Geschäftsführung sie prüft.',
+   'Enter your own bonuses with date, type and amount until an administrator reviews them.', false, 937),
+  ('bonuses.review', 'action', 'page.broker_bonuses', 'documents', 'Boni prüfen', 'Review bonuses',
+   'Die Boni aller Makler sehen, korrigieren, freigeben, ablehnen und als ausgezahlt markieren.',
+   'See every broker''s bonuses, correct, approve, reject and mark them paid.', false, 938)
+on conflict (key) do update
+   set kind = excluded.kind, parent_key = excluded.parent_key, category = excluded.category,
+       label_de = excluded.label_de, label_en = excluded.label_en,
+       description_de = excluded.description_de, description_en = excluded.description_en,
+       default_enabled = excluded.default_enabled, sort_order = excluded.sort_order;
+
+-- A property the CRM marks as sold opens a deal by itself. Off by default.
+insert into public.permissions (key, kind, parent_key, category, label_de, label_en, default_enabled, sort_order) values
+  ('deals.from_crm', 'section', 'page.commission_deals', 'documents', 'Verkäufe aus dem CRM übernehmen', 'Open deals from CRM sales', false, 939)
+on conflict (key) do update
+   set kind = excluded.kind, parent_key = excluded.parent_key, category = excluded.category,
+       label_de = excluded.label_de, label_en = excluded.label_en,
+       default_enabled = excluded.default_enabled, sort_order = excluded.sort_order;
+
+-- A broker entering their own commissions, for an administrator to review and approve. Held by no role
+-- until a client gives it to one; see supabase/presets/broker-role.sql.
+insert into public.permissions (key, kind, parent_key, category, label_de, label_en, description_de, description_en, default_enabled, sort_order) values
+  ('deals.submit', 'action', 'page.commission_deals', 'documents', 'Eigene Provisionen erfassen', 'Enter own commissions',
+   'Verkäufe auf den eigenen Objekten anlegen und bearbeiten, bis die Geschäftsführung sie freigibt. Freigeben lässt sich damit nichts.',
+   'Create and edit deals on your own properties until an administrator approves them. It approves nothing.', false, 935)
+on conflict (key) do update
+   set kind = excluded.kind, parent_key = excluded.parent_key, category = excluded.category,
+       label_de = excluded.label_de, label_en = excluded.label_en,
+       description_de = excluded.description_de, description_en = excluded.description_en,
+       default_enabled = excluded.default_enabled, sort_order = excluded.sort_order;
 
 -- -------------------------------------------------------------- the actions
 --
@@ -183,7 +236,7 @@ select r.id, k
           'invoices.approve', 'invoices.approve_final', 'invoices.override_workflow',
           'master_data.read', 'master_data.write',
           'bank.read', 'bank.write', 'payments.write',
-          'rules.write', 'settings.manage']
+          'rules.write', 'settings.manage', 'bonuses.review']
         when r.name = 'supervisor' then array[
           'documents.read', 'documents.write',
           'invoices.approve', 'invoices.approve_final',
@@ -211,7 +264,9 @@ insert into public.scheduled_jobs (key, edge_function, schedule, enabled, descri
   ('bank_sync', 'bank-sync', '7 * * * *', false,
    'Fetches bank transactions. Seven minutes past the hour, so it does not collide with the ingest.'),
   ('notify_dispatch', 'notify-dispatch', '*/15 * * * *', false,
-   'Sends the notifications that are waiting. Every fifteen minutes.')
+   'Sends the notifications that are waiting. Every fifteen minutes.'),
+  ('propstack_sync', 'propstack-sync', '0 * * * *', false,
+   'Pulls the properties from the CRM and links brokers to their accounts. Hourly.')
 on conflict (key) do update
    set edge_function = excluded.edge_function,
        description = excluded.description;

@@ -47,6 +47,7 @@ const ALL = "__alle";
 
 export const Route = createFileRoute("/customers/")({
   head: () => ({ meta: [{ title: pageTitle("Kunden") }] }),
+  staticData: { titleKey: "customers" },
   component: CustomersPage,
 });
 

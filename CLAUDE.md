@@ -2,6 +2,23 @@
 
 Guidance for Claude Code when working in this repository.
 
+## This branch is van Oepen's Hub (READ BEFORE THE REST)
+
+**On the `commission-invoices` branch, this repository is the Immobilien van Oepen Hub**, decided on
+2026-10-06. It started as the template and now carries one client's brand, roles and screens. So:
+
+- The client's name, logo, colours and wording belong here: `src/config/brand.ts`, the `--brand*`
+  ramp in `src/styles.css`, `public/brand/`, `public/favicon.ico`. The rule below against writing a
+  client's name applies to the template branches, not to this one.
+- Build what van Oepen needs for van Oepen. Do not keep it generic for a template that this branch
+  no longer feeds. Features that were built switched off are switched on for this client in its own
+  database, as data.
+- Changes that every client would want still go to the template, from a clean branch off it.
+- The client's database is its own Supabase project; the Hub's `.env` points at it. The `client-files/`
+  folder of `../van-oepen-communication` holds real customer data and is never committed or copied here.
+
+The rest of this file was written for the template and still describes how the code works.
+
 ## What this repository is (READ FIRST)
 
 **This is the template a new client's Hub is cloned from**, not a client's Hub. It is a copy of the

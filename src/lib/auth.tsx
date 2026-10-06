@@ -25,7 +25,8 @@ import type { Session } from "@supabase/supabase-js";
 import { supabase } from "@/integrations/supabase/client";
 import { TABLE } from "@/config/tables";
 
-export type AppRole = "super_admin" | "admin" | "supervisor" | "assistant";
+export type AppRole =
+  "super_admin" | "admin" | "supervisor" | "assistant" | "broker" | "bookkeeper" | "tax_advisor";
 
 type SessionUser = { email: string; name: string };
 

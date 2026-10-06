@@ -31,6 +31,7 @@ import { errorText } from "@/lib/data/format";
 
 export const Route = createFileRoute("/incoming-invoices/upload")({
   head: () => ({ meta: [{ title: pageTitle("Beleg hochladen") }] }),
+  staticData: { titleKey: "uploadDocument" },
   /**
    * `?fuer=txn:<id>` means the upload started on a bank transaction that has no document.
    *

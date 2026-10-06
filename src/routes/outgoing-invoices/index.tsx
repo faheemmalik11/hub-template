@@ -63,6 +63,7 @@ import { brandVars, pageTitle } from "@/config/brand";
 
 export const Route = createFileRoute("/outgoing-invoices/")({
   head: () => ({ meta: [{ title: pageTitle("Ausgangsrechnungen") }] }),
+  staticData: { titleKey: "outgoingInvoices" },
   component: OutgoingInvoicesPage,
 });
 

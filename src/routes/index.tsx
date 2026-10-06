@@ -16,6 +16,7 @@ import { VolumeChart } from "@/components/home/volume-chart";
 import { useTranslation } from "@/lib/i18n";
 
 export const Route = createFileRoute("/")({
+  staticData: { titleKey: "overview" },
   head: () => ({
     meta: [{ title: pageTitle("Übersicht") }, { name: "description", content: BRAND.description }],
   }),

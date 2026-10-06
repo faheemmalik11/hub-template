@@ -51,6 +51,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Separator } from "@/components/ui/separator";
 import { Switch } from "@/components/ui/switch";
 import { Combobox } from "@/components/ui/combobox";
+import { LinkedDocuments } from "@/components/documents/linked-documents";
 import { PingDialog, PingNotice, usePingRecipients } from "@/components/documents/ping-button";
 import { useShellLeafLabel } from "@/kit/components/shell";
 import {
@@ -3150,6 +3151,8 @@ function DocumentDetail({ doc }: { doc: Document }) {
               </div>
             </div>
           )}
+
+          <LinkedDocuments documentId={doc.id} />
 
           {/* Review box: the checks that did NOT pass, and nothing else. Lives in src/kit so
               the other hub repos render the same card from the same data. */}

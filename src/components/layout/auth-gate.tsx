@@ -145,7 +145,7 @@ function LoginScreen() {
             backgroundSize: "44px 44px",
           }}
         />
-        <Logo variant="white" className="h-7" />
+        <Logo variant="white" className="h-10" />
         <div className="relative max-w-md">
           <p className="font-display text-4xl leading-tight text-white">
             {t("auth.login.panelTitleLine1")}

@@ -35,6 +35,7 @@ import {
 
 export const Route = createFileRoute("/outgoing-invoices/upload")({
   head: () => ({ meta: [{ title: pageTitle("Ausgangsrechnung hochladen") }] }),
+  staticData: { titleKey: "uploadOutgoingInvoice" },
   component: UploadPage,
 });
 

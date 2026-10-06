@@ -140,6 +140,12 @@ export interface PropertiesConfig {
    * hinzufügen". Absent in a Hub whose assignments are not edited on this screen.
    */
   assignmentAction?: (property: PropertyData) => ReactNode;
+  /** The companies card. On unless a Hub says otherwise: a CRM-led client assigns no companies here. */
+  companies?: boolean;
+  /** The section of documents booked to this property. On unless a Hub says otherwise. */
+  bookedDocuments?: boolean;
+  /** Created and updated on the master data card. They are this Hub's row dates and read as the CRM's. */
+  recordDates?: boolean;
 
   /**
    * A field the Hub must collect when a property is CREATED, beyond the shared form.

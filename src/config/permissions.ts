@@ -39,6 +39,8 @@ export const PERMISSIONS = {
   pageProfile: "page.profile",
   pageIncomingInvoices: "page.incoming_invoices",
   pageOutgoingInvoices: "page.outgoing_invoices",
+  pageCommissionDeals: "page.commission_deals",
+  pageBrokerBonuses: "page.broker_bonuses",
   pageManualBookings: "page.manual_bookings",
   pageFileNaming: "page.file_naming",
   pageDocumentSources: "page.document_sources",
@@ -64,6 +66,10 @@ export const PERMISSIONS = {
   pageNotifications: "page.notifications",
   pageActivityLog: "page.activity_log",
   pageTrash: "page.trash",
+  propertiesCrmSync: "properties.crm_sync",
+  dealsSubmit: "deals.submit",
+  bonusesSubmit: "bonuses.submit",
+  bonusesReview: "bonuses.review",
   pageBankConnections: "page.bank_connections",
 
   // Menu groups. Switching one off takes its pages with it.

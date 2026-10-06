@@ -9,6 +9,7 @@ export {
   useDocument,
   useDocumentFile,
   useDocumentHistory,
+  useDocumentLinks,
   useDocuments,
   useDocumentsByProperty,
   useDocumentsBySupplierPages,

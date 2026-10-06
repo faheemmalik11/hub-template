@@ -40,6 +40,8 @@ create table if not exists public.app_users (
     area text,
     covers_all_areas boolean not null default false,
     slack_user_id text,
+    -- Who this person is in the CRM, so they see only what the CRM says is theirs.
+    crm_external_id text,
     notifications_seen_at timestamptz,
     created_by uuid,
     created_at timestamptz not null default now(),
@@ -51,6 +53,8 @@ create table if not exists public.app_users (
 
 create unique index if not exists app_users_email_lower_idx on public.app_users (lower(email));
 create index if not exists app_users_role_id_idx on public.app_users (role_id);
+create unique index if not exists app_users_crm_external_id_idx on public.app_users (crm_external_id)
+    where crm_external_id is not null;
 create unique index if not exists app_users_one_active_per_area on public.app_users (area)
     where area is not null and is_active;
 

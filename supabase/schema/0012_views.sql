@@ -97,16 +97,17 @@ create or replace view public.v_open_items with (security_invoker = true) as
 select d.*,
        coalesce(m.matched_sum, 0) as matched_sum,
        public.invoice_is_fully_covered(
-           d.amount_gross,
-           case when d.paid_at is not null then abs(coalesce(d.amount_gross, 0))
+           public.amount_paid_out(d.amount_gross, d.tip_amount),
+           case when d.paid_at is not null then abs(coalesce(public.amount_paid_out(d.amount_gross, d.tip_amount), 0))
                 else coalesce(m.matched_sum, 0) end) as is_covered,
        -- One word naming what stops this being chased, for the app to translate. Null means nothing
        -- does, which is the normal case for something genuinely open.
        case
          when public.invoice_is_fully_covered(
-                d.amount_gross,
-                case when d.paid_at is not null then abs(coalesce(d.amount_gross, 0))
+                public.amount_paid_out(d.amount_gross, d.tip_amount),
+                case when d.paid_at is not null then abs(coalesce(public.amount_paid_out(d.amount_gross, d.tip_amount), 0))
                      else coalesce(m.matched_sum, 0) end) then null
+         when public.is_a_reminder(d.id) then 'reminder_letter'
          when coalesce(d.amount_gross, 0) = 0 then 'no_amount'
          when d.amount_gross < 0 then 'credit_note'
          when coalesce(d.already_paid, false) then 'paid_privately'
@@ -114,11 +115,12 @@ select d.*,
        end as open_blocker,
        -- The one flag the open items screen filters on.
        not public.invoice_is_fully_covered(
-             d.amount_gross,
-             case when d.paid_at is not null then abs(coalesce(d.amount_gross, 0))
+             public.amount_paid_out(d.amount_gross, d.tip_amount),
+             case when d.paid_at is not null then abs(coalesce(public.amount_paid_out(d.amount_gross, d.tip_amount), 0))
                   else coalesce(m.matched_sum, 0) end)
          and coalesce(d.amount_gross, 0) > 0
-         and coalesce(d.already_paid, false) = false as is_open
+         and coalesce(d.already_paid, false) = false
+         and not public.is_a_reminder(d.id) as is_open
   from public.documents d
   left join (
         select document_id, sum(coalesce(amount_matched, 0)) as matched_sum
