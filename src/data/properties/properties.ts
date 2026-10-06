@@ -7,6 +7,10 @@ import type { Company, Property, PropertyCompany } from "@/lib/data/types";
 
 // `objekte` (Migration 0004) is newer than the generated Database type, so it isn't known to the
 // typed client — reads go through the untyped `sb` cast, like the writes.
+const PROPERTY_COLUMNS =
+  "id, code, name, address, vat_status, filing_folder, drive_folder_id, filing_binding, source, " +
+  "external_id, created_at, updated_at, deleted_at, deleted_by, delete_reason";
+
 export function useProperties() {
   return useQuery({
     queryKey: ["objekte"],
@@ -14,7 +18,7 @@ export function useProperties() {
     queryFn: async (): Promise<Property[]> => {
       const { data, error } = await sb
         .from(TABLE.properties)
-        .select("*")
+        .select(PROPERTY_COLUMNS)
         .order("code", { ascending: true });
       if (error) throw error;
       return (data ?? []) as Property[];
@@ -222,7 +226,7 @@ export function useProperty(id: string) {
     queryFn: async (): Promise<Property | null> => {
       const { data, error } = await sb
         .from(TABLE.properties)
-        .select("*")
+        .select(PROPERTY_COLUMNS)
         .eq("id", id)
         .maybeSingle();
       if (error) throw error;
@@ -241,7 +245,11 @@ export function useCreateProperty() {
       address?: string | null;
       vat_status?: string | null;
     }): Promise<Property> => {
-      const { data, error } = await sb.from(TABLE.properties).insert(values).select("*").single();
+      const { data, error } = await sb
+        .from(TABLE.properties)
+        .insert(values)
+        .select(PROPERTY_COLUMNS)
+        .single();
       if (error) throw error;
       return data as Property;
     },

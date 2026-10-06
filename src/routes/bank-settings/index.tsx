@@ -26,6 +26,7 @@ import { pageTitle } from "@/config/brand";
 
 export const Route = createFileRoute("/bank-settings/")({
   head: () => ({ meta: [{ title: pageTitle("Bank-Einstellungen") }] }),
+  staticData: { titleKey: "bankSettings" },
   component: BankSettingsPage,
 });
 

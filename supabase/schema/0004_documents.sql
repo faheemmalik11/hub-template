@@ -53,6 +53,12 @@ create table if not exists public.documents (
     payment_method text,
     tax_note text,
 
+    -- Written on a receipt by hand, which the printed figures do not say. The tip is on top of the
+    -- printed total, so what left the account is amount_gross + tip_amount.
+    tip_amount numeric(14, 2),
+    occasion text,
+    participants text,
+
     -- What it is booked against
     company_id uuid references public.companies(id),
     company_code text,
@@ -108,6 +114,7 @@ create table if not exists public.documents (
     early_payment_discount_amount numeric(14, 2),
     paid_at timestamptz,
     filed_at timestamptz,
+    published_at timestamptz,
     storage_path text,
     uploaded_for_transaction_id uuid,
 
@@ -160,7 +167,8 @@ create table if not exists public.documents (
     constraint documents_income_tax_treatment_known
         check (income_tax_treatment is null or income_tax_treatment in ('capital_expense', 'maintenance_expense')),
     -- Overhead belongs to the company as a whole, so it cannot also sit on one property.
-    constraint documents_overhead_has_no_property check (not (is_overhead and property_id is not null))
+    constraint documents_overhead_has_no_property check (not (is_overhead and property_id is not null)),
+    constraint documents_tip_not_negative check (tip_amount is null or tip_amount >= 0)
 );
 
 create index if not exists documents_status on public.documents (status) where deleted_at is null;
@@ -197,6 +205,23 @@ create table if not exists public.document_files (
 
 create unique index if not exists document_files_one_per_role
     on public.document_files (document_id, role) where deleted_at is null;
+
+-- One document pointing at another it is about. A reminder letter names the bill it chases, so the
+-- two are never paid separately; a credit note names the bill it reduces; a corrected bill names the
+-- one it replaces.
+create table if not exists public.document_links (
+    id uuid primary key default gen_random_uuid(),
+    document_id uuid not null references public.documents(id) on delete cascade,
+    related_document_id uuid not null references public.documents(id) on delete cascade,
+    kind text not null,
+    created_by text,
+    created_at timestamptz not null default now(),
+    constraint document_links_kind_known check (kind in ('reminder_of', 'credit_for', 'replaces')),
+    constraint document_links_not_itself check (document_id <> related_document_id),
+    constraint document_links_unique unique (document_id, related_document_id, kind)
+);
+
+create index if not exists document_links_related on public.document_links (related_document_id);
 
 -- What happened to this document, in order. The trail a person reads on the detail screen.
 create table if not exists public.document_history (

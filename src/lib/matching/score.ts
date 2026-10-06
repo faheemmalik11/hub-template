@@ -7,6 +7,7 @@ import { amountMatch, hasTransposedDigits, TOLERANCE_PENALTY } from "@/kit/lib/b
 export interface MatchDocument {
   id: string;
   amount_gross: number | null;
+  tip_amount?: number | null;
   document_date: string | null;
   due_date: string | null;
   invoice_number: string | null;
@@ -80,9 +81,14 @@ function relevantDate(doc: MatchDocument): string | null {
   return doc.due_date ?? doc.document_date;
 }
 
+export function amountPaidOut(doc: MatchDocument): number {
+  const gross = doc.amount_gross ?? 0;
+  return gross > 0 ? gross + (doc.tip_amount ?? 0) : gross;
+}
+
 function pairAmount(doc: MatchDocument, txn: MatchTransaction): number {
   const txnAmount = Math.abs(txn.amount);
-  const gross = Math.abs(doc.amount_gross ?? 0);
+  const gross = Math.abs(amountPaidOut(doc));
   const capped = gross > 0 ? Math.min(txnAmount, gross) : txnAmount;
   return Math.max(Number(capped.toFixed(2)), 0.01);
 }
@@ -92,7 +98,7 @@ export function scoreMatch(
   txn: MatchTransaction,
   amountTolerance: number = 0.01,
 ): { score: number; reasons: MatchReasons } {
-  const gross = doc.amount_gross ?? 0;
+  const gross = amountPaidOut(doc);
   const txnAmount = Math.abs(txn.amount);
   const reference = normalize(txn.payment_reference);
 

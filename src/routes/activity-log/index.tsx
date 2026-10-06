@@ -45,6 +45,7 @@ import type { ProcessingLog } from "@/lib/data/types";
 
 export const Route = createFileRoute("/activity-log/")({
   head: () => ({ meta: [{ title: pageTitle("Protokoll") }] }),
+  staticData: { titleKey: "activityLog" },
   component: ActivityLogGuard,
 });
 

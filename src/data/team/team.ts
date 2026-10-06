@@ -32,6 +32,23 @@ import type { NotificationTargetKind } from "@/lib/data/notification-target";
 // the client entirely"; everything about it except the name stays read-only.
 export type AssignableRole = Exclude<AppRole, "super_admin">;
 
+/** The roles a person can be given, as the database holds them, so a role a client adds shows up. */
+export function useAssignableRoles() {
+  return useQuery({
+    queryKey: ["roles", "assignable"],
+    staleTime: STALE,
+    queryFn: async (): Promise<{ name: AssignableRole; label: string }[]> => {
+      const { data, error } = await sb
+        .from(TABLE.roles)
+        .select("name, label")
+        .eq("assignable", true)
+        .order("sort_order");
+      if (error) throw error;
+      return (data ?? []) as { name: AssignableRole; label: string }[];
+    },
+  });
+}
+
 export function useRoles() {
   return useQuery({
     queryKey: ["roles"],
@@ -128,6 +145,7 @@ interface EmployeeRow {
   escalation_days: number | null;
   area: ApprovalArea | null;
   covers_all_areas: boolean;
+  crm_external_id: string | null;
   roles: { name: AppRole } | null;
   user_company_access: { company_id: string; can_view: boolean; deleted_at: string | null }[];
   user_permissions: { permission_key: string; granted: boolean }[];
@@ -197,7 +215,7 @@ export function useEmployees() {
         .from(TABLE.appUsers)
         .select(
           "id, email, name, role_id, is_active, must_change_password, created_at, " +
-            "deputy_user_id, escalation_days, area, covers_all_areas, " +
+            "deputy_user_id, escalation_days, area, covers_all_areas, crm_external_id, " +
             "roles(name), user_company_access(company_id, can_view, deleted_at), " +
             "user_permissions(permission_key, granted)",
         )
@@ -224,6 +242,7 @@ export function useEmployees() {
         escalation_days: row.escalation_days,
         area: row.area,
         covers_all_areas: row.covers_all_areas,
+        crm_external_id: row.crm_external_id,
         permissions: effectivePermissions(
           row.user_permissions ?? [],
           rolePermissions.get(row.role_id) ?? new Set<string>(),

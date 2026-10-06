@@ -65,6 +65,7 @@ import { TABLE } from "@/config/tables";
 
 export const Route = createFileRoute("/trash/")({
   head: () => ({ meta: [{ title: pageTitle("Papierkorb") }] }),
+  staticData: { titleKey: "trash" },
   component: TrashGuard,
 });
 

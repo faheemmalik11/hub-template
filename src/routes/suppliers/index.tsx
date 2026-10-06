@@ -76,6 +76,7 @@ import type { Supplier, SupplierBankAccount, SupplierDuplicateGroup } from "@/li
 
 export const Route = createFileRoute("/suppliers/")({
   head: () => ({ meta: [{ title: pageTitle("Lieferanten") }] }),
+  staticData: { titleKey: "suppliers" },
   component: SuppliersPage,
 });
 

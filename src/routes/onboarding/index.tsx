@@ -15,6 +15,7 @@ import { pageTitle } from "@/config/brand";
 
 export const Route = createFileRoute("/onboarding/")({
   head: () => ({ meta: [{ title: pageTitle("Onboarding") }] }),
+  staticData: { titleKey: "onboarding" },
   component: OnboardingPage,
 });
 

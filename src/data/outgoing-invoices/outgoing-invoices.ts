@@ -63,7 +63,7 @@ export function useCreateCustomer() {
   const qc = useQueryClient();
   return useMutation({
     mutationFn: async (args: {
-      companyId: string;
+      companyId: string | null;
       isCompany: boolean;
       name: string;
       contactPerson?: string | null;

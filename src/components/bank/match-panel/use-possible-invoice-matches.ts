@@ -114,6 +114,7 @@ export function usePossibleInvoiceMatches(txn: {
           const doc: MatchDocument = {
             id: b.id,
             amount_gross: b.amount_gross,
+            tip_amount: b.tip_amount,
             document_date: b.document_date,
             due_date: b.due_date,
             invoice_number: b.invoice_number,

@@ -9,6 +9,7 @@ import {
 import { TABLE } from "@/config/tables";
 import { amountQueryFilter } from "@/data/bank";
 import { STALE, actorEmail, sb } from "@/data/client";
+import { queryKeys } from "@/data/keys";
 import {
   FILE_URL_STALE,
   fetchAllRows,
@@ -41,6 +42,8 @@ import type {
   DocumentListRow,
   DocumentSortKey,
   DocumentHistory,
+  DocumentLinkKind,
+  LinkedDocument,
   OpenItemRow,
 } from "@/lib/data/types";
 
@@ -716,6 +719,7 @@ const DOCUMENTS_LIST_COLUMNS = [
   "document_type",
   "cost_category",
   "amount_gross",
+  "tip_amount",
   "amount_net",
   "vat_amount",
   "vat_rate",
@@ -1341,6 +1345,56 @@ export function useDocumentHistory(documentId: string) {
         .order("created_at", { ascending: false });
       if (error) throw error;
       return (data ?? []) as unknown as DocumentHistory[];
+    },
+  });
+}
+
+export function useDocumentLinks(documentId: string) {
+  return useQuery({
+    queryKey: queryKeys.documents.links(documentId),
+    enabled: !!documentId,
+    staleTime: STALE,
+    queryFn: async (): Promise<LinkedDocument[]> => {
+      const { data, error } = await sb
+        .from(TABLE.documentLinks)
+        .select("id, document_id, related_document_id, kind")
+        .or(`document_id.eq.${documentId},related_document_id.eq.${documentId}`);
+      if (error) throw error;
+      const links = (data ?? []) as {
+        id: string;
+        document_id: string;
+        related_document_id: string;
+        kind: DocumentLinkKind;
+      }[];
+      if (links.length === 0) return [];
+      const otherId = (link: (typeof links)[number]) =>
+        link.document_id === documentId ? link.related_document_id : link.document_id;
+      const { data: others, error: othersError } = await sb
+        .from(TABLE.documents)
+        .select("id, invoice_number, issuer")
+        .in("id", links.map(otherId))
+        .is("deleted_at", null);
+      if (othersError) throw othersError;
+      const byId = new Map(
+        (
+          (others ?? []) as { id: string; invoice_number: string | null; issuer: string | null }[]
+        ).map((row) => [row.id, row]),
+      );
+      return links.flatMap((link) => {
+        const other = byId.get(otherId(link));
+        if (!other) return [];
+        return [
+          {
+            linkId: link.id,
+            kind: link.kind,
+            direction:
+              link.document_id === documentId ? ("outgoing" as const) : ("incoming" as const),
+            documentId: other.id,
+            invoiceNumber: other.invoice_number,
+            issuer: other.issuer,
+          },
+        ];
+      });
     },
   });
 }

@@ -65,6 +65,19 @@ export type HistoryType =
   // moment handed_over_at is set, the same shape as 'bezahlt' above.
   | "handed_over";
 
+export type DocumentLinkKind = "reminder_of" | "credit_for" | "replaces";
+
+/** One document that is tied to another, seen from the document being read. */
+export interface LinkedDocument {
+  linkId: string;
+  kind: DocumentLinkKind;
+  /** `outgoing`: this document is the reminder, credit or replacement. `incoming`: another one is. */
+  direction: "outgoing" | "incoming";
+  documentId: string;
+  invoiceNumber: string | null;
+  issuer: string | null;
+}
+
 export interface DocumentHistory {
   id: number;
   document_id: string;
@@ -445,6 +458,9 @@ export interface Document {
   vat_rate: number | null;
   vat_amount: number | null;
   amount_gross: number | null;
+  tip_amount: number | null;
+  occasion: string | null;
+  participants: string | null;
   currency: string | null;
   is_small_amount: boolean | null;
   intake_channel: string | null;
@@ -590,12 +606,13 @@ export interface Document {
  * for ever with no action on the screen able to close them. They are named rather than dropped: the
  * screen reports the count and can list them, so somebody can go and fix the amount.
  *
- *   kein_betrag     no gross amount was ever extracted, so there is nothing to measure against
- *   gutschrift      a negative gross, a supplier credit note: money coming back rather than owed
- *   privat_bezahlt  already_paid: settled from a private account, so no company bank movement
+ *   no_amount       no gross amount was ever extracted, so there is nothing to measure against
+ *   credit_note     a negative gross, a supplier credit note: money coming back rather than owed
+ *   paid_privately  already_paid: settled from a private account, so no company bank movement
  *                   can ever match it
+ *   reminder_letter a supplier's reminder, linked to the bill it chases: paid with that bill
  */
-export type OpenItemBlocker = "no_amount" | "credit_note" | "paid_privately";
+export type OpenItemBlocker = "no_amount" | "credit_note" | "paid_privately" | "reminder_letter";
 
 /**
  * One row of `v_open_items`, narrowed to what Offene Posten actually renders.
@@ -1778,6 +1795,8 @@ export interface Employee {
   area: ApprovalArea | null;
   /** Signs off for every area; the fallback when no exact area owner is active. */
   covers_all_areas: boolean;
+  /** The CRM broker this person is, so they see only what the CRM says is theirs. */
+  crm_external_id: string | null;
 }
 
 // Papierkorb (Briefing Screen 18) -- one row per soft-deleted record, from the v_trash view

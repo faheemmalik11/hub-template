@@ -7,6 +7,7 @@ import { SEED_MODE } from "@/config/seed";
 
 import { supabase } from "@/integrations/supabase/client";
 import { TABLE } from "@/config/tables";
+import { useAuth } from "@/lib/auth";
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 const sb = supabase as any;
@@ -15,6 +16,8 @@ type TourProgressRow = {
   tour_id: string;
   version: number;
 };
+
+const STORED_STATUS = { skipped: "skipped", completed: "done" } as const;
 
 type SaveInput = {
   tourId: string;
@@ -26,15 +29,9 @@ type SaveInput = {
 export function useTourSeenStore(): TourSeenStore {
   const queryClient = useQueryClient();
 
-  const sessionQuery = useQuery({
-    queryKey: ["tour_progress", "session_user"],
-    staleTime: Infinity,
-    queryFn: async (): Promise<string | null> => {
-      const { data } = await supabase.auth.getUser();
-      return data.user?.id ?? null;
-    },
-  });
-  const userId = sessionQuery.data ?? null;
+  // tour_progress.user_id is the app user, not the auth user: the policy compares it with
+  // current_app_user_id(), so saving the auth id was refused and every tour reopened.
+  const userId = useAuth().appUserId;
 
   const progressQuery = useQuery({
     queryKey: ["tour_progress", userId],
@@ -54,12 +51,16 @@ export function useTourSeenStore(): TourSeenStore {
       // deliberate act that should leave no trace and change nothing.
       const alreadyRecorded = (progressQuery.data ?? []).some((row) => row.tour_id === tourId);
       if (alreadyRecorded) return;
-      const { error } = await sb
-        .from(TABLE.tourProgress)
-        .upsert(
-          { user_id: userId, tour_id: tourId, version, status, last_step: lastStep },
-          { onConflict: "user_id,tour_id" },
-        );
+      const { error } = await sb.from(TABLE.tourProgress).upsert(
+        {
+          user_id: userId,
+          tour_id: tourId,
+          version,
+          status: STORED_STATUS[status],
+          last_step: lastStep,
+        },
+        { onConflict: "user_id,tour_id" },
+      );
       if (error) throw error;
     },
     onSuccess: () => {

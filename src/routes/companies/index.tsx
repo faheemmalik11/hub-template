@@ -52,6 +52,7 @@ import type { Company } from "@/lib/data/types";
 
 export const Route = createFileRoute("/companies/")({
   head: () => ({ meta: [{ title: pageTitle("Gesellschaften") }] }),
+  staticData: { titleKey: "companies" },
   component: CompaniesPage,
 });
 

@@ -96,6 +96,7 @@ import { FolderTreePicker } from "@/components/inbox/folder-tree-picker";
 
 export const Route = createFileRoute("/companies/$id")({
   head: () => ({ meta: [{ title: pageTitle("Gesellschaft") }] }),
+  staticData: { titleKey: "company" },
   component: CompanyDetailPage,
 });
 

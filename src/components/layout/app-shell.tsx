@@ -1,5 +1,5 @@
-import { type ReactNode, useMemo } from "react";
-import { Link, useRouterState } from "@tanstack/react-router";
+import { type ReactNode, useEffect, useMemo } from "react";
+import { Link, useMatches, useNavigate, useRouterState } from "@tanstack/react-router";
 import {
   Settings2,
   BellRing,
@@ -14,6 +14,7 @@ import {
   FileOutput,
   FileText,
   HandCoins,
+  Award,
   Files,
   Folder,
   FolderTree,
@@ -60,11 +61,12 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { SidebarMenu } from "@/components/ui/sidebar";
 import { NoAccess } from "@/components/layout/no-access";
-import { featureKeyForPath } from "@/config/routes";
+import { featureKeyForPath, firstAllowedPath } from "@/config/routes";
 import { useAuth } from "@/lib/auth";
 import { PERMISSIONS, type PermissionKey } from "@/config/permissions";
 import { useActingAs, useInvoicesReturnedToMe } from "@/data";
 import { useTranslation } from "@/lib/i18n";
+import { pageTitle } from "@/config/brand";
 import { useTourLabels, useTours } from "@/lib/tour/tours";
 import { useTourSeenStore } from "@/lib/tour/use-tour-seen-store";
 import { TourOpenFlag } from "@/lib/tour/tour-open-flag";
@@ -104,6 +106,18 @@ const nav: NavEntry[] = [
     items: [
       { labelKey: "nav.eingangsrechnungen", to: "/incoming-invoices", icon: FileInput },
       { labelKey: "nav.ausgangsrechnungen", to: "/outgoing-invoices", icon: FileOutput },
+      {
+        labelKey: "nav.commissionDeals",
+        to: "/commission-deals",
+        icon: HandCoins,
+        permission: PERMISSIONS.pageCommissionDeals,
+      },
+      {
+        labelKey: "nav.brokerBonuses",
+        to: "/broker-bonuses",
+        icon: Award,
+        permission: PERMISSIONS.pageBrokerBonuses,
+      },
       { labelKey: "nav.manuelleBuchungen", to: "/manual-bookings", icon: Banknote },
       {
         labelKey: "nav.dateibenennung",
@@ -227,17 +241,52 @@ function visibleWith(permission: PermissionKey | undefined, can: (k: string) => 
   return can(permission);
 }
 
+/**
+ * Whether a menu link is shown to this person: the same question the page itself asks before it
+ * opens. An entry that names its own permission uses that; every other entry uses the permission of
+ * the page it leads to, so the menu never offers a page that answers "no access". Until the person's
+ * permissions have loaded, only the entries that name their own are held back, as before, so the
+ * menu does not empty and refill.
+ */
+function linkVisible(
+  link: { to: string; permission?: PermissionKey },
+  can: (k: string) => boolean,
+  permissionsUnavailable: boolean,
+): boolean {
+  if (link.permission) return can(link.permission);
+  if (permissionsUnavailable) return true;
+  const pageKey = featureKeyForPath(link.to);
+  return pageKey === null || can(pageKey);
+}
+
 export function AppShell({ children }: { children: ReactNode }) {
   const { user, role, pictureUrl, can, permissionsUnavailable, logout } = useAuth();
   const { t } = useTranslation();
   const pathname = useRouterState({ select: (state) => state.location.pathname });
+  // A route's head() cannot follow the language switch, so the tab title is set here, in the current
+  // language, for every route that names one with `staticData.titleKey`.
+  const titleKey = useMatches({ select: (matches) => matches.at(-1)?.staticData?.titleKey });
+  useEffect(() => {
+    if (titleKey) document.title = pageTitle(t(`pageTitles.${titleKey}`));
+  }, [titleKey, t]);
   const pageFeature = featureKeyForPath(pathname);
   const pageIsLiveForThisPerson = pageFeature === null || can(pageFeature);
   const showDenied = !permissionsUnavailable && !pageIsLiveForThisPerson;
+  // A role without the overview lands on its first page instead of on "no access".
+  const navigate = useNavigate();
+  useEffect(() => {
+    if (!showDenied || pathname !== "/") return;
+    const landing = firstAllowedPath(can);
+    if (landing !== "/") void navigate({ to: landing as never, replace: true });
+  }, [showDenied, pathname, can, navigate]);
   const shellNav = useMemo<ShellNavEntry[]>(
     () =>
       nav
-        .filter((entry) => visibleWith(entry.permission, can))
+        .filter((entry) =>
+          isGroup(entry)
+            ? visibleWith(entry.permission, can)
+            : linkVisible(entry, can, permissionsUnavailable),
+        )
         .map((entry) =>
           isGroup(entry)
             ? {
@@ -246,7 +295,7 @@ export function AppShell({ children }: { children: ReactNode }) {
                 icon: entry.icon,
                 tourId: entry.tourId,
                 items: entry.items
-                  .filter((child) => visibleWith(child.permission, can))
+                  .filter((child) => linkVisible(child, can, permissionsUnavailable))
                   .map((child) => ({
                     key: child.to,
                     label: t(child.labelKey),
@@ -263,7 +312,7 @@ export function AppShell({ children }: { children: ReactNode }) {
               },
         )
         .filter((entry) => !isShellGroup(entry) || entry.items.length > 0),
-    [can, t],
+    [can, t, permissionsUnavailable],
   );
 
   // In-app "returned to me" notification (Briefing Screen 6) — no email/push, just a count badge
@@ -283,8 +332,8 @@ export function AppShell({ children }: { children: ReactNode }) {
   );
 
   const adminItems = useMemo(
-    () => adminNav.items.filter((child) => visibleWith(child.permission, can)),
-    [can],
+    () => adminNav.items.filter((child) => linkVisible(child, can, permissionsUnavailable)),
+    [can, permissionsUnavailable],
   );
   const adminActive = adminItems.some((child) => pathname.startsWith(child.to));
 
@@ -321,7 +370,7 @@ export function AppShell({ children }: { children: ReactNode }) {
             aria-label={t("nav.toOverview")}
             className="flex items-center gap-2 overflow-hidden"
           >
-            <Logo className="h-7 shrink-0 group-data-[collapsible=icon]:h-6" />
+            <Logo className="h-9 shrink-0 group-data-[collapsible=icon]:h-7" />
           </Link>
         }
         headerActions={

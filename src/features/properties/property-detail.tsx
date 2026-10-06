@@ -571,30 +571,32 @@ export function PropertyDetail({ code, config }: { code: string; config: Propert
                 {t("properties.detail.section.stammdaten")}
               </h2>
               <FactList facts={masterData} columns={2} />
-              <div className="mt-3.5 grid grid-cols-2 gap-4 border-t border-border/60 pt-3.5">
-                <div>
-                  <dt className="text-xs uppercase tracking-wide text-muted-foreground">
-                    {t("properties.detail.field.erstellt")}
-                  </dt>
-                  <dd className="mt-0.5 text-base text-foreground">
-                    {formatDate(property.created_at)}
-                  </dd>
+              {config.recordDates !== false && (
+                <div className="mt-3.5 grid grid-cols-2 gap-4 border-t border-border/60 pt-3.5">
+                  <div>
+                    <dt className="text-xs uppercase tracking-wide text-muted-foreground">
+                      {t("properties.detail.field.erstellt")}
+                    </dt>
+                    <dd className="mt-0.5 text-base text-foreground">
+                      {formatDate(property.created_at)}
+                    </dd>
+                  </div>
+                  <div>
+                    <dt className="text-xs uppercase tracking-wide text-muted-foreground">
+                      {t("properties.detail.field.aktualisiert")}
+                    </dt>
+                    <dd className="mt-0.5 text-base text-foreground">
+                      {formatDate(property.updated_at ?? property.created_at)}
+                    </dd>
+                  </div>
                 </div>
-                <div>
-                  <dt className="text-xs uppercase tracking-wide text-muted-foreground">
-                    {t("properties.detail.field.aktualisiert")}
-                  </dt>
-                  <dd className="mt-0.5 text-base text-foreground">
-                    {formatDate(property.updated_at ?? property.created_at)}
-                  </dd>
-                </div>
-              </div>
+              )}
             </section>
           )}
 
           {/* Its own card rather than a block inside Stammdaten: these assignments read differently
               from master data, and on some Hubs they are not even editable from here. */}
-          {property && (
+          {property && config.companies !== false && (
             <section className="rounded-xl border border-border bg-card p-5">
               <div className="mb-1 flex flex-wrap items-center justify-between gap-2">
                 <h2 className="text-sm font-semibold uppercase tracking-wide text-muted-foreground">
@@ -683,221 +685,223 @@ export function PropertyDetail({ code, config }: { code: string; config: Propert
               header, even when the property has nothing booked. Replacing the whole block with a
               bare "no invoices" box made the controls disappear along with the rows, so a period
               that happened to be empty read as a missing feature rather than as an empty period. */}
-          <section className="rounded-xl border border-border bg-card p-5">
-            <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
-              {/* Count and total sit ON the heading line. As a tinted tile underneath they were a
+          {config.bookedDocuments !== false && (
+            <section className="rounded-xl border border-border bg-card p-5">
+              <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
+                {/* Count and total sit ON the heading line. As a tinted tile underneath they were a
                   box competing with the table for the eye, for two numbers that are a subtitle. */}
-              <h2 className="flex flex-wrap items-baseline gap-x-2 gap-y-0.5 text-sm font-semibold uppercase tracking-wide text-muted-foreground">
-                {t("properties.detail.section.verbucht")}
-                {/* Count and total come from two different queries -- the count from the paged row
+                <h2 className="flex flex-wrap items-baseline gap-x-2 gap-y-0.5 text-sm font-semibold uppercase tracking-wide text-muted-foreground">
+                  {t("properties.detail.section.verbucht")}
+                  {/* Count and total come from two different queries -- the count from the paged row
                     query's exact count, the sum from the aggregate projection -- so they are gated
                     separately rather than one publishing the other's zero. */}
-                {documentsReady ? (
-                  <span className="text-sm font-normal normal-case tracking-normal text-muted-foreground">
-                    {t("properties.detail.belegeCount", { count: documentsTotal })}
-                  </span>
-                ) : (
-                  <Skeleton className="h-4 w-20" />
-                )}
-                {totalsReady ? (
-                  <span className="text-sm font-semibold normal-case tracking-normal tabular-nums text-foreground">
-                    {formatEUR(total)}
-                  </span>
-                ) : (
-                  <Skeleton className="h-4 w-24" />
-                )}
-              </h2>
-              {/* One control: the period list turns into the range calendar in place. */}
-              <PeriodPicker
-                value={period}
-                onValueChange={(v) => setPeriod(v)}
-                fromDate={fromDate}
-                toDate={toDate}
-                onRangeApply={(fromDateNew, toDateNew) => {
-                  setFromDate(fromDateNew);
-                  setToDate(toDateNew);
-                }}
-                locale={dateLocale()}
-                formatDay={(iso) => formatDate(iso)}
-                backLabel={t("home.zeitraumAktion.zurueck")}
-                placeholder={t("documents.list.filter.zeitraum")}
-                ariaLabel={t("documents.list.filter.zeitraum")}
-                className="w-full sm:w-[190px]"
-                rangeLabels={{
-                  placeholder: t("documents.list.filter.zeitraumWaehlen"),
-                  reset: t("documents.list.filter.zeitraumZuruecksetzen"),
-                  apply: t("documents.list.filter.zeitraumAnwenden"),
-                  previousMonth: t("documents.list.filter.monatZurueck"),
-                  nextMonth: t("documents.list.filter.monatVor"),
-                  pickSecond: t("documents.list.filter.zweitesDatum"),
-                }}
-                options={periodOptions}
-                customValue={PERIOD_CUSTOM}
-              />
-            </div>
-
-            {totalsReady && differingDocuments > 0 && (
-              <div className="mb-4 flex items-start gap-2 rounded-lg border border-amber-300 bg-amber-50 px-3 py-2 text-amber-900 dark:border-amber-900/60 dark:bg-amber-950/40 dark:text-amber-200">
-                <TriangleAlert className="mt-0.5 size-4 shrink-0" />
-                <p className="text-xs">
-                  {t("properties.detail.gesellschaftAbweichung", {
-                    count: differingDocuments,
-                    companies: companies.map((c) => c.code).join(", "),
-                  })}
-                </p>
+                  {documentsReady ? (
+                    <span className="text-sm font-normal normal-case tracking-normal text-muted-foreground">
+                      {t("properties.detail.belegeCount", { count: documentsTotal })}
+                    </span>
+                  ) : (
+                    <Skeleton className="h-4 w-20" />
+                  )}
+                  {totalsReady ? (
+                    <span className="text-sm font-semibold normal-case tracking-normal tabular-nums text-foreground">
+                      {formatEUR(total)}
+                    </span>
+                  ) : (
+                    <Skeleton className="h-4 w-24" />
+                  )}
+                </h2>
+                {/* One control: the period list turns into the range calendar in place. */}
+                <PeriodPicker
+                  value={period}
+                  onValueChange={(v) => setPeriod(v)}
+                  fromDate={fromDate}
+                  toDate={toDate}
+                  onRangeApply={(fromDateNew, toDateNew) => {
+                    setFromDate(fromDateNew);
+                    setToDate(toDateNew);
+                  }}
+                  locale={dateLocale()}
+                  formatDay={(iso) => formatDate(iso)}
+                  backLabel={t("home.zeitraumAktion.zurueck")}
+                  placeholder={t("documents.list.filter.zeitraum")}
+                  ariaLabel={t("documents.list.filter.zeitraum")}
+                  className="w-full sm:w-[190px]"
+                  rangeLabels={{
+                    placeholder: t("documents.list.filter.zeitraumWaehlen"),
+                    reset: t("documents.list.filter.zeitraumZuruecksetzen"),
+                    apply: t("documents.list.filter.zeitraumAnwenden"),
+                    previousMonth: t("documents.list.filter.monatZurueck"),
+                    nextMonth: t("documents.list.filter.monatVor"),
+                    pickSecond: t("documents.list.filter.zweitesDatum"),
+                  }}
+                  options={periodOptions}
+                  customValue={PERIOD_CUSTOM}
+                />
               </div>
-            )}
 
-            <div className="hidden overflow-hidden rounded-lg border border-border sm:block">
-              {/* Capped and scrolled rather than left to grow: the card sits in a grid row, so an
+              {totalsReady && differingDocuments > 0 && (
+                <div className="mb-4 flex items-start gap-2 rounded-lg border border-amber-300 bg-amber-50 px-3 py-2 text-amber-900 dark:border-amber-900/60 dark:bg-amber-950/40 dark:text-amber-200">
+                  <TriangleAlert className="mt-0.5 size-4 shrink-0" />
+                  <p className="text-xs">
+                    {t("properties.detail.gesellschaftAbweichung", {
+                      count: differingDocuments,
+                      companies: companies.map((c) => c.code).join(", "),
+                    })}
+                  </p>
+                </div>
+              )}
+
+              <div className="hidden overflow-hidden rounded-lg border border-border sm:block">
+                {/* Capped and scrolled rather than left to grow: the card sits in a grid row, so an
                   unbounded table drags the whole page height with it. The header cells are sticky
                   and carry their own solid background -- on the row alone the tint is translucent
                   and scrolled rows show through. */}
-              <Table containerClassName="max-h-[26rem]">
-                <TableHeader>
-                  <TableRow className="bg-muted/40 [&>th]:sticky [&>th]:top-0 [&>th]:z-10 [&>th]:bg-muted">
-                    <TableHead>{t("properties.detail.col.steller")}</TableHead>
-                    <TableHead>{t("properties.detail.col.ges")}</TableHead>
-                    <TableHead>{t("properties.detail.col.datum")}</TableHead>
-                    <TableHead>{t("properties.detail.col.ust")}</TableHead>
-                    <TableHead className="text-right">
-                      {t("properties.detail.col.betrag")}
-                    </TableHead>
-                    <TableHead>{t("properties.detail.col.status")}</TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {documents.map((b) => (
-                    <TableRow
-                      key={b.id}
-                      className="cursor-pointer"
-                      onClick={() => config.openDocument(b.id)}
-                    >
-                      <TableCell>
-                        <div className="font-medium text-foreground">
+                <Table containerClassName="max-h-[26rem]">
+                  <TableHeader>
+                    <TableRow className="bg-muted/40 [&>th]:sticky [&>th]:top-0 [&>th]:z-10 [&>th]:bg-muted">
+                      <TableHead>{t("properties.detail.col.steller")}</TableHead>
+                      <TableHead>{t("properties.detail.col.ges")}</TableHead>
+                      <TableHead>{t("properties.detail.col.datum")}</TableHead>
+                      <TableHead>{t("properties.detail.col.ust")}</TableHead>
+                      <TableHead className="text-right">
+                        {t("properties.detail.col.betrag")}
+                      </TableHead>
+                      <TableHead>{t("properties.detail.col.status")}</TableHead>
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                    {documents.map((b) => (
+                      <TableRow
+                        key={b.id}
+                        className="cursor-pointer"
+                        onClick={() => config.openDocument(b.id)}
+                      >
+                        <TableCell>
+                          <div className="font-medium text-foreground">
+                            {issuerName(b.supplier_id, b.issuer)}
+                          </div>
+                          <div className="text-xs text-muted-foreground">
+                            {b.invoice_number ?? t("properties.detail.ohneNr")}
+                          </div>
+                        </TableCell>
+                        <TableCell>
+                          <span className="inline-flex items-center gap-1.5">
+                            <CompanyChip code={b.company_code} />
+                            {companyMatchesNot(b.company_code) && (
+                              <span title={t("properties.detail.gesellschaftAbweichungZeile")}>
+                                <TriangleAlert
+                                  className="size-3.5 shrink-0 text-amber-600"
+                                  aria-label={t("properties.detail.gesellschaftAbweichungZeile")}
+                                />
+                              </span>
+                            )}
+                          </span>
+                        </TableCell>
+                        <TableCell className="text-sm tabular-nums text-muted-foreground">
+                          {formatDate(b.document_date)}
+                        </TableCell>
+                        <TableCell>
+                          <VatBadge vatRate={b.vat_rate} tax={b.tax} />
+                        </TableCell>
+                        <TableCell className="text-right font-medium tabular-nums">
+                          {formatEUR(b.amount_gross)}
+                        </TableCell>
+                        <TableCell>
+                          <StatusBadge status={b.status} />
+                        </TableCell>
+                      </TableRow>
+                    ))}
+                    {!documentsReady &&
+                      [0, 1, 2].map((i) => (
+                        <TableRow key={`beleg-skeleton-${i}`}>
+                          <TableCell colSpan={6} className="py-3">
+                            <Skeleton className="h-4 w-full" />
+                          </TableCell>
+                        </TableRow>
+                      ))}
+                    {documentsReady && documents.length === 0 && (
+                      <TableRow>
+                        <TableCell colSpan={6} className="py-12 text-center text-muted-foreground">
+                          {allDocuments.length === 0
+                            ? t("properties.detail.noBelege")
+                            : t("properties.detail.noBelegeZeitraum")}
+                        </TableCell>
+                      </TableRow>
+                    )}
+                    {documentsQ.hasNextPage && (
+                      <TableRow ref={sentinelRef}>
+                        <TableCell
+                          colSpan={99}
+                          className="py-3 text-center text-xs text-muted-foreground"
+                        >
+                          {t("loadMore.rest", { count: documentsTotal - documents.length })}
+                        </TableCell>
+                      </TableRow>
+                    )}
+                  </TableBody>
+                </Table>
+              </div>
+
+              {/* Mobile: one card per invoice instead of a 6-column table. Renders the SAME paged
+                rows as the table -- it used to render every fetched invoice, so the infinite scroll
+                above it was doing nothing here. */}
+              <div className="space-y-3 sm:hidden">
+                {documents.map((b) => (
+                  <div
+                    key={b.id}
+                    role="button"
+                    tabIndex={0}
+                    className="cursor-pointer rounded-lg border border-border p-3"
+                    onClick={() => config.openDocument(b.id)}
+                    onKeyDown={(e) => {
+                      if (e.key === "Enter" || e.key === " ") config.openDocument(b.id);
+                    }}
+                  >
+                    <div className="flex items-start justify-between gap-3">
+                      <div className="min-w-0">
+                        <div className="truncate font-medium text-foreground">
                           {issuerName(b.supplier_id, b.issuer)}
                         </div>
                         <div className="text-xs text-muted-foreground">
                           {b.invoice_number ?? t("properties.detail.ohneNr")}
                         </div>
-                      </TableCell>
-                      <TableCell>
-                        <span className="inline-flex items-center gap-1.5">
-                          <CompanyChip code={b.company_code} />
-                          {companyMatchesNot(b.company_code) && (
-                            <span title={t("properties.detail.gesellschaftAbweichungZeile")}>
-                              <TriangleAlert
-                                className="size-3.5 shrink-0 text-amber-600"
-                                aria-label={t("properties.detail.gesellschaftAbweichungZeile")}
-                              />
-                            </span>
-                          )}
-                        </span>
-                      </TableCell>
-                      <TableCell className="text-sm tabular-nums text-muted-foreground">
-                        {formatDate(b.document_date)}
-                      </TableCell>
-                      <TableCell>
-                        <VatBadge vatRate={b.vat_rate} tax={b.tax} />
-                      </TableCell>
-                      <TableCell className="text-right font-medium tabular-nums">
+                      </div>
+                      <div className="shrink-0 text-right font-medium tabular-nums text-foreground">
                         {formatEUR(b.amount_gross)}
-                      </TableCell>
-                      <TableCell>
-                        <StatusBadge status={b.status} />
-                      </TableCell>
-                    </TableRow>
-                  ))}
-                  {!documentsReady &&
-                    [0, 1, 2].map((i) => (
-                      <TableRow key={`beleg-skeleton-${i}`}>
-                        <TableCell colSpan={6} className="py-3">
-                          <Skeleton className="h-4 w-full" />
-                        </TableCell>
-                      </TableRow>
-                    ))}
-                  {documentsReady && documents.length === 0 && (
-                    <TableRow>
-                      <TableCell colSpan={6} className="py-12 text-center text-muted-foreground">
-                        {allDocuments.length === 0
-                          ? t("properties.detail.noBelege")
-                          : t("properties.detail.noBelegeZeitraum")}
-                      </TableCell>
-                    </TableRow>
-                  )}
-                  {documentsQ.hasNextPage && (
-                    <TableRow ref={sentinelRef}>
-                      <TableCell
-                        colSpan={99}
-                        className="py-3 text-center text-xs text-muted-foreground"
-                      >
-                        {t("loadMore.rest", { count: documentsTotal - documents.length })}
-                      </TableCell>
-                    </TableRow>
-                  )}
-                </TableBody>
-              </Table>
-            </div>
-
-            {/* Mobile: one card per invoice instead of a 6-column table. Renders the SAME paged
-                rows as the table -- it used to render every fetched invoice, so the infinite scroll
-                above it was doing nothing here. */}
-            <div className="space-y-3 sm:hidden">
-              {documents.map((b) => (
-                <div
-                  key={b.id}
-                  role="button"
-                  tabIndex={0}
-                  className="cursor-pointer rounded-lg border border-border p-3"
-                  onClick={() => config.openDocument(b.id)}
-                  onKeyDown={(e) => {
-                    if (e.key === "Enter" || e.key === " ") config.openDocument(b.id);
-                  }}
-                >
-                  <div className="flex items-start justify-between gap-3">
-                    <div className="min-w-0">
-                      <div className="truncate font-medium text-foreground">
-                        {issuerName(b.supplier_id, b.issuer)}
-                      </div>
-                      <div className="text-xs text-muted-foreground">
-                        {b.invoice_number ?? t("properties.detail.ohneNr")}
                       </div>
                     </div>
-                    <div className="shrink-0 text-right font-medium tabular-nums text-foreground">
-                      {formatEUR(b.amount_gross)}
+                    <div className="mt-2 flex flex-wrap items-center gap-1.5">
+                      <CompanyChip code={b.company_code} />
+                      {companyMatchesNot(b.company_code) && (
+                        <TriangleAlert
+                          className="size-3.5 shrink-0 text-amber-600"
+                          aria-label={t("properties.detail.gesellschaftAbweichungZeile")}
+                        />
+                      )}
+                      <VatBadge vatRate={b.vat_rate} tax={b.tax} />
+                      <StatusBadge status={b.status} />
+                    </div>
+                    <div className="mt-2 text-xs text-muted-foreground">
+                      {formatDate(b.document_date)}
                     </div>
                   </div>
-                  <div className="mt-2 flex flex-wrap items-center gap-1.5">
-                    <CompanyChip code={b.company_code} />
-                    {companyMatchesNot(b.company_code) && (
-                      <TriangleAlert
-                        className="size-3.5 shrink-0 text-amber-600"
-                        aria-label={t("properties.detail.gesellschaftAbweichungZeile")}
-                      />
-                    )}
-                    <VatBadge vatRate={b.vat_rate} tax={b.tax} />
-                    <StatusBadge status={b.status} />
+                ))}
+                {!documentsReady && <SectionSkeleton className="h-40" />}
+                {documentsReady && documents.length === 0 && (
+                  <p className="rounded-lg border border-border px-4 py-12 text-center text-sm text-muted-foreground">
+                    {allDocuments.length === 0
+                      ? t("properties.detail.noBelege")
+                      : t("properties.detail.noBelegeZeitraum")}
+                  </p>
+                )}
+                {documentsQ.hasNextPage && (
+                  <div ref={sentinelRef} className="py-3 text-center text-xs text-muted-foreground">
+                    {t("loadMore.rest", { count: documentsTotal - documents.length })}
                   </div>
-                  <div className="mt-2 text-xs text-muted-foreground">
-                    {formatDate(b.document_date)}
-                  </div>
-                </div>
-              ))}
-              {!documentsReady && <SectionSkeleton className="h-40" />}
-              {documentsReady && documents.length === 0 && (
-                <p className="rounded-lg border border-border px-4 py-12 text-center text-sm text-muted-foreground">
-                  {allDocuments.length === 0
-                    ? t("properties.detail.noBelege")
-                    : t("properties.detail.noBelegeZeitraum")}
-                </p>
-              )}
-              {documentsQ.hasNextPage && (
-                <div ref={sentinelRef} className="py-3 text-center text-xs text-muted-foreground">
-                  {t("loadMore.rest", { count: documentsTotal - documents.length })}
-                </div>
-              )}
-            </div>
-          </section>
+                )}
+              </div>
+            </section>
+          )}
           {/* Under the invoice table, not beside the master data: the spellings are what routes a
               document to this property, so they read as context for the documents rather than as
               another master-data field. Same position as on the company page. */}

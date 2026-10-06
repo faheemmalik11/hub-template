@@ -38,6 +38,7 @@ const SHOW_VAT_MARKER = false;
 
 export const Route = createFileRoute("/file-naming/")({
   head: () => ({ meta: [{ title: pageTitle("Dateibenennung") }] }),
+  staticData: { titleKey: "fileNaming" },
   component: FileNamingGuard,
 });
 

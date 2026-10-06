@@ -10,6 +10,7 @@ export const queryKeys = {
     list: (filters: unknown) => ["documents", "list", filters] as const,
     one: (id: string) => ["documents", id] as const,
     history: (id: string) => ["documents", id, "history"] as const,
+    links: (id: string) => ["documents", id, "links"] as const,
   },
   suppliers: {
     all: ["suppliers"] as const,
@@ -17,6 +18,13 @@ export const queryKeys = {
   },
   companies: { all: ["companies"] as const },
   properties: { all: ["properties"] as const },
+  propertyListings: { all: ["property-listings"] as const },
+  propertyCrmData: (code: string) => ["property-crm-data", code] as const,
+  brokerBonuses: { all: ["broker-bonuses"] as const },
+  deals: {
+    all: ["deals"] as const,
+    one: (id: string) => ["deals", id] as const,
+  },
   categories: { all: ["categories"] as const },
   bank: {
     accounts: ["bank", "accounts"] as const,

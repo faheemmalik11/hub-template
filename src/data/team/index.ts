@@ -18,6 +18,7 @@ export {
   useResetEmployeePassword,
   useRestoreRecord,
   useRolePermissions,
+  useAssignableRoles,
   useRoles,
   useSaveChannelSecret,
   useSaveNotificationChannel,

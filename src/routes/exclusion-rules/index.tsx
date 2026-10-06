@@ -72,6 +72,7 @@ import { errorText } from "@/lib/data/format";
 
 export const Route = createFileRoute("/exclusion-rules/")({
   head: () => ({ meta: [{ title: pageTitle("Ausschlussregeln") }] }),
+  staticData: { titleKey: "exclusionRules" },
   component: ExclusionRulesPage,
 });
 

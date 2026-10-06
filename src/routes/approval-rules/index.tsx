@@ -39,6 +39,7 @@ import { errorText, formatDate, formatDateTime, formatEUR } from "@/lib/data/for
 export const Route = createFileRoute("/approval-rules/")({
   validateSearch: tabSearch,
   head: () => ({ meta: [{ title: pageTitle("Freigabe-Regeln") }] }),
+  staticData: { titleKey: "approvalRules" },
   component: ApprovalRulesGuard,
 });
 
@@ -64,8 +65,8 @@ function ApprovalRulesRoute() {
   const config = {
     ...adapter.config,
     defaultChainLabels: [
-      t("approvalRules.leiter.standard.schritt1"),
-      t("approvalRules.leiter.standard.schritt2"),
+      t("approvalRules.defaultChain.firstStep"),
+      t("approvalRules.defaultChain.secondStep"),
     ],
   };
   const { scopeOptions, approvers, approverName } = adapter;

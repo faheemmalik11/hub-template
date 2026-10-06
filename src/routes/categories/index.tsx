@@ -53,6 +53,7 @@ import { errorText } from "@/lib/data/format";
 
 export const Route = createFileRoute("/categories/")({
   head: () => ({ meta: [{ title: pageTitle("Kategorien") }] }),
+  staticData: { titleKey: "categories" },
   component: CategoriesPage,
 });
 

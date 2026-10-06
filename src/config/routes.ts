@@ -50,6 +50,18 @@ export const ROUTES: RouteEntry[] = [
     module: PERMISSIONS.moduleInvoices,
   },
   {
+    path: "/commission-deals",
+    labelKey: "nav.commissionDeals",
+    key: PERMISSIONS.pageCommissionDeals,
+    module: PERMISSIONS.moduleInvoices,
+  },
+  {
+    path: "/broker-bonuses",
+    labelKey: "nav.brokerBonuses",
+    key: PERMISSIONS.pageBrokerBonuses,
+    module: PERMISSIONS.moduleInvoices,
+  },
+  {
     path: "/manual-bookings",
     labelKey: "nav.manuelleBuchungen",
     key: PERMISSIONS.pageManualBookings,
@@ -218,4 +230,24 @@ export function featureKeyForPath(pathname: string): string | null {
     if (matches && (!best || route.path.length > best.path.length)) best = route;
   }
   return best?.key ?? null;
+}
+
+/**
+ * Where a person lands when the overview is not theirs, which is the case for a role that was not
+ * given it: the pages a role like that is most likely to work in come first, then whatever else
+ * they may open.
+ */
+const LANDING_ORDER = ["/properties", "/commission-deals", "/broker-bonuses", "/profile"];
+
+export function firstAllowedPath(can: (key: string) => boolean): string {
+  const open = (path: string) => {
+    const route = ROUTES.find((entry) => entry.path === path);
+    return !!route && can(route.key);
+  };
+  if (open("/")) return "/";
+  return (
+    LANDING_ORDER.find(open) ??
+    ROUTES.find((entry) => entry.path !== "/" && can(entry.key))?.path ??
+    "/"
+  );
 }

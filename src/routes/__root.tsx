@@ -97,6 +97,7 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
       // Only the .ico exists. The former svg/png/apple-touch entries pointed at
       // files that were never in `public/` and 404'd on every page load.
       { rel: "icon", href: BRAND.assets.icon, sizes: "any" },
+      { rel: "icon", type: "image/png", href: BRAND.assets.iconPng, sizes: "256x256" },
       { rel: "stylesheet", href: appCss },
       { rel: "preconnect", href: "https://fonts.googleapis.com" },
       {

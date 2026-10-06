@@ -113,6 +113,7 @@ export const Route = createFileRoute("/open-items/")({
     cashDiscount: input.cashDiscount === "closing" ? ("closing" as const) : undefined,
   }),
   head: () => ({ meta: [{ title: pageTitle("Offene Posten") }] }),
+  staticData: { titleKey: "openItems" },
   component: OpenItemPage,
 });
 

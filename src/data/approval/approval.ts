@@ -107,7 +107,7 @@ export function useUpdateChainPerson() {
       userId: string;
       changes: Partial<
         Pick<ChainPerson, "deputy_user_id" | "escalation_days" | "area" | "covers_all_areas">
-      >;
+      > & { crm_external_id?: string | null };
     }) => {
       const { error } = await sb
         .from(TABLE.appUsers)

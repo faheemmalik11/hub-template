@@ -23,6 +23,7 @@ import {
  */
 export const Route = createFileRoute("/reports/")({
   head: () => ({ meta: [{ title: pageTitle("Kostenanalyse") }] }),
+  staticData: { titleKey: "costAnalysis" },
   validateSearch: (input: Record<string, unknown>): CostAnalysisSearch =>
     validateCostAnalysisSearch(input),
   component: ReportsGuard,

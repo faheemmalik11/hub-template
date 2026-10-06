@@ -75,6 +75,7 @@ const CARD_ICON = "grid size-9 shrink-0 place-items-center rounded-xl bg-brand-t
 
 export const Route = createFileRoute("/notifications/")({
   head: () => ({ meta: [{ title: pageTitle("Benachrichtigungen") }] }),
+  staticData: { titleKey: "notifications" },
   validateSearch: (search: Record<string, unknown>): { tab: NotificationsTab } => ({
     tab: search.tab === "einstellungen" ? "einstellungen" : "meldungen",
   }),

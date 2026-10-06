@@ -5,6 +5,7 @@ import { toast } from "sonner";
 
 import { AssignmentDialog } from "@/components/properties/assignment-dialog";
 import { KnownSpellingsCard } from "@/components/master-data/known-spellings-card";
+import { CrmPropertySection } from "@/components/properties/crm-property-section";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -23,11 +24,13 @@ import type { PropertyCompany } from "@/lib/data/types";
 import { CompanyChip } from "@/components/documents/badges";
 import { errorText } from "@/lib/data/format";
 import { useAuth } from "@/lib/auth";
+import { PERMISSIONS } from "@/config/permissions";
 import { pageTitle } from "@/config/brand";
 import { useTranslation } from "@/lib/i18n";
 
 export const Route = createFileRoute("/properties/$code")({
   head: () => ({ meta: [{ title: pageTitle("Objekt") }] }),
+  staticData: { titleKey: "property" },
   component: PropertyDetailPage,
 });
 
@@ -42,6 +45,10 @@ function PropertyDetailPage() {
   const { code } = Route.useParams();
   const navigate = useNavigate();
   const { t } = useTranslation();
+  const { can } = useAuth();
+  // A client that keeps its properties in a CRM sees the CRM's record, not companies, booked
+  // documents or spellings, which are for one that keeps them here.
+  const crmLed = can(PERMISSIONS.propertiesCrmSync);
   // Held here rather than in the editor: the Add button sits in the card header, which the shared
   // screen renders, and the Edit buttons sit in the rows, so both open one modal through this.
   const [assignmentDialog, setAssignmentDialog] = useState<{ link: PropertyCompany | null } | null>(
@@ -58,6 +65,9 @@ function PropertyDetailPage() {
       // Archiving is supported; the review date and the ownership type are not columns here, and
       // filing_folder is a Dropbox path for the pipeline rather than a link anybody opens. See
       // the capability table in features/properties/PORTING.md.
+      companies: !crmLed,
+      bookedDocuments: !crmLed,
+      recordDates: !crmLed,
       masterDataCheck: false,
       archiving: true,
       ownership: false,
@@ -79,16 +89,19 @@ function PropertyDetailPage() {
           <Plus className="size-3.5" /> {t("properties.detail.zuordnungHinzufuegen")}
         </Button>
       ),
-      spellings: (propertyCode) => (
-        <KnownSpellingsCard entityType="objekt" entityCode={propertyCode} />
-      ),
+      spellings: (propertyCode) =>
+        crmLed ? (
+          <CrmPropertySection propertyCode={propertyCode} />
+        ) : (
+          <KnownSpellingsCard entityType="objekt" entityCode={propertyCode} />
+        ),
       backLink: ({ className, children }) => (
         <Link to="/properties" className={className}>
           {children}
         </Link>
       ),
     }),
-    [navigate, t, assignmentDialog],
+    [navigate, t, assignmentDialog, crmLed],
   );
 
   return <PropertyDetail code={code} config={config} />;

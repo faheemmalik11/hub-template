@@ -48,13 +48,43 @@ create table if not exists public.properties (
     filing_folder text,
     drive_folder_id text,
     filing_binding text,
+    -- Where the row came from, and its id there, for a property kept in step with a CRM.
+    source text not null default 'app',
+    external_id text,
+    -- What the CRM says about the property, for a client whose property list is the CRM's. Left empty
+    -- everywhere else. The crm_ names keep it apart from the Hub's own status and archive.
+    crm_status text,
+    crm_status_id text,
+    marketing_type text,
+    property_type text,
+    usage_type text,
+    asking_price numeric(14, 2),
+    sold_price numeric(14, 2),
+    sold_on date,
+    living_space numeric(10, 2),
+    plot_area numeric(12, 2),
+    room_count numeric(5, 1),
+    commission_note text,
+    broker_external_id text,
+    broker_name text,
+    broker_email text,
+    parties jsonb not null default '[]'::jsonb,
+    archived_in_crm boolean not null default false,
+    crm_updated_at timestamptz,
+    crm_synced_at timestamptz,
+    -- The CRM's own record, exactly as it sent it. The columns above are copies taken from it.
+    crm_data jsonb,
     created_at timestamptz not null default now(),
     updated_at timestamptz not null default now(),
     deleted_at timestamptz,
     deleted_by text,
     delete_reason text,
-    constraint properties_filing_folder_shape check (public.is_folder_path(filing_folder))
+    constraint properties_filing_folder_shape check (public.is_folder_path(filing_folder)),
+    constraint properties_source_external_id unique (source, external_id)
 );
+
+create index if not exists properties_crm_status on public.properties (crm_status)
+    where crm_status is not null;
 
 -- A property can belong to more than one company, and carries its own cost centre in each.
 create table if not exists public.property_companies (
@@ -162,13 +192,22 @@ create table if not exists public.customers (
     vat_id text,
     customer_number text,
     source text not null default 'app',
+    -- The same person in the CRM and in the accounting tool, so neither is created twice.
+    crm_external_id text,
+    accounting_external_id text,
     created_at timestamptz not null default now(),
     updated_at timestamptz not null default now(),
     deleted_at timestamptz,
     deleted_by text,
     delete_reason text,
-    constraint customers_source_known check (source in ('app', 'upload'))
+    constraint customers_source_known check (source in ('app', 'upload', 'crm'))
 );
+
+create unique index if not exists customers_crm_external_id
+    on public.customers (crm_external_id) where crm_external_id is not null and deleted_at is null;
+create unique index if not exists customers_accounting_external_id
+    on public.customers (accounting_external_id)
+    where accounting_external_id is not null and deleted_at is null;
 
 -- What a cost is booked as. A tree, so a client can group its own way.
 create table if not exists public.categories (

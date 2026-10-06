@@ -47,6 +47,53 @@ $$;
 revoke execute on function public.has_company_access(uuid) from public, anon;
 grant execute on function public.has_company_access(uuid) to authenticated;
 
+create or replace function public.current_crm_external_id() returns text
+language sql stable security definer set search_path to 'public'
+as $$
+  select crm_external_id from public.app_users where id = public.current_app_user_id();
+$$;
+
+create or replace function public.owns_deal(p_deal_id uuid) returns boolean
+language sql stable security definer set search_path to 'public'
+as $$
+  select exists (
+    select 1
+      from public.deals d
+      left join public.properties p on p.id = d.property_id
+     where d.id = p_deal_id
+       and d.deleted_at is null
+       and (d.acquired_by = public.current_app_user_id()
+            or d.handled_by = public.current_app_user_id()
+            or (p.broker_external_id is not null
+                and p.broker_external_id = public.current_crm_external_id()))
+  );
+$$;
+
+create or replace function public.owns_deal_side(p_side_id uuid) returns boolean
+language sql stable security definer set search_path to 'public'
+as $$
+  select exists (select 1 from public.deal_sides s
+                  where s.id = p_side_id and public.owns_deal(s.deal_id));
+$$;
+
+create or replace function public.owns_customer_through_a_deal(p_customer_id uuid) returns boolean
+language sql stable security definer set search_path to 'public'
+as $$
+  select exists (select 1
+                   from public.deal_parties dp
+                   join public.deal_sides s on s.id = dp.deal_side_id
+                  where dp.customer_id = p_customer_id and public.owns_deal(s.deal_id));
+$$;
+
+revoke execute on function public.current_crm_external_id() from public, anon;
+revoke execute on function public.owns_deal(uuid) from public, anon;
+revoke execute on function public.owns_deal_side(uuid) from public, anon;
+revoke execute on function public.owns_customer_through_a_deal(uuid) from public, anon;
+grant execute on function public.current_crm_external_id() to authenticated;
+grant execute on function public.owns_deal(uuid) to authenticated;
+grant execute on function public.owns_deal_side(uuid) to authenticated;
+grant execute on function public.owns_customer_through_a_deal(uuid) to authenticated;
+
 -- An administering role holds everything, so a client can never lock themselves out of their own
 -- data by mis-editing a role. It does NOT hold what this client has switched off: a feature that is
 -- off is off for everybody, which is the difference between a hidden screen and a feature a client
@@ -95,9 +142,9 @@ begin
                 'categories', 'category_aliases', 'entity_aliases', 'vat_rates']),
             ('documents.read', 'documents.write', array[
                 'documents', 'document_files', 'document_history', 'document_line_items',
-                'document_taxes', 'document_bank_accounts', 'outgoing_invoices',
+                'document_taxes', 'document_bank_accounts', 'document_links', 'outgoing_invoices',
                 'outgoing_invoice_files', 'outgoing_invoice_transaction_matches',
-                'manual_bookings']),
+                'manual_bookings', 'deals', 'deal_sides', 'deal_parties']),
             ('bank.read', 'bank.write', array[
                 'bank_accounts', 'bank_connections', 'bank_transactions', 'bank_providers',
                 'bank_sync_logs', 'document_transaction_matches', 'open_item_whitelist_rules']),
@@ -108,7 +155,7 @@ begin
             ('documents.read', 'settings.manage', array[
                 'channels', 'channel_folders', 'channel_state', 'read_cursors',
                 'imported_items', 'pipeline_runs', 'processing_log', 'ai_usage',
-                'ingest_exclusions', 'filing_placements', 'filename_settings',
+                'ingest_exclusions', 'filing_placements', 'filing_attempts', 'filename_settings',
                 'matching_settings', 'tenant_settings', 'tenant_settings_history',
                 'notification_channels', 'notification_target_kinds',
                 'notification_dispatch_log', 'assistant_usage'])
@@ -137,7 +184,8 @@ declare
     t text;
 begin
     foreach t in array array['documents', 'bank_accounts', 'bank_transactions',
-                             'outgoing_invoices', 'manual_bookings', 'payment_orders'] loop
+                             'outgoing_invoices', 'manual_bookings', 'payment_orders',
+                             'deals'] loop
         execute format('drop policy if exists %I on public.%I', t || '_company_scope', t);
         execute format(
             'create policy %I on public.%I as restrictive for all to authenticated using (public.has_company_access(company_id)) with check (public.has_company_access(company_id))',
@@ -145,6 +193,30 @@ begin
     end loop;
 end
 $$;
+
+-- What the CRM says is a person's own, whatever their role may read: the properties they are the
+-- broker of, the sales those belong to, and the customers on them. Read only, and added to what a
+-- role already grants, so it widens nothing for anyone who may read everything.
+drop policy if exists properties_own_broker_read on public.properties;
+create policy properties_own_broker_read on public.properties for select to authenticated
+    using (deleted_at is null and broker_external_id is not null
+           and broker_external_id = public.current_crm_external_id());
+
+drop policy if exists deals_own_read on public.deals;
+create policy deals_own_read on public.deals for select to authenticated
+    using (public.owns_deal(id));
+
+drop policy if exists deal_sides_own_read on public.deal_sides;
+create policy deal_sides_own_read on public.deal_sides for select to authenticated
+    using (public.owns_deal(deal_id));
+
+drop policy if exists deal_parties_own_read on public.deal_parties;
+create policy deal_parties_own_read on public.deal_parties for select to authenticated
+    using (public.owns_deal_side(deal_side_id));
+
+drop policy if exists customers_own_deals_read on public.customers;
+create policy customers_own_deals_read on public.customers for select to authenticated
+    using (public.owns_customer_through_a_deal(id));
 
 -- A person's own rows, regardless of capability: their notification settings, their tour progress,
 -- and what was sent to them.

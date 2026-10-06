@@ -624,7 +624,7 @@ Deno.serve(async (req) => {
       db
         .from(TABLE.vOpenItems)
         .select(
-          `id, amount_gross, document_date, due_date, invoice_number, customer_number, issuer, ${TABLE.suppliers}(iban)`,
+          `id, amount_gross, tip_amount, document_date, due_date, invoice_number, customer_number, issuer, ${TABLE.suppliers}(iban)`,
         )
         .eq("is_open", true)
         .order("id")
@@ -646,6 +646,7 @@ Deno.serve(async (req) => {
     const belege: MatchDocument[] = (belegeRows ?? []).map((b: Record<string, unknown>) => ({
       id: b.id as string,
       amount_gross: (b.amount_gross as number | null) ?? null,
+      tip_amount: (b.tip_amount as number | null) ?? null,
       document_date: (b.document_date as string | null) ?? null,
       due_date: (b.due_date as string | null) ?? null,
       invoice_number: (b.invoice_number as string | null) ?? null,

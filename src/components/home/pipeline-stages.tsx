@@ -29,7 +29,7 @@ const TILE_LABEL = "text-muted-foreground";
 const STAGES: { key: string; statuses: string[]; tileCls: string; labelCls: string }[] = [
   { key: "received", statuses: ["received"], tileCls: TILE, labelCls: TILE_LABEL },
   {
-    key: "inPruefung",
+    key: "inReview",
     // Rückfrage is a held document, not a separate place in the chain: it is in review with a
     // question outstanding, so it counts where a person would look for it.
     statuses: ["in_review", "query"],
@@ -37,7 +37,7 @@ const STAGES: { key: string; statuses: string[]; tileCls: string; labelCls: stri
     labelCls: TILE_LABEL,
   },
   {
-    key: "freigegeben",
+    key: "approved",
     statuses: ["approved_first", "freigegeben_stufe2", "approved_final"],
     tileCls: TILE,
     labelCls: TILE_LABEL,

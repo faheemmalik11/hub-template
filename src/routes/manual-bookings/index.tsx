@@ -64,6 +64,7 @@ import { pageTitle } from "@/config/brand";
 
 export const Route = createFileRoute("/manual-bookings/")({
   head: () => ({ meta: [{ title: pageTitle("Manuelle Buchungen") }] }),
+  staticData: { titleKey: "manualBookings" },
   component: ManualBookingsPage,
 });
 

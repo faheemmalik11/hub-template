@@ -12,6 +12,7 @@ import { pageTitle } from "@/config/brand";
 
 export const Route = createFileRoute("/inbox/")({
   head: () => ({ meta: [{ title: pageTitle("Postfach & Ablage") }] }),
+  staticData: { titleKey: "inbox" },
   component: InboxPage,
 });
 

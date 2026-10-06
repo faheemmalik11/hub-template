@@ -80,6 +80,7 @@ import { pageTitle } from "@/config/brand";
 
 export const Route = createFileRoute("/opos-whitelist/")({
   head: () => ({ meta: [{ title: pageTitle("Ausgeschlossene Zahlungen") }] }),
+  staticData: { titleKey: "excludedPayments" },
   component: OposWhitelistPage,
 });
 

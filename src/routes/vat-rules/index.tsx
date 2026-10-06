@@ -57,6 +57,7 @@ function ReserveAmount({ value, className }: { value: number; className?: string
 export const Route = createFileRoute("/vat-rules/")({
   validateSearch: tabSearch,
   head: () => ({ meta: [{ title: pageTitle("USt-Regeln & Steuerrücklage") }] }),
+  staticData: { titleKey: "vatRules" },
   component: VatRulesPage,
 });
 

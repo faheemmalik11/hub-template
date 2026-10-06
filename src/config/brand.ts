@@ -1,6 +1,6 @@
 /**
- * Central brand configuration. In this template the values are placeholders: a client
- * sets their own here, and nothing else in the app should need editing.
+ * Central brand configuration for Immobilien van Oepen. This branch is that client's Hub, so the
+ * values are theirs: the name, the colours of FARBEN_IvO_NEU_2026 and the logo package.
  *
  * Central brand configuration. The single source for the product name and brand
  * identity. Components must not hardcode the name; import from here instead.
@@ -24,16 +24,16 @@
 
 export const BRAND = {
   /** Product name in running text and translations (`{{brand}}`). */
-  name: "Hub",
+  name: "Immobilien van Oepen",
 
   /** Wordmark shown in the logo. */
-  wordmark: "Hub",
+  wordmark: "Immobilien van Oepen",
 
   /** The organization's mail domain, e.g. the login placeholder (`{{domain}}`). */
-  emailDomain: "example.com",
+  emailDomain: "immobilien-vanoepen.de",
 
   /** Full product name for page titles and meta descriptions. */
-  productName: "Hub",
+  productName: "Immobilien van Oepen",
 
   /**
    * Separator between page name and product name in the browser title. A middot,
@@ -45,33 +45,34 @@ export const BRAND = {
   /**
    * Meta description. User-facing, so German (see the language rule in CLAUDE.md).
    */
-  description: "Internes Buchhaltungs-Cockpit.",
+  description: "Buchhaltung und Provisionen von Immobilien van Oepen.",
 
   /**
    * Browser-chrome color (`<meta name="theme-color">`). The one place a brand
    * color is duplicated outside `styles.css`: the meta tag needs a literal value
    * and cannot read a CSS variable. Keep in sync with `--brand`
-   * (`oklch(0.8 0.041 59.7)`, the logo beige).
+   * (`#423F3B`, Kohle: the primary colour of the brand).
    */
-  themeColor: "#D2B8A4",
+  themeColor: "#423F3B",
 
   /**
    * Brand assets under `public/`. `logo.mode` selects how `<Logo>` renders:
    * `"text"` draws `wordmark`, `"image"` draws `logo.src` / `logo.white`.
    *
-   * The artwork here is ours, not a client's. A client replaces these three files with their own
-   * and edits nothing else; what must never happen is one client's mark reaching the next client's
-   * Hub, which is what shipping their files in this folder would do. The white variant is the same
-   * artwork recoloured for the dark login panel.
+   * The artwork here is the client's own, from their logo package: the gold wordmark with the symbol,
+   * and the white one for the dark login panel. `mark.png` is the symbol alone.
    */
   assets: {
-    icon: "/favicon.ico",
+    // The ?v= on each file is a cache buster: browsers hold on to a favicon and a logo for a long time,
+    // so a changed file needs a changed address. Raise it when the artwork changes again.
+    icon: "/favicon.ico?v=ivo1",
+    iconPng: "/brand/mark.png?v=ivo1",
     logo: {
       mode: "image" as "text" | "image",
-      src: "/brand/logo.png",
-      white: "/brand/logo-white.png",
-      /** Intrinsic aspect ratio (1000 × 444), so callers can size by height alone. */
-      aspectRatio: "1000 / 444",
+      src: "/brand/logo.png?v=ivo1",
+      white: "/brand/logo-white.png?v=ivo1",
+      /** Intrinsic aspect ratio (1200 × 268), so callers can size by height alone. */
+      aspectRatio: "1200 / 268",
     },
   },
 } as const;
