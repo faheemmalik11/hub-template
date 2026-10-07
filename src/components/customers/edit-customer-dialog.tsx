@@ -10,6 +10,7 @@
 // customer because LexOffice refuses to invoice a contact without a billing address; the same reason
 // is why kundeSchema is called with `adressePflicht: false` on this Hub's create dialog. The rules
 // stay in step: name is the only required field, in both dialogs.
+import { Pencil } from "lucide-react";
 import { useState } from "react";
 import { toast } from "sonner";
 
@@ -194,5 +195,27 @@ export function EditCustomerDialog({
         </DialogFooter>
       </DialogContent>
     </Dialog>
+  );
+}
+
+export function EditCustomerButton({ customer }: { customer: Customer }) {
+  const { t } = useTranslation();
+  const [open, setOpen] = useState(false);
+  return (
+    <>
+      <Button
+        variant="ghost"
+        size="icon"
+        aria-label={t("customers.detail.edit.button")}
+        title={t("customers.detail.edit.button")}
+        onClick={(event) => {
+          event.stopPropagation();
+          setOpen(true);
+        }}
+      >
+        <Pencil className="size-4" />
+      </Button>
+      <EditCustomerDialog open={open} onOpenChange={setOpen} customer={customer} />
+    </>
   );
 }

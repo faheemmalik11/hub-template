@@ -30,6 +30,7 @@ import {
 import { useCreateCustomer, useCustomers, useCompanies, useCustomerInvoiceTotals } from "@/data";
 import { errorText, formatEUR } from "@/lib/data/format";
 import { ErrorState, TableSkeleton } from "@/components/documents/query-states";
+import { EditCustomerButton } from "@/components/customers/edit-customer-dialog";
 import { Skeleton } from "@/components/ui/skeleton";
 import { CompanyChip } from "@/components/documents/badges";
 import { type FilterField } from "@/components/data-table/filter-fields";
@@ -313,6 +314,9 @@ function CustomersPage() {
                   >
                     {t("customers.list.col.ueberfaellig")}
                   </SortableColumnHeader>
+                  <TableHead className="w-[1%] text-right">
+                    {t("customers.list.col.aktionen")}
+                  </TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
@@ -352,12 +356,15 @@ function CustomersPage() {
                           "—"
                         )}
                       </TableCell>
+                      <TableCell className="text-right">
+                        <EditCustomerButton customer={k} />
+                      </TableCell>
                     </TableRow>
                   );
                 })}
                 {view.total === 0 && (
                   <TableRow>
-                    <TableCell colSpan={6} className="py-12 text-center text-muted-foreground">
+                    <TableCell colSpan={7} className="py-12 text-center text-muted-foreground">
                       {t("customers.list.empty")}
                     </TableCell>
                   </TableRow>
@@ -388,6 +395,7 @@ function CustomersPage() {
                         </div>
                       </div>
                       <div className="shrink-0 text-right">
+                        <EditCustomerButton customer={k} />
                         <div className="font-medium tabular-nums text-foreground">
                           {totalsReady ? (
                             formatEUR(s.total)

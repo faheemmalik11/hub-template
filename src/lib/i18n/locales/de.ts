@@ -231,7 +231,7 @@ const de = {
       },
       fields: {
         title: "Die ausgelesenen Angaben",
-        text: "Rechts stehen alle Felder, die aus dem Dokument gelesen wurden, und darunter die Prüfungen, die nicht aufgegangen sind. Hier ordnen Sie die Rechnung auch einer Gesellschaft und einem Objekt zu.",
+        text: "Rechts stehen alle Felder, die aus dem Dokument gelesen wurden, und darunter die Prüfungen, die nicht aufgegangen sind. Hier ordnen Sie die Rechnung auch einer Gesellschaft zu.",
         hint: "Ein Feld, bei dem sich das System nicht sicher war, ist gekennzeichnet und gehört zuerst angesehen.",
       },
       tabs: {
@@ -396,7 +396,7 @@ const de = {
     companies: {
       header: {
         title: "Ihre Gesellschaften",
-        text: "Das Unternehmen besteht aus mehreren Gesellschaften. Jede Rechnung und jedes Objekt gehört genau zu einer davon, und danach richtet sich die gesamte Auswertung.",
+        text: "Das Unternehmen besteht aus mehreren Gesellschaften. Jede Rechnung gehört genau zu einer davon, und danach richtet sich die gesamte Auswertung.",
         hint: "Eine neue Gesellschaft brauchen Sie selten. Wenn doch, legen Sie sie hier oben an.",
       },
       toolbar: {
@@ -885,7 +885,7 @@ const de = {
 
   // Start page ("/") — the module launcher + recent invoices.
   settings: {
-    titel: "Benachrichtigungen",
+    titel: "Meldungen & Benachrichtigungen",
     sub: "Legen Sie fest, welche Meldungen im Hub erscheinen und welche über externe Kanäle gehen.",
     gespeichert: "Gespeichert.",
     speichern: "Speichern",
@@ -1717,11 +1717,11 @@ const de = {
 
     // ---- invoice list ----
     list: {
-      title: "Eingangsrechnungen",
+      title: "Eingangsrechnungen (Ausgaben)",
       // The screen, not the plumbing. It used to name the ingestion pipeline, which is not
       // a word anyone doing accounting has to know.
       subtitle:
-        "Eingegangene Rechnungen prüfen, einer Gesellschaft und einem Objekt zuordnen und zur Zahlung freigeben.",
+        "Eingegangene Rechnungen prüfen, einer Gesellschaft zuordnen und zur Zahlung freigeben.",
       upload: "Beleg hochladen",
       bulk: {
         spalte: "Auswahl",
@@ -3112,6 +3112,7 @@ const de = {
         rechnungen: "Rechnungen",
         betrag: "Betrag",
         ueberfaellig: "Überfällig",
+        aktionen: "Aktionen",
       },
       empty: "Keine Kunden gefunden.",
       neu: {
@@ -5614,7 +5615,7 @@ const de = {
 
   // Outgoing invoices (Ausgangsrechnungen) — placeholder page.
   outgoingInvoices: {
-    title: "Ausgangsrechnungen",
+    title: "Ausgangsrechnungen (Einnahmen)",
     subtitle: "Ausgangsrechnungen werden manuell hochgeladen und automatisch ausgelesen.",
     status: {
       draft: "Entwurf",
