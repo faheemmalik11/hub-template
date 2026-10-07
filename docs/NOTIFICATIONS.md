@@ -201,7 +201,7 @@ stored as sent. None of it needs Slack; Slack, when connected, delivers the same
 | A bonus is approved, rejected (with the note) or paid | the broker it belongs to | trigger `broker_bonuses_notify_decided` |
 | The hourly CRM sync fails after working | every administering role, once until it recovers | `propstack-sync`, through `notify_administrators` |
 
-"Administering role" is any role with `administers` set, minus the developer role. Nobody is told about
+"Administering role" is any role with `administers` set, the developer role included. Nobody is told about
 what they did themselves. Helpers: `administrator_ids()`, `send_system_ping(...)`,
 `notify_administrators(...)`; only the last is callable by the service role, the rest only from other
 database functions.

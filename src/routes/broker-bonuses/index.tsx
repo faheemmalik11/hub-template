@@ -32,7 +32,9 @@ import {
 } from "@/components/ui/table";
 import { Textarea } from "@/components/ui/textarea";
 import { EmptyState, ErrorState, TableSkeleton } from "@/components/documents/query-states";
+import { ExpandableNote } from "@/components/broker-bonuses/expandable-note";
 import {
+  BONUS_NOTE_MAX_LENGTH,
   BONUS_TYPES,
   useBrokerBonuses,
   useDeleteBrokerBonus,
@@ -67,14 +69,14 @@ const STATUS_VARIANT: Record<BonusStatus, "default" | "secondary" | "outline"> =
 
 const PAYROLL_CUTOFF_DAY = 15;
 
-function payrollMonthOf(submittedAt: string): string {
+function payrollMonthOf(submittedAt: string, language: string): string {
   const submitted = new Date(submittedAt);
   const month = new Date(
     submitted.getFullYear(),
     submitted.getMonth() + (submitted.getDate() > PAYROLL_CUTOFF_DAY ? 1 : 0),
     1,
   );
-  return month.toLocaleDateString(undefined, { month: "long", year: "numeric" });
+  return month.toLocaleDateString(language, { month: "long", year: "numeric" });
 }
 
 function todayIso(): string {
@@ -82,7 +84,8 @@ function todayIso(): string {
 }
 
 function BrokerBonusesPage() {
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
+  const language = i18n.language;
   const { can } = useAuth();
   const canReview = can(PERMISSIONS.bonusesReview);
   const canSubmit = can(PERMISSIONS.bonusesSubmit);
@@ -107,7 +110,7 @@ function BrokerBonusesPage() {
       t(`brokerBonuses.export.${key}`),
     );
     const rows = approvedOrPaid.map((bonus) => [
-      payrollMonthOf(bonus.created_at),
+      payrollMonthOf(bonus.created_at, language),
       bonus.broker?.name ?? bonus.broker?.email ?? "",
       formatDate(bonus.earned_on),
       t(`brokerBonuses.types.${bonus.bonus_type}`),
@@ -181,7 +184,9 @@ function BrokerBonusesPage() {
                     <TableHead className="text-right">
                       {t("brokerBonuses.columns.amount")}
                     </TableHead>
-                    <TableHead>{t("brokerBonuses.columns.payrollMonth")}</TableHead>
+                    <TableHead className="whitespace-nowrap">
+                      {t("brokerBonuses.columns.payrollMonth")}
+                    </TableHead>
                     <TableHead>{t("brokerBonuses.columns.status")}</TableHead>
                     <TableHead />
                   </TableRow>
@@ -189,35 +194,37 @@ function BrokerBonusesPage() {
                 <TableBody>
                   {view.pageRows.map((bonus) => (
                     <TableRow key={bonus.id}>
-                      <TableCell className="text-sm">{formatDate(bonus.earned_on)}</TableCell>
+                      <TableCell className="align-top text-sm whitespace-nowrap">
+                        {formatDate(bonus.earned_on)}
+                      </TableCell>
                       {seesAllBrokers && (
-                        <TableCell className="text-sm">
+                        <TableCell className="align-top text-sm whitespace-nowrap">
                           {bonus.broker?.name ?? bonus.broker?.email ?? "—"}
                         </TableCell>
                       )}
-                      <TableCell>
+                      <TableCell className="align-top">
                         <div className="text-sm font-medium">
                           {t(`brokerBonuses.types.${bonus.bonus_type}`)}
                         </div>
-                        {bonus.note && (
-                          <div className="text-xs text-muted-foreground">{bonus.note}</div>
-                        )}
+                        {bonus.note && <ExpandableNote text={bonus.note} />}
                         {bonus.review_note && (
-                          <div className="text-xs text-muted-foreground">
-                            {t("brokerBonuses.reviewNote", { note: bonus.review_note })}
-                          </div>
+                          <ExpandableNote
+                            text={t("brokerBonuses.reviewNote", { note: bonus.review_note })}
+                          />
                         )}
                       </TableCell>
-                      <TableCell className="text-right tabular-nums">
+                      <TableCell className="align-top text-right tabular-nums whitespace-nowrap">
                         {formatEUR(bonus.amount)}
                       </TableCell>
-                      <TableCell className="text-sm">{payrollMonthOf(bonus.created_at)}</TableCell>
-                      <TableCell>
+                      <TableCell className="align-top text-sm whitespace-nowrap">
+                        {payrollMonthOf(bonus.created_at, language)}
+                      </TableCell>
+                      <TableCell className="align-top">
                         <Badge variant={STATUS_VARIANT[bonus.status]} className="whitespace-nowrap">
                           {t(`brokerBonuses.status.${bonus.status}`)}
                         </Badge>
                       </TableCell>
-                      <TableCell className="text-right">
+                      <TableCell className="align-top text-right">
                         <div className="flex justify-end gap-2">
                           {canReview && bonus.status === "submitted" && (
                             <Button size="sm" onClick={() => setReviewing(bonus)}>
@@ -372,9 +379,13 @@ function NewBonusDialog() {
               <Textarea
                 id="bonus-note"
                 value={note}
+                maxLength={BONUS_NOTE_MAX_LENGTH}
                 onChange={(event) => setNote(event.target.value)}
                 placeholder={t("brokerBonuses.newDialog.notePlaceholder")}
               />
+              <p className="text-right text-xs text-muted-foreground">
+                {note.length} / {BONUS_NOTE_MAX_LENGTH}
+              </p>
             </div>
           </div>
           <DialogFooter>
@@ -452,8 +463,12 @@ function ReviewDialog({ bonus, onClose }: { bonus: BrokerBonus | null; onClose: 
             <Textarea
               id="review-note"
               value={reviewNote}
+              maxLength={BONUS_NOTE_MAX_LENGTH}
               onChange={(event) => setReviewNote(event.target.value)}
             />
+            <p className="text-right text-xs text-muted-foreground">
+              {reviewNote.length} / {BONUS_NOTE_MAX_LENGTH}
+            </p>
           </div>
         </div>
         <DialogFooter>

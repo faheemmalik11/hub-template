@@ -1,4 +1,5 @@
 export {
+  BONUS_NOTE_MAX_LENGTH,
   BONUS_TYPES,
   useBrokerBonuses,
   useDeleteBrokerBonus,
