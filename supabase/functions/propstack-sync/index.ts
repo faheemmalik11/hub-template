@@ -138,10 +138,22 @@ async function syncAndRecord(db: Db) {
     return { ok: true as const, result };
   } catch (error) {
     const message = messageOf(error);
+    const { data: before } = await db
+      .from(TABLE.scheduledJobs)
+      .select("last_status")
+      .eq("key", "propstack_sync")
+      .maybeSingle();
     await db
       .from(TABLE.scheduledJobs)
       .update({ ...finished, last_status: "failed", last_message: message.slice(0, 500) })
       .eq("key", "propstack_sync");
+    if (before?.last_status !== "failed") {
+      await db.rpc("notify_administrators", {
+        p_note: `Der CRM-Abgleich ist fehlgeschlagen: ${message.slice(0, 200)}`,
+        p_path: "/properties",
+        p_source: "sync",
+      });
+    }
     return { ok: false as const, message };
   }
 }

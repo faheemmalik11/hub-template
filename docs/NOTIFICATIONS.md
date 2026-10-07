@@ -186,6 +186,31 @@ of the four cron ticks an hour rather than of every notification.
 
 ---
 
+## What the estate agency Hub tells people (bell entries)
+
+Written by `supabase/schema/0020_system_notifications.sql` and the functions it is called from, as
+`ping` events with a `target.path`, so each one opens the screen it is about. The text is German and is
+stored as sent. None of it needs Slack; Slack, when connected, delivers the same events.
+
+| When | Who is told | Source |
+| --- | --- | --- |
+| A broker saves a deal as ready for approval | every administering role except the sender | trigger `deals_notify_status_changed` |
+| An administrator approves a deal | the broker the deal belongs to | the same trigger |
+| A property turns "Verkauft" in the CRM and opens a deal | the administrators and the broker | `create_deals_for_sold_properties` |
+| A broker enters a bonus | every administering role | trigger `broker_bonuses_notify_submitted` |
+| A bonus is approved, rejected (with the note) or paid | the broker it belongs to | trigger `broker_bonuses_notify_decided` |
+| The hourly CRM sync fails after working | every administering role, once until it recovers | `propstack-sync`, through `notify_administrators` |
+
+"Administering role" is any role with `administers` set, minus the developer role. Nobody is told about
+what they did themselves. Helpers: `administrator_ids()`, `send_system_ping(...)`,
+`notify_administrators(...)`; only the last is callable by the service role, the rest only from other
+database functions.
+
+Not covered: email. Delivery is the bell, and Slack when a client connects it. An email channel would
+need a sending mailbox and its credentials.
+
+---
+
 ## Not built yet
 
 - **"Approvals I cover that are overdue"** appears as a bell toggle and has full translations, but
