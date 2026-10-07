@@ -228,7 +228,7 @@ const en = {
       },
       fields: {
         title: "The extracted details",
-        text: "On the right are all the fields read out of the document, and below them the checks that did not pass. This is also where you assign the invoice to a company and a property.",
+        text: "On the right are all the fields read out of the document, and below them the checks that did not pass. This is also where you assign the invoice to a company.",
         hint: "A field the system was unsure about is marked and deserves your attention first.",
       },
       tabs: {
@@ -393,7 +393,7 @@ const en = {
     companies: {
       header: {
         title: "Your companies",
-        text: "The business is made up of several companies. Every invoice and every property belongs to exactly one of them, and all the reporting follows from that.",
+        text: "The business is made up of several companies. Every invoice belongs to exactly one of them, and all the reporting follows from that.",
         hint: "You rarely need a new company. When you do, you add it here at the top.",
       },
       toolbar: {
@@ -832,7 +832,7 @@ const en = {
   },
 
   settings: {
-    titel: "Notifications",
+    titel: "Alerts & notifications",
     sub: "Choose which updates appear in the Hub and which are sent through external channels.",
     gespeichert: "Saved.",
     speichern: "Save",
@@ -1668,10 +1668,9 @@ const en = {
     },
 
     list: {
-      title: "Incoming invoices",
+      title: "Incoming invoices (Expenses)",
       // The screen, not the plumbing, see the German file.
-      subtitle:
-        "Review incoming invoices, assign them to a company and a property, and release them for payment.",
+      subtitle: "Review incoming invoices, assign them to a company, and release them for payment.",
       upload: "Upload document",
       bulk: {
         spalte: "Selection",
@@ -3010,6 +3009,7 @@ const en = {
         rechnungen: "Invoices",
         betrag: "Amount",
         ueberfaellig: "Overdue",
+        aktionen: "Actions",
       },
       empty: "No customers found.",
       neu: {
@@ -5403,7 +5403,7 @@ const en = {
   },
 
   outgoingInvoices: {
-    title: "Outgoing invoices",
+    title: "Outgoing invoices (Income)",
     subtitle: "Outgoing invoices are uploaded manually and read out automatically.",
     status: {
       draft: "Draft",

@@ -28,13 +28,7 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import {
-  useCreateCompany,
-  useCompanyDocumentTotals,
-  useCompanies,
-  useProperties,
-  usePropertyCompanies,
-} from "@/data";
+import { useCreateCompany, useCompanyDocumentTotals, useCompanies } from "@/data";
 import { errorText, formatDate, formatEUR } from "@/lib/data/format";
 import { ErrorState, TableSkeleton } from "@/components/documents/query-states";
 import { type FilterField } from "@/components/data-table/filter-fields";
@@ -83,10 +77,6 @@ function CompaniesPage() {
 
   const companiesQ = useCompanies({ includeArchived: status !== "aktiv" });
   const totalsQ = useCompanyDocumentTotals();
-  // Both unscoped and both small tables: one request each feeds the property count of every row,
-  // rather than one query per company.
-  const propertiesQ = useProperties();
-  const propertyCompaniesQ = usePropertyCompanies();
   const companies = useMemo(() => companiesQ.data ?? [], [companiesQ.data]);
 
   // Totals arrive pre-aggregated from Postgres (view v_company_invoice_totals) instead of being
@@ -99,19 +89,6 @@ function CompaniesPage() {
     () => totalsQ.data ?? new Map<string, { total: number; count: number }>(),
     [totalsQ.data],
   );
-
-  // How many properties each company owns. A property may belong to several companies at once
-  // (property_companies, migration 0083), so this is a count of links, not of rows in `objekte`.
-  const propertiesReady = propertyCompaniesQ.data !== undefined && propertiesQ.data !== undefined;
-  const propertyCount = useMemo(() => {
-    const known = new Set((propertiesQ.data ?? []).map((o) => o.id));
-    const map = new Map<string, number>();
-    for (const a of propertyCompaniesQ.data ?? []) {
-      if (!known.has(a.property_id)) continue;
-      map.set(a.company_id, (map.get(a.company_id) ?? 0) + 1);
-    }
-    return map;
-  }, [propertyCompaniesQ.data, propertiesQ.data]);
 
   // How many companies file nowhere. Without a Dropbox folder the pipeline files nothing for them,
   // and until now that was invisible: no column, no count, no way to work through them.
@@ -141,8 +118,6 @@ function CompaniesPage() {
       switch (key) {
         case "name":
           return g.name ?? "";
-        case "objekte":
-          return propertyCount.get(g.id) ?? 0;
         case "summe":
           return totals.get(g.id)?.total ?? 0;
         case "createdAt":
@@ -160,7 +135,6 @@ function CompaniesPage() {
   const sortColumns = [
     { value: "code", label: t("companies.list.col.code") },
     { value: "name", label: t("companies.list.col.name") },
-    { value: "objekte", label: t("companies.list.col.objekte") },
     { value: "summe", label: t("companies.list.col.verbucht") },
     { value: "createdAt", label: t("companies.list.col.createdAt") },
     { value: "updatedAt", label: t("companies.list.col.updatedAt") },
@@ -241,12 +215,11 @@ function CompaniesPage() {
     () =>
       view.pageRows.map((g) => ({
         company: g,
-        properties: propertyCount.get(g.id) ?? 0,
         total: totals.get(g.id)?.total ?? 0,
         count: totals.get(g.id)?.count ?? 0,
         archived: !!g.deleted_at,
       })),
-    [view.pageRows, totals, propertyCount],
+    [view.pageRows, totals],
   );
 
   return (
@@ -324,17 +297,6 @@ function CompaniesPage() {
                   >
                     {t("companies.list.col.name")}
                   </SortableColumnHeader>
-                  <TableHead className="w-[150px]">{t("companies.list.col.bereich")}</TableHead>
-                  <SortableColumnHeader
-                    column="objekte"
-                    sort={view.sort}
-                    dir={view.dir}
-                    onSort={view.toggleSort}
-                    align="right"
-                    className="w-[110px]"
-                  >
-                    {t("companies.list.col.objekte")}
-                  </SortableColumnHeader>
                   <SortableColumnHeader
                     column="summe"
                     sort={view.sort}
@@ -365,7 +327,7 @@ function CompaniesPage() {
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {rows.map(({ company: g, properties, total, count, archived }) => (
+                {rows.map(({ company: g, total, count, archived }) => (
                   <TableRow
                     key={g.id}
                     className={cn("cursor-pointer", archived && "opacity-50")}
@@ -380,19 +342,6 @@ function CompaniesPage() {
                         <span className="ml-2 inline-flex items-center rounded-md bg-muted px-2 py-0.5 font-sans text-xs text-muted-foreground">
                           {t("companies.list.archiviertBadge")}
                         </span>
-                      )}
-                    </TableCell>
-                    <TableCell>
-                      <AreaBadge area={g.area} />
-                    </TableCell>
-                    <TableCell className="text-right tabular-nums text-muted-foreground">
-                      {/* A skeleton, not a "—": the property links come from a different query
-                          than the rows, and an em dash here is an affirmative "owns nothing"
-                          shown before anything is known. */}
-                      {propertiesReady ? (
-                        properties || "—"
-                      ) : (
-                        <Skeleton className="ml-auto h-4 w-6" />
                       )}
                     </TableCell>
                     <TableCell>
@@ -414,7 +363,7 @@ function CompaniesPage() {
                 ))}
                 {view.total === 0 && (
                   <TableRow>
-                    <TableCell colSpan={7} className="py-12 text-center text-muted-foreground">
+                    <TableCell colSpan={5} className="py-12 text-center text-muted-foreground">
                       {t("companies.list.empty")}
                     </TableCell>
                   </TableRow>
@@ -424,7 +373,7 @@ function CompaniesPage() {
           </div>
 
           <div className="space-y-3 sm:hidden">
-            {rows.map(({ company: g, properties, total, count, archived }) => (
+            {rows.map(({ company: g, total, count, archived }) => (
               <div
                 key={g.id}
                 className={cn(
@@ -448,12 +397,6 @@ function CompaniesPage() {
                   />
                 </div>
                 <div className="mt-3 flex flex-wrap items-center gap-1.5">
-                  <AreaBadge area={g.area} />
-                  {propertiesReady && properties > 0 && (
-                    <span className="inline-flex items-center rounded-md bg-muted px-2 py-0.5 text-xs text-muted-foreground">
-                      {t("companies.list.objekteCount", { count: properties })}
-                    </span>
-                  )}
                   {archived && (
                     <span className="inline-flex items-center rounded-md bg-muted px-2 py-0.5 text-xs text-muted-foreground">
                       {t("companies.list.archiviertBadge")}
@@ -492,22 +435,6 @@ function CompaniesPage() {
         />
       )}
     </div>
-  );
-}
-
-/**
- * The area of responsibility, as a neutral chip.
- *
- * Deliberately not colour-coded: the two areas are peers, and a palette that tells them apart by
- * hue would claim one of them means something (good, urgent, blocked) that it does not.
- */
-function AreaBadge({ area }: { area: Company["area"] }) {
-  const { t } = useTranslation();
-  if (!area) return <span className="text-sm text-muted-foreground">—</span>;
-  return (
-    <span className="inline-flex items-center rounded-md bg-muted px-2 py-0.5 text-xs text-foreground">
-      {t(`approvalRules.bereich.${area}`)}
-    </span>
   );
 }
 
