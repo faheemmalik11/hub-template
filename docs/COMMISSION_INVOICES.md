@@ -108,7 +108,7 @@ rules are in the database (`supabase/schema/0017_broker_commissions.sql`), not i
   broker sees nothing, that approval is refused to the broker, and that an approved deal cannot be
   edited. The screens were checked in a browser: the dialog offers exactly the broker's properties,
   and the deal page has Save but no Approve.
-- **Not built:** telling the administrator that a deal has been submitted.
+- **Notifications:** saving a deal as ready tells the administrators, and approving it tells the broker (`docs/NOTIFICATIONS.md`).
 
 ## Open
 

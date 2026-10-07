@@ -36,6 +36,7 @@ sellers, see `COMMISSION_INVOICES.md`.)
 - **Reviewer notification:** the trigger `notify_bonus_submitted` writes a bell entry for every active
   administering role except the developer role, linking to `/broker-bonuses`, each time a broker
   enters a bonus.
+- **Decision notice:** approving, rejecting (with the review note) or paying a bonus tells the broker (`notify_bonus_decided`, `docs/NOTIFICATIONS.md`).
 - **Checked:** a broker row was inserted and read back, and a broker approving their own bonus was
   refused, against the local database. The screen itself was not opened in a browser.
 
@@ -45,4 +46,3 @@ sellers, see `COMMISSION_INVOICES.md`.)
   rely on the broker entering the right amount.
 - Questions to the client: the rule for "Empfehlung Finanzierung", and whether the notary bonus is
   now 500 euro (the 2025 list shows 300).
-- The broker is not told when a bonus is approved or rejected.

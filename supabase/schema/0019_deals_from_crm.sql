@@ -46,7 +46,6 @@ declare
   v_switched_on timestamptz;
   v_created integer := 0;
   v_deal record;
-  v_recipient uuid;
 begin
   if not exists (select 1 from public.live_features() f where f.key = 'deals.from_crm') then
     return 0;
@@ -98,21 +97,17 @@ begin
        set note = 'Provisionssätze aus dem CRM übernommen (Bruttosätze auf netto umgerechnet). Bitte prüfen.'
      where id = v_deal.id;
 
-    for v_recipient in
-      select u.id
-        from public.app_users u
-        left join public.roles r on r.id = u.role_id
-       where u.is_active and (u.id = v_deal.acquired_by or (r.administers and r.name <> 'super_admin'))
-    loop
-      insert into public.notification_events (type, payload, recipient_user_id, created_by)
-      values ('ping',
-              jsonb_build_object(
-                'from_name', 'Hub',
-                'note', 'Verkauft im CRM: ' || coalesce(v_deal.property_label, 'Objekt')
-                        || '. Die Provision wartet auf Vervollständigung.',
-                'target', jsonb_build_object('kind', 'page', 'path', '/commission-deals/' || v_deal.id)),
-              v_recipient, 'crm');
-    end loop;
+    perform public.notify_administrators(
+      'Verkauft im CRM: ' || coalesce(v_deal.property_label, 'Objekt')
+        || '. Die Provision wartet auf Vervollständigung.',
+      '/commission-deals/' || v_deal.id, 'crm', v_deal.acquired_by);
+    if v_deal.acquired_by is not null then
+      perform public.send_system_ping(
+        v_deal.acquired_by, 'Hub',
+        'Verkauft im CRM: ' || coalesce(v_deal.property_label, 'Objekt')
+          || '. Die Provision wartet auf Vervollständigung.',
+        '/commission-deals/' || v_deal.id, 'crm');
+    end if;
   end loop;
 
   return v_created;

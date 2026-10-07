@@ -1,6 +1,13 @@
 -- Gives a client whose database already exists "a CRM sale opens a deal". Paste into the Supabase SQL
 -- editor as the database owner. It switches nothing on: see the last lines for that.
+-- Needs 0020_system_notifications.sql applied first (broker-for-an-existing-client.sql includes it).
 -- Built from supabase/schema/0019_deals_from_crm.sql and the `deals.from_crm` row of supabase/catalogue.sql.
+
+-- A property the CRM marks as sold opens a deal, for the broker to complete and an administrator to approve.
+--
+-- Runs after each CRM sync. Inert until `deals.from_crm` is switched on. The CRM's own sold date is
+-- usually empty, so what counts is the moment the sync saw the status become sold, and only a change seen
+-- after the switch opens a deal: the CRM's history never becomes a pile of deals. Re-runnable.
 
 -- A property the CRM marks as sold opens a deal, for the broker to complete and an administrator to approve.
 --
@@ -62,7 +69,6 @@ declare
   v_switched_on timestamptz;
   v_created integer := 0;
   v_deal record;
-  v_recipient uuid;
 begin
   if not exists (select 1 from public.live_features() f where f.key = 'deals.from_crm') then
     return 0;
@@ -114,21 +120,17 @@ begin
        set note = 'Provisionssätze aus dem CRM übernommen (Bruttosätze auf netto umgerechnet). Bitte prüfen.'
      where id = v_deal.id;
 
-    for v_recipient in
-      select u.id
-        from public.app_users u
-        left join public.roles r on r.id = u.role_id
-       where u.is_active and (u.id = v_deal.acquired_by or (r.administers and r.name <> 'super_admin'))
-    loop
-      insert into public.notification_events (type, payload, recipient_user_id, created_by)
-      values ('ping',
-              jsonb_build_object(
-                'from_name', 'Hub',
-                'note', 'Verkauft im CRM: ' || coalesce(v_deal.property_label, 'Objekt')
-                        || '. Die Provision wartet auf Vervollständigung.',
-                'target', jsonb_build_object('kind', 'page', 'path', '/commission-deals/' || v_deal.id)),
-              v_recipient, 'crm');
-    end loop;
+    perform public.notify_administrators(
+      'Verkauft im CRM: ' || coalesce(v_deal.property_label, 'Objekt')
+        || '. Die Provision wartet auf Vervollständigung.',
+      '/commission-deals/' || v_deal.id, 'crm', v_deal.acquired_by);
+    if v_deal.acquired_by is not null then
+      perform public.send_system_ping(
+        v_deal.acquired_by, 'Hub',
+        'Verkauft im CRM: ' || coalesce(v_deal.property_label, 'Objekt')
+          || '. Die Provision wartet auf Vervollständigung.',
+        '/commission-deals/' || v_deal.id, 'crm');
+    end if;
   end loop;
 
   return v_created;
