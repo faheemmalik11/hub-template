@@ -16,7 +16,7 @@ sellers, see `COMMISSION_INVOICES.md`.)
   review time and review note. Types are checked: `notary`, `google_review`, `viewing_new_job`,
   `company_lead_share`, `own_job_share`, `financing_referral`, `other`.
 - **Permissions** in `supabase/catalogue.sql`, all off by default: page `page.broker_bonuses`,
-  actions `bonuses.submit` and `bonuses.review`. The catalogue gives `bonuses.review` to roles that
+  actions `bonuses.submit`, `bonuses.review` and `bonuses.read`. The catalogue gives `bonuses.review` to roles that
   administer.
 - **Row security:** a holder of `bonuses.submit` reads, inserts, edits and deletes only their own
   rows, and only while `submitted`; they cannot write a reviewer or a status other than `submitted`.
@@ -30,15 +30,19 @@ sellers, see `COMMISSION_INVOICES.md`.)
 - **Roles:** `supabase/presets/broker-role.sql` gives the Broker role the page and `bonuses.submit`,
   and every administering role the page and `bonuses.review`.
   `supabase/presets/broker-for-an-existing-client.sql` is the combined file for a live database.
+- **Payroll view:** the Buchhaltung role holds `bonuses.read`, which reads every broker's `approved` and
+  `paid` bonuses and nothing else, and changes none. The screen shows those rows with the broker name
+  and an "Als CSV exportieren" button (salary month, broker, date, type, amount, status).
+- **Reviewer notification:** the trigger `notify_bonus_submitted` writes a bell entry for every active
+  administering role except the developer role, linking to `/broker-bonuses`, each time a broker
+  enters a bonus.
 - **Checked:** a broker row was inserted and read back, and a broker approving their own bonus was
   refused, against the local database. The screen itself was not opened in a browser.
 
 ## Open
 
-- The bookkeeper cannot see bonuses yet. Ayla needs the approved list for the salaries: give her a
-  read-only permission, or an export of approved bonuses per month.
 - Bonuses are typed in by the broker. They are not calculated from sales, so the 10% and 50% shares
   rely on the broker entering the right amount.
 - Questions to the client: the rule for "Empfehlung Finanzierung", and whether the notary bonus is
   now 500 euro (the 2025 list shows 300).
-- No notification to the reviewer when a bonus is entered.
+- The broker is not told when a bonus is approved or rejected.

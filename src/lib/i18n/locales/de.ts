@@ -4412,6 +4412,18 @@ const de = {
       "Tragen Sie Ihre Boni mit Datum, Art und Betrag ein. Die Geschäftsführung prüft und gibt sie frei.",
     subtitleReview:
       "Die Boni aller Makler. Prüfen, korrigieren, freigeben und als ausgezahlt markieren.",
+    subtitlePayroll:
+      "Die freigegebenen und ausgezahlten Boni aller Makler, für die Gehaltsabrechnung.",
+    export: {
+      button: "Als CSV exportieren",
+      fileName: "Boni",
+      payrollMonth: "Gehaltsmonat",
+      broker: "Makler",
+      date: "Datum",
+      type: "Art",
+      amount: "Betrag",
+      status: "Status",
+    },
     newBonus: "Bonus erfassen",
     cutoffHint:
       "Boni, die bis zum {{day}}. eines Monats erfasst werden, gehen in das Gehalt dieses Monats, spätere in das des nächsten.",

@@ -1,6 +1,6 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useMemo, useState } from "react";
-import { Plus } from "lucide-react";
+import { Download, Plus } from "lucide-react";
 import { toast } from "sonner";
 
 import { Badge } from "@/components/ui/badge";
@@ -44,6 +44,7 @@ import {
 } from "@/data";
 import { PERMISSIONS } from "@/config/permissions";
 import { pageTitle } from "@/config/brand";
+import { downloadTextFile, toCsv } from "@/kit/lib/download";
 import { useAuth } from "@/lib/auth";
 import { errorText, formatDate, formatEUR } from "@/lib/data/format";
 import { useTranslation } from "@/lib/i18n";
@@ -82,11 +83,30 @@ function BrokerBonusesPage() {
   const { can } = useAuth();
   const canReview = can(PERMISSIONS.bonusesReview);
   const canSubmit = can(PERMISSIONS.bonusesSubmit);
+  const seesAllBrokers = canReview || can(PERMISSIONS.bonusesRead);
   const bonusesQ = useBrokerBonuses();
   const bonuses = useMemo(() => bonusesQ.data ?? [], [bonusesQ.data]);
   const [reviewing, setReviewing] = useState<BrokerBonus | null>(null);
   const markPaid = useReviewBrokerBonus();
   const remove = useDeleteBrokerBonus();
+
+  const exportApproved = () => {
+    const approvedOrPaid = bonuses.filter(
+      (bonus) => bonus.status === "approved" || bonus.status === "paid",
+    );
+    const header = ["payrollMonth", "broker", "date", "type", "amount", "status"].map((key) =>
+      t(`brokerBonuses.export.${key}`),
+    );
+    const rows = approvedOrPaid.map((bonus) => [
+      payrollMonthOf(bonus.created_at),
+      bonus.broker?.name ?? bonus.broker?.email ?? "",
+      formatDate(bonus.earned_on),
+      t(`brokerBonuses.types.${bonus.bonus_type}`),
+      String(bonus.amount).replace(".", ","),
+      t(`brokerBonuses.status.${bonus.status}`),
+    ]);
+    downloadTextFile(`${t("brokerBonuses.export.fileName")}.csv`, toCsv([header, ...rows]));
+  };
 
   const totalOf = (status: BonusStatus) =>
     bonuses
@@ -101,14 +121,28 @@ function BrokerBonusesPage() {
             {t("brokerBonuses.title")}
           </h1>
           <p className="mt-1 max-w-2xl text-sm text-muted-foreground">
-            {canReview ? t("brokerBonuses.subtitleReview") : t("brokerBonuses.subtitle")}
+            {canReview
+              ? t("brokerBonuses.subtitleReview")
+              : seesAllBrokers
+                ? t("brokerBonuses.subtitlePayroll")
+                : t("brokerBonuses.subtitle")}
           </p>
         </div>
-        {canSubmit && <NewBonusDialog />}
+        <div className="flex gap-2">
+          {seesAllBrokers && (
+            <Button variant="outline" onClick={exportApproved}>
+              <Download /> {t("brokerBonuses.export.button")}
+            </Button>
+          )}
+          {canSubmit && <NewBonusDialog />}
+        </div>
       </div>
 
       <div className="mt-6 grid gap-3 sm:grid-cols-3">
-        {(["submitted", "approved", "paid"] as const).map((status) => (
+        {(canReview
+          ? (["submitted", "approved", "paid"] as const)
+          : (["approved", "paid"] as const)
+        ).map((status) => (
           <div key={status} className="rounded-xl border border-border bg-card p-4">
             <p className="text-sm text-muted-foreground">{t(`brokerBonuses.totals.${status}`)}</p>
             <p className="mt-1 text-2xl font-semibold tabular-nums">{formatEUR(totalOf(status))}</p>
@@ -132,7 +166,7 @@ function BrokerBonusesPage() {
               <TableHeader>
                 <TableRow>
                   <TableHead>{t("brokerBonuses.columns.date")}</TableHead>
-                  {canReview && <TableHead>{t("brokerBonuses.columns.broker")}</TableHead>}
+                  {seesAllBrokers && <TableHead>{t("brokerBonuses.columns.broker")}</TableHead>}
                   <TableHead>{t("brokerBonuses.columns.type")}</TableHead>
                   <TableHead className="text-right">{t("brokerBonuses.columns.amount")}</TableHead>
                   <TableHead>{t("brokerBonuses.columns.payrollMonth")}</TableHead>
@@ -144,7 +178,7 @@ function BrokerBonusesPage() {
                 {bonuses.map((bonus) => (
                   <TableRow key={bonus.id}>
                     <TableCell className="text-sm">{formatDate(bonus.earned_on)}</TableCell>
-                    {canReview && (
+                    {seesAllBrokers && (
                       <TableCell className="text-sm">
                         {bonus.broker?.name ?? bonus.broker?.email ?? "—"}
                       </TableCell>

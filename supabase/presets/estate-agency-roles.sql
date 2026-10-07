@@ -54,4 +54,11 @@ select r.id, k
    and exists (select 1 from public.permissions p where p.key = k)
 on conflict do nothing;
 
+insert into public.role_permissions (role_id, permission_key)
+select r.id, k
+  from public.roles r
+  cross join unnest(array['page.broker_bonuses', 'bonuses.read']) as k
+ where r.name = 'bookkeeper'
+on conflict do nothing;
+
 commit;

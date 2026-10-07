@@ -126,6 +126,9 @@ insert into public.permissions (key, kind, parent_key, category, label_de, label
   ('bonuses.submit', 'action', 'page.broker_bonuses', 'documents', 'Eigene Boni erfassen', 'Enter own bonuses',
    'Eigene Boni mit Datum, Art und Betrag erfassen, bis die Geschäftsführung sie prüft.',
    'Enter your own bonuses with date, type and amount until an administrator reviews them.', false, 937),
+  ('bonuses.read', 'action', 'page.broker_bonuses', 'documents', 'Freigegebene Boni sehen', 'See approved bonuses',
+   'Die freigegebenen und ausgezahlten Boni aller Makler lesen, zum Beispiel für die Gehaltsabrechnung. Ändern lässt sich damit nichts.',
+   'Read every broker''s approved and paid bonuses, for example for payroll. It changes nothing.', false, 940),
   ('bonuses.review', 'action', 'page.broker_bonuses', 'documents', 'Boni prüfen', 'Review bonuses',
    'Die Boni aller Makler sehen, korrigieren, freigeben, ablehnen und als ausgezahlt markieren.',
    'See every broker''s bonuses, correct, approve, reject and mark them paid.', false, 938)

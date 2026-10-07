@@ -70,6 +70,7 @@ export const PERMISSIONS = {
   dealsSubmit: "deals.submit",
   bonusesSubmit: "bonuses.submit",
   bonusesReview: "bonuses.review",
+  bonusesRead: "bonuses.read",
   pageBankConnections: "page.bank_connections",
 
   // Menu groups. Switching one off takes its pages with it.
