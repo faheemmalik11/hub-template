@@ -10,7 +10,7 @@ as $$
   select u.id
     from public.app_users u
     join public.roles r on r.id = u.role_id
-   where u.is_active and r.administers and r.name <> 'super_admin';
+   where u.is_active and r.administers;
 $$;
 
 create or replace function public.send_system_ping(

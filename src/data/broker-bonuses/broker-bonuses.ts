@@ -4,6 +4,8 @@ import { TABLE } from "@/config/tables";
 import { STALE, sb } from "@/data/client";
 import { queryKeys } from "@/data/keys";
 
+export const BONUS_NOTE_MAX_LENGTH = 500;
+
 export const BONUS_TYPES = [
   "notary",
   "google_review",

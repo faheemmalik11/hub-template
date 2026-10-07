@@ -34,7 +34,7 @@ sellers, see `COMMISSION_INVOICES.md`.)
   `paid` bonuses and nothing else, and changes none. The screen shows those rows with the broker name
   and an "Als CSV exportieren" button (salary month, broker, date, type, amount, status).
 - **Reviewer notification:** the trigger `notify_bonus_submitted` writes a bell entry for every active
-  administering role except the developer role, linking to `/broker-bonuses`, each time a broker
+  administering role, the developer role included, linking to `/broker-bonuses`, each time a broker
   enters a bonus.
 - **Decision notice:** approving, rejecting (with the review note) or paying a bonus tells the broker (`notify_bonus_decided`, `docs/NOTIFICATIONS.md`).
 - **Checked:** a broker row was inserted and read back, and a broker approving their own bonus was

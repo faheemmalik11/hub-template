@@ -4273,6 +4273,8 @@ const en = {
       amount: "Amount",
       status: "Status",
     },
+    expandNote: "Show the whole note",
+    collapseNote: "Collapse the note",
     newBonus: "Enter bonus",
     cutoffHint:
       "Bonuses entered by the {{day}}th of a month go into that month's salary, later ones into the next.",

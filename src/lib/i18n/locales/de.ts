@@ -4427,6 +4427,8 @@ const de = {
       amount: "Betrag",
       status: "Status",
     },
+    expandNote: "Notiz ausklappen",
+    collapseNote: "Notiz einklappen",
     newBonus: "Bonus erfassen",
     cutoffHint:
       "Boni, die bis zum {{day}}. eines Monats erfasst werden, gehen in das Gehalt dieses Monats, spätere in das des nächsten.",

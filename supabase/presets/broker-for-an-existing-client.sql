@@ -145,6 +145,13 @@ create table if not exists public.broker_bonuses (
     constraint broker_bonuses_review_complete check ((reviewed_by is null) = (reviewed_at is null))
 );
 
+update public.broker_bonuses set note = left(note, 500) where char_length(note) > 500;
+update public.broker_bonuses set review_note = left(review_note, 500) where char_length(review_note) > 500;
+
+alter table public.broker_bonuses drop constraint if exists broker_bonuses_notes_short;
+alter table public.broker_bonuses add constraint broker_bonuses_notes_short
+    check (char_length(note) <= 500 and char_length(review_note) <= 500);
+
 create index if not exists broker_bonuses_broker on public.broker_bonuses (broker_user_id, earned_on desc);
 create index if not exists broker_bonuses_status on public.broker_bonuses (status);
 
@@ -236,7 +243,7 @@ as $$
   select u.id
     from public.app_users u
     join public.roles r on r.id = u.role_id
-   where u.is_active and r.administers and r.name <> 'super_admin';
+   where u.is_active and r.administers;
 $$;
 
 create or replace function public.send_system_ping(
