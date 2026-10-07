@@ -7463,6 +7463,10 @@ create policy broker_bonuses_review on public.broker_bonuses for all to authenti
     using (public.has_permission('bonuses.review'))
     with check (public.has_permission('bonuses.review'));
 
+drop policy if exists broker_bonuses_approved_read on public.broker_bonuses;
+create policy broker_bonuses_approved_read on public.broker_bonuses for select to authenticated
+    using (public.has_permission('bonuses.read') and status in ('approved', 'paid'));
+
 drop policy if exists broker_bonuses_own_read on public.broker_bonuses;
 create policy broker_bonuses_own_read on public.broker_bonuses for select to authenticated
     using (public.has_permission('bonuses.submit') and broker_user_id = public.current_app_user_id());
@@ -7488,6 +7492,47 @@ create policy broker_bonuses_own_delete on public.broker_bonuses for delete to a
            and broker_user_id = public.current_app_user_id() and status = 'submitted');
 
 grant select, insert, update, delete on public.broker_bonuses to authenticated;
+
+create or replace function public.notify_bonus_submitted() returns trigger
+language plpgsql security definer set search_path to 'public'
+as $$
+declare
+  v_broker text;
+  v_type text;
+  v_recipient uuid;
+begin
+  select coalesce(name, email) into v_broker from public.app_users where id = new.broker_user_id;
+  v_type := case new.bonus_type
+    when 'notary' then 'Notarbonus'
+    when 'google_review' then 'Google-Bewertung'
+    when 'viewing_new_job' then 'Neuer Auftrag aus Besichtigung'
+    when 'company_lead_share' then '10 % Anteil (Firmenlead)'
+    when 'own_job_share' then '50 % Anteil (eigener Auftrag)'
+    when 'financing_referral' then 'Empfehlung Finanzierung'
+    else 'Sonstiges' end;
+
+  for v_recipient in
+    select u.id
+      from public.app_users u
+      join public.roles r on r.id = u.role_id
+     where u.is_active and r.administers and r.name <> 'super_admin' and u.id <> new.broker_user_id
+  loop
+    insert into public.notification_events (type, payload, recipient_user_id, created_by)
+    values ('ping',
+            jsonb_build_object(
+              'from_name', v_broker,
+              'note', 'Neuer Bonus zur Prüfung: ' || v_type || ', '
+                      || replace(to_char(new.amount, 'FM999999990.00'), '.', ',') || ' €',
+              'target', jsonb_build_object('kind', 'page', 'path', '/broker-bonuses')),
+            v_recipient, 'bonus');
+  end loop;
+  return new;
+end;
+$$;
+
+drop trigger if exists broker_bonuses_notify_submitted on public.broker_bonuses;
+create trigger broker_bonuses_notify_submitted after insert on public.broker_bonuses
+    for each row execute function public.notify_bonus_submitted();
 
 commit;
 

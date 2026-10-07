@@ -4260,6 +4260,17 @@ const en = {
     subtitle:
       "Enter your bonuses with date, type and amount. The management reviews and approves them.",
     subtitleReview: "Every broker's bonuses. Review, correct, approve and mark them paid.",
+    subtitlePayroll: "Every broker's approved and paid bonuses, for payroll.",
+    export: {
+      button: "Export as CSV",
+      fileName: "Bonuses",
+      payrollMonth: "Salary month",
+      broker: "Broker",
+      date: "Date",
+      type: "Type",
+      amount: "Amount",
+      status: "Status",
+    },
     newBonus: "Enter bonus",
     cutoffHint:
       "Bonuses entered by the {{day}}th of a month go into that month's salary, later ones into the next.",

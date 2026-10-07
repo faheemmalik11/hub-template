@@ -23,6 +23,7 @@ insert into public.feature_settings (feature_key, enabled) values
   ('deals.submit', true),
   ('page.broker_bonuses', true),
   ('bonuses.submit', true),
+  ('bonuses.read', true),
   ('bonuses.review', true)
 on conflict (feature_key) do update set enabled = true;
 
