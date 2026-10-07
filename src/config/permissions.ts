@@ -19,6 +19,7 @@ export const PERMISSIONS = {
   // for by name, listed at the top of supabase/schema/0010_access.sql.
   usersRead: "users.read",
   documentsRead: "documents.read",
+  documentsPropertyAssignment: "documents.property_assignment",
   documentsWrite: "documents.write",
   masterDataRead: "master_data.read",
   masterDataWrite: "master_data.write",
