@@ -7,7 +7,12 @@ import {
   type RankedBarRow,
 } from "@/components/dashboard/ranked-bars";
 import { PeriodPicker, useStoredPeriod } from "@/components/home/period-picker";
-import { formatEURCompact, COMPANY_WITHOUT, overviewPeriodRange } from "@/lib/data/format";
+import {
+  formatEUR,
+  formatEURCompact,
+  COMPANY_WITHOUT,
+  overviewPeriodRange,
+} from "@/lib/data/format";
 import { useOverviewInvoices } from "@/data";
 import { useTranslation } from "@/lib/i18n";
 
@@ -60,18 +65,26 @@ export function TopSuppliers() {
     return { rows, total };
   }, [invoicesQ.data, t]);
 
-  if (!invoicesQ.isLoading && rows.length === 0) return null;
-
   return (
     <DashboardPanel
-      title={t("home.top.title", { count: rows.length })}
+      title={t("home.top.title", { count: RANKED_ROWS })}
       titleExtra={t("home.rank.total", { sum: formatEURCompact(total) })}
       headerRight={<PeriodPicker value={period} onChange={setPeriod} />}
       className="overflow-hidden"
     >
-      {invoicesQ.isLoading ? <RankedBarsSkeleton /> : <RankedBars rows={rows} />}
+      {invoicesQ.isLoading ? (
+        <RankedBarsSkeleton />
+      ) : (
+        <RankedBars rows={rows.length > 0 ? rows : [emptyRow(t)]} />
+      )}
     </DashboardPanel>
   );
+}
+
+const RANKED_ROWS = 5;
+
+function emptyRow(t: (key: string) => string): RankedBarRow {
+  return { key: "__empty", label: t("home.rank.empty"), valueText: formatEUR(0), sharePct: 0 };
 }
 
 export function CompanyVolume() {
@@ -115,16 +128,18 @@ export function CompanyVolume() {
     return { rows, total };
   }, [invoicesQ.data, t]);
 
-  if (!invoicesQ.isLoading && rows.length === 0) return null;
-
   return (
     <DashboardPanel
-      title={t("home.companies.title", { count: rows.length })}
+      title={t("home.companies.title", { count: RANKED_ROWS })}
       titleExtra={t("home.rank.total", { sum: formatEURCompact(total) })}
       headerRight={<PeriodPicker value={period} onChange={setPeriod} />}
       className="overflow-hidden"
     >
-      {invoicesQ.isLoading ? <RankedBarsSkeleton /> : <RankedBars rows={rows} />}
+      {invoicesQ.isLoading ? (
+        <RankedBarsSkeleton />
+      ) : (
+        <RankedBars rows={rows.length > 0 ? rows : [emptyRow(t)]} />
+      )}
     </DashboardPanel>
   );
 }

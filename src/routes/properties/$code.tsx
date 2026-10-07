@@ -5,7 +5,7 @@ import { toast } from "sonner";
 
 import { AssignmentDialog } from "@/components/properties/assignment-dialog";
 import { KnownSpellingsCard } from "@/components/master-data/known-spellings-card";
-import { CrmPropertySection } from "@/components/properties/crm-property-section";
+import { CrmAllFieldsCard, CrmFactsCard } from "@/components/properties/crm-property-section";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -69,7 +69,8 @@ function PropertyDetailPage() {
       bookedDocuments: !crmLed,
       recordDates: !crmLed,
       masterDataCheck: false,
-      archiving: true,
+      editing: !crmLed,
+      archiving: !crmLed,
       ownership: false,
       driveFolder: false,
       assignmentEditor: (property) => (
@@ -89,9 +90,10 @@ function PropertyDetailPage() {
           <Plus className="size-3.5" /> {t("properties.detail.zuordnungHinzufuegen")}
         </Button>
       ),
+      details: (propertyCode) => (crmLed ? <CrmFactsCard propertyCode={propertyCode} /> : null),
       spellings: (propertyCode) =>
         crmLed ? (
-          <CrmPropertySection propertyCode={propertyCode} />
+          <CrmAllFieldsCard propertyCode={propertyCode} />
         ) : (
           <KnownSpellingsCard entityType="objekt" entityCode={propertyCode} />
         ),

@@ -374,15 +374,17 @@ export function PropertyDetail({ code, config }: { code: string; config: Propert
         </div>
         {property && (
           <div className="flex w-full flex-wrap items-center gap-2 sm:w-auto">
-            <Button
-              onClick={() => {
-                setForm(oFormFrom(property));
-                setEdit(true);
-              }}
-              className="gap-2"
-            >
-              <Pencil className="size-4" /> {t("properties.detail.action.bearbeiten")}
-            </Button>
+            {config.editing !== false && (
+              <Button
+                onClick={() => {
+                  setForm(oFormFrom(property));
+                  setEdit(true);
+                }}
+                className="gap-2"
+              >
+                <Pencil className="size-4" /> {t("properties.detail.action.bearbeiten")}
+              </Button>
+            )}
             {/* The destructive action moved into a menu, matching the company page: it was a
                 full-width red button sitting beside Edit, given the same weight as the thing
                 people actually come here to do.
@@ -678,6 +680,7 @@ export function PropertyDetail({ code, config }: { code: string; config: Propert
               )}
             </section>
           )}
+          {config.details?.(code)}
         </div>
 
         <div className="space-y-6">

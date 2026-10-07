@@ -1280,6 +1280,7 @@ const de = {
     },
     rank: {
       total: "Gesamt: {{sum}}",
+      empty: "Noch keine Daten",
     },
     top: {
       title: "Top {{count}} Lieferanten",
@@ -1412,6 +1413,7 @@ const de = {
     inbox: "Postfach & Ablage",
     incomingInvoices: "Eingangsrechnungen",
     manualBookings: "Manuelle Buchungen",
+    overview: "Übersicht",
     notifications: "Benachrichtigungen",
     onboarding: "Onboarding",
     openItems: "Offene Posten",
