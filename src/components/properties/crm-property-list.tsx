@@ -25,6 +25,9 @@ import type { ListedProperty } from "@/data";
 import { PERMISSIONS } from "@/config/permissions";
 import { useAuth } from "@/lib/auth";
 import { formatDate, formatDateTime, formatEUR } from "@/lib/data/format";
+import { usePaginationLabels } from "@/lib/use-pagination-labels";
+import { useTableView } from "@/lib/use-table-view";
+import { TablePagination } from "@/kit/components/feedback/table-pagination";
 import { useTranslation } from "@/lib/i18n";
 import { listingTypeLabel } from "@/components/properties/listing-labels";
 import { SyncPropertiesButton } from "@/components/properties/sync-properties-button";
@@ -45,6 +48,10 @@ function matchesSearch(listing: ListedProperty, needle: string): boolean {
   return [listing.name, listing.address, listing.broker_name, listing.external_id]
     .filter(Boolean)
     .some((value) => value!.toLowerCase().includes(needle));
+}
+
+function listingSortValue(listing: ListedProperty, key: string): string | number {
+  return key === "name" ? listing.name : (listing.crm_updated_at ?? "");
 }
 
 export function CrmPropertyList() {
@@ -71,6 +78,13 @@ export function CrmPropertyList() {
     );
   }, [listings, status, search]);
   const lastSyncedAt = latestSync(listings);
+  const view = useTableView(visibleListings, {
+    sortValue: listingSortValue,
+    initialSort: "updated",
+    initialDir: "desc",
+    resetKey: `${status}|${search}`,
+  });
+  const paginationLabels = usePaginationLabels();
 
   return (
     <div>
@@ -135,7 +149,25 @@ export function CrmPropertyList() {
             hint={t("propertyListings.emptyHint")}
           />
         ) : (
-          <ListingsTable listings={visibleListings} />
+          <>
+            <ListingsTable listings={view.pageRows} />
+            {view.total > 0 && (
+              <div className="mt-3">
+                <TablePagination
+                  page={view.page}
+                  totalPages={view.totalPages}
+                  pageSize={view.pageSize}
+                  total={view.total}
+                  from={view.from}
+                  to={view.to}
+                  onPage={view.setPage}
+                  onPageSize={view.setPageSize}
+                  labels={paginationLabels}
+                  divider={false}
+                />
+              </div>
+            )}
+          </>
         )}
       </div>
     </div>

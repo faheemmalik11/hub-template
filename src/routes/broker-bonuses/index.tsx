@@ -45,7 +45,10 @@ import {
 import { PERMISSIONS } from "@/config/permissions";
 import { pageTitle } from "@/config/brand";
 import { downloadTextFile, toCsv } from "@/kit/lib/download";
+import { TablePagination } from "@/kit/components/feedback/table-pagination";
 import { useAuth } from "@/lib/auth";
+import { usePaginationLabels } from "@/lib/use-pagination-labels";
+import { useTableView } from "@/lib/use-table-view";
 import { errorText, formatDate, formatEUR } from "@/lib/data/format";
 import { useTranslation } from "@/lib/i18n";
 
@@ -86,6 +89,12 @@ function BrokerBonusesPage() {
   const seesAllBrokers = canReview || can(PERMISSIONS.bonusesRead);
   const bonusesQ = useBrokerBonuses();
   const bonuses = useMemo(() => bonusesQ.data ?? [], [bonusesQ.data]);
+  const view = useTableView(bonuses, {
+    sortValue: (bonus) => bonus.earned_on,
+    initialSort: "earned",
+    initialDir: "desc",
+  });
+  const paginationLabels = usePaginationLabels();
   const [reviewing, setReviewing] = useState<BrokerBonus | null>(null);
   const markPaid = useReviewBrokerBonus();
   const remove = useDeleteBrokerBonus();
@@ -161,101 +170,119 @@ function BrokerBonusesPage() {
         ) : bonuses.length === 0 ? (
           <EmptyState title={t("brokerBonuses.emptyTitle")} hint={t("brokerBonuses.emptyHint")} />
         ) : (
-          <div className="overflow-x-auto rounded-xl border border-border bg-card">
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead>{t("brokerBonuses.columns.date")}</TableHead>
-                  {seesAllBrokers && <TableHead>{t("brokerBonuses.columns.broker")}</TableHead>}
-                  <TableHead>{t("brokerBonuses.columns.type")}</TableHead>
-                  <TableHead className="text-right">{t("brokerBonuses.columns.amount")}</TableHead>
-                  <TableHead>{t("brokerBonuses.columns.payrollMonth")}</TableHead>
-                  <TableHead>{t("brokerBonuses.columns.status")}</TableHead>
-                  <TableHead />
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {bonuses.map((bonus) => (
-                  <TableRow key={bonus.id}>
-                    <TableCell className="text-sm">{formatDate(bonus.earned_on)}</TableCell>
-                    {seesAllBrokers && (
-                      <TableCell className="text-sm">
-                        {bonus.broker?.name ?? bonus.broker?.email ?? "—"}
-                      </TableCell>
-                    )}
-                    <TableCell>
-                      <div className="text-sm font-medium">
-                        {t(`brokerBonuses.types.${bonus.bonus_type}`)}
-                      </div>
-                      {bonus.note && (
-                        <div className="text-xs text-muted-foreground">{bonus.note}</div>
+          <>
+            <div className="overflow-x-auto rounded-xl border border-border bg-card">
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead>{t("brokerBonuses.columns.date")}</TableHead>
+                    {seesAllBrokers && <TableHead>{t("brokerBonuses.columns.broker")}</TableHead>}
+                    <TableHead>{t("brokerBonuses.columns.type")}</TableHead>
+                    <TableHead className="text-right">
+                      {t("brokerBonuses.columns.amount")}
+                    </TableHead>
+                    <TableHead>{t("brokerBonuses.columns.payrollMonth")}</TableHead>
+                    <TableHead>{t("brokerBonuses.columns.status")}</TableHead>
+                    <TableHead />
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {view.pageRows.map((bonus) => (
+                    <TableRow key={bonus.id}>
+                      <TableCell className="text-sm">{formatDate(bonus.earned_on)}</TableCell>
+                      {seesAllBrokers && (
+                        <TableCell className="text-sm">
+                          {bonus.broker?.name ?? bonus.broker?.email ?? "—"}
+                        </TableCell>
                       )}
-                      {bonus.review_note && (
-                        <div className="text-xs text-muted-foreground">
-                          {t("brokerBonuses.reviewNote", { note: bonus.review_note })}
+                      <TableCell>
+                        <div className="text-sm font-medium">
+                          {t(`brokerBonuses.types.${bonus.bonus_type}`)}
                         </div>
-                      )}
-                    </TableCell>
-                    <TableCell className="text-right tabular-nums">
-                      {formatEUR(bonus.amount)}
-                    </TableCell>
-                    <TableCell className="text-sm">{payrollMonthOf(bonus.created_at)}</TableCell>
-                    <TableCell>
-                      <Badge variant={STATUS_VARIANT[bonus.status]} className="whitespace-nowrap">
-                        {t(`brokerBonuses.status.${bonus.status}`)}
-                      </Badge>
-                    </TableCell>
-                    <TableCell className="text-right">
-                      <div className="flex justify-end gap-2">
-                        {canReview && bonus.status === "submitted" && (
-                          <Button size="sm" onClick={() => setReviewing(bonus)}>
-                            {t("brokerBonuses.review")}
-                          </Button>
+                        {bonus.note && (
+                          <div className="text-xs text-muted-foreground">{bonus.note}</div>
                         )}
-                        {canReview && bonus.status === "approved" && (
-                          <Button
-                            size="sm"
-                            variant="outline"
-                            disabled={markPaid.isPending}
-                            onClick={() =>
-                              markPaid.mutate(
-                                { id: bonus.id, status: "paid" },
-                                {
+                        {bonus.review_note && (
+                          <div className="text-xs text-muted-foreground">
+                            {t("brokerBonuses.reviewNote", { note: bonus.review_note })}
+                          </div>
+                        )}
+                      </TableCell>
+                      <TableCell className="text-right tabular-nums">
+                        {formatEUR(bonus.amount)}
+                      </TableCell>
+                      <TableCell className="text-sm">{payrollMonthOf(bonus.created_at)}</TableCell>
+                      <TableCell>
+                        <Badge variant={STATUS_VARIANT[bonus.status]} className="whitespace-nowrap">
+                          {t(`brokerBonuses.status.${bonus.status}`)}
+                        </Badge>
+                      </TableCell>
+                      <TableCell className="text-right">
+                        <div className="flex justify-end gap-2">
+                          {canReview && bonus.status === "submitted" && (
+                            <Button size="sm" onClick={() => setReviewing(bonus)}>
+                              {t("brokerBonuses.review")}
+                            </Button>
+                          )}
+                          {canReview && bonus.status === "approved" && (
+                            <Button
+                              size="sm"
+                              variant="outline"
+                              disabled={markPaid.isPending}
+                              onClick={() =>
+                                markPaid.mutate(
+                                  { id: bonus.id, status: "paid" },
+                                  {
+                                    onError: (error) =>
+                                      toast.error(t("brokerBonuses.failed"), {
+                                        description: errorText(error),
+                                      }),
+                                  },
+                                )
+                              }
+                            >
+                              {t("brokerBonuses.markPaid")}
+                            </Button>
+                          )}
+                          {canSubmit && bonus.status === "submitted" && (
+                            <Button
+                              size="sm"
+                              variant="outline"
+                              disabled={remove.isPending}
+                              onClick={() =>
+                                remove.mutate(bonus.id, {
                                   onError: (error) =>
                                     toast.error(t("brokerBonuses.failed"), {
                                       description: errorText(error),
                                     }),
-                                },
-                              )
-                            }
-                          >
-                            {t("brokerBonuses.markPaid")}
-                          </Button>
-                        )}
-                        {canSubmit && bonus.status === "submitted" && (
-                          <Button
-                            size="sm"
-                            variant="outline"
-                            disabled={remove.isPending}
-                            onClick={() =>
-                              remove.mutate(bonus.id, {
-                                onError: (error) =>
-                                  toast.error(t("brokerBonuses.failed"), {
-                                    description: errorText(error),
-                                  }),
-                              })
-                            }
-                          >
-                            {t("brokerBonuses.withdraw")}
-                          </Button>
-                        )}
-                      </div>
-                    </TableCell>
-                  </TableRow>
-                ))}
-              </TableBody>
-            </Table>
-          </div>
+                                })
+                              }
+                            >
+                              {t("brokerBonuses.withdraw")}
+                            </Button>
+                          )}
+                        </div>
+                      </TableCell>
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
+            </div>
+            <div className="mt-3">
+              <TablePagination
+                page={view.page}
+                totalPages={view.totalPages}
+                pageSize={view.pageSize}
+                total={view.total}
+                from={view.from}
+                to={view.to}
+                onPage={view.setPage}
+                onPageSize={view.setPageSize}
+                labels={paginationLabels}
+                divider={false}
+              />
+            </div>
+          </>
         )}
       </div>
 

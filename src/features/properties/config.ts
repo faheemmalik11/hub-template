@@ -120,6 +120,8 @@ export interface PropertiesConfig {
    * banner. Without the column there is nothing to archive to and nothing to restore from.
    */
   archiving: boolean;
+  /** False hides the Edit button: the properties are kept in step with another system. Default true. */
+  editing?: boolean;
   /** Eigenbestand vs. Fremdverwaltung (`properties.ownership_type`). */
   ownership: boolean;
   /** The Drive folder link (`properties.drive_folder_url`). */
@@ -164,6 +166,8 @@ export interface PropertiesConfig {
     /** Clear the control, when the dialog opens and after a successful create. */
     reset: () => void;
   };
+  /** An extra card under the master data, in the left column. */
+  details?: (propertyCode: string) => ReactNode;
   /** Extra card below the master data, e.g. the known-spellings list. */
   spellings?: (propertyCode: string) => ReactNode;
 

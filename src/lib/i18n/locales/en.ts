@@ -1224,6 +1224,7 @@ const en = {
     },
     rank: {
       total: "Total: {{sum}}",
+      empty: "No data yet",
     },
     top: {
       title: "Top {{count}} suppliers",
@@ -1394,6 +1395,7 @@ const en = {
     inbox: "Inbox & filing",
     incomingInvoices: "Incoming invoices",
     manualBookings: "Manual bookings",
+    overview: "Overview",
     notifications: "Notifications",
     onboarding: "Onboarding",
     openItems: "Open items",

@@ -32,7 +32,10 @@ import {
 import { useCompanies, useCreateDeal, useDeals, useProperties, usePropertyListings } from "@/data";
 import { PERMISSIONS } from "@/config/permissions";
 import { pageTitle } from "@/config/brand";
+import { TablePagination } from "@/kit/components/feedback/table-pagination";
 import { useAuth } from "@/lib/auth";
+import { usePaginationLabels } from "@/lib/use-pagination-labels";
+import { useTableView } from "@/lib/use-table-view";
 import { errorText, formatDate, formatEUR } from "@/lib/data/format";
 import { useTranslation } from "@/lib/i18n";
 
@@ -54,6 +57,13 @@ function CommissionDealsPage() {
       ),
     [deals],
   );
+
+  const view = useTableView(deals, {
+    sortValue: (deal) => deal.created_at,
+    initialSort: "created",
+    initialDir: "desc",
+  });
+  const paginationLabels = usePaginationLabels();
 
   return (
     <div>
@@ -80,51 +90,69 @@ function CommissionDealsPage() {
             hint={t("commissionDeals.emptyHint")}
           />
         ) : (
-          <div className="overflow-x-auto rounded-xl border border-border bg-card">
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead>{t("commissionDeals.columns.property")}</TableHead>
-                  <TableHead>{t("commissionDeals.columns.notarisedOn")}</TableHead>
-                  <TableHead className="text-right">{t("commissionDeals.columns.price")}</TableHead>
-                  <TableHead className="text-right">
-                    {t("commissionDeals.columns.commission")}
-                  </TableHead>
-                  <TableHead>{t("commissionDeals.columns.status")}</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {deals.map((deal) => {
-                  const total = totals.get(deal.id);
-                  return (
-                    <TableRow key={deal.id}>
-                      <TableCell>
-                        <Link
-                          to="/commission-deals/$id"
-                          params={{ id: deal.id }}
-                          className="font-medium text-foreground hover:underline"
-                        >
-                          {deal.property?.name ?? deal.property_label ?? "—"}
-                        </Link>
-                      </TableCell>
-                      <TableCell className="text-sm">
-                        {deal.notarised_on ? formatDate(deal.notarised_on) : "—"}
-                      </TableCell>
-                      <TableCell className="text-right tabular-nums">
-                        {deal.purchase_price === null ? "—" : formatEUR(deal.purchase_price)}
-                      </TableCell>
-                      <TableCell className="text-right tabular-nums">
-                        {total === null || total === undefined ? "—" : formatEUR(total / 100)}
-                      </TableCell>
-                      <TableCell>
-                        <DealStatusBadge status={deal.status} />
-                      </TableCell>
-                    </TableRow>
-                  );
-                })}
-              </TableBody>
-            </Table>
-          </div>
+          <>
+            <div className="overflow-x-auto rounded-xl border border-border bg-card">
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead>{t("commissionDeals.columns.property")}</TableHead>
+                    <TableHead>{t("commissionDeals.columns.notarisedOn")}</TableHead>
+                    <TableHead className="text-right">
+                      {t("commissionDeals.columns.price")}
+                    </TableHead>
+                    <TableHead className="text-right">
+                      {t("commissionDeals.columns.commission")}
+                    </TableHead>
+                    <TableHead>{t("commissionDeals.columns.status")}</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {view.pageRows.map((deal) => {
+                    const total = totals.get(deal.id);
+                    return (
+                      <TableRow key={deal.id}>
+                        <TableCell>
+                          <Link
+                            to="/commission-deals/$id"
+                            params={{ id: deal.id }}
+                            className="font-medium text-foreground hover:underline"
+                          >
+                            {deal.property?.name ?? deal.property_label ?? "—"}
+                          </Link>
+                        </TableCell>
+                        <TableCell className="text-sm">
+                          {deal.notarised_on ? formatDate(deal.notarised_on) : "—"}
+                        </TableCell>
+                        <TableCell className="text-right tabular-nums">
+                          {deal.purchase_price === null ? "—" : formatEUR(deal.purchase_price)}
+                        </TableCell>
+                        <TableCell className="text-right tabular-nums">
+                          {total === null || total === undefined ? "—" : formatEUR(total / 100)}
+                        </TableCell>
+                        <TableCell>
+                          <DealStatusBadge status={deal.status} />
+                        </TableCell>
+                      </TableRow>
+                    );
+                  })}
+                </TableBody>
+              </Table>
+            </div>
+            <div className="mt-3">
+              <TablePagination
+                page={view.page}
+                totalPages={view.totalPages}
+                pageSize={view.pageSize}
+                total={view.total}
+                from={view.from}
+                to={view.to}
+                onPage={view.setPage}
+                onPageSize={view.setPageSize}
+                labels={paginationLabels}
+                divider={false}
+              />
+            </div>
+          </>
         )}
       </div>
     </div>

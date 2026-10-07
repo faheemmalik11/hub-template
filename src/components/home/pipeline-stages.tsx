@@ -79,11 +79,6 @@ export function PipelineStages() {
 
   if (countsQ.isError) return null;
 
-  const total = stages.reduce((s, x) => s + x.count, 0);
-  // Nothing has been ingested for this period. A row of six zeroes says less than not rendering
-  // it and lets the panels around it keep the reader's attention.
-  if (!countsQ.isLoading && total === 0) return null;
-
   return (
     <DashboardPanel
       title={t("home.stages.title")}
