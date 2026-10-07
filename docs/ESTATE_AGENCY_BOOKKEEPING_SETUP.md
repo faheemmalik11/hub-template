@@ -112,3 +112,12 @@ and must not be attached to a bill.
 The function shares `propstack.ts` and `sealed.ts` with the app as copies in `_shared/`. After
 changing either source, run `node scripts/copy-edge-shared.mjs`; `--check` fails when they differ.
 Run once by hand against production: 760 properties fetched.
+
+## No property on a document
+
+The pipeline never attaches a property for this kind of client (`rules.assign_properties` is false for
+`estate_agency_crm`), and the Hub hides the property controls on the document screen: the catalogue
+section `documents.property_assignment` (on everywhere else) is switched off by
+`supabase/presets/estate-agency-no-property-assignment.sql`. Hidden are the property field in the
+"needs your decision" card and in the Zuordnung editor, with the company suggestion derived from it.
+The invoice list columns and filters are not changed.

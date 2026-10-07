@@ -138,6 +138,15 @@ on conflict (key) do update
        description_de = excluded.description_de, description_en = excluded.description_en,
        default_enabled = excluded.default_enabled, sort_order = excluded.sort_order;
 
+-- Whether a document is assigned to a property. On everywhere; a client whose properties live in a CRM
+-- and never carry costs switches it off.
+insert into public.permissions (key, kind, parent_key, category, label_de, label_en, default_enabled, sort_order) values
+  ('documents.property_assignment', 'section', 'page.incoming_invoices', 'documents', 'Belege Objekten zuordnen', 'Assign documents to properties', true, 215)
+on conflict (key) do update
+   set kind = excluded.kind, parent_key = excluded.parent_key, category = excluded.category,
+       label_de = excluded.label_de, label_en = excluded.label_en,
+       default_enabled = excluded.default_enabled, sort_order = excluded.sort_order;
+
 -- A property the CRM marks as sold opens a deal by itself. Off by default.
 insert into public.permissions (key, kind, parent_key, category, label_de, label_en, default_enabled, sort_order) values
   ('deals.from_crm', 'section', 'page.commission_deals', 'documents', 'Verkäufe aus dem CRM übernehmen', 'Open deals from CRM sales', false, 939)

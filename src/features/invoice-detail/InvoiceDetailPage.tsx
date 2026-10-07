@@ -129,6 +129,7 @@ import {
   useUnarchiveDocument,
   useUpdateDocument,
   useProcessingLogForDocument,
+  useFeature,
 } from "@/data";
 import { resolveCostCentre, type CostCentre } from "@/lib/data/cost-centre";
 import {
@@ -481,6 +482,7 @@ function DocumentDetail({ doc }: { doc: Document }) {
   const supplierQ = useSupplier(doc.supplier_id ?? "");
   const invoiceAccountsQ = useInvoiceBankAccounts(doc.id, doc.supplier_id);
   const companiesQ = useCompanies();
+  const assignsProperties = useFeature(PERMISSIONS.documentsPropertyAssignment);
   const propertiesQ = useProperties();
   const categoriesQ = useCostAnalysisCategories();
   const propertyCompaniesQ = usePropertyCompanies();
@@ -1744,7 +1746,7 @@ function DocumentDetail({ doc }: { doc: Document }) {
   // which has no such code and where empty would otherwise be indistinguishable from undecided.
   const propertyDecided = doc.property_assignment_source === "human";
   const companyOpen = !doc.company_code;
-  const propertyOpen = !doc.property_code && !propertyDecided;
+  const propertyOpen = assignsProperties && !doc.property_code && !propertyDecided;
   const categoryOpen = !doc.category_id && doc.cost_category_source !== "human";
 
   /**
@@ -3626,120 +3628,123 @@ function DocumentDetail({ doc }: { doc: Document }) {
                       ) : null}
                     </div>
                   )}
-                  <div className="space-y-1">
-                    {isEdit("booking") ? (
-                      <>
-                        <span className="text-sm text-muted-foreground">
-                          {t("documents.detail.field.objekt")}
-                        </span>
-                        <Combobox
-                          value={form.property_code || "__none"}
-                          onValueChange={(v) => set("property_code", v === "__none" ? "" : v)}
-                          options={[
-                            { value: "__none", label: t("documents.detail.field.ohne") },
-                            // Overhead sits WITH the properties, not beside them: it is the other
-                            // answer to the same question, and the two are mutually exclusive.
-                            {
-                              value: OVERHEAD,
-                              label: t("documents.detail.field.gemeinkosten"),
-                            },
-                            // Legacy AI-extracted code not in the master data — keep it visible/selectable
-                            // so the current state is clear, but flag it (below) for correction.
-                            ...(propertyUnknown && form.property_code === doc.property_code
-                              ? [
-                                  {
-                                    value: doc.property_code as string,
-                                    label: `${doc.property_code} (${t("documents.detail.field.objektUnbekanntKurz")})`,
-                                  },
-                                ]
-                              : []),
-                            ...properties.map((o) => ({
-                              value: o.code,
-                              label: o.name ? `${o.code} · ${o.name}` : o.code,
-                              keywords: o.name ?? "",
-                            })),
-                          ]}
-                        />
-                      </>
-                    ) : (
-                      <ReadField
-                        label={t("documents.detail.field.objekt")}
-                        confidence={confidence.objekt_code}
-                        source={doc.property_assignment_source}
-                        leerAls={propertyDecided ? <NoChoiceValue /> : undefined}
-                        value={
-                          doc.is_overhead
-                            ? t("documents.detail.field.gemeinkosten")
-                            : property
-                              ? `${property.code}${property.name ? ` · ${property.name}` : ""}`
-                              : propertyUnknown
-                                ? `${doc.property_code} (${t("documents.detail.field.objektUnbekanntKurz")})`
-                                : doc.property_code
-                        }
-                        sub={
-                          costCentre ? (
-                            <CostCentreHint
-                              costCentre={costCentre}
-                              propertyCode={property?.code ?? null}
-                            />
-                          ) : undefined
-                        }
-                        badge={
-                          <SourceBadge
-                            source={doc.property_assignment_source}
-                            hasValue={!!doc.property_code}
+                  {assignsProperties && (
+                    <div className="space-y-1">
+                      {isEdit("booking") ? (
+                        <>
+                          <span className="text-sm text-muted-foreground">
+                            {t("documents.detail.field.objekt")}
+                          </span>
+                          <Combobox
+                            value={form.property_code || "__none"}
+                            onValueChange={(v) => set("property_code", v === "__none" ? "" : v)}
+                            options={[
+                              { value: "__none", label: t("documents.detail.field.ohne") },
+                              // Overhead sits WITH the properties, not beside them: it is the other
+                              // answer to the same question, and the two are mutually exclusive.
+                              {
+                                value: OVERHEAD,
+                                label: t("documents.detail.field.gemeinkosten"),
+                              },
+                              // Legacy AI-extracted code not in the master data — keep it visible/selectable
+                              // so the current state is clear, but flag it (below) for correction.
+                              ...(propertyUnknown && form.property_code === doc.property_code
+                                ? [
+                                    {
+                                      value: doc.property_code as string,
+                                      label: `${doc.property_code} (${t("documents.detail.field.objektUnbekanntKurz")})`,
+                                    },
+                                  ]
+                                : []),
+                              ...properties.map((o) => ({
+                                value: o.code,
+                                label: o.name ? `${o.code} · ${o.name}` : o.code,
+                                keywords: o.name ?? "",
+                              })),
+                            ]}
                           />
-                        }
-                      />
-                    )}
-                    {/* Extracted property code isn't in the master data → offer to create it. */}
-                    {propertyUnknown ? (
-                      <div className="flex flex-wrap items-center gap-2 rounded-md border border-amber-300 bg-amber-50 px-2 py-1.5 text-sm text-amber-700">
-                        <span className="flex items-center gap-1">
-                          <TriangleAlert className="size-3 shrink-0" />
-                          {t("documents.detail.field.objektUnbekannt")}
-                        </span>
-                        <Button
-                          asChild
-                          size="sm"
-                          variant="outline"
-                          className="h-6 gap-1 border-amber-300 px-2 text-sm text-amber-800 hover:bg-amber-100"
-                        >
-                          <Link to="/properties" search={{ new: doc.property_code ?? undefined }}>
-                            <Plus className="size-3" /> {t("documents.detail.field.objektAnlegen")}
-                          </Link>
-                        </Button>
-                      </div>
-                    ) : null}
-                    {/* The company follows from the property (migration 0083), so offer it instead
+                        </>
+                      ) : (
+                        <ReadField
+                          label={t("documents.detail.field.objekt")}
+                          confidence={confidence.objekt_code}
+                          source={doc.property_assignment_source}
+                          leerAls={propertyDecided ? <NoChoiceValue /> : undefined}
+                          value={
+                            doc.is_overhead
+                              ? t("documents.detail.field.gemeinkosten")
+                              : property
+                                ? `${property.code}${property.name ? ` · ${property.name}` : ""}`
+                                : propertyUnknown
+                                  ? `${doc.property_code} (${t("documents.detail.field.objektUnbekanntKurz")})`
+                                  : doc.property_code
+                          }
+                          sub={
+                            costCentre ? (
+                              <CostCentreHint
+                                costCentre={costCentre}
+                                propertyCode={property?.code ?? null}
+                              />
+                            ) : undefined
+                          }
+                          badge={
+                            <SourceBadge
+                              source={doc.property_assignment_source}
+                              hasValue={!!doc.property_code}
+                            />
+                          }
+                        />
+                      )}
+                      {/* Extracted property code isn't in the master data → offer to create it. */}
+                      {propertyUnknown ? (
+                        <div className="flex flex-wrap items-center gap-2 rounded-md border border-amber-300 bg-amber-50 px-2 py-1.5 text-sm text-amber-700">
+                          <span className="flex items-center gap-1">
+                            <TriangleAlert className="size-3 shrink-0" />
+                            {t("documents.detail.field.objektUnbekannt")}
+                          </span>
+                          <Button
+                            asChild
+                            size="sm"
+                            variant="outline"
+                            className="h-6 gap-1 border-amber-300 px-2 text-sm text-amber-800 hover:bg-amber-100"
+                          >
+                            <Link to="/properties" search={{ new: doc.property_code ?? undefined }}>
+                              <Plus className="size-3" />{" "}
+                              {t("documents.detail.field.objektAnlegen")}
+                            </Link>
+                          </Button>
+                        </div>
+                      ) : null}
+                      {/* The company follows from the property (migration 0083), so offer it instead
                         of making the reviewer look it up on the property page. */}
-                    {isEdit("booking") && companySuggestionOpen ? (
-                      <div className="flex flex-wrap items-center gap-2 rounded-md border border-sky-300 bg-sky-50 px-2 py-1.5 text-sm text-sky-800">
-                        <span>
-                          {t("documents.detail.field.gesellschaftVorschlag", {
-                            code: companySuggestion?.code ?? "",
-                          })}
-                        </span>
-                        <Button
-                          size="sm"
-                          variant="outline"
-                          className="h-6 gap-1 border-sky-300 px-2 text-sm text-sky-900 hover:bg-sky-100"
-                          onClick={() => set("company_code", companySuggestion?.code ?? "")}
-                        >
-                          <Check className="size-3" />
-                          {t("documents.detail.field.gesellschaftUebernehmen")}
-                        </Button>
-                      </div>
-                    ) : isEdit("booking") && companySuggestion?.ambiguous ? (
-                      <p className="rounded-md border border-amber-300 bg-amber-50 px-2 py-1.5 text-sm text-amber-800">
-                        {t("documents.detail.field.gesellschaftMehrdeutig")}
-                      </p>
-                    ) : isEdit("booking") && companySuggestion?.missing ? (
-                      <p className="rounded-md border border-amber-300 bg-amber-50 px-2 py-1.5 text-sm text-amber-800">
-                        {t("documents.detail.field.gesellschaftKeineZuordnung")}
-                      </p>
-                    ) : null}
-                  </div>
+                      {isEdit("booking") && companySuggestionOpen ? (
+                        <div className="flex flex-wrap items-center gap-2 rounded-md border border-sky-300 bg-sky-50 px-2 py-1.5 text-sm text-sky-800">
+                          <span>
+                            {t("documents.detail.field.gesellschaftVorschlag", {
+                              code: companySuggestion?.code ?? "",
+                            })}
+                          </span>
+                          <Button
+                            size="sm"
+                            variant="outline"
+                            className="h-6 gap-1 border-sky-300 px-2 text-sm text-sky-900 hover:bg-sky-100"
+                            onClick={() => set("company_code", companySuggestion?.code ?? "")}
+                          >
+                            <Check className="size-3" />
+                            {t("documents.detail.field.gesellschaftUebernehmen")}
+                          </Button>
+                        </div>
+                      ) : isEdit("booking") && companySuggestion?.ambiguous ? (
+                        <p className="rounded-md border border-amber-300 bg-amber-50 px-2 py-1.5 text-sm text-amber-800">
+                          {t("documents.detail.field.gesellschaftMehrdeutig")}
+                        </p>
+                      ) : isEdit("booking") && companySuggestion?.missing ? (
+                        <p className="rounded-md border border-amber-300 bg-amber-50 px-2 py-1.5 text-sm text-amber-800">
+                          {t("documents.detail.field.gesellschaftKeineZuordnung")}
+                        </p>
+                      ) : null}
+                    </div>
+                  )}
                   {/* ONE category, picked from the real BWA taxonomy (bwa_categories, migration
                       0030) — not free text. cost_category still exists in the schema as a legacy
                       mirror the rule engine also writes, but it is derived automatically
