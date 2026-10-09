@@ -20,7 +20,11 @@ export const queryKeys = {
   properties: { all: ["properties"] as const },
   propertyListings: { all: ["property-listings"] as const },
   propertyCrmData: (code: string) => ["property-crm-data", code] as const,
-  brokerBonuses: { all: ["broker-bonuses"] as const },
+  brokerBonuses: {
+    all: ["broker-bonuses"] as const,
+    settings: ["broker-bonuses", "settings"] as const,
+    forDeal: (dealId: string) => ["broker-bonuses", "deal", dealId] as const,
+  },
   deals: {
     all: ["deals"] as const,
     one: (id: string) => ["deals", id] as const,

@@ -42,7 +42,7 @@ each problem is a code (`purchase_price_missing`, `fee_missing`, `no_payers`, `s
 1. Side net fee = purchase price × net rate.
 2. Payer net = side net split by share.
 3. Invoice line, gross = payer net × (1 + VAT), rounded half up to the cent.
-4. Discount is subtracted from the gross line.
+4. The payer's own discount (a fixed gross amount, with its reason) is subtracted from the gross line.
 5. Net and VAT are recomputed from the gross total: net = total / (1 + VAT), rounded; VAT = total
    minus net.
 6. The rate printed on the invoice is the gross rate: 2.5% net shows as 2.975%, 3% as 3.57%.
@@ -56,8 +56,10 @@ Run with `npm test` (Node's own test runner, which strips the types itself).
 | Table | Holds |
 |---|---|
 | `deals` | One sale: company, property (`property_id` or a free `property_label`), price, VAT rate, notary date, who won and who handled it (`acquired_by`, `handled_by`), approval, `status` (`incomplete`, `ready`, `approved`, `invoiced`, `cancelled`). `source` + `external_id` is unique, for the row a CRM import creates |
-| `deal_sides` | What the buyer or the seller side pays: `fee_kind` `percent` (`fee_net_rate`) or `fixed` (`fee_net_amount`), plus `discount_gross` and its reason. One per side |
-| `deal_parties` | Who pays on a side, as a `customers` row, with an optional `share_percent`. No share on any party means equal split |
+| `deal_sides` | What the buyer or the seller side pays: `fee_kind` `percent` (`fee_net_rate`) or `fixed` (`fee_net_amount`), One per side |
+| `deal_parties` | Who pays on a side, as a `customers` row, with an optional `share_percent` (no share on any party means equal split) and that person's own `discount_gross` and `discount_reason` |
+| `deal_costs` | What the agency paid for the sale: `kind` (`city_fee`, `photos`, `energy_certificate`, `voucher`, `other`), description, `amount`, `incurred_on`. Saved with the deal by `save_deal(..., p_costs)`; readable and editable by whoever may edit the deal, including a broker on their own deal |
+| `deals.own_lead`, `from_viewing`, `referrer_customer_id`, `costs_closed_at`, `ready_for_bookkeeping_at` | What the bonus rules depend on. Edited on the deal page under "Angaben zum Verkauf"; the two timestamps are set when the box is ticked and kept while it stays ticked |
 | `outgoing_invoices.deal_party_id` | Which party an issued invoice bills |
 | `outgoing_invoices.expected_payment_on`, `sent_at`, `accounting_external_id` | When the money is expected (a seller pays weeks later), when it was emailed, and the accounting tool's id. See `BOOKKEEPING_SCHEMA_ADDITIONS.md` |
 
@@ -72,7 +74,7 @@ Money is `numeric(14, 2)` in the database and cents in the calculator; convert a
 | Catalogue key `page.commission_deals` under `module.invoices`, `default_enabled = false` | `supabase/catalogue.sql` |
 | Route and menu entry | `src/config/routes.ts`, `src/components/layout/app-shell.tsx` |
 | List: property, notary date, price, gross commission (calculated), status; "Neuer Verkauf" picks a property and prefills the price from the CRM listing | `src/routes/commission-deals/index.tsx` |
-| Detail: sale (date, price, VAT, note), one card per side (pays or not, percent or fixed, discount and reason, payers with optional shares, create a customer inline), live draft invoices or the list of what is missing, Save, Approve | `src/routes/commission-deals/$id.tsx`, `src/components/commission/side-card.tsx`, `src/components/commission/draft-invoices.tsx` |
+| Detail: sale (date, price, VAT, note), one card per side (pays or not, percent or fixed, discount and reason, payers with optional shares, create a customer inline), live draft invoices or the list of what is missing, Save, Approve | `src/routes/commission-deals/$id.tsx`, `src/components/commission/side-card.tsx` (each payer has a discount and a reason), `src/components/commission/deal-facts-card.tsx`, `src/components/commission/deal-costs-card.tsx`, `src/components/commission/draft-invoices.tsx` |
 | Form to calculator and to saved rows, German number entry | `src/components/commission/deal-form.ts`, tested in `deal-form.test.ts` |
 | Hooks `useDeals`, `useDeal`, `useCreateDeal`, `useSaveDeal`, `useApproveDeal` | `src/data/deals/deals.ts` |
 | `save_deal(p_deal_id, p_deal, p_sides, p_status)`: deal, sides and payers in one transaction, as the caller. Any save withdraws an approval. `approve_deal(p_deal_id)`: only from `ready` | `supabase/schema/0011_functions.sql` |
@@ -112,9 +114,10 @@ rules are in the database (`supabase/schema/0017_broker_commissions.sql`), not i
 
 ## Open
 
-- **Discount on a shared side.** The calculator takes one discount per side and splits it by share.
-  The two sample invoices fit this (2,000 split gives 1,000 each) but would also fit "1,000 per
-  person". Confirm with the client before the screen is built.
+- **Discount per person (done).** The client's answer is a fixed euro amount for a named party with a
+  reason, so the discount sits on `deal_parties` and the calculator takes it per payer. A database
+  built before this runs `supabase/presets/deal-details-for-an-existing-client.sql`, which moves an
+  old side discount onto the payers by share.
 - A property the CRM marks "Verkauft" opens a deal by itself (`deals.from_crm`, off by default,
   `supabase/schema/0019_deals_from_crm.sql`, run at the end of each `propstack-sync`). The deal is
   `incomplete`, with the realised price (`sold_price`), the property and the broker filled in; the
@@ -141,3 +144,13 @@ rules are in the database (`supabase/schema/0017_broker_commissions.sql`), not i
 - The breadcrumb shows the sale's id rather than the property name.
 - Outgoing e-invoices are mandatory for this client from 1 January 2027. Check that the accounting
   tool issues them.
+
+## Expected payment of seller invoices
+
+`supabase/schema/0023_expected_payment.sql`. A seller pays once the purchase price has reached them, so a seller's commission invoice has no due date. The trigger `outgoing_invoices_set_expected_payment` fills `expected_payment_on` with the deal's `notarised_on` + `seller_payment_wait_days()` (56) when the invoice has a `deal_party_id` on a seller side, no due date, and is not a referral credit. The outgoing list (`src/routes/outgoing-invoices/index.tsx`) treats `due_date ?? expected_payment_on` as the date for overdue and sorting, and marks an expected date with "(erwartet)".
+
+`notify_overdue_payments()` pings the administrators once per invoice (`overdue_notified_at`) when an open or sent invoice passes its expected date. It is timed by a pg_cron job `overdue-payments`, daily 06:00, created by `supabase/presets/expected-payment-for-an-existing-client.sql`. Open: the 8 weeks are the client's figure from the brief; a notary date that changes later does not move an invoice that already has a date.
+
+## Overview: attention panel and blockers
+
+`src/components/home/attention-panel.tsx` greets the person and lists the incoming invoices waiting on them: rejected back to them, queries addressed to them, assigned to them, each invoice in one bucket only. The deputy bucket of the sibling Hub is not ported. `src/components/home/system-blockers.tsx` shows what is stuck system-wide: invoices to review, overdue outgoing invoices (due date, else the expected payment date), payments without a receipt, receipts that cannot be reconciled. A zero row is not drawn; all zeros collapse to one line. Both are mounted in `src/routes/index.tsx`. The manual outgoing-invoice form of the sibling Hub is not ported: it creates invoices through the accounting tool.

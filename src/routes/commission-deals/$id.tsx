@@ -10,6 +10,9 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { ErrorState, TableSkeleton } from "@/components/documents/query-states";
 import { DealStatusBadge } from "@/components/commission/deal-status-badge";
+import { BonusSuggestionsCard } from "@/components/commission/bonus-suggestions-card";
+import { DealCostsCard } from "@/components/commission/deal-costs-card";
+import { DealFactsCard } from "@/components/commission/deal-facts-card";
 import { DraftInvoices } from "@/components/commission/draft-invoices";
 import { SideCard } from "@/components/commission/side-card";
 import {
@@ -28,6 +31,7 @@ import {
   useSaveDeal,
 } from "@/data";
 import type { Deal } from "@/data";
+import { useFeature } from "@/data/use-feature";
 import { PERMISSIONS } from "@/config/permissions";
 import { pageTitle } from "@/config/brand";
 import { useAuth } from "@/lib/auth";
@@ -78,6 +82,7 @@ function DealEditor({ deal }: { deal: Deal }) {
     mayEditAny ||
     (can(PERMISSIONS.dealsSubmit) && (deal.status === "incomplete" || deal.status === "ready"));
   const mayApprove = can(PERMISSIONS.invoicesApprove);
+  const suggestsBonuses = useFeature(PERMISSIONS.bonusesSuggest) && can(PERMISSIONS.bonusesReview);
   const [form, setForm] = useState<DealForm>(() => dealFormOf(deal));
   const [savedForm, setSavedForm] = useState(() => JSON.stringify(dealFormOf(deal)));
   const customersQ = useCustomers();
@@ -231,6 +236,20 @@ function DealEditor({ deal }: { deal: Deal }) {
             </div>
           </section>
 
+          <DealFactsCard
+            form={form}
+            onChange={set}
+            customerOptions={customerOptions}
+            disabled={!mayEdit}
+            assignsBrokers={mayEditAny}
+          />
+
+          <DealCostsCard
+            costs={form.costs}
+            onChange={(costs) => set({ costs })}
+            disabled={!mayEdit}
+          />
+
           {SIDES.map((side) => (
             <SideCard
               key={side}
@@ -254,6 +273,8 @@ function DealEditor({ deal }: { deal: Deal }) {
               <DraftInvoices result={result} customerName={customerName} />
             </div>
           </section>
+
+          {suggestsBonuses && !unsaved && <BonusSuggestionsCard deal={deal} />}
 
           <div className="flex flex-wrap gap-2">
             {mayEdit && (

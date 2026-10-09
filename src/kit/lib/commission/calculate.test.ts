@@ -27,8 +27,7 @@ describe("matches issued brokerage invoices", () => {
       side: "buyer",
       purchasePriceCents: 440_000_00,
       fee: { kind: "percent", netRatePercent: 3 },
-      payers: [{ key: "a" }],
-      discountGrossCents: 500_00,
+      payers: [{ key: "a", discountGrossCents: 500_00 }],
       vatRatePercent: VAT,
     });
     assert.deepEqual(totals(result), [
@@ -65,13 +64,15 @@ describe("matches issued brokerage invoices", () => {
     assert.equal(invoicesOf(result)[0].sharePercent, 50);
   });
 
-  test("two sellers share the fee and the discount", () => {
+  test("two sellers each get their own discount", () => {
     const result = calculateSideCommission({
       side: "seller",
       purchasePriceCents: 610_000_00,
       fee: { kind: "percent", netRatePercent: 2.5 },
-      payers: [{ key: "a" }, { key: "b" }],
-      discountGrossCents: 2_000_00,
+      payers: [
+        { key: "a", discountGrossCents: 1_000_00 },
+        { key: "b", discountGrossCents: 1_000_00 },
+      ],
       vatRatePercent: VAT,
     });
     const expected = {
@@ -82,6 +83,23 @@ describe("matches issued brokerage invoices", () => {
       vat: 1_289_09,
     };
     assert.deepEqual(totals(result), [expected, expected]);
+  });
+
+  test("a discount for one of two sellers leaves the other invoice whole", () => {
+    const result = calculateSideCommission({
+      side: "seller",
+      purchasePriceCents: 610_000_00,
+      fee: { kind: "percent", netRatePercent: 2.5 },
+      payers: [{ key: "a", discountGrossCents: 500_00, discountReason: "Kulanz" }, { key: "b" }],
+      vatRatePercent: VAT,
+    });
+    const [first, second] = invoicesOf(result);
+    assert.equal(first.discountGrossCents, 500_00);
+    assert.equal(first.discountReason, "Kulanz");
+    assert.equal(first.totalGrossCents, 9_073_75 - 500_00);
+    assert.equal(second.discountGrossCents, 0);
+    assert.equal(second.discountReason, null);
+    assert.equal(second.totalGrossCents, 9_073_75);
   });
 
   test("a half cent rounds up on each share", () => {
@@ -204,8 +222,7 @@ describe("shares", () => {
       side: "buyer",
       purchasePriceCents: 10_000_00,
       fee: { kind: "percent", netRatePercent: 3 },
-      payers: [{ key: "a" }],
-      discountGrossCents: 1_000_00,
+      payers: [{ key: "a", discountGrossCents: 1_000_00 }],
       vatRatePercent: VAT,
     });
     assert.deepEqual(result, {

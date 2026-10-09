@@ -32,16 +32,22 @@ const form: DealForm = {
   purchasePrice: "610.000",
   vatRate: "19",
   note: "",
+  acquiredBy: null,
+  handledBy: null,
+  ownLead: false,
+  fromViewing: false,
+  referrerCustomerId: null,
+  costsClosed: false,
+  readyForBookkeeping: false,
+  costs: [],
   buyer: {
     enabled: true,
     feeKind: "percent",
     rate: "2,5",
     amount: "",
-    discount: "",
-    discountReason: "",
     parties: [
-      { customerId: "b1", share: "" },
-      { customerId: "b2", share: "" },
+      { customerId: "b1", share: "", discount: "", discountReason: "" },
+      { customerId: "b2", share: "", discount: "", discountReason: "" },
     ],
   },
   seller: {
@@ -49,11 +55,9 @@ const form: DealForm = {
     feeKind: "percent",
     rate: "2,5",
     amount: "",
-    discount: "2.000",
-    discountReason: "Kulanz",
     parties: [
-      { customerId: "s1", share: "" },
-      { customerId: "s2", share: "" },
+      { customerId: "s1", share: "", discount: "1.000", discountReason: "Kulanz" },
+      { customerId: "s2", share: "", discount: "1.000", discountReason: "Kulanz" },
     ],
   },
 };
@@ -79,10 +83,24 @@ describe("deal form", () => {
     );
   });
 
+  test("saves cost lines as numbers and drops lines without an amount", () => {
+    const withCosts: DealForm = {
+      ...form,
+      costs: [
+        { kind: "photos", description: "", amount: "250,50", incurredOn: "2026-08-01" },
+        { kind: "voucher", description: "Gutschein", amount: "", incurredOn: "" },
+      ],
+    };
+    assert.deepEqual(saveInputOf(withCosts).costs, [
+      { kind: "photos", description: null, amount: 250.5, incurred_on: "2026-08-01" },
+    ]);
+  });
+
   test("saves numbers, not the text typed", () => {
     const saved = saveInputOf(form);
     assert.equal(saved.deal.purchase_price, 610000);
-    assert.equal(saved.sides[1].discount_gross, 2000);
+    assert.equal(saved.sides[1].parties[0].discount_gross, 1000);
+    assert.equal(saved.sides[1].parties[0].discount_reason, "Kulanz");
     assert.equal(saved.sides[0].fee_net_rate, 2.5);
     assert.equal(saved.sides[0].fee_net_amount, null);
   });

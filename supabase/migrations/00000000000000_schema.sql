@@ -2045,8 +2045,6 @@ create table if not exists public.deal_sides (
     fee_kind text not null,
     fee_net_rate numeric(6, 3),
     fee_net_amount numeric(14, 2),
-    discount_gross numeric(14, 2) not null default 0,
-    discount_reason text,
     created_at timestamptz not null default now(),
     updated_at timestamptz not null default now(),
     unique (deal_id, side),
@@ -2054,25 +2052,27 @@ create table if not exists public.deal_sides (
     -- The fee may still be missing on an incomplete deal, but never belong to the other kind.
     constraint deal_sides_fee_shape check (
         (fee_kind = 'percent' and fee_net_amount is null and (fee_net_rate is null or fee_net_rate > 0))
-        or (fee_kind = 'fixed' and fee_net_rate is null and (fee_net_amount is null or fee_net_amount > 0))),
-    constraint deal_sides_discount_not_negative check (discount_gross >= 0)
+        or (fee_kind = 'fixed' and fee_net_rate is null and (fee_net_amount is null or fee_net_amount > 0)))
 );
 
 drop trigger if exists deal_sides_touch on public.deal_sides;
 create trigger deal_sides_touch before update on public.deal_sides
     for each row execute function public.set_updated_at();
 
--- Who pays on a side. No share on any party of a side means they split it equally.
+-- Who pays on a side, and the discount that person was granted. No share on any party of a side means they split it equally.
 create table if not exists public.deal_parties (
     id uuid primary key default gen_random_uuid(),
     deal_side_id uuid not null references public.deal_sides(id) on delete cascade,
     customer_id uuid not null references public.customers(id),
     share_percent numeric(6, 3),
+    discount_gross numeric(14, 2) not null default 0,
+    discount_reason text,
     position integer not null default 0,
     created_at timestamptz not null default now(),
     unique (deal_side_id, customer_id),
     constraint deal_parties_share_in_range
-        check (share_percent is null or (share_percent > 0 and share_percent <= 100))
+        check (share_percent is null or (share_percent > 0 and share_percent <= 100)),
+    constraint deal_parties_discount_not_negative check (discount_gross >= 0)
 );
 
 -- What this business billed, as opposed to what it was billed.
@@ -5549,9 +5549,9 @@ CREATE OR REPLACE FUNCTION public.run_now_enabled() RETURNS boolean
                        from public.tenant_settings where single_row), false)
 $$;
 
--- Saves a deal with its sides and payers in one transaction, as the caller. Any edit withdraws an
--- approval, because what was approved is no longer what is saved.
-CREATE OR REPLACE FUNCTION public.save_deal(p_deal_id uuid, p_deal jsonb, p_sides jsonb, p_status text) RETURNS void
+-- Saves a deal with its sides, payers and costs in one transaction, as the caller. Any edit withdraws
+-- an approval, because what was approved is no longer what is saved.
+CREATE OR REPLACE FUNCTION public.save_deal(p_deal_id uuid, p_deal jsonb, p_sides jsonb, p_status text, p_costs jsonb DEFAULT '[]'::jsonb) RETURNS void
     LANGUAGE plpgsql SECURITY INVOKER
     SET search_path TO 'public'
     AS $$
@@ -5559,6 +5559,7 @@ declare
   v_side jsonb;
   v_side_id uuid;
   v_party jsonb;
+  v_cost jsonb;
   v_position integer;
 begin
   if p_status not in ('incomplete', 'ready') then
@@ -5572,6 +5573,15 @@ begin
          purchase_price = (p_deal->>'purchase_price')::numeric,
          vat_rate = coalesce((p_deal->>'vat_rate')::numeric, 19),
          note = nullif(p_deal->>'note', ''),
+         acquired_by = nullif(p_deal->>'acquired_by', '')::uuid,
+         handled_by = nullif(p_deal->>'handled_by', '')::uuid,
+         own_lead = coalesce((p_deal->>'own_lead')::boolean, false),
+         from_viewing = coalesce((p_deal->>'from_viewing')::boolean, false),
+         referrer_customer_id = nullif(p_deal->>'referrer_customer_id', '')::uuid,
+         costs_closed_at = case when coalesce((p_deal->>'costs_closed')::boolean, false)
+                                then coalesce(costs_closed_at, now()) end,
+         ready_for_bookkeeping_at = case when coalesce((p_deal->>'ready_for_bookkeeping')::boolean, false)
+                                         then coalesce(ready_for_bookkeeping_at, now()) end,
          status = p_status,
          approved_by = null,
          approved_at = null
@@ -5585,28 +5595,32 @@ begin
      and side not in (select value->>'side' from jsonb_array_elements(p_sides));
 
   for v_side in select value from jsonb_array_elements(p_sides) loop
-    insert into public.deal_sides
-        (deal_id, side, fee_kind, fee_net_rate, fee_net_amount, discount_gross, discount_reason)
-    values
-        (p_deal_id, v_side->>'side', v_side->>'fee_kind', (v_side->>'fee_net_rate')::numeric,
-         (v_side->>'fee_net_amount')::numeric, coalesce((v_side->>'discount_gross')::numeric, 0),
-         nullif(v_side->>'discount_reason', ''))
+    insert into public.deal_sides (deal_id, side, fee_kind, fee_net_rate, fee_net_amount)
+    values (p_deal_id, v_side->>'side', v_side->>'fee_kind', (v_side->>'fee_net_rate')::numeric,
+            (v_side->>'fee_net_amount')::numeric)
     on conflict (deal_id, side) do update
        set fee_kind = excluded.fee_kind,
            fee_net_rate = excluded.fee_net_rate,
-           fee_net_amount = excluded.fee_net_amount,
-           discount_gross = excluded.discount_gross,
-           discount_reason = excluded.discount_reason
+           fee_net_amount = excluded.fee_net_amount
     returning id into v_side_id;
 
     delete from public.deal_parties where deal_side_id = v_side_id;
     v_position := 0;
     for v_party in select value from jsonb_array_elements(coalesce(v_side->'parties', '[]'::jsonb)) loop
-      insert into public.deal_parties (deal_side_id, customer_id, share_percent, position)
+      insert into public.deal_parties
+          (deal_side_id, customer_id, share_percent, discount_gross, discount_reason, position)
       values (v_side_id, (v_party->>'customer_id')::uuid, (v_party->>'share_percent')::numeric,
-              v_position);
+              coalesce((v_party->>'discount_gross')::numeric, 0),
+              nullif(v_party->>'discount_reason', ''), v_position);
       v_position := v_position + 1;
     end loop;
+  end loop;
+
+  delete from public.deal_costs where deal_id = p_deal_id;
+  for v_cost in select value from jsonb_array_elements(coalesce(p_costs, '[]'::jsonb)) loop
+    insert into public.deal_costs (deal_id, kind, description, amount, incurred_on)
+    values (p_deal_id, v_cost->>'kind', nullif(v_cost->>'description', ''),
+            (v_cost->>'amount')::numeric, nullif(v_cost->>'incurred_on', '')::date);
   end loop;
 end;
 $$;
@@ -7770,5 +7784,230 @@ drop trigger if exists broker_bonuses_notify_decided on public.broker_bonuses;
 create trigger broker_bonuses_notify_decided after update of status on public.broker_bonuses
     for each row when (old.status is distinct from new.status and new.status in ('approved', 'rejected', 'paid'))
     execute function public.notify_bonus_decided();
+
+commit;
+
+-- ===================================================================== 0021_deal_costs.sql
+
+-- What the agency paid out of its own pocket for one sale: city fees, photos, the energy certificate,
+-- a voucher. A broker's bonus is worked out on the fee less these. Re-runnable.
+
+begin;
+
+create table if not exists public.deal_costs (
+    id uuid primary key default gen_random_uuid(),
+    deal_id uuid not null references public.deals(id) on delete cascade,
+    kind text not null,
+    description text,
+    amount numeric(14, 2) not null,
+    incurred_on date,
+    created_at timestamptz not null default now(),
+    constraint deal_costs_kind_known
+        check (kind in ('city_fee', 'photos', 'energy_certificate', 'voucher', 'other')),
+    constraint deal_costs_amount_positive check (amount > 0)
+);
+
+create index if not exists deal_costs_deal on public.deal_costs (deal_id);
+
+alter table public.deal_costs enable row level security;
+
+drop policy if exists deal_costs_read on public.deal_costs;
+create policy deal_costs_read on public.deal_costs for select to authenticated
+    using (public.may_read('documents.read'));
+
+drop policy if exists deal_costs_write on public.deal_costs;
+create policy deal_costs_write on public.deal_costs for all to authenticated
+    using (public.may_write('documents.write'))
+    with check (public.may_write('documents.write'));
+
+drop policy if exists deal_costs_own_read on public.deal_costs;
+create policy deal_costs_own_read on public.deal_costs for select to authenticated
+    using (public.owns_deal(deal_id));
+
+drop policy if exists deal_costs_submit on public.deal_costs;
+create policy deal_costs_submit on public.deal_costs for all to authenticated
+    using (public.may_edit_own_deal(deal_id))
+    with check (public.may_edit_own_deal(deal_id));
+
+commit;
+
+-- ===================================================================== 0022_bonus_suggestions.sql
+
+-- Bonuses worked out from a sale. An administrator creates the suggestion from the deal, the broker
+-- confirms it, and the usual review follows. Inert until a role holds `bonuses.suggest`, which no
+-- role does by default. Re-runnable.
+
+begin;
+
+alter table public.broker_bonuses add column if not exists deal_id uuid references public.deals(id);
+
+alter table public.broker_bonuses drop constraint if exists broker_bonuses_status_known;
+alter table public.broker_bonuses add constraint broker_bonuses_status_known
+    check (status in ('suggested', 'submitted', 'approved', 'rejected', 'paid'));
+
+create unique index if not exists broker_bonuses_one_per_deal_and_type
+    on public.broker_bonuses (deal_id, bonus_type)
+    where deal_id is not null and status <> 'rejected';
+
+create table if not exists public.bonus_settings (
+    single_row boolean primary key default true check (single_row),
+    notary_amount numeric(12, 2) not null default 500 check (notary_amount > 0),
+    follow_up_amount numeric(12, 2) not null default 300 check (follow_up_amount > 0),
+    own_lead_share_percent numeric(5, 2) not null default 50 check (own_lead_share_percent > 0 and own_lead_share_percent <= 100),
+    company_lead_share_percent numeric(5, 2) not null default 10 check (company_lead_share_percent > 0 and company_lead_share_percent <= 100),
+    personnel_flat_amount numeric(12, 2) not null default 1500 check (personnel_flat_amount >= 0),
+    company_lead_deducts_costs boolean not null default true,
+    updated_at timestamptz not null default now()
+);
+
+insert into public.bonus_settings (single_row) values (true) on conflict do nothing;
+
+drop trigger if exists bonus_settings_touch on public.bonus_settings;
+create trigger bonus_settings_touch before update on public.bonus_settings
+    for each row execute function public.set_updated_at();
+
+alter table public.bonus_settings enable row level security;
+
+drop policy if exists bonus_settings_read on public.bonus_settings;
+create policy bonus_settings_read on public.bonus_settings for select to authenticated
+    using (public.has_permission('bonuses.review') or public.has_permission('bonuses.submit'));
+
+drop policy if exists bonus_settings_write on public.bonus_settings;
+create policy bonus_settings_write on public.bonus_settings for update to authenticated
+    using (public.has_permission('bonuses.review'))
+    with check (public.has_permission('bonuses.review'));
+
+grant select, update on public.bonus_settings to authenticated;
+
+drop policy if exists broker_bonuses_own_confirm on public.broker_bonuses;
+create policy broker_bonuses_own_confirm on public.broker_bonuses for update to authenticated
+    using (public.has_permission('bonuses.submit')
+           and broker_user_id = public.current_app_user_id() and status = 'suggested')
+    with check (public.has_permission('bonuses.submit')
+                and broker_user_id = public.current_app_user_id() and status = 'submitted'
+                and reviewed_by is null and reviewed_at is null);
+
+drop policy if exists broker_bonuses_own_decline on public.broker_bonuses;
+create policy broker_bonuses_own_decline on public.broker_bonuses for delete to authenticated
+    using (public.has_permission('bonuses.submit')
+           and broker_user_id = public.current_app_user_id() and status = 'suggested');
+
+create or replace function public.notify_bonus_submitted() returns trigger
+language plpgsql security definer set search_path to 'public'
+as $$
+begin
+  perform public.notify_administrators(
+    'Neuer Bonus zur Prüfung: ' || public.bonus_type_label(new.bonus_type) || ', '
+      || replace(to_char(new.amount, 'FM999999990.00'), '.', ',') || ' €',
+    '/broker-bonuses', 'bonus', new.broker_user_id,
+    coalesce((select coalesce(name, email) from public.app_users where id = new.broker_user_id), 'Hub'));
+  return null;
+end;
+$$;
+
+drop trigger if exists broker_bonuses_notify_submitted on public.broker_bonuses;
+create trigger broker_bonuses_notify_submitted after insert on public.broker_bonuses
+    for each row when (new.status = 'submitted')
+    execute function public.notify_bonus_submitted();
+
+drop trigger if exists broker_bonuses_notify_confirmed on public.broker_bonuses;
+create trigger broker_bonuses_notify_confirmed after update of status on public.broker_bonuses
+    for each row when (old.status = 'suggested' and new.status = 'submitted')
+    execute function public.notify_bonus_submitted();
+
+create or replace function public.notify_bonus_suggested() returns trigger
+language plpgsql security definer set search_path to 'public'
+as $$
+begin
+  if new.broker_user_id is distinct from public.current_app_user_id() then
+    perform public.send_system_ping(
+      new.broker_user_id, 'Hub',
+      'Bonus zur Bestätigung: ' || public.bonus_type_label(new.bonus_type) || ', '
+        || replace(to_char(new.amount, 'FM999999990.00'), '.', ',') || ' €',
+      '/broker-bonuses', 'bonus');
+  end if;
+  return null;
+end;
+$$;
+
+drop trigger if exists broker_bonuses_notify_suggested on public.broker_bonuses;
+create trigger broker_bonuses_notify_suggested after insert on public.broker_bonuses
+    for each row when (new.status = 'suggested')
+    execute function public.notify_bonus_suggested();
+
+commit;
+
+-- ===================================================================== 0023_expected_payment.sql
+
+-- A seller pays once the purchase price has reached them, so their commission invoice has no due
+-- date: the money is expected eight weeks after the notary date. Administrators hear about it when
+-- that date passes and the invoice is still open. Re-runnable.
+
+begin;
+
+alter table public.outgoing_invoices add column if not exists overdue_notified_at timestamptz;
+
+create or replace function public.seller_payment_wait_days() returns integer
+language sql immutable as $$ select 56 $$;
+
+create or replace function public.expected_payment_for_party(p_deal_party_id uuid) returns date
+language sql stable security definer set search_path to 'public'
+as $$
+  select d.notarised_on + public.seller_payment_wait_days()
+    from public.deal_parties dp
+    join public.deal_sides s on s.id = dp.deal_side_id
+    join public.deals d on d.id = s.deal_id
+   where dp.id = p_deal_party_id and s.side = 'seller';
+$$;
+
+create or replace function public.set_expected_payment_on() returns trigger
+language plpgsql security definer set search_path to 'public'
+as $$
+begin
+  if new.expected_payment_on is null and new.due_date is null
+     and new.deal_party_id is not null and new.kind is distinct from 'referral_credit' then
+    new.expected_payment_on := public.expected_payment_for_party(new.deal_party_id);
+  end if;
+  return new;
+end;
+$$;
+
+drop trigger if exists outgoing_invoices_set_expected_payment on public.outgoing_invoices;
+create trigger outgoing_invoices_set_expected_payment
+    before insert or update of deal_party_id, due_date on public.outgoing_invoices
+    for each row execute function public.set_expected_payment_on();
+
+create or replace function public.notify_overdue_payments() returns integer
+language plpgsql security definer set search_path to 'public'
+as $$
+declare
+  v_ids uuid[];
+  v_count integer;
+begin
+  select array_agg(id) into v_ids
+    from public.outgoing_invoices
+   where deleted_at is null
+     and status in ('sent', 'overdue')
+     and due_date is null
+     and expected_payment_on < current_date
+     and overdue_notified_at is null;
+  v_count := coalesce(cardinality(v_ids), 0);
+  if v_count = 0 then
+    return 0;
+  end if;
+
+  perform public.notify_administrators(
+    case when v_count = 1 then 'Eine Provisionsrechnung ist überfällig'
+         else v_count || ' Provisionsrechnungen sind überfällig' end,
+    '/outgoing-invoices', 'payment');
+  update public.outgoing_invoices set overdue_notified_at = now() where id = any (v_ids);
+  return v_count;
+end;
+$$;
+
+revoke execute on function public.notify_overdue_payments() from public, anon, authenticated;
+grant execute on function public.notify_overdue_payments() to service_role;
+revoke execute on function public.expected_payment_for_party(uuid) from public, anon, authenticated;
+revoke execute on function public.set_expected_payment_on() from public, anon, authenticated;
 
 commit;

@@ -71,6 +71,10 @@ const ALL = "__alle";
 const STATUS_VALUES = ["draft", "open", "overdue", "paid", "voided"] as const;
 type StatusFilter = (typeof STATUS_VALUES)[number];
 
+function paymentDueOn(invoice: OutgoingInvoice) {
+  return invoice.due_date ?? invoice.expected_payment_on ?? null;
+}
+
 function effectiveStatus(status: OutgoingVoucherStatus, dueDate: string | null): StatusFilter {
   if (status === "paidoff") return "paid";
   if (status === "voided") return "voided";
@@ -103,7 +107,7 @@ function OutgoingInvoicesPage() {
   const filtered = useMemo(() => {
     const q = search.trim().toLowerCase();
     return (invoicesQ.data ?? []).filter((inv) => {
-      if (status !== ALL && effectiveStatus(inv.status, inv.due_date) !== status) return false;
+      if (status !== ALL && effectiveStatus(inv.status, paymentDueOn(inv)) !== status) return false;
       if (!matchesToSearch(inv, q)) return false;
       return true;
     });
@@ -126,7 +130,7 @@ function OutgoingInvoicesPage() {
     let paid = 0;
     let paidAmount = 0;
     for (const inv of basis) {
-      const stand = effectiveStatus(inv.status, inv.due_date);
+      const stand = effectiveStatus(inv.status, paymentDueOn(inv));
       const gross = inv.amount_gross ?? 0;
       // A voided invoice is not money anybody expects, so it counts in neither total.
       if (stand !== "voided") volume += gross;
@@ -216,7 +220,7 @@ function OutgoingInvoicesPage() {
         case "betrag":
           return inv.amount_gross ?? 0;
         case "faellig":
-          return inv.due_date ?? "";
+          return paymentDueOn(inv) ?? "";
         default:
           return inv.invoice_date ?? "";
       }
@@ -357,7 +361,10 @@ function OutgoingInvoicesPage() {
                     {formatDate(inv.invoice_date)}
                   </TableCell>
                   <TableCell className="text-sm text-muted-foreground tabular-nums">
-                    {formatDate(inv.due_date)}
+                    {formatDate(paymentDueOn(inv))}
+                    {!inv.due_date && inv.expected_payment_on && (
+                      <span className="ml-1 text-xs">{t("outgoingInvoices.list.expected")}</span>
+                    )}
                   </TableCell>
                   <TableCell className="text-right font-medium tabular-nums">
                     {formatEUR(inv.amount_gross)}

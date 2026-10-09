@@ -1,4 +1,4 @@
-import { createFileRoute } from "@tanstack/react-router";
+import { createFileRoute, Link } from "@tanstack/react-router";
 import { useMemo, useState } from "react";
 import { Download, Plus } from "lucide-react";
 import { toast } from "sonner";
@@ -32,11 +32,13 @@ import {
 } from "@/components/ui/table";
 import { Textarea } from "@/components/ui/textarea";
 import { EmptyState, ErrorState, TableSkeleton } from "@/components/documents/query-states";
+import { BonusSettingsDialog } from "@/components/broker-bonuses/bonus-settings-dialog";
 import { ExpandableNote } from "@/components/broker-bonuses/expandable-note";
 import {
   BONUS_NOTE_MAX_LENGTH,
   BONUS_TYPES,
   useBrokerBonuses,
+  useConfirmSuggestedBonus,
   useDeleteBrokerBonus,
   useReviewBrokerBonus,
   useSubmitBrokerBonus,
@@ -48,6 +50,7 @@ import { PERMISSIONS } from "@/config/permissions";
 import { pageTitle } from "@/config/brand";
 import { downloadTextFile, toCsv } from "@/kit/lib/download";
 import { TablePagination } from "@/kit/components/feedback/table-pagination";
+import { useFeature } from "@/data/use-feature";
 import { useAuth } from "@/lib/auth";
 import { usePaginationLabels } from "@/lib/use-pagination-labels";
 import { useTableView } from "@/lib/use-table-view";
@@ -61,6 +64,7 @@ export const Route = createFileRoute("/broker-bonuses/")({
 });
 
 const STATUS_VARIANT: Record<BonusStatus, "default" | "secondary" | "outline"> = {
+  suggested: "outline",
   submitted: "secondary",
   approved: "default",
   paid: "outline",
@@ -101,6 +105,8 @@ function BrokerBonusesPage() {
   const [reviewing, setReviewing] = useState<BrokerBonus | null>(null);
   const markPaid = useReviewBrokerBonus();
   const remove = useDeleteBrokerBonus();
+  const confirmSuggested = useConfirmSuggestedBonus();
+  const suggestsBonuses = useFeature(PERMISSIONS.bonusesSuggest);
 
   const exportApproved = () => {
     const approvedOrPaid = bonuses.filter(
@@ -146,6 +152,7 @@ function BrokerBonusesPage() {
               <Download /> {t("brokerBonuses.export.button")}
             </Button>
           )}
+          {canReview && suggestsBonuses && <BonusSettingsDialog />}
           {canSubmit && <NewBonusDialog />}
         </div>
       </div>
@@ -206,6 +213,15 @@ function BrokerBonusesPage() {
                         <div className="text-sm font-medium">
                           {t(`brokerBonuses.types.${bonus.bonus_type}`)}
                         </div>
+                        {bonus.deal_id && (
+                          <Link
+                            to="/commission-deals/$id"
+                            params={{ id: bonus.deal_id }}
+                            className="text-xs text-muted-foreground hover:underline"
+                          >
+                            {t("brokerBonuses.fromDeal")}
+                          </Link>
+                        )}
                         {bonus.note && <ExpandableNote text={bonus.note} />}
                         {bonus.review_note && (
                           <ExpandableNote
@@ -251,13 +267,12 @@ function BrokerBonusesPage() {
                               {t("brokerBonuses.markPaid")}
                             </Button>
                           )}
-                          {canSubmit && bonus.status === "submitted" && (
+                          {canSubmit && bonus.status === "suggested" && (
                             <Button
                               size="sm"
-                              variant="outline"
-                              disabled={remove.isPending}
+                              disabled={confirmSuggested.isPending}
                               onClick={() =>
-                                remove.mutate(bonus.id, {
+                                confirmSuggested.mutate(bonus.id, {
                                   onError: (error) =>
                                     toast.error(t("brokerBonuses.failed"), {
                                       description: errorText(error),
@@ -265,9 +280,29 @@ function BrokerBonusesPage() {
                                 })
                               }
                             >
-                              {t("brokerBonuses.withdraw")}
+                              {t("brokerBonuses.confirm")}
                             </Button>
                           )}
+                          {canSubmit &&
+                            (bonus.status === "submitted" || bonus.status === "suggested") && (
+                              <Button
+                                size="sm"
+                                variant="outline"
+                                disabled={remove.isPending}
+                                onClick={() =>
+                                  remove.mutate(bonus.id, {
+                                    onError: (error) =>
+                                      toast.error(t("brokerBonuses.failed"), {
+                                        description: errorText(error),
+                                      }),
+                                  })
+                                }
+                              >
+                                {bonus.status === "suggested"
+                                  ? t("brokerBonuses.decline")
+                                  : t("brokerBonuses.withdraw")}
+                              </Button>
+                            )}
                         </div>
                       </TableCell>
                     </TableRow>

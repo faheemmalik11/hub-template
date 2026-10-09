@@ -18,7 +18,9 @@ import type { FeeKind } from "@/data";
 import type { CommissionSide } from "@/kit/lib/commission";
 import { errorText } from "@/lib/data/format";
 import { useTranslation } from "@/lib/i18n";
-import type { SideForm } from "./deal-form";
+import type { PartyForm, SideForm } from "./deal-form";
+
+const EMPTY_PARTY: PartyForm = { customerId: "", share: "", discount: "", discountReason: "" };
 
 export function SideCard({
   side,
@@ -50,7 +52,7 @@ export function SideCard({
     setCreating(true);
     try {
       const customerId = await createCustomer(name);
-      set({ parties: [...value.parties, { customerId, share: "" }] });
+      set({ parties: [...value.parties, { ...EMPTY_PARTY, customerId }] });
       setNewCustomerName("");
     } catch (error) {
       toast.error(t("commissionDeals.side.customerFailed"), { description: errorText(error) });
@@ -116,24 +118,6 @@ export function SideCard({
                 />
               </div>
             )}
-            <div className="space-y-1.5">
-              <Label>{t("commissionDeals.side.discount")}</Label>
-              <Input
-                inputMode="decimal"
-                value={value.discount}
-                onChange={(event) => set({ discount: event.target.value })}
-                placeholder="0"
-                disabled={disabled}
-              />
-            </div>
-            <div className="space-y-1.5">
-              <Label>{t("commissionDeals.side.discountReason")}</Label>
-              <Input
-                value={value.discountReason}
-                onChange={(event) => set({ discountReason: event.target.value })}
-                disabled={disabled}
-              />
-            </div>
           </div>
 
           <div>
@@ -141,35 +125,56 @@ export function SideCard({
             <p className="text-xs text-muted-foreground">{t("commissionDeals.side.shareHint")}</p>
             <div className="mt-2 space-y-2">
               {value.parties.map((party, index) => (
-                <div key={index} className="flex items-center gap-2">
-                  <Combobox
-                    className="flex-1"
-                    value={party.customerId || null}
-                    onValueChange={(customerId) => setParty(index, { customerId })}
-                    options={customerOptions}
-                    placeholder={t("commissionDeals.side.payerPlaceholder")}
-                    searchPlaceholder={t("commissionDeals.side.payerSearch")}
-                    emptyText={t("commissionDeals.side.noCustomers")}
-                    disabled={disabled}
-                  />
-                  <Input
-                    className="w-24"
-                    inputMode="decimal"
-                    value={party.share}
-                    onChange={(event) => setParty(index, { share: event.target.value })}
-                    placeholder={t("commissionDeals.side.share")}
-                    aria-label={t("commissionDeals.side.share")}
-                    disabled={disabled}
-                  />
-                  <Button
-                    variant="ghost"
-                    size="icon"
-                    onClick={() => set({ parties: value.parties.filter((_, i) => i !== index) })}
-                    aria-label={t("commissionDeals.side.remove")}
-                    disabled={disabled}
-                  >
-                    <Trash2 className="size-4" />
-                  </Button>
+                <div key={index} className="space-y-2 rounded-lg border border-border/60 p-2">
+                  <div className="flex items-center gap-2">
+                    <Combobox
+                      className="flex-1"
+                      value={party.customerId || null}
+                      onValueChange={(customerId) => setParty(index, { customerId })}
+                      options={customerOptions}
+                      placeholder={t("commissionDeals.side.payerPlaceholder")}
+                      searchPlaceholder={t("commissionDeals.side.payerSearch")}
+                      emptyText={t("commissionDeals.side.noCustomers")}
+                      disabled={disabled}
+                    />
+                    <Input
+                      className="w-24"
+                      inputMode="decimal"
+                      value={party.share}
+                      onChange={(event) => setParty(index, { share: event.target.value })}
+                      placeholder={t("commissionDeals.side.share")}
+                      aria-label={t("commissionDeals.side.share")}
+                      disabled={disabled}
+                    />
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      onClick={() => set({ parties: value.parties.filter((_, i) => i !== index) })}
+                      aria-label={t("commissionDeals.side.remove")}
+                      disabled={disabled}
+                    >
+                      <Trash2 className="size-4" />
+                    </Button>
+                  </div>
+                  <div className="flex gap-2">
+                    <Input
+                      className="w-40"
+                      inputMode="decimal"
+                      value={party.discount}
+                      onChange={(event) => setParty(index, { discount: event.target.value })}
+                      placeholder={t("commissionDeals.side.discount")}
+                      aria-label={t("commissionDeals.side.discount")}
+                      disabled={disabled}
+                    />
+                    <Input
+                      className="flex-1"
+                      value={party.discountReason}
+                      onChange={(event) => setParty(index, { discountReason: event.target.value })}
+                      placeholder={t("commissionDeals.side.discountReason")}
+                      aria-label={t("commissionDeals.side.discountReason")}
+                      disabled={disabled || !party.discount.trim()}
+                    />
+                  </div>
                 </div>
               ))}
             </div>
@@ -177,7 +182,7 @@ export function SideCard({
               <Button
                 variant="outline"
                 size="sm"
-                onClick={() => set({ parties: [...value.parties, { customerId: "", share: "" }] })}
+                onClick={() => set({ parties: [...value.parties, EMPTY_PARTY] })}
                 disabled={disabled}
               >
                 <Plus className="size-4" /> {t("commissionDeals.side.addPayer")}

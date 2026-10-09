@@ -3,6 +3,8 @@ import { useMemo } from "react";
 
 import { BRAND, pageTitle } from "@/config/brand";
 import { overviewPeriodRange } from "@/lib/data/format";
+import { HomeAttention } from "@/components/home/attention-panel";
+import { SystemBlockers } from "@/components/home/system-blockers";
 import { DashboardAlertStrip } from "@/components/home/dashboard-alert-strip";
 import { DashboardPanel } from "@/components/dashboard/panel";
 import { MoneyCards } from "@/components/home/money-cards";
@@ -42,6 +44,7 @@ function Index() {
       {/* Setup checklist while it's incomplete, general alerts once it's done. Never both.
           Pipeline errors ride along as the "fehler" item, so the old red banner is retired. */}
       <DashboardAlertStrip />
+      <HomeAttention />
 
       <div className="grid gap-3 lg:grid-cols-3">
         <section className="min-w-0 lg:col-span-2" data-tour="overview-money-cards">
@@ -84,6 +87,8 @@ function Index() {
           <BankCard />
         </div>
       </div>
+
+      <SystemBlockers />
     </div>
   );
 }

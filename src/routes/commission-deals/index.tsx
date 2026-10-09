@@ -4,7 +4,6 @@ import { Plus } from "lucide-react";
 import { toast } from "sonner";
 
 import { Button } from "@/components/ui/button";
-import { Combobox, type ComboboxOption } from "@/components/ui/combobox";
 import {
   Dialog,
   DialogContent,
@@ -23,13 +22,16 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { EmptyState, ErrorState, TableSkeleton } from "@/components/documents/query-states";
+import { BrokerNumbersCard } from "@/components/commission/broker-numbers-card";
 import { DealStatusBadge } from "@/components/commission/deal-status-badge";
+import { PropertyPicker } from "@/components/commission/property-picker";
 import {
   calculateDealForm,
   dealFormOf,
   dealGrossTotalCents,
 } from "@/components/commission/deal-form";
-import { useCompanies, useCreateDeal, useDeals, useProperties, usePropertyListings } from "@/data";
+import { propertyChoiceTitle, useCompanies, useCreateDeal, useDeals } from "@/data";
+import type { PropertyChoice } from "@/data";
 import { PERMISSIONS } from "@/config/permissions";
 import { pageTitle } from "@/config/brand";
 import { TablePagination } from "@/kit/components/feedback/table-pagination";
@@ -78,6 +80,8 @@ function CommissionDealsPage() {
         </div>
         {(can(PERMISSIONS.documentsWrite) || can(PERMISSIONS.dealsSubmit)) && <NewDealDialog />}
       </div>
+
+      {can(PERMISSIONS.dealsSubmit) && !can(PERMISSIONS.documentsWrite) && <BrokerNumbersCard />}
 
       <div className="mt-6">
         {dealsQ.isLoading ? (
@@ -164,50 +168,23 @@ function NewDealDialog() {
   const navigate = useNavigate();
   const { can } = useAuth();
   const [open, setOpen] = useState(false);
-  const [propertyId, setPropertyId] = useState<string | null>(null);
-  const propertiesQ = useProperties();
-  const listingsQ = usePropertyListings({ enabled: can(PERMISSIONS.propertiesCrmSync) });
+  const [property, setProperty] = useState<PropertyChoice | null>(null);
   const companiesQ = useCompanies();
   const createDeal = useCreateDeal();
 
-  const listingByProperty = useMemo(
-    () => new Map((listingsQ.data ?? []).map((listing) => [listing.id, listing])),
-    [listingsQ.data],
-  );
-  const options = useMemo<ComboboxOption[]>(
-    () =>
-      (propertiesQ.data ?? [])
-        .filter((property) => !property.deleted_at)
-        .map((property) => {
-          const status = listingByProperty.get(property.id)?.crm_status;
-          return {
-            value: property.id,
-            label: status
-              ? `${property.name ?? property.code} · ${status}`
-              : (property.name ?? property.code),
-            keywords: [property.code, property.address].filter(Boolean).join(" "),
-          };
-        }),
-    [propertiesQ.data, listingByProperty],
-  );
-
   const create = () => {
-    const property = propertiesQ.data?.find((candidate) => candidate.id === propertyId);
     if (!property) return;
-    const listing = listingByProperty.get(property.id);
     createDeal.mutate(
       {
         propertyId: property.id,
-        propertyLabel: [property.name ?? property.code, property.address]
-          .filter(Boolean)
-          .join(", "),
+        propertyLabel: [propertyChoiceTitle(property), property.address].filter(Boolean).join(", "),
         companyId: companiesQ.data?.[0]?.id ?? null,
-        purchasePrice: listing?.sold_price ?? listing?.asking_price ?? null,
+        purchasePrice: property.sold_price ?? property.asking_price ?? null,
       },
       {
         onSuccess: (id) => {
           setOpen(false);
-          setPropertyId(null);
+          setProperty(null);
           navigate({ to: "/commission-deals/$id", params: { id } });
         },
         onError: (error) =>
@@ -229,20 +206,13 @@ function NewDealDialog() {
           </DialogHeader>
           <div className="space-y-2">
             <Label>{t("commissionDeals.newDialog.property")}</Label>
-            <Combobox
-              value={propertyId}
-              onValueChange={setPropertyId}
-              options={options}
-              placeholder={t("commissionDeals.newDialog.propertyPlaceholder")}
-              searchPlaceholder={t("commissionDeals.newDialog.propertySearch")}
-              emptyText={t("commissionDeals.newDialog.noProperties")}
-            />
+            <PropertyPicker value={property} onChange={setProperty} />
           </div>
           <DialogFooter>
             <Button variant="outline" onClick={() => setOpen(false)}>
               {t("commissionDeals.newDialog.cancel")}
             </Button>
-            <Button onClick={create} disabled={!propertyId || createDeal.isPending}>
+            <Button onClick={create} disabled={!property || createDeal.isPending}>
               {t("commissionDeals.newDialog.create")}
             </Button>
           </DialogFooter>
