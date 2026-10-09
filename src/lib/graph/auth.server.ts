@@ -11,6 +11,15 @@
 
 import { channelCredential } from "@/lib/inbox/channel-credentials.server";
 
+export class GraphAuthError extends Error {
+  constructor(
+    message: string,
+    public status: number,
+  ) {
+    super(message);
+  }
+}
+
 export async function getGraphAccessToken(): Promise<string> {
   const [tenant, clientId, clientSecret] = await Promise.all([
     channelCredential("mailbox", "GRAPH_TENANT_ID"),
@@ -30,7 +39,10 @@ export async function getGraphAccessToken(): Promise<string> {
   });
   if (!res.ok) {
     const body = await res.text().catch(() => "");
-    throw new Error(`Graph token exchange failed (${res.status}): ${body.slice(0, 300)}`);
+    throw new GraphAuthError(
+      `Graph token exchange failed (${res.status}): ${body.slice(0, 300)}`,
+      res.status,
+    );
   }
   const data = (await res.json()) as { access_token?: string };
   if (!data.access_token) {

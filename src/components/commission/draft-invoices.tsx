@@ -73,7 +73,10 @@ export function DraftInvoices({
                   <dd>{euros(invoice.lineGrossCents)}</dd>
                 </div>
                 <div className="flex justify-between">
-                  <dt>{t("commissionDeals.drafts.discount")}</dt>
+                  <dt>
+                    {t("commissionDeals.drafts.discount")}
+                    {invoice.discountReason && ` (${invoice.discountReason})`}
+                  </dt>
                   <dd>−{euros(invoice.discountGrossCents)}</dd>
                 </div>
               </>

@@ -6,6 +6,8 @@ export type SideFee =
 export interface CommissionPayer {
   key: string;
   sharePercent?: number;
+  discountGrossCents?: number;
+  discountReason?: string;
 }
 
 export interface SideCommissionInput {
@@ -13,7 +15,6 @@ export interface SideCommissionInput {
   purchasePriceCents: number | null;
   fee: SideFee | null;
   payers: readonly CommissionPayer[];
-  discountGrossCents?: number;
   vatRatePercent: number;
 }
 
@@ -33,6 +34,7 @@ export interface CommissionInvoiceDraft {
   grossRatePercent: number | null;
   lineGrossCents: number;
   discountGrossCents: number;
+  discountReason: string | null;
   totalGrossCents: number;
   totalNetCents: number;
   totalVatCents: number;

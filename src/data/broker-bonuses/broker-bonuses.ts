@@ -17,7 +17,7 @@ export const BONUS_TYPES = [
 ] as const;
 
 export type BonusType = (typeof BONUS_TYPES)[number];
-export type BonusStatus = "submitted" | "approved" | "rejected" | "paid";
+export type BonusStatus = "suggested" | "submitted" | "approved" | "rejected" | "paid";
 
 export interface BrokerBonus {
   id: string;
@@ -26,6 +26,7 @@ export interface BrokerBonus {
   earned_on: string;
   amount: number;
   note: string | null;
+  deal_id: string | null;
   status: BonusStatus;
   reviewed_at: string | null;
   review_note: string | null;
@@ -34,7 +35,7 @@ export interface BrokerBonus {
 }
 
 const BONUS_SELECT =
-  `id, broker_user_id, bonus_type, earned_on, amount, note, status, reviewed_at, review_note, ` +
+  `id, broker_user_id, bonus_type, earned_on, amount, note, deal_id, status, reviewed_at, review_note, ` +
   `created_at, broker:app_users!broker_user_id(name, email)`;
 
 export function useBrokerBonuses() {
@@ -90,7 +91,7 @@ export function useReviewBrokerBonus() {
   return useMutation({
     mutationFn: async (input: {
       id: string;
-      status: Exclude<BonusStatus, "submitted">;
+      status: Exclude<BonusStatus, "submitted" | "suggested">;
       amount?: number;
       reviewNote?: string | null;
     }) => {
@@ -105,5 +106,142 @@ export function useReviewBrokerBonus() {
       if (error) throw error;
     },
     onSuccess: () => qc.invalidateQueries({ queryKey: queryKeys.brokerBonuses.all }),
+  });
+}
+
+export function useConfirmSuggestedBonus() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async (id: string) => {
+      const { error } = await sb
+        .from(TABLE.brokerBonuses)
+        .update({ status: "submitted" })
+        .eq("id", id);
+      if (error) throw error;
+    },
+    onSuccess: () => qc.invalidateQueries({ queryKey: queryKeys.brokerBonuses.all }),
+  });
+}
+
+export interface BonusSettings {
+  notary_amount: number;
+  follow_up_amount: number;
+  own_lead_share_percent: number;
+  company_lead_share_percent: number;
+  personnel_flat_amount: number;
+  company_lead_deducts_costs: boolean;
+}
+
+const SETTINGS_SELECT =
+  "notary_amount, follow_up_amount, own_lead_share_percent, company_lead_share_percent, " +
+  "personnel_flat_amount, company_lead_deducts_costs";
+
+export function useBonusSettings(enabled = true) {
+  return useQuery({
+    queryKey: queryKeys.brokerBonuses.settings,
+    enabled,
+    staleTime: STALE,
+    queryFn: async (): Promise<BonusSettings> => {
+      const { data, error } = await sb.from(TABLE.bonusSettings).select(SETTINGS_SELECT).single();
+      if (error) throw error;
+      return data as BonusSettings;
+    },
+  });
+}
+
+export function useSaveBonusSettings() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async (settings: BonusSettings) => {
+      const { error } = await sb.from(TABLE.bonusSettings).update(settings).eq("single_row", true);
+      if (error) throw error;
+    },
+    onSuccess: () => qc.invalidateQueries({ queryKey: queryKeys.brokerBonuses.settings }),
+  });
+}
+
+export function useDealBonuses(dealId: string, enabled = true) {
+  return useQuery({
+    queryKey: queryKeys.brokerBonuses.forDeal(dealId),
+    enabled,
+    staleTime: STALE,
+    queryFn: async (): Promise<
+      Array<{ bonus_type: BonusType; status: BonusStatus; amount: number }>
+    > => {
+      const { data, error } = await sb
+        .from(TABLE.brokerBonuses)
+        .select("bonus_type, status, amount")
+        .eq("deal_id", dealId)
+        .neq("status", "rejected");
+      if (error) throw error;
+      return (data ?? []) as Array<{ bonus_type: BonusType; status: BonusStatus; amount: number }>;
+    },
+  });
+}
+
+export function useSuggestBonuses(dealId: string) {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async (
+      suggestions: Array<{
+        brokerUserId: string;
+        bonusType: BonusType;
+        earnedOn: string;
+        amount: number;
+        note: string;
+      }>,
+    ) => {
+      const { error } = await sb.from(TABLE.brokerBonuses).insert(
+        suggestions.map((suggestion) => ({
+          deal_id: dealId,
+          broker_user_id: suggestion.brokerUserId,
+          bonus_type: suggestion.bonusType,
+          earned_on: suggestion.earnedOn,
+          amount: suggestion.amount,
+          note: suggestion.note,
+          status: "suggested",
+        })),
+      );
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: queryKeys.brokerBonuses.all });
+    },
+  });
+}
+
+export function useDealCommissionPaid(dealId: string, enabled = true) {
+  return useQuery({
+    queryKey: ["deal-commission-paid", dealId],
+    enabled,
+    staleTime: STALE,
+    queryFn: async (): Promise<boolean> => {
+      const { data: parties, error: partiesError } = await sb
+        .from(TABLE.dealParties)
+        .select(`id, ${TABLE.dealSides}!inner(deal_id)`)
+        .eq(`${TABLE.dealSides}.deal_id`, dealId);
+      if (partiesError) throw partiesError;
+      const people = (parties ?? []) as Array<{ id: string }>;
+      if (people.length === 0) return false;
+      const { data: invoices, error } = await sb
+        .from(TABLE.outgoingInvoices)
+        .select("deal_party_id, status")
+        .in(
+          "deal_party_id",
+          people.map((party) => party.id),
+        )
+        .is("deleted_at", null)
+        .neq("status", "cancelled");
+      if (error) throw error;
+      const paid = new Set(
+        ((invoices ?? []) as Array<{ deal_party_id: string | null; status: string }>)
+          .filter((invoice) => invoice.status === "paid" && invoice.deal_party_id)
+          .map((invoice) => invoice.deal_party_id),
+      );
+      const open = ((invoices ?? []) as Array<{ status: string }>).some(
+        (invoice) => invoice.status !== "paid",
+      );
+      return !open && people.every((party) => paid.has(party.id));
+    },
   });
 }

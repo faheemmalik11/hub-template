@@ -1728,6 +1728,7 @@ export interface OutgoingInvoice {
   status: OutgoingVoucherStatus;
   invoice_date: string | null;
   due_date: string | null;
+  expected_payment_on?: string | null;
   amount_net: number | null;
   amount_gross: number | null;
   currency: string;

@@ -57,8 +57,6 @@ create table if not exists public.deal_sides (
     fee_kind text not null,
     fee_net_rate numeric(6, 3),
     fee_net_amount numeric(14, 2),
-    discount_gross numeric(14, 2) not null default 0,
-    discount_reason text,
     created_at timestamptz not null default now(),
     updated_at timestamptz not null default now(),
     unique (deal_id, side),
@@ -66,25 +64,27 @@ create table if not exists public.deal_sides (
     -- The fee may still be missing on an incomplete deal, but never belong to the other kind.
     constraint deal_sides_fee_shape check (
         (fee_kind = 'percent' and fee_net_amount is null and (fee_net_rate is null or fee_net_rate > 0))
-        or (fee_kind = 'fixed' and fee_net_rate is null and (fee_net_amount is null or fee_net_amount > 0))),
-    constraint deal_sides_discount_not_negative check (discount_gross >= 0)
+        or (fee_kind = 'fixed' and fee_net_rate is null and (fee_net_amount is null or fee_net_amount > 0)))
 );
 
 drop trigger if exists deal_sides_touch on public.deal_sides;
 create trigger deal_sides_touch before update on public.deal_sides
     for each row execute function public.set_updated_at();
 
--- Who pays on a side. No share on any party of a side means they split it equally.
+-- Who pays on a side, and the discount that person was granted. No share on any party of a side means they split it equally.
 create table if not exists public.deal_parties (
     id uuid primary key default gen_random_uuid(),
     deal_side_id uuid not null references public.deal_sides(id) on delete cascade,
     customer_id uuid not null references public.customers(id),
     share_percent numeric(6, 3),
+    discount_gross numeric(14, 2) not null default 0,
+    discount_reason text,
     position integer not null default 0,
     created_at timestamptz not null default now(),
     unique (deal_side_id, customer_id),
     constraint deal_parties_share_in_range
-        check (share_percent is null or (share_percent > 0 and share_percent <= 100))
+        check (share_percent is null or (share_percent > 0 and share_percent <= 100)),
+    constraint deal_parties_discount_not_negative check (discount_gross >= 0)
 );
 
 -- What this business billed, as opposed to what it was billed.

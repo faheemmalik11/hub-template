@@ -19,6 +19,7 @@ import { z } from "zod";
 
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 import { AppError } from "./errors";
+import { describeSendFailure, sendErrorText } from "@/lib/datev/send-errors";
 import { sendGraphMimeMessage } from "@/lib/graph/send-mail.server";
 import { wrapEinvoiceXmlAsPdf } from "@/lib/datev/zugferd.server";
 import { buildRawEmail, type EmailAttachment } from "@/lib/datev/mime-message.server";
@@ -298,17 +299,34 @@ export const triggerDatevHandover = createServerFn({ method: "POST" })
       // unreachable given the zod enum, kept for parity with the removed Edge Function's guard
       throw new AppError("Invalid direction", 400, "VALIDATION_ERROR");
     }
-    const senderEmail = process.env.DATEV_SENDER_EMAIL;
-    if (!senderEmail) {
-      throw new AppError("DATEV_SENDER_EMAIL is not set for this app.", 500, "CONFIG_ERROR");
-    }
-
     // supabaseAdmin bypasses RLS and the column-level grant that hides `address` from
     // `authenticated` — dynamic import per client.server.ts's own guidance (top-level imports in
     // a *.functions.ts file ship to the client bundle; only code actually reached inside a
     // .handler() body is tree-shaken out).
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
     const db = supabaseAdmin as Db;
+
+    const refuse = async (
+      code: Parameters<typeof sendErrorText>[0],
+      detail: string,
+      status = 500,
+    ) => {
+      const message = sendErrorText(code, detail);
+      await db.from(TABLE.handoverBatches).insert({
+        company_id: companyId,
+        direction,
+        invoice_count: 0,
+        total_bytes: 0,
+        status: "error",
+        error_message: message,
+      });
+      return new AppError(message, status, code);
+    };
+
+    const senderEmail = process.env.DATEV_SENDER_EMAIL;
+    if (!senderEmail) {
+      throw await refuse("NO_MAILBOX", "DATEV_SENDER_EMAIL is not set for this app.");
+    }
 
     const { data: route, error: routeError } = await db
       .from(TABLE.handoverRoutes)
@@ -318,10 +336,10 @@ export const triggerDatevHandover = createServerFn({ method: "POST" })
       .maybeSingle();
     if (routeError) throw new AppError(errorMessage(routeError), 500, "DB_ERROR");
     if (!route || !route.is_enabled) {
-      throw new AppError(
+      throw await refuse(
+        "NO_ROUTE",
         `No enabled DATEV route configured for this company/${direction} combination.`,
         400,
-        "NOT_CONFIGURED",
       );
     }
     const recipientAddress = route.address as string;
@@ -496,7 +514,10 @@ export const triggerDatevHandover = createServerFn({ method: "POST" })
         }
 
         if (recordError) {
-          const message = `EMAIL WAS SENT but recording it failed after 3 attempts — these ${chunk.length} invoice(s) must be reconciled manually, do NOT resend: ${errorMessage(recordError)}`;
+          const message = sendErrorText(
+            "RECORD_FAILED",
+            `${chunk.length} invoice(s), recording failed after 3 attempts: ${errorMessage(recordError)}`,
+          );
           await db.from(TABLE.handoverBatches).insert({
             id: batchId,
             company_id: companyId,
@@ -516,7 +537,7 @@ export const triggerDatevHandover = createServerFn({ method: "POST" })
           batchResults.push({ status: "success", invoiceCount: chunk.length, totalBytes });
         }
       } catch (e) {
-        const message = errorMessage(e);
+        const message = describeSendFailure(e);
         // A failed SEND is never marked handed over — only the failure itself is logged, so the
         // invoices in this chunk stay "ready" and can be retried on the next manual trigger. This
         // branch is only reached for failures before sendGraphMimeMessage succeeds; a post-send

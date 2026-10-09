@@ -27,6 +27,15 @@
 
 import { getGraphAccessToken } from "./auth.server";
 
+export class GraphSendError extends Error {
+  constructor(
+    message: string,
+    public status: number,
+  ) {
+    super(message);
+  }
+}
+
 // `mimeBase64` is a standard-base64 RFC 2822 message, as returned by buildRawEmail().
 export async function sendGraphMimeMessage(senderEmail: string, mimeBase64: string): Promise<void> {
   const accessToken = await getGraphAccessToken();
@@ -44,6 +53,9 @@ export async function sendGraphMimeMessage(senderEmail: string, mimeBase64: stri
   // Graph answers a successful sendMail with 202 Accepted and an empty body.
   if (!res.ok) {
     const body = await res.text().catch(() => "");
-    throw new Error(`Graph sendMail failed (${res.status}): ${body.slice(0, 500)}`);
+    throw new GraphSendError(
+      `Graph sendMail failed (${res.status}): ${body.slice(0, 500)}`,
+      res.status,
+    );
   }
 }

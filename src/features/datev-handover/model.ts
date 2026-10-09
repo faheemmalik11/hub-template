@@ -203,3 +203,8 @@ export function formatBytes(bytes: number): string {
   if (bytes < 1024 * 1024) return `${formatNumber(bytes / 1024, 0)} KB`;
   return `${formatNumber(bytes / (1024 * 1024), 1)} MB`;
 }
+
+export function parseSendError(raw: string): { code: string | null; detail: string } {
+  const m = /^\[([A-Z_]+)\]\s*([\s\S]*)$/.exec(raw.trim());
+  return m ? { code: m[1], detail: m[2] } : { code: null, detail: raw };
+}

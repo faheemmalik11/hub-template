@@ -21,6 +21,7 @@ import {
   type DatevReadyInvoice,
 } from "./adapter";
 import { formatBytes, type SendTarget } from "./model";
+import { SendErrorText } from "./SendErrorText";
 
 /** What one company's call came back with. */
 interface CompanyOutcome {
@@ -475,16 +476,18 @@ function Result({ outcomes }: { outcomes: CompanyOutcome[] }) {
               </span>
             </div>
 
-            {o.error && <p className="mt-2 text-sm text-danger">{o.error}</p>}
+            {o.error && <SendErrorText raw={o.error} className="mt-2 text-sm text-danger" />}
 
             {/* Printed in full, never summarised. One of the strings that can land here is the send
                 function's "EMAIL WAS SENT but recording it failed after 3 attempts ... do NOT
                 resend" — the one case where the right next step is the opposite of the obvious one,
                 and any paraphrase loses it. */}
             {failed.map((b, i) => (
-              <p key={i} className="mt-2 text-sm break-words text-danger">
-                {b.error ?? t("handover.senden.result.fehlgeschlagen")}
-              </p>
+              <SendErrorText
+                key={i}
+                raw={b.error ?? t("handover.senden.result.fehlgeschlagen")}
+                className="mt-2 text-sm text-danger"
+              />
             ))}
 
             {ok.length > 1 && (

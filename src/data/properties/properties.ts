@@ -1,7 +1,14 @@
-import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import {
+  keepPreviousData,
+  useInfiniteQuery,
+  useMutation,
+  useQuery,
+  useQueryClient,
+} from "@tanstack/react-query";
 
 import { TABLE } from "@/config/tables";
 import { STALE, actorEmail, sb } from "@/data/client";
+import { queryKeys } from "@/data/keys";
 import { requiredReason } from "@/data/shared";
 import type { Company, Property, PropertyCompany } from "@/lib/data/types";
 
@@ -10,6 +17,57 @@ import type { Company, Property, PropertyCompany } from "@/lib/data/types";
 const PROPERTY_COLUMNS =
   "id, code, name, address, vat_status, filing_folder, drive_folder_id, filing_binding, source, " +
   "external_id, created_at, updated_at, deleted_at, deleted_by, delete_reason";
+
+export interface PropertyChoice {
+  id: string;
+  code: string;
+  name: string | null;
+  address: string | null;
+  crm_status: string | null;
+  asking_price: number | null;
+  sold_price: number | null;
+}
+
+export function propertyChoiceTitle(property: PropertyChoice): string {
+  return property.name ?? property.code;
+}
+
+const PROPERTY_CHOICE_COLUMNS = "id, code, name, address, crm_status, asking_price, sold_price";
+export const PROPERTY_CHOICE_PAGE_SIZE = 30;
+
+function searchTermOf(input: string): string {
+  return input.replace(/[%*,()\\]/g, " ").trim();
+}
+
+export function usePropertyChoices(search: string, enabled = true) {
+  const term = searchTermOf(search);
+  return useInfiniteQuery({
+    queryKey: [...queryKeys.properties.all, "choices", term],
+    enabled,
+    staleTime: STALE,
+    placeholderData: keepPreviousData,
+    initialPageParam: 0,
+    queryFn: async ({ pageParam }): Promise<PropertyChoice[]> => {
+      let query = sb
+        .from(TABLE.properties)
+        .select(PROPERTY_CHOICE_COLUMNS)
+        .is("deleted_at", null)
+        .order("name", { ascending: true, nullsFirst: false })
+        .order("code", { ascending: true })
+        .range(pageParam, pageParam + PROPERTY_CHOICE_PAGE_SIZE - 1);
+      if (term) {
+        query = query.or(`name.ilike.%${term}%,code.ilike.%${term}%,address.ilike.%${term}%`);
+      }
+      const { data, error } = await query;
+      if (error) throw error;
+      return (data ?? []) as PropertyChoice[];
+    },
+    getNextPageParam: (lastPage, pages) =>
+      lastPage.length < PROPERTY_CHOICE_PAGE_SIZE
+        ? undefined
+        : pages.length * PROPERTY_CHOICE_PAGE_SIZE,
+  });
+}
 
 export function useProperties() {
   return useQuery({

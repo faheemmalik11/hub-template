@@ -1,12 +1,29 @@
 import { calculateDealCommission } from "../../kit/lib/commission/calculate.ts";
 import type { CommissionResult, CommissionSide, SideFee } from "@/kit/lib/commission/types";
-import type { Deal, DealInput, DealSide, DealSideInput, FeeKind } from "@/data/deals/deals";
+import type {
+  Deal,
+  DealCostInput,
+  DealCostKind,
+  DealInput,
+  DealSide,
+  DealSideInput,
+  FeeKind,
+} from "@/data/deals/deals";
 
 export const SIDES: CommissionSide[] = ["buyer", "seller"];
 
 export interface PartyForm {
   customerId: string;
   share: string;
+  discount: string;
+  discountReason: string;
+}
+
+export interface CostForm {
+  kind: DealCostKind;
+  description: string;
+  amount: string;
+  incurredOn: string;
 }
 
 export interface SideForm {
@@ -14,8 +31,6 @@ export interface SideForm {
   feeKind: FeeKind;
   rate: string;
   amount: string;
-  discount: string;
-  discountReason: string;
   parties: PartyForm[];
 }
 
@@ -25,6 +40,14 @@ export interface DealForm {
   purchasePrice: string;
   vatRate: string;
   note: string;
+  acquiredBy: string | null;
+  handledBy: string | null;
+  ownLead: boolean;
+  fromViewing: boolean;
+  referrerCustomerId: string | null;
+  costsClosed: boolean;
+  readyForBookkeeping: boolean;
+  costs: CostForm[];
   buyer: SideForm;
   seller: SideForm;
 }
@@ -55,8 +78,6 @@ function emptySide(enabled: boolean): SideForm {
     feeKind: "percent",
     rate: "",
     amount: "",
-    discount: "",
-    discountReason: "",
     parties: [],
   };
 }
@@ -68,11 +89,11 @@ function sideFormOf(side: DealSide | undefined): SideForm {
     feeKind: side.fee_kind,
     rate: formatDecimal(side.fee_net_rate),
     amount: formatDecimal(side.fee_net_amount),
-    discount: side.discount_gross ? formatDecimal(side.discount_gross) : "",
-    discountReason: side.discount_reason ?? "",
     parties: side.deal_parties.map((party) => ({
       customerId: party.customer_id,
       share: formatDecimal(party.share_percent),
+      discount: party.discount_gross ? formatDecimal(party.discount_gross) : "",
+      discountReason: party.discount_reason ?? "",
     })),
   };
 }
@@ -86,6 +107,19 @@ export function dealFormOf(deal: Deal): DealForm {
     purchasePrice: formatDecimal(deal.purchase_price),
     vatRate: formatDecimal(deal.vat_rate),
     note: deal.note ?? "",
+    acquiredBy: deal.acquired_by,
+    handledBy: deal.handled_by,
+    ownLead: deal.own_lead,
+    fromViewing: deal.from_viewing,
+    referrerCustomerId: deal.referrer_customer_id,
+    costsClosed: deal.costs_closed_at !== null,
+    readyForBookkeeping: deal.ready_for_bookkeeping_at !== null,
+    costs: deal.deal_costs.map((cost) => ({
+      kind: cost.kind,
+      description: cost.description ?? "",
+      amount: formatDecimal(cost.amount),
+      incurredOn: cost.incurred_on ?? "",
+    })),
     buyer: isNew ? emptySide(true) : sideFormOf(sideOf("buyer")),
     seller: isNew ? emptySide(true) : sideFormOf(sideOf("seller")),
   };
@@ -113,11 +147,13 @@ export function calculateDealForm(form: DealForm): CommissionResult {
             .filter((party) => party.customerId)
             .map((party) => {
               const share = parseDecimal(party.share);
-              return share === null
-                ? { key: party.customerId }
-                : { key: party.customerId, sharePercent: share };
+              return {
+                key: party.customerId,
+                ...(share === null ? {} : { sharePercent: share }),
+                discountGrossCents: cents(parseDecimal(party.discount)) ?? 0,
+                discountReason: party.discountReason.trim() || undefined,
+              };
             }),
-          discountGrossCents: cents(parseDecimal(side.discount)) ?? 0,
         }
       : undefined;
   return calculateDealCommission({
@@ -128,14 +164,42 @@ export function calculateDealForm(form: DealForm): CommissionResult {
   });
 }
 
-export function saveInputOf(form: DealForm): { deal: DealInput; sides: DealSideInput[] } {
+function costInputsOf(form: DealForm): DealCostInput[] {
+  return form.costs.flatMap((cost) => {
+    const amount = parseDecimal(cost.amount);
+    return amount === null || amount <= 0
+      ? []
+      : [
+          {
+            kind: cost.kind,
+            description: cost.description.trim() || null,
+            amount,
+            incurred_on: cost.incurredOn || null,
+          },
+        ];
+  });
+}
+
+export function saveInputOf(form: DealForm): {
+  deal: DealInput;
+  sides: DealSideInput[];
+  costs: DealCostInput[];
+} {
   return {
+    costs: costInputsOf(form),
     deal: {
       company_id: form.companyId,
       notarised_on: form.notarisedOn || null,
       purchase_price: parseDecimal(form.purchasePrice),
       vat_rate: parseDecimal(form.vatRate) ?? 19,
       note: form.note.trim() || null,
+      acquired_by: form.acquiredBy,
+      handled_by: form.handledBy,
+      own_lead: form.ownLead,
+      from_viewing: form.fromViewing,
+      referrer_customer_id: form.referrerCustomerId,
+      costs_closed: form.costsClosed,
+      ready_for_bookkeeping: form.readyForBookkeeping,
     },
     sides: SIDES.filter((side) => form[side].enabled).map((side) => {
       const sideForm = form[side];
@@ -144,13 +208,13 @@ export function saveInputOf(form: DealForm): { deal: DealInput; sides: DealSideI
         fee_kind: sideForm.feeKind,
         fee_net_rate: sideForm.feeKind === "percent" ? parseDecimal(sideForm.rate) : null,
         fee_net_amount: sideForm.feeKind === "fixed" ? parseDecimal(sideForm.amount) : null,
-        discount_gross: parseDecimal(sideForm.discount) ?? 0,
-        discount_reason: sideForm.discountReason.trim() || null,
         parties: sideForm.parties
           .filter((party) => party.customerId)
           .map((party) => ({
             customer_id: party.customerId,
             share_percent: parseDecimal(party.share),
+            discount_gross: parseDecimal(party.discount) ?? 0,
+            discount_reason: party.discountReason.trim() || null,
           })),
       };
     }),

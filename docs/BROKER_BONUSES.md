@@ -40,9 +40,33 @@ sellers, see `COMMISSION_INVOICES.md`.)
 - **Checked:** a broker row was inserted and read back, and a broker approving their own bonus was
   refused, against the local database. The screen itself was not opened in a browser.
 
+## Suggested from a sale
+
+Off by default: the switch `bonuses.suggest` (catalogue section under `page.broker_bonuses`, granted to
+administering roles). `supabase/presets/bonus-suggestions-for-an-existing-client.sql` adds it to a live
+database and ends with the line that switches it on. Run `deal-details-for-an-existing-client.sql` first.
+
+- **Calculation:** `src/kit/lib/commission/bonuses.ts` (`suggestBonuses`, tests beside it), run on the saved
+  deal. Rules: notary bonus 500 for the person who handled the sale, unless the sale is an own lead;
+  follow-up 300 when the sale came from a viewing; own lead gives 50 % of (net commission after discounts
+  minus the deal's costs minus the 1,500 personnel flat rate), no notary bonus; a lead won by another broker
+  than the one who handled it gives that broker 10 %. The notary and follow-up bonuses are due at the notary
+  date. The two shares wait until the costs are closed and every commission invoice of the deal is paid.
+- **Settings:** table `bonus_settings` (one row): the amounts, the two percentages, the personnel flat rate and
+  whether the 10 % is taken after costs. Edited under "Regeln" on the bonus screen by whoever reviews.
+- **Flow:** on the deal page ("Boni für diesen Verkauf", `src/components/commission/bonus-suggestions-card.tsx`)
+  an administrator creates a suggestion. It is a `broker_bonuses` row with status `suggested`, `deal_id` set and
+  the calculation as its note, one per deal and type. The broker is notified, confirms it (status `submitted`,
+  the administrators are notified) or declines it (the row is deleted), and the usual review follows.
+- **Who is "handled by" and "lead won by":** `deals.handled_by` and `deals.acquired_by`, set on the deal page
+  by whoever may edit any deal. A sale opened from the CRM sets both to the CRM's broker.
+- **Assumptions to confirm with the client:** what the 10 % is calculated on (the setting defaults to the
+  commission after costs), what happens when nothing is left after the deductions (no suggestion is made),
+  and that a sale from a viewing and an own lead may both apply. The Google bonus is not tied to a sale and
+  stays manual.
+
 ## Open
 
-- Bonuses are typed in by the broker. They are not calculated from sales, so the 10% and 50% shares
-  rely on the broker entering the right amount.
+- Without the `bonuses.suggest` switch, bonuses are typed in by the broker and nothing checks the amount.
 - Questions to the client: the rule for "Empfehlung Finanzierung", and whether the notary bonus is
   now 500 euro (the 2025 list shows 300).

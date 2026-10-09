@@ -73,8 +73,9 @@ export function calculateSideCommission(input: SideCommissionInput): CommissionR
   const shares = input.payers.length > 0 ? resolveShares(input.payers) : null;
   if (typeof shares === "string") report(shares);
 
-  const discountGrossCents = input.discountGrossCents ?? 0;
-  if (discountGrossCents < 0) report("discount_negative");
+  if (input.payers.some((payer) => (payer.discountGrossCents ?? 0) < 0)) {
+    report("discount_negative");
+  }
 
   const netCents = sideNetCents(input);
   if (netCents !== null && netCents <= 0) report("fee_not_positive");
@@ -87,11 +88,11 @@ export function calculateSideCommission(input: SideCommissionInput): CommissionR
   const grossRatePercent =
     netRatePercent === null ? null : grossRateFromNet(netRatePercent, input.vatRatePercent);
   const payerNetCents = splitByShares(netCents, shares);
-  const payerDiscountCents = splitByShares(discountGrossCents, shares);
 
   const invoices: CommissionInvoiceDraft[] = input.payers.map((payer, index) => {
     const lineGrossCents = grossFromNetCents(payerNetCents[index], input.vatRatePercent);
-    const totalGrossCents = lineGrossCents - payerDiscountCents[index];
+    const discountGrossCents = payer.discountGrossCents ?? 0;
+    const totalGrossCents = lineGrossCents - discountGrossCents;
     const totalNetCents = netFromGrossCents(totalGrossCents, input.vatRatePercent);
     return {
       side: input.side,
@@ -101,7 +102,8 @@ export function calculateSideCommission(input: SideCommissionInput): CommissionR
       netRatePercent,
       grossRatePercent,
       lineGrossCents,
-      discountGrossCents: payerDiscountCents[index],
+      discountGrossCents,
+      discountReason: payer.discountReason ?? null,
       totalGrossCents,
       totalNetCents,
       totalVatCents: totalGrossCents - totalNetCents,
