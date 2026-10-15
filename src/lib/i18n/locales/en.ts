@@ -7193,6 +7193,10 @@ const en = {
     errorUnknown: "Unknown error while loading data.",
     retry: "Try again",
   },
+
+  errors: {
+    serviceNotConfigured: "This feature isn't available right now. Please try again later.",
+  },
 } as const;
 
 export default en;

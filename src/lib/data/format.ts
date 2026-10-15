@@ -1662,8 +1662,19 @@ export function isOverdue(
  * Order matters: check for a `message` property before falling back, since PostgrestError carries
  * one without being an Error. `details` is appended when it says something the message does not,
  * because for constraint violations that is usually the part naming the actual column.
+ *
+ * Edge Functions (BANKSapi, Pleo, Propstack — supabase/functions/_shared/*) throw plain English
+ * errors naming the missing secret or env var when a service isn't configured yet (e.g.
+ * "Missing Pleo config: PLEO_API_KEY, PLEO_COMPANY_ID", "PROPSTACK_API_KEY is not stored in the
+ * admin panel"). That text is correct for a log but must never reach a toast: it exposes which
+ * credential is missing to anyone who clicks the button. TECHNICAL_ERROR_PATTERN catches these —
+ * by the SCREAMING_SNAKE_CASE env-var shape and the named services — and swaps in the generic,
+ * translated fallback instead. The raw message still goes to the console for whoever is debugging.
  */
-export function errorText(e: unknown): string {
+const TECHNICAL_ERROR_PATTERN =
+  /\bBANKSapi\b|\bPleo\b|\bPropstack\b|\b[A-Z][A-Z0-9]*(?:_[A-Z0-9]+)+\b|is not stored in the admin panel|is not set as a secret|no team channel configured/;
+
+function rawErrorText(e: unknown): string {
   if (e == null) return "Unbekannter Fehler";
   if (typeof e === "string") return e;
   if (e instanceof Error && e.message) return e.message;
@@ -1688,4 +1699,13 @@ export function errorText(e: unknown): string {
     }
   }
   return String(e);
+}
+
+export function errorText(e: unknown): string {
+  const raw = rawErrorText(e);
+  if (TECHNICAL_ERROR_PATTERN.test(raw)) {
+    console.error("errorText: hid technical detail from the user —", raw);
+    return i18n.t("errors.serviceNotConfigured");
+  }
+  return raw;
 }

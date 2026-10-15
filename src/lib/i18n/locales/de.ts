@@ -7518,6 +7518,13 @@ const de = {
     errorUnknown: "Unbekannter Fehler beim Laden der Daten.",
     retry: "Erneut versuchen",
   },
+
+  // generic fallback shown instead of a technical/internal error message (e.g. a missing
+  // server-side configuration) — never the raw detail, see errorText() in lib/data/format.ts
+  errors: {
+    serviceNotConfigured:
+      "Diese Funktion ist gerade nicht verfügbar. Bitte versuchen Sie es später erneut.",
+  },
 } as const;
 
 export default de;
