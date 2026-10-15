@@ -7196,6 +7196,7 @@ const en = {
 
   errors: {
     serviceNotConfigured: "This feature isn't available right now. Please try again later.",
+    noPermission: "You don't have permission to do that.",
   },
 } as const;
 

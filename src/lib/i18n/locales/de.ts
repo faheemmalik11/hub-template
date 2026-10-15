@@ -7519,11 +7519,10 @@ const de = {
     retry: "Erneut versuchen",
   },
 
-  // generic fallback shown instead of a technical/internal error message (e.g. a missing
-  // server-side configuration) — never the raw detail, see errorText() in lib/data/format.ts
   errors: {
     serviceNotConfigured:
       "Diese Funktion ist gerade nicht verfügbar. Bitte versuchen Sie es später erneut.",
+    noPermission: "Dafür fehlt Ihnen die Berechtigung.",
   },
 } as const;
 
