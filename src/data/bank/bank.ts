@@ -33,6 +33,7 @@ import {
 } from "@/lib/api/bank-manual-import.functions";
 import type { NormalizedRow } from "@/lib/bank-import/types";
 import type { BankAccountFields } from "@/lib/data/bank-account-fields";
+import { edgeFunctionErrorText } from "@/lib/data/format";
 import type {
   BankAccount,
   BankConnection,
@@ -203,17 +204,7 @@ export function usePleoEmployees(enabled = true) {
       const { data, error } = await supabase.functions.invoke(EDGE_FUNCTION.expenseToolEmployees, {
         body: {},
       });
-      if (error) {
-        // The function answers with a JSON body naming the reason, and a 403 specifically means the
-        // API key does not carry the `users:read` scope. supabase-js flattens every non-2xx into
-        // "Edge Function returned a non-2xx status code", which would tell the reader nothing.
-        const ctx = (error as { context?: Response }).context;
-        if (ctx && typeof ctx.json === "function") {
-          const body = await ctx.json().catch(() => null);
-          if (body?.error) throw new Error(String(body.error));
-        }
-        throw error;
-      }
+      if (error) throw new Error(await edgeFunctionErrorText(error));
       return ((data ?? {}) as { employees?: PleoEmployee[] }).employees ?? [];
     },
   });
@@ -955,7 +946,7 @@ export function useTriggerSync() {
   return useMutation({
     mutationFn: async (): Promise<Record<string, unknown>> => {
       const { data, error } = await supabase.functions.invoke(EDGE_FUNCTION.bankSync, { body: {} });
-      if (error) throw error;
+      if (error) throw new Error(await edgeFunctionErrorText(error));
       return (data ?? {}) as Record<string, unknown>;
     },
     onSuccess: () => {
@@ -1067,17 +1058,7 @@ export function useDisconnectBank() {
       const { data, error } = await supabase.functions.invoke(EDGE_FUNCTION.bankDisconnect, {
         body: { connectionId: vars.connectionId },
       });
-      // The function answers 403/500 with a JSON body naming the reason. supabase-js turns any
-      // non-2xx into a flat "Edge Function returned a non-2xx status code", which tells the user
-      // nothing, so the body is read back off the response before giving up on it.
-      if (error) {
-        const ctx = (error as { context?: Response }).context;
-        if (ctx && typeof ctx.json === "function") {
-          const body = await ctx.json().catch(() => null);
-          if (body?.error) throw new Error(String(body.error));
-        }
-        throw error;
-      }
+      if (error) throw new Error(await edgeFunctionErrorText(error));
       return (data ?? {}) as DisconnectResult;
     },
     onSuccess: () => {
@@ -1112,7 +1093,7 @@ export function useStartBankConnect() {
       body: { callbackUrl?: string; customerIp?: string } = {},
     ): Promise<BankConnectResult> => {
       const { data, error } = await supabase.functions.invoke(EDGE_FUNCTION.bankConnect, { body });
-      if (error) throw error;
+      if (error) throw new Error(await edgeFunctionErrorText(error));
       const result = (data ?? {}) as BankConnectResult & { error?: string };
       // The function returns 200 with an { error } body for configuration problems, so a failure
       // would otherwise look like success with no URL.
@@ -1170,7 +1151,7 @@ export function useInitiatePayment() {
       const { data, error } = await supabase.functions.invoke(EDGE_FUNCTION.paymentInitiate, {
         body,
       });
-      if (error) throw error;
+      if (error) throw new Error(await edgeFunctionErrorText(error));
       return data as { paymentOrder: PaymentOrder; webformUrl?: string; reused?: boolean };
     },
     onSuccess: (_data, variables) => {
@@ -1201,7 +1182,7 @@ export function useCancelPaymentOrder() {
       const { data, error } = await supabase.functions.invoke(EDGE_FUNCTION.paymentCancel, {
         body: { paymentOrderId: body.paymentOrderId },
       });
-      if (error) throw error;
+      if (error) throw new Error(await edgeFunctionErrorText(error));
       return data as { paymentOrder: PaymentOrder };
     },
     onSuccess: (_data, variables) => {

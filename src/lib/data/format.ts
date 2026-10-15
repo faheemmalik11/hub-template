@@ -1709,3 +1709,23 @@ export function errorText(e: unknown): string {
   }
   return raw;
 }
+
+/**
+ * The real reason a `supabase.functions.invoke()` call failed.
+ *
+ * supabase-js flattens EVERY non-2xx Edge Function response into the same generic
+ * `error.message`, "Edge Function returned a non-2xx status code" — it never reads the JSON body
+ * the function actually sent, so a caller who just does `if (error) throw error` loses the one
+ * thing worth telling anyone (which service failed, or that a permission is missing) and shows
+ * that flat sentence instead. The real `{ error: "..." }` body lives on `error.context`, a Response
+ * that has to be read back explicitly. Feed the result into errorText() rather than throwing it
+ * straight to a toast, so a technical reason still gets hidden behind the generic fallback.
+ */
+export async function edgeFunctionErrorText(error: unknown): Promise<string> {
+  const context = (error as { context?: unknown } | null)?.context;
+  if (context && typeof (context as Response).json === "function") {
+    const body = await (context as Response).json().catch(() => null);
+    if (body && typeof body.error === "string" && body.error.trim()) return body.error;
+  }
+  return rawErrorText(error);
+}

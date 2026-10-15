@@ -10,7 +10,7 @@ import { PERMISSIONS } from "@/config/permissions";
 import { useInvoicesReturnedByType } from "@/data/approval";
 import { keepPreviousData } from "@tanstack/react-query";
 import { EDGE_FUNCTION } from "@/config/edge-functions";
-import { todayLocal } from "@/lib/data/format";
+import { edgeFunctionErrorText, todayLocal } from "@/lib/data/format";
 import { notifyTargetPath } from "@/lib/data/notification-target";
 import {
   createEmployee as createEmployeeFn,
@@ -902,7 +902,7 @@ export function useSlackDirectory(enabled: boolean) {
       const { data, error } = await supabase.functions.invoke(EDGE_FUNCTION.notifyDispatch, {
         body: { mode: "directory" },
       });
-      if (error) throw error;
+      if (error) throw new Error(await edgeFunctionErrorText(error));
       if (data?.error) throw new Error(String(data.error));
       return {
         ...data,
@@ -1167,7 +1167,7 @@ export function useSendTestNotification() {
       const { data, error } = await supabase.functions.invoke(EDGE_FUNCTION.notifyDispatch, {
         body: { mode: "test", channel },
       });
-      if (error) throw error;
+      if (error) throw new Error(await edgeFunctionErrorText(error));
       if (data?.error) throw new Error(String(data.error));
     },
   });
