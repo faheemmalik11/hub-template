@@ -113,15 +113,10 @@ Deno.serve(async (req) => {
     if (invoiceError) throw new Error(`invoice lookup failed: ${invoiceError.message}`);
     if (!invoice) return jsonResponse({ error: "invoice not found" }, 404);
     if (invoice.paid_at) return jsonResponse({ error: "invoice is already marked as paid" }, 409);
-    // handover/FREELANCER-HANDOVER.md: "after final approval, payment is initiated" --
-    // 'freigegeben_vorgesetzter' IS the "awaiting payment" state (migration 0036, no separate
-    // "released for payment" stage), so this is the one workflow_status a payment may start from.
-    // Enforced server-side, not just by hiding the button client-side, since this is the actual
-    // authorization boundary for a money-moving call.
-    if (invoice.workflow_status !== "freigegeben_vorgesetzter") {
+    if (invoice.workflow_status !== "approved_final") {
       return jsonResponse(
         {
-          error: `invoice must be fully approved (freigegeben_vorgesetzter) before payment can be triggered, currently '${invoice.workflow_status}'`,
+          error: `invoice must be fully approved (approved_final) before payment can be triggered, currently '${invoice.workflow_status}'`,
         },
         409,
       );
@@ -260,7 +255,7 @@ Deno.serve(async (req) => {
         fraud_flags: ibanChangedRecently
           ? { iban_changed_recently: { lookback_days: IBAN_CHANGE_LOOKBACK_DAYS } }
           : null,
-        initiated_by: actor,
+        initiated_by: caller.id,
         initiated_at: now,
       })
       .select("*")

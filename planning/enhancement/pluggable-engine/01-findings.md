@@ -193,6 +193,33 @@ database and invoking `bank-sync` against the mock provider for real.
   `where provider_hash is not null` changes nothing about how many `NULL` rows are allowed — it only
   removes the index's incompatibility with `onConflict`. In `supabase/schema/0006_bank.sql`.
 
+**Two more, found testing `payment-initiate`/`payment-callback` the same way, both fixed:**
+- `payment-initiate/index.ts` checked `invoice.workflow_status !== "freigegeben_vorgesetzter"` — a
+  value the current `documents_workflow_status_known` constraint doesn't even allow. Every payment
+  would have been refused, permanently, against this schema. Fixed to `"approved_final"`.
+- The same function wrote `initiated_by: actor` where `actor` is the caller's email string, into
+  `payment_orders.initiated_by`, a `uuid` FK to `app_users.id`. Fixed to `caller.id` (already
+  resolved correctly earlier in the same function via `requirePaymentRight`, just not reused here).
+- `supabase/config.toml` had `[functions.bank-callback] verify_jwt = false` but no matching entry
+  for `payment-callback`, even though that function's own header comment says it's public for the
+  same reason. Confirmed by testing: Kong rejected the request before the function ever ran. Added
+  the missing `[functions.payment-callback]` entry.
+
+## 9. The workflow-status i18n keys never followed the English rename — found, not yet fixed
+
+`src/lib/data/format.ts`'s own code (`workflowLabelDe`, and its comment describing how the live UI
+looks the status up via `useTranslation`) expects i18n keys named after the English
+`workflow_status` enum (`documents.workflow.approved_final`). The actual keys stored in both
+`src/lib/i18n/locales/en.ts` and `de.ts` are still the pre-rename German names — `eingegangen`,
+`in_pruefung`, `rueckfrage`, `freigegeben_assistenz`, `freigegeben_vorgesetzter`, `bezahlt` — across
+at least five separate key blocks (badges, history list, tooltips, action hints). Confirmed by
+grep: zero occurrences of `"approved_final"` anywhere in `en.ts`. Since i18next falls back to the
+raw key string when a key is missing, every workflow status badge in the app, and the persisted
+audit-trail label (`workflowLabelDe`), currently renders the literal English enum value instead of
+a translated label. Roughly 30-40 key renames across both files to fix properly — found via the
+same payment-initiate/payment-callback testing session that found finding 8's bugs, deferred rather
+than fixed in the same pass so it could be scoped and sequenced deliberately.
+
 **Proven, not just fixed:** `bank-sync` run three times in a row against the mock provider —
 `accounts: 2` stable across all three, `transactions_new: 5` then `0` then `0`, zero duplicate
 `(connection_id, provider_account_ref)` pairs in the actual table afterward. The dedup rewrite from

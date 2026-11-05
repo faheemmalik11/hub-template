@@ -7,3 +7,9 @@ project_id = "env(SUPABASE_PROJECT_ID)"
 # updates a bank_connections row we created ourselves in bank-connect.
 [functions.bank-callback]
 verify_jwt = false
+
+# Same reasoning as bank-callback: BANKSapi's payment-SCA webform redirects the customer's
+# BROWSER here with no JWT attached. payment-callback never trusts the query string for the
+# outcome itself, only to look up which row to re-check with BANKSapi directly.
+[functions.payment-callback]
+verify_jwt = false
