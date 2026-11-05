@@ -43,13 +43,13 @@ export function CompanyTable({ rows, handlers }: { rows: CompanyRow[]; handlers:
         <Table>
           <TableHeader>
             <TableRow className="bg-muted/40">
-              <TableHead>{t("handover.spalte.gesellschaft")}</TableHead>
-              <TableHead>{t("handover.spalte.einrichtung")}</TableHead>
-              <TableHead className="text-right">{t("handover.spalte.bereit")}</TableHead>
-              <TableHead className="text-right">{t("handover.spalte.gesendet")}</TableHead>
-              <TableHead>{t("handover.spalte.zuletzt")}</TableHead>
+              <TableHead>{t("handover.col.company")}</TableHead>
+              <TableHead>{t("handover.col.setup")}</TableHead>
+              <TableHead className="text-right">{t("handover.col.ready")}</TableHead>
+              <TableHead className="text-right">{t("handover.col.sent")}</TableHead>
+              <TableHead>{t("handover.col.lastSent")}</TableHead>
               <TableHead className="w-[1%] text-right whitespace-nowrap">
-                {t("handover.spalte.aktionen")}
+                {t("handover.col.actions")}
               </TableHead>
             </TableRow>
           </TableHeader>
@@ -101,17 +101,17 @@ export function CompanyTable({ rows, handlers }: { rows: CompanyRow[]; handlers:
             </div>
             <dl className="mt-3 space-y-1.5 border-t border-border pt-3 text-sm">
               <div className="flex items-baseline justify-between gap-3">
-                <dt className="text-muted-foreground">{t("handover.spalte.bereit")}</dt>
+                <dt className="text-muted-foreground">{t("handover.col.ready")}</dt>
                 <dd className="text-right">
                   <ReadyCell row={row} />
                 </dd>
               </div>
               <div className="flex items-baseline justify-between gap-3">
-                <dt className="text-muted-foreground">{t("handover.spalte.gesendet")}</dt>
+                <dt className="text-muted-foreground">{t("handover.col.sent")}</dt>
                 <dd className="tabular-nums text-muted-foreground">{row.sent}</dd>
               </div>
               <div className="flex items-baseline justify-between gap-3">
-                <dt className="text-muted-foreground">{t("handover.spalte.zuletzt")}</dt>
+                <dt className="text-muted-foreground">{t("handover.col.lastSent")}</dt>
                 <dd className="text-right">
                   <LastCell row={row} />
                 </dd>
@@ -133,9 +133,9 @@ function SetupStatus({ row }: { row: CompanyRow }) {
     <RouteStatus
       configured={row.setup !== "missing"}
       enabled={row.setup === "ready"}
-      configuredLabel={t("handover.status.eingerichtet")}
-      notConfiguredLabel={t("handover.status.nichtEingerichtet")}
-      disabledLabel={t("handover.status.pausiert")}
+      configuredLabel={t("handover.status.configured")}
+      notConfiguredLabel={t("handover.status.notConfigured")}
+      disabledLabel={t("handover.status.paused")}
     />
   );
 }
@@ -157,14 +157,14 @@ function ReadyCell({ row }: { row: CompanyRow }) {
           row.ready.length > 0 ? "font-medium text-foreground" : "text-muted-foreground",
         )}
       >
-        {t("handover.dateien", { count: row.ready.length })}
+        {t("handover.files", { count: row.ready.length })}
       </span>
       {row.ready.length > 0 && (
         <div className="text-xs text-muted-foreground">{formatEUR(row.readyTotal)}</div>
       )}
       {row.blocked.length > 0 && (
         <div className="text-xs text-warning">
-          {t("handover.uebersprungenKurz", { count: row.blocked.length })}
+          {t("handover.skippedShort", { count: row.blocked.length })}
         </div>
       )}
     </div>
@@ -176,14 +176,14 @@ function LastCell({ row }: { row: CompanyRow }) {
   return (
     <div className="text-sm">
       <span className="tabular-nums text-muted-foreground">
-        {row.lastSent ? formatDateTime(row.lastSent.created_at) : t("handover.nie")}
+        {row.lastSent ? formatDateTime(row.lastSent.created_at) : t("handover.never")}
       </span>
       {/* A failed attempt is not a handover, so it never dates this column — but it must not vanish
           either. The mark leads to the same history the overflow menu opens. */}
       {row.lastAttemptFailed && (
         <div className="inline-flex items-center gap-1 text-xs text-danger">
           <AlertTriangle className="size-3 shrink-0" aria-hidden />
-          {t("handover.letzterVersuchFehler")}
+          {t("handover.lastAttemptFailed")}
         </div>
       )}
     </div>
@@ -210,20 +210,20 @@ function RowActions({ row, handlers }: { row: CompanyRow; handlers: RowHandlers 
           onClick={() => handlers.onConfigure(row)}
         >
           <Settings2 className="size-4" />
-          {t("handover.aktion.einrichten")}
+          {t("handover.action.configure")}
         </Button>
       )}
       {row.action === "send" && (
         <Button size="sm" className="gap-1.5" onClick={() => handlers.onSend(row)}>
           <Send className="size-4" />
-          {t("handover.aktion.senden")}
+          {t("handover.action.send")}
         </Button>
       )}
       <DropdownMenu>
         <DropdownMenuTrigger asChild>
           <Button variant="ghost" size="icon" className="size-8">
             <MoreHorizontal className="size-4" />
-            <span className="sr-only">{t("handover.spalte.aktionen")}</span>
+            <span className="sr-only">{t("handover.col.actions")}</span>
           </Button>
         </DropdownMenuTrigger>
         <DropdownMenuContent align="end">
@@ -234,12 +234,12 @@ function RowActions({ row, handlers }: { row: CompanyRow; handlers: RowHandlers 
           {row.action !== "configure" && (
             <DropdownMenuItem onSelect={() => handlers.onConfigure(row)}>
               <Settings2 className="size-4" />
-              {t("handover.aktion.einrichtungBearbeiten")}
+              {t("handover.action.editSetup")}
             </DropdownMenuItem>
           )}
           <DropdownMenuItem onSelect={() => handlers.onHistory(row)}>
             <History className="size-4" />
-            {t("handover.aktion.verlaufAnzeigen")}
+            {t("handover.action.viewHistory")}
           </DropdownMenuItem>
         </DropdownMenuContent>
       </DropdownMenu>

@@ -103,11 +103,11 @@ export function ConnectionGroupRow({
                 {isConnection && group.disconnectedAt ? (
                   <span
                     className="inline-flex shrink-0 items-center rounded-md bg-muted px-2 py-0.5 text-xs font-medium text-muted-foreground"
-                    title={t("bankAccounts.trennen.getrenntTitle", {
+                    title={t("bankAccounts.disconnect.disconnectedTitle", {
                       datum: formatDateTime(group.disconnectedAt),
                     })}
                   >
-                    {t("bankAccounts.trennen.getrennt")}
+                    {t("bankAccounts.disconnect.disconnected")}
                   </span>
                 ) : (
                   isConnection &&
@@ -138,11 +138,11 @@ export function ConnectionGroupRow({
                   connections, and not on one whose subject is the accounts. */}
               <p className="mt-0.5 text-sm text-muted-foreground">
                 {leer ? (
-                  <span className="text-warning" title={t("bankConnections.keineKontenTitle")}>
-                    {t("bankConnections.keineKonten")}
+                  <span className="text-warning" title={t("bankConnections.noAccountsTitle")}>
+                    {t("bankConnections.noAccounts")}
                   </span>
                 ) : (
-                  t("bankAccounts.gruppe.konten", { count: group.count })
+                  t("bankAccounts.group.accounts", { count: group.count })
                 )}
                 {/* Whose consent this is. A BANKSapi consent belongs to whoever authorised it at
                     their own bank, and an expired one can only be renewed by that person, so the
@@ -152,8 +152,8 @@ export function ConnectionGroupRow({
                   <>
                     {" · "}
                     {group.connectedFromDate
-                      ? t("bankAccounts.gruppe.verbundenVon", { name: group.connectedFromDate })
-                      : t("bankAccounts.gruppe.verbundenVonUnbekannt")}
+                      ? t("bankAccounts.group.connectedBy", { name: group.connectedFromDate })
+                      : t("bankAccounts.group.connectedByUnknown")}
                   </>
                 )}
               </p>
@@ -162,7 +162,7 @@ export function ConnectionGroupRow({
           {isConnection && (
             <div className="flex shrink-0 items-center gap-2">
               <span className="text-sm tabular-nums text-muted-foreground">
-                {t("bankAccounts.gruppe.letzterSync", {
+                {t("bankAccounts.group.lastSync", {
                   datum: group.lastSyncAt ? formatDateTime(group.lastSyncAt) : "—",
                 })}
               </span>

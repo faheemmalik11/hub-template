@@ -39,7 +39,7 @@ export function SyncLogDialog() {
           them moves. */}
       <DialogContent className="flex max-h-[85vh] max-w-5xl flex-col overflow-hidden">
         <DialogHeader className="shrink-0">
-          <DialogTitle>{t("bankAccounts.syncLog.titel")}</DialogTitle>
+          <DialogTitle>{t("bankAccounts.syncLog.title")}</DialogTitle>
           {/* The last run, where the page used to state it. Taking it off the accounts screen was
               the point, but deleting it would have thrown away the one line that answers "is the
               feed alive" -- so it moved to the top of the history it summarises. DialogDescription

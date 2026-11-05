@@ -291,7 +291,7 @@ export const triggerDatevHandover = createServerFn({ method: "POST" })
       throw new AppError(accessError.message, 500, "ACCESS_CHECK_FAILED");
     }
     if (mayAccess !== true) {
-      throw new AppError("Kein Zugriff auf diese Gesellschaft.", 403, "FORBIDDEN");
+      throw new AppError("No access to this company.", 403, "FORBIDDEN");
     }
 
     if (direction !== "outgoing" && direction !== "incoming") {
@@ -326,15 +326,7 @@ export const triggerDatevHandover = createServerFn({ method: "POST" })
     }
     const recipientAddress = route.address as string;
 
-    // WHY BOTH DIRECTIONS LOOK THE SAME FROM HERE DOWN. An outgoing invoice is a different table
-    // with differently-named columns, so it is mapped into the same `ReadyInvoice` shape once, at
-    // the edge. Everything after this — the attachment build, the per-invoice blocking, the
-    // batching, the send, the bookkeeping — is one path for both, which is the only way the two
-    // directions cannot drift into behaving differently on failure.
-    //
-    // ELIGIBILITY IS THE SAME RULE BOTH WAYS: not yet handed over, not deleted. Incoming adds
-    // `workflow_status = 'bezahlt'`; an outgoing invoice has no equivalent workflow column
-    // (`status` mirrors LexOffice and means something else), so issuance is the whole test.
+    // Both directions map into one ReadyInvoice shape here, so everything below is one path.
     let eligible: ReadyInvoice[];
     if (direction === "outgoing") {
       const { data, error } = await db

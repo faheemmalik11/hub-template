@@ -26,11 +26,11 @@ export function propertySchema(t: (key: string) => string, assignedCodes: Set<st
     code: z
       .string()
       .trim()
-      .min(1, t("properties.validierung.code"))
-      .max(32, t("properties.validierung.codeLaenge"))
+      .min(1, t("properties.validation.code"))
+      .max(32, t("properties.validation.codeLength"))
       .refine(
         (c) => !assignedCodes.has(c.toLocaleLowerCase()),
-        t("properties.validierung.codeVergeben"),
+        t("properties.validation.codeTaken"),
       ),
   });
 }

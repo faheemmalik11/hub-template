@@ -55,14 +55,14 @@ function useScopeChips(rule: AssignmentRule) {
     if (rule.property_id) {
       const o = (propertiesQ.data ?? []).find((x) => x.id === rule.property_id);
       chips.push({
-        label: t("assignmentRules.scope.objekt"),
+        label: t("assignmentRules.scope.property"),
         value: o ? (o.name ? `${o.code} · ${o.name}` : o.code) : rule.property_id,
       });
     }
     if (rule.company_id) {
       const g = (companiesQ.data ?? []).find((x) => x.id === rule.company_id);
       chips.push({
-        label: t("assignmentRules.scope.gesellschaft"),
+        label: t("assignmentRules.scope.company"),
         value: g ? `${g.code} · ${g.name}` : rule.company_id,
       });
     }
@@ -103,12 +103,12 @@ function ValueContent({ rule, value }: { rule: AssignmentRule; value: string }) 
       ) : null}
       {rule.vat_deductible_pct != null ? (
         <span className="ml-2 text-xs text-muted-foreground">
-          {t("assignmentRules.col.abzugsfaehigkeit", { percent: rule.vat_deductible_pct })}
+          {t("assignmentRules.col.deductibility", { percent: rule.vat_deductible_pct })}
         </span>
       ) : null}
       {rule.vat_special_case ? (
         <span className="ml-2 text-xs text-muted-foreground">
-          {t(`assignmentRules.vatSonderfall.${rule.vat_special_case}`)}
+          {t(`assignmentRules.vatSpecialCase.${rule.vat_special_case}`)}
         </span>
       ) : null}
       {rule.note ? <p className="mt-0.5 text-xs text-muted-foreground">{rule.note}</p> : null}
@@ -139,10 +139,10 @@ function EffectText({ previewQ }: { previewQ: ReturnType<typeof useRulePreview> 
   if (previewQ.isLoading) return <span className="text-muted-foreground">…</span>;
   return (
     <span
-      title={t("assignmentRules.col.wirkungHint")}
+      title={t("assignmentRules.col.impactHint")}
       className={cn((previewQ.data?.would_change ?? 0) > 0 && "font-medium text-amber-700")}
     >
-      {t("assignmentRules.wirkung", {
+      {t("assignmentRules.impact", {
         change: previewQ.data?.would_change ?? 0,
         total: previewQ.data?.matches ?? 0,
       })}
@@ -184,33 +184,33 @@ function RuleActions({
             className={buttonClass}
             disabled={bulkApply.isPending || (previewQ.data?.would_change ?? 0) === 0}
           >
-            <Wand2 className="size-4" /> {t("assignmentRules.action.anwenden")}
+            <Wand2 className="size-4" /> {t("assignmentRules.action.apply")}
           </Button>
         </AlertDialogTrigger>
         <AlertDialogContent>
           <AlertDialogHeader>
-            <AlertDialogTitle>{t("assignmentRules.action.anwendenTitle")}</AlertDialogTitle>
+            <AlertDialogTitle>{t("assignmentRules.action.applyTitle")}</AlertDialogTitle>
             <AlertDialogDescription>
               {(previewQ.data?.would_change ?? 0) > 0
-                ? t("assignmentRules.action.anwendenDesc", {
+                ? t("assignmentRules.action.applyDesc", {
                     change: previewQ.data?.would_change ?? 0,
                     total: previewQ.data?.matches ?? 0,
                   })
-                : t("assignmentRules.action.anwendenKeine")}
+                : t("assignmentRules.action.applyNone")}
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
-            <AlertDialogCancel>{t("assignmentRules.action.abbrechen")}</AlertDialogCancel>
+            <AlertDialogCancel>{t("assignmentRules.action.cancel")}</AlertDialogCancel>
             <AlertDialogAction
               disabled={(previewQ.data?.would_change ?? 0) === 0}
               onClick={() =>
                 bulkApply.mutate(rule.id, {
                   onSuccess: (res) => {
                     if (res.changed === 0) {
-                      toast.info(t("assignmentRules.toast.angewendetKeine"));
+                      toast.info(t("assignmentRules.toast.appliedNone"));
                     } else if (res.skipped > 0) {
                       toast.success(
-                        t("assignmentRules.toast.angewendetUebersprungen", {
+                        t("assignmentRules.toast.appliedSkipped", {
                           changed: res.changed,
                           matches: res.matches,
                           skipped: res.skipped,
@@ -218,7 +218,7 @@ function RuleActions({
                       );
                     } else {
                       toast.success(
-                        t("assignmentRules.toast.angewendet", {
+                        t("assignmentRules.toast.applied", {
                           changed: res.changed,
                           matches: res.matches,
                         }),
@@ -227,14 +227,14 @@ function RuleActions({
                   },
                   onError: (e) =>
                     toast.error(
-                      t("assignmentRules.toast.fehlgeschlagen", {
+                      t("assignmentRules.toast.failed", {
                         error: errorText(e),
                       }),
                     ),
                 })
               }
             >
-              {t("assignmentRules.action.anwendenConfirm", {
+              {t("assignmentRules.action.applyConfirm", {
                 count: previewQ.data?.would_change ?? 0,
               })}
             </AlertDialogAction>
@@ -253,23 +253,23 @@ function RuleActions({
               "text-destructive hover:bg-destructive/10 hover:text-destructive",
             )}
           >
-            <Trash2 className="size-4" /> {t("assignmentRules.action.loeschen")}
+            <Trash2 className="size-4" /> {t("assignmentRules.action.delete")}
           </Button>
         </AlertDialogTrigger>
         <AlertDialogContent>
           <AlertDialogHeader>
-            <AlertDialogTitle>{t("assignmentRules.action.loeschenTitle")}</AlertDialogTitle>
+            <AlertDialogTitle>{t("assignmentRules.action.deleteTitle")}</AlertDialogTitle>
             <AlertDialogDescription>
-              {t("assignmentRules.action.loeschenDesc", { value })}
+              {t("assignmentRules.action.deleteDesc", { value })}
             </AlertDialogDescription>
           </AlertDialogHeader>
           <Input
             value={reason}
             onChange={(e) => setReason(e.target.value)}
-            placeholder={t("assignmentRules.action.grundPlaceholder")}
+            placeholder={t("assignmentRules.action.reasonPlaceholder")}
           />
           <AlertDialogFooter>
-            <AlertDialogCancel>{t("assignmentRules.action.abbrechen")}</AlertDialogCancel>
+            <AlertDialogCancel>{t("assignmentRules.action.cancel")}</AlertDialogCancel>
             <AlertDialogAction
               disabled={!reason.trim()}
               className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
@@ -277,10 +277,10 @@ function RuleActions({
                 remove.mutate(
                   { id: rule.id, reason: reason.trim() },
                   {
-                    onSuccess: () => toast.success(t("assignmentRules.toast.geloescht")),
+                    onSuccess: () => toast.success(t("assignmentRules.toast.deleted")),
                     onError: (e) =>
                       toast.error(
-                        t("assignmentRules.toast.fehlgeschlagen", {
+                        t("assignmentRules.toast.failed", {
                           error: errorText(e),
                         }),
                       ),
@@ -288,7 +288,7 @@ function RuleActions({
                 )
               }
             >
-              {t("assignmentRules.action.loeschenConfirm")}
+              {t("assignmentRules.action.deleteConfirm")}
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
@@ -327,12 +327,12 @@ export function RuleRow({ rule }: { rule: AssignmentRule }) {
                 onSuccess: () =>
                   toast.success(
                     v
-                      ? t("assignmentRules.toast.aktiviert")
-                      : t("assignmentRules.toast.deaktiviert"),
+                      ? t("assignmentRules.toast.activated")
+                      : t("assignmentRules.toast.deactivated"),
                   ),
                 onError: (e) =>
                   toast.error(
-                    t("assignmentRules.toast.fehlgeschlagen", {
+                    t("assignmentRules.toast.failed", {
                       error: errorText(e),
                     }),
                   ),
@@ -380,12 +380,12 @@ export function RuleCard({ rule }: { rule: AssignmentRule }) {
                 onSuccess: () =>
                   toast.success(
                     v
-                      ? t("assignmentRules.toast.aktiviert")
-                      : t("assignmentRules.toast.deaktiviert"),
+                      ? t("assignmentRules.toast.activated")
+                      : t("assignmentRules.toast.deactivated"),
                   ),
                 onError: (e) =>
                   toast.error(
-                    t("assignmentRules.toast.fehlgeschlagen", {
+                    t("assignmentRules.toast.failed", {
                       error: errorText(e),
                     }),
                   ),
@@ -400,7 +400,7 @@ export function RuleCard({ rule }: { rule: AssignmentRule }) {
         </div>
       )}
       <p className="mt-2 text-xs text-muted-foreground">
-        {t("assignmentRules.col.wirkung")}: <EffectText previewQ={previewQ} />
+        {t("assignmentRules.col.impact")}: <EffectText previewQ={previewQ} />
       </p>
       <div className="mt-3 border-t border-border pt-3">
         <RuleActions rule={rule} value={value} previewQ={previewQ} layout="card" />

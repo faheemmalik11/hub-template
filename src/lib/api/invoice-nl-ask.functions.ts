@@ -32,7 +32,7 @@ const AnswerSchema = {
 } as const;
 
 // Human-readable summary of the filters actually used for the DB query (after any fallback), e.g.
-// "companyCode=STAY, dateFrom=2026-01-01" — empty string when nothing was filtered.
+// "companyCode=ACME, dateFrom=2026-01-01" — empty string when nothing was filtered.
 function describeResolvedFilters(f: InvoiceFilters): string {
   const parts = [
     f.companyCode && `companyCode=${f.companyCode}`,
@@ -54,7 +54,7 @@ function describeResolvedFilters(f: InvoiceFilters): string {
 // REMINDER" repeat of it) but stayed unreliable because this call's own context is dominated by
 // German DATA rows/categories/filenames, which kept pulling the answer toward German even on an
 // English question (ported fix from immonetz, then reproduced live here too, e.g. the reported
-// "Give me all the invoices related to Electricity of my STAY company." case).
+// "Give me all the invoices related to Electricity of my ACME company." case).
 function synthesisInstructions(language: AnswerLanguage): string {
   const languageName = language === "en" ? "English" : "German";
   const numberFormatExample =

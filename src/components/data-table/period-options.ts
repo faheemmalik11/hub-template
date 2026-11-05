@@ -49,7 +49,7 @@ export function usePeriodOptions(allValue: string = PERIOD_ALL) {
     () =>
       OVERVIEW_PERIODS.map((p) => ({
         value: p === PERIOD_ALL ? allValue : p,
-        label: t(`home.zeitraumKurz.${p}`),
+        label: t(`home.periodShort.${p}`),
       })),
     [t, allValue],
   );

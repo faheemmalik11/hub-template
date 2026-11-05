@@ -16,7 +16,7 @@ import type { Company } from "@/lib/data/types";
 export function useCompanies(opts?: { includeArchived?: boolean }) {
   const includeArchived = opts?.includeArchived ?? false;
   return useQuery({
-    queryKey: ["gesellschaften", { includeArchived }],
+    queryKey: ["companies", { includeArchived }],
     staleTime: STALE,
     queryFn: async (): Promise<Company[]> => {
       let query = sb.from(TABLE.companies).select("*");
@@ -49,8 +49,8 @@ export function useSoftDeleteCompany(companyId: string) {
       if (error) throw error;
     },
     onSuccess: () => {
-      qc.invalidateQueries({ queryKey: ["gesellschaft", companyId] });
-      qc.invalidateQueries({ queryKey: ["gesellschaften"] });
+      qc.invalidateQueries({ queryKey: ["company", companyId] });
+      qc.invalidateQueries({ queryKey: ["companies"] });
     },
   });
 }
@@ -71,8 +71,8 @@ export function useRestoreCompany(companyId: string) {
       if (error) throw error;
     },
     onSuccess: () => {
-      qc.invalidateQueries({ queryKey: ["gesellschaft", companyId] });
-      qc.invalidateQueries({ queryKey: ["gesellschaften"] });
+      qc.invalidateQueries({ queryKey: ["company", companyId] });
+      qc.invalidateQueries({ queryKey: ["companies"] });
     },
   });
 }
@@ -90,7 +90,6 @@ export function useCompany(id: string) {
   });
 }
 
-// Gesellschaft (Stammdaten) anlegen. Gibt die neue Zeile zurück.
 export function useCreateCompany() {
   const qc = useQueryClient();
   return useMutation({
@@ -99,11 +98,10 @@ export function useCreateCompany() {
       if (error) throw error;
       return data as Company;
     },
-    onSuccess: () => qc.invalidateQueries({ queryKey: ["gesellschaften"] }),
+    onSuccess: () => qc.invalidateQueries({ queryKey: ["companies"] }),
   });
 }
 
-// Gesellschaft-Stammdaten aktualisieren.
 export function useUpdateCompany(companyId: string) {
   const qc = useQueryClient();
   return useMutation({
@@ -123,8 +121,8 @@ export function useUpdateCompany(companyId: string) {
       }
     },
     onSuccess: () => {
-      qc.invalidateQueries({ queryKey: ["gesellschaft", companyId] });
-      qc.invalidateQueries({ queryKey: ["gesellschaften"] });
+      qc.invalidateQueries({ queryKey: ["company", companyId] });
+      qc.invalidateQueries({ queryKey: ["companies"] });
     },
   });
 }

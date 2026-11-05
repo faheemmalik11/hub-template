@@ -314,7 +314,7 @@ export function FolderTreePicker({
         // "choose a folder …", which reads as an unanswered question. While still loading the
         // caller's placeholder ("Lädt …") stays.
         !multi && !stillNotLoaded
-        ? t("documentSources.folder.keineAuswahl")
+        ? t("documentSources.folder.noneSelected")
         : (placeholder ?? t("common.combobox.placeholder"))
       : selectedLabels.length === 1
         ? selectedLabels[0]
@@ -347,8 +347,8 @@ export function FolderTreePicker({
           aria-label={
             hasChildren
               ? isExpanded
-                ? t("documentSources.folder.ordnerEinklappen")
-                : t("documentSources.folder.ordnerAusklappen")
+                ? t("documentSources.folder.folderCollapse")
+                : t("documentSources.folder.folderExpand")
               : undefined
           }
           className={cn(
@@ -484,7 +484,7 @@ export function FolderTreePicker({
               }}
               className="mb-0.5 w-full rounded-md px-2 py-1.5 text-left text-sm text-muted-foreground hover:bg-accent"
             >
-              {t("documentSources.folder.keineAuswahl")}
+              {t("documentSources.folder.noneSelected")}
             </button>
           )}
           {visibleTree.length === 0 ? (
@@ -501,7 +501,7 @@ export function FolderTreePicker({
         </div>
         {missingCount > 0 && (
           <p className="border-t border-border px-3 py-1.5 text-xs text-muted-foreground">
-            {t("documentSources.folder.ordnerFehlt", { count: missingCount })}
+            {t("documentSources.folder.folderMissing", { count: missingCount })}
           </p>
         )}
       </PopoverContent>

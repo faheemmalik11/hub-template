@@ -99,7 +99,7 @@ function NotificationsPage() {
     <div className="space-y-6">
       <div>
         <h1 className="text-xl font-semibold tracking-tight text-foreground">
-          {t("settings.titel")}
+          {t("settings.title")}
         </h1>
         <p className="text-sm text-muted-foreground">{t("settings.sub")}</p>
       </div>
@@ -115,10 +115,10 @@ function NotificationsPage() {
           className="h-auto w-full justify-start gap-6 rounded-none border-b border-border bg-transparent p-0"
         >
           <TabsTrigger value="meldungen" className={TAB_CLS}>
-            {t("notifications.tabMeldungen")}
+            {t("notifications.tabAlerts")}
           </TabsTrigger>
           <TabsTrigger value="einstellungen" className={TAB_CLS}>
-            {t("notifications.tabEinstellungen")}
+            {t("notifications.tabSettings")}
           </TabsTrigger>
         </TabsList>
         <TabsContent value="meldungen" className="mt-4" data-tour="notifications-alerts">
@@ -211,7 +211,7 @@ function MessagesTab() {
               onClick={() => setPingOpen(true)}
             >
               <BellRing className="size-3.5" aria-hidden />
-              {t("ping.titel")}
+              {t("ping.title")}
             </Button>
           )}
           <Button
@@ -462,7 +462,7 @@ function SettingsTab() {
         setSlackToken("");
         setEditingToken(false);
         setSlackEnabled(false);
-        toast.success(t("settings.kanaele.slackGetrennt"));
+        toast.success(t("settings.channels.slackDisconnected"));
       },
       onError: (e) => toast.error(errorText(e)),
     });
@@ -491,7 +491,7 @@ function SettingsTab() {
   function saveSlack() {
     const token = slackToken.trim();
     if (token && !/^(xoxb-|xoxe[.-])/.test(token)) {
-      toast.error(t("settings.kanaele.slackTokenUngueltig"));
+      toast.error(t("settings.channels.slackInvalidToken"));
       return;
     }
     const digest =
@@ -513,7 +513,7 @@ function SettingsTab() {
       setSlackLinks({});
       setSlackToken("");
       setEditingToken(false);
-      toast.success(t("settings.gespeichert"));
+      toast.success(t("settings.saved"));
     };
     const saveDigestSettings = () =>
       digest
@@ -549,7 +549,7 @@ function SettingsTab() {
 
   function save(changes: Partial<NotificationSettings>) {
     saveBell.mutate(changes, {
-      onSuccess: () => toast.success(t("settings.gespeichert")),
+      onSuccess: () => toast.success(t("settings.saved")),
       onError: (e) => toast.error(errorText(e)),
     });
   }
@@ -575,8 +575,8 @@ function SettingsTab() {
               <BellRing className="size-4 text-brand-dark" aria-hidden />
             </span>
             <div className="min-w-0">
-              <CardTitle>{t("settings.glocke.titel")}</CardTitle>
-              <CardDescription>{t("settings.glocke.desc")}</CardDescription>
+              <CardTitle>{t("settings.bell.title")}</CardTitle>
+              <CardDescription>{t("settings.bell.desc")}</CardDescription>
             </div>
           </div>
         </CardHeader>
@@ -585,7 +585,7 @@ function SettingsTab() {
             {BELL_GROUPS.map((group) => (
               <div key={group.key}>
                 <p className="pt-5 pb-1 text-xs font-medium tracking-wide text-muted-foreground uppercase">
-                  {t(`settings.glocke.gruppe.${group.key}`)}
+                  {t(`settings.bell.gruppe.${group.key}`)}
                 </p>
                 <div className="divide-y divide-border">
                   {group.events.map((type) => (
@@ -613,7 +613,7 @@ function SettingsTab() {
                 variant="ghost"
                 onClick={() => basis && setForm({ ...form, bell_events: basis.bell_events })}
               >
-                {t("settings.kanaele.abbrechen")}
+                {t("settings.channels.cancel")}
               </Button>
             )}
             <Button
@@ -622,7 +622,7 @@ function SettingsTab() {
               onClick={() => save({ bell_events: form.bell_events })}
             >
               {saveBell.isPending && <Loader2 className="size-3.5 animate-spin" aria-hidden />}
-              {t("settings.speichern")}
+              {t("settings.save")}
             </Button>
           </div>
         </CardContent>
@@ -643,12 +643,12 @@ function SettingsTab() {
                   <Slack className="size-4 text-brand-dark" aria-hidden />
                 </span>
                 <div className="min-w-0">
-                  <CardTitle>{t("settings.kanaele.slackTitel")}</CardTitle>
-                  <CardDescription>{t("settings.kanaele.slackDesc")}</CardDescription>
+                  <CardTitle>{t("settings.channels.slackTitle")}</CardTitle>
+                  <CardDescription>{t("settings.channels.slackDesc")}</CardDescription>
                 </div>
               </div>
               <Switch
-                aria-label={t("settings.kanaele.slackAktiv")}
+                aria-label={t("settings.channels.slackActive")}
                 checked={slackEnabled ?? false}
                 disabled={!slackConnected.data}
                 onCheckedChange={(v) => setSlackEnabled(v)}
@@ -666,18 +666,18 @@ function SettingsTab() {
                       </span>
                       <div className="min-w-0 flex-1 space-y-2">
                         <p className="text-sm text-foreground">
-                          {t("settings.kanaele.slackSchritt1")}
+                          {t("settings.channels.slackStep1")}
                         </p>
                         <Button size="sm" variant="outline" className="shadow-none" asChild>
                           <a href={SLACK_CREATE_URL} target="_blank" rel="noreferrer noopener">
                             <ExternalLink className="size-3.5" aria-hidden />
-                            {t("settings.kanaele.slackAppErstellen")}
+                            {t("settings.channels.slackOpenSlack")}
                           </a>
                         </Button>
                         <ol className="ml-4 list-decimal space-y-0.5 text-xs text-muted-foreground">
-                          <li>{t("settings.kanaele.slackSchritt1a")}</li>
-                          <li>{t("settings.kanaele.slackSchritt1b")}</li>
-                          <li>{t("settings.kanaele.slackSchritt1c")}</li>
+                          <li>{t("settings.channels.slackStep1a")}</li>
+                          <li>{t("settings.channels.slackStep1b")}</li>
+                          <li>{t("settings.channels.slackStep1c")}</li>
                         </ol>
                       </div>
                     </li>
@@ -687,7 +687,7 @@ function SettingsTab() {
                       </span>
                       <div className="min-w-0 flex-1 space-y-2">
                         <p className="text-sm text-foreground">
-                          {t("settings.kanaele.slackSchritt2")}
+                          {t("settings.channels.slackStep2")}
                         </p>
                         <div className="flex gap-2">
                           <Input
@@ -706,7 +706,7 @@ function SettingsTab() {
                             {saveSlackToken.isPending && (
                               <Loader2 className="size-3.5 animate-spin" aria-hidden />
                             )}
-                            {t("settings.kanaele.slackVerbinden")}
+                            {t("settings.channels.slackConnect")}
                           </Button>
                           {editingToken && (
                             <Button
@@ -718,12 +718,12 @@ function SettingsTab() {
                                 setEditingToken(false);
                               }}
                             >
-                              {t("settings.kanaele.abbrechen")}
+                              {t("settings.channels.cancel")}
                             </Button>
                           )}
                         </div>
                         <p className="text-xs text-muted-foreground">
-                          {t("settings.kanaele.slackSchritt2Hinweis")}
+                          {t("settings.channels.slackStep2Hint")}
                         </p>
                       </div>
                     </li>
@@ -734,7 +734,7 @@ function SettingsTab() {
                       <div className="min-w-0">
                         <p className="flex items-center gap-1.5 text-sm font-medium text-success">
                           <CheckCircle2 className="size-4" aria-hidden />
-                          {t("settings.kanaele.slackVerbunden")}
+                          {t("settings.channels.slackConnected")}
                         </p>
                         {lastRunQ.data && (
                           <p
@@ -746,8 +746,8 @@ function SettingsTab() {
                           >
                             {t(
                               lastRunQ.data.ok
-                                ? "settings.kanaele.letzterLaufOk"
-                                : "settings.kanaele.letzterLaufFehler",
+                                ? "settings.channels.lastRunOk"
+                                : "settings.channels.lastRunFailed",
                               {
                                 time: formatDateTime(
                                   lastRunQ.data.finished_at ?? lastRunQ.data.started_at,
@@ -766,7 +766,7 @@ function SettingsTab() {
                             disabled={!slackReady || sendTest.isPending}
                             onClick={() =>
                               sendTest.mutate("slack", {
-                                onSuccess: () => toast.success(t("settings.kanaele.testOk")),
+                                onSuccess: () => toast.success(t("settings.channels.testOk")),
                                 onError: (e) => toast.error(errorText(e)),
                               })
                             }
@@ -774,7 +774,7 @@ function SettingsTab() {
                             {sendTest.isPending && (
                               <Loader2 className="size-3.5 animate-spin" aria-hidden />
                             )}
-                            {t("settings.kanaele.test")}
+                            {t("settings.channels.test")}
                           </Button>
                           <Button
                             size="sm"
@@ -782,7 +782,7 @@ function SettingsTab() {
                             onClick={() => setEditingToken(true)}
                             className="text-muted-foreground"
                           >
-                            {t("settings.kanaele.slackTokenErsetzen")}
+                            {t("settings.channels.slackChangeConnection")}
                           </Button>
                           <Separator orientation="vertical" className="h-5" />
                           <AlertDialog>
@@ -792,24 +792,24 @@ function SettingsTab() {
                                 variant="ghost"
                                 className="text-destructive hover:bg-destructive/10 hover:text-destructive"
                               >
-                                {t("settings.kanaele.slackTrennen")}
+                                {t("settings.channels.slackDisconnect")}
                               </Button>
                             </AlertDialogTrigger>
                             <AlertDialogContent>
                               <AlertDialogHeader>
                                 <AlertDialogTitle>
-                                  {t("settings.kanaele.slackTrennenTitel")}
+                                  {t("settings.channels.slackDisconnectTitle")}
                                 </AlertDialogTitle>
                                 <AlertDialogDescription>
-                                  {t("settings.kanaele.slackTrennenText")}
+                                  {t("settings.channels.slackDisconnectText")}
                                 </AlertDialogDescription>
                               </AlertDialogHeader>
                               <AlertDialogFooter>
                                 <AlertDialogCancel>
-                                  {t("settings.kanaele.abbrechen")}
+                                  {t("settings.channels.cancel")}
                                 </AlertDialogCancel>
                                 <AlertDialogAction onClick={disconnectSlack}>
-                                  {t("settings.kanaele.slackTrennen")}
+                                  {t("settings.channels.slackDisconnect")}
                                 </AlertDialogAction>
                               </AlertDialogFooter>
                             </AlertDialogContent>
@@ -824,7 +824,7 @@ function SettingsTab() {
                   <>
                     <div className="border-t border-border pt-4">
                       <p className="text-sm font-semibold text-foreground">
-                        {t("settings.kanaele.abschnittMeldungen")}
+                        {t("settings.channels.notificationsSection")}
                       </p>
                       <div className="mt-2 divide-y divide-border">
                         {SLACK_EVENTS.map((type) => (
@@ -833,7 +833,7 @@ function SettingsTab() {
                             className="flex cursor-pointer items-center justify-between gap-3 py-2.5"
                           >
                             <span className="text-sm text-foreground">
-                              {t(`settings.kanaele.event.${type}`)}
+                              {t(`settings.channels.event.${type}`)}
                             </span>
                             <Switch
                               checked={(slackEvents ?? {})[type] !== false}
@@ -847,7 +847,7 @@ function SettingsTab() {
 
                       <label className="mt-4 flex cursor-pointer items-center justify-between gap-3 border-t border-border pt-4">
                         <span className="text-sm text-foreground">
-                          {t("settings.kanaele.slackDm")}
+                          {t("settings.channels.slackDm")}
                         </span>
                         <Switch checked={slackDm ?? true} onCheckedChange={(v) => setSlackDm(v)} />
                       </label>
@@ -855,7 +855,7 @@ function SettingsTab() {
                       {(slackDm ?? true) && directory.isPending && (
                         <p className="mt-2 flex items-center gap-2 text-xs text-muted-foreground">
                           <Loader2 className="size-3.5 animate-spin" aria-hidden />
-                          {t("settings.kanaele.slackLaedt")}
+                          {t("settings.channels.slackLoading")}
                         </p>
                       )}
 
@@ -867,7 +867,7 @@ function SettingsTab() {
                             className="flex cursor-pointer items-center gap-1.5 text-xs text-muted-foreground hover:text-foreground"
                           >
                             <CheckCircle2 className="size-3.5 text-success" aria-hidden />
-                            {t("settings.kanaele.slackPersonenTreffer", {
+                            {t("settings.channels.slackPeopleFound", {
                               found: matchedCount,
                               total: people.length,
                             })}
@@ -904,7 +904,7 @@ function SettingsTab() {
                                         options={[
                                           {
                                             value: "",
-                                            label: t("settings.kanaele.slackPersonKeine"),
+                                            label: t("settings.channels.slackNoPersonMatch"),
                                           },
                                           ...slackMembers.map((m) => ({
                                             value: m.id,
@@ -917,7 +917,7 @@ function SettingsTab() {
                                 ))}
                               </ul>
                               <p className="border-t border-border bg-brand-wash px-3 py-2 text-xs text-muted-foreground">
-                                {t("settings.kanaele.slackPersonHinweis")}
+                                {t("settings.channels.slackPersonHint")}
                               </p>
                             </div>
                           )}
@@ -929,7 +929,7 @@ function SettingsTab() {
                       <label className="flex cursor-pointer items-center justify-between gap-3">
                         <span className="flex items-center gap-2 text-sm font-semibold text-foreground">
                           <CalendarClock className="size-4 text-brand-dark" aria-hidden />
-                          {t("settings.digest.titel")}
+                          {t("settings.digest.title")}
                         </span>
                         <Switch
                           checked={form.digest_enabled}
@@ -941,22 +941,22 @@ function SettingsTab() {
                         <div className="mt-4 space-y-4">
                           <div className="grid gap-4 sm:grid-cols-2">
                             <div className="space-y-1.5">
-                              <Label>{t("settings.digest.uhrzeit")}</Label>
+                              <Label>{t("settings.digest.time")}</Label>
                               <Combobox
                                 value={form.digest_time}
                                 onValueChange={(v) => setForm({ ...form, digest_time: v })}
                                 options={timeChoices}
                               />
                               <p className="text-xs text-muted-foreground">
-                                {t("settings.digest.zeitzone", { zone: localZone })}
+                                {t("settings.digest.timezone", { zone: localZone })}
                               </p>
                             </div>
                             <div className="space-y-1.5">
-                              <Label>{t("settings.kanaele.slackKanal")}</Label>
+                              <Label>{t("settings.channels.slackChannel")}</Label>
                               {directory.isPending ? (
                                 <div className="flex h-9 items-center gap-2 rounded-md border border-input px-3 text-sm text-muted-foreground">
                                   <Loader2 className="size-3.5 animate-spin" aria-hidden />
-                                  {t("settings.kanaele.slackLaedt")}
+                                  {t("settings.channels.slackLoading")}
                                 </div>
                               ) : slackChannels.length > 0 ? (
                                 <Combobox
@@ -977,13 +977,13 @@ function SettingsTab() {
                               {!directory.isPending &&
                                 (directory.data?.channelError || directory.isError) && (
                                   <p className="text-xs text-muted-foreground">
-                                    {t("settings.kanaele.slackKanalScope")}
+                                    {t("settings.channels.slackChannelScope")}
                                   </p>
                                 )}
                             </div>
                           </div>
                           <div>
-                            <Label>{t("settings.digest.inhalt")}</Label>
+                            <Label>{t("settings.digest.content")}</Label>
                             <div className="mt-2 flex flex-wrap gap-2">
                               {DIGEST_EVENTS.map((type) => {
                                 const on = form.digest_events[type] !== false;
@@ -1022,7 +1022,7 @@ function SettingsTab() {
                     <div className="flex justify-end gap-2 border-t border-border pt-4">
                       {(slackDirty || digestDirty || linksDirty) && (
                         <Button size="sm" variant="ghost" onClick={resetSlack}>
-                          {t("settings.kanaele.abbrechen")}
+                          {t("settings.channels.cancel")}
                         </Button>
                       )}
                       <Button
@@ -1041,7 +1041,7 @@ function SettingsTab() {
                           saveSettings.isPending) && (
                           <Loader2 className="size-3.5 animate-spin" aria-hidden />
                         )}
-                        {t("settings.kanaele.aenderungenSpeichern")}
+                        {t("settings.channels.saveChanges")}
                       </Button>
                     </div>
                   </>

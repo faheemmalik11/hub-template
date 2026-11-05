@@ -115,8 +115,8 @@ function ActivityLogPage() {
           changed what" arrives here first, so this is where it belongs. */}
       <Tabs defaultValue="verarbeitung" className="mt-6">
         <TabsList data-tour="log-tabs">
-          <TabsTrigger value="verarbeitung">{t("activityLog.tabs.verarbeitung")}</TabsTrigger>
-          <TabsTrigger value="aenderungen">{t("activityLog.tabs.aenderungen")}</TabsTrigger>
+          <TabsTrigger value="verarbeitung">{t("activityLog.tabs.processing")}</TabsTrigger>
+          <TabsTrigger value="aenderungen">{t("activityLog.tabs.changes")}</TabsTrigger>
         </TabsList>
         <TabsContent value="verarbeitung" className="mt-4">
           <ProcessingLogTab />
@@ -191,11 +191,11 @@ function ProcessingLogTab() {
     // Exports what is on screen, page included — the honest scope for a button next to a paginated
     // table. The full reason goes in verbatim, which is the thing that could not be got out before.
     const header = [
-      t("activityLog.col.zeitpunkt"),
-      t("activityLog.col.betreff"),
-      t("activityLog.col.absender"),
+      t("activityLog.col.time"),
+      t("activityLog.col.subject"),
+      t("activityLog.col.sender"),
       t("activityLog.col.status"),
-      t("activityLog.col.grund"),
+      t("activityLog.col.reason"),
     ];
     const lines = [
       header,
@@ -284,7 +284,7 @@ function ProcessingLogTab() {
           className="w-full sm:w-[180px]"
           placeholder={t("activityLog.filterStatus")}
           options={[
-            { value: ALL, label: t("activityLog.alleStatus") },
+            { value: ALL, label: t("activityLog.allStatuses") },
             ...statusValues.map((s) => ({
               value: s,
               label: t(`activityLog.status.${s}`, { defaultValue: s }),
@@ -298,12 +298,12 @@ function ProcessingLogTab() {
           value={period}
           onValueChange={(v) => setPeriod(v as Period)}
           className="w-full sm:w-[170px]"
-          placeholder={t("activityLog.filter.zeitraum")}
+          placeholder={t("activityLog.filter.period")}
           options={[
-            { value: PERIOD.all, label: t("activityLog.filter.gesamterZeitraum") },
-            { value: PERIOD.today, label: t("activityLog.filter.heute") },
-            { value: PERIOD.days7, label: t("activityLog.filter.letzte7Tage") },
-            { value: PERIOD.days30, label: t("activityLog.filter.letzte30Tage") },
+            { value: PERIOD.all, label: t("activityLog.filter.allTime") },
+            { value: PERIOD.today, label: t("activityLog.filter.today") },
+            { value: PERIOD.days7, label: t("activityLog.filter.last7Days") },
+            { value: PERIOD.days30, label: t("activityLog.filter.last30Days") },
           ]}
         />
         {/* One tap for the common case, next to the dropdown that covers the rest. */}
@@ -313,7 +313,7 @@ function ProcessingLogTab() {
           size="sm"
           onClick={() => setPeriod(period === PERIOD.today ? PERIOD.all : PERIOD.today)}
         >
-          {t("activityLog.filter.heute")}
+          {t("activityLog.filter.today")}
         </Button>
         {/* Audit issue #9: there was no way to get anything off this screen at all. */}
         <Button
@@ -358,13 +358,13 @@ function ProcessingLogTab() {
             <Table>
               <TableHeader>
                 <TableRow className="bg-muted/40">
-                  <TableHead>{t("activityLog.col.zeitpunkt")}</TableHead>
-                  <TableHead>{t("activityLog.col.betreff")}</TableHead>
-                  <TableHead>{t("activityLog.col.absender")}</TableHead>
+                  <TableHead>{t("activityLog.col.time")}</TableHead>
+                  <TableHead>{t("activityLog.col.subject")}</TableHead>
+                  <TableHead>{t("activityLog.col.sender")}</TableHead>
                   <TableHead>{t("activityLog.col.status")}</TableHead>
-                  <TableHead>{t("activityLog.col.grund")}</TableHead>
+                  <TableHead>{t("activityLog.col.reason")}</TableHead>
                   <TableHead className="w-[92px] text-right">
-                    {t("activityLog.col.aktionen")}
+                    {t("activityLog.col.actions")}
                   </TableHead>
                 </TableRow>
               </TableHeader>
@@ -687,8 +687,8 @@ function DetailDialog({ entry, onClose }: { entry: ProcessingLog | null; onClose
         </DialogHeader>
 
         <dl className="space-y-4 text-sm">
-          <Field label={t("activityLog.detail.betreff")}>{entry.subject ?? "—"}</Field>
-          <Field label={t("activityLog.detail.absender")}>
+          <Field label={t("activityLog.detail.subject")}>{entry.subject ?? "—"}</Field>
+          <Field label={t("activityLog.detail.sender")}>
             {sender.name && <div>{sender.name}</div>}
             {sender.address && <div className="text-muted-foreground">{sender.address}</div>}
             {!sender.name && !sender.address && "—"}
@@ -703,9 +703,9 @@ function DetailDialog({ entry, onClose }: { entry: ProcessingLog | null; onClose
               ? t(`activityLog.status.${entry.status}`, { defaultValue: entry.status })
               : "—"}
           </Field>
-          <Field label={t("activityLog.detail.grund")}>
+          <Field label={t("activityLog.detail.reason")}>
             {reason.causes.length === 0 && !reason.verdict ? (
-              t("activityLog.detail.keinGrund")
+              t("activityLog.detail.noReason")
             ) : (
               <div className="space-y-2">
                 {reason.verdict && (
@@ -728,7 +728,7 @@ function DetailDialog({ entry, onClose }: { entry: ProcessingLog | null; onClose
               </div>
             )}
           </Field>
-          <Field label={t("activityLog.detail.beleg")}>
+          <Field label={t("activityLog.detail.invoice")}>
             {entry.document_id ? (
               <Button
                 type="button"
@@ -742,10 +742,10 @@ function DetailDialog({ entry, onClose }: { entry: ProcessingLog | null; onClose
                   });
                 }}
               >
-                {t("activityLog.detail.belegOeffnen")}
+                {t("activityLog.detail.openInvoice")}
               </Button>
             ) : (
-              <span className="text-muted-foreground">{t("activityLog.detail.keinBeleg")}</span>
+              <span className="text-muted-foreground">{t("activityLog.detail.noInvoice")}</span>
             )}
           </Field>
         </dl>
@@ -792,7 +792,7 @@ function ChangeLogTab() {
 
   return (
     <div>
-      <p className="text-sm text-muted-foreground">{t("activityLog.aenderungen.subtitle")}</p>
+      <p className="text-sm text-muted-foreground">{t("activityLog.changes.subtitle")}</p>
 
       <div className="mt-6 flex flex-wrap items-center gap-3">
         <div className="relative w-full flex-1 sm:min-w-[240px] sm:w-auto">
@@ -800,7 +800,7 @@ function ChangeLogTab() {
           <Input
             value={search}
             onChange={(e) => setSearch(e.target.value)}
-            placeholder={t("activityLog.aenderungen.search")}
+            placeholder={t("activityLog.changes.search")}
             className="pl-9"
           />
         </div>
@@ -824,7 +824,7 @@ function ChangeLogTab() {
       ) : (
         <>
           <p className="mt-4 text-sm text-muted-foreground">
-            {t("activityLog.aenderungen.count", { count: total })}
+            {t("activityLog.changes.count", { count: total })}
             {q.isFetching && ` · ${t("bank.list.updating")}`}
           </p>
 
@@ -832,11 +832,11 @@ function ChangeLogTab() {
             <Table>
               <TableHeader>
                 <TableRow className="bg-muted/40">
-                  <TableHead>{t("activityLog.aenderungen.col.zeitpunkt")}</TableHead>
-                  <TableHead>{t("activityLog.aenderungen.col.akteur")}</TableHead>
-                  <TableHead>{t("activityLog.aenderungen.col.typ")}</TableHead>
-                  <TableHead>{t("activityLog.aenderungen.col.tabelle")}</TableHead>
-                  <TableHead>{t("activityLog.aenderungen.col.text")}</TableHead>
+                  <TableHead>{t("activityLog.changes.col.time")}</TableHead>
+                  <TableHead>{t("activityLog.changes.col.user")}</TableHead>
+                  <TableHead>{t("activityLog.changes.col.type")}</TableHead>
+                  <TableHead>{t("activityLog.changes.col.table")}</TableHead>
+                  <TableHead>{t("activityLog.changes.col.text")}</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
@@ -867,7 +867,7 @@ function ChangeLogTab() {
                 {rows.length === 0 && (
                   <TableRow>
                     <TableCell colSpan={5} className="py-12 text-center text-muted-foreground">
-                      {t("activityLog.aenderungen.empty")}
+                      {t("activityLog.changes.empty")}
                     </TableCell>
                   </TableRow>
                 )}
@@ -895,7 +895,7 @@ function ChangeLogTab() {
             ))}
             {rows.length === 0 && (
               <p className="rounded-xl border border-border bg-card py-12 text-center text-sm text-muted-foreground">
-                {t("activityLog.aenderungen.empty")}
+                {t("activityLog.changes.empty")}
               </p>
             )}
           </div>

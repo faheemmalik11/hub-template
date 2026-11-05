@@ -159,8 +159,8 @@ function CompaniesPage() {
   const sortColumns = [
     { value: "code", label: t("companies.list.col.code") },
     { value: "name", label: t("companies.list.col.name") },
-    { value: "objekte", label: t("companies.list.col.objekte") },
-    { value: "summe", label: t("companies.list.col.verbucht") },
+    { value: "objekte", label: t("companies.list.col.properties") },
+    { value: "summe", label: t("companies.list.col.invoices") },
     { value: "createdAt", label: t("companies.list.col.createdAt") },
     { value: "updatedAt", label: t("companies.list.col.updatedAt") },
   ];
@@ -177,33 +177,33 @@ function CompaniesPage() {
       value: status,
       defaultValue: STATUS_DEFAULT,
       options: [
-        { value: "alle", label: t("companies.list.filter.statusAlle") },
-        { value: "aktiv", label: t("companies.list.filter.statusAktiv") },
-        { value: "archived", label: t("companies.list.filter.statusArchiviert") },
+        { value: "alle", label: t("companies.list.filter.statusAll") },
+        { value: "aktiv", label: t("companies.list.filter.statusActive") },
+        { value: "archived", label: t("companies.list.filter.statusArchived") },
       ],
       onChange: (v) => setStatus(v as StatusFilter),
     },
     {
       kind: "select",
       key: "bereich",
-      label: t("companies.list.filter.bereich"),
+      label: t("companies.list.filter.area"),
       value: area,
       defaultValue: AREA_ALL,
       options: [
-        { value: AREA_ALL, label: t("companies.list.filter.bereichAlle") },
-        { value: "hospitality", label: t("approvalRules.bereich.hospitality") },
-        { value: "stay_re", label: t("approvalRules.bereich.stay_re") },
-        { value: AREA_WITHOUT, label: t("companies.list.filter.bereichOhne") },
+        { value: AREA_ALL, label: t("companies.list.filter.areaAll") },
+        { value: "hospitality", label: t("approvalRules.area.hospitality") },
+        { value: "stay_re", label: t("approvalRules.area.stay_re") },
+        { value: AREA_WITHOUT, label: t("companies.list.filter.areaNone") },
       ],
       onChange: setArea,
     },
     {
       kind: "toggle",
       key: "ohneAblage",
-      fieldLabel: t("companies.list.filter.ablage"),
+      fieldLabel: t("companies.list.filter.folder"),
       // Kept offered even at zero: inside the popover it costs no surface area, and a filter that
       // appears and disappears is harder to trust than one that comes back empty.
-      label: t("companies.list.filter.ohneAblage", { count: withoutFilingTotal }),
+      label: t("companies.list.filter.withoutFolder", { count: withoutFilingTotal }),
       value: onlyWithoutFiling,
       onChange: setOnlyWithoutFiling,
     },
@@ -323,7 +323,7 @@ function CompaniesPage() {
                   >
                     {t("companies.list.col.name")}
                   </SortableColumnHeader>
-                  <TableHead className="w-[150px]">{t("companies.list.col.bereich")}</TableHead>
+                  <TableHead className="w-[150px]">{t("companies.list.col.area")}</TableHead>
                   <SortableColumnHeader
                     column="objekte"
                     sort={view.sort}
@@ -332,7 +332,7 @@ function CompaniesPage() {
                     align="right"
                     className="w-[110px]"
                   >
-                    {t("companies.list.col.objekte")}
+                    {t("companies.list.col.properties")}
                   </SortableColumnHeader>
                   <SortableColumnHeader
                     column="summe"
@@ -341,7 +341,7 @@ function CompaniesPage() {
                     onSort={view.toggleSort}
                     align="right"
                   >
-                    {t("companies.list.col.verbucht")}
+                    {t("companies.list.col.invoices")}
                   </SortableColumnHeader>
                   <SortableColumnHeader
                     column="createdAt"
@@ -377,7 +377,7 @@ function CompaniesPage() {
                       {g.name}
                       {archived && (
                         <span className="ml-2 inline-flex items-center rounded-md bg-muted px-2 py-0.5 font-sans text-xs text-muted-foreground">
-                          {t("companies.list.archiviertBadge")}
+                          {t("companies.list.archivedBadge")}
                         </span>
                       )}
                     </TableCell>
@@ -399,7 +399,7 @@ function CompaniesPage() {
                         count={count}
                         amount={total}
                         formatAmount={formatEUR}
-                        formatCount={(count) => t("companies.list.belegeCount", { count })}
+                        formatCount={(count) => t("companies.list.documentsCount", { count })}
                         loading={!totalsReady}
                       />
                     </TableCell>
@@ -442,7 +442,7 @@ function CompaniesPage() {
                     count={count}
                     amount={total}
                     formatAmount={formatEUR}
-                    formatCount={(count) => t("companies.list.belegeCount", { count })}
+                    formatCount={(count) => t("companies.list.documentsCount", { count })}
                     loading={!totalsReady}
                   />
                 </div>
@@ -450,12 +450,12 @@ function CompaniesPage() {
                   <AreaBadge area={g.area} />
                   {propertiesReady && properties > 0 && (
                     <span className="inline-flex items-center rounded-md bg-muted px-2 py-0.5 text-xs text-muted-foreground">
-                      {t("companies.list.objekteCount", { count: properties })}
+                      {t("companies.list.propertiesCount", { count: properties })}
                     </span>
                   )}
                   {archived && (
                     <span className="inline-flex items-center rounded-md bg-muted px-2 py-0.5 text-xs text-muted-foreground">
-                      {t("companies.list.archiviertBadge")}
+                      {t("companies.list.archivedBadge")}
                     </span>
                   )}
                 </div>
@@ -505,7 +505,7 @@ function AreaBadge({ area }: { area: Company["area"] }) {
   if (!area) return <span className="text-sm text-muted-foreground">—</span>;
   return (
     <span className="inline-flex items-center rounded-md bg-muted px-2 py-0.5 text-xs text-foreground">
-      {t(`approvalRules.bereich.${area}`)}
+      {t(`approvalRules.area.${area}`)}
     </span>
   );
 }
@@ -536,14 +536,14 @@ function NewCompanyDialog() {
       { code: c, name: n },
       {
         onSuccess: () => {
-          toast.success(t("companies.list.toast.angelegt"));
+          toast.success(t("companies.list.toast.created"));
           setCode("");
           setName("");
           setOpen(false);
         },
         onError: (e) =>
           toast.error(
-            t("companies.list.toast.anlegenFehlgeschlagen", {
+            t("companies.list.toast.createFailed", {
               error: errorText(e),
             }),
           ),
@@ -561,18 +561,18 @@ function NewCompanyDialog() {
     >
       <DialogTrigger asChild>
         <Button className="gap-2">
-          <Plus className="size-4" /> {t("companies.list.neu.button")}
+          <Plus className="size-4" /> {t("companies.list.new.button")}
         </Button>
       </DialogTrigger>
       <DialogContent>
         <DialogHeader>
-          <DialogTitle>{t("companies.list.neu.title")}</DialogTitle>
-          <DialogDescription>{t("companies.list.neu.desc")}</DialogDescription>
+          <DialogTitle>{t("companies.list.new.title")}</DialogTitle>
+          <DialogDescription>{t("companies.list.new.desc")}</DialogDescription>
         </DialogHeader>
         <div className="grid gap-3">
           <div className="space-y-1">
             <Label className="text-xs text-muted-foreground">
-              {t("companies.list.neu.codeLabel")} <RequiredStern />
+              {t("companies.list.new.codeLabel")} <RequiredStern />
             </Label>
             <Input
               value={code}
@@ -580,14 +580,14 @@ function NewCompanyDialog() {
                 setCode(e.target.value);
                 clearError("code");
               }}
-              placeholder={t("companies.list.neu.codePlaceholder")}
+              placeholder={t("companies.list.new.codePlaceholder")}
               aria-invalid={!!error.code}
             />
             <FieldErrorText text={error.code} />
           </div>
           <div className="space-y-1">
             <Label className="text-xs text-muted-foreground">
-              {t("companies.list.neu.nameLabel")} <RequiredStern />
+              {t("companies.list.new.nameLabel")} <RequiredStern />
             </Label>
             <Input
               value={name}
@@ -595,7 +595,7 @@ function NewCompanyDialog() {
                 setName(e.target.value);
                 clearError("name");
               }}
-              placeholder={t("companies.list.neu.namePlaceholder")}
+              placeholder={t("companies.list.new.namePlaceholder")}
               aria-invalid={!!error.name}
             />
             <FieldErrorText text={error.name} />
@@ -603,10 +603,10 @@ function NewCompanyDialog() {
         </div>
         <DialogFooter>
           <Button variant="outline" onClick={() => setOpen(false)}>
-            {t("companies.list.neu.cancel")}
+            {t("companies.list.new.cancel")}
           </Button>
           <Button onClick={submit} disabled={create.isPending}>
-            {create.isPending ? t("companies.list.neu.anlege") : t("companies.list.neu.anlegen")}
+            {create.isPending ? t("companies.list.new.creating") : t("companies.list.new.create")}
           </Button>
         </DialogFooter>
       </DialogContent>

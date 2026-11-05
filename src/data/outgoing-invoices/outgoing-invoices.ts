@@ -30,10 +30,7 @@ export function useCustomers(companyId?: string) {
     queryKey: ["customers", companyId ?? null],
     staleTime: STALE,
     queryFn: async (): Promise<Customer[]> => {
-      // Paged for the same reason useOutgoingInvoices is: an unranged request does not error past
-      // the project's Max Rows cap, it silently truncates, so this list would just start omitting
-      // customers once there are more than 1000 of them -- and the Kunden screen's per-customer
-      // totals would be computed against a short list without anything looking wrong.
+      // Paged: an unranged request silently truncates past the project's Max Rows cap instead of erroring.
       return fetchAllRows<Customer>((from, to, withCount) => {
         let query = sb
           .from(TABLE.customers)
@@ -100,16 +97,7 @@ export function useCreateCustomer() {
   });
 }
 
-// Stammdaten eines Kunden ändern.
-//
-// Purely local, unlike the sibling Immonetz Hub: that one mirrors its customers into LexOffice and
-// therefore has to write there first (the invoice address is read from the LexOffice contact, so a
-// local-only edit would look like it worked and change nothing). This Hub has no LexOffice
-// integration at all, so the row here IS the master record and a direct update is correct.
-//
-// Until this existed there was no way to edit a customer anywhere in this app -- the detail page
-// only said "Stammdaten sind hier nicht editierbar", and with no external system behind it that
-// meant a typo in a customer's name or address could never be corrected.
+// Purely local: unlike the sibling Immonetz Hub, this Hub has no LexOffice mirror, so this row IS the master record.
 export function useUpdateCustomer(customerId: string) {
   const qc = useQueryClient();
   return useMutation({
@@ -148,7 +136,6 @@ export function useUpdateCustomer(customerId: string) {
   });
 }
 
-// Kunde löschen (Soft-Delete, lokal).
 export function useSoftDeleteCustomer(customerId: string) {
   const qc = useQueryClient();
   return useMutation({
@@ -363,13 +350,7 @@ export function useSoftDeleteOutgoingInvoice(invoiceId: string) {
 }
 
 // --- Outgoing invoice upload (migration 0085) ---------------------------------------------
-// LexOffice was removed entirely (migration 0086), so this is the only way an outgoing invoice
-// actually gets created here: drop a PDF/image, extractOutgoingInvoiceFields reads it via OpenAI
-// and proposes a company/customer match, the reviewer confirms an editable preview, then
-// createUploadedOutgoingInvoice writes it. See src/routes/ausgangsrechnungen/hochladen.tsx.
-
-// Read-only AI extraction — never writes to the DB. A plain mutation (not a query) since it's
-// triggered once per file drop, not something to cache/refetch.
+// LexOffice was removed entirely (migration 0086): this upload flow is now the only way an outgoing invoice gets created.
 export function useExtractOutgoingInvoiceFields() {
   return useMutation({
     mutationFn: async (args: {

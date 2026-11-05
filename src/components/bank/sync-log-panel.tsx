@@ -228,7 +228,7 @@ export function SyncLogPanel() {
       },
       locale: dateLocale(),
       formatDay: (iso) => formatDate(iso),
-      backLabel: t("home.zeitraumAktion.zurueck"),
+      backLabel: t("home.periodAction.back"),
       placeholder: t("documents.list.filter.zeitraum"),
       rangeLabels: {
         placeholder: t("documents.list.filter.zeitraumWaehlen"),
@@ -304,8 +304,8 @@ export function SyncLogPanel() {
                     scrolling. `bg-muted` rather than a translucent tint: rows sliding
                     under a half-transparent header show through it. */}
                 <TableRow className="sticky top-0 z-10 bg-muted">
-                  <TableHead>{t("bankConnections.logCol.zeitpunkt")}</TableHead>
-                  <TableHead>{t("bankConnections.logCol.ereignis")}</TableHead>
+                  <TableHead>{t("bankConnections.logCol.time")}</TableHead>
+                  <TableHead>{t("bankConnections.logCol.event")}</TableHead>
                   <TableHead>{t("syncLog.col.connection")}</TableHead>
                   <TableHead>{t("bankConnections.logCol.details")}</TableHead>
                 </TableRow>

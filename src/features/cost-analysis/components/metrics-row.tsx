@@ -108,7 +108,7 @@ function ComparisonRow({
     return (
       <span className="flex items-center gap-1 text-muted-foreground">
         <Minus className="size-3 shrink-0" />
-        {t("reports.summe.vergleichUnveraendert", { label })}
+        {t("reports.total.comparedUnchanged", { label })}
       </span>
     );
   }
@@ -126,7 +126,7 @@ function ComparisonRow({
         {formatEUR(delta)}
       </span>
       <span className="truncate text-muted-foreground">
-        {t("reports.summe.vergleichGegen", { label })}
+        {t("reports.total.comparedTo", { label })}
       </span>
     </span>
   );

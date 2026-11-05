@@ -374,7 +374,7 @@ filters: use ONLY the exact codes/names listed below, or null if the question do
   spend total, narrated as "paid", in German. Worked pairs, both directions:
     "How much have we paid E.ON?"         == "Wie viel haben wir für E.ON bezahlt?"      → paid
     "How much did we spend on E.ON?"      == "Wie viel haben wir für E.ON ausgegeben?"   → null
-    "How much did STAY spend in total?"   == "Wie viel hat STAY insgesamt ausgegeben?"   → null
+    "How much did ACME spend in total?"   == "Wie viel hat ACME insgesamt ausgegeben?"   → null
     "Which E.ON invoices are still open?" == "Welche E.ON-Rechnungen sind noch offen?"   → open
 
   paymentState is independent of sumField: "How much VAT have we actually paid?" / "Wie viel Umsatzsteuer haben wir tatsächlich bezahlt?" is paymentState='paid' AND sumField='vat'. Asking about a tax amount does not stop the question being about settled money.

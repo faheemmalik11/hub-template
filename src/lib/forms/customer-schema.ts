@@ -31,17 +31,17 @@ export function customerSchema(
           z.union([z.literal(""), field]),
         );
   return z.object({
-    companyId: z.string().min(1, t("customers.validierung.gesellschaft")),
-    name: z.string().trim().min(1, t("customers.validierung.name")),
-    addressStreet: optional(z.string().trim().min(1, t("customers.validierung.strasse"))),
+    companyId: z.string().min(1, t("customers.validation.company")),
+    name: z.string().trim().min(1, t("customers.validation.name")),
+    addressStreet: optional(z.string().trim().min(1, t("customers.validation.street"))),
     addressZip: optional(
       z
         .string()
         .trim()
-        .regex(/^\d{4,5}$/, t("customers.validierung.plz")),
+        .regex(/^\d{4,5}$/, t("customers.validation.zip")),
     ),
-    addressCity: optional(z.string().trim().min(1, t("customers.validierung.ort"))),
-    email: z.union([z.literal(""), z.string().trim().email(t("customers.validierung.email"))]),
+    addressCity: optional(z.string().trim().min(1, t("customers.validation.city"))),
+    email: z.union([z.literal(""), z.string().trim().email(t("customers.validation.email"))]),
   });
 }
 

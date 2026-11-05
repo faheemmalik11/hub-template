@@ -190,15 +190,13 @@ export function EntriesTable({
       <table className="w-full text-sm">
         <thead className="sticky top-0 bg-card">
           <tr className="text-left text-muted-foreground">
-            <th className="py-2 pl-3 pr-3 font-normal">
-              {t("reports.aufschluesselung.spalteBeleg")}
-            </th>
+            <th className="py-2 pl-3 pr-3 font-normal">{t("reports.breakdown.colSupplier")}</th>
             {categoryFor && (
-              <th className="py-2 pr-2 font-normal">{t("reports.filter.labelKategorie")}</th>
+              <th className="py-2 pr-2 font-normal">{t("reports.filter.labelCategory")}</th>
             )}
-            <th className="py-2 pr-2 font-normal">{t("reports.aufschluesselung.spalteDatum")}</th>
+            <th className="py-2 pr-2 font-normal">{t("reports.breakdown.colDate")}</th>
             <th className="py-2 pl-2 pr-3 text-right font-normal">
-              {t("reports.aufschluesselung.spalteBetrag")}
+              {t("reports.breakdown.colAmount")}
             </th>
           </tr>
         </thead>
@@ -266,7 +264,7 @@ export function EntriesTable({
           {hatMore && (
             <tr ref={sentinel as React.RefObject<HTMLTableRowElement>}>
               <td colSpan={categoryFor ? 4 : 3} className="py-2 text-sm text-muted-foreground">
-                {t("reports.belegListe.weitere", { count: rest })}
+                {t("reports.receiptList.more", { count: rest })}
               </td>
             </tr>
           )}
@@ -333,17 +331,13 @@ function GroupsTable({
         <Columns />
         <thead>
           <tr className="text-left text-muted-foreground">
-            <th className="py-2 pl-3 pr-2 font-normal">
-              {t("reports.aufschluesselung.spalteKategorie")}
-            </th>
+            <th className="py-2 pl-3 pr-2 font-normal">{t("reports.breakdown.colCategory")}</th>
             <th className="py-2 pl-2 pr-3 text-right font-normal sm:pr-8">
-              {t("reports.spalte.betrag")}
+              {t("reports.col.amount")}
             </th>
-            <th className="py-2 pl-2 text-left font-normal">
-              {t("reports.aufschluesselung.spalteAnteil")}
-            </th>
+            <th className="py-2 pl-2 text-left font-normal">{t("reports.breakdown.colShare")}</th>
             <th className="py-2 pl-2 pr-3 text-right font-normal">
-              {t("reports.aufschluesselung.spalteAnzahl")}
+              {t("reports.breakdown.colCount")}
             </th>
           </tr>
         </thead>
@@ -472,7 +466,7 @@ function GroupsTable({
         <tbody>
           <tr className="border-t border-foreground/25 font-medium">
             <td className="py-2 pl-3 pr-2 text-foreground">
-              {t("reports.aufschluesselung.summe", { group: group.label })}
+              {t("reports.breakdown.total", { group: group.label })}
             </td>
             <td className="py-2 pl-2 pr-3 text-right tabular-nums text-foreground sm:pr-8">
               {laden ? <Skeleton className="ml-auto h-4 w-24" /> : formatEUR(group.total)}
@@ -558,11 +552,9 @@ export function Breakdown({
       <div className="flex flex-wrap items-start justify-between gap-x-8 gap-y-3">
         <div className="min-w-0">
           <h2 className="text-base font-semibold tracking-tight text-foreground">
-            {t("reports.tabelle.titel")}
+            {t("reports.table.title")}
           </h2>
-          <p className="mt-0.5 text-sm text-muted-foreground">
-            {t("reports.aufschluesselung.untertitel")}
-          </p>
+          <p className="mt-0.5 text-sm text-muted-foreground">{t("reports.breakdown.subtitle")}</p>
         </div>
         {hint && <div className="min-w-0 lg:max-w-[60%]">{hint}</div>}
       </div>
@@ -577,7 +569,7 @@ export function Breakdown({
           the reader cannot see. */}
       {groups.length > 1 && (
         <p className="mt-4 flex items-baseline justify-end gap-3 border-t border-border pt-3 text-sm text-muted-foreground">
-          <span>{t("reports.aufschluesselung.gesamtkosten")}</span>
+          <span>{t("reports.breakdown.totalCosts")}</span>
           <span className="text-base font-semibold tabular-nums text-foreground">
             {formatEUR(totalCost)}
           </span>
@@ -599,13 +591,13 @@ export function Breakdown({
               <span className="text-base font-semibold text-foreground">{open?.label}</span>
               <span
                 className="text-xl font-semibold tabular-nums text-foreground"
-                title={t("reports.aufschluesselung.gesamtbetrag")}
+                title={t("reports.breakdown.totalAmount")}
               >
                 {formatEUR(open?.amount ?? 0)}
               </span>
               <span className="inline-flex items-center gap-1.5 rounded-md bg-muted px-2.5 py-1 text-sm font-normal text-muted-foreground">
                 <FileText className="size-3.5" />
-                {t("reports.aufschluesselung.anzahl", { count: open?.items.length ?? 0 })}
+                {t("reports.breakdown.anzahl", { count: open?.items.length ?? 0 })}
               </span>
             </DialogTitle>
           </DialogHeader>
@@ -618,9 +610,7 @@ export function Breakdown({
               onOpenManualBooking={onOpenManualBooking}
             />
           ) : (
-            <p className="text-sm text-muted-foreground">
-              {t("reports.aufschluesselung.keineEintraege")}
-            </p>
+            <p className="text-sm text-muted-foreground">{t("reports.breakdown.noEntries")}</p>
           )}
         </DialogContent>
       </Dialog>

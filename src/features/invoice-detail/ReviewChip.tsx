@@ -40,11 +40,11 @@ export function ReviewBadge({
   unchecked = false,
   className,
 }: {
-  /** How many checks failed. See pruefGruende()/pruefKarte() in ./pruefung. */
+  /** How many checks failed. See checkReasons()/checkCard() in ./checks. */
   reasonCount?: number;
   /**
    * The pipeline reported no checks at all for this receipt, passed or failed. Compute it as
-   * `karte.gruende.length === 0 && karte.bestanden.length === 0` from pruefKarte().
+   * `card.reasons.length === 0 && card.passed.length === 0` from checkCard().
    */
   unchecked?: boolean;
   /** `invoices.status`, only for the two values that outrank the review question. Optional. */

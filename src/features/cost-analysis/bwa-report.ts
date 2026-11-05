@@ -75,7 +75,7 @@ export interface CostAnalysisReportRow {
   /** Skeleton row key, or a synthetic group id. Drilldown keys off this. */
   key: string;
   kind: ReportRowKind;
-  /** i18n key suffix under `reports.zeile.` */
+  /** i18n key suffix under `reports.row.` */
   labelKey: string;
   /**
    * What the row shows in the amount column.

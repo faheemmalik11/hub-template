@@ -31,7 +31,7 @@ import { cn } from "@/lib/utils";
  * on spending more. And no delta renders when the previous period is zero, because a percentage
  * against nothing is either infinite or meaningless and "+100%" reads as a real trend.
  */
-type CardKey = "eingang" | "ausgang" | "grossProfit";
+type CardKey = "incoming" | "outgoing" | "grossProfit";
 
 const CARDS: {
   key: CardKey;
@@ -41,7 +41,7 @@ const CARDS: {
   higherIsBetter: boolean;
 }[] = [
   {
-    key: "eingang",
+    key: "incoming",
     icon: FileText,
     to: "/incoming-invoices",
     iconTint: CHIP.brand,
@@ -49,7 +49,7 @@ const CARDS: {
     higherIsBetter: false,
   },
   {
-    key: "ausgang",
+    key: "outgoing",
     icon: FileOutput,
     to: "/outgoing-invoices",
     iconTint: CHIP.neutral,
@@ -120,31 +120,31 @@ function MoneyCard({ config }: { config: (typeof CARDS)[number] }) {
   const rows = invoicesQ.data ?? [];
   const rowsBefore = invoicesBeforeQ.data ?? [];
   const value =
-    config.key === "eingang"
+    config.key === "incoming"
       ? rows.reduce((s, r) => s + (r.amount_gross ?? 0), 0)
-      : config.key === "ausgang"
+      : config.key === "outgoing"
         ? outgoingTotal(range.fromDate, range.toDate)
         : (costAnalysis.rowByKey.get("gross_profit")?.amount ?? 0);
 
   // The sum answers "how much", the count answers "how many": both belong to the same card.
   const count =
-    config.key === "eingang"
+    config.key === "incoming"
       ? rows.length
-      : config.key === "ausgang"
+      : config.key === "outgoing"
         ? outgoingRows(range.fromDate, range.toDate).length
         : undefined;
 
   const previous =
     !before.fromDate || !before.toDate
       ? undefined
-      : config.key === "eingang"
+      : config.key === "incoming"
         ? rowsBefore.reduce((s, r) => s + (r.amount_gross ?? 0), 0)
-        : config.key === "ausgang"
+        : config.key === "outgoing"
           ? outgoingTotal(before.fromDate, before.toDate)
           : (costAnalysisBefore.rowByKey.get("gross_profit")?.amount ?? undefined);
 
   const loading =
-    config.key === "ausgang"
+    config.key === "outgoing"
       ? outgoingQ.isLoading
       : config.key === "grossProfit"
         ? costAnalysis.isLoading

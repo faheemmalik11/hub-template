@@ -82,7 +82,7 @@ export function useNotificationItems(): {
       {
         key: "neu",
         label: t("settings.event.neu"),
-        message: t("notifications.msg.neu", { count: counts?.newDocuments ?? 0 }),
+        message: t("notifications.msg.new", { count: counts?.newDocuments ?? 0 }),
         count: counts?.newDocuments ?? 0,
         tone: "default",
         link: { to: "/incoming-invoices" },
@@ -90,7 +90,7 @@ export function useNotificationItems(): {
       {
         key: "query",
         label: t("settings.event.rueckfrage"),
-        message: t("notifications.msg.rueckfrage", { count: returned }),
+        message: t("notifications.msg.query", { count: returned }),
         count: returned,
         tone: "warn",
         link: { to: "/incoming-invoices", search: { workflow: "query" } },
@@ -98,7 +98,7 @@ export function useNotificationItems(): {
       {
         key: "rejected",
         label: t("settings.event.abgelehnt"),
-        message: t("notifications.msg.abgelehnt", { count: rejected }),
+        message: t("notifications.msg.rejected", { count: rejected }),
         count: rejected,
         tone: "danger",
         link: { to: "/incoming-invoices", search: { workflow: "rejected" } },
@@ -106,7 +106,7 @@ export function useNotificationItems(): {
       {
         key: "zuPruefen",
         label: t("settings.event.zuPruefen"),
-        message: t("notifications.msg.zuPruefen", { count: counts?.zuCheck ?? 0 }),
+        message: t("notifications.msg.needsReview", { count: counts?.zuCheck ?? 0 }),
         count: counts?.zuCheck ?? 0,
         tone: "warn",
         link: { to: "/incoming-invoices", search: { status: "needs_review" } },
@@ -114,7 +114,7 @@ export function useNotificationItems(): {
       {
         key: "faellig",
         label: t("settings.event.faellig"),
-        message: t("notifications.msg.faellig", { count: counts?.due ?? 0 }),
+        message: t("notifications.msg.overdue", { count: counts?.due ?? 0 }),
         count: counts?.due ?? 0,
         tone: "danger",
         link: { to: "/open-items", search: { type: "incoming", due: "ueberfaellig" } },
@@ -122,7 +122,7 @@ export function useNotificationItems(): {
       {
         key: "suggestions",
         label: t("settings.event.vorschlaege"),
-        message: t("notifications.msg.vorschlaege", { count: bankQ.data?.suggestion ?? 0 }),
+        message: t("notifications.msg.suggestions", { count: bankQ.data?.suggestion ?? 0 }),
         count: bankQ.data?.suggestion ?? 0,
         tone: "warn",
         link: { to: "/bank-transactions", search: { matching: "suggestion" } },
@@ -130,7 +130,7 @@ export function useNotificationItems(): {
       {
         key: "fehler",
         label: t("settings.event.fehler"),
-        message: t("notifications.msg.fehler", { count: error }),
+        message: t("notifications.msg.errors", { count: error }),
         count: error,
         tone: "danger",
         link: { to: "/activity-log" },
@@ -141,8 +141,8 @@ export function useNotificationItems(): {
       all.push({
         key: `${ASSIGNED_KEY_PREFIX}${doc.id}`,
         label: t("settings.event.zuweisung"),
-        message: t("notifications.msg.zuweisungEine", {
-          doc: number || t("notifications.belegOhneNummer"),
+        message: t("notifications.msg.assignedOne", {
+          doc: number || t("notifications.noNumber"),
         }),
         count: 1,
         tone: "warn",

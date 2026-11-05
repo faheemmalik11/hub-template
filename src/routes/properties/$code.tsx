@@ -32,9 +32,9 @@ export const Route = createFileRoute("/properties/$code")({
 });
 
 /**
- * The this client wiring for the shared Objekt detail screen.
+ * The this client wiring for the shared property detail screen.
  *
- * The assignment card is EDITABLE here, unlike Immonetz where the Geschäftsbereiche screen owns the
+ * The assignment card is EDITABLE here, unlike Immonetz where the business-lines screen owns the
  * relation. this client assigns a property straight to companies, and this page is the only place that
  * does it, so editing it where it is displayed is the whole of the feature rather than half of it.
  */
@@ -76,7 +76,7 @@ function PropertyDetailPage() {
           className="h-7 gap-1.5 text-xs"
           onClick={() => setAssignmentDialog({ link: null })}
         >
-          <Plus className="size-3.5" /> {t("properties.detail.zuordnungHinzufuegen")}
+          <Plus className="size-3.5" /> {t("properties.detail.assignmentAdd")}
         </Button>
       ),
       spellings: (propertyCode) => (
@@ -118,7 +118,7 @@ function AssignmentEditor({
   const companiesQ = useCompanies();
   const { user } = useAuth();
   const remove = useRemovePropertyCompanyLink();
-  const [zuRemove, setZuRemove] = useState<{
+  const [toRemove, setToRemove] = useState<{
     link: PropertyCompany;
     company: string;
   } | null>(null);
@@ -135,7 +135,7 @@ function AssignmentEditor({
     <div className="space-y-3">
       {rows.length === 0 ? (
         <p className="rounded-md border border-dashed border-border py-4 text-center text-xs text-muted-foreground">
-          {t("properties.detail.gesellschaftenEmpty")}
+          {t("properties.detail.companiesEmpty")}
         </p>
       ) : (
         <div className="space-y-1.5">
@@ -165,8 +165,8 @@ function AssignmentEditor({
                   }
                 >
                   {link.cost_centre_number != null
-                    ? t("properties.detail.kostenstelle", { nr: link.cost_centre_number })
-                    : t("properties.detail.kostenstelleFehlt")}
+                    ? t("properties.detail.costCentre", { nr: link.cost_centre_number })
+                    : t("properties.detail.costCentreMissing")}
                 </span>
                 {/* Edit and remove appear on hover (and on keyboard focus), always on a phone where
                     there is no hover, the same way the company page's property list works. */}
@@ -176,8 +176,8 @@ function AssignmentEditor({
                     variant="ghost"
                     className="size-7"
                     onClick={() => setDialog({ link })}
-                    aria-label={t("properties.detail.zuordnungBearbeiten")}
-                    title={t("properties.detail.zuordnungBearbeiten")}
+                    aria-label={t("properties.detail.assignmentEdit")}
+                    title={t("properties.detail.assignmentEdit")}
                   >
                     <Pencil className="size-3.5" />
                   </Button>
@@ -186,13 +186,13 @@ function AssignmentEditor({
                     variant="ghost"
                     className="size-7 text-destructive hover:bg-destructive/10 hover:text-destructive"
                     onClick={() =>
-                      setZuRemove({
+                      setToRemove({
                         link,
                         company: company ? `${company.code} · ${company.name}` : "",
                       })
                     }
-                    aria-label={t("properties.detail.zuordnungEntfernen")}
-                    title={t("properties.detail.zuordnungEntfernen")}
+                    aria-label={t("properties.detail.assignmentRemove")}
+                    title={t("properties.detail.assignmentRemove")}
                   >
                     <X className="size-3.5" />
                   </Button>
@@ -211,37 +211,37 @@ function AssignmentEditor({
         />
       )}
       <AlertDialog
-        open={!!zuRemove}
-        onOpenChange={(open) => (open ? undefined : setZuRemove(null))}
+        open={!!toRemove}
+        onOpenChange={(open) => (open ? undefined : setToRemove(null))}
       >
         <AlertDialogContent>
           <AlertDialogHeader>
-            <AlertDialogTitle>{t("properties.detail.zuordnungEntfernenTitel")}</AlertDialogTitle>
+            <AlertDialogTitle>{t("properties.detail.assignmentRemoveTitle")}</AlertDialogTitle>
             <AlertDialogDescription>
               {rows.length <= 1
-                ? t("properties.detail.zuordnungLetzte")
-                : t("properties.detail.zuordnungEntfernenBeschreibung", {
-                    company: zuRemove?.company ?? "",
+                ? t("properties.detail.assignmentLast")
+                : t("properties.detail.assignmentRemoveDesc", {
+                    company: toRemove?.company ?? "",
                   })}
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
-            <AlertDialogCancel>{t("properties.detail.action.abbrechen")}</AlertDialogCancel>
+            <AlertDialogCancel>{t("properties.detail.action.cancel")}</AlertDialogCancel>
             <AlertDialogAction
               className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
-              disabled={!zuRemove || rows.length <= 1 || remove.isPending}
+              disabled={!toRemove || rows.length <= 1 || remove.isPending}
               onClick={() => {
-                if (!zuRemove) return;
+                if (!toRemove) return;
                 remove.mutate(
-                  { linkId: zuRemove.link.id, actor: user?.email ?? null },
+                  { linkId: toRemove.link.id, actor: user?.email ?? null },
                   {
                     onSuccess: () => {
-                      toast.success(t("properties.detail.toast.zuordnungGeaendert"));
-                      setZuRemove(null);
+                      toast.success(t("properties.detail.toast.assignmentChanged"));
+                      setToRemove(null);
                     },
                     onError: (e) =>
                       toast.error(
-                        t("properties.detail.toast.speichernFehlgeschlagen", {
+                        t("properties.detail.toast.saveFailed", {
                           error: errorText(e),
                         }),
                       ),
@@ -249,7 +249,7 @@ function AssignmentEditor({
                 );
               }}
             >
-              {t("properties.detail.zuordnungEntfernenBestaetigen")}
+              {t("properties.detail.assignmentRemoveConfirm")}
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>

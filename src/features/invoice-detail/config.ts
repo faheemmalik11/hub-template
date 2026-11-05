@@ -1,20 +1,7 @@
-/**
- * THE REPO-SPECIFIC HALF OF THE INVOICE DETAIL PAGE.
- *
- * Everything in src/features/invoice-detail/ except this file is meant to be byte-identical
- * across the hubs (this Hub, Immonetz, ...). Porting the page to another repo is: copy the
- * folder, then rewrite THIS file for that repo's chain — see PORTING.md. If you find yourself
- * editing another file in this folder for one repo only, the thing you are changing probably
- * belongs in here as config instead.
- */
+// The repo-specific half of the invoice detail page; everything else in this folder is byte-identical across Hubs (see PORTING.md).
 import type { ApprovalActionId } from "@/lib/data/format";
 import type { WorkflowStatus } from "@/lib/data/types";
 
-// Only the plain chain steps get a circle on the workflow bar. `skip_step` and
-// `mark_already_approved` used to land on 'approved_final' as well and were kept out of
-// the bar for that reason; they are gone now (see nextLegalActions), so a manager approves by
-// clicking the step itself. 'complete' is here too: closing off a DATEV-handed invoice is a step
-// a person takes, so it gets a circle like the approvals do.
 export const CHAIN_ACTION_IDS: ApprovalActionId[] = [
   "send_for_review",
   "approve",
@@ -22,15 +9,10 @@ export const CHAIN_ACTION_IDS: ApprovalActionId[] = [
   "complete",
 ];
 
-// 'bezahlt' and everything after it are stamped by DB triggers (migrations 0036/0038) when a
-// payment or a DATEV handover is confirmed, never by a person picking the step. Those circles
-// stay inert, and nothing draws an arrow at them. Named rather than "everything from 'bezahlt'
-// onwards": 'closed' sits in that tail and is NOT trigger-driven.
+// 'paid' and 'handed_over' are stamped by DB triggers, never by a person picking the step, so those circles stay inert.
 export const AUTO_STEPS: WorkflowStatus[] = ["paid", "handed_over"];
 
-// Manual correction targets (see runCorrection above): every status except 'not_relevant',
-// which has its own dedicated flow (useSetNotRelevant/useClearNotRelevant) that also touches the
-// mailbox return flags — setting the raw column here directly would desync those.
+// Every status except 'not_relevant', which has its own dedicated flow that also touches the mailbox return flags.
 export const CORRECTABLE_STATUSES: WorkflowStatus[] = [
   "received",
   "in_review",
@@ -44,7 +26,7 @@ export const CORRECTABLE_STATUSES: WorkflowStatus[] = [
 ];
 
 // The approval-workflow invoice_history types (migration 0035) live in their own section on the
-// Freigabe tab, not mixed into the general Verlauf tab — kept as one list so both places filter
+// Approval tab, not mixed into the general History tab — kept as one list so both places filter
 // on exactly the same set.
 export const APPROVAL_HISTORY_TYPES = [
   "approval_first",
@@ -54,12 +36,8 @@ export const APPROVAL_HISTORY_TYPES = [
   "already_approved",
   "skipped",
   "correction",
-  // Unlinking a bank match walks the invoice back out of Bezahlt. It belongs in the workflow
-  // timeline because the status really did move, but it is NOT "manually corrected": nobody
-  // touched the status, a payment was removed and the status followed.
+  // Both belong in the workflow timeline (status moved, or reconciliation happened) but are not "manually corrected".
   "zuordnung_getrennt",
-  // A confirmed bank match. The reconciliation is a step in the invoice's life even when it
-  // does not move the status, so the chip belongs on the same timeline as the rest of it.
   "zuordnung_bestaetigt",
   "paid",
   "payment_failed",
@@ -67,19 +45,7 @@ export const APPROVAL_HISTORY_TYPES = [
   "closed",
 ];
 
-/**
- * Reading the German back out of a history row written before the move/action was stored as data.
- *
- * `invoice_history.text` is German on purpose -- it is the audit record -- and every row written
- * before those data fields existed has nothing BUT that German sentence, which is why an English
- * UI still shows "Zur Prüfung geben" and "Manuell korrigiert: ... → ...". The German labels are
- * generated from a fixed table (approvalActionLabelDe / workflowLabelDe), so they can be generated
- * again here and matched against, recovering the id the row never stored. A backfill migration
- * would be the tidier fix; this needs no migration and leaves the stored audit text untouched.
- *
- * Anything that does not match is returned as-is: an unrecognised sentence is somebody's typed
- * comment or a row from a version this table does not describe, and printing it beats dropping it.
- */
+// Recovers the action id for history rows written before it was stored as data, by regenerating and matching the German label text.
 export const LEGACY_ACTION_IDS: ApprovalActionId[] = [
   "send_for_review",
   "approve",
@@ -113,18 +79,13 @@ export const LADDER_THEME = {
   line: "border-[oklch(0.55_0.052_196)]",
 };
 
-// ---- Review card: where a failed check sends the reader --------------------------------------
-//
-// Per repo, because the destinations are: the ids below are the sections of THIS repo's detail
-// page. A check with no entry here renders as plain text in the review card rather than as a
-// button that goes nowhere.
-
-export const MATCHING_ANCHOR = "zahlung-abgleich";
-export const TRANSFER_ANCHOR = "zahlung-ueberweisung";
-export const AMOUNTS_ANCHOR = "uebersicht-betraege";
-export const INVOICEDATA_ANCHOR = "uebersicht-rechnungsdaten";
-export const PARTICIPANTS_ANCHOR = "uebersicht-beteiligte";
-export const SUPPLIER_ANCHOR = "lieferant-stammdaten";
+// A check with no entry here renders as plain text in the review card rather than as a button that goes nowhere.
+export const MATCHING_ANCHOR = "payment-matching";
+export const TRANSFER_ANCHOR = "payment-transfer";
+export const AMOUNTS_ANCHOR = "overview-amounts";
+export const INVOICEDATA_ANCHOR = "overview-invoice-data";
+export const PARTICIPANTS_ANCHOR = "overview-participants";
+export const SUPPLIER_ANCHOR = "supplier-master-data";
 
 export const FIELD_JUMPTARGET: Record<string, { tab: string; anchor: string }> = {
   // The `validation_detail` column's check names. Same destinations as the German keys below.
@@ -160,8 +121,8 @@ export const REVIEW_ANCHOR = "review-box";
 export const HEADER_NOTE_COUNT = 3;
 
 // The header's "see all notes" link scrolls here and flashes it.
-export const NOTES_ANCHOR = "notizen-verlauf";
+export const NOTES_ANCHOR = "notes-history";
 
 // The workflow history row for the currently open query -- always the newest row while one is
 // open, since nothing can happen to the invoice after a query until it is answered.
-export const QUERY_ANCHOR = "offene-rueckfrage";
+export const QUERY_ANCHOR = "open-query";

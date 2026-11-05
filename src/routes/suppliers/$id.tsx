@@ -164,10 +164,10 @@ function lFormFrom(l: Supplier): LForm {
  */
 function historyActor(value: string | null, t: (k: string) => string): string {
   const raw = value?.trim();
-  if (!raw) return t("suppliers.detail.ibanVerlauf.akteurUnbekannt");
-  if (raw === "pipeline") return t("suppliers.detail.ibanVerlauf.akteurPipeline");
+  if (!raw) return t("suppliers.detail.ibanHistory.actorUnknown");
+  if (raw === "pipeline") return t("suppliers.detail.ibanHistory.actorPipeline");
   if (/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(raw))
-    return t("suppliers.detail.ibanVerlauf.akteurHub");
+    return t("suppliers.detail.ibanHistory.actorHub");
   return raw;
 }
 
@@ -188,7 +188,7 @@ function BankAccountCopy({
       <TooltipTrigger asChild>
         <button
           type="button"
-          aria-label={t("suppliers.detail.bankkonten.kopieren")}
+          aria-label={t("suppliers.detail.bankAccounts.copy")}
           className={cn(
             "flex size-7 cursor-pointer items-center justify-center rounded text-muted-foreground transition-colors hover:bg-background hover:text-foreground",
             className,
@@ -199,14 +199,14 @@ function BankAccountCopy({
               setCopied(true);
               window.setTimeout(() => setCopied(false), 1500);
             } catch {
-              toast.error(t("suppliers.detail.bankkonten.kopierenFehlgeschlagen"));
+              toast.error(t("suppliers.detail.bankAccounts.copyFailed"));
             }
           }}
         >
           {copied ? <Check className="size-3.5 text-brand" /> : <Copy className="size-3.5" />}
         </button>
       </TooltipTrigger>
-      <TooltipContent>{t("suppliers.detail.bankkonten.kopieren")}</TooltipContent>
+      <TooltipContent>{t("suppliers.detail.bankAccounts.copy")}</TooltipContent>
     </Tooltip>
   );
 }
@@ -490,19 +490,19 @@ function SupplierDetailPage() {
   function save() {
     const changes = collectChanges();
     if (Object.keys(changes).length === 0) {
-      toast.info(t("suppliers.detail.toast.keineAenderungen"));
+      toast.info(t("suppliers.detail.toast.noChanges"));
       setEdit(false);
       return;
     }
     updateL.mutate(changes, {
       onSuccess: () => {
-        toast.success(t("suppliers.detail.toast.gespeichert"));
+        toast.success(t("suppliers.detail.toast.saved"));
         setForm(null);
         setEdit(false);
       },
       onError: (e) =>
         toast.error(
-          t("suppliers.detail.toast.speichernFehlgeschlagen", {
+          t("suppliers.detail.toast.saveFailed", {
             error: errorText(e),
           }),
         ),
@@ -511,12 +511,12 @@ function SupplierDetailPage() {
   function confirmDelete() {
     deleteL.mutate(deleteReason.trim(), {
       onSuccess: () => {
-        toast.success(t("suppliers.detail.toast.geloescht"));
+        toast.success(t("suppliers.detail.toast.deleted"));
         navigate({ to: "/suppliers" });
       },
       onError: (e) =>
         toast.error(
-          t("suppliers.detail.toast.loeschenFehlgeschlagen", {
+          t("suppliers.detail.toast.deleteFailed", {
             error: errorText(e),
           }),
         ),
@@ -527,17 +527,17 @@ function SupplierDetailPage() {
   // the same thing twice and pushed everything that is not the heading further down.
   const readFields: { label: string; value: string; mono?: boolean; copy?: string }[] = [
     {
-      label: t("suppliers.detail.field.adresse"),
+      label: t("suppliers.detail.field.address"),
       value: l.address ?? "—",
       copy: l.address ?? undefined,
     },
     {
-      label: t("suppliers.detail.field.ustId"),
+      label: t("suppliers.detail.field.vatId"),
       value: l.vat_id ?? "—",
       copy: l.vat_id ?? undefined,
     },
     {
-      label: t("suppliers.detail.field.telefon"),
+      label: t("suppliers.detail.field.phone"),
       value: l.phone ?? "—",
       copy: l.phone ?? undefined,
     },
@@ -546,7 +546,7 @@ function SupplierDetailPage() {
       value: l.email ?? "—",
       copy: l.email ?? undefined,
     },
-    { label: t("suppliers.detail.field.ansprechpartner"), value: l.contact_person ?? "—" },
+    { label: t("suppliers.detail.field.contact"), value: l.contact_person ?? "—" },
   ];
 
   return (
@@ -580,22 +580,22 @@ function SupplierDetailPage() {
               <TooltipTrigger asChild>
                 <span className="inline-flex items-center gap-1 rounded border border-amber-300 bg-amber-100 px-2 py-0.5 text-xs font-medium text-amber-900">
                   <TriangleAlert className="size-3.5" />
-                  {t("suppliers.detail.bankkonten.neu.header")}
+                  {t("suppliers.detail.bankAccounts.new.header")}
                 </span>
               </TooltipTrigger>
               <TooltipContent className="max-w-[20rem]">
-                {t("suppliers.detail.bankkonten.neu.headerHinweis")}
+                {t("suppliers.detail.bankAccounts.new.headerHint")}
               </TooltipContent>
             </Tooltip>
           )}
         </div>
         <div className="flex flex-wrap items-center gap-2">
           <Button onClick={startEdit} className="gap-2">
-            <Pencil className="size-4" /> {t("suppliers.detail.action.bearbeiten")}
+            <Pencil className="size-4" /> {t("suppliers.detail.action.edit")}
           </Button>
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
-              <Button variant="outline" size="icon" aria-label={t("suppliers.detail.action.mehr")}>
+              <Button variant="outline" size="icon" aria-label={t("suppliers.detail.action.more")}>
                 <MoreVertical className="size-4" />
               </Button>
             </DropdownMenuTrigger>
@@ -607,7 +607,7 @@ function SupplierDetailPage() {
                   is normally office material" -- start from the supplier, not from a receipt. */}
               {!l.deleted_at && (
                 <DropdownMenuItem className="cursor-pointer" onSelect={() => setRuleOpen(true)}>
-                  <Wand2 className="size-4" /> {t("suppliers.detail.regel.button")}
+                  <Wand2 className="size-4" /> {t("suppliers.detail.rule.button")}
                 </DropdownMenuItem>
               )}
               {/* merge_suppliers() rejects an already-deleted merge-away supplier, so the action is
@@ -618,9 +618,7 @@ function SupplierDetailPage() {
                 </DropdownMenuItem>
               )}
               {!l.deleted_at && <DropdownMenuSeparator />}
-              {/* Offering "Löschen" on an already-deleted record was the only way this page
-                  acknowledged the state at all, and it acknowledged it wrongly. Deleted records
-                  offer the opposite action instead. */}
+              {/* Deleted records offer restore, not delete again. */}
               {l.deleted_at ? (
                 <DropdownMenuItem
                   className="cursor-pointer"
@@ -630,7 +628,7 @@ function SupplierDetailPage() {
                       onSuccess: () => toast.success(t("suppliers.detail.restore.toast")),
                       onError: (e) =>
                         toast.error(
-                          t("suppliers.detail.toast.loeschenFehlgeschlagen", {
+                          t("suppliers.detail.toast.deleteFailed", {
                             error: errorText(e),
                           }),
                         ),
@@ -678,7 +676,7 @@ function SupplierDetailPage() {
           <Input
             value={deleteReason}
             onChange={(e) => setDeleteReason(e.target.value)}
-            placeholder={t("suppliers.detail.delete.grundPlaceholder")}
+            placeholder={t("suppliers.detail.delete.reasonPlaceholder")}
           />
           <AlertDialogFooter>
             <AlertDialogCancel>{t("suppliers.detail.delete.cancel")}</AlertDialogCancel>
@@ -700,9 +698,9 @@ function SupplierDetailPage() {
         <div className="mt-4 flex flex-wrap items-center gap-2 rounded-lg border border-border bg-muted/40 px-3 py-2.5 text-sm text-muted-foreground">
           <Trash2 className="size-4 shrink-0" />
           <span>
-            {t("suppliers.detail.geloeschtBanner", {
+            {t("suppliers.detail.deletedBanner", {
               datum: formatDateTime(l.deleted_at),
-              reason: l.delete_reason || t("suppliers.detail.geloeschtOhneGrund"),
+              reason: l.delete_reason || t("suppliers.detail.deletedNoReason"),
             })}
           </span>
         </div>
@@ -718,7 +716,7 @@ function SupplierDetailPage() {
         <div className="space-y-6">
           <section ref={detailsCardRef} className="rounded-xl border border-border bg-card p-5">
             <h2 className="mb-4 text-sm font-semibold uppercase tracking-wide text-muted-foreground">
-              {t("suppliers.detail.section.stammdaten")}
+              {t("suppliers.detail.section.masterData")}
             </h2>
             <dl className="space-y-3">
               {readFields.map((rf) => (
@@ -753,7 +751,7 @@ function SupplierDetailPage() {
             >
               <div className="flex flex-wrap items-center gap-2">
                 <h2 className="text-sm font-semibold uppercase tracking-wide text-muted-foreground">
-                  {t("suppliers.detail.section.bankkonten")}
+                  {t("suppliers.detail.section.bankAccounts")}
                 </h2>
                 {/* The recently-changed warning belongs to these accounts, not to the supplier's
                     contact details. Beside the History button it also reads as one thought: the
@@ -772,7 +770,7 @@ function SupplierDetailPage() {
                     onClick={() => setIbanHistoryOpen(true)}
                   >
                     <History className="size-3.5" />
-                    {t("suppliers.detail.ibanVerlauf.button")}
+                    {t("suppliers.detail.ibanHistory.button")}
                   </Button>
                 )}
                 <Button
@@ -781,7 +779,7 @@ function SupplierDetailPage() {
                   className="gap-1.5"
                   onClick={() => setBankDialogOpen(true)}
                 >
-                  <Plus className="size-3.5" /> {t("suppliers.detail.bankkonten.hinzufuegen")}
+                  <Plus className="size-3.5" /> {t("suppliers.detail.bankAccounts.add")}
                 </Button>
               </div>
             </div>
@@ -790,7 +788,7 @@ function SupplierDetailPage() {
               <SectionSkeleton className="h-44" />
             ) : activeAccounts.length === 0 ? (
               <div className="rounded-md border border-dashed border-border py-6 text-center text-xs text-muted-foreground">
-                {t("suppliers.detail.bankkonten.empty")}
+                {t("suppliers.detail.bankAccounts.empty")}
               </div>
             ) : (
               <div className="overflow-hidden rounded-lg border border-border">
@@ -804,10 +802,10 @@ function SupplierDetailPage() {
                         {/* The star leads the row: it is what you scan for, and reading "which one
                             is the default" should not mean crossing four columns first. */}
                         <TableHead className="w-9" />
-                        <TableHead>{t("suppliers.detail.bankkonten.col.iban")}</TableHead>
-                        <TableHead>{t("suppliers.detail.bankkonten.col.bic")}</TableHead>
-                        <TableHead>{t("suppliers.detail.bankkonten.col.bank")}</TableHead>
-                        <TableHead>{t("suppliers.detail.bankkonten.col.quelle")}</TableHead>
+                        <TableHead>{t("suppliers.detail.bankAccounts.col.iban")}</TableHead>
+                        <TableHead>{t("suppliers.detail.bankAccounts.col.bic")}</TableHead>
+                        <TableHead>{t("suppliers.detail.bankAccounts.col.bank")}</TableHead>
+                        <TableHead>{t("suppliers.detail.bankAccounts.col.source")}</TableHead>
                         <TableHead className="text-right" />
                       </TableRow>
                     </TableHeader>
@@ -829,13 +827,13 @@ function SupplierDetailPage() {
                                   <TooltipTrigger asChild>
                                     <span
                                       className="flex size-7 cursor-default items-center justify-center text-primary"
-                                      aria-label={t("suppliers.detail.bankkonten.standard")}
+                                      aria-label={t("suppliers.detail.bankAccounts.default")}
                                     >
                                       <Star className="size-3.5 fill-current" />
                                     </span>
                                   </TooltipTrigger>
                                   <TooltipContent>
-                                    {t("suppliers.detail.bankkonten.standard")}
+                                    {t("suppliers.detail.bankAccounts.default")}
                                   </TooltipContent>
                                 </Tooltip>
                               ) : (
@@ -843,7 +841,7 @@ function SupplierDetailPage() {
                                   <TooltipTrigger asChild>
                                     <button
                                       className="flex size-7 cursor-pointer items-center justify-center rounded text-muted-foreground transition-colors hover:bg-background hover:text-primary disabled:cursor-not-allowed disabled:opacity-50"
-                                      aria-label={t("suppliers.detail.bankkonten.alsStandard")}
+                                      aria-label={t("suppliers.detail.bankAccounts.makeDefault")}
                                       disabled={setDefaultIban.isPending}
                                       onClick={() =>
                                         setDefaultIban.mutate(
@@ -852,16 +850,15 @@ function SupplierDetailPage() {
                                             onSuccess: () =>
                                               toast.success(
                                                 t(
-                                                  "suppliers.detail.bankkonten.toast.standardGesetzt",
+                                                  "suppliers.detail.bankAccounts.toast.defaultSet",
                                                   { iban: formatIBAN(k.iban) },
                                                 ),
                                               ),
                                             onError: (e) =>
                                               toast.error(
-                                                t(
-                                                  "suppliers.detail.bankkonten.toast.fehlgeschlagen",
-                                                  { error: errorText(e) },
-                                                ),
+                                                t("suppliers.detail.bankAccounts.toast.failed", {
+                                                  error: errorText(e),
+                                                }),
                                               ),
                                           },
                                         )
@@ -871,7 +868,7 @@ function SupplierDetailPage() {
                                     </button>
                                   </TooltipTrigger>
                                   <TooltipContent>
-                                    {t("suppliers.detail.bankkonten.alsStandard")}
+                                    {t("suppliers.detail.bankAccounts.makeDefault")}
                                   </TooltipContent>
                                 </Tooltip>
                               )}
@@ -890,11 +887,11 @@ function SupplierDetailPage() {
                                   <TooltipTrigger asChild>
                                     <span className="ml-2 inline-flex items-center gap-1 rounded border border-amber-300 bg-amber-100 px-1.5 py-0.5 font-sans text-[11px] font-medium text-amber-900">
                                       <TriangleAlert className="size-3" />
-                                      {t("suppliers.detail.bankkonten.neu.badge")}
+                                      {t("suppliers.detail.bankAccounts.new.badge")}
                                     </span>
                                   </TooltipTrigger>
                                   <TooltipContent className="max-w-[20rem]">
-                                    {t("suppliers.detail.bankkonten.neu.hinweis")}
+                                    {t("suppliers.detail.bankAccounts.new.hint")}
                                   </TooltipContent>
                                 </Tooltip>
                               )}
@@ -906,9 +903,9 @@ function SupplierDetailPage() {
                               {k.bank_name || "—"}
                             </TableCell>
                             <TableCell className="whitespace-nowrap text-xs text-muted-foreground">
-                              <div>{t(`suppliers.detail.bankkonten.quelle.${k.source}`)}</div>
+                              <div>{t(`suppliers.detail.bankAccounts.source.${k.source}`)}</div>
                               <div className="text-[11px] opacity-80">
-                                {t("suppliers.detail.bankkonten.seit", {
+                                {t("suppliers.detail.bankAccounts.since", {
                                   datum: formatDate(k.first_seen_at),
                                 })}
                               </div>
@@ -955,24 +952,21 @@ function SupplierDetailPage() {
                                     <TooltipTrigger asChild>
                                       <button
                                         className="flex size-7 cursor-pointer items-center justify-center rounded text-amber-700 transition-colors hover:bg-background hover:text-amber-900 disabled:cursor-not-allowed disabled:opacity-50"
-                                        aria-label={t(
-                                          "suppliers.detail.bankkonten.neu.bestaetigen",
-                                        )}
+                                        aria-label={t("suppliers.detail.bankAccounts.new.confirm")}
                                         disabled={confirmBankAccount.isPending}
                                         onClick={() =>
                                           confirmBankAccount.mutate(k.id, {
                                             onSuccess: () =>
                                               toast.success(
-                                                t("suppliers.detail.bankkonten.neu.bestaetigt", {
+                                                t("suppliers.detail.bankAccounts.new.confirmed", {
                                                   iban: formatIBAN(k.iban),
                                                 }),
                                               ),
                                             onError: (e) =>
                                               toast.error(
-                                                t(
-                                                  "suppliers.detail.bankkonten.toast.fehlgeschlagen",
-                                                  { error: errorText(e) },
-                                                ),
+                                                t("suppliers.detail.bankAccounts.toast.failed", {
+                                                  error: errorText(e),
+                                                }),
                                               ),
                                           })
                                         }
@@ -981,7 +975,7 @@ function SupplierDetailPage() {
                                       </button>
                                     </TooltipTrigger>
                                     <TooltipContent>
-                                      {t("suppliers.detail.bankkonten.neu.bestaetigen")}
+                                      {t("suppliers.detail.bankAccounts.new.confirm")}
                                     </TooltipContent>
                                   </Tooltip>
                                 )}
@@ -989,7 +983,7 @@ function SupplierDetailPage() {
                                   <TooltipTrigger asChild>
                                     <button
                                       className="flex size-7 cursor-pointer items-center justify-center rounded text-muted-foreground transition-colors hover:bg-background hover:text-foreground"
-                                      aria-label={t("suppliers.detail.bankkonten.bearbeiten")}
+                                      aria-label={t("suppliers.detail.bankAccounts.edit")}
                                       onClick={() => {
                                         setEditAccount(k);
                                         // Grouped, the way the table renders it. The column is
@@ -1004,7 +998,7 @@ function SupplierDetailPage() {
                                     </button>
                                   </TooltipTrigger>
                                   <TooltipContent>
-                                    {t("suppliers.detail.bankkonten.bearbeiten")}
+                                    {t("suppliers.detail.bankAccounts.edit")}
                                   </TooltipContent>
                                 </Tooltip>
                                 {!isStandard && (
@@ -1014,30 +1008,30 @@ function SupplierDetailPage() {
                                         <AlertDialogTrigger asChild>
                                           <button
                                             className="flex size-7 cursor-pointer items-center justify-center rounded text-muted-foreground transition-colors hover:bg-background hover:text-destructive"
-                                            aria-label={t("suppliers.detail.bankkonten.entfernen")}
+                                            aria-label={t("suppliers.detail.bankAccounts.remove")}
                                           >
                                             <X className="size-3.5" />
                                           </button>
                                         </AlertDialogTrigger>
                                       </TooltipTrigger>
                                       <TooltipContent>
-                                        {t("suppliers.detail.bankkonten.entfernen")}
+                                        {t("suppliers.detail.bankAccounts.remove")}
                                       </TooltipContent>
                                     </Tooltip>
                                     <AlertDialogContent>
                                       <AlertDialogHeader>
                                         <AlertDialogTitle>
-                                          {t("suppliers.detail.bankkonten.confirm.title")}
+                                          {t("suppliers.detail.bankAccounts.confirm.title")}
                                         </AlertDialogTitle>
                                         <AlertDialogDescription>
-                                          {t("suppliers.detail.bankkonten.confirm.desc", {
+                                          {t("suppliers.detail.bankAccounts.confirm.desc", {
                                             iban: formatIBAN(k.iban),
                                           })}
                                         </AlertDialogDescription>
                                       </AlertDialogHeader>
                                       <AlertDialogFooter>
                                         <AlertDialogCancel>
-                                          {t("suppliers.detail.bankkonten.confirm.cancel")}
+                                          {t("suppliers.detail.bankAccounts.confirm.cancel")}
                                         </AlertDialogCancel>
                                         <AlertDialogAction
                                           onClick={() =>
@@ -1047,7 +1041,7 @@ function SupplierDetailPage() {
                                                 onSuccess: () =>
                                                   toast.success(
                                                     t(
-                                                      "suppliers.detail.bankkonten.toast.entfernt",
+                                                      "suppliers.detail.bankAccounts.toast.removed",
                                                       {
                                                         iban: formatIBAN(k.iban),
                                                       },
@@ -1056,7 +1050,7 @@ function SupplierDetailPage() {
                                                 onError: (e) =>
                                                   toast.error(
                                                     t(
-                                                      "suppliers.detail.bankkonten.toast.fehlgeschlagen",
+                                                      "suppliers.detail.bankAccounts.toast.failed",
                                                       { error: errorText(e) },
                                                     ),
                                                   ),
@@ -1065,7 +1059,7 @@ function SupplierDetailPage() {
                                           }
                                           className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
                                         >
-                                          {t("suppliers.detail.bankkonten.confirm.confirm")}
+                                          {t("suppliers.detail.bankAccounts.confirm.confirm")}
                                         </AlertDialogAction>
                                       </AlertDialogFooter>
                                     </AlertDialogContent>
@@ -1103,7 +1097,7 @@ function SupplierDetailPage() {
               >
                 <CollapsibleTrigger asChild>
                   <button className="flex w-full items-center justify-between text-xs font-medium text-muted-foreground hover:text-foreground">
-                    {t("suppliers.detail.bankkonten.inaktivTitle", {
+                    {t("suppliers.detail.bankAccounts.inactiveTitle", {
                       count: inactiveAccounts.length,
                     })}
                     <ChevronDown
@@ -1121,7 +1115,7 @@ function SupplierDetailPage() {
                         {formatIBAN(k.iban)}
                       </span>
                       <span className="shrink-0 text-[11px] text-muted-foreground">
-                        {t(`suppliers.detail.bankkonten.quelle.${k.source}`)}
+                        {t(`suppliers.detail.bankAccounts.source.${k.source}`)}
                       </span>
                     </div>
                   ))}
@@ -1140,7 +1134,7 @@ function SupplierDetailPage() {
               >
                 <DialogHeader>
                   <DialogTitle>
-                    {t("suppliers.detail.ibanVerlauf.title", {
+                    {t("suppliers.detail.ibanHistory.title", {
                       count: historyQ.data?.length ?? 0,
                     })}
                   </DialogTitle>
@@ -1154,7 +1148,7 @@ function SupplierDetailPage() {
                     the history hangs beneath it, which is the only reading in which the arrows are
                     true. */}
                 <p className="text-xs text-muted-foreground">
-                  {t("suppliers.detail.ibanVerlauf.hinweis")}
+                  {t("suppliers.detail.ibanHistory.hint")}
                 </p>
                 <ol className="mt-3 max-h-[60vh] overflow-y-auto pr-1">
                   {(historyQ.data ?? []).map((h, i, all) => (
@@ -1185,7 +1179,7 @@ function SupplierDetailPage() {
                         <div className="flex flex-wrap items-baseline gap-x-2 gap-y-0.5">
                           <span className="text-sm font-medium text-foreground">
                             {t(
-                              `suppliers.detail.ibanVerlauf.event.${h.event ?? "default_changed"}`,
+                              `suppliers.detail.ibanHistory.event.${h.event ?? "default_changed"}`,
                             )}
                           </span>
                           <span className="text-xs text-muted-foreground">
@@ -1219,12 +1213,13 @@ function SupplierDetailPage() {
                 }}
               >
                 <DialogHeader>
-                  <DialogTitle>{t("suppliers.detail.bankkonten.editDialog.title")}</DialogTitle>
+                  <DialogTitle>{t("suppliers.detail.bankAccounts.editDialog.title")}</DialogTitle>
                 </DialogHeader>
                 <div className="space-y-3">
                   <div>
                     <Label htmlFor="edit-iban">
-                      {t("suppliers.detail.bankkonten.col.iban")} <span aria-hidden="true">*</span>
+                      {t("suppliers.detail.bankAccounts.col.iban")}{" "}
+                      <span aria-hidden="true">*</span>
                     </Label>
                     <Input
                       id="edit-iban"
@@ -1235,12 +1230,12 @@ function SupplierDetailPage() {
                     />
                     {editIbanInvalid && (
                       <p className="mt-1 text-[11px] text-destructive">
-                        {t("suppliers.detail.bankkonten.toast.ungueltig")}
+                        {t("suppliers.detail.bankAccounts.toast.invalid")}
                       </p>
                     )}
                   </div>
                   <div>
-                    <Label htmlFor="edit-bic">{t("suppliers.detail.bankkonten.col.bic")}</Label>
+                    <Label htmlFor="edit-bic">{t("suppliers.detail.bankAccounts.col.bic")}</Label>
                     <Input
                       id="edit-bic"
                       value={editBic}
@@ -1249,7 +1244,7 @@ function SupplierDetailPage() {
                     />
                   </div>
                   <div>
-                    <Label htmlFor="edit-bank">{t("suppliers.detail.bankkonten.col.bank")}</Label>
+                    <Label htmlFor="edit-bank">{t("suppliers.detail.bankAccounts.col.bank")}</Label>
                     <Input
                       id="edit-bank"
                       value={editBankName}
@@ -1260,7 +1255,7 @@ function SupplierDetailPage() {
                 </div>
                 <DialogFooter>
                   <Button variant="outline" onClick={() => setEditAccount(null)}>
-                    {t("suppliers.detail.bankkonten.dialog.abbrechen")}
+                    {t("suppliers.detail.bankAccounts.dialog.cancel")}
                   </Button>
                   <Button
                     disabled={
@@ -1282,7 +1277,7 @@ function SupplierDetailPage() {
                         {
                           onSuccess: () => {
                             toast.success(
-                              t("suppliers.detail.bankkonten.toast.gespeichert", {
+                              t("suppliers.detail.bankAccounts.toast.saved", {
                                 iban: formatIBAN(compactIBAN(editIban) ?? editIban),
                               }),
                             );
@@ -1290,7 +1285,7 @@ function SupplierDetailPage() {
                           },
                           onError: (e) =>
                             toast.error(
-                              t("suppliers.detail.bankkonten.toast.fehlgeschlagen", {
+                              t("suppliers.detail.bankAccounts.toast.failed", {
                                 error: errorText(e),
                               }),
                             ),
@@ -1298,7 +1293,7 @@ function SupplierDetailPage() {
                       );
                     }}
                   >
-                    {t("suppliers.detail.bankkonten.editDialog.speichern")}
+                    {t("suppliers.detail.bankAccounts.editDialog.save")}
                   </Button>
                 </DialogFooter>
               </DialogContent>
@@ -1310,28 +1305,28 @@ function SupplierDetailPage() {
               existingIbans={activeAccounts.map((k) => k.iban)}
               saving={addBankAccount.isPending}
               labels={{
-                title: t("suppliers.detail.bankkonten.dialog.title"),
-                iban: t("suppliers.detail.bankkonten.col.iban"),
-                bic: t("suppliers.detail.bankkonten.col.bic"),
-                bank: t("suppliers.detail.bankkonten.col.bank"),
-                cancel: t("suppliers.detail.bankkonten.dialog.abbrechen"),
-                save: t("suppliers.detail.bankkonten.dialog.speichern"),
-                invalidIban: t("suppliers.detail.bankkonten.toast.ungueltig"),
-                duplicateIban: t("suppliers.detail.bankkonten.toast.bereitsVorhanden"),
+                title: t("suppliers.detail.bankAccounts.dialog.title"),
+                iban: t("suppliers.detail.bankAccounts.col.iban"),
+                bic: t("suppliers.detail.bankAccounts.col.bic"),
+                bank: t("suppliers.detail.bankAccounts.col.bank"),
+                cancel: t("suppliers.detail.bankAccounts.dialog.cancel"),
+                save: t("suppliers.detail.bankAccounts.dialog.save"),
+                invalidIban: t("suppliers.detail.bankAccounts.toast.invalid"),
+                duplicateIban: t("suppliers.detail.bankAccounts.toast.alreadyExists"),
               }}
               onSave={(input) =>
                 addBankAccount.mutate(input, {
                   onSuccess: () => {
                     setBankDialogOpen(false);
                     toast.success(
-                      t("suppliers.detail.bankkonten.toast.hinzugefuegt", {
+                      t("suppliers.detail.bankAccounts.toast.added", {
                         iban: formatIBAN(input.iban),
                       }),
                     );
                   },
                   onError: (e) =>
                     toast.error(
-                      t("suppliers.detail.bankkonten.toast.fehlgeschlagen", {
+                      t("suppliers.detail.bankAccounts.toast.failed", {
                         error: errorText(e),
                       }),
                     ),
@@ -1344,13 +1339,13 @@ function SupplierDetailPage() {
               {/* Count and total sit ON the heading line. As tiles underneath they were two more
                   boxes competing with the table for the eye, for two numbers that are a subtitle. */}
               <h2 className="flex flex-wrap items-baseline gap-x-2 gap-y-0.5 text-sm font-semibold uppercase tracking-wide text-muted-foreground">
-                {t("suppliers.detail.section.verbucht")}
+                {t("suppliers.detail.section.invoices")}
                 {/* Count and total come from two different queries -- the count from the paged
                     row query's exact count, the sum from the aggregate projection -- so they are
                     gated separately rather than one publishing the other's zero. */}
                 {documentsQ.data !== undefined ? (
                   <span className="text-sm font-normal normal-case tracking-normal text-muted-foreground">
-                    {t("suppliers.detail.gesamt", { count: documentsTotal })}
+                    {t("suppliers.detail.total", { count: documentsTotal })}
                   </span>
                 ) : (
                   <Skeleton className="h-4 w-20" />
@@ -1367,7 +1362,7 @@ function SupplierDetailPage() {
                 {directDebitDocuments.length > 0 && (
                   <span className="inline-flex items-center gap-1 rounded border border-amber-300 bg-amber-50 px-1.5 py-0.5 text-xs font-medium normal-case tracking-normal text-amber-900">
                     <Landmark className="size-3 shrink-0" />
-                    {t("suppliers.detail.lastschrift.anzahl", {
+                    {t("suppliers.detail.directDebit.count", {
                       count: directDebitDocuments.length,
                     })}
                   </span>
@@ -1387,7 +1382,7 @@ function SupplierDetailPage() {
                   }}
                   locale={dateLocale()}
                   formatDay={(iso) => formatDate(iso)}
-                  backLabel={t("home.zeitraumAktion.zurueck")}
+                  backLabel={t("home.periodAction.back")}
                   placeholder={t("documents.list.filter.zeitraum")}
                   ariaLabel={t("documents.list.filter.zeitraum")}
                   className="w-full sm:w-[190px]"
@@ -1420,10 +1415,10 @@ function SupplierDetailPage() {
               <Table containerClassName="max-h-[26rem]">
                 <TableHeader>
                   <TableRow className="bg-muted/40 [&>th]:sticky [&>th]:top-0 [&>th]:z-10 [&>th]:bg-muted">
-                    <TableHead>{t("suppliers.detail.col.beleg")}</TableHead>
-                    <TableHead>{t("suppliers.detail.col.ges")}</TableHead>
-                    <TableHead>{t("suppliers.detail.col.datum")}</TableHead>
-                    <TableHead className="text-right">{t("suppliers.detail.col.betrag")}</TableHead>
+                    <TableHead>{t("suppliers.detail.col.document")}</TableHead>
+                    <TableHead>{t("suppliers.detail.col.company")}</TableHead>
+                    <TableHead>{t("suppliers.detail.col.date")}</TableHead>
+                    <TableHead className="text-right">{t("suppliers.detail.col.amount")}</TableHead>
                     <TableHead>{t("suppliers.detail.col.status")}</TableHead>
                   </TableRow>
                 </TableHeader>
@@ -1438,7 +1433,7 @@ function SupplierDetailPage() {
                     >
                       <TableCell>
                         <div className="font-medium text-foreground">
-                          {b.invoice_number ?? t("suppliers.detail.ohneNr")}
+                          {b.invoice_number ?? t("suppliers.detail.noNumber")}
                         </div>
                         <div className="max-w-[140px] truncate text-xs text-muted-foreground">
                           {b.property_code ?? "—"}
@@ -1458,7 +1453,7 @@ function SupplierDetailPage() {
                           {isDirectDebit(b.payment_method) && (
                             <Landmark
                               className="size-3.5 shrink-0 text-amber-700"
-                              aria-label={t("suppliers.detail.section.lastschrift")}
+                              aria-label={t("suppliers.detail.section.directDebit")}
                             />
                           )}
                           {formatEUR(b.amount_gross)}
@@ -1479,7 +1474,7 @@ function SupplierDetailPage() {
                   {!documentsQ.isLoading && documents.length === 0 && (
                     <TableRow>
                       <TableCell colSpan={5} className="py-8 text-center text-muted-foreground">
-                        {t("suppliers.detail.belegeEmpty")}
+                        {t("suppliers.detail.documentsEmpty")}
                       </TableCell>
                     </TableRow>
                   )}
@@ -1512,7 +1507,7 @@ function SupplierDetailPage() {
                   <div className="flex items-start justify-between gap-2">
                     <div className="min-w-0">
                       <div className="font-medium text-foreground">
-                        {b.invoice_number ?? t("suppliers.detail.ohneNr")}
+                        {b.invoice_number ?? t("suppliers.detail.noNumber")}
                       </div>
                       <div className="truncate text-xs text-muted-foreground">
                         {b.property_code ?? "—"}
@@ -1545,7 +1540,7 @@ function SupplierDetailPage() {
               {documentsQ.isLoading && <SectionSkeleton className="h-80" />}
               {!documentsQ.isLoading && documents.length === 0 && (
                 <p className="rounded-lg border border-border py-8 text-center text-muted-foreground">
-                  {t("suppliers.detail.belegeEmpty")}
+                  {t("suppliers.detail.documentsEmpty")}
                 </p>
               )}
             </div>
@@ -1587,18 +1582,18 @@ function SupplierDetailPage() {
               full
             />
             <LField
-              label={t("suppliers.detail.field.adresse")}
+              label={t("suppliers.detail.field.address")}
               value={f.address}
               onChange={(v) => setF("address", v)}
               full
             />
             <LField
-              label={t("suppliers.detail.field.ustId")}
+              label={t("suppliers.detail.field.vatId")}
               value={f.vat_id}
               onChange={(v) => setF("vat_id", v)}
             />
             <LField
-              label={t("suppliers.detail.field.telefon")}
+              label={t("suppliers.detail.field.phone")}
               value={f.phone}
               onChange={(v) => setF("phone", v)}
             />
@@ -1608,7 +1603,7 @@ function SupplierDetailPage() {
               onChange={(v) => setF("email", v)}
             />
             <LField
-              label={t("suppliers.detail.field.ansprechpartner")}
+              label={t("suppliers.detail.field.contact")}
               value={f.contact_person}
               onChange={(v) => setF("contact_person", v)}
               full
@@ -1616,12 +1611,12 @@ function SupplierDetailPage() {
           </div>
           <DialogFooter>
             <Button variant="outline" onClick={cancel}>
-              {t("suppliers.detail.action.abbrechen")}
+              {t("suppliers.detail.action.cancel")}
             </Button>
             <Button onClick={save} disabled={updateL.isPending || !hatChanges}>
               {updateL.isPending
-                ? t("suppliers.detail.action.speichere")
-                : t("suppliers.detail.action.speichern")}
+                ? t("suppliers.detail.action.saving")
+                : t("suppliers.detail.action.save")}
             </Button>
           </DialogFooter>
         </DialogContent>

@@ -351,28 +351,28 @@ function CompanyDetailPage() {
   // read their master data from.
   const masterData: Fact[] = [
     {
-      label: t("companies.detail.field.bereich"),
-      value: g.area ? t(`approvalRules.bereich.${g.area}`) : null,
+      label: t("companies.detail.field.area"),
+      value: g.area ? t(`approvalRules.area.${g.area}`) : null,
     },
     {
-      label: t("companies.detail.field.buchungsbasis"),
+      label: t("companies.detail.field.bookingBasis"),
       // NULL is shown as the rule that actually applies, not as a blank: the Kostenanalyse falls
       // back to the payment date, so an em dash here would hide a decision that is being made.
-      value: t(`companies.buchungsbasis.${g.booking_basis ?? "payment_date"}`),
+      value: t(`companies.bookingBasis.${g.booking_basis ?? "payment_date"}`),
     },
     // The number every invoice booked to Gemeinkosten in this company carries. Shown rather than
     // hidden when missing, because an empty value here is why those invoices say none is recorded.
     {
-      label: t("companies.detail.field.gemeinkosten"),
+      label: t("companies.detail.field.overheadCentre"),
       value:
         g.overhead_cost_centre != null
           ? String(g.overhead_cost_centre)
-          : t("companies.detail.field.gemeinkostenFehlt"),
+          : t("companies.detail.field.overheadCentreMissing"),
     },
-    { label: t("companies.detail.field.ablage"), value: filingPath, wide: true },
-    { label: t("companies.detail.field.erstellt"), value: formatDate(g.created_at) },
+    { label: t("companies.detail.field.folder"), value: filingPath, wide: true },
+    { label: t("companies.detail.field.created"), value: formatDate(g.created_at) },
     {
-      label: t("companies.detail.field.aktualisiert"),
+      label: t("companies.detail.field.updated"),
       value: formatDate(g.updated_at ?? g.created_at),
     },
   ];
@@ -400,7 +400,7 @@ function CompanyDetailPage() {
     if (folder !== (g.filing_folder ?? null)) changes.filing_folder = folder;
     const overhead = f.overhead.trim();
     if (overhead !== "" && !/^[1-9]\d{0,8}$/.test(overhead)) {
-      setError({ overhead: t("companies.detail.field.gemeinkostenUngueltig") });
+      setError({ overhead: t("companies.detail.field.overheadCentreInvalid") });
       return;
     }
     const overheadNumber = overhead === "" ? null : Number(overhead);
@@ -416,19 +416,19 @@ function CompanyDetailPage() {
     }
     setError({});
     if (Object.keys(changes).length === 0) {
-      toast.info(t("companies.detail.toast.keineAenderungen"));
+      toast.info(t("companies.detail.toast.noChanges"));
       setEdit(false);
       return;
     }
     updateG.mutate(changes, {
       onSuccess: () => {
-        toast.success(t("companies.detail.toast.gespeichert"));
+        toast.success(t("companies.detail.toast.saved"));
         setForm(null);
         setEdit(false);
       },
       onError: (e) =>
         toast.error(
-          t("companies.detail.toast.speichernFehlgeschlagen", {
+          t("companies.detail.toast.saveFailed", {
             error: errorText(e),
           }),
         ),
@@ -462,17 +462,17 @@ function CompanyDetailPage() {
           </h1>
           {g.area && (
             <span className="inline-flex items-center rounded-md bg-muted px-2 py-0.5 text-xs text-foreground">
-              {t(`approvalRules.bereich.${g.area}`)}
+              {t(`approvalRules.area.${g.area}`)}
             </span>
           )}
         </div>
         <div className="flex flex-wrap items-center gap-2">
           <Button onClick={startEdit} className="gap-2">
-            <Pencil className="size-4" /> {t("companies.detail.action.bearbeiten")}
+            <Pencil className="size-4" /> {t("companies.detail.action.edit")}
           </Button>
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
-              <Button variant="outline" size="icon" aria-label={t("companies.detail.action.mehr")}>
+              <Button variant="outline" size="icon" aria-label={t("companies.detail.action.more")}>
                 <MoreVertical className="size-4" />
               </Button>
             </DropdownMenuTrigger>
@@ -489,7 +489,7 @@ function CompanyDetailPage() {
               </DropdownMenuItem>
               <DropdownMenuItem asChild className="cursor-pointer">
                 <Link to="/properties">
-                  <Archive className="size-4" /> {t("companies.detail.action.objekte")}
+                  <Archive className="size-4" /> {t("companies.detail.action.properties")}
                 </Link>
               </DropdownMenuItem>
               <DropdownMenuSeparator />
@@ -500,24 +500,24 @@ function CompanyDetailPage() {
                   disabled={restoreG.isPending}
                   onSelect={() =>
                     restoreG.mutate(undefined, {
-                      onSuccess: () => toast.success(t("companies.detail.toast.wiederhergestellt")),
+                      onSuccess: () => toast.success(t("companies.detail.toast.restored")),
                       onError: (e) =>
                         toast.error(
-                          t("companies.detail.toast.archivierenFehlgeschlagen", {
+                          t("companies.detail.toast.archiveFailed", {
                             error: errorText(e),
                           }),
                         ),
                     })
                   }
                 >
-                  <RotateCcw className="size-4" /> {t("companies.detail.action.wiederherstellen")}
+                  <RotateCcw className="size-4" /> {t("companies.detail.action.restore")}
                 </DropdownMenuItem>
               ) : (
                 <DropdownMenuItem
                   className="cursor-pointer text-destructive focus:text-destructive"
                   onSelect={() => setArchiveOpen(true)}
                 >
-                  <Archive className="size-4" /> {t("companies.detail.action.archivieren")}
+                  <Archive className="size-4" /> {t("companies.detail.action.archive")}
                 </DropdownMenuItem>
               )}
             </DropdownMenuContent>
@@ -531,14 +531,14 @@ function CompanyDetailPage() {
       >
         <AlertDialogContent>
           <AlertDialogHeader>
-            <AlertDialogTitle>{t("companies.detail.objektEntfernen.titel")}</AlertDialogTitle>
+            <AlertDialogTitle>{t("companies.detail.propertyRemove.title")}</AlertDialogTitle>
             <AlertDialogDescription>
               {propertyRemove?.lastCompany
-                ? t("companies.detail.objektEntfernen.letzte", {
+                ? t("companies.detail.propertyRemove.onlyCompany", {
                     property: propertyRemove.code,
                     company: g.code,
                   })
-                : t("companies.detail.objektEntfernen.beschreibung", {
+                : t("companies.detail.propertyRemove.description", {
                     property: propertyRemove
                       ? `${propertyRemove.code}${propertyRemove.name ? ` · ${propertyRemove.name}` : ""}`
                       : "",
@@ -547,7 +547,7 @@ function CompanyDetailPage() {
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
-            <AlertDialogCancel>{t("companies.detail.archiv.cancel")}</AlertDialogCancel>
+            <AlertDialogCancel>{t("companies.detail.archive.cancel")}</AlertDialogCancel>
             <AlertDialogAction
               className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
               disabled={!propertyRemove || propertyRemove.lastCompany || removeProperty.isPending}
@@ -558,7 +558,7 @@ function CompanyDetailPage() {
                   {
                     onSuccess: () => {
                       toast.success(
-                        t("companies.detail.objektEntfernen.erfolg", {
+                        t("companies.detail.propertyRemove.success", {
                           property: propertyRemove.code,
                         }),
                       );
@@ -566,7 +566,7 @@ function CompanyDetailPage() {
                     },
                     onError: (e) =>
                       toast.error(
-                        t("companies.detail.toast.speichernFehlgeschlagen", {
+                        t("companies.detail.toast.saveFailed", {
                           error: errorText(e),
                         }),
                       ),
@@ -574,7 +574,7 @@ function CompanyDetailPage() {
                 );
               }}
             >
-              {t("companies.detail.objektEntfernen.bestaetigen")}
+              {t("companies.detail.propertyRemove.confirm")}
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
@@ -583,32 +583,32 @@ function CompanyDetailPage() {
       <AlertDialog open={archiveOpen} onOpenChange={setArchiveOpen}>
         <AlertDialogContent>
           <AlertDialogHeader>
-            <AlertDialogTitle>{t("companies.detail.archiv.title")}</AlertDialogTitle>
+            <AlertDialogTitle>{t("companies.detail.archive.title")}</AlertDialogTitle>
             <AlertDialogDescription>
-              {t("companies.detail.archiv.desc")}
+              {t("companies.detail.archive.desc")}
               {totalsReady && allDocuments.length > 0
-                ? " " + t("companies.detail.archiv.mitBelegen", { count: allDocuments.length })
+                ? " " + t("companies.detail.archive.withDocuments", { count: allDocuments.length })
                 : ""}
             </AlertDialogDescription>
           </AlertDialogHeader>
           <Input
             value={archiveReason}
             onChange={(e) => setArchiveReason(e.target.value)}
-            placeholder={t("companies.detail.archiv.grundPlaceholder")}
+            placeholder={t("companies.detail.archive.reasonPlaceholder")}
           />
           <AlertDialogFooter>
-            <AlertDialogCancel>{t("companies.detail.archiv.cancel")}</AlertDialogCancel>
+            <AlertDialogCancel>{t("companies.detail.archive.cancel")}</AlertDialogCancel>
             <AlertDialogAction
               disabled={!archiveReason.trim()}
               onClick={() =>
                 archiveG.mutate(archiveReason.trim(), {
                   onSuccess: () => {
-                    toast.success(t("companies.detail.toast.archiviert"));
+                    toast.success(t("companies.detail.toast.archived"));
                     setArchiveReason("");
                   },
                   onError: (e) =>
                     toast.error(
-                      t("companies.detail.toast.archivierenFehlgeschlagen", {
+                      t("companies.detail.toast.archiveFailed", {
                         error: errorText(e),
                       }),
                     ),
@@ -616,7 +616,7 @@ function CompanyDetailPage() {
               }
               className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
             >
-              {t("companies.detail.archiv.confirm")}
+              {t("companies.detail.archive.confirm")}
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
@@ -627,9 +627,9 @@ function CompanyDetailPage() {
       {g.deleted_at && (
         <div className="mt-4 flex items-center gap-2 rounded-lg border border-border bg-muted/40 px-3 py-2.5 text-sm text-muted-foreground">
           <Archive className="size-4 shrink-0" />
-          {t("companies.detail.archiv.banner", {
+          {t("companies.detail.archive.banner", {
             datum: formatDate(g.deleted_at),
-            reason: g.delete_reason?.trim() || t("companies.detail.archiv.ohneGrund"),
+            reason: g.delete_reason?.trim() || t("companies.detail.archive.ohneGrund"),
           })}
         </div>
       )}
@@ -644,7 +644,7 @@ function CompanyDetailPage() {
         <div className="space-y-6">
           <section className="rounded-xl border border-border bg-card p-5">
             <h2 className="mb-4 text-sm font-semibold uppercase tracking-wide text-muted-foreground">
-              {t("companies.detail.section.stammdaten")}
+              {t("companies.detail.section.masterData")}
             </h2>
             <FactList facts={masterData} columns={2} />
           </section>
@@ -652,10 +652,10 @@ function CompanyDetailPage() {
           <section className="rounded-xl border border-border bg-card p-5">
             <div className="mb-3 flex flex-wrap items-center justify-between gap-2">
               <h2 className="flex flex-wrap items-baseline gap-x-2 text-sm font-semibold uppercase tracking-wide text-muted-foreground">
-                {t("companies.detail.section.objekte")}
+                {t("companies.detail.section.properties")}
                 {propertiesReady && properties.length > 0 && (
                   <span className="text-sm font-normal normal-case tracking-normal text-muted-foreground">
-                    {t("companies.detail.objekteCount", { count: properties.length })}
+                    {t("companies.detail.propertiesCount", { count: properties.length })}
                   </span>
                 )}
               </h2>
@@ -666,13 +666,15 @@ function CompanyDetailPage() {
                 disabled={!propertiesReady}
                 onClick={() => setAssignmentDialog({ link: null })}
               >
-                <Plus className="size-3.5" /> {t("companies.detail.objektHinzufuegen")}
+                <Plus className="size-3.5" /> {t("companies.detail.propertyAdd")}
               </Button>
             </div>
             {!propertiesReady ? (
               <SectionSkeleton className="h-16" />
             ) : properties.length === 0 ? (
-              <p className="text-sm text-muted-foreground">{t("companies.detail.objekteEmpty")}</p>
+              <p className="text-sm text-muted-foreground">
+                {t("companies.detail.propertiesEmpty")}
+              </p>
             ) : (
               <div className="space-y-1.5">
                 {properties.map((o) => {
@@ -704,8 +706,8 @@ function CompanyDetailPage() {
                           }
                         >
                           {link.number != null
-                            ? t("properties.detail.kostenstelle", { nr: link.number })
-                            : t("properties.detail.kostenstelleFehlt")}
+                            ? t("properties.detail.costCentre", { nr: link.number })
+                            : t("properties.detail.costCentreMissing")}
                         </span>
                       )}
                       {link && (
@@ -715,8 +717,8 @@ function CompanyDetailPage() {
                             variant="ghost"
                             className="size-7"
                             onClick={() => setAssignmentDialog({ link: link.link })}
-                            aria-label={t("properties.detail.zuordnungBearbeiten")}
-                            title={t("properties.detail.zuordnungBearbeiten")}
+                            aria-label={t("properties.detail.assignmentEdit")}
+                            title={t("properties.detail.assignmentEdit")}
                           >
                             <Pencil className="size-3.5" />
                           </Button>
@@ -731,10 +733,10 @@ function CompanyDetailPage() {
                                 lastCompany: link.count <= 1,
                               })
                             }
-                            aria-label={t("companies.detail.objektEntfernen.aktion", {
+                            aria-label={t("companies.detail.propertyRemove.action", {
                               property: o.code,
                             })}
-                            title={t("companies.detail.objektEntfernen.aktion", {
+                            title={t("companies.detail.propertyRemove.action", {
                               property: o.code,
                             })}
                             className="size-7 text-destructive hover:bg-destructive/10 hover:text-destructive"
@@ -765,14 +767,14 @@ function CompanyDetailPage() {
               {/* Count and total sit ON the heading line. As tiles underneath they were two more
                   boxes competing with the table for the eye, for two numbers that are a subtitle. */}
               <h2 className="flex flex-wrap items-baseline gap-x-2 gap-y-0.5 text-sm font-semibold uppercase tracking-wide text-muted-foreground">
-                {t("companies.detail.section.verbucht")}
+                {t("companies.detail.section.invoices")}
                 {/* Count and total come from two different queries -- the count from the paged
                     row query's exact count, the sum from the aggregate projection -- so they are
                     gated separately. Sharing one flag meant whichever landed first published the
                     other's zero as a settled figure. */}
                 {documentsReady ? (
                   <span className="text-sm font-normal normal-case tracking-normal text-muted-foreground">
-                    {t("companies.detail.gesamt", { count: documentsTotal })}
+                    {t("companies.detail.total", { count: documentsTotal })}
                   </span>
                 ) : (
                   <Skeleton className="h-4 w-20" />
@@ -798,7 +800,7 @@ function CompanyDetailPage() {
                 }}
                 locale={dateLocale()}
                 formatDay={(iso) => formatDate(iso)}
-                backLabel={t("home.zeitraumAktion.zurueck")}
+                backLabel={t("home.periodAction.back")}
                 placeholder={t("documents.list.filter.zeitraum")}
                 ariaLabel={t("documents.list.filter.zeitraum")}
                 className="w-full sm:w-[190px]"
@@ -819,7 +821,7 @@ function CompanyDetailPage() {
               <div className="mb-4 flex items-start gap-2 rounded-lg border border-warning/40 bg-warning-soft px-3 py-2 text-warning">
                 <TriangleAlert className="mt-0.5 size-4 shrink-0" />
                 <p className="text-xs">
-                  {t("companies.detail.fremdeObjekte", {
+                  {t("companies.detail.foreignProperties", {
                     count: foreignDocuments.length,
                     total: formatEUR(foreignTotal),
                   })}
@@ -832,8 +834,8 @@ function CompanyDetailPage() {
             ) : documents.length === 0 ? (
               <p className="rounded-lg border border-border px-4 py-12 text-center text-sm text-muted-foreground">
                 {allDocuments.length === 0
-                  ? t("companies.detail.belegeEmpty")
-                  : t("companies.detail.belegeEmptyZeitraum")}
+                  ? t("companies.detail.documentsEmpty")
+                  : t("companies.detail.documentsEmptyPeriod")}
               </p>
             ) : (
               <>
@@ -847,11 +849,11 @@ function CompanyDetailPage() {
                   <Table containerClassName="max-h-[26rem]">
                     <TableHeader>
                       <TableRow className="bg-muted/40 [&>th]:sticky [&>th]:top-0 [&>th]:z-10 [&>th]:bg-muted">
-                        <TableHead>{t("companies.detail.col.beleg")}</TableHead>
-                        <TableHead>{t("companies.detail.col.objekt")}</TableHead>
-                        <TableHead>{t("companies.detail.col.datum")}</TableHead>
+                        <TableHead>{t("companies.detail.col.document")}</TableHead>
+                        <TableHead>{t("companies.detail.col.property")}</TableHead>
+                        <TableHead>{t("companies.detail.col.date")}</TableHead>
                         <TableHead className="text-right">
-                          {t("companies.detail.col.betrag")}
+                          {t("companies.detail.col.amount")}
                         </TableHead>
                         <TableHead>{t("companies.detail.col.status")}</TableHead>
                       </TableRow>
@@ -866,7 +868,7 @@ function CompanyDetailPage() {
                           }
                         >
                           <TableCell className="font-medium text-foreground">
-                            {b.invoice_number ?? t("companies.detail.ohneNr")}
+                            {b.invoice_number ?? t("companies.detail.noNumber")}
                           </TableCell>
                           <TableCell className="text-sm text-muted-foreground">
                             <PropertyCell
@@ -914,7 +916,7 @@ function CompanyDetailPage() {
                       <div className="flex items-start justify-between gap-3">
                         <div className="min-w-0">
                           <div className="font-medium text-foreground">
-                            {b.invoice_number ?? t("companies.detail.ohneNr")}
+                            {b.invoice_number ?? t("companies.detail.noNumber")}
                           </div>
                           <div className="mt-0.5 text-xs text-muted-foreground">
                             {formatDate(b.document_date)}
@@ -984,18 +986,16 @@ function CompanyDetailPage() {
             </div>
             <div className="space-y-1">
               <Label className="text-xs text-muted-foreground">
-                {t("companies.detail.field.bereich")}
+                {t("companies.detail.field.area")}
               </Label>
               <Select value={f.area} onValueChange={(v) => setF("area", v)}>
                 <SelectTrigger>
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value={AREA_LEER}>{t("approvalRules.bereich.keiner")}</SelectItem>
-                  <SelectItem value="hospitality">
-                    {t("approvalRules.bereich.hospitality")}
-                  </SelectItem>
-                  <SelectItem value="stay_re">{t("approvalRules.bereich.stay_re")}</SelectItem>
+                  <SelectItem value={AREA_LEER}>{t("approvalRules.area.noneOption")}</SelectItem>
+                  <SelectItem value="hospitality">{t("approvalRules.area.hospitality")}</SelectItem>
+                  <SelectItem value="stay_re">{t("approvalRules.area.stay_re")}</SelectItem>
                 </SelectContent>
               </Select>
             </div>
@@ -1004,7 +1004,7 @@ function CompanyDetailPage() {
                 be changed in SQL, so every company silently ran on the payment-date fallback. */}
             <div className="space-y-1">
               <Label className="text-xs text-muted-foreground">
-                {t("companies.detail.field.buchungsbasis")}
+                {t("companies.detail.field.bookingBasis")}
               </Label>
               <Select
                 value={f.bookingBasis}
@@ -1015,15 +1015,15 @@ function CompanyDetailPage() {
                 </SelectTrigger>
                 <SelectContent>
                   <SelectItem value="invoice_date">
-                    {t("companies.buchungsbasis.invoice_date")}
+                    {t("companies.bookingBasis.invoice_date")}
                   </SelectItem>
                   <SelectItem value="payment_date">
-                    {t("companies.buchungsbasis.payment_date")}
+                    {t("companies.bookingBasis.payment_date")}
                   </SelectItem>
                 </SelectContent>
               </Select>
               <p className="text-xs text-muted-foreground">
-                {t("companies.detail.field.buchungsbasisHinweis")}
+                {t("companies.detail.field.bookingBasisHint")}
               </p>
             </div>
             {/* companies.overhead_cost_centre: the cost centre for everything booked to Gemeinkosten in
@@ -1031,23 +1031,23 @@ function CompanyDetailPage() {
                 SQL. Updating a company is admin-only, so this field is too. */}
             <div className="space-y-1">
               <Label className="text-xs text-muted-foreground">
-                {t("companies.detail.field.gemeinkosten")}
+                {t("companies.detail.field.overheadCentre")}
               </Label>
               <Input
                 inputMode="numeric"
                 value={f.overhead}
                 onChange={(e) => setF("overhead", e.target.value)}
                 aria-invalid={!!error.overhead}
-                placeholder={t("companies.detail.field.gemeinkostenPlatzhalter")}
+                placeholder={t("companies.detail.field.overheadCentrePlaceholder")}
               />
               <FieldErrorText text={error.overhead} />
               <p className="text-xs text-muted-foreground">
-                {t("companies.detail.field.gemeinkostenHinweis")}
+                {t("companies.detail.field.overheadCentreHint")}
               </p>
             </div>
             <div className="space-y-1">
               <Label className="text-xs text-muted-foreground">
-                {t("companies.detail.field.ablage")}
+                {t("companies.detail.field.folder")}
               </Label>
               <FolderTreePicker
                 folders={filingFoldersQ.data}
@@ -1056,23 +1056,23 @@ function CompanyDetailPage() {
                 multi={false}
                 placeholder={
                   filingFoldersQ.isLoading
-                    ? t("documentSources.folder.laedt")
-                    : t("companies.detail.field.ablagePlaceholder")
+                    ? t("documentSources.folder.loading")
+                    : t("companies.detail.field.folderPlaceholder")
                 }
               />
               <p className="text-xs text-muted-foreground">
-                {t("companies.detail.field.ablageHinweis")}
+                {t("companies.detail.field.folderHint")}
               </p>
             </div>
           </div>
           <DialogFooter>
             <Button variant="outline" onClick={cancel}>
-              {t("companies.detail.action.abbrechen")}
+              {t("companies.detail.action.cancel")}
             </Button>
             <Button onClick={save} disabled={updateG.isPending}>
               {updateG.isPending
-                ? t("companies.detail.action.speichere")
-                : t("companies.detail.action.speichern")}
+                ? t("companies.detail.action.saving")
+                : t("companies.detail.action.save")}
             </Button>
           </DialogFooter>
         </DialogContent>
@@ -1102,7 +1102,7 @@ function PropertyCell({
   return (
     <span
       className="inline-flex items-center gap-1 font-medium text-warning"
-      title={t("companies.detail.fremdesObjektHinweis", {
+      title={t("companies.detail.foreignPropertyHint", {
         property: code,
         companies: (foreignProperties.get(code) ?? [])
           .map((cid) => companyCodeById.get(cid) ?? cid)

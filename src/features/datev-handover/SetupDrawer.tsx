@@ -102,11 +102,10 @@ export function SetupDrawer({
       },
       {
         onSuccess: () => {
-          toast.success(t("handover.setup.gespeichert"));
+          toast.success(t("handover.setup.saved"));
           onOpenChange(false);
         },
-        onError: (e: unknown) =>
-          toast.error(t("handover.setup.fehlgeschlagen", { error: errorText(e) })),
+        onError: (e: unknown) => toast.error(t("handover.setup.failed", { error: errorText(e) })),
       },
     );
   }
@@ -123,9 +122,7 @@ export function SetupDrawer({
 
         <div className="mt-6 flex-1 space-y-6">
           <div>
-            <Label className="text-xs text-muted-foreground">
-              {t("handover.setup.gesellschaft")}
-            </Label>
+            <Label className="text-xs text-muted-foreground">{t("handover.setup.company")}</Label>
             <p className="mt-1 font-medium text-foreground">
               {row.company.code}
               {row.company.name && (
@@ -160,10 +157,10 @@ export function SetupDrawer({
             onClick={() => onOpenChange(false)}
             disabled={saveRoutes.isPending}
           >
-            {t("handover.aktion.abbrechen")}
+            {t("handover.action.cancel")}
           </Button>
           <Button onClick={save} disabled={nothingZuSave || saveRoutes.isPending}>
-            {t("handover.setup.speichern")}
+            {t("handover.setup.save")}
           </Button>
         </SheetFooter>
       </SheetContent>
@@ -199,7 +196,7 @@ function AddressField({
     <div className="rounded-lg border border-border p-3">
       <div className="flex flex-wrap items-center justify-between gap-2">
         <Label htmlFor={fieldId} className="text-sm font-medium text-foreground">
-          {t(`handover.setup.adresseFuer.${direction}`)}
+          {t(`handover.setup.addressFor.${direction}`)}
         </Label>
         {/* Per address, not per company: the send checks `is_enabled` on the row it is about to
             use, so one company can have a live incoming address and a paused outgoing one. */}
@@ -210,7 +207,7 @@ function AddressField({
             onCheckedChange={(v) => onChange({ isEnabled: v })}
           />
           <Label htmlFor={switchId} className="text-xs font-normal text-muted-foreground">
-            {t("handover.setup.aktivKurz")}
+            {t("handover.setup.activeShort")}
           </Label>
         </div>
       </div>
@@ -220,13 +217,13 @@ function AddressField({
         className="mt-2"
         value={draft.address}
         onChange={(e) => onChange({ address: e.target.value })}
-        placeholder={existing ? t("handover.setup.adresseVorhanden") : "name@uploadmail.datev.de"}
+        placeholder={existing ? t("handover.setup.addressOnFile") : "name@uploadmail.datev.de"}
       />
       {/* One line, under the address that actually sends. The "•••• hinterlegt" placeholder is what
           says an address is already on file — and, by standing in the field rather than beside it,
           what says leaving the field alone leaves the stored address alone. */}
       {direction === "incoming" && (
-        <p className="mt-1.5 text-xs text-muted-foreground">{t("handover.setup.adresseHilfe")}</p>
+        <p className="mt-1.5 text-xs text-muted-foreground">{t("handover.setup.addressHelp")}</p>
       )}
     </div>
   );

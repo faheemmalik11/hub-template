@@ -25,11 +25,7 @@ import type { NotificationTargetKind } from "@/lib/data/notification-target";
 // Team & Rollen (Briefing Screen 17, Appendix A7)
 // ===========================================================================
 
-// The three roles an admin may ASSIGN from the UI. 'super_admin' (the owner/technical account) is
-// deliberately excluded: it is not assignable, and the DB refuses to grant it besides
-// (guard_super_admin_row, migrations 20260813120000 + 20260813140000). It IS visible now -- Team & Rollen lists it
-// pinned and highlighted so its name can be edited -- which reverses A7's original "invisible to
-// the client entirely"; everything about it except the name stays read-only.
+// 'super_admin' is deliberately excluded from assignment; the DB also refuses to grant it (guard_super_admin_row).
 export type AssignableRole = Exclude<AppRole, "super_admin">;
 
 export function useRoles() {
@@ -44,12 +40,6 @@ export function useRoles() {
   });
 }
 
-/**
- * What each role grants by default, keyed by role id.
- *
- * Read whole rather than per role: the Team screen renders a matrix, and `useEmployees` already
- * folds these into each person's effective set, so the two must come from the same fetch shape.
- */
 export function useRolePermissions() {
   return useQuery({
     queryKey: ["role-permissions"],
@@ -68,17 +58,7 @@ export function useRolePermissions() {
   });
 }
 
-/**
- * Grant or revoke a permission for a whole ROLE.
- *
- * Absence is the answer here -- `role_permissions` has no `granted` column, so a revoke is a
- * delete. Verified against the live policies: `role_permissions_write` is `for all` gated on
- * `is_admin()`, so both directions work for an admin and are refused for anyone else at the
- * database, not just in this UI.
- *
- * Logged, because it moves everyone holding that role who has no personal override -- the one
- * change in this system with blast radius beyond a single person.
- */
+// `role_permissions` has no `granted` column, so a revoke is a row delete, not an update.
 export function useSetRolePermission() {
   const qc = useQueryClient();
   return useMutation({
@@ -109,8 +89,6 @@ export function useSetRolePermission() {
     },
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ["role-permissions"] });
-      // Employee rows show EFFECTIVE permissions, which fold in these defaults: a role change moves
-      // everyone without a personal override, so that list is stale the moment this succeeds.
       qc.invalidateQueries({ queryKey: ["employees"] });
     },
   });
@@ -174,11 +152,7 @@ function effectivePermissions(
   return [...keys].filter((k) => own.get(k) ?? roleDefaults.has(k));
 }
 
-// Admin-only (RLS: app_users_admin_read).
-// Returns EVERY employee, super_admin included, because Team & Rollen has to list and rename them.
-// Super admin is deliberately NOT filtered here any more, so any consumer that must not offer it --
-// the approval-rule pickers, where a super admin must never appear as a step or a deputy --
-// filters on role_name itself. See freigabe-regeln/index.tsx and team/index.tsx for both of those.
+// Returns every employee including super_admin; consumers that must exclude it filter on role_name themselves.
 export function useEmployees() {
   return useQuery({
     queryKey: ["employees"],
@@ -215,11 +189,7 @@ export function useEmployees() {
         allowed_company_ids: row.user_company_access
           .filter((g) => g.can_view && g.deleted_at === null)
           .map((g) => g.company_id),
-        // Effective = the person's own override where one exists, otherwise their role's default.
-        // The same rule current_permissions() applies server-side, so the switches on Team & Rollen
-        // show what the database would actually decide. Nothing is forced by role here: an earlier
-        // version rewrote an admin's value to true before the UI saw it, which meant their switch
-        // could be turned off, written, and still read back as on.
+        // Effective = the person's own override where one exists, otherwise their role's default — matches current_permissions() server-side.
         deputy_user_id: row.deputy_user_id,
         escalation_days: row.escalation_days,
         area: row.area,
@@ -237,16 +207,12 @@ function invalidateEmployeeState(qc: ReturnType<typeof useQueryClient>) {
   qc.invalidateQueries({ queryKey: ["employees"] });
 }
 
-// Toggle one of the three itemized accounting capabilities (migration 20260812150000). Distinct
-// from useUpdateEmployeeRole: role changes what screens someone can reach, this changes whether
-// they're flagged as trusted for booking/approving/paying specifically.
+// Distinct from useUpdateEmployeeRole: that changes screen access, this flags trust for booking/approving/paying.
 export function useSetAccountingRight() {
   const qc = useQueryClient();
   return useMutation({
     mutationFn: async (args: { employeeId: string; right: string; value: boolean }) => {
-      // Written as an explicit row in BOTH directions. `granted: false` is a REVOKE of something the
-      // role would otherwise grant -- deleting the row instead would silently fall back to the role
-      // default, so an admin could never be denied a permission their role includes.
+      // `granted: false` is an explicit REVOKE row, not a delete -- a delete would fall back to the role default.
       const { error } = await sb.from(TABLE.userPermissions).upsert(
         {
           user_id: args.employeeId,
@@ -288,11 +254,7 @@ export function useCreateEmployee() {
   });
 }
 
-// Delegates to the server function (updateEmployeeProfile) rather than writing app_users
-// directly: renaming is a plain row edit, but the email is also the employee's login identity
-// (matched against auth.jwt() by has_company_access()/current_role_name()), so it has to update
-// the real Supabase Auth account in lockstep -- only server code holding the service-role key
-// can do that. See employees.functions.ts for the full reasoning.
+// Delegates to the server function: the email is also the login identity, so it must update Supabase Auth in lockstep.
 export function useUpdateEmployeeProfile() {
   const qc = useQueryClient();
   return useMutation({
@@ -303,10 +265,7 @@ export function useUpdateEmployeeProfile() {
   });
 }
 
-// Delegates to the server function (resetEmployeePassword) -- setting a Supabase Auth password
-// needs the service-role Admin API, same as createEmployee/updateEmployeeProfile. Returns a
-// fresh one-time temp password the admin hands to the employee; must_change_password is flipped
-// back to true server-side so it's forced to be replaced on next login (see auth-gate.tsx).
+// Returns a fresh temp password; must_change_password is flipped back to true server-side.
 export function useResetEmployeePassword() {
   const qc = useQueryClient();
   return useMutation({
@@ -321,10 +280,7 @@ export function useUpdateEmployeeRole() {
   const qc = useQueryClient();
   return useMutation({
     mutationFn: async (args: { employeeId: string; roleName: AssignableRole }) => {
-      // Resolve the TARGET role's id from its name. This used to take a `roleId` argument, and
-      // every caller passed the employee's CURRENT role_id -- so the update wrote the same value
-      // back and the role never changed, while still writing a "Rolle geändert auf X"
-      // change_history row and returning success. Role edits silently did nothing.
+      // Resolves the TARGET role's id from its name -- a prior `roleId` param let callers pass the current role back and silently no-op.
       const { data: role, error: roleError } = await sb
         .from(TABLE.roles)
         .select("id")
@@ -350,21 +306,8 @@ export function useUpdateEmployeeRole() {
   });
 }
 
-// Replaces the full grant set for an employee. Upsert-then-soft-delete, deliberately in that
-// order: if the upsert of the new grants fails, the mutation throws with the employee's PRIOR
-// grants still fully intact; only once the new grants are safely written do the old ones get
-// revoked. The reverse order (revoke-then-upsert) has a real failure window in the middle where
-// the employee would have zero grants recorded -- which has_company_access() reads as
-// UNRESTRICTED ("no grants = everything"), i.e. a failed edit could silently widen a restricted
-// employee's access instead of leaving them at their narrower prior state. An empty companyIds
-// array is itself a deliberate, valid end state ("unrestricted"), just never one reached via a
-// mid-mutation failure.
-//
-// Revoking is a soft-delete (deleted_at), not a row delete: user_company_access has admin
-// select/insert/update RLS policies but deliberately no delete policy (migration 0059), so a
-// plain .delete() call silently removes zero rows under RLS -- no error, no effect -- instead of
-// failing loudly. has_company_access() already filters on deleted_at is null, so setting it is
-// the real revoke.
+// Upsert-then-soft-delete, deliberately in that order: a failure mid-mutation must leave prior grants intact,
+// never a zero-grants window that has_company_access() would read as unrestricted.
 export function useSetCompanyAccess() {
   const qc = useQueryClient();
   return useMutation({
@@ -425,20 +368,7 @@ export function useSetEmployeeActive() {
   });
 }
 
-// ===========================================================================
-// Papierkorb (Briefing Screen 18)
-// ===========================================================================
-
-/**
- * The trash list.
- *
- * Paged through `fetchAllRows` rather than sent as one open-ended select. `v_trash` is a 14-way
- * UNION ALL over every soft-deletable table in the system, so it is the query in this file most
- * likely to cross the platform's per-request row cap first — and when an unbounded select crosses
- * it, PostgREST returns a silent prefix. Ordered newest-first, that prefix drops the OLDEST
- * deletions, which are exactly the ones somebody is looking for when they open this screen.
- * (docs/audit/papierkorb/trash/ISSUES.md #4)
- */
+// Paged through fetchAllRows: an unbounded select on this 14-way UNION view could silently drop the oldest rows.
 export function useTrash(tableFilter?: string) {
   return useQuery({
     queryKey: ["trash", tableFilter ?? "alle"],
@@ -491,21 +421,15 @@ export function useTrashTables() {
 
 function invalidateTrashState(qc: ReturnType<typeof useQueryClient>) {
   qc.invalidateQueries({ queryKey: ["trash"] });
-  // A restore/purge can touch virtually any list screen (invoices, suppliers, customers, ...) --
-  // broad invalidation here is the honest choice over silently stale lists elsewhere.
+  // Broad invalidation: a restore/purge can touch virtually any list screen.
   qc.invalidateQueries({ queryKey: ["belege"] });
   qc.invalidateQueries({ queryKey: ["belege-liste"] });
-  qc.invalidateQueries({ queryKey: ["lieferanten"] });
-  qc.invalidateQueries({ queryKey: ["kunden"] });
-  // "ausgangsrechnungen-liste" was never a real query key -- useOutgoingInvoices/useOutgoingInvoice
-  // key on "outgoing_invoices"/"outgoing_invoice". Fixed here so a restore/purge touching
-  // outgoing_invoices actually refreshes the list instead of silently no-opping.
+  qc.invalidateQueries({ queryKey: ["suppliers"] });
+  qc.invalidateQueries({ queryKey: ["customers"] });
+  qc.invalidateQueries({ queryKey: ["customer"] });
   qc.invalidateQueries({ queryKey: ["outgoing_invoices"] });
   qc.invalidateQueries({ queryKey: ["outgoing_invoice"] });
-  qc.invalidateQueries({ queryKey: ["gesellschaften"] });
-  // A restored approver no longer changes anything the app reads -- the table is frozen
-  // (migration 20260901160000) -- but approval_rules still shares the trash, so its list would
-  // otherwise stay stale for the whole STALE window after a restore or purge.
+  qc.invalidateQueries({ queryKey: ["companies"] });
   qc.invalidateQueries({ queryKey: ["approval_rules"] });
 }
 

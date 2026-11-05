@@ -205,16 +205,16 @@ function OutgoingInvoicesPage() {
   }, [metrics, status, setStatus, t]);
 
   const view = useTableView(filtered, {
-    initialSort: "datum",
+    initialSort: "date",
     initialDir: "desc",
     resetKey: `${companyId}:${status}:${search}`,
     sortValue: (inv, key) => {
       switch (key) {
-        case "kunde":
+        case "customer":
           return inv.customers?.name ?? "";
-        case "betrag":
+        case "amount":
           return inv.amount_gross ?? 0;
-        case "faellig":
+        case "due":
           return inv.due_date ?? "";
         default:
           return inv.invoice_date ?? "";
@@ -223,10 +223,10 @@ function OutgoingInvoicesPage() {
   });
 
   const sortColumns = [
-    { value: "datum", label: t("outgoingInvoices.list.col.datum") },
-    { value: "kunde", label: t("outgoingInvoices.list.col.kunde") },
-    { value: "betrag", label: t("outgoingInvoices.list.col.betrag") },
-    { value: "faellig", label: t("outgoingInvoices.list.col.faellig") },
+    { value: "date", label: t("outgoingInvoices.list.col.date") },
+    { value: "customer", label: t("outgoingInvoices.list.col.customer") },
+    { value: "amount", label: t("outgoingInvoices.list.col.amount") },
+    { value: "due", label: t("outgoingInvoices.list.col.due") },
   ];
 
   return (
@@ -242,7 +242,7 @@ function OutgoingInvoicesPage() {
         </div>
         <Button asChild className="gap-2" data-tour="outgoing-actions">
           <Link to="/outgoing-invoices/upload">
-            <UploadCloud className="size-4" /> {t("outgoingInvoices.hochladen.button")}
+            <UploadCloud className="size-4" /> {t("outgoingInvoices.upload.button")}
           </Link>
         </Button>
       </div>
@@ -254,7 +254,7 @@ function OutgoingInvoicesPage() {
       {/* The total is not a filter, so it is a line rather than a card: a fourth card would be
           active on every fresh page and read as a filter nobody applied. */}
       <p className="mt-2 text-xs text-muted-foreground">
-        {t("outgoingInvoices.list.kpi.volumenZeile", {
+        {t("outgoingInvoices.list.kpi.volumeLine", {
           count: metrics.total,
           total: formatEUR(metrics.volume),
         })}
@@ -272,13 +272,13 @@ function OutgoingInvoicesPage() {
         </div>
         <div className="w-full space-y-1.5 sm:w-[220px]">
           <Label className="text-xs text-muted-foreground">
-            {t("outgoingInvoices.list.filter.gesellschaft")}
+            {t("outgoingInvoices.list.filter.company")}
           </Label>
           <Combobox
             value={companyId}
             onValueChange={setCompanyId}
             options={[
-              { value: ALL, label: t("outgoingInvoices.list.filter.alleGesellschaften") },
+              { value: ALL, label: t("outgoingInvoices.list.filter.allCompanies") },
               ...companies.map((g) => ({ value: g.id, label: `${g.code} · ${g.name}` })),
             ]}
           />
@@ -291,7 +291,7 @@ function OutgoingInvoicesPage() {
             value={status}
             onValueChange={(v) => setStatus(v as StatusFilter | typeof ALL)}
             options={[
-              { value: ALL, label: t("outgoingInvoices.list.filter.alleStatus") },
+              { value: ALL, label: t("outgoingInvoices.list.filter.allStatuses") },
               ...STATUS_VALUES.map((s) => ({
                 value: s,
                 label: t(`outgoingInvoices.status.${s}`),
@@ -327,12 +327,12 @@ function OutgoingInvoicesPage() {
             <TableHeader>
               <TableRow className="bg-muted/40">
                 <TableHead>{t("outgoingInvoices.list.col.nr")}</TableHead>
-                <TableHead>{t("outgoingInvoices.list.col.kunde")}</TableHead>
-                <TableHead>{t("outgoingInvoices.list.col.gesellschaft")}</TableHead>
-                <TableHead>{t("outgoingInvoices.list.col.datum")}</TableHead>
-                <TableHead>{t("outgoingInvoices.list.col.faellig")}</TableHead>
+                <TableHead>{t("outgoingInvoices.list.col.customer")}</TableHead>
+                <TableHead>{t("outgoingInvoices.list.col.company")}</TableHead>
+                <TableHead>{t("outgoingInvoices.list.col.date")}</TableHead>
+                <TableHead>{t("outgoingInvoices.list.col.due")}</TableHead>
                 <TableHead className="text-right">
-                  {t("outgoingInvoices.list.col.betrag")}
+                  {t("outgoingInvoices.list.col.amount")}
                 </TableHead>
                 <TableHead>{t("outgoingInvoices.list.col.status")}</TableHead>
                 <TableHead className="w-[70px]" />
@@ -342,7 +342,7 @@ function OutgoingInvoicesPage() {
               {view.pageRows.map((inv) => (
                 <TableRow key={inv.id}>
                   <TableCell className="font-medium text-foreground">
-                    {inv.invoice_number ?? t("outgoingInvoices.list.entwurf")}
+                    {inv.invoice_number ?? t("outgoingInvoices.list.draft")}
                   </TableCell>
                   <TableCell className="text-sm text-foreground">
                     {inv.customers?.name ?? "—"}
@@ -423,7 +423,7 @@ function OutgoingStatusCell({ invoice }: { invoice: OutgoingInvoice }) {
           {
             onError: (e) =>
               toast.error(
-                t("outgoingInvoices.list.statusFehlgeschlagen", {
+                t("outgoingInvoices.list.statusFailed", {
                   error: errorText(e),
                 }),
               ),
@@ -461,11 +461,11 @@ function OutgoingInvoiceFileButton({ invoiceId }: { invoiceId: string }) {
       if (res.data?.previewUrl) {
         window.open(res.data.previewUrl, "_blank", "noreferrer");
       } else {
-        toast.error(t("outgoingInvoices.list.dateiFehlgeschlagen"));
+        toast.error(t("outgoingInvoices.list.fileFailed"));
       }
     } catch (e) {
       toast.error(
-        t("outgoingInvoices.list.dateiFehlgeschlagenMitFehler", {
+        t("outgoingInvoices.list.fileFailedWithError", {
           error: errorText(e),
         }),
       );
@@ -480,7 +480,7 @@ function OutgoingInvoiceFileButton({ invoiceId }: { invoiceId: string }) {
       onClick={open}
       disabled={loading}
       className="inline-flex text-muted-foreground transition-colors hover:text-foreground disabled:opacity-50"
-      title={t("outgoingInvoices.list.dateiAnsehen")}
+      title={t("outgoingInvoices.list.viewFile")}
     >
       {loading ? <Loader2 className="size-4 animate-spin" /> : <FileText className="size-4" />}
     </button>
@@ -503,7 +503,7 @@ function DeleteInvoiceButton({ invoice }: { invoice: OutgoingInvoice }) {
       },
       onError: (e) =>
         toast.error(
-          t("outgoingInvoices.list.delete.toastFehlgeschlagen", {
+          t("outgoingInvoices.list.delete.toastFailed", {
             error: errorText(e),
           }),
         ),
@@ -530,7 +530,7 @@ function DeleteInvoiceButton({ invoice }: { invoice: OutgoingInvoice }) {
         <Input
           value={reason}
           onChange={(e) => setReason(e.target.value)}
-          placeholder={t("outgoingInvoices.list.delete.grundPlaceholder")}
+          placeholder={t("outgoingInvoices.list.delete.reasonPlaceholder")}
         />
         <AlertDialogFooter>
           <AlertDialogCancel>{t("outgoingInvoices.list.delete.cancel")}</AlertDialogCancel>

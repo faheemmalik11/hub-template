@@ -42,13 +42,9 @@ import type {
 import { VAT_SPECIAL_CASES, VAT_TREATMENTS } from "@/lib/data/types";
 import { errorText } from "@/lib/data/format";
 
-const LEER = "__none";
+const NONE = "__none";
 
-// Two-level category options for the Combobox below: a fine tag's label carries its coarse group
-// ("Raumkosten › Energie"), so it stays identifiable without a grouped-dropdown widget the shared
-// Combobox does not support. A coarse category is itself a valid, selectable option too (the
-// briefing: "even coarser is also possible"). Shared with the Kategorien/Vorschläge tabs on the
-// Zuordnungsregeln screen — single source of truth, do not duplicate this logic elsewhere.
+// Shared with the other assignment-rule tabs — single source of truth, do not duplicate this logic elsewhere.
 export function useCategoryOptions(categories: CostAnalysisCategory[]): ComboboxOption[] {
   return useMemo(() => {
     const byId = new Map(categories.map((c) => [c.id, c]));
@@ -63,12 +59,6 @@ export function useCategoryOptions(categories: CostAnalysisCategory[]): Combobox
   }, [categories]);
 }
 
-// Create-a-rule dialog, always with the retroactive preview ("this would change N receipts")
-// before saving (Briefing Screen 4). Originally the Zuordnungsregeln screen's own "+ Regel"
-// button; now also reusable from the receipt detail page ("create as rule", pre-filled with that
-// receipt's own supplier/category/VAT values) and the supplier detail page (pre-filled with just
-// that supplier, category picked fresh) — Screen 4's two rule-creation entry points, both landing
-// in the same rule list and both going through the same preview.
 export function NewRuleDialog({
   defaultCompanyId,
   defaultSupplierId,
@@ -93,17 +83,11 @@ export function NewRuleDialog({
   defaultVatSpecialCase?: VatSpecialCase | null;
   fixedTarget?: RuleTarget;
   trigger?: ReactNode;
-  /** Controlled mode, used by the Vorschläge tab: it opens this dialog from another tab with the
-   *  supplier and category already filled in, so there is no trigger to click. The caller mounts
-   *  the dialog only while it wants it open and unmounts it on close, which is also what gives the
-   *  form fresh defaults -- every field below is initialised once from its `default*` prop and is
-   *  never reset afterwards. */
+  /** Controlled mode: the caller mounts the dialog only while open, which is what resets its fields to their `default*` props. */
   open?: boolean;
   onOpenChange?: (open: boolean) => void;
 } = {}) {
   const { t } = useTranslation();
-  // Names the scope dropdowns as a group. They have their own labels; this says what the group as
-  // a whole is.
   const scopeId = useId();
   const [openIntern, setOpenIntern] = useState(false);
   const controlled = open !== undefined;
@@ -113,17 +97,17 @@ export function NewRuleDialog({
     onOpenChange?.(next);
   };
   const [target, setTarget] = useState<RuleTarget>(fixedTarget ?? "cost_category");
-  const [categoryId, setCategoryId] = useState(defaultCategoryId ?? LEER);
+  const [categoryId, setCategoryId] = useState(defaultCategoryId ?? NONE);
   const [vatRate, setVatRate] = useState(defaultVatRate != null ? String(defaultVatRate) : "");
-  const [vatHandling, setVatHandling] = useState<string>(defaultVatTreatment ?? LEER);
+  const [vatHandling, setVatHandling] = useState<string>(defaultVatTreatment ?? NONE);
   const [deductionPercent, setDeductionPercent] = useState(
     defaultVatDeductiblePct != null ? String(defaultVatDeductiblePct) : "",
   );
-  const [specialCase, setSpecialCase] = useState<string>(defaultVatSpecialCase ?? LEER);
-  const [supplier, setSupplier] = useState(defaultSupplierId ?? LEER);
-  const [property, setProperty] = useState(LEER);
-  const [company, setCompany] = useState(defaultCompanyId ?? LEER);
-  const [muster, setMuster] = useState(defaultReferencePattern ?? "");
+  const [specialCase, setSpecialCase] = useState<string>(defaultVatSpecialCase ?? NONE);
+  const [supplier, setSupplier] = useState(defaultSupplierId ?? NONE);
+  const [property, setProperty] = useState(NONE);
+  const [company, setCompany] = useState(defaultCompanyId ?? NONE);
+  const [pattern, setPattern] = useState(defaultReferencePattern ?? "");
   const [note, setNote] = useState("");
 
   const suppliersQ = useSuppliers();
@@ -134,15 +118,12 @@ export function NewRuleDialog({
   const create = useCreateAssignmentRule();
 
   const rateParsed = vatRate.trim() === "" ? null : Number(vatRate.replace(",", "."));
-  // A VAT rate is a percentage, so it gets the same bound its neighbour two fields below already
-  // had. Without it `199` passed every check, recalculated the retroactive preview normally, and
-  // left the save button enabled -- a one-digit slip could be bulk-applied across real invoices.
+  // Without this bound a one-digit slip like `199` could be bulk-applied across real invoices.
   const rateNoNumber = rateParsed != null && !Number.isFinite(rateParsed);
   const rateOutside =
     rateParsed != null && Number.isFinite(rateParsed) && (rateParsed < 0 || rateParsed > 100);
   const rateInvalid = rateNoNumber || rateOutside;
-  // Not an error. 5,5 % and 16 % were both real German rates and other EU rates exist, so an
-  // unusual value is worth a second look rather than a block.
+  // Not an error: unusual rates like 5.5% or 16% are real EU rates too, just worth a second look.
   const rateUnusual = rateParsed != null && !rateInvalid && ![0, 7, 19].includes(rateParsed);
   const deductionParsed =
     deductionPercent.trim() === "" ? null : Number(deductionPercent.replace(",", "."));
@@ -150,17 +131,15 @@ export function NewRuleDialog({
     deductionParsed != null &&
     (!Number.isFinite(deductionParsed) || deductionParsed < 0 || deductionParsed > 100);
 
-  // The rule as it would be stored. Also what the preview is computed from, so the number shown is
-  // about the rule the user is actually about to save.
   const draft: AssignmentRuleInput | null = useMemo(() => {
     const scope = {
-      supplier_id: supplier === LEER ? null : supplier,
-      property_id: property === LEER ? null : property,
-      company_id: company === LEER ? null : company,
-      reference_pattern: muster.trim() === "" ? null : muster.trim(),
+      supplier_id: supplier === NONE ? null : supplier,
+      property_id: property === NONE ? null : property,
+      company_id: company === NONE ? null : company,
+      reference_pattern: pattern.trim() === "" ? null : pattern.trim(),
     };
     if (target === "cost_category") {
-      if (categoryId === LEER) return null;
+      if (categoryId === NONE) return null;
       const cat = (categoriesQ.data ?? []).find((c) => c.id === categoryId);
       return { target, category_id: categoryId, cost_category: cat?.name ?? null, ...scope };
     }
@@ -170,9 +149,9 @@ export function NewRuleDialog({
     return {
       target,
       vat_rate: rateParsed,
-      vat_treatment: vatHandling === LEER ? null : (vatHandling as VatTreatment),
+      vat_treatment: vatHandling === NONE ? null : (vatHandling as VatTreatment),
       vat_deductible_pct: deductionParsed,
-      vat_special_case: specialCase === LEER ? null : (specialCase as VatSpecialCase),
+      vat_special_case: specialCase === NONE ? null : (specialCase as VatSpecialCase),
       ...scope,
     };
   }, [
@@ -188,42 +167,42 @@ export function NewRuleDialog({
     supplier,
     property,
     company,
-    muster,
+    pattern,
   ]);
 
   const previewQ = useRulePreviewScope(draft);
 
   const scopeLeer =
-    supplier === LEER && property === LEER && company === LEER && muster.trim() === "";
+    supplier === NONE && property === NONE && company === NONE && pattern.trim() === "";
 
   function reset() {
     setTarget(fixedTarget ?? "cost_category");
-    setCategoryId(defaultCategoryId ?? LEER);
+    setCategoryId(defaultCategoryId ?? NONE);
     setVatRate(defaultVatRate != null ? String(defaultVatRate) : "");
-    setVatHandling(defaultVatTreatment ?? LEER);
+    setVatHandling(defaultVatTreatment ?? NONE);
     setDeductionPercent(defaultVatDeductiblePct != null ? String(defaultVatDeductiblePct) : "");
-    setSpecialCase(defaultVatSpecialCase ?? LEER);
-    setSupplier(defaultSupplierId ?? LEER);
-    setProperty(LEER);
-    setCompany(defaultCompanyId ?? LEER);
-    setMuster(defaultReferencePattern ?? "");
+    setSpecialCase(defaultVatSpecialCase ?? NONE);
+    setSupplier(defaultSupplierId ?? NONE);
+    setProperty(NONE);
+    setCompany(defaultCompanyId ?? NONE);
+    setPattern(defaultReferencePattern ?? "");
     setNote("");
   }
 
   function save() {
     if (!draft) {
-      toast.error(t("assignmentRules.neu.wertFehlt"));
+      toast.error(t("assignmentRules.new.valueMissing"));
       return;
     }
     if (scopeLeer) {
-      toast.error(t("assignmentRules.neu.scopeFehlt"));
+      toast.error(t("assignmentRules.new.scopeMissing"));
       return;
     }
     create.mutate(
       { ...draft, note: note.trim() === "" ? null : note.trim() },
       {
         onSuccess: () => {
-          toast.success(t("assignmentRules.toast.angelegt"));
+          toast.success(t("assignmentRules.toast.created"));
           reset();
           setOpen(false);
         },
@@ -231,8 +210,8 @@ export function NewRuleDialog({
           const msg = errorText(e);
           toast.error(
             /duplicate key|assignment_rules_scope_unique/i.test(msg)
-              ? t("assignmentRules.neu.schonVorhanden")
-              : t("assignmentRules.toast.fehlgeschlagen", { error: msg }),
+              ? t("assignmentRules.new.alreadyExists")
+              : t("assignmentRules.toast.failed", { error: msg }),
           );
         },
       },
@@ -241,27 +220,26 @@ export function NewRuleDialog({
 
   return (
     <Dialog open={isOpen} onOpenChange={setOpen}>
-      {/* No trigger at all in controlled mode: whoever set `open` is the trigger, and rendering a
-          hidden button here would still mount it. */}
+      {/* No trigger at all in controlled mode: a hidden button here would still mount it. */}
       {controlled ? null : (
         <DialogTrigger asChild>
           {trigger ?? (
             <Button className="gap-2">
-              <Plus className="size-4" /> {t(`assignmentRules.neu.button.${target}`)}
+              <Plus className="size-4" /> {t(`assignmentRules.new.button.${target}`)}
             </Button>
           )}
         </DialogTrigger>
       )}
       <DialogContent className="sm:max-w-lg">
         <DialogHeader>
-          <DialogTitle>{t(`assignmentRules.neu.title.${target}`)}</DialogTitle>
-          <DialogDescription>{t(`assignmentRules.neu.desc.${target}`)}</DialogDescription>
+          <DialogTitle>{t(`assignmentRules.new.title.${target}`)}</DialogTitle>
+          <DialogDescription>{t(`assignmentRules.new.desc.${target}`)}</DialogDescription>
         </DialogHeader>
 
         <div className="space-y-4">
           {fixedTarget ? null : (
             <Field className="space-y-1.5">
-              <Label>{t("assignmentRules.neu.feld")}</Label>
+              <Label>{t("assignmentRules.new.field")}</Label>
               <Select value={target} onValueChange={(v) => setTarget(v as RuleTarget)}>
                 <SelectTrigger>
                   <SelectValue />
@@ -279,18 +257,18 @@ export function NewRuleDialog({
 
           {target === "cost_category" ? (
             <Field className="space-y-1.5">
-              <Label>{t("assignmentRules.neu.kategorie")}</Label>
+              <Label>{t("assignmentRules.new.category")}</Label>
               <Combobox
-                value={categoryId === LEER ? null : categoryId}
+                value={categoryId === NONE ? null : categoryId}
                 onValueChange={setCategoryId}
                 options={categoryOptions}
-                placeholder={t("assignmentRules.neu.kategoriePlaceholder")}
+                placeholder={t("assignmentRules.new.categoryPlaceholder")}
               />
             </Field>
           ) : (
             <div className="space-y-4">
               <Field className="space-y-1.5">
-                <Label>{t("assignmentRules.neu.ustSatz")}</Label>
+                <Label>{t("assignmentRules.new.vatRate")}</Label>
                 <Input
                   value={vatRate}
                   onChange={(e) => setVatRate(e.target.value)}
@@ -298,26 +276,24 @@ export function NewRuleDialog({
                   inputMode="decimal"
                 />
                 {rateNoNumber ? (
-                  <p className="text-xs text-destructive">
-                    {t("assignmentRules.neu.ustUngueltig")}
-                  </p>
+                  <p className="text-xs text-destructive">{t("assignmentRules.new.vatInvalid")}</p>
                 ) : rateOutside ? (
                   <p className="text-xs text-destructive">
-                    {t("assignmentRules.neu.ustAusserhalb")}
+                    {t("assignmentRules.new.vatOutOfRange")}
                   </p>
                 ) : rateUnusual ? (
-                  <p className="text-xs text-amber-700">{t("assignmentRules.neu.ustUnueblich")}</p>
+                  <p className="text-xs text-amber-700">{t("assignmentRules.new.vatUnusual")}</p>
                 ) : null}
               </Field>
               <Field className="space-y-1.5">
-                <Label>{t("assignmentRules.neu.steuerbehandlung")}</Label>
+                <Label>{t("assignmentRules.new.taxTreatment")}</Label>
                 <Select value={vatHandling} onValueChange={setVatHandling}>
                   <SelectTrigger>
                     <SelectValue />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value={LEER}>
-                      {t("assignmentRules.neu.steuerbehandlungOhne")}
+                    <SelectItem value={NONE}>
+                      {t("assignmentRules.new.taxTreatmentNone")}
                     </SelectItem>
                     {VAT_TREATMENTS.map((v) => (
                       <SelectItem key={v} value={v}>
@@ -327,11 +303,11 @@ export function NewRuleDialog({
                   </SelectContent>
                 </Select>
                 <p className="text-xs text-muted-foreground">
-                  {t("assignmentRules.neu.steuerbehandlungHint")}
+                  {t("assignmentRules.new.taxTreatmentHint")}
                 </p>
               </Field>
               <Field className="space-y-1.5">
-                <Label>{t("assignmentRules.neu.abzugsfaehigkeit")}</Label>
+                <Label>{t("assignmentRules.new.deductibility")}</Label>
                 <Input
                   value={deductionPercent}
                   onChange={(e) => setDeductionPercent(e.target.value)}
@@ -340,16 +316,16 @@ export function NewRuleDialog({
                 />
                 {deductionInvalid ? (
                   <p className="text-xs text-destructive">
-                    {t("assignmentRules.neu.abzugsfaehigkeitUngueltig")}
+                    {t("assignmentRules.new.deductibilityInvalid")}
                   </p>
                 ) : (
                   <p className="text-xs text-muted-foreground">
-                    {t("assignmentRules.neu.abzugsfaehigkeitHint")}
+                    {t("assignmentRules.new.deductibilityHint")}
                   </p>
                 )}
               </Field>
               <Field className="space-y-1.5">
-                <Label>{t("assignmentRules.neu.sonderfall")}</Label>
+                <Label>{t("assignmentRules.new.specialCase")}</Label>
                 <Select
                   value={specialCase}
                   onValueChange={(v) => {
@@ -362,17 +338,17 @@ export function NewRuleDialog({
                     <SelectValue />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value={LEER}>{t("assignmentRules.neu.sonderfallOhne")}</SelectItem>
+                    <SelectItem value={NONE}>{t("assignmentRules.new.specialCaseNone")}</SelectItem>
                     {VAT_SPECIAL_CASES.map((v) => (
                       <SelectItem key={v} value={v}>
-                        {t(`assignmentRules.vatSonderfall.${v}`)}
+                        {t(`assignmentRules.vatSpecialCase.${v}`)}
                       </SelectItem>
                     ))}
                   </SelectContent>
                 </Select>
                 {specialCase === "hospitality" ? (
                   <p className="text-xs text-muted-foreground">
-                    {t("assignmentRules.neu.sonderfallBewirtungHinweis")}
+                    {t("assignmentRules.new.specialCaseHospitalityHint")}
                   </p>
                 ) : null}
               </Field>
@@ -381,11 +357,9 @@ export function NewRuleDialog({
 
           <div className="space-y-1.5">
             <p id={scopeId} className="text-sm font-medium leading-none">
-              {t("assignmentRules.neu.geltungsbereich")}
+              {t("assignmentRules.new.scope")}
             </p>
-            <p className="text-xs text-muted-foreground">
-              {t("assignmentRules.neu.geltungsbereichHint")}
-            </p>
+            <p className="text-xs text-muted-foreground">{t("assignmentRules.new.scopeHint")}</p>
           </div>
 
           <div role="group" aria-labelledby={scopeId} className="grid gap-3 sm:grid-cols-2">
@@ -397,20 +371,20 @@ export function NewRuleDialog({
                 value={supplier}
                 onValueChange={setSupplier}
                 options={[
-                  { value: LEER, label: t("assignmentRules.neu.beliebig") },
+                  { value: NONE, label: t("assignmentRules.new.any") },
                   ...(suppliersQ.data ?? []).map((l) => ({ value: l.id, label: l.name })),
                 ]}
               />
             </Field>
             <Field className="space-y-1">
               <Label className="text-xs font-normal text-muted-foreground">
-                {t("assignmentRules.scope.objekt")}
+                {t("assignmentRules.scope.property")}
               </Label>
               <Combobox
                 value={property}
                 onValueChange={setProperty}
                 options={[
-                  { value: LEER, label: t("assignmentRules.neu.beliebig") },
+                  { value: NONE, label: t("assignmentRules.new.any") },
                   ...(propertiesQ.data ?? []).map((o) => ({
                     value: o.id,
                     label: o.name ? `${o.code} · ${o.name}` : o.code,
@@ -421,13 +395,13 @@ export function NewRuleDialog({
             </Field>
             <Field className="space-y-1">
               <Label className="text-xs font-normal text-muted-foreground">
-                {t("assignmentRules.scope.gesellschaft")}
+                {t("assignmentRules.scope.company")}
               </Label>
               <Combobox
                 value={company}
                 onValueChange={setCompany}
                 options={[
-                  { value: LEER, label: t("assignmentRules.neu.beliebig") },
+                  { value: NONE, label: t("assignmentRules.new.any") },
                   ...(companiesQ.data ?? []).map((g) => ({
                     value: g.id,
                     label: `${g.code} · ${g.name}`,
@@ -441,52 +415,50 @@ export function NewRuleDialog({
           <Field className="space-y-1.5">
             <Label>{t("assignmentRules.scope.verwendungszweck")}</Label>
             <Input
-              value={muster}
-              onChange={(e) => setMuster(e.target.value)}
-              placeholder={t("assignmentRules.neu.musterPlaceholder")}
+              value={pattern}
+              onChange={(e) => setPattern(e.target.value)}
+              placeholder={t("assignmentRules.new.patternPlaceholder")}
             />
-            <p className="text-xs text-muted-foreground">{t("assignmentRules.neu.musterHint")}</p>
+            <p className="text-xs text-muted-foreground">{t("assignmentRules.new.patternHint")}</p>
           </Field>
 
           <Field className="space-y-1.5">
-            <Label>{t("assignmentRules.neu.notiz")}</Label>
+            <Label>{t("assignmentRules.new.note")}</Label>
             <Input value={note} onChange={(e) => setNote(e.target.value)} />
           </Field>
 
-          {/* Retroactive impact, before saving. The briefing is explicit that a rule must not take
-              effect on old receipts without the person seeing how many it moves first. */}
+          {/* A rule must not take effect on old receipts without showing how many it moves first. */}
           <div className="rounded-lg border border-border bg-muted/40 p-3 text-sm">
             <div className="flex items-center gap-1.5 font-medium text-foreground">
-              <Wand2 className="size-4" /> {t("assignmentRules.neu.vorschau")}
+              <Wand2 className="size-4" /> {t("assignmentRules.new.preview")}
             </div>
             {scopeLeer ? (
               <p className="mt-1 text-xs text-muted-foreground">
-                {t("assignmentRules.neu.scopeFehlt")}
+                {t("assignmentRules.new.scopeMissing")}
               </p>
             ) : !draft ? (
               <p className="mt-1 text-xs text-muted-foreground">
-                {t("assignmentRules.neu.wertFehlt")}
+                {t("assignmentRules.new.valueMissing")}
               </p>
             ) : previewQ.isLoading ? (
               <p className="mt-1 text-xs text-muted-foreground">
-                {t("assignmentRules.neu.vorschauLaedt")}
+                {t("assignmentRules.new.previewLoading")}
               </p>
             ) : previewQ.isError ? (
               <p className="mt-1 text-xs text-destructive">
-                {t("assignmentRules.neu.vorschauFehler")}
+                {t("assignmentRules.new.previewError")}
               </p>
             ) : (
               <>
                 <p className="mt-1">
-                  {t("assignmentRules.neu.vorschauText", {
+                  {t("assignmentRules.new.previewText", {
                     change: previewQ.data?.would_change ?? 0,
                     total: previewQ.data?.matches ?? 0,
                   })}
                 </p>
-                {/* The gap between the two numbers is the informative part: it is already-correct
-                    or already human-decided receipts, which this rule will not touch. */}
+                {/* The gap between the two numbers is already-decided receipts this rule won't touch. */}
                 <p className="mt-1 text-xs text-muted-foreground">
-                  {t("assignmentRules.neu.vorschauHint")}
+                  {t("assignmentRules.new.previewHint")}
                 </p>
               </>
             )}
@@ -495,10 +467,10 @@ export function NewRuleDialog({
 
         <DialogFooter>
           <Button variant="outline" onClick={() => setOpen(false)}>
-            {t("assignmentRules.action.abbrechen")}
+            {t("assignmentRules.action.cancel")}
           </Button>
           <Button onClick={save} disabled={create.isPending || !draft || scopeLeer}>
-            {t(`assignmentRules.neu.speichern.${target}`)}
+            {t(`assignmentRules.new.save.${target}`)}
           </Button>
         </DialogFooter>
       </DialogContent>

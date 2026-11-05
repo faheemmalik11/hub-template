@@ -546,7 +546,7 @@ export function useCostAnalysisScope(filter: CostAnalysisScopeFilter): CostAnaly
         // Prefix the company code: the default view is ALL companies, and a manual booking with no
         // note fell back to a bare "Manuelle Buchung", so two of them in the same bucket rendered as
         // two identical rows with nothing to tell them apart.
-        label: [code, m.note ?? t("reports.manuelleBuchung")].filter(Boolean).join(" · "),
+        label: [code, m.note ?? t("reports.manualBooking")].filter(Boolean).join(" · "),
         date: m.period,
       });
     }

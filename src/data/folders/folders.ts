@@ -18,12 +18,7 @@ import type { Channel, ChannelFolder, ChannelFolderRole } from "@/lib/data/types
 // rather than `channels`, which this client's no longer does. See useChannels() below and
 // docs/TABLE_NAMING_MIGRATION.md.
 
-// ---- Postfach folder pickers (Briefing Screen 1: pick a real folder, don't type its id) ----
-//
-// Longer staleTime than the usual data queries: a mailbox's/app folder's structure changes rarely
-// (a person creating a new folder is an occasional, deliberate act), and every open of the
-// Postfach screen re-running a live Graph/Dropbox call would be a slow, easily-avoided round trip
-// for data that is essentially static within a session.
+// Longer than the usual staleTime: a mailbox's folder structure rarely changes within a session.
 const INBOX_FOLDERS_STALE = 5 * 60_000;
 
 export function useActorDisplay(email: string | null) {
@@ -76,17 +71,7 @@ export function useChannelFolders() {
   });
 }
 
-/**
- * Change a channel's own settings: whether it runs, and the one address or path it points at.
- *
- * `settings` is merged, never replaced. The column is shared with the pipeline and the panel, and
- * it carries keys this screen knows nothing about (a bucket, a provider hint). Writing a whole
- * object would drop them.
- *
- * The write REPORTS ITSELF, the same reasoning as mail_settings before it: an RLS-blocked update
- * matches no rows and returns success, so without the returned row a person without
- * postfach.settings would click Speichern, see "gespeichert", and have changed nothing.
- */
+// `settings` is merged, never replaced: the column also carries pipeline/panel keys this screen knows nothing about.
 export function useUpdateChannel() {
   const qc = useQueryClient();
   return useMutation({
@@ -194,8 +179,6 @@ export function useSaveChannelFolders() {
         if (error) throw error;
       }
 
-      // Nothing added and nothing removed still has to report itself, or a person without
-      // postfach.settings sees a silent success. A delete that matches no row is not an error.
       if (gone.length === 0 && added.length === 0) return;
     },
     onSuccess: () => {
@@ -206,7 +189,7 @@ export function useSaveChannelFolders() {
 
 export function useMailboxFolders(enabled = true) {
   return useQuery({
-    queryKey: ["postfach_mailbox_folders"],
+    queryKey: ["mailbox_folders"],
     staleTime: INBOX_FOLDERS_STALE,
     enabled,
     queryFn: () => getMailboxFolders(),
@@ -215,7 +198,7 @@ export function useMailboxFolders(enabled = true) {
 
 export function useFilingFolders(enabled = true) {
   return useQuery({
-    queryKey: ["postfach_filing_folders"],
+    queryKey: ["filing_folders"],
     staleTime: INBOX_FOLDERS_STALE,
     enabled,
     queryFn: () => getFilingFolders(),

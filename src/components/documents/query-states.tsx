@@ -23,7 +23,6 @@ function errorMessage(error: unknown, fallback: string): string {
   return fallback;
 }
 
-// Fehlermeldung statt weißem Schirm — mit optionalem Wiederholen.
 export function ErrorState({
   error,
   onRetry,
@@ -56,7 +55,6 @@ export function ErrorState({
   );
 }
 
-// Leerzustand.
 export function EmptyState({
   title,
   hint,
@@ -115,7 +113,6 @@ export function ComingSoon({
   );
 }
 
-// Tabellen-Skeleton.
 export function TableSkeleton({ rows = 6, cols = 5 }: { rows?: number; cols?: number }) {
   return (
     <div className="overflow-hidden rounded-xl border border-border bg-card">
@@ -132,7 +129,6 @@ export function TableSkeleton({ rows = 6, cols = 5 }: { rows?: number; cols?: nu
   );
 }
 
-// Karten-Skeleton (KPIs etc.).
 export function CardsSkeleton({ count = 4 }: { count?: number }) {
   return (
     <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">

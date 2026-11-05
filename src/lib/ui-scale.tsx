@@ -1,10 +1,3 @@
-/**
- * Globaler Größenregler (UI-Scale).
- *
- * Setzt die CSS-Variable --ui-scale auf <html>, wodurch die gesamte
- * rem-basierte Oberfläche kleiner/größer wird. Ziel: Größe live ausprobieren,
- * bevor die finale Größe festgelegt wird. Persistiert in localStorage.
- */
 import { createContext, useContext, useEffect, useState, type ReactNode } from "react";
 
 export const UI_SCALE_MIN = 0.8;
@@ -12,7 +5,6 @@ export const UI_SCALE_MAX = 1.35;
 export const UI_SCALE_DEFAULT = 1;
 export const UI_SCALE_STEP = 0.05;
 
-/** Voreinstellungen für schnelle, verlässliche Auswahl. */
 export const UI_SCALE_PRESETS: { label: string; value: number }[] = [
   { label: "Kompakt", value: 0.9 },
   { label: "Standard", value: 1 },
@@ -36,7 +28,6 @@ function clamp(value: number) {
 export function UIScaleProvider({ children }: { children: ReactNode }) {
   const [scale, setScaleState] = useState(UI_SCALE_DEFAULT);
 
-  // Beim Mount gespeicherten Wert laden (nur im Browser).
   useEffect(() => {
     const stored = window.localStorage.getItem(STORAGE_KEY);
     if (stored) {
@@ -45,7 +36,6 @@ export function UIScaleProvider({ children }: { children: ReactNode }) {
     }
   }, []);
 
-  // Bei jeder Änderung CSS-Variable + Persistenz aktualisieren.
   useEffect(() => {
     document.documentElement.style.setProperty("--ui-scale", String(scale));
     window.localStorage.setItem(STORAGE_KEY, String(scale));
@@ -61,6 +51,6 @@ export function UIScaleProvider({ children }: { children: ReactNode }) {
 
 export function useUIScale() {
   const ctx = useContext(UIScaleContext);
-  if (!ctx) throw new Error("useUIScale muss innerhalb von UIScaleProvider genutzt werden");
+  if (!ctx) throw new Error("useUIScale must be used inside UIScaleProvider");
   return ctx;
 }

@@ -31,7 +31,7 @@ export function BasisToggle({
 
   return (
     <div className={cn("flex shrink-0 items-center gap-2", className)}>
-      <span className="text-sm text-muted-foreground">{t("reports.basis.gruppe")}</span>
+      <span className="text-sm text-muted-foreground">{t("reports.basis.group")}</span>
 
       <div
         role="radiogroup"
@@ -61,26 +61,20 @@ export function BasisToggle({
         <PopoverTrigger asChild>
           <button
             type="button"
-            aria-label={t("reports.basis.erklaerungTitel")}
+            aria-label={t("reports.basis.explainTitle")}
             className="inline-flex cursor-pointer items-center text-muted-foreground/70 hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
           >
             <Info className="size-3.5" />
           </button>
         </PopoverTrigger>
         <PopoverContent align="end" className="w-[min(24rem,90vw)] p-3">
-          <p className="text-sm font-medium text-foreground">
-            {t("reports.basis.erklaerungTitel")}
-          </p>
+          <p className="text-sm font-medium text-foreground">{t("reports.basis.explainTitle")}</p>
           <dl className="mt-2 space-y-2">
             {(["net", "gross"] as const).map((b) => (
               <div key={b}>
                 <dt className="text-sm font-medium text-foreground">{t(`reports.basis.${b}`)}</dt>
                 <dd className="text-sm leading-relaxed text-muted-foreground">
-                  {t(
-                    b === "net"
-                      ? "reports.basis.erklaerungNetto"
-                      : "reports.basis.erklaerungBrutto",
-                  )}
+                  {t(b === "net" ? "reports.basis.explainNet" : "reports.basis.explainGross")}
                 </dd>
               </div>
             ))}

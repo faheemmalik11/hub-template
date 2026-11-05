@@ -18,5 +18,5 @@ export function usePaymentRight(): { mayPay: boolean; reason: string | undefined
   const { can } = useAuth();
   const { t } = useTranslation();
   const mayPay = can(PERMISSIONS.paymentsWrite);
-  return { mayPay, reason: mayPay ? undefined : t("bank.matches.keineZahlBerechtigung") };
+  return { mayPay, reason: mayPay ? undefined : t("bank.matches.noPaymentPermission") };
 }

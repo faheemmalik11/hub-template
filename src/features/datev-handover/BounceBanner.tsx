@@ -62,9 +62,9 @@ export function BounceBanner() {
                   <p className="text-sm text-foreground">
                     {codeFor(batch.company_id)}
                     {" · "}
-                    {t(`handover.richtung.${batch.direction}`)}
+                    {t(`handover.direction.${batch.direction}`)}
                     {" · "}
-                    {t("handover.bounce.belege", { count: batch.invoice_count })}
+                    {t("handover.bounce.receipts", { count: batch.invoice_count })}
                   </p>
                   <p className="mt-0.5 text-xs tabular-nums text-muted-foreground">
                     {formatDateTime(batch.bounced_at ?? batch.created_at)}
@@ -86,7 +86,7 @@ export function BounceBanner() {
                         onSuccess: () => toast.success(t("handover.bounce.toast.ok")),
                         onError: (e: unknown) =>
                           toast.error(
-                            t("handover.bounce.toast.fehlgeschlagen", {
+                            t("handover.bounce.toast.failed", {
                               error: errorText(e),
                             }),
                           ),
@@ -94,7 +94,7 @@ export function BounceBanner() {
                     )
                   }
                 >
-                  {t("handover.bounce.erledigt")}
+                  {t("handover.bounce.markHandled")}
                 </Button>
               </li>
             ))}

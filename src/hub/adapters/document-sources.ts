@@ -190,7 +190,7 @@ function mailSource(
         key: "is_active",
         kind: "toggle",
         showInHeader: true,
-        label: t("sources.fields.aktiv"),
+        label: t("sources.fields.active"),
         value: row.is_active,
       },
       {
@@ -202,7 +202,7 @@ function mailSource(
       {
         key: "mail_source_folders",
         kind: "multiSelect",
-        label: t("sources.fields.quelle"),
+        label: t("sources.fields.source"),
         description: t("sources.fields.mailQuelleHint"),
         value: row.sourceFolders,
         ...shared,
@@ -210,7 +210,7 @@ function mailSource(
       {
         key: "mail_processed_folder",
         kind: "treeSelect",
-        label: t("sources.fields.ziel"),
+        label: t("sources.fields.destination"),
         description: t("sources.fields.mailZielHint"),
         value: row.processedFolder,
         ...shared,
@@ -218,7 +218,7 @@ function mailSource(
       {
         key: "mail_return_folder",
         kind: "treeSelect",
-        label: t("sources.fields.rueckgabe"),
+        label: t("sources.fields.returnFolder"),
         description: t("sources.fields.mailRueckgabeHint"),
         value: row.returnFolder,
         ...shared,
@@ -266,13 +266,13 @@ function filingSource(
         key: "is_active",
         kind: "toggle",
         showInHeader: true,
-        label: t("sources.fields.aktiv"),
+        label: t("sources.fields.active"),
         value: row.is_active,
       },
       {
         key: "drive_source_folders",
         kind: "multiSelect",
-        label: t("sources.fields.quelle"),
+        label: t("sources.fields.source"),
         description: t("sources.fields.driveQuelleHint"),
         value: row.sourceFolders,
         ...shared,
@@ -280,7 +280,7 @@ function filingSource(
       {
         key: "drive_processed_folder",
         kind: "treeSelect",
-        label: t("sources.fields.ziel"),
+        label: t("sources.fields.destination"),
         description: t("sources.fields.driveZielHint"),
         value: row.processedFolder,
         ...shared,
@@ -288,7 +288,7 @@ function filingSource(
       {
         key: "drive_return_folder",
         kind: "treeSelect",
-        label: t("sources.fields.rueckgabe"),
+        label: t("sources.fields.returnFolder"),
         description: t("sources.fields.driveRueckgabeHint"),
         value: row.returnFolder,
         ...shared,

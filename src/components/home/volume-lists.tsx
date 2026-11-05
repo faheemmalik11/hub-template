@@ -48,7 +48,7 @@ export function TopSuppliers() {
       .slice(0, 5)
       .map(([issuer, v]) => ({
         key: issuer || "__none",
-        label: issuer || t("home.top.unbekannt"),
+        label: issuer || t("home.top.unknown"),
         valueText: formatEURCompact(v.sum),
         sharePct: absTotal > 0 ? (Math.abs(v.sum) / absTotal) * 100 : 0,
         link: v.supplierId
@@ -104,7 +104,7 @@ export function CompanyVolume() {
       .slice(0, 5)
       .map(([code, sum]) => ({
         key: code || "__none",
-        label: code || t("home.companies.ohne"),
+        label: code || t("home.companies.unassigned"),
         valueText: formatEURCompact(sum),
         sharePct: absTotal > 0 ? (Math.abs(sum) / absTotal) * 100 : 0,
         link: {

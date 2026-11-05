@@ -447,7 +447,7 @@ function teamSpec(activeTab: string | undefined, permissionCategories: string[])
                 ...permissionCategories.map((category): StepSpec => ({
                   target: `permission-group-${category}`,
                   key: "permissionGroup",
-                  titleKey: `team.permissions.kategorie.${category}`,
+                  titleKey: `team.permissions.category.${category}`,
                   placement: "right",
                 })),
               ]
@@ -606,7 +606,7 @@ export function useTours(): TourMap {
     map["/opos-whitelist"] = build(oposSpec(canOposWrite));
     map["/bank-accounts"] = build(bankAccountsSpec(tab));
     map["/assignment-rules"] = build(
-      assignmentSpec(tab, ["regeln", "spielplatz", "suggestions"], "tabsRegeln"),
+      assignmentSpec(tab, ["regeln", "spielplatz", "suggestions"], "tabsRules"),
     );
     map["/notifications"] = build(notificationsSpec(tab, canNotificationSettings, hasSlackChannel));
     if (canApprovals) {

@@ -5,8 +5,6 @@ import { STALE, sb } from "@/data/client";
 import { fetchAllRows, searchTokens, searchWasDropped } from "@/data/shared";
 import type { PipelineHealth, PipelineRun, RunRequest, ProcessingLog } from "@/lib/data/types";
 
-// Pipeline-Lauf-Heartbeat fürs Health-Panel (Briefing Betrieb/Monitoring: running / last run / errors).
-// Liest pipeline_runs (Migration 0013 im Pipeline-Repo). refetchInterval hält die Anzeige live.
 export function usePipelineHealth() {
   return useQuery({
     queryKey: ["pipeline_health"],

@@ -101,11 +101,11 @@ function NoAccess() {
     <div className="mx-auto max-w-xl rounded-xl border border-border bg-card px-6 py-12 text-center">
       <ShieldAlert className="mx-auto size-8 text-muted-foreground" aria-hidden />
       <h1 className="mt-4 text-xl font-semibold tracking-tight text-foreground">
-        {t("trash.guard.titel")}
+        {t("trash.guard.title")}
       </h1>
       <p className="mt-2 text-sm text-muted-foreground">{t("trash.guard.text")}</p>
       <Button asChild variant="outline" className="mt-6">
-        <Link to="/">{t("trash.guard.zurueck")}</Link>
+        <Link to="/">{t("trash.guard.back")}</Link>
       </Button>
     </div>
   );
@@ -116,32 +116,32 @@ function NoAccess() {
  *  it saves, and search, sort and "select all N" all have to see everything anyway. */
 const PAGE_SIZE: (typeof PAGE_SIZES)[number] = 25;
 
-const ALTER_OPTIONS = [
-  { value: "alle", days: 0 },
+const AGE_OPTIONS = [
+  { value: "all", days: 0 },
   { value: "d30", days: 30 },
   { value: "d90", days: 90 },
   { value: "d365", days: 365 },
 ] as const;
 
-type SortKey = "typ" | "bezeichnung" | "geloeschtAm";
+type SortKey = "type" | "label" | "deletedAt";
 
 /** Whole days between a deletion and now. */
-function alterInDays(deletedAt: string): number {
+function ageInDays(deletedAt: string): number {
   return Math.floor((Date.now() - new Date(deletedAt).getTime()) / 86_400_000);
 }
 
 function TrashPage() {
   const { t } = useTranslation();
-  const [tableFilter, setTableFilter] = useState<string>("alle");
+  const [tableFilter, setTableFilter] = useState<string>("all");
   const [search, setSearch] = useState("");
-  const [alter, setAlter] = useState<string>("alle");
-  const [sortKey, setSortKey] = useState<SortKey>("geloeschtAm");
+  const [age, setAge] = useState<string>("all");
+  const [sortKey, setSortKey] = useState<SortKey>("deletedAt");
   const [sortAsc, setSortAsc] = useState(false);
   const [page, setPage] = useState(0);
   const [pagesSize, setPagesSize] = useState<number>(PAGE_SIZE);
   const [selection, setSelection] = useState<Set<string>>(new Set());
 
-  const q = useTrash(tableFilter === "alle" ? undefined : tableFilter);
+  const q = useTrash(tableFilter === "all" ? undefined : tableFilter);
   const allRecords = useMemo(() => q.data ?? [], [q.data]);
 
   // The filter's options come from the database that enforces them, not from a constant in this
@@ -160,9 +160,9 @@ function TrashPage() {
 
   const filtered = useMemo(() => {
     const needle = search.trim().toLowerCase();
-    const minimumDays = ALTER_OPTIONS.find((o) => o.value === alter)?.days ?? 0;
+    const minimumDays = AGE_OPTIONS.find((o) => o.value === age)?.days ?? 0;
     const match = allRecords.filter((r) => {
-      if (minimumDays > 0 && alterInDays(r.deleted_at) < minimumDays) return false;
+      if (minimumDays > 0 && ageInDays(r.deleted_at) < minimumDays) return false;
       if (!needle) return true;
       return [r.label, r.delete_reason, r.deleted_by, r.table_name]
         .filter(Boolean)
@@ -171,14 +171,14 @@ function TrashPage() {
 
     const direction = sortAsc ? 1 : -1;
     return [...match].sort((a, b) => {
-      if (sortKey === "geloeschtAm") {
+      if (sortKey === "deletedAt") {
         return (new Date(a.deleted_at).getTime() - new Date(b.deleted_at).getTime()) * direction;
       }
-      const links = sortKey === "typ" ? a.table_name : (a.label ?? "");
-      const right = sortKey === "typ" ? b.table_name : (b.label ?? "");
+      const links = sortKey === "type" ? a.table_name : (a.label ?? "");
+      const right = sortKey === "type" ? b.table_name : (b.label ?? "");
       return links.localeCompare(right, "de") * direction;
     });
-  }, [allRecords, search, alter, sortKey, sortAsc]);
+  }, [allRecords, search, age, sortKey, sortAsc]);
 
   const pages = Math.max(1, Math.ceil(filtered.length / pagesSize));
   const currentPage = Math.min(page, pages - 1);
@@ -232,7 +232,7 @@ function TrashPage() {
     if (key === sortKey) setSortAsc((v) => !v);
     else {
       setSortKey(key);
-      setSortAsc(key !== "geloeschtAm");
+      setSortAsc(key !== "deletedAt");
     }
     setPage(0);
   }
@@ -283,11 +283,11 @@ function TrashPage() {
               setSelection(new Set());
             }}
           >
-            <SelectTrigger className="w-full sm:w-[220px]" aria-label={t("trash.col.typ")}>
+            <SelectTrigger className="w-full sm:w-[220px]" aria-label={t("trash.col.type")}>
               <SelectValue />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="alle">{t("trash.filter.alle")}</SelectItem>
+              <SelectItem value="all">{t("trash.filter.all")}</SelectItem>
               {eligible.map((tbl) => (
                 <SelectItem key={tbl} value={tbl}>
                   {t(`trash.table.${tbl}`, { defaultValue: tbl })}
@@ -296,19 +296,19 @@ function TrashPage() {
             </SelectContent>
           </Select>
           <Select
-            value={alter}
+            value={age}
             onValueChange={(v) => {
-              setAlter(v);
+              setAge(v);
               setPage(0);
             }}
           >
-            <SelectTrigger className="w-full sm:w-[190px]" aria-label={t("trash.alter.label")}>
+            <SelectTrigger className="w-full sm:w-[190px]" aria-label={t("trash.ageFilter.label")}>
               <SelectValue />
             </SelectTrigger>
             <SelectContent>
-              {ALTER_OPTIONS.map((o) => (
+              {AGE_OPTIONS.map((o) => (
                 <SelectItem key={o.value} value={o.value}>
-                  {t(`trash.alter.${o.value}`)}
+                  {t(`trash.age.${o.value}`)}
                 </SelectItem>
               ))}
             </SelectContent>
@@ -336,9 +336,7 @@ function TrashPage() {
               onDone={() => setSelection(new Set())}
             />
 
-            {/* No separate "61 Einträge" line above the table: the pagination bar below already
-                says "Zeige 1–25 von 61", and two counts in two places — one of them the filtered
-                total, the other the page — read as a discrepancy rather than as information. */}
+            {/* No separate total count here: it would duplicate the pagination bar below and read as a discrepancy. */}
 
             <div className="mt-3 hidden overflow-hidden rounded-xl border border-border bg-card sm:block">
               <Table>
@@ -350,30 +348,30 @@ function TrashPage() {
                           pageAllSelected ? true : pagePartialSelected ? "indeterminate" : false
                         }
                         onCheckedChange={choosePage}
-                        aria-label={t("trash.auswahl.seite")}
+                        aria-label={t("trash.selection.page")}
                         disabled={visible.length === 0}
                       />
                     </TableHead>
                     <SortHead
-                      label={t("trash.col.typ")}
-                      active={sortKey === "typ"}
+                      label={t("trash.col.type")}
+                      active={sortKey === "type"}
                       asc={sortAsc}
-                      onClick={() => sortBy("typ")}
+                      onClick={() => sortBy("type")}
                     />
                     <SortHead
-                      label={t("trash.col.bezeichnung")}
-                      active={sortKey === "bezeichnung"}
+                      label={t("trash.col.label")}
+                      active={sortKey === "label"}
                       asc={sortAsc}
-                      onClick={() => sortBy("bezeichnung")}
+                      onClick={() => sortBy("label")}
                     />
                     <SortHead
-                      label={t("trash.col.gelöschtAm")}
-                      active={sortKey === "geloeschtAm"}
+                      label={t("trash.col.deletedAt")}
+                      active={sortKey === "deletedAt"}
                       asc={sortAsc}
-                      onClick={() => sortBy("geloeschtAm")}
+                      onClick={() => sortBy("deletedAt")}
                     />
-                    <TableHead>{t("trash.col.gelöschtVon")}</TableHead>
-                    <TableHead>{t("trash.col.grund")}</TableHead>
+                    <TableHead>{t("trash.col.deletedBy")}</TableHead>
+                    <TableHead>{t("trash.col.reason")}</TableHead>
                     <TableHead className="w-[110px]" />
                   </TableRow>
                 </TableHeader>
@@ -470,17 +468,17 @@ function SortHead({
 }
 
 /** "vor 12 Tagen" — issue #3: a formatted date says when, not how long it has been sitting here. */
-function Alter({ deletedAt }: { deletedAt: string }) {
+function Age({ deletedAt }: { deletedAt: string }) {
   const { t } = useTranslation();
-  const days = alterInDays(deletedAt);
+  const days = ageInDays(deletedAt);
   const text =
     days < 1
-      ? t("trash.age.heute")
+      ? t("trash.age.today")
       : days < 30
-        ? t("trash.age.tage", { count: days })
+        ? t("trash.age.days", { count: days })
         : days < 365
-          ? t("trash.age.monate", { count: Math.floor(days / 30) })
-          : t("trash.age.jahre", { count: Math.floor(days / 365) });
+          ? t("trash.age.months", { count: Math.floor(days / 30) })
+          : t("trash.age.years", { count: Math.floor(days / 365) });
   return <span className="text-xs text-muted-foreground">{text}</span>;
 }
 
@@ -513,12 +511,12 @@ function ReasonCell({ reason }: { reason: string | null }) {
             className="h-auto p-0 text-xs"
             onClick={() => setOpen(true)}
           >
-            {t("trash.grundVoll.mehr")}
+            {t("trash.reasonFull.more")}
           </Button>
           <Dialog open={open} onOpenChange={setOpen}>
             <DialogContent>
               <DialogHeader>
-                <DialogTitle>{t("trash.grundVoll.titel")}</DialogTitle>
+                <DialogTitle>{t("trash.reasonFull.title")}</DialogTitle>
                 <DialogDescription className="whitespace-pre-wrap break-words text-left text-foreground">
                   {text}
                 </DialogDescription>
@@ -543,7 +541,7 @@ function useTrashRowActions(record: TrashRecord) {
         onSuccess: () => toast.success(t("trash.restore.toast.ok", { label: record.label })),
         onError: (e) =>
           toast.error(
-            t("trash.restore.toast.fehlgeschlagen", {
+            t("trash.restore.toast.failed", {
               error: errorText(e),
             }),
           ),
@@ -558,7 +556,7 @@ function useTrashRowActions(record: TrashRecord) {
         onSuccess: () => toast.success(t("trash.purge.toast.ok", { label: record.label })),
         onError: (e) =>
           toast.error(
-            t("trash.purge.toast.fehlgeschlagen", {
+            t("trash.purge.toast.failed", {
               error: errorText(e),
             }),
           ),
@@ -616,7 +614,7 @@ function TrashActions({ record, purgeable }: { record: TrashRecord; purgeable: b
         variant="ghost"
         size="icon"
         className="text-brand hover:bg-brand/10 hover:text-brand"
-        aria-label={t("trash.action.wiederherstellen")}
+        aria-label={t("trash.action.restore")}
         disabled={restore.isPending}
         onClick={() => setRestoreOpen(true)}
       >
@@ -631,14 +629,17 @@ function TrashActions({ record, purgeable }: { record: TrashRecord; purgeable: b
             </AlertDialogDescription>
           </AlertDialogHeader>
           <div className="space-y-2">
-            <label className="text-sm text-muted-foreground" htmlFor={`restore-grund-${record.id}`}>
-              {t("trash.restore.grundLabel")}
+            <label
+              className="text-sm text-muted-foreground"
+              htmlFor={`restore-reason-${record.id}`}
+            >
+              {t("trash.restore.reasonLabel")}
             </label>
             <Textarea
-              id={`restore-grund-${record.id}`}
+              id={`restore-reason-${record.id}`}
               rows={2}
               value={reason}
-              placeholder={t("trash.restore.grundPlaceholder")}
+              placeholder={t("trash.restore.reasonPlaceholder")}
               onChange={(e) => setReason(e.target.value)}
             />
           </div>
@@ -668,7 +669,7 @@ function TrashActions({ record, purgeable }: { record: TrashRecord; purgeable: b
             variant="ghost"
             size="icon"
             className="text-destructive hover:bg-destructive/10 hover:text-destructive"
-            aria-label={t("trash.action.endgueltigLoeschen")}
+            aria-label={t("trash.action.deletePermanently")}
             onClick={() => setPurgeOpen(true)}
           >
             <Trash2 className="size-4" />
@@ -742,11 +743,11 @@ function BulkBar({
         await restore.mutateAsync({ table: r.table_name, id: r.id, reason: null });
         ok++;
       } catch (e) {
-        toast.error(t("trash.restore.toast.fehlgeschlagen", { error: errorText(e) }));
+        toast.error(t("trash.restore.toast.failed", { error: errorText(e) }));
       }
     }
     setRunning(false);
-    if (ok > 0) toast.success(t("trash.restore.toast.mehrere", { count: ok }));
+    if (ok > 0) toast.success(t("trash.restore.toast.multiple", { count: ok }));
     onDone();
   }
 
@@ -758,22 +759,22 @@ function BulkBar({
         await purge.mutateAsync({ table: r.table_name, id: r.id });
         ok++;
       } catch (e) {
-        toast.error(t("trash.purge.toast.fehlgeschlagen", { error: errorText(e) }));
+        toast.error(t("trash.purge.toast.failed", { error: errorText(e) }));
       }
     }
     setRunning(false);
     setOpen(false);
-    if (ok > 0) toast.success(t("trash.purge.toast.mehrere", { count: ok }));
+    if (ok > 0) toast.success(t("trash.purge.toast.multiple", { count: ok }));
     onDone();
   }
 
   return (
     <div className="mt-4 flex flex-wrap items-center gap-3 rounded-xl border border-border bg-muted/40 px-4 py-3">
       <span className="text-sm font-medium text-foreground">
-        {t("trash.auswahl.anzahl", { count: selected.length })}
+        {t("trash.selection.count", { count: selected.length })}
       </span>
       <Button size="sm" variant="outline" disabled={running} onClick={allRestore}>
-        {t("trash.auswahl.wiederherstellen", { count: selected.length })}
+        {t("trash.selection.restore", { count: selected.length })}
       </Button>
       <Button
         size="sm"
@@ -782,10 +783,10 @@ function BulkBar({
         disabled={running || selectedPurgeable.length === 0}
         onClick={() => setOpen(true)}
       >
-        {t("trash.auswahl.loeschen", { count: selectedPurgeable.length })}
+        {t("trash.selection.delete", { count: selectedPurgeable.length })}
       </Button>
       <Button size="sm" variant="ghost" disabled={running} onClick={onDone}>
-        {t("trash.auswahl.aufheben")}
+        {t("trash.selection.clear")}
       </Button>
       {/* The escape hatch out of page scope. It only appears once the page IS fully ticked, and it
           names the number it is about to arm — the whole point of not letting the header checkbox
@@ -798,27 +799,27 @@ function BulkBar({
           disabled={running}
           onClick={onAllChoose}
         >
-          {t("trash.auswahl.alleGefiltert", { count: filteredTotal })}
+          {t("trash.selection.selectAllFiltered", { count: filteredTotal })}
         </Button>
       )}
       {allFilteredSelected && moreAlsOnePage && (
         <span className="text-xs text-muted-foreground">
-          {t("trash.auswahl.alleGewaehlt", { count: filteredTotal })}
+          {t("trash.selection.allSelected", { count: filteredTotal })}
         </span>
       )}
       {locked > 0 && (
         <span className="text-xs text-muted-foreground">
-          {t("trash.auswahl.nichtsPurgebar", { count: locked })}
+          {t("trash.selection.someNotPurgeable", { count: locked })}
         </span>
       )}
       <AlertDialog open={open} onOpenChange={setOpen}>
         <AlertDialogContent>
           <AlertDialogHeader>
             <AlertDialogTitle>
-              {t("trash.purge.titelMehrere", { count: selectedPurgeable.length })}
+              {t("trash.purge.titleMultiple", { count: selectedPurgeable.length })}
             </AlertDialogTitle>
             <AlertDialogDescription>
-              {t("trash.purge.descMehrere", { count: selectedPurgeable.length })}
+              {t("trash.purge.descMultiple", { count: selectedPurgeable.length })}
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
@@ -855,7 +856,7 @@ function TrashRow({
         <Checkbox
           checked={selected}
           onCheckedChange={onToggle}
-          aria-label={t("trash.auswahl.zeile", { label: record.label })}
+          aria-label={t("trash.selection.row", { label: record.label })}
         />
       </TableCell>
       <TableCell>
@@ -866,7 +867,7 @@ function TrashRow({
       <TableCell className="font-medium text-foreground">{record.label}</TableCell>
       <TableCell className="text-sm text-muted-foreground">
         <div>{formatDateTime(record.deleted_at)}</div>
-        <Alter deletedAt={record.deleted_at} />
+        <Age deletedAt={record.deleted_at} />
       </TableCell>
       <TableCell className="text-sm text-muted-foreground">{record.deleted_by ?? "—"}</TableCell>
       <TableCell className="text-sm text-muted-foreground">
@@ -899,7 +900,7 @@ function TrashCard({
           <Checkbox
             checked={selected}
             onCheckedChange={onToggle}
-            aria-label={t("trash.auswahl.zeile", { label: record.label })}
+            aria-label={t("trash.selection.row", { label: record.label })}
             className="mt-1"
           />
           <div className="min-w-0">
@@ -913,15 +914,15 @@ function TrashCard({
       </div>
       <div className="mt-3 space-y-1 border-t border-border pt-2 text-xs text-muted-foreground">
         <div>
-          {t("trash.col.gelöschtAm")}: {formatDateTime(record.deleted_at)} ·{" "}
-          <Alter deletedAt={record.deleted_at} />
+          {t("trash.col.deletedAt")}: {formatDateTime(record.deleted_at)} ·{" "}
+          <Age deletedAt={record.deleted_at} />
         </div>
         <div>
-          {t("trash.col.gelöschtVon")}: {record.deleted_by ?? "—"}
+          {t("trash.col.deletedBy")}: {record.deleted_by ?? "—"}
         </div>
         {record.delete_reason && (
           <div>
-            <span className="mr-1">{t("trash.col.grund")}:</span>
+            <span className="mr-1">{t("trash.col.reason")}:</span>
             <ReasonCell reason={record.delete_reason} />
           </div>
         )}

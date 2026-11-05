@@ -77,7 +77,7 @@ export function TransactionDocuments({
   if (isError) {
     return (
       <p className={cn("text-sm text-muted-foreground", className)}>
-        {t("bank.detail.belege.fehler")}
+        {t("bank.detail.belege.error")}
       </p>
     );
   }
@@ -91,14 +91,14 @@ export function TransactionDocuments({
         )}
       >
         <FileWarning className="size-6" />
-        <p className="mt-2">{t("bank.detail.belege.keine")}</p>
+        <p className="mt-2">{t("bank.detail.belege.none")}</p>
       </div>
     );
   }
 
   const isPdf = (active.mime ?? "") === "application/pdf";
   const isImage = (active.mime ?? "").startsWith("image/");
-  const name = active.filename ?? t("bank.detail.belege.datei");
+  const name = active.filename ?? t("bank.detail.belege.file");
 
   return (
     <div className={cn("space-y-3", className)}>
@@ -119,9 +119,7 @@ export function TransactionDocuments({
         ) : (
           <div className="flex flex-col items-center justify-center px-4 py-10 text-center text-sm text-muted-foreground">
             <FileWarning className="size-6" />
-            <p className="mt-2">
-              {t("bank.detail.belege.nichtDarstellbar", { type: active.mime })}
-            </p>
+            <p className="mt-2">{t("bank.detail.belege.cannotDisplay", { type: active.mime })}</p>
           </div>
         )}
       </div>
@@ -175,8 +173,8 @@ export function TransactionDocuments({
           <Paperclip className="size-3.5 shrink-0" />
           <span className="truncate">
             {active.source
-              ? t("bank.detail.belege.quelle", { source: active.source })
-              : t("bank.detail.belege.vorhanden")}
+              ? t("bank.detail.belege.source", { source: active.source })
+              : t("bank.detail.belege.available")}
             {active.sizeBytes ? ` · ${formatBytes(active.sizeBytes)}` : ""}
             {files.length > 1
               ? ` · ${t("bank.detail.belege.anzahl", { count: files.length })}`
@@ -191,14 +189,14 @@ export function TransactionDocuments({
                 variant="ghost"
                 size="sm"
                 className="size-8 p-0"
-                aria-label={t("bank.detail.belege.neuerTab")}
+                aria-label={t("bank.detail.belege.newTab")}
               >
                 <a href={active.previewUrl} target="_blank" rel="noreferrer">
                   <ExternalLink className="size-3.5" />
                 </a>
               </Button>
             </TooltipTrigger>
-            <TooltipContent>{t("bank.detail.belege.neuerTab")}</TooltipContent>
+            <TooltipContent>{t("bank.detail.belege.newTab")}</TooltipContent>
           </Tooltip>
           <Dialog>
             <Tooltip>
@@ -208,13 +206,13 @@ export function TransactionDocuments({
                     variant="ghost"
                     size="sm"
                     className="size-8 p-0"
-                    aria-label={t("bank.detail.belege.vergroessern")}
+                    aria-label={t("bank.detail.belege.enlarge")}
                   >
                     <Maximize2 className="size-3.5" />
                   </Button>
                 </DialogTrigger>
               </TooltipTrigger>
-              <TooltipContent>{t("bank.detail.belege.vergroessern")}</TooltipContent>
+              <TooltipContent>{t("bank.detail.belege.enlarge")}</TooltipContent>
             </Tooltip>
             <DialogContent className="max-w-[95vw] sm:max-w-5xl">
               <DialogHeader>
@@ -240,7 +238,7 @@ export function TransactionDocuments({
           attribute: it is cross-origin and the browser would ignore it anyway. */}
       <Button asChild variant="outline" size="sm" className="w-full gap-2">
         <a href={active.downloadUrl}>
-          <Download className="size-4" /> {t("bank.detail.belege.herunterladen")}
+          <Download className="size-4" /> {t("bank.detail.belege.download")}
         </a>
       </Button>
     </div>

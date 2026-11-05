@@ -78,16 +78,16 @@ export function TriggerSyncButton({
       </AlertDialogTrigger>
       <AlertDialogContent>
         <AlertDialogHeader>
-          <AlertDialogTitle>{t("bankConnections.syncBestaetigen.titel")}</AlertDialogTitle>
+          <AlertDialogTitle>{t("bankConnections.syncConfirm.title")}</AlertDialogTitle>
           <AlertDialogDescription>
             {onlySandbox
-              ? t("bankConnections.syncBestaetigen.textSandbox", { count: connections.length })
-              : t("bankConnections.syncBestaetigen.textLive", { count: connections.length })}
+              ? t("bankConnections.syncConfirm.textSandbox", { count: connections.length })
+              : t("bankConnections.syncConfirm.textLive", { count: connections.length })}
           </AlertDialogDescription>
         </AlertDialogHeader>
         <AlertDialogFooter>
           <AlertDialogCancel disabled={triggerSync.isPending}>
-            {t("bankConnections.syncBestaetigen.abbrechen")}
+            {t("bankConnections.syncConfirm.cancel")}
           </AlertDialogCancel>
           <AlertDialogAction
             onClick={(e) => {
@@ -98,7 +98,7 @@ export function TriggerSyncButton({
           >
             {triggerSync.isPending
               ? t("bankConnections.syncing")
-              : t("bankConnections.syncBestaetigen.starten")}
+              : t("bankConnections.syncConfirm.start")}
           </AlertDialogAction>
         </AlertDialogFooter>
       </AlertDialogContent>

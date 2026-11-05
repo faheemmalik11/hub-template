@@ -57,7 +57,7 @@ export function CloseRemainderButton({
     setBusy(true);
     try {
       await onClose(reason.trim());
-      toast.success(t("bank.detail.restschliessen.erledigt"));
+      toast.success(t("bank.detail.closeRemainder.done"));
       setOpen(false);
       setReason("");
     } catch (e) {
@@ -76,7 +76,7 @@ export function CloseRemainderButton({
       onClick={() => setOpen(true)}
     >
       <CircleSlash className="size-3.5" />
-      {actionLabel ?? t("bank.detail.restschliessen.aktion")}
+      {actionLabel ?? t("bank.detail.closeRemainder.action")}
     </Button>
   );
 
@@ -100,12 +100,12 @@ export function CloseRemainderButton({
             <AlertDialogDescription>{description}</AlertDialogDescription>
           </AlertDialogHeader>
           <p className="rounded-lg border border-amber-300 bg-amber-50 px-3 py-2 text-sm text-amber-900 dark:border-amber-900/60 dark:bg-amber-950/40 dark:text-amber-200">
-            {t("bank.detail.restschliessen.betrag", { amount: remainderLabel })}
+            {t("bank.detail.closeRemainder.amount", { amount: remainderLabel })}
           </p>
           <div className="space-y-1.5">
             <Label htmlFor="close-remainder-reason">
-              {t("bank.detail.restschliessen.grund")}{" "}
-              <span className="text-destructive" title={t("common.form.pflichtfeld")}>
+              {t("bank.detail.closeRemainder.reason")}{" "}
+              <span className="text-destructive" title={t("common.form.required")}>
                 *
               </span>
             </Label>
@@ -113,19 +113,19 @@ export function CloseRemainderButton({
               id="close-remainder-reason"
               value={reason}
               onChange={(e) => setReason(e.target.value)}
-              placeholder={t("bank.detail.restschliessen.grundPlaceholder")}
+              placeholder={t("bank.detail.closeRemainder.reasonPlaceholder")}
               rows={3}
             />
           </div>
           <AlertDialogFooter>
             <AlertDialogCancel disabled={busy}>
-              {t("bank.detail.restschliessen.abbrechen")}
+              {t("bank.detail.closeRemainder.cancel")}
             </AlertDialogCancel>
             {/* Required, because this is a write-off and the history is the only record of why. */}
             <Button onClick={run} disabled={busy || reason.trim() === ""}>
               {busy
-                ? t("bank.detail.restschliessen.laeuft")
-                : t("bank.detail.restschliessen.bestaetigen")}
+                ? t("bank.detail.closeRemainder.saving")
+                : t("bank.detail.closeRemainder.confirm")}
             </Button>
           </AlertDialogFooter>
         </AlertDialogContent>

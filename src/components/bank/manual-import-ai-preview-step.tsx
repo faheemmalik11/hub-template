@@ -160,12 +160,12 @@ export function ManualImportAiPreviewStep({
         <Table containerClassName="max-h-[400px]">
           <TableHeader>
             <TableRow>
-              <TableHead>{t("bank.manualImport.preview.col.datum")}</TableHead>
+              <TableHead>{t("bank.manualImport.preview.col.date")}</TableHead>
               <TableHead className="text-right">
-                {t("bank.manualImport.preview.col.betrag")}
+                {t("bank.manualImport.preview.col.amount")}
               </TableHead>
-              <TableHead>{t("bank.manualImport.preview.col.gegenkonto")}</TableHead>
-              <TableHead>{t("bank.manualImport.preview.col.verwendungszweck")}</TableHead>
+              <TableHead>{t("bank.manualImport.preview.col.counterparty")}</TableHead>
+              <TableHead>{t("bank.manualImport.preview.col.paymentReference")}</TableHead>
               <TableHead className="w-9" />
             </TableRow>
           </TableHeader>

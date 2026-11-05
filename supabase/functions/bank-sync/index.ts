@@ -593,7 +593,7 @@ Deno.serve(async (req) => {
         .select(
           "id, amount, booking_date, payment_reference, counterparty_iban, counterparty_holder",
         )
-        .eq("matching_status", "offen")
+        .eq("matching_status", "open")
         .lt("amount", 0)
         .order("id")
         .range(from, to),
@@ -666,7 +666,7 @@ Deno.serve(async (req) => {
         .select(
           "id, amount, booking_date, payment_reference, counterparty_iban, counterparty_holder",
         )
-        .eq("matching_status", "offen")
+        .eq("matching_status", "open")
         .gt("amount", 0)
         .order("id")
         .range(from, to),

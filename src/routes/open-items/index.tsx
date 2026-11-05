@@ -139,11 +139,11 @@ function parseMatchParam(
   return null;
 }
 
-type Tab = "belege" | "fehlend";
-// "incoming" = incoming invoices (what we owe), "outgoing" = outgoing invoices (revenue). Deliberately
-// NOT named after bank_transactions.direction, which uses the OPPOSITE sense (eingehend = a credit,
-// i.e. money that pays one of OUR outgoing invoices) -- see MatchPanel's own richtung mapping.
-type ItemType = "alle" | "incoming" | "outgoing";
+type Tab = "invoices" | "missing";
+// "incoming" = incoming invoices (what we owe), "outgoing" = outgoing invoices (revenue). Shares a
+// name with bank_transactions.direction but means the OPPOSITE: a bank credit (direction=incoming)
+// settles one of OUR outgoing invoices -- see manual-search.tsx's isCredit convention.
+type ItemType = "all" | "incoming" | "outgoing";
 
 /** Sortable columns of tab A. */
 type DocumentsSort = "counterparty" | "amount" | "received" | "invoiceDate" | "due";
@@ -183,13 +183,8 @@ interface OpenInvoiceRow {
 }
 
 /**
- * The date this row started being somebody's problem.
- *
- * A due date when there is one; otherwise the invoice date, otherwise the day it was ingested. It
- * is what the Fällig/Alter column shows and what that column sorts by, so the sort can never
- * disagree with the cell, and so a list where NO row has a due date (which is every incoming
- * invoice in both databases today, see docs/OFFENE_POSTEN.md) still sorts by real urgency instead
- * of by a column of dashes.
+ * Due date if present, else invoice date, else ingestion date — matches what the Fällig/Alter
+ * column shows, so the sort never disagrees with the cell.
  */
 function urgencyDatum(row: {
   due: string | null;
@@ -232,7 +227,7 @@ function urgency(row: OpenInvoiceRow, today: string): Urgency {
 function OpenItemPage() {
   const navigate = useNavigate();
   const { t } = useTranslation();
-  const [tab, setTabRaw] = useTabParam(["belege", "fehlend"] as const, "belege");
+  const [tab, setTabRaw] = useTabParam(["invoices", "missing"] as const, "invoices");
   const setTab = setTabRaw as (next: Tab) => void;
   const {
     match: matchParamValue,
@@ -240,13 +235,13 @@ function OpenItemPage() {
     type: typeParam,
     due: dueParam,
   } = Route.useSearch();
-  const [fDocumentsType, setFDocumentsType] = useState<ItemType>(typeParam ?? "alle");
-  const [fDue, setFDue] = useState<DueBucket | "alle">(dueParam ?? "alle");
+  const [fDocumentsType, setFDocumentsType] = useState<ItemType>(typeParam ?? "all");
+  const [fDue, setFDue] = useState<DueBucket | "all">(dueParam ?? "all");
   const [periodInvoices, setPeriodInvoices] = useState<PeriodValue>({ period: "alle" });
   const [fCompanyDocuments, setFCompanyDocuments] = useState(ALL_COMPANIES);
   const [fCounterpartyDocuments, setFCounterpartyDocuments] = useState("");
-  const [fMissingDirection, setFMissingDirection] = useState<"alle" | "eingehend" | "ausgehend">(
-    "alle",
+  const [fMissingDirection, setFMissingDirection] = useState<"all" | "incoming" | "outgoing">(
+    "all",
   );
   const openMatch = parseMatchParam(matchParamValue);
   // Tab B breakdown (Briefing Screen 8/10: "missing receipts must stand out early and clearly —
@@ -265,11 +260,8 @@ function OpenItemPage() {
   // because coverage has nothing to measure against. See OpenItemBlocker.
   const [showBlocked, setShowBlocked] = useState(false);
 
-  // Newest RECEIVED first, by product decision. created_at is always present, whereas
-  // document_date is whatever the supplier printed and is often weeks older or missing; what
-  // somebody opens this screen to work on is usually what just arrived. Urgency is one click away
-  // instead of being the default: the Fällig/Alter header sorts oldest-first, and the figure above
-  // the table already says how much of the list is overdue or long open.
+  // Sorts by received date by default, not urgency: created_at is always present while
+  // document_date is often missing. Urgency sort is one click away via the Fällig/Alter header.
   const [sortDocuments, setSortDocuments] = useState<DocumentsSort>("received");
   const [dirDocuments, setDirDocuments] = useState<SortDir>("desc");
   const [sortMissing, setSortMissing] = useState<MissingSort>("date");
@@ -297,7 +289,7 @@ function OpenItemPage() {
   const [pageDocuments, setPageDocuments] = useState(1);
   const [pageMissing, setPageMissing] = useState(1);
 
-  const missingDirection = fMissingDirection === "alle" ? undefined : fMissingDirection;
+  const missingDirection = fMissingDirection === "all" ? undefined : fMissingDirection;
   const searchMissing = useDebouncedValue(fCounterparty, SEARCH_DEBOUNCE_MS);
   // 25 rows at a time, filtered, sorted and counted BY THE DATABASE, the same way the Bank
   // transactions screen does it. This used to be the unpaginated hook, which pulled the whole open
@@ -487,8 +479,8 @@ function OpenItemPage() {
       const datum = (row.invoiceDate ?? row.datum)?.slice(0, 10);
       if (invoiceRange.fromDate && (!datum || datum < invoiceRange.fromDate)) return false;
       if (invoiceRange.toDate && (!datum || datum > invoiceRange.toDate)) return false;
-      if (fDue !== "alle" && dueBucket(row.due, today) !== fDue) return false;
-      if (!showBlocked && fDocumentsType !== "alle" && row.type !== fDocumentsType) return false;
+      if (fDue !== "all" && dueBucket(row.due, today) !== fDue) return false;
+      if (!showBlocked && fDocumentsType !== "all" && row.type !== fDocumentsType) return false;
       if (fCompanyDocuments === WITHOUT_COMPANY) {
         if (row.companyId !== null) return false;
       } else if (fCompanyDocuments !== ALL_COMPANIES && row.companyId !== fCompanyDocuments) {
@@ -521,10 +513,10 @@ function OpenItemPage() {
   // has to know each source to give it an icon and a label, so the list lives in one place.
   const sourceOptions = useMemo(
     () => [
-      { value: ALL_SOURCES, label: t("openItems.fehlend.filter.alleQuellen") },
+      { value: ALL_SOURCES, label: t("openItems.missing.filter.allSources") },
       ...SOURCES.map((q) => ({
         value: q,
-        label: t(`openItems.fehlend.quelle.${q}`, { defaultValue: q }),
+        label: t(`openItems.missing.source.${q}`, { defaultValue: q }),
       })),
     ],
     [t],
@@ -542,11 +534,11 @@ function OpenItemPage() {
     fCompanyDocuments !== ALL_COMPANIES || fCounterpartyDocuments.trim() !== "";
   const filterActiveDocuments =
     engFilterDocuments ||
-    fDocumentsType !== "alle" ||
-    fDue !== "alle" ||
+    fDocumentsType !== "all" ||
+    fDue !== "all" ||
     periodInvoices.period !== "alle";
   const filterActiveMissing =
-    fMissingDirection !== "alle" ||
+    fMissingDirection !== "all" ||
     fCompanyMissing !== ALL_COMPANIES ||
     fSource !== ALL_SOURCES ||
     periodTransactions.period !== "alle" ||
@@ -554,23 +546,23 @@ function OpenItemPage() {
   // Counts only the two dropdown filters behind the popover, not the search box (already visible
   // and editable on the surface, so it needs no chip/badge of its own).
   const documentsFilterCount =
-    (fDocumentsType !== "alle" ? 1 : 0) +
-    (fDue !== "alle" ? 1 : 0) +
+    (fDocumentsType !== "all" ? 1 : 0) +
+    (fDue !== "all" ? 1 : 0) +
     (fCompanyDocuments !== ALL_COMPANIES ? 1 : 0) +
     (periodInvoices.period !== "alle" ? 1 : 0) +
     (showBlocked ? 1 : 0);
   const missingFilterCount =
-    (fMissingDirection !== "alle" ? 1 : 0) +
+    (fMissingDirection !== "all" ? 1 : 0) +
     (fCompanyMissing !== ALL_COMPANIES ? 1 : 0) +
     (periodTransactions.period !== "alle" ? 1 : 0) +
     (fSource !== ALL_SOURCES ? 1 : 0);
 
-  const page = tab === "belege" ? pageDocuments : pageMissing;
-  const setPage = tab === "belege" ? setPageDocuments : setPageMissing;
-  const rows = tab === "fehlend" ? missingRows : openItemRows;
+  const page = tab === "invoices" ? pageDocuments : pageMissing;
+  const setPage = tab === "invoices" ? setPageDocuments : setPageMissing;
+  const rows = tab === "missing" ? missingRows : openItemRows;
   // The payments tab is paged by the server, so its total is the count that came back with the
   // page, not the length of what is in memory.
-  const total = tab === "fehlend" ? missingTotal : openItemRows.length;
+  const total = tab === "missing" ? missingTotal : openItemRows.length;
   const totalPages = Math.max(1, Math.ceil(total / pageSize));
   // Clamp rather than reset: if the list shrinks under you (a link removes both sides), land on the
   // last real page instead of an empty one.
@@ -579,9 +571,9 @@ function OpenItemPage() {
   const toDate = Math.min(safePage * pageSize, total);
   // The payments tab already holds exactly one page; only the invoice side still slices.
   const pageRows =
-    tab === "fehlend" ? rows : rows.slice((safePage - 1) * pageSize, safePage * pageSize);
-  const documentsPage = tab === "belege" ? (pageRows as OpenInvoiceRow[]) : [];
-  const missingPage = tab === "fehlend" ? (pageRows as BankTransaction[]) : [];
+    tab === "missing" ? rows : rows.slice((safePage - 1) * pageSize, safePage * pageSize);
+  const documentsPage = tab === "invoices" ? (pageRows as OpenInvoiceRow[]) : [];
+  const missingPage = tab === "missing" ? (pageRows as BankTransaction[]) : [];
 
   function sortBy(column: DocumentsSort) {
     setPageDocuments(1);
@@ -606,8 +598,8 @@ function OpenItemPage() {
   }
 
   function documentsFilterReset() {
-    setFDocumentsType("alle");
-    setFDue("alle");
+    setFDocumentsType("all");
+    setFDue("all");
     setFCompanyDocuments(ALL_COMPANIES);
     setFCounterpartyDocuments("");
     setPeriodInvoices({ period: "alle" });
@@ -616,7 +608,7 @@ function OpenItemPage() {
   }
 
   function missingFilterReset() {
-    setFMissingDirection("alle");
+    setFMissingDirection("all");
     setFCompanyMissing(ALL_COMPANIES);
     setFCounterparty("");
     setPeriodTransactions({ period: "alle" });
@@ -624,8 +616,8 @@ function OpenItemPage() {
   }
 
   const companyOptions = [
-    { value: ALL_COMPANIES, label: t("openItems.fehlend.alleGesellschaften") },
-    { value: WITHOUT_COMPANY, label: t("openItems.ohneGesellschaft") },
+    { value: ALL_COMPANIES, label: t("openItems.missing.allCompanies") },
+    { value: WITHOUT_COMPANY, label: t("openItems.noCompany") },
     ...(companiesQ.data ?? []).map((g) => ({
       value: g.id,
       label: `${g.code} · ${g.name}`,
@@ -739,28 +731,28 @@ function OpenItemPage() {
           {t("openItems.title")}
         </h1>
         <p className="text-sm text-muted-foreground">
-          {t(tab === "fehlend" ? "openItems.subtitleFehlend" : "openItems.subtitle")}
+          {t(tab === "missing" ? "openItems.subtitleMissing" : "openItems.subtitle")}
         </p>
       </div>
 
       {/* Tab A filter bar: counterparty search gets its own full-width row -- it's the primary way
           in -- with invoice type & company underneath. */}
-      {tab === "belege" && (
+      {tab === "invoices" && (
         <div className="mt-4 space-y-3">
           <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between sm:gap-4">
             <div
               className="flex w-full shrink-0 rounded-md border border-border p-0.5 sm:inline-flex sm:w-auto"
               data-tour="reconcile-tabs"
             >
-              <TabButton active count={openItemRows.length} onClick={() => setTab("belege")}>
-                {t("openItems.tab.belege")}
+              <TabButton active count={openItemRows.length} onClick={() => setTab("invoices")}>
+                {t("openItems.tab.invoices")}
               </TabButton>
               <TabButton
                 active={false}
                 count={missingQ.isPending ? undefined : missingTotal}
-                onClick={() => setTab("fehlend")}
+                onClick={() => setTab("missing")}
               >
-                {t("openItems.tab.fehlend")}
+                {t("openItems.tab.missing")}
               </TabButton>
             </div>
             <div
@@ -773,8 +765,8 @@ function OpenItemPage() {
                   setFCounterpartyDocuments(e.target.value);
                   setPageDocuments(1);
                 }}
-                placeholder={t("openItems.belege.gegenparteiPlaceholder")}
-                aria-label={t("openItems.belege.gegenparteiPlaceholder")}
+                placeholder={t("openItems.invoices.counterpartyPlaceholder")}
+                aria-label={t("openItems.invoices.counterpartyPlaceholder")}
                 className="h-9 w-full shadow-none sm:w-96"
               />
               <Popover>
@@ -798,11 +790,11 @@ function OpenItemPage() {
                             onClick={documentsFilterReset}
                             className="cursor-pointer text-xs text-muted-foreground underline hover:text-foreground"
                           >
-                            {t("openItems.filterZuruecksetzen")}
+                            {t("openItems.filterReset")}
                           </button>
                         )}
                         <PopoverClose
-                          aria-label={t("openItems.filterSchliessen")}
+                          aria-label={t("openItems.filterClose")}
                           className="cursor-pointer rounded text-muted-foreground transition-colors hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
                         >
                           <X className="size-4" />
@@ -812,7 +804,7 @@ function OpenItemPage() {
                     <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
                       <label className="flex flex-col gap-1">
                         <span className="text-xs font-medium text-muted-foreground">
-                          {t("openItems.belege.filter.label")}
+                          {t("openItems.invoices.filter.label")}
                         </span>
                         <Combobox
                           value={fDocumentsType}
@@ -822,25 +814,25 @@ function OpenItemPage() {
                           }}
                           className="w-full shadow-none"
                           options={[
-                            { value: "alle", label: t("openItems.belege.filter.alle") },
-                            { value: "incoming", label: t("openItems.belege.filter.incoming") },
-                            { value: "outgoing", label: t("openItems.belege.filter.outgoing") },
+                            { value: "all", label: t("openItems.invoices.filter.all") },
+                            { value: "incoming", label: t("openItems.invoices.filter.incoming") },
+                            { value: "outgoing", label: t("openItems.invoices.filter.outgoing") },
                           ]}
                         />
                       </label>
                       <label className="flex flex-col gap-1">
                         <span className="text-xs font-medium text-muted-foreground">
-                          {t("openItems.belege.col.faelligAlter")}
+                          {t("openItems.invoices.col.dueAge")}
                         </span>
                         <Combobox
                           value={fDue}
                           onValueChange={(v) => {
-                            setFDue(v as DueBucket | "alle");
+                            setFDue(v as DueBucket | "all");
                             setPageDocuments(1);
                           }}
                           className="w-full shadow-none"
                           options={[
-                            { value: "alle", label: t("openItems.due.any") },
+                            { value: "all", label: t("openItems.due.any") },
                             ...DUE_BUCKETS.map((b) => ({
                               value: b,
                               label: t(`openItems.due.${b}`),
@@ -864,7 +856,7 @@ function OpenItemPage() {
                       </div>
                       <label className="flex flex-col gap-1">
                         <span className="text-xs font-medium text-muted-foreground">
-                          {t("openItems.fehlend.col.gesellschaft")}
+                          {t("openItems.missing.col.company")}
                         </span>
                         <Combobox
                           value={fCompanyDocuments}
@@ -891,7 +883,7 @@ function OpenItemPage() {
                             }}
                           />
                           <span className="text-sm text-foreground">
-                            {t("openItems.blocker.anzeigen", { count: blockedDocuments.length })}
+                            {t("openItems.blocker.show", { count: blockedDocuments.length })}
                           </span>
                         </label>
                       )}
@@ -903,15 +895,15 @@ function OpenItemPage() {
           </div>
           {documentsFilterCount > 0 && (
             <div className="flex flex-wrap items-center gap-2">
-              {fDocumentsType !== "alle" && (
+              {fDocumentsType !== "all" && (
                 <FilterChip
                   label={t(
                     fDocumentsType === "incoming"
-                      ? "openItems.belege.filter.incoming"
-                      : "openItems.belege.filter.outgoing",
+                      ? "openItems.invoices.filter.incoming"
+                      : "openItems.invoices.filter.outgoing",
                   )}
                   onClear={() => {
-                    setFDocumentsType("alle");
+                    setFDocumentsType("all");
                     setPageDocuments(1);
                   }}
                 />
@@ -930,7 +922,7 @@ function OpenItemPage() {
               )}
               {showBlocked && (
                 <FilterChip
-                  label={t("openItems.blocker.anzeigen", { count: blockedDocuments.length })}
+                  label={t("openItems.blocker.show", { count: blockedDocuments.length })}
                   onClear={() => {
                     setShowBlocked(false);
                     setPageDocuments(1);
@@ -944,7 +936,7 @@ function OpenItemPage() {
 
       {/* Missing-receipts breakdown (Briefing Screen 8): direction + company + counterparty, plus the
           EUR totals alongside the item count so this reads as "€X open", not just "N items". */}
-      {tab === "fehlend" && (
+      {tab === "missing" && (
         <div className="mt-4 space-y-3">
           <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between sm:gap-4">
             <div
@@ -954,16 +946,16 @@ function OpenItemPage() {
               <TabButton
                 active={false}
                 count={openItemRows.length}
-                onClick={() => setTab("belege")}
+                onClick={() => setTab("invoices")}
               >
-                {t("openItems.tab.belege")}
+                {t("openItems.tab.invoices")}
               </TabButton>
               <TabButton
                 active
                 count={missingQ.isPending ? undefined : missingTotal}
-                onClick={() => setTab("fehlend")}
+                onClick={() => setTab("missing")}
               >
-                {t("openItems.tab.fehlend")}
+                {t("openItems.tab.missing")}
               </TabButton>
             </div>
             <div
@@ -979,8 +971,8 @@ function OpenItemPage() {
                     setFCounterparty(e.target.value);
                     setPageMissing(1);
                   }}
-                  placeholder={t("openItems.fehlend.gegenparteiPlaceholder")}
-                  aria-label={t("openItems.fehlend.gegenparteiPlaceholder")}
+                  placeholder={t("openItems.missing.counterpartyPlaceholder")}
+                  aria-label={t("openItems.missing.counterpartyPlaceholder")}
                   className="h-9 w-full shadow-none"
                 />
                 {fCounterparty.trim() !== "" && missingQ.isFetching && (
@@ -1008,11 +1000,11 @@ function OpenItemPage() {
                             onClick={missingFilterReset}
                             className="cursor-pointer text-xs text-muted-foreground underline hover:text-foreground"
                           >
-                            {t("openItems.filterZuruecksetzen")}
+                            {t("openItems.filterReset")}
                           </button>
                         )}
                         <PopoverClose
-                          aria-label={t("openItems.filterSchliessen")}
+                          aria-label={t("openItems.filterClose")}
                           className="cursor-pointer rounded text-muted-foreground transition-colors hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
                         >
                           <X className="size-4" />
@@ -1022,27 +1014,27 @@ function OpenItemPage() {
                     <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
                       <label className="flex flex-col gap-1">
                         <span className="text-xs font-medium text-muted-foreground">
-                          {t("openItems.fehlend.col.richtung")}
+                          {t("openItems.missing.col.direction")}
                         </span>
                         <Combobox
                           value={fMissingDirection}
                           onValueChange={(v) => {
-                            setFMissingDirection(v as "alle" | "eingehend" | "ausgehend");
+                            setFMissingDirection(v as "all" | "incoming" | "outgoing");
                             setPageMissing(1);
                           }}
                           className="w-full shadow-none"
                           options={[
                             {
-                              value: "alle",
-                              label: t("openItems.fehlend.filter.alleRichtungen"),
+                              value: "all",
+                              label: t("openItems.missing.filter.allDirections"),
                             },
                             {
-                              value: "eingehend",
-                              label: t("openItems.fehlend.filter.eingehend"),
+                              value: "incoming",
+                              label: t("openItems.missing.filter.incoming"),
                             },
                             {
-                              value: "ausgehend",
-                              label: t("openItems.fehlend.filter.ausgehend"),
+                              value: "outgoing",
+                              label: t("openItems.missing.filter.outgoing"),
                             },
                           ]}
                         />
@@ -1063,7 +1055,7 @@ function OpenItemPage() {
                       </div>
                       <label className="flex flex-col gap-1">
                         <span className="text-xs font-medium text-muted-foreground">
-                          {t("openItems.fehlend.col.quelle")}
+                          {t("openItems.missing.col.source")}
                         </span>
                         <Combobox
                           value={fSource}
@@ -1077,7 +1069,7 @@ function OpenItemPage() {
                       </label>
                       <label className="flex flex-col gap-1">
                         <span className="text-xs font-medium text-muted-foreground">
-                          {t("openItems.fehlend.col.gesellschaft")}
+                          {t("openItems.missing.col.company")}
                         </span>
                         <Combobox
                           value={fCompanyMissing}
@@ -1097,22 +1089,22 @@ function OpenItemPage() {
           </div>
           {missingFilterCount > 0 && (
             <div className="flex flex-wrap items-center gap-2">
-              {fMissingDirection !== "alle" && (
+              {fMissingDirection !== "all" && (
                 <FilterChip
                   label={t(
-                    fMissingDirection === "eingehend"
-                      ? "openItems.fehlend.filter.eingehend"
-                      : "openItems.fehlend.filter.ausgehend",
+                    fMissingDirection === "incoming"
+                      ? "openItems.missing.filter.incoming"
+                      : "openItems.missing.filter.outgoing",
                   )}
                   onClear={() => {
-                    setFMissingDirection("alle");
+                    setFMissingDirection("all");
                     setPageMissing(1);
                   }}
                 />
               )}
               {fSource !== ALL_SOURCES && (
                 <FilterChip
-                  label={t(`openItems.fehlend.quelle.${fSource}`, { defaultValue: fSource })}
+                  label={t(`openItems.missing.source.${fSource}`, { defaultValue: fSource })}
                   onClear={() => {
                     setFSource(ALL_SOURCES);
                     setPageMissing(1);
@@ -1137,7 +1129,7 @@ function OpenItemPage() {
       )}
 
       <div data-tour="reconcile-list">
-        {tab === "belege" ? (
+        {tab === "invoices" ? (
           openQ.isError ||
           blockedQ.isError ||
           outgoingInvoicesQ.isError ||
@@ -1172,22 +1164,22 @@ function OpenItemPage() {
                   showBlocked
                     ? "openItems.blocker.emptyTitle"
                     : engFilterDocuments
-                      ? "openItems.belege.gefiltertEmptyTitle"
+                      ? "openItems.invoices.filteredEmptyTitle"
                       : fDocumentsType === "outgoing"
-                        ? "openItems.ausgangsrechnungen.emptyTitle"
+                        ? "openItems.outgoing.emptyTitle"
                         : fDocumentsType === "incoming"
-                          ? "openItems.belege.emptyTitle"
+                          ? "openItems.invoices.emptyTitle"
                           : "openItems.emptyTitle",
                 )}
                 hint={t(
                   showBlocked
                     ? "openItems.blocker.emptyHint"
                     : engFilterDocuments
-                      ? "openItems.belege.gefiltertEmptyHint"
+                      ? "openItems.invoices.filteredEmptyHint"
                       : fDocumentsType === "outgoing"
-                        ? "openItems.ausgangsrechnungen.emptyHint"
+                        ? "openItems.outgoing.emptyHint"
                         : fDocumentsType === "incoming"
-                          ? "openItems.belege.emptyHint"
+                          ? "openItems.invoices.emptyHint"
                           : "openItems.emptyHint",
                 )}
               />
@@ -1208,9 +1200,9 @@ function OpenItemPage() {
                         dir={dirDocuments}
                         onSort={sortBy}
                       >
-                        {t("openItems.col.gegenpartei")}
+                        {t("openItems.col.counterparty")}
                       </SortHeader>
-                      <TableHead>{t("openItems.belege.col.nr")}</TableHead>
+                      <TableHead>{t("openItems.invoices.col.nr")}</TableHead>
                       <SortHeader
                         column="amount"
                         active={sortDocuments}
@@ -1218,7 +1210,7 @@ function OpenItemPage() {
                         onSort={sortBy}
                         className="text-right"
                       >
-                        {t("openItems.belege.col.betrag")}
+                        {t("openItems.invoices.col.amount")}
                       </SortHeader>
                       <SortHeader
                         column="invoiceDate"
@@ -1226,7 +1218,7 @@ function OpenItemPage() {
                         dir={dirDocuments}
                         onSort={sortBy}
                       >
-                        {t("openItems.belege.col.rechnungsdatum")}
+                        {t("openItems.invoices.col.invoiceDate")}
                       </SortHeader>
                       <SortHeader
                         column="due"
@@ -1234,7 +1226,7 @@ function OpenItemPage() {
                         dir={dirDocuments}
                         onSort={sortBy}
                       >
-                        {t("openItems.belege.col.faelligAlter")}
+                        {t("openItems.invoices.col.dueAge")}
                       </SortHeader>
                       <TableHead className="w-[120px]" />
                     </TableRow>
@@ -1261,7 +1253,7 @@ function OpenItemPage() {
                           {formatEUR(row.amount)}
                           {row.matched > 0.01 && (
                             <span className="block text-[0.7rem] font-normal leading-tight text-amber-700">
-                              {t("openItems.belege.restOffen", {
+                              {t("openItems.invoices.remainingOpen", {
                                 rest: formatEUR(
                                   Math.max(Math.abs(row.amount ?? 0) - row.matched, 0),
                                 ),
@@ -1284,7 +1276,7 @@ function OpenItemPage() {
                               className="h-7 gap-1 px-0 font-medium"
                               onClick={() => openMatchPanelForDocument(row)}
                             >
-                              {t("openItems.belege.verknuepfen")}
+                              {t("openItems.invoices.link")}
                               <ChevronRight />
                             </Button>
                           )}
@@ -1322,7 +1314,7 @@ function OpenItemPage() {
                         {formatEUR(row.amount)}
                         {row.matched > 0.01 && (
                           <span className="block text-[0.7rem] font-normal leading-tight text-amber-700">
-                            {t("openItems.belege.restOffen", {
+                            {t("openItems.invoices.remainingOpen", {
                               rest: formatEUR(Math.max(Math.abs(row.amount ?? 0) - row.matched, 0)),
                               paid: formatEUR(row.matched),
                             })}
@@ -1349,7 +1341,7 @@ function OpenItemPage() {
                           className="h-7 gap-1 px-0 font-medium"
                           onClick={() => openMatchPanelForDocument(row)}
                         >
-                          {t("openItems.belege.verknuepfen")}
+                          {t("openItems.invoices.link")}
                           <ChevronRight />
                         </Button>
                       </div>
@@ -1372,13 +1364,13 @@ function OpenItemPage() {
             <EmptyState
               title={t(
                 filterActiveMissing
-                  ? "openItems.fehlend.gefiltertEmptyTitle"
-                  : "openItems.fehlend.emptyTitle",
+                  ? "openItems.missing.filteredEmptyTitle"
+                  : "openItems.missing.emptyTitle",
               )}
               hint={t(
                 filterActiveMissing
-                  ? "openItems.fehlend.gefiltertEmptyHint"
-                  : "openItems.fehlend.emptyHint",
+                  ? "openItems.missing.filteredEmptyHint"
+                  : "openItems.missing.emptyHint",
               )}
             />
           </div>
@@ -1396,19 +1388,19 @@ function OpenItemPage() {
                       dir={dirMissing}
                       onSort={sortMissingBy}
                     >
-                      {t("openItems.fehlend.col.datum")}
+                      {t("openItems.missing.col.date")}
                     </MissingSortHeader>
-                    <TableHead className="w-[110px]">{t("openItems.fehlend.col.quelle")}</TableHead>
-                    <TableHead>{t("openItems.fehlend.col.gesellschaft")}</TableHead>
+                    <TableHead className="w-[110px]">{t("openItems.missing.col.source")}</TableHead>
+                    <TableHead>{t("openItems.missing.col.company")}</TableHead>
                     <MissingSortHeader
                       column="contraAccount"
                       active={sortMissing}
                       dir={dirMissing}
                       onSort={sortMissingBy}
                     >
-                      {t("openItems.fehlend.col.gegenkonto")}
+                      {t("openItems.missing.col.counterAccount")}
                     </MissingSortHeader>
-                    <TableHead>{t("openItems.fehlend.col.verwendungszweck")}</TableHead>
+                    <TableHead>{t("openItems.missing.col.paymentReference")}</TableHead>
                     <MissingSortHeader
                       column="amount"
                       active={sortMissing}
@@ -1416,7 +1408,7 @@ function OpenItemPage() {
                       onSort={sortMissingBy}
                       className="text-right"
                     >
-                      {t("openItems.fehlend.col.betrag")}
+                      {t("openItems.missing.col.amount")}
                     </MissingSortHeader>
                     <TableHead className="w-[64px]" />
                   </TableRow>
@@ -1477,7 +1469,7 @@ function OpenItemPage() {
                         {((txn.amount < 0 ? allocatedByTxn : outgoingAllocatedByTxn).get(txn.id) ??
                           0) > 0.01 && (
                           <span className="block text-[0.7rem] font-normal leading-tight text-amber-700">
-                            {t("openItems.fehlend.restOffen", {
+                            {t("openItems.missing.remainingOpen", {
                               rest: formatEUR(openRest(txn)),
                               matched: formatEUR(
                                 (txn.amount < 0 ? allocatedByTxn : outgoingAllocatedByTxn).get(
@@ -1501,7 +1493,7 @@ function OpenItemPage() {
                               setMatchParam(matchParam({ kind: "transaction", id: txn.id }), false)
                             }
                           >
-                            {t("openItems.fehlend.belegFinden")}
+                            {t("openItems.missing.findInvoice")}
                             <ChevronRight />
                           </Button>
                         </div>
@@ -1554,7 +1546,7 @@ function OpenItemPage() {
                         {formatSignedEUR(txn.amount)}
                         {allocated > 0.01 && (
                           <span className="block text-[0.7rem] font-normal leading-tight text-amber-700">
-                            {t("openItems.fehlend.restOffen", {
+                            {t("openItems.missing.remainingOpen", {
                               rest: formatEUR(Math.max(Math.abs(txn.amount) - allocated, 0)),
                               matched: formatEUR(allocated),
                             })}
@@ -1582,7 +1574,7 @@ function OpenItemPage() {
                           setMatchParam(matchParam({ kind: "transaction", id: txn.id }), false)
                         }
                       >
-                        {t("openItems.fehlend.belegFinden")}
+                        {t("openItems.missing.findInvoice")}
                         <ChevronRight />
                       </Button>
                     </div>
@@ -1720,8 +1712,8 @@ function TypeBadge({ type }: { type: "incoming" | "outgoing" }) {
     >
       {t(
         type === "incoming"
-          ? "openItems.belege.filter.incoming"
-          : "openItems.belege.filter.outgoing",
+          ? "openItems.invoices.filter.incoming"
+          : "openItems.invoices.filter.outgoing",
       )}
     </span>
   );
@@ -1760,21 +1752,15 @@ function CounterpartyLink({ row }: { row: OpenInvoiceRow }) {
   // Ausgangsrechnungen list. Said out loud instead of leaving a row that looks like its neighbours
   // and does nothing when clicked.
   return (
-    <Link to="/outgoing-invoices" className={classes} title={t("openItems.belege.zurListe")}>
+    <Link to="/outgoing-invoices" className={classes} title={t("openItems.invoices.backToList")}>
       {row.counterparty}
     </Link>
   );
 }
 
 /**
- * "Fällig / Alter", a column that always says something.
- *
- * `invoices.due_date` is written by nobody today: the pipeline never extracts it (no
- * `faelligkeit` key exists in a single `extracted` blob in either database) and until now the
- * invoice form had no field for it, so the column was 0 of 30 filled on Immonetz and 0 of 433 on
- * the this Hub. A column of dashes on the screen whose entire purpose is "which of these is late".
- * A due date is now enterable on the invoice detail AND, when there is none, the cell falls back to
- * how long the receipt has been sitting there, which is always knowable.
+ * `invoices.due_date` is populated by nobody today, so when it's empty the cell falls back to
+ * how long the receipt has been sitting, which is always knowable.
  */
 function DueCell({ row, today }: { row: OpenInvoiceRow; today: string }) {
   const { t } = useTranslation();
@@ -1790,11 +1776,11 @@ function DueCell({ row, today }: { row: OpenInvoiceRow; today: string }) {
     d.days == null
       ? undefined
       : row.due
-        ? t(d.overdue ? "openItems.belege.ueberfaelligTage" : "openItems.belege.faelligAm", {
+        ? t(d.overdue ? "openItems.invoices.overdueDays" : "openItems.invoices.dueOn", {
             count: d.days,
             datum: formatDate(row.due),
           })
-        : t("openItems.belege.offenSeit", { count: d.days });
+        : t("openItems.invoices.openSince", { count: d.days });
 
   const cashDiscount = row.cashDiscount;
   const bucket = dueBucket(row.due, today);
@@ -1872,28 +1858,28 @@ function CategoryCell({ txn }: { txn: BankTransaction }) {
                 toast.success(
                   t(
                     categoryId
-                      ? "openItems.fehlend.kategorieGesetzt"
-                      : "openItems.fehlend.kategorieEntfernt",
+                      ? "openItems.missing.categorySaved"
+                      : "openItems.missing.categoryRemoved",
                   ),
                 ),
               onError: (e) =>
-                toast.error(t("openItems.fehlend.kategorieFehler", { error: errorText(e) })),
+                toast.error(t("openItems.missing.categoryError", { error: errorText(e) })),
             },
           );
         }}
         options={[
-          { value: NO_CATEGORY, label: t("openItems.fehlend.kategorieOhne") },
+          { value: NO_CATEGORY, label: t("openItems.missing.categoryNone") },
           ...categoryOptions,
         ]}
-        placeholder={t("openItems.fehlend.kategoriePlaceholder")}
+        placeholder={t("openItems.missing.categoryPlaceholder")}
         className="h-7 w-auto min-w-[150px] px-2 py-1 text-xs"
       />
       {txn.category_source === "rule" && (
         <span
           className="shrink-0 text-[10px] text-muted-foreground"
-          title={t("openItems.fehlend.kategorieRegelHint")}
+          title={t("openItems.missing.categoryRuleHint")}
         >
-          {t("openItems.fehlend.kategorieRegel")}
+          {t("openItems.missing.categoryRule")}
         </span>
       )}
     </div>
@@ -2030,7 +2016,7 @@ function FilterChip({ label, onClear }: { label: string; onClear: () => void }) 
       <button
         type="button"
         onClick={onClear}
-        aria-label={t("openItems.filterChipEntfernen")}
+        aria-label={t("openItems.filterChipRemove")}
         className="cursor-pointer hover:text-foreground"
       >
         <X className="size-3.5" />
@@ -2079,7 +2065,7 @@ function SourceChip({ source }: { source: string | null | undefined }) {
   return (
     <span className="inline-flex items-center gap-1 rounded-md bg-muted px-2 py-0.5 text-xs font-medium text-muted-foreground">
       {Icon && <Icon className="size-3 shrink-0" />}
-      {t(`openItems.fehlend.quelle.${source}`, { defaultValue: source })}
+      {t(`openItems.missing.source.${source}`, { defaultValue: source })}
     </span>
   );
 }

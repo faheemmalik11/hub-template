@@ -2558,9 +2558,8 @@ function DocumentDetail({ doc }: { doc: Document }) {
                 destructive: true,
               },
           ...(pingRecipient.length > 0
-            ? [{ id: "ping", icon: BellRing, label: t("ping.aktion") }]
+            ? [{ id: "ping", icon: BellRing, label: t("ping.action") }]
             : []),
-          // Verwerfen (für "zu prüfen"): kein Beleg -- Soft-Delete mit Grund.
           ...(doc.status === "needs_review"
             ? [
                 {
@@ -2885,7 +2884,7 @@ function DocumentDetail({ doc }: { doc: Document }) {
               {doc.confidence_score != null && (
                 <ConfidencePill
                   score={doc.confidence_score}
-                  mitLabel
+                  withLabel
                   className="px-2.5 py-1 text-base"
                 />
               )}
@@ -4614,21 +4613,21 @@ function DocumentDetail({ doc }: { doc: Document }) {
               existingIbans={allAccounts.map((k) => k.iban)}
               saving={newSuppliersAccount.isPending}
               labels={{
-                title: t("suppliers.detail.bankkonten.dialog.title"),
-                iban: t("suppliers.detail.bankkonten.col.iban"),
-                bic: t("suppliers.detail.bankkonten.col.bic"),
-                bank: t("suppliers.detail.bankkonten.col.bank"),
-                cancel: t("suppliers.detail.bankkonten.dialog.abbrechen"),
-                save: t("suppliers.detail.bankkonten.dialog.speichern"),
-                invalidIban: t("suppliers.detail.bankkonten.toast.ungueltig"),
-                duplicateIban: t("suppliers.detail.bankkonten.toast.bereitsVorhanden"),
+                title: t("suppliers.detail.bankAccounts.dialog.title"),
+                iban: t("suppliers.detail.bankAccounts.col.iban"),
+                bic: t("suppliers.detail.bankAccounts.col.bic"),
+                bank: t("suppliers.detail.bankAccounts.col.bank"),
+                cancel: t("suppliers.detail.bankAccounts.dialog.cancel"),
+                save: t("suppliers.detail.bankAccounts.dialog.save"),
+                invalidIban: t("suppliers.detail.bankAccounts.toast.invalid"),
+                duplicateIban: t("suppliers.detail.bankAccounts.toast.alreadyExists"),
               }}
               onSave={(input) =>
                 newSuppliersAccount.mutate(input, {
                   onSuccess: () => {
                     setAccountChoiceOpen(false);
                     toast.success(
-                      t("suppliers.detail.bankkonten.toast.hinzugefuegt", {
+                      t("suppliers.detail.bankAccounts.toast.added", {
                         iban: formatIBAN(input.iban),
                       }),
                     );
@@ -5338,14 +5337,14 @@ function NowPaySection({
                 existingIbans={(recipientAccountsQ.data ?? []).map((k) => k.iban)}
                 saving={newAccount.isPending}
                 labels={{
-                  title: t("suppliers.detail.bankkonten.dialog.title"),
-                  iban: t("suppliers.detail.bankkonten.col.iban"),
-                  bic: t("suppliers.detail.bankkonten.col.bic"),
-                  bank: t("suppliers.detail.bankkonten.col.bank"),
-                  cancel: t("suppliers.detail.bankkonten.dialog.abbrechen"),
-                  save: t("suppliers.detail.bankkonten.dialog.speichern"),
-                  invalidIban: t("suppliers.detail.bankkonten.toast.ungueltig"),
-                  duplicateIban: t("suppliers.detail.bankkonten.toast.bereitsVorhanden"),
+                  title: t("suppliers.detail.bankAccounts.dialog.title"),
+                  iban: t("suppliers.detail.bankAccounts.col.iban"),
+                  bic: t("suppliers.detail.bankAccounts.col.bic"),
+                  bank: t("suppliers.detail.bankAccounts.col.bank"),
+                  cancel: t("suppliers.detail.bankAccounts.dialog.cancel"),
+                  save: t("suppliers.detail.bankAccounts.dialog.save"),
+                  invalidIban: t("suppliers.detail.bankAccounts.toast.invalid"),
+                  duplicateIban: t("suppliers.detail.bankAccounts.toast.alreadyExists"),
                 }}
                 onSave={(input) =>
                   newAccount.mutate(input, {
@@ -5355,7 +5354,7 @@ function NowPaySection({
                       setRecipientAccountId(id);
                       setNewIbanOpen(false);
                       toast.success(
-                        t("suppliers.detail.bankkonten.toast.hinzugefuegt", {
+                        t("suppliers.detail.bankAccounts.toast.added", {
                           iban: formatIBAN(input.iban),
                         }),
                       );
@@ -5558,8 +5557,8 @@ function PaymentMatchingSection({ doc }: { doc: Document }) {
         <div className="mt-3 flex flex-wrap items-center justify-between gap-3 rounded-lg border border-border bg-muted/40 px-3 py-2.5 text-base">
           <span>
             {restClosed
-              ? t("bank.detail.restschliessen.istAbgeschrieben")
-              : t("bank.detail.restschliessen.offenRechnung", {
+              ? t("bank.detail.closeRemainder.isWrittenOff")
+              : t("bank.detail.closeRemainder.openInvoice", {
                   amount: formatEUR(restOpen),
                 })}
           </span>
@@ -5572,22 +5571,21 @@ function PaymentMatchingSection({ doc }: { doc: Document }) {
                     reopenRemainder.mutate(
                       { documentId: doc.id },
                       {
-                        onSuccess: () =>
-                          toast.success(t("bank.detail.restschliessen.wiederGeoeffnet")),
+                        onSuccess: () => toast.success(t("bank.detail.closeRemainder.reopened")),
                         onError: (e) => toast.error(errorText(e)),
                       },
                     )
                   }
                 >
-                  {t("bank.detail.restschliessen.wiederOeffnen")}
+                  {t("bank.detail.closeRemainder.reopen")}
                 </Button>
               )
             : null}
           {!restClosed && (
             <CloseRemainderButton
-              title={t("bank.detail.restschliessen.titelRechnung")}
-              description={t("bank.detail.restschliessen.beschreibungRechnung")}
-              actionLabel={t("bank.detail.restschliessen.aktionRechnung")}
+              title={t("bank.detail.closeRemainder.titleInvoice")}
+              description={t("bank.detail.closeRemainder.descInvoice")}
+              actionLabel={t("bank.detail.closeRemainder.actionInvoice")}
               remainderLabel={formatEUR(restOpen)}
               disabledReason={mayPay ? null : noPaymentRight}
               onClose={async (reason) => {
@@ -5968,13 +5966,13 @@ function RuleHint({
     if (r.property_id) {
       parts.push(
         propertiesQ.data?.find((o) => o.id === r.property_id)?.code ??
-          t("assignmentRules.scope.objekt"),
+          t("assignmentRules.scope.property"),
       );
     }
     if (r.company_id) {
       parts.push(
         companiesQ.data?.find((g) => g.id === r.company_id)?.code ??
-          t("assignmentRules.scope.gesellschaft"),
+          t("assignmentRules.scope.company"),
       );
     }
     if (r.reference_pattern) parts.push(`"${r.reference_pattern}"`);

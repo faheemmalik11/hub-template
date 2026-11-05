@@ -11,11 +11,6 @@ import {
 } from "@/lib/ui-scale";
 import { cn } from "@/lib/utils";
 
-/**
- * Größenregler: skaliert die gesamte Oberfläche live. Voreinstellungen für
- * verlässliche Auswahl, Schieberegler + Schritte für Feinjustage.
- * Gedacht zum Ausprobieren, bevor die finale Größe festgelegt wird.
- */
 export function SizeControl() {
   const { scale, setScale, reset } = useUIScale();
   const percent = Math.round(scale * 100);
@@ -35,7 +30,6 @@ export function SizeControl() {
             <span className="font-mono text-xs text-muted-foreground tabular-nums">{percent}%</span>
           </div>
 
-          {/* Voreinstellungen */}
           <div className="grid grid-cols-4 gap-1.5">
             {UI_SCALE_PRESETS.map((preset) => {
               const active = Math.abs(scale - preset.value) < 0.001;
@@ -56,7 +50,6 @@ export function SizeControl() {
             })}
           </div>
 
-          {/* Feinjustage: Schritt − / Slider / Schritt + */}
           <div className="flex items-center gap-2">
             <Button
               variant="outline"

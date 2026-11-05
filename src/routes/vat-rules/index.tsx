@@ -47,7 +47,7 @@ function ReserveAmount({ value, className }: { value: number; className?: string
       </span>
       {reimbursement ? (
         <span className="mt-0.5 block text-xs font-normal text-emerald-700">
-          {t("vatRules.ruecklage.erstattung")}
+          {t("vatRules.reserve.refund")}
         </span>
       ) : null}
     </span>
@@ -114,12 +114,12 @@ function VatRulesPage() {
       {/* The company selector is lifted to page level on purpose, so it survives a tab switch
           instead of each tab owning its own and losing it. */}
       <div data-tour="vat-company" className="mt-6 w-full max-w-xs space-y-1.5">
-        <Label>{t("vatRules.gesellschaft")}</Label>
+        <Label>{t("vatRules.company")}</Label>
         <Combobox
           value={companyId}
           onValueChange={setCompanyId}
           options={[
-            { value: LEER, label: t("vatRules.alleGesellschaften") },
+            { value: LEER, label: t("vatRules.allCompanies") },
             ...companies.map((g) => ({
               value: g.id,
               label: `${g.code} · ${g.name}`,
@@ -133,7 +133,7 @@ function VatRulesPage() {
         <div className="space-y-4">
           <div className="flex flex-col items-start gap-4 sm:flex-row sm:justify-between">
             <p className="max-w-3xl rounded-lg border border-border bg-muted/40 p-3 text-xs text-muted-foreground">
-              {t("vatRules.hinweis")}
+              {t("vatRules.hint")}
             </p>
             <div className="w-full sm:w-auto sm:shrink-0">
               <NewRuleDialog
@@ -145,16 +145,16 @@ function VatRulesPage() {
 
           <div className="flex flex-wrap gap-2 text-xs text-muted-foreground">
             <span className="rounded border border-border bg-muted/50 px-2 py-1">
-              {t("vatRules.anzahl.lieferant", { count: scopeCounts.supplier })}
+              {t("vatRules.count.lieferant", { count: scopeCounts.supplier })}
             </span>
             <span className="rounded border border-border bg-muted/50 px-2 py-1">
-              {t("vatRules.anzahl.objekt", { count: scopeCounts.property })}
+              {t("vatRules.count.property", { count: scopeCounts.property })}
             </span>
             <span className="rounded border border-border bg-muted/50 px-2 py-1">
-              {t("vatRules.anzahl.gesellschaft", { count: scopeCounts.company })}
+              {t("vatRules.count.company", { count: scopeCounts.company })}
             </span>
             <span className="rounded border border-border bg-muted/50 px-2 py-1">
-              {t("vatRules.anzahl.global", { count: scopeCounts.global })}
+              {t("vatRules.count.global", { count: scopeCounts.global })}
             </span>
           </div>
 
@@ -170,14 +170,14 @@ function VatRulesPage() {
                 <Table>
                   <TableHeader>
                     <TableRow>
-                      <TableHead>{t("assignmentRules.col.wert")}</TableHead>
-                      <TableHead>{t("assignmentRules.col.geltungsbereich")}</TableHead>
+                      <TableHead>{t("assignmentRules.col.value")}</TableHead>
+                      <TableHead>{t("assignmentRules.col.scope")}</TableHead>
                       <TableHead className="text-right">
-                        {t("assignmentRules.col.wirkung")}
+                        {t("assignmentRules.col.impact")}
                       </TableHead>
-                      <TableHead>{t("assignmentRules.col.aktiv")}</TableHead>
+                      <TableHead>{t("assignmentRules.col.active")}</TableHead>
                       <TableHead className="text-right">
-                        {t("assignmentRules.col.aktionen")}
+                        {t("assignmentRules.col.actions")}
                       </TableHead>
                     </TableRow>
                   </TableHeader>

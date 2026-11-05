@@ -51,10 +51,6 @@ export function StatusBadge({
   );
 }
 
-// Recognition traffic light (DB column belege.traffic_light, from the pipeline A2/A6): a labeled pill
-// with a solid dot — green = auto-accepted, yellow = confirm, red = review. Distinct from the
-// per-field confidence dot (KonfidenzDot); this is the server-computed, check-capped verdict.
-// Renders nothing when no value is set (older rows not yet scored), so it never shows an empty pill.
 export function TrafficLightBadge({
   trafficLight,
   score,
@@ -87,22 +83,13 @@ export function TrafficLightBadge({
   );
 }
 
-// AI confidence on its own: how sure the extraction is, nothing else. Colored purely by the
-// confidence band (green / amber / red), never by the checks, so it reads independently of review.
 export function ConfidencePill({
   score,
-  mitLabel = false,
+  withLabel = false,
   className,
 }: {
   score: number | null | undefined;
-  /**
-   * Name the number instead of showing a bare percentage.
-   *
-   * In the invoice list the column header says what the figure is, so the pill only has to carry
-   * the value. Standing on its own -- the detail header -- it has no header above it, and "96 %"
-   * next to a due date is a percentage of nothing in particular.
-   */
-  mitLabel?: boolean;
+  withLabel?: boolean;
   className?: string;
 }) {
   const { t } = useTranslation();
@@ -121,7 +108,7 @@ export function ConfidencePill({
       />
       {pct == null
         ? t("documents.konfidenz.keine")
-        : mitLabel
+        : withLabel
           ? t("documents.detail.konfidenz.prozent", { percent: pct })
           : `${pct} %`}
     </span>
@@ -181,7 +168,6 @@ export function ChannelBadge({
   );
 }
 
-// ust_satz > 0 → "USt 19 %" (Teal), sonst "0 %" (neutral, ohne Vorsteuer).
 export function VatBadge({
   vatRate,
   tax,
@@ -561,15 +547,6 @@ export function DatevReadyBadge({ className }: { className?: string }) {
   );
 }
 
-// Konfidenz-Ampel je Feld (aus extracted.konfidenz).
-/**
- * How sure the AI is about THIS ONE field.
- *
- * A 8px dot with nothing but a native `title` was a mark most readers never worked out: it says
- * nothing about what it measures, and the colours only mean something to somebody who already
- * knows the bands. It now carries a real tooltip that names the axis, gives the number, and prints
- * the whole scale, so one hover explains every dot on the screen rather than just this one.
- */
 export function ConfidenceDot({
   score,
   className,

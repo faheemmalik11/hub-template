@@ -33,7 +33,7 @@ import { useTranslation } from "@/lib/i18n";
 import { tabSearch, useTabParam } from "@/lib/use-tab-param";
 import { useTableView } from "@/lib/use-table-view";
 import type { CostAnalysisCategory } from "@/lib/data/types";
-import { KiImportChartOfAccountsDialog } from "@/components/assignment/ai-import-chart-of-accounts-dialog";
+import { AiImportChartOfAccountsDialog } from "@/components/assignment/ai-import-chart-of-accounts-dialog";
 import { pageTitle } from "@/config/brand";
 import { errorText } from "@/lib/data/format";
 import {
@@ -71,8 +71,8 @@ const FISCAL_YEAR_OPTIONS: ComboboxOption[] = Array.from({ length: 2099 - 1999 +
   return { value: String(year), label: String(year) };
 });
 
-const TABS = ["regeln", "spielplatz", "kontenrahmen", "suggestions"] as const;
-const VISIBLE_TABS = TABS.filter((key) => key !== "kontenrahmen");
+const TABS = ["rules", "playground", "chartOfAccounts", "suggestions"] as const;
+const VISIBLE_TABS = TABS.filter((key) => key !== "chartOfAccounts");
 type Tab = (typeof TABS)[number];
 
 const CREATING = "__new";
@@ -83,18 +83,16 @@ type Labels = ReturnType<typeof useAssignmentRulesLabels>;
 
 function AssignmentRulesPage() {
   const { t } = useTranslation();
-  const [tab, setTab] = useTabParam(TABS, "regeln");
+  const [tab, setTab] = useTabParam(TABS, "rules");
 
-  // Radix unmounts an inactive TabsContent, which threw away everything the tab you left was
-  // holding: the Kontenrahmen company selector reset to the default on a plain in-app tab click.
-  // Panels now stay mounted once opened and are hidden with CSS instead.
+  // Radix unmounts an inactive TabsContent; panels stay mounted once opened and are hidden with CSS.
   const [visited, setVisited] = useState<Set<Tab>>(() => new Set([tab]));
   useEffect(() => {
     setVisited((prev) => (prev.has(tab) ? prev : new Set(prev).add(tab)));
   }, [tab]);
 
   useEffect(() => {
-    document.title = pageTitle(t(`assignmentRules.doktitel.${tab}`));
+    document.title = pageTitle(t(`assignmentRules.docTitle.${tab}`));
   }, [t, tab]);
 
   const [ruleTemplate, setRuleTemplate] = useState<{
@@ -133,17 +131,17 @@ function AssignmentRulesPage() {
           ))}
         </TabsList>
         {panel(
-          "regeln",
+          "rules",
           <RulesTab template={ruleTemplate} onTemplateDone={() => setRuleTemplate(null)} />,
         )}
-        {panel("spielplatz", <PlaygroundTab />)}
-        {panel("kontenrahmen", <ChartOfAccountsTab />)}
+        {panel("playground", <PlaygroundTab />)}
+        {panel("chartOfAccounts", <ChartOfAccountsTab />)}
         {panel(
           "suggestions",
           <SuggestionsTab
             onRuleCreate={(template) => {
               setRuleTemplate(template);
-              setTab("regeln");
+              setTab("rules");
             }}
           />,
         )}
@@ -543,7 +541,7 @@ function ChartOfAccountsTab() {
       <div className="flex flex-wrap items-end justify-between gap-4">
         <div className="flex flex-wrap items-end gap-4">
           <div className="w-full max-w-xs space-y-1.5 sm:w-auto">
-            <Label>{t("chartOfAccounts.gesellschaft")}</Label>
+            <Label>{t("chartOfAccounts.company")}</Label>
             <Combobox
               value={companyId}
               onValueChange={setCompanyId}
@@ -556,7 +554,7 @@ function ChartOfAccountsTab() {
             />
           </div>
           <div className="space-y-1.5">
-            <Label>{t("chartOfAccounts.jahr")}</Label>
+            <Label>{t("chartOfAccounts.fiscalYear")}</Label>
             <Combobox
               value={String(year)}
               onValueChange={(v) => setYear(Number(v))}
@@ -565,19 +563,19 @@ function ChartOfAccountsTab() {
             />
           </div>
           <div className="w-full space-y-1.5 sm:w-72">
-            <Label>{t("chartOfAccounts.suche")}</Label>
+            <Label>{t("chartOfAccounts.search")}</Label>
             <div className="relative">
               <Search className="absolute left-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
               <Input
                 value={search}
                 onChange={(e) => setSearch(e.target.value)}
-                placeholder={t("chartOfAccounts.suchePlaceholder")}
+                placeholder={t("chartOfAccounts.searchPlaceholder")}
                 className="pl-9"
               />
             </div>
           </div>
         </div>
-        <KiImportChartOfAccountsDialog
+        <AiImportChartOfAccountsDialog
           companies={companies}
           categories={categoriesQ.data ?? []}
           defaultCompanyId={companyId}
@@ -586,7 +584,7 @@ function ChartOfAccountsTab() {
       </div>
 
       <p className="mt-4 max-w-3xl rounded-lg border border-border bg-muted/40 p-3 text-xs text-muted-foreground">
-        {t("chartOfAccounts.hinweis")}
+        {t("chartOfAccounts.hint")}
       </p>
 
       {!companyId ? null : mappingQ.isError ? (
@@ -606,8 +604,8 @@ function ChartOfAccountsTab() {
         // accounts yet" and "your search matched none of its accounts" need different actions.
         <div className="mt-6">
           <EmptyState
-            title={t("chartOfAccounts.keineTreffer")}
-            hint={t("chartOfAccounts.keineTrefferHint")}
+            title={t("chartOfAccounts.noResults")}
+            hint={t("chartOfAccounts.noResultsHint")}
           />
         </div>
       ) : (
@@ -616,9 +614,9 @@ function ChartOfAccountsTab() {
             <Table>
               <TableHeader>
                 <TableRow>
-                  <TableHead>{t("chartOfAccounts.col.konto")}</TableHead>
-                  <TableHead>{t("chartOfAccounts.col.kategorie")}</TableHead>
-                  <TableHead>{t("chartOfAccounts.col.notiz")}</TableHead>
+                  <TableHead>{t("chartOfAccounts.col.account")}</TableHead>
+                  <TableHead>{t("chartOfAccounts.col.category")}</TableHead>
+                  <TableHead>{t("chartOfAccounts.col.note")}</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
@@ -661,21 +659,9 @@ function ChartOfAccountsTab() {
   );
 }
 
-// ===========================================================================
-// Vorschläge tab — read-only. Suggestions from existing receipts, nothing more.
-// ===========================================================================
-
-// This tab used to let you pick a category per supplier and turn the row into a real
-// assignment_rules row, one at a time or all at once. It no longer does: it reports what the
-// existing receipts suggest, and "Regel anlegen" hands that supplier and category to the rule
-// dialog on the Regeln tab. Rules are written where their consequences are visible -- that dialog
-// shows the retroactive "this would change N of M receipts" preview first. This screen never did.
-//
-// It also only lists suggestions that land on a REAL category. A supplier whose receipts are
-// filed under the catch-all "Nicht zugeordnet" (is_catchall), or under free text that matches
-// nothing in the taxonomy, is not a suggestion -- it is a receipt nobody has classified yet, and
-// presenting it as a proposal invited exactly the mistake the audit found: accepting "Nicht
-// zugeordnet" as though it were a decision.
+// Suggestions tab is read-only. It excludes suppliers whose receipts land on the catch-all
+// "Nicht zugeordnet" category (is_catchall) or on unmatched free text — those are unclassified
+// receipts, not suggestions, and showing them as one invited treating "unclassified" as a decision.
 function SuggestionsTab({
   onRuleCreate,
 }: {
@@ -750,8 +736,8 @@ function SuggestionsTab({
 
   return (
     <div data-tour="assignment-suggestions">
-      <SearchInput value={search} onValueChange={setSearch} placeholder={t("suggestions.suche")} />
-      <p className="mt-3 max-w-2xl text-sm text-muted-foreground">{t("suggestions.hinweis")}</p>
+      <SearchInput value={search} onValueChange={setSearch} placeholder={t("suggestions.search")} />
+      <p className="mt-3 max-w-2xl text-sm text-muted-foreground">{t("suggestions.hint")}</p>
 
       {suggestionsQ.isError ? (
         <div className="mt-6">
@@ -769,10 +755,7 @@ function SuggestionsTab({
         // Distinct from the empty state above: "there is nothing to suggest" and "your search
         // matched none of the suggestions" are different situations.
         <div className="mt-6">
-          <EmptyState
-            title={t("suggestions.keineTreffer")}
-            hint={t("suggestions.keineTrefferHint")}
-          />
+          <EmptyState title={t("suggestions.noResults")} hint={t("suggestions.noResultsHint")} />
         </div>
       ) : (
         <>
@@ -780,10 +763,10 @@ function SuggestionsTab({
             <Table>
               <TableHeader>
                 <TableRow>
-                  <TableHead>{t("suggestions.col.lieferant")}</TableHead>
-                  <TableHead>{t("suggestions.col.belege")}</TableHead>
-                  <TableHead>{t("suggestions.col.kategorie")}</TableHead>
-                  <TableHead className="text-right">{t("suggestions.col.aktion")}</TableHead>
+                  <TableHead>{t("suggestions.col.supplier")}</TableHead>
+                  <TableHead>{t("suggestions.col.documents")}</TableHead>
+                  <TableHead>{t("suggestions.col.category")}</TableHead>
+                  <TableHead className="text-right">{t("suggestions.col.action")}</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
@@ -791,7 +774,7 @@ function SuggestionsTab({
                   <TableRow key={z.supplierId}>
                     <TableCell className="font-medium text-foreground">{z.name}</TableCell>
                     <TableCell className="text-sm tabular-nums text-muted-foreground">
-                      {t("suggestions.belegeCount", { n: z.documents, total: z.total })}
+                      {t("suggestions.documentsCount", { n: z.documents, total: z.total })}
                     </TableCell>
                     <TableCell className="text-sm text-foreground">{z.label}</TableCell>
                     <TableCell className="text-right">
@@ -803,7 +786,7 @@ function SuggestionsTab({
                           onRuleCreate({ supplierId: z.supplierId, categoryId: z.category.id })
                         }
                       >
-                        {t("suggestions.action.regelAnlegen")}
+                        {t("suggestions.action.createRule")}
                       </Button>
                     </TableCell>
                   </TableRow>
@@ -816,7 +799,7 @@ function SuggestionsTab({
               <div key={z.supplierId} className="rounded-xl border border-border bg-card p-4">
                 <p className="font-medium text-foreground">{z.name}</p>
                 <p className="mt-0.5 text-xs tabular-nums text-muted-foreground">
-                  {t("suggestions.belegeCount", { n: z.documents, total: z.total })}
+                  {t("suggestions.documentsCount", { n: z.documents, total: z.total })}
                 </p>
                 <p className="mt-2 text-sm text-foreground">{z.label}</p>
                 <Button
@@ -827,7 +810,7 @@ function SuggestionsTab({
                     onRuleCreate({ supplierId: z.supplierId, categoryId: z.category.id })
                   }
                 >
-                  {t("suggestions.action.regelAnlegen")}
+                  {t("suggestions.action.createRule")}
                 </Button>
               </div>
             ))}

@@ -62,7 +62,7 @@ export function CardProgramDialog({ account }: { account: BankAccount }) {
       },
       {
         onSuccess: () => {
-          toast.success(t("bankAccounts.karten.dialog.toastSaved"));
+          toast.success(t("bankAccounts.cards.dialog.toastSaved"));
           setOpen(false);
         },
         onError: (e) => toast.error(t("bankAccounts.dialog.toastFailed", { error: errorText(e) })),
@@ -85,19 +85,19 @@ export function CardProgramDialog({ account }: { account: BankAccount }) {
           variant="outline"
           type="button"
           className={cn("gap-2", !account.company_id && "border-warning/40 text-warning")}
-          title={t("bankAccounts.karten.dialog.titel")}
+          title={t("bankAccounts.cards.dialog.title")}
         >
           <Pencil className="size-4" />
           {account.company_id
-            ? t("bankAccounts.karten.dialog.button")
-            : t("bankAccounts.karten.dialog.zuordnen")}
+            ? t("bankAccounts.cards.dialog.button")
+            : t("bankAccounts.cards.dialog.assign")}
         </Button>
       </DialogTrigger>
 
       <DialogContent className="max-w-md">
         <DialogHeader>
-          <DialogTitle>{t("bankAccounts.karten.dialog.titel")}</DialogTitle>
-          <DialogDescription>{t("bankAccounts.karten.dialog.text")}</DialogDescription>
+          <DialogTitle>{t("bankAccounts.cards.dialog.title")}</DialogTitle>
+          <DialogDescription>{t("bankAccounts.cards.dialog.text")}</DialogDescription>
         </DialogHeader>
 
         <div className="space-y-4">
@@ -113,12 +113,12 @@ export function CardProgramDialog({ account }: { account: BankAccount }) {
           </div>
 
           <div className="space-y-1.5">
-            <Label>{t("bankAccountForm.field.gesellschaft")}</Label>
+            <Label>{t("bankAccountForm.field.company")}</Label>
             <Combobox
               id="card-program-company"
               value={companyId}
               onValueChange={setCompanyId}
-              placeholder={t("bankAccounts.karten.dialog.gesellschaftPlaceholder")}
+              placeholder={t("bankAccounts.cards.dialog.companyPlaceholder")}
               options={companies.map((c) => ({
                 value: c.id,
                 label: `${c.code} · ${c.name}`,
@@ -126,7 +126,7 @@ export function CardProgramDialog({ account }: { account: BankAccount }) {
               }))}
             />
             <p className="text-xs text-muted-foreground">
-              {t("bankAccounts.karten.dialog.gesellschaftHinweis")}
+              {t("bankAccounts.cards.dialog.companyHint")}
             </p>
           </div>
         </div>

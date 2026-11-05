@@ -162,12 +162,12 @@ function TransactionDetailPage() {
       {/* Why this transaction is hidden, and who decided it — a rule or a person. */}
       {txn.matching_status === "ignored" && txn.no_receipt_reason && (
         <p className="mt-3 text-sm text-muted-foreground">
-          {t("noReceipt.detail.grund", {
+          {t("noReceipt.detail.reason", {
             reason: t(`openItemWhitelist.category.${txn.no_receipt_reason}`),
           })}{" "}
           {txn.whitelist_rule_id
-            ? t("noReceipt.detail.durchRegel")
-            : t("noReceipt.detail.manuell", { actor: txn.no_receipt_set_by ?? "—" })}
+            ? t("noReceipt.detail.byRule")
+            : t("noReceipt.detail.manual", { actor: txn.no_receipt_set_by ?? "—" })}
         </p>
       )}
 
@@ -177,13 +177,13 @@ function TransactionDetailPage() {
           className="rounded-xl border border-border bg-card p-5 text-base"
         >
           <h2 className="mb-3 text-base font-semibold uppercase tracking-wide text-muted-foreground">
-            {t("bank.detail.section.transaktion")}
+            {t("bank.detail.section.transaction")}
           </h2>
-          <Row label={t("bank.detail.row.buchungsdatum")} value={formatDate(txn.booking_date)} />
-          <Row label={t("bank.detail.row.wertstellung")} value={formatDate(txn.value_date)} />
-          <Row label={t("bank.detail.row.buchungstext")} value={txn.booking_text ?? "—"} />
+          <Row label={t("bank.detail.row.bookingDate")} value={formatDate(txn.booking_date)} />
+          <Row label={t("bank.detail.row.valueDate")} value={formatDate(txn.value_date)} />
+          <Row label={t("bank.detail.row.bookingText")} value={txn.booking_text ?? "—"} />
           <Separator className="my-3" />
-          <Row label={t("bank.detail.row.gegenkonto")} value={txn.counterparty_holder ?? "—"} />
+          <Row label={t("bank.detail.row.counterparty")} value={txn.counterparty_holder ?? "—"} />
           <Row
             label={t("bank.detail.row.iban")}
             value={txn.counterparty_iban ? formatIBAN(txn.counterparty_iban) : "—"}
@@ -197,21 +197,21 @@ function TransactionDetailPage() {
               rows carry both. Falls back to the email alone when Pleo has no display name. */}
           {(txn.spender_name || txn.spender_email) && (
             <Row
-              label={t("bank.detail.row.bezahltVon")}
+              label={t("bank.detail.row.paidBy")}
               value={txn.spender_name ?? txn.spender_email ?? "—"}
               sub={txn.spender_name ? (txn.spender_email ?? undefined) : undefined}
             />
           )}
           <Separator className="my-3" />
           <Row
-            label={t("bank.detail.row.konto")}
+            label={t("bank.detail.row.account")}
             value={account ? (account.account_name ?? account.iban ?? "—") : "—"}
           />
           {account?.iban && (
-            <Row label={t("bank.detail.row.kontoIban")} value={formatIBAN(account.iban)} mono />
+            <Row label={t("bank.detail.row.accountIban")} value={formatIBAN(account.iban)} mono />
           )}
           <div className="mt-2 flex items-center justify-between gap-3">
-            <span className="text-muted-foreground">{t("bank.detail.row.gesellschaft")}</span>
+            <span className="text-muted-foreground">{t("bank.detail.row.company")}</span>
             <span className="text-right text-foreground">
               {company ? (
                 <span className="inline-flex items-center gap-2">
@@ -219,7 +219,7 @@ function TransactionDetailPage() {
                   <span className="text-base text-muted-foreground">{company.name}</span>
                 </span>
               ) : (
-                t("bank.detail.keineGesellschaft")
+                t("bank.detail.noCompany")
               )}
             </span>
           </div>
@@ -228,7 +228,7 @@ function TransactionDetailPage() {
           <Separator className="my-3" />
           <div>
             <div className="text-sm text-muted-foreground">
-              {t("bank.detail.row.verwendungszweck")}
+              {t("bank.detail.row.paymentReference")}
             </div>
             <p className="mt-1 text-base text-foreground">{txn.payment_reference ?? "—"}</p>
           </div>
@@ -250,15 +250,15 @@ function TransactionDetailPage() {
               <h2 className="text-base font-semibold uppercase tracking-wide text-muted-foreground">
                 {t(
                   txn.amount >= 0
-                    ? "bank.detail.section.passendeAusgangsrechnungen"
-                    : "bank.detail.section.passendeBelege",
+                    ? "bank.detail.section.matchingOutgoingInvoices"
+                    : "bank.detail.section.matchingInvoices",
                 )}
               </h2>
               <p className="mt-1 text-sm text-muted-foreground">
                 {t(
                   txn.amount >= 0
-                    ? "bank.detail.passendeAusgangsrechnungenHint"
-                    : "bank.detail.passendeBelegeHint",
+                    ? "bank.detail.matchingOutgoingInvoicesHint"
+                    : "bank.detail.matchingInvoicesHint",
                 )}
               </p>
             </div>
@@ -273,13 +273,13 @@ function TransactionDetailPage() {
                   <Button asChild variant="outline" size="sm">
                     <Link to="/incoming-invoices/upload" search={{ for: `txn:${txn.id}` }}>
                       <Upload className="mr-1.5 size-4" />
-                      {t("bank.detail.belege.hochladen")}
+                      {t("bank.detail.belege.upload")}
                     </Link>
                   </Button>
                   <Button asChild variant="outline" size="sm">
                     <Link to="/open-items" search={{ match: `txn:${txn.id}` }}>
                       <Link2 className="mr-1.5 size-4" />
-                      {t("bank.detail.belege.zuordnen")}
+                      {t("bank.detail.belege.link")}
                     </Link>
                   </Button>
                 </>
@@ -300,13 +300,13 @@ function TransactionDetailPage() {
               <span>
                 {fullUsed
                   ? txn.fully_used_note
-                    ? t("bank.detail.restschliessen.istGeschlossenGrund", {
+                    ? t("bank.detail.closeRemainder.isClosedReason", {
                         reason: txn.fully_used_note,
                       })
-                    : t("bank.detail.restschliessen.istGeschlossen")
+                    : t("bank.detail.closeRemainder.isClosed")
                   : /* Unsigned: this is what is LEFT of the payment, not a movement, and
                        formatSignedEUR wrote it as "+62,08 EUR" as if money had come in. */
-                    t("bank.detail.restschliessen.offenZahlung", { amount: formatEUR(rest) })}
+                    t("bank.detail.closeRemainder.openPayment", { amount: formatEUR(rest) })}
               </span>
               {fullUsed ? (
                 canPay && (
@@ -315,22 +315,21 @@ function TransactionDetailPage() {
                     size="sm"
                     onClick={() =>
                       reopenRemainder.mutate(txn.id, {
-                        onSuccess: () =>
-                          toast.success(t("bank.detail.restschliessen.wiederGeoeffnet")),
+                        onSuccess: () => toast.success(t("bank.detail.closeRemainder.reopened")),
                         onError: (e) => toast.error(errorText(e)),
                       })
                     }
                   >
-                    {t("bank.detail.restschliessen.wiederOeffnen")}
+                    {t("bank.detail.closeRemainder.reopen")}
                   </Button>
                 )
               ) : (
                 <CloseRemainderButton
-                  title={t("bank.detail.restschliessen.titelZahlung")}
-                  description={t("bank.detail.restschliessen.beschreibungZahlung")}
-                  actionLabel={t("bank.detail.restschliessen.aktionZahlung")}
+                  title={t("bank.detail.closeRemainder.titlePayment")}
+                  description={t("bank.detail.closeRemainder.descPayment")}
+                  actionLabel={t("bank.detail.closeRemainder.actionPayment")}
                   remainderLabel={formatEUR(rest)}
-                  disabledReason={canPay ? null : t("bank.detail.restschliessen.keineBerechtigung")}
+                  disabledReason={canPay ? null : t("bank.detail.closeRemainder.noPermission")}
                   onClose={async (reason) => {
                     await closeRemainder.mutateAsync({ transactionId: txn.id, reason });
                   }}
@@ -422,17 +421,15 @@ function PendingUploads({ transactionId }: { transactionId: string }) {
           )}
           <div className="min-w-0 flex-1">
             <p className="font-medium">
-              {u.extracted
-                ? t("bank.detail.belege.uploadGelesen")
-                : t("bank.detail.belege.uploadLaeuft")}
+              {u.extracted ? t("bank.detail.belege.uploadRead") : t("bank.detail.belege.uploading")}
             </p>
             <p className="mt-0.5 text-sm">
               {u.extracted
-                ? t("bank.detail.belege.uploadGelesenHint")
-                : t("bank.detail.belege.uploadLaeuftHint")}
+                ? t("bank.detail.belege.uploadReadHint")
+                : t("bank.detail.belege.uploadingHint")}
             </p>
             <p className="mt-1 truncate text-xs opacity-70">
-              {u.filename ?? t("bank.detail.belege.datei")}
+              {u.filename ?? t("bank.detail.belege.file")}
               {" · "}
               {formatDateTime(u.createdAt)}
             </p>
@@ -445,7 +442,7 @@ function PendingUploads({ transactionId }: { transactionId: string }) {
             className="h-7 shrink-0 px-2 text-xs text-amber-900 hover:bg-amber-100 hover:text-amber-900 dark:text-amber-200 dark:hover:bg-amber-900/40"
           >
             <Link to="/incoming-invoices/$nr" params={{ nr: u.id }}>
-              {t("bank.detail.belege.uploadOeffnen")}
+              {t("bank.detail.belege.uploadOpen")}
             </Link>
           </Button>
         </div>
@@ -466,8 +463,8 @@ function CategoryRow({ txn }: { txn: BankTransaction }) {
   if (isCreditNote) {
     return (
       <Row
-        label={t("bank.detail.row.kategorie")}
-        value={category ? category.name : t("bank.detail.kategorieGutschrift")}
+        label={t("bank.detail.row.category")}
+        value={category ? category.name : t("bank.detail.categoryFromCreditNote")}
       />
     );
   }
@@ -475,10 +472,10 @@ function CategoryRow({ txn }: { txn: BankTransaction }) {
   return (
     <div className="mt-2 space-y-1.5">
       <div className="flex items-center justify-between gap-3">
-        <span className="text-muted-foreground">{t("bank.detail.row.kategorie")}</span>
+        <span className="text-muted-foreground">{t("bank.detail.row.category")}</span>
         {txn.category_source === "rule" && (
           <span className="text-[10px] uppercase tracking-wide text-muted-foreground">
-            {t("bank.detail.kategorieRegel")}
+            {t("bank.detail.categoryFromRule")}
           </span>
         )}
       </div>
@@ -488,13 +485,12 @@ function CategoryRow({ txn }: { txn: BankTransaction }) {
           setCategory.mutate(
             { transactionId: txn.id, categoryId: v === NO_CATEGORY ? null : v },
             {
-              onSuccess: () => toast.success(t("bank.detail.kategorieGespeichert")),
-              onError: (e) =>
-                toast.error(t("bank.detail.kategorieFehlgeschlagen", { error: errorText(e) })),
+              onSuccess: () => toast.success(t("bank.detail.categorySaved")),
+              onError: (e) => toast.error(t("bank.detail.categoryFailed", { error: errorText(e) })),
             },
           )
         }
-        options={[{ value: NO_CATEGORY, label: t("bank.detail.kategorieOhne") }, ...options]}
+        options={[{ value: NO_CATEGORY, label: t("bank.detail.categoryNone") }, ...options]}
         className="w-full"
       />
     </div>

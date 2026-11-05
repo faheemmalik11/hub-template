@@ -74,10 +74,10 @@ export function PleoPanel({
           // carry the `users:read` scope this endpoint needs, and the message says which it is.
           <ErrorState error={employeesQ.error} onRetry={() => employeesQ.refetch()} />
         ) : all.length === 0 ? (
-          <EmptyState title={t("bankAccounts.karten.keineMitarbeiter")} />
+          <EmptyState title={t("bankAccounts.cards.noEmployees")} />
         ) : filtered.length === 0 ? (
           <div>
-            <EmptyState title={t("bankAccounts.keineTreffer.title")} />
+            <EmptyState title={t("bankAccounts.noMatches.title")} />
             {/* No reset button: the search box that narrowed this lives on the tab row above,
                 where clearing it is one click away and visible. */}
           </div>
@@ -86,10 +86,10 @@ export function PleoPanel({
             <Table>
               <TableHeader>
                 <TableRow className="bg-muted/40">
-                  <TableHead>{t("bankAccounts.karten.col.mitarbeiter")}</TableHead>
-                  <TableHead>{t("bankAccounts.karten.col.email")}</TableHead>
-                  {showJobTitle && <TableHead>{t("bankAccounts.karten.col.position")}</TableHead>}
-                  {showCode && <TableHead>{t("bankAccounts.karten.col.code")}</TableHead>}
+                  <TableHead>{t("bankAccounts.cards.col.employee")}</TableHead>
+                  <TableHead>{t("bankAccounts.cards.col.email")}</TableHead>
+                  {showJobTitle && <TableHead>{t("bankAccounts.cards.col.position")}</TableHead>}
+                  {showCode && <TableHead>{t("bankAccounts.cards.col.code")}</TableHead>}
                 </TableRow>
               </TableHeader>
               <TableBody>
@@ -100,7 +100,7 @@ export function PleoPanel({
                         // Pleo has the account but no name on it. Not a dash: an unnamed
                         // cardholder is a thing to fix in Pleo, not an empty cell to skim past.
                         <span className="font-normal text-muted-foreground">
-                          {t("bankAccounts.karten.ohneName")}
+                          {t("bankAccounts.cards.noName")}
                         </span>
                       )}
                     </TableCell>

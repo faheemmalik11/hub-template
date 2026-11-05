@@ -44,7 +44,7 @@ import type {
   OpenItemRow,
 } from "@/lib/data/types";
 
-// Per-company invoice totals for the Gesellschaften list, aggregated by Postgres (view
+// Per-company invoice totals for the companies list, aggregated by Postgres (view
 // v_company_invoice_totals, migration 20260817170000).
 //
 // The list used to call useBelege() -- every invoice in the system -- purely to group them by
@@ -430,7 +430,7 @@ export function useCompanyDocumentTotals() {
   });
 }
 
-// Belege-Liste. Bei Suchbegriff Volltextsuche über die generierte `fts`-Spalte.
+// Document list. Full-text search over the generated `fts` column when there's a search term.
 /**
  * The open items of the incoming side, decided by Postgres.
  *
@@ -522,21 +522,21 @@ export function useDocumentsByProperty(
     enabled: !!propertyCode && ready,
     queryFn: async (): Promise<Document[]> => {
       // Quoted so a code containing a PostgREST separator cannot break out of the or() expression.
-      const oder = propertyId
+      const orFilter = propertyId
         ? `property_id.eq.${propertyId},property_code.eq."${propertyCode}"`
         : `property_code.eq."${propertyCode}"`;
       return fetchAllRows<Document>(
         (from, to, withCount) =>
           sb
             .from(TABLE.documents)
-            // Narrow, for the reason spelled out above BELEG_ZEILE_SPALTEN: `select("*")` here was
+            // Narrow, for the reason spelled out above DOCUMENT_ROW_COLUMNS: `select("*")` here was
             // moving this property's entire OCR text and embedding vectors to render five columns.
             .select(DOCUMENT_ROW_COLUMNS_VAT, withCount ? { count: "exact" } : undefined)
             .is("deleted_at", null)
             .is("archived_at", null)
             .is("not_relevant_at", null)
             .neq("status", "split")
-            .or(oder)
+            .or(orFilter)
             .order("document_date", { ascending: false })
             .range(from, to) as unknown as Promise<{
             data: Document[] | null;
@@ -663,9 +663,9 @@ export function useDocuments(search?: string) {
  * the boundary means no caller can forget to, and no two screens can disagree about whether an
  * invoice still needs review.
  *
- * Nothing is written back. `belegNachgeprueft` returns a new object with `validation_detail`
+ * Nothing is written back. `documentRechecked` returns a new object with `validation_detail`
  * replaced; the row in the database keeps the pipeline's own map, which is the record of what the
- * extraction actually found. See src/features/invoice-detail/nachpruefung.ts.
+ * extraction actually found. See src/features/invoice-detail/recheck.ts.
  *
  * The supplier's IBAN is fetched alongside, because the three transfer checks need the account the
  * invoice is actually paid to, and a reviewer who enters it on the supplier's screen has answered
@@ -695,8 +695,8 @@ async function rechecked<T extends Document>(rows: T[]): Promise<T[]> {
 // sort change. Narrowed to this list it is 300 KB and about 1 second.
 //
 // Everything a row helper touches has to stay, not only what the table paints. `extracted` and
-// `validation` feed pruefGruende() and belegNachgeprueft(), `recipient_name` and `extracted` feed
-// the outgoing-invoice badge, `supplier_id` is how nachgeprueft() looks up the supplier IBAN, and
+// `validation` feed documentRechecked(), `recipient_name` and `extracted` feed
+// the outgoing-invoice badge, `supplier_id` is how documentRechecked() looks up the supplier IBAN, and
 // `amount_net`/`vat_amount` are compared by the re-check even though no column shows them.
 //
 // Columns used only to FILTER or SORT are deliberately absent: PostgREST applies `order` and the
@@ -786,13 +786,13 @@ function applyDocumentsFilter(query: any, f: DocumentsFilter) {
       query = query.like("search_text", `%${escaped}%`);
     }
   }
-  // GESELLSCHAFT_OHNE is not an ordinary code: it means "no company assigned", which the pipeline
+  // COMPANY_WITHOUT is not an ordinary code: it means "no company assigned", which the pipeline
   // writes as NULL and which the companies table also has a row for. Both have to match, or the
   // filter finds a handful of rows while the list plainly shows hundreds reading "ohne".
   if (f.company === COMPANY_WITHOUT)
     query = query.or(`company_code.is.null,company_code.eq.${COMPANY_WITHOUT}`);
   else if (f.company) query = query.eq("company_code", f.company);
-  // Same idea as GESELLSCHAFT_OHNE above: a filter for the rows that have nothing assigned, which
+  // Same idea as COMPANY_WITHOUT above: a filter for the rows that have nothing assigned, which
   // is the state most of this queue is actually in.
   if (f.property === PROPERTY_WITHOUT) query = query.is("property_code", null);
   else if (f.property) query = query.eq("property_code", f.property);
@@ -807,7 +807,7 @@ function applyDocumentsFilter(query: any, f: DocumentsFilter) {
   else if (f.datev === "open") query = query.is("handed_over_at", null);
   // Bank-reconciliation presence -- its own axis, separate from `zahlung`. `zahlung` says whether
   // the invoice is marked paid; this says whether a bank transaction has been matched to it, and
-  // whether that match is still waiting on a human. 'suggestion' covers status kandidat AND auto:
+  // whether that match is still waiting on a human. 'suggestion' covers status candidate AND auto:
   // both are undecided, which is the same reading the detail screens use.
   // The three values are a PARTITION: every invoice falls in exactly one. "suggestion" therefore
   // excludes rows that already have a confirmed match -- confirming one candidate leaves its
@@ -1265,18 +1265,18 @@ export function useDocument(id: string) {
   });
 }
 
-// Original-Datei (bytea) eines Belegs. Wird nur im Detail geladen.
+// A document's original file (bytea). Only loaded in the detail view.
 export function useDocumentFile(documentId: string) {
   return useQuery({
     queryKey: ["beleg_datei", documentId],
     enabled: !!documentId,
     staleTime: STALE,
     queryFn: async (): Promise<DocumentFile | null> => {
-      // invoice_files ist seit Migration 0011 mehrzeilig je Beleg (role 'original' | 'xml' | …).
-      // Für die Vorschau NUR das Original holen, sonst würde .maybeSingle() bei mehreren Zeilen werfen
-      // bzw. versehentlich die XML statt des PDFs liefern.
-      // `sb` (untyped): `role` fehlt im veralteten generierten Database-Typ (wie die übrigen
-      // neueren Spalten/Tabellen im Projekt).
+      // invoice_files has carried multiple rows per document since migration 0011 (role 'original' |
+      // 'xml' | …). Fetch ONLY the original for the preview, or .maybeSingle() would throw on
+      // multiple rows, or worse, accidentally return the XML instead of the PDF.
+      // `sb` (untyped): `role` is missing from the outdated generated Database type (like the
+      // project's other newer columns/tables).
       const { data, error } = await sb
         .from(TABLE.documentFiles)
         .select("*")
@@ -1327,7 +1327,7 @@ export function useTransactionDocuments(transactionId: string, opts: { enabled?:
   });
 }
 
-// ---- Verlauf / Notizen (beleg_verlauf) ----
+// ---- History / notes (beleg_verlauf) ----
 export function useDocumentHistory(documentId: string) {
   return useQuery({
     queryKey: ["beleg_verlauf", documentId],
@@ -1345,10 +1345,10 @@ export function useDocumentHistory(documentId: string) {
   });
 }
 
-// ---- Schreib-Mutations (Stufe 2) ----
+// ---- Write mutations (stage 2) ----
 
-// Beleg-Felder aktualisieren. `changes` = nur die geänderten Spalten.
-// `protokoll` (optional) erzeugt zusätzlich einen Verlaufseintrag.
+// Updates document fields. `changes` = only the changed columns.
+// `activityLog` (optional) additionally creates a history entry.
 export function useUpdateDocument(documentId: string) {
   const qc = useQueryClient();
   return useMutation({
@@ -1373,7 +1373,7 @@ export function useUpdateDocument(documentId: string) {
        * the Hub too, but only by having the fourteen check rules and an IBAN mod-97 written a
        * second time in plpgsql, and two copies of a rule set drift. This keeps one implementation,
        * in TypeScript, shared with the screens. A write that bypasses this still displays
-       * correctly, because the read path derives the same answer (see `nachgeprueft` above); what
+       * correctly, because the read path derives the same answer (see `documentRechecked` above); what
        * it loses is the stored record of who corrected what, and `validateInvoice` in
        * src/lib/api/invoice-validation.functions.ts is the endpoint for repairing that.
        */
@@ -1452,7 +1452,7 @@ export function useUpdateDocument(documentId: string) {
   });
 }
 
-// Notiz hinzufügen.
+// Adds a note.
 export function useAddNote(documentId: string) {
   const qc = useQueryClient();
   return useMutation({
@@ -1463,7 +1463,7 @@ export function useAddNote(documentId: string) {
   });
 }
 
-// Beleg löschen (Soft-Delete, revisionssicher) — setzt deleted_at + Verlauf.
+// Deletes a document (soft delete, audit-safe) — sets deleted_at + history.
 export function useSoftDeleteDocument(documentId: string) {
   const qc = useQueryClient();
   return useMutation({
@@ -1487,8 +1487,8 @@ export function useSoftDeleteDocument(documentId: string) {
   });
 }
 
-// Upload (#11): Beleg-Stub + Originaldatei anlegen. Die KI-Extraktion macht
-// danach die Python-Pipeline (eingangskanal='upload', extracted IS NULL).
+// Upload (#11): creates the document stub + original file. The Python pipeline does the AI
+// extraction afterward (intake_channel='upload', extracted IS NULL).
 // The file bytes are already in Storage by the time this runs (src/features/file-upload):
 // the browser uploads straight to the bucket and hands the resulting path over here, so nothing
 // large ever passes through PostgREST. `invoiceId` is minted client-side because it forms part of
@@ -1626,8 +1626,8 @@ export function hexToUint8Array(hex: string): Uint8Array {
   return out;
 }
 
-// MIME ermitteln: octet-stream auf Dateiendung zurückführen, damit PDFs/Bilder
-// korrekt im Browser angezeigt werden.
+// Resolves the MIME type: falls back from octet-stream to the file extension, so PDFs/images
+// render correctly in the browser.
 export function resolveMime(file: Pick<DocumentFile, "mime" | "filename">): string {
   const mime = file.mime ?? "";
   if (mime && mime !== "application/octet-stream") return mime;

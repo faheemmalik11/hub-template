@@ -111,7 +111,7 @@ export function PossibleMatches({
             score={score}
             actions={
               <MatchCardAction
-                label={t("bank.matches.bestaetigenZahlung")}
+                label={t("bank.matches.confirmPayment")}
                 pendingLabel={t("matchPanel.linking")}
                 pending={pendingId === txn.id}
                 disabled={linking || !mayPay}

@@ -49,15 +49,15 @@ export function RemoveBankAccountDialog({ account }: { account: BankAccount }) {
           // name only the first, dropping the two counts that say how much invoice reconciliation
           // and how many attached receipt files were just destroyed -- the expensive half to redo.
           const parts = [
-            t("bankAccounts.entfernen.toastUmsaetze", { count: res.purgedTransactions }),
+            t("bankAccounts.remove.toastTransactions", { count: res.purgedTransactions }),
           ];
           if (res.purgedMatches > 0) {
-            parts.push(t("bankAccounts.entfernen.toastZuordnungen", { count: res.purgedMatches }));
+            parts.push(t("bankAccounts.remove.toastMatches", { count: res.purgedMatches }));
           }
           if (res.purgedFiles > 0) {
-            parts.push(t("bankAccounts.entfernen.toastDateien", { count: res.purgedFiles }));
+            parts.push(t("bankAccounts.remove.toastFiles", { count: res.purgedFiles }));
           }
-          toast.success(t("bankAccounts.entfernen.toastOk"), {
+          toast.success(t("bankAccounts.remove.toastOk"), {
             description: res.purgedTransactions > 0 ? parts.join(" · ") : undefined,
           });
           setOpen(false);
@@ -65,7 +65,7 @@ export function RemoveBankAccountDialog({ account }: { account: BankAccount }) {
         },
         onError: (e) =>
           toast.error(
-            t("bankAccounts.entfernen.toastFehler", {
+            t("bankAccounts.remove.toastError", {
               error: errorText(e),
             }),
           ),
@@ -81,7 +81,7 @@ export function RemoveBankAccountDialog({ account }: { account: BankAccount }) {
           size="icon"
           type="button"
           className="size-7 text-muted-foreground hover:bg-destructive/10 hover:text-destructive"
-          title={t("bankAccounts.entfernen.button")}
+          title={t("bankAccounts.remove.button")}
         >
           <Trash2 className="size-4" />
         </Button>
@@ -90,50 +90,44 @@ export function RemoveBankAccountDialog({ account }: { account: BankAccount }) {
       <AlertDialogContent>
         <AlertDialogHeader>
           <AlertDialogTitle>
-            {t("bankAccounts.entfernen.titel", { account: account.account_name ?? "—" })}
+            {t("bankAccounts.remove.title", { account: account.account_name ?? "—" })}
           </AlertDialogTitle>
-          <AlertDialogDescription>
-            {t("bankAccounts.entfernen.beschreibung")}
-          </AlertDialogDescription>
+          <AlertDialogDescription>{t("bankAccounts.remove.description")}</AlertDialogDescription>
         </AlertDialogHeader>
 
         {/* What this click actually costs, in numbers, before it happens. */}
         <div className="rounded-lg border border-destructive/30 bg-destructive/5 px-3 py-2 text-sm">
           {preview.isLoading ? (
-            <span className="text-muted-foreground">{t("bankAccounts.entfernen.zaehle")}</span>
+            <span className="text-muted-foreground">{t("bankAccounts.remove.counting")}</span>
           ) : preview.isError ? (
             // A failed count must not read as "nothing to lose".
-            <span className="text-muted-foreground">
-              {t("bankAccounts.entfernen.zaehlenFehlgeschlagen")}
-            </span>
+            <span className="text-muted-foreground">{t("bankAccounts.remove.countingFailed")}</span>
           ) : preview.data && preview.data.transactions > 0 ? (
             <span className="text-foreground">
-              {t("bankAccounts.entfernen.vorschau", {
+              {t("bankAccounts.remove.preview", {
                 transactions: preview.data.transactions,
                 assignments: preview.data.matches,
                 files: preview.data.files,
               })}
             </span>
           ) : (
-            <span className="text-muted-foreground">
-              {t("bankAccounts.entfernen.vorschauLeer")}
-            </span>
+            <span className="text-muted-foreground">{t("bankAccounts.remove.previewEmpty")}</span>
           )}
         </div>
 
         <div className="space-y-1.5">
-          <Label htmlFor="bank-account-remove-reason">{t("bankAccounts.entfernen.grund")}</Label>
+          <Label htmlFor="bank-account-remove-reason">{t("bankAccounts.remove.reason")}</Label>
           <Input
             id="bank-account-remove-reason"
             value={reason}
-            placeholder={t("bankAccounts.entfernen.grundPlatzhalter")}
+            placeholder={t("bankAccounts.remove.reasonPlaceholder")}
             onChange={(e) => setReason(e.target.value)}
           />
         </div>
 
         <AlertDialogFooter>
           <AlertDialogCancel disabled={exclude.isPending}>
-            {t("bankAccounts.entfernen.abbrechen")}
+            {t("bankAccounts.remove.cancel")}
           </AlertDialogCancel>
           {/* asChild would let the dialog close on click before the mutation resolves. */}
           <AlertDialogAction
@@ -145,8 +139,8 @@ export function RemoveBankAccountDialog({ account }: { account: BankAccount }) {
             className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
           >
             {exclude.isPending
-              ? t("bankAccounts.entfernen.laeuft")
-              : t("bankAccounts.entfernen.bestaetigen")}
+              ? t("bankAccounts.remove.running")
+              : t("bankAccounts.remove.confirm")}
           </AlertDialogAction>
         </AlertDialogFooter>
       </AlertDialogContent>

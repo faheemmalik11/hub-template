@@ -36,8 +36,8 @@ export function VolumeChart({
   const config = useMemo(
     () =>
       ({
-        incoming: { label: t("home.money.eingang"), color: "var(--color-chart-1)" },
-        outgoing: { label: t("home.money.ausgang"), color: "var(--color-chart-2)" },
+        incoming: { label: t("home.money.incoming"), color: "var(--color-chart-1)" },
+        outgoing: { label: t("home.money.outgoing"), color: "var(--color-chart-2)" },
       }) satisfies ChartConfig,
     [t],
   );
@@ -115,7 +115,7 @@ export function VolumeChart({
         <ChartLegend content={<ChartLegendContent />} />
         <Line
           dataKey="incoming"
-          name={t("home.money.eingang")}
+          name={t("home.money.incoming")}
           type="monotone"
           stroke="var(--color-incoming)"
           strokeWidth={2}
@@ -123,7 +123,7 @@ export function VolumeChart({
         />
         <Line
           dataKey="outgoing"
-          name={t("home.money.ausgang")}
+          name={t("home.money.outgoing")}
           type="monotone"
           stroke="var(--color-outgoing)"
           strokeWidth={2}

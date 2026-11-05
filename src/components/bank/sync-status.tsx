@@ -139,7 +139,7 @@ function relativeAgo(
   t: (key: string, opts?: Record<string, unknown>) => string,
 ): string {
   if (minutes === null) return "—";
-  if (minutes < 2) return t("bankAccounts.health.ago.jetzt");
+  if (minutes < 2) return t("bankAccounts.health.ago.now");
   if (minutes < 60) return t("bankAccounts.health.ago.min", { count: minutes });
   if (minutes < 2880) return t("bankAccounts.health.ago.std", { count: Math.round(minutes / 60) });
   return t("bankAccounts.health.ago.tage", { count: Math.round(minutes / 1440) });

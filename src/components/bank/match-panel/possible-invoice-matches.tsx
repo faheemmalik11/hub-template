@@ -107,7 +107,7 @@ export function PossibleInvoiceMatches({
             score={candidate.score}
             actions={
               <MatchCardAction
-                label={t("bank.matches.bestaetigenBeleg")}
+                label={t("bank.matches.confirmInvoice")}
                 pendingLabel={t("matchPanel.linking")}
                 pending={pendingId === candidate.id}
                 disabled={linking || !mayPay}

@@ -64,8 +64,8 @@ function ApprovalRulesRoute() {
   const config = {
     ...adapter.config,
     defaultChainLabels: [
-      t("approvalRules.leiter.standard.schritt1"),
-      t("approvalRules.leiter.standard.schritt2"),
+      t("approvalRules.lead.standard.step1"),
+      t("approvalRules.lead.standard.step2"),
     ],
   };
   const { scopeOptions, approvers, approverName } = adapter;

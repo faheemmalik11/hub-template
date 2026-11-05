@@ -68,10 +68,10 @@ function NoCompany({ t }: { t: T }) {
   return (
     <span
       className="inline-flex items-center gap-1.5 whitespace-nowrap rounded-md bg-warning-soft px-2 py-0.5 text-xs font-medium text-warning"
-      title={t("bankAccounts.ohneGesellschaftTitle")}
+      title={t("bankAccounts.noCompanyTitle")}
     >
       <AlertTriangle className="size-3 shrink-0" />
-      {t("bankAccounts.keineGesellschaft")}
+      {t("bankAccounts.noCompany")}
     </span>
   );
 }
@@ -178,7 +178,7 @@ function AccountRow({ a, indented, ctx }: { a: BankAccount; indented: boolean; c
               no longer counts. */}
           <span
             className={cn(a.is_active === false && "text-muted-foreground line-through")}
-            title={a.is_active === false ? t("bankAccounts.aktiv.inaktivTitle") : undefined}
+            title={a.is_active === false ? t("bankAccounts.active.inactiveTitle") : undefined}
           >
             {a.account_name ?? "—"}
           </span>
@@ -234,7 +234,7 @@ function AccountCard({ a, ctx }: { a: BankAccount; ctx: RowsContext }) {
                 "truncate text-sm font-medium text-foreground",
                 a.is_active === false && "text-muted-foreground line-through",
               )}
-              title={a.is_active === false ? t("bankAccounts.aktiv.inaktivTitle") : undefined}
+              title={a.is_active === false ? t("bankAccounts.active.inactiveTitle") : undefined}
             >
               {a.account_name ?? "—"}
             </span>
@@ -266,7 +266,7 @@ function AccountCard({ a, ctx }: { a: BankAccount; ctx: RowsContext }) {
           <dd className="mt-0.5 truncate text-foreground">{bankNameOf(a)}</dd>
         </div>
         <div>
-          <dt className="text-muted-foreground">{t("bankAccounts.col.art")}</dt>
+          <dt className="text-muted-foreground">{t("bankAccounts.col.type")}</dt>
           <dd className="mt-0.5 truncate text-foreground">{a.product_type ?? "—"}</dd>
         </div>
       </dl>
@@ -323,15 +323,15 @@ export function BankAccountsTable({
                   sorts it are the same thing. Grouped, it orders WITHIN each bank, which is the
                   only ordering that can coexist with the grouping. */}
               <SortableColumnHeader column="konto" sort={sort} dir={dir} onSort={onSort}>
-                {t("bankAccounts.col.konto")}
+                {t("bankAccounts.col.account")}
               </SortableColumnHeader>
               <SortableColumnHeader column="gesellschaft" sort={sort} dir={dir} onSort={onSort}>
-                {t("bankAccounts.col.gesellschaft")}
+                {t("bankAccounts.col.company")}
               </SortableColumnHeader>
               <TableHead>{t("bankAccounts.col.iban")}</TableHead>
               {ctx.showBankColumn && <TableHead>{t("bankAccounts.col.bank")}</TableHead>}
-              <TableHead>{t("bankAccounts.col.art")}</TableHead>
-              {ctx.showConnection && <TableHead>{t("bankAccounts.col.anbindung")}</TableHead>}
+              <TableHead>{t("bankAccounts.col.type")}</TableHead>
+              {ctx.showConnection && <TableHead>{t("bankAccounts.col.connection")}</TableHead>}
               <TableHead className="w-20" />
             </TableRow>
           </TableHeader>
@@ -383,8 +383,8 @@ export function BankAccountsTable({
                       </span>
                       <span className="mt-0.5 block text-sm text-muted-foreground">
                         {group.connectionId && group.countTotal === 0
-                          ? t("bankConnections.keineKonten")
-                          : t("bankAccounts.gruppe.konten", { count: group.count })}
+                          ? t("bankConnections.noAccounts")
+                          : t("bankAccounts.group.accounts", { count: group.count })}
                       </span>
                     </span>
                   </button>

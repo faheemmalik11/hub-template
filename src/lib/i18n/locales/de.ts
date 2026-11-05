@@ -503,7 +503,7 @@ const de = {
         text: 'Im Bereich "Testen" probieren Sie eine Regel aus, bevor Sie sie speichern. Sie sehen sofort, welche Belege die Regel treffen würde.',
         hint: "Der Test verändert keine Daten. Er zeigt nur eine Vorschau.",
       },
-      tabsRegeln: {
+      tabsRules: {
         title: "Drei Bereiche",
         text: '"Regeln" zeigt die bestehenden Zuordnungsregeln. Unter "Testen" probieren Sie eine Regel aus, ohne etwas zu speichern. Unter "Vorschläge" stehen Regeln, die das System aus Ihren bisherigen Belegen ableitet.',
         hint: "Die Kategorien selbst pflegen Sie unter Stammdaten.",
@@ -667,9 +667,9 @@ const de = {
   },
   aliases: {
     title: "Namensvarianten",
-    anzahl_one: "{{count}} Variante",
-    anzahl_other: "{{count}} Varianten",
-    hinweis: {
+    count_one: "{{count}} Variante",
+    count_other: "{{count}} Varianten",
+    note: {
       gesellschaft:
         "Namensvarianten, unter denen diese Gesellschaft auf Belegen auftaucht. Die Pipeline ordnet Belege darüber automatisch zu.",
       objekt:
@@ -678,8 +678,8 @@ const de = {
         "Namensvarianten, unter denen dieser Lieferant auftritt. Wird beim Zusammenführen zweier Lieferanten automatisch ergänzt.",
     },
     placeholder: "Neue Variante …",
-    hinzufuegen: "Hinzufügen",
-    entfernen: "Entfernen",
+    add: "Hinzufügen",
+    remove: "Entfernen",
     empty: "Keine Namensvarianten erfasst.",
     confirm: {
       title: "Variante entfernen?",
@@ -688,12 +688,12 @@ const de = {
       confirm: "Entfernen",
     },
     toast: {
-      hinzugefuegt: "Variante „{{alias}}“ hinzugefügt.",
-      entfernt: "Variante „{{alias}}“ entfernt.",
-      bereitsVorhanden: "Diese Variante ist bereits erfasst.",
-      beanspruchtVonAnderer:
+      added: "Variante „{{alias}}“ hinzugefügt.",
+      removed: "Variante „{{alias}}“ entfernt.",
+      alreadyExists: "Diese Variante ist bereits erfasst.",
+      claimedByOther:
         "„{{alias}}“ ist bereits einer anderen Einheit zugeordnet. Eine Variante kann nur zu einer gehören, bitte dort zuerst entfernen.",
-      fehlgeschlagen: "Hinzufügen fehlgeschlagen: {{error}}",
+      failed: "Hinzufügen fehlgeschlagen: {{error}}",
     },
   },
   app: {
@@ -704,15 +704,12 @@ const de = {
 
   // Reusable across the app (copy-to-clipboard control).
   common: {
-    // Shared form vocabulary. The asterisk next to a required label reads as one, and this is
-    // what it says on hover and to a screen reader.
     form: {
-      pflichtfeld: "Pflichtfeld",
+      required: "Pflichtfeld",
     },
-    datum: {
-      waehlen: "Datum wählen …",
-      leeren: "Datum leeren",
-      kalender: "Kalender öffnen",
+    date: {
+      clear: "Datum leeren",
+      openCalendar: "Kalender öffnen",
     },
     copy: {
       copied: "{{label}} kopiert",
@@ -728,7 +725,7 @@ const de = {
     },
     multiCombobox: {
       countSelected: "{{count}} ausgewählt",
-      weitere: "+{{count}} weitere",
+      more: "+{{count}} weitere",
     },
     // Shared client-side list pagination (suppliers, companies, properties).
     pagination: {
@@ -746,9 +743,6 @@ const de = {
     },
   },
 
-  // Top navigation (header). Group labels + page links.
-  // Shared wording for role-gated pages (components/layout/kein-zugriff.tsx). Papierkorb keeps its
-  // own, more specific text under papierkorb.guard, which can name what is being withheld.
   access: {
     title: "Kein Zugriff auf diese Seite",
     textAdmin:
@@ -820,46 +814,46 @@ const de = {
 
   nav: {
     onboarding: "Onboarding-Checkliste",
-    uebersicht: "Übersicht",
-    rechnungen: "Rechnungen",
-    eingangsrechnungen: "Eingangsrechnungen",
-    ausgangsrechnungen: "Ausgangsrechnungen",
-    zahlungen: "Bank",
-    banktransaktionen: "Banktransaktionen",
-    bankkonten: "Bankkonten",
-    bankverbindungen: "Bankverbindungen",
-    offenePosten: "Offene Posten",
+    overview: "Übersicht",
+    invoices: "Rechnungen",
+    incomingInvoices: "Eingangsrechnungen",
+    outgoingInvoices: "Ausgangsrechnungen",
+    banking: "Bank",
+    bankTransactions: "Banktransaktionen",
+    bankAccounts: "Bankkonten",
+    bankConnections: "Bankverbindungen",
+    openItems: "Offene Posten",
     oposWhitelist: "Ausgeschlossene Zahlungen",
-    bankEinstellungen: "Einstellungen",
-    stammdaten: "Stammdaten",
-    lieferanten: "Lieferanten",
-    kunden: "Kunden",
-    gesellschaften: "Gesellschaften",
-    objekte: "Objekte",
-    postfach: "Einstellungen",
-    zuordnungsregeln: "Zuordnungsregeln",
-    ustRegeln: "USt-Regeln",
-    freigabeRegeln: "Freigabe-Regeln",
-    datevUebergabe: "DATEV-Übergabe",
-    ausschlussregeln: "Ausschlussregeln",
-    manuelleBuchungen: "Manuelle Buchungen",
-    auswertungen: "Kostenanalyse",
-    protokoll: "Protokoll",
-    verwaltung: "Verwaltung",
+    bankSettings: "Einstellungen",
+    masterData: "Stammdaten",
+    suppliers: "Lieferanten",
+    customers: "Kunden",
+    companies: "Gesellschaften",
+    properties: "Objekte",
+    mailbox: "Einstellungen",
+    assignmentRules: "Zuordnungsregeln",
+    vatRules: "USt-Regeln",
+    approvalRules: "Freigabe-Regeln",
+    datevHandover: "DATEV-Übergabe",
+    exclusionRules: "Ausschlussregeln",
+    manualBookings: "Manuelle Buchungen",
+    costAnalysis: "Kostenanalyse",
+    log: "Protokoll",
+    administration: "Verwaltung",
     team: "Team",
-    benachrichtigungen: "Meldungen & Benachrichtigungen",
-    regeln: "Regeln",
-    steuern: "Steuern",
-    kategorien: "Kategorien",
-    steuerruecklage: "Steuerrücklage",
-    papierkorb: "Papierkorb",
-    dateibenennung: "Dateibenennung",
+    notifications: "Meldungen & Benachrichtigungen",
+    rules: "Regeln",
+    tax: "Steuern",
+    categories: "Kategorien",
+    vatReserve: "Steuerrücklage",
+    trash: "Papierkorb",
+    fileNaming: "Dateibenennung",
     toOverview: "Zur Übersicht",
     menu: "Menü",
-    meinProfil: "Mein Profil",
+    myProfile: "Mein Profil",
     logout: "Abmelden",
-    rueckfrageAnMich_one: "{{count}} Rückfrage an mich",
-    rueckfrageAnMich_other: "{{count}} Rückfragen an mich",
+    queryForMe_one: "{{count}} Rückfrage an mich",
+    queryForMe_other: "{{count}} Rückfragen an mich",
   },
 
   // Buchhaltung-Health-Kachel auf der Übersicht (running / letzter Lauf / Fehler) — liest
@@ -868,8 +862,8 @@ const de = {
   breadcrumb: {
     ariaLabel: "Navigationspfad",
     upload: "Beleg hochladen",
-    ausgangsrechnungNeu: "Neue Ausgangsrechnung",
-    ausgangsrechnungHochladen: "Ausgangsrechnung hochladen",
+    outgoingInvoiceNew: "Neue Ausgangsrechnung",
+    outgoingInvoiceUpload: "Ausgangsrechnung hochladen",
   },
 
   health: {
@@ -881,14 +875,13 @@ const de = {
     errorsN: "{{n}} Fehler",
   },
 
-  // Start page ("/") — the module launcher + recent invoices.
   settings: {
-    titel: "Benachrichtigungen",
+    title: "Benachrichtigungen",
     sub: "Legen Sie fest, welche Meldungen im Hub erscheinen und welche über externe Kanäle gehen.",
-    gespeichert: "Gespeichert.",
-    speichern: "Speichern",
-    glocke: {
-      titel: "Glocke im Hub",
+    saved: "Gespeichert.",
+    save: "Speichern",
+    bell: {
+      title: "Glocke im Hub",
       desc: "Was in Ihrer Benachrichtigungsglocke erscheint.",
       gruppe: {
         zugewiesen: "Für mich",
@@ -896,57 +889,57 @@ const de = {
       },
     },
     digest: {
-      titel: "Tageszusammenfassung",
-      uhrzeit: "Uhrzeit",
-      zeitzone: "Ihre Zeitzone: {{zone}}",
-      inhalt: "In der Zusammenfassung enthalten",
+      title: "Tageszusammenfassung",
+      time: "Uhrzeit",
+      timezone: "Ihre Zeitzone: {{zone}}",
+      content: "In der Zusammenfassung enthalten",
     },
-    kanaele: {
-      slackTitel: "Slack-Benachrichtigungen",
+    channels: {
+      slackTitle: "Slack-Benachrichtigungen",
       slackDesc: "Wichtige Hinweise und eine Tageszusammenfassung in Slack.",
-      abschnittMeldungen: "Meldungen",
+      notificationsSection: "Meldungen",
       event: {
         zuweisung: "Beleg mir zugewiesen",
         rueckfrage: "Rückfrage zu einem Beleg",
         abgelehnt: "Beleg abgelehnt und zurückgegeben",
         ping: "Freigabe- oder Feedback-Anfrage",
       },
-      slackKanalScope:
+      slackChannelScope:
         "Kanalliste nicht verfügbar. Fügen Sie in Slack die Berechtigung channels:read hinzu und installieren Sie die App erneut.",
-      slackLaedt: "Wird aus Slack geladen …",
-      slackPersonenTreffer: "{{found}} von {{total}} Personen in Slack gefunden",
-      slackPersonKeine: "Nur Team-Kanal",
-      slackPersonFehlt: "keine Slack-Adresse",
-      slackPersonHinweis:
+      slackLoading: "Wird aus Slack geladen …",
+      slackPeopleFound: "{{found}} von {{total}} Personen in Slack gefunden",
+      slackNoPersonMatch: "Nur Team-Kanal",
+      slackNoSlackAddress: "keine Slack-Adresse",
+      slackPersonHint:
         "Personen werden über ihre E-Mail-Adresse in Slack gefunden. Stimmt sie nicht überein, gehen ihre Meldungen in den Team-Kanal.",
-      slackAktiv: "Slack-Versand aktiv",
-      slackAppErstellen: "Slack öffnen",
-      slackVerbunden: "Slack ist verbunden",
-      slackSchritt1:
+      slackActive: "Slack-Versand aktiv",
+      slackOpenSlack: "Slack öffnen",
+      slackConnected: "Slack ist verbunden",
+      slackStep1:
         "this client zu Ihrem Slack hinzufügen. Klicken Sie unten auf Slack öffnen und machen Sie dann bei Slack Folgendes. Sie müssen dort Apps installieren dürfen.",
-      slackSchritt1a:
+      slackStep1a:
         "Workspace auswählen und die Zusammenfassung bestätigen, die Slack anzeigt. Alles darin ist schon ausgefüllt.",
-      slackSchritt1b: "Auf Install to Workspace klicken, dann auf Allow.",
-      slackSchritt1c: "Links OAuth & Permissions öffnen und den Bot User OAuth Token kopieren.",
-      slackSchritt2: "Zurück hierher kommen und diesen Schlüssel einfügen.",
-      slackSchritt2Hinweis:
+      slackStep1b: "Auf Install to Workspace klicken, dann auf Allow.",
+      slackStep1c: "Links OAuth & Permissions öffnen und den Bot User OAuth Token kopieren.",
+      slackStep2: "Zurück hierher kommen und diesen Schlüssel einfügen.",
+      slackStep2Hint:
         "Der richtige Schlüssel beginnt mit xoxb-. Der Verification Token auf der Seite Basic Information ist ein anderer Wert und funktioniert nicht.",
-      slackVerbinden: "Verbinden",
-      slackTokenErsetzen: "Verbindung ändern",
-      slackTrennen: "Trennen",
-      slackTrennenTitel: "Slack trennen?",
-      slackTrennenText:
+      slackConnect: "Verbinden",
+      slackChangeConnection: "Verbindung ändern",
+      slackDisconnect: "Trennen",
+      slackDisconnectTitle: "Slack trennen?",
+      slackDisconnectText:
         "Der Zugangsschlüssel wird gelöscht und es wird nichts mehr nach Slack gesendet. Sie können sich jederzeit neu verbinden.",
-      slackGetrennt: "Slack wurde getrennt.",
-      aenderungenSpeichern: "Änderungen speichern",
-      abbrechen: "Abbrechen",
-      slackTokenUngueltig:
+      slackDisconnected: "Slack wurde getrennt.",
+      saveChanges: "Änderungen speichern",
+      cancel: "Abbrechen",
+      slackInvalidToken:
         "Das ist nicht der richtige Schlüssel. Der richtige beginnt mit xoxb- und steht in Slack unter „OAuth & Permissions“.",
-      slackKanal: "Team-Kanal",
+      slackChannel: "Team-Kanal",
       slackDm: "Persönliche Benachrichtigungen",
       test: "Testnachricht senden",
-      letzterLaufOk: "Letzte Zustellung: {{time}}",
-      letzterLaufFehler: "Letzte Zustellung: {{time}} · fehlgeschlagen",
+      lastRunOk: "Letzte Zustellung: {{time}}",
+      lastRunFailed: "Letzte Zustellung: {{time}} · fehlgeschlagen",
       testOk: "Testnachricht gesendet. Prüfen Sie den Kanal.",
     },
     event: {
@@ -1007,97 +1000,89 @@ const de = {
     seeAllCount_one: "{{count}} weitere anzeigen",
     seeAllCount_other: "{{count}} weitere anzeigen",
     collapse: "Weniger anzeigen",
-    // Stands in for the invoice number in an alert sentence when the receipt has none yet.
-    belegOhneNummer: "ohne Nummer",
-    // Alert sentences: what happened, then what to do about it. Two short sentences, so a
-    // reader who does not know the system still understands why the row is there.
+    noNumber: "ohne Nummer",
     msg: {
-      belegOhneNummer: "ohne Nummer",
-      zuweisungEine: "Rechnung {{doc}} wurde Ihnen zugewiesen. Bitte kümmern Sie sich darum.",
-      neu_one: "{{count}} neue Rechnung ist eingegangen. Sie kann bearbeitet werden.",
-      neu_other: "{{count}} neue Rechnungen sind eingegangen. Sie können bearbeitet werden.",
-      rueckfrage_one:
+      noNumber: "ohne Nummer",
+      assignedOne: "Rechnung {{doc}} wurde Ihnen zugewiesen. Bitte kümmern Sie sich darum.",
+      new_one: "{{count}} neue Rechnung ist eingegangen. Sie kann bearbeitet werden.",
+      new_other: "{{count}} neue Rechnungen sind eingegangen. Sie können bearbeitet werden.",
+      query_one:
         "Zu {{count}} Rechnung gibt es eine Rückfrage an Sie. Ein Kollege wartet auf Ihre Antwort.",
-      rueckfrage_other:
+      query_other:
         "Zu {{count}} Rechnungen gibt es Rückfragen an Sie. Ihre Kollegen warten auf Antwort.",
-      abgelehnt_one:
+      rejected_one:
         "{{count}} Rechnung wurde abgelehnt und kam zu Ihnen zurück. Bitte korrigieren und erneut einreichen.",
-      abgelehnt_other:
+      rejected_other:
         "{{count}} Rechnungen wurden abgelehnt und kamen zu Ihnen zurück. Bitte korrigieren und erneut einreichen.",
-      eskaliert_one:
+      escalated_one:
         "{{count}} Freigabe in Ihrer Vertretung ist überfällig. Bitte entscheiden Sie, damit die Rechnung weitergeht.",
-      eskaliert_other:
+      escalated_other:
         "{{count}} Freigaben in Ihrer Vertretung sind überfällig. Bitte entscheiden Sie, damit die Rechnungen weitergehen.",
-      zuPruefen_one:
+      needsReview_one:
         "{{count}} Rechnung wartet auf Prüfung. Bitte prüfen Sie, ob die Angaben stimmen.",
-      zuPruefen_other:
+      needsReview_other:
         "{{count}} Rechnungen warten auf Prüfung. Bitte prüfen Sie, ob die Angaben stimmen.",
-      faellig_one:
+      overdue_one:
         "{{count}} Rechnung ist überfällig. Das Fälligkeitsdatum ist vorbei und sie muss noch bezahlt werden.",
-      faellig_other:
+      overdue_other:
         "{{count}} Rechnungen sind überfällig. Die Fälligkeitsdaten sind vorbei und sie müssen noch bezahlt werden.",
-      vorschlaege_one:
+      suggestions_one:
         "{{count}} Zahlung wurde automatisch einer Rechnung zugeordnet. Bitte prüfen und bestätigen Sie den Vorschlag.",
-      vorschlaege_other:
+      suggestions_other:
         "{{count}} Zahlungen wurden automatisch Rechnungen zugeordnet. Bitte prüfen und bestätigen Sie die Vorschläge.",
-      fehler_one:
+      errors_one:
         "{{count}} Dokument konnte nicht verarbeitet werden. Im Protokoll steht, woran es lag.",
-      fehler_other:
+      errors_other:
         "{{count}} Dokumente konnten nicht verarbeitet werden. Im Protokoll steht, woran es lag.",
       ping_one: "{{count}} Kollege bittet Sie, sich etwas anzusehen.",
       ping_other: "{{count}} Kollegen bitten Sie, sich etwas anzusehen.",
     },
     title: "Benachrichtigungen",
     empty: "Nichts Neues. Alles ist auf dem aktuellen Stand.",
-    // The SCREEN a notification is about, shown beside it in the bell. Without this a row reads
-    // the same whether it points at an invoice, a supplier or a payment.
-    ziel: {
+    target: {
       invoice: "Eingangsrechnung",
       transaction: "Banktransaktion",
       supplier: "Lieferant",
       customer: "Kunde",
       property: "Objekt",
       page: "Seite",
-      unbekannt: "Hub",
+      unknown: "Hub",
     },
     pingSent: "An {{name}}",
     pingSentWithNote: "An {{name}}: {{note}}",
     pingFrom: "Von {{name}}",
     pingFromWithNote: "Von {{name}}: {{note}}",
-    zeitraum: {
-      alle: "Alle Zeiträume",
-      heute: "Heute",
+    dateRange: {
+      any: "Alle Zeiträume",
+      today: "Heute",
       "7": "Letzte 7 Tage",
       "30": "Letzte 30 Tage",
     },
-    alleAnsehen: "Alle ansehen",
-    ausblenden: "Ausblenden",
-    gelesen: "Gelesen",
-    tabMeldungen: "Meldungen",
-    tabEinstellungen: "Einstellungen",
+    viewAll: "Alle ansehen",
+    dismiss: "Ausblenden",
+    tabAlerts: "Meldungen",
+    tabSettings: "Einstellungen",
   },
 
   ping: {
-    aktion: "Jemanden benachrichtigen",
-    titel: "Jemanden darum bitten",
+    action: "Jemanden benachrichtigen",
+    title: "Jemanden darum bitten",
     desc: "Die Person bekommt es in ihrer Glocke und, wenn Slack aktiv ist, als private Nachricht.",
-    descAllgemein:
-      "Die Person bekommt es in ihrer Glocke und, wenn Slack aktiv ist, als private Nachricht.",
-    empfaenger: "Empfänger",
-    empfaengerPlaceholder: "Person wählen",
-    notiz: "Notiz (optional)",
-    notizPlaceholder: "z. B. Bitte heute noch freigeben.",
-    abbrechen: "Abbrechen",
-    senden: "Erinnerung senden",
-    wirdGesendet: "Wird gesendet …",
-    gesendet: "Erinnerung gesendet.",
-    fehlgeschlagen: "Es wurde nichts gesendet. {{error}}",
-    unbekannterFehler: "Unbekannter Fehler.",
-    keineEmpfaenger: "Es gibt niemanden sonst zum Benachrichtigen.",
+    recipient: "Empfänger",
+    recipientPlaceholder: "Person wählen",
+    note: "Notiz (optional)",
+    notePlaceholder: "z. B. Bitte heute noch freigeben.",
+    cancel: "Abbrechen",
+    send: "Erinnerung senden",
+    sending: "Wird gesendet …",
+    sent: "Erinnerung gesendet.",
+    failed: "Es wurde nichts gesendet. {{error}}",
+    unknownError: "Unbekannter Fehler.",
+    noRecipients: "Es gibt niemanden sonst zum Benachrichtigen.",
     banner: {
-      vonUnbekannt: "Jemand",
-      ohneNotiz: "bittet Sie, sich das anzusehen.",
-      schliessen: "Hinweis schließen",
+      fromUnknown: "Jemand",
+      noNote: "bittet Sie, sich das anzusehen.",
+      dismiss: "Hinweis schließen",
     },
   },
 
@@ -1223,7 +1208,7 @@ const de = {
           "{{count}} Gesellschaften haben noch keine DATEV-Adresse für Eingangsrechnungen.",
       },
     },
-    zeitraumKurz: {
+    periodShort: {
       alle: "Gesamt",
       "letzte-30-tage": "30 Tage",
       "aktueller-monat": "Dieser Monat",
@@ -1234,8 +1219,8 @@ const de = {
       "letztes-jahr": "Letztes Jahr",
       benutzerdefiniert: "Eigener Zeitraum",
     },
-    zeitraumAktion: {
-      zurueck: "Zurück",
+    periodAction: {
+      back: "Zurück",
       reset: "Zurücksetzen",
     },
     chart: {
@@ -1253,59 +1238,50 @@ const de = {
         "letztes-jahr": "{{pct}} % zum Jahr davor",
         benutzerdefiniert: "{{pct}} % zum gleich langen Zeitraum davor",
       },
-      eingang: "Eingangsrechnungen",
-      ausgang: "Ausgangsrechnungen",
+      incoming: "Eingangsrechnungen",
+      outgoing: "Ausgangsrechnungen",
       count: "{{n}} Rechnungen",
       grossProfit: "Gewinn (Rohertrag)",
-      ohneBeleg: "Zahlungen ohne Beleg",
-    },
-    blockers: {
-      title: "Steht gerade fest",
-      clear: "Nichts blockiert. Alle Belege und Zahlungen sind in Bearbeitung.",
-      zuPruefen: "Belege zu prüfen",
-      ueberfaellig: "Ausgangsrechnungen überfällig",
-      ohneBeleg: "Zahlungen ohne Beleg",
-      blockiert: "Belege nicht abgleichbar",
     },
     stages: {
       title: "Bearbeitungsstand der Rechnungen",
-      eingegangen: "Eingegangen",
-      inPruefung: "In Prüfung",
-      freigegeben: "Freigegeben",
-      bezahlt: "Bezahlt",
+      received: "Eingegangen",
+      inReview: "In Prüfung",
+      approved: "Freigegeben",
+      paid: "Bezahlt",
       datev: "An DATEV",
-      abgeschlossen: "Abgeschlossen",
+      closed: "Abgeschlossen",
     },
     rank: {
       total: "Gesamt: {{sum}}",
     },
     top: {
       title: "Top {{count}} Lieferanten",
-      unbekannt: "Ohne Absender",
+      unknown: "Ohne Absender",
     },
     companies: {
       title: "Top {{count}} Gesellschaften nach Ausgaben",
-      ohne: "Ohne Zuordnung",
+      unassigned: "Ohne Zuordnung",
     },
     processing: {
       title: "Belegverarbeitung",
-      kanaele: "Nach Kanal:",
+      byChannel: "Nach Kanal:",
       lastRun: "Letzter Lauf: {{time}}",
       lastRunTitle: "Wann die automatische Verarbeitung zuletzt gelaufen ist.",
       runningNow: "Verarbeitung läuft",
-      verarbeitet: "Dokumente verarbeitet",
-      erkannt: "Fehlerfrei gelesen",
-      zuPruefen: "Warten auf Prüfung",
-      fehler: "Fehlgeschlagen",
+      processed: "Dokumente verarbeitet",
+      recognized: "Fehlerfrei gelesen",
+      needsReview: "Warten auf Prüfung",
+      failed: "Fehlgeschlagen",
       all: "Zum Protokoll",
     },
     bank: {
       title: "Bank",
-      gesamt: "Alle Banktransaktionen",
-      offen: "Noch ohne Rechnung",
-      vorschlag: "Warten auf Bestätigung",
-      zugeordnet: "Mit Rechnung verknüpft",
-      ignoriert: "Ignoriert (kein Beleg nötig)",
+      total: "Alle Banktransaktionen",
+      unlinked: "Noch ohne Rechnung",
+      suggested: "Warten auf Bestätigung",
+      linked: "Mit Rechnung verknüpft",
+      ignored: "Ignoriert (kein Beleg nötig)",
       all: "Alle Transaktionen ansehen",
     },
     open: {
@@ -1315,75 +1291,6 @@ const de = {
       overdue: "Überfällig",
       none: "Alles bezahlt.",
       all: "Alle unbezahlten Rechnungen ansehen",
-    },
-    ablageWarnung: {
-      mail: "Postfach",
-      drive: "Ablage",
-      message: {
-        mail: "Für das Postfach ist kein Zielordner für verarbeitete E-Mails ausgewählt. Es wird nichts verschoben, der Ordner leert sich also nie.",
-        drive:
-          "Für Dropbox ist kein Zielordner für verarbeitete Dateien ausgewählt. Es wird nichts verschoben, der Ordner leert sich also nie.",
-      },
-      dismiss: "Hinweis ausblenden",
-    },
-    // The personal header block (components/home/attention-panel.tsx).
-    attention: {
-      greetMorning: "Guten Morgen, {{name}}",
-      greetDay: "Guten Tag, {{name}}",
-      greetEvening: "Guten Abend, {{name}}",
-      greetMorningAnon: "Guten Morgen",
-      greetDayAnon: "Guten Tag",
-      greetEveningAnon: "Guten Abend",
-      lead_one: "{{count}} Rechnung wartet auf Sie.",
-      lead_other: "{{count}} Rechnungen warten auf Sie.",
-      loading: "Wird geprüft, was auf Sie wartet …",
-      clear: "Nichts liegt gerade bei Ihnen.",
-      error: "Ihre offenen Punkte konnten nicht geladen werden.",
-      more_one: "{{count}} weitere Rechnung ansehen",
-      more_other: "{{count}} weitere Rechnungen ansehen",
-      bucket: {
-        rueckfrage_one: "{{count}} Rückfrage",
-        rueckfrage_other: "{{count}} Rückfragen",
-        zugewiesen_one: "{{count}} zugewiesen",
-        zugewiesen_other: "{{count}} zugewiesen",
-      },
-      reason: {
-        eskaliert: "überfällig, Sie sind Vertretung",
-        abgelehnt: "abgelehnt, zurück an Sie",
-        rueckfrage: "Rückfrage an Sie",
-        zugewiesen: "Ihnen zugewiesen",
-      },
-    },
-    title: "Übersicht",
-    // The screen, not the plumbing: naming the ingestion pipeline and the database told the
-    // reader nothing they can act on.
-    subtitle: "Der Stand Ihrer Buchhaltung auf einen Blick.",
-    empty: "Noch keine Belege vorhanden.",
-    kachelFehler: "Konnte nicht geladen werden",
-    volumenKurz: "Volumen",
-    ausgangCount: "{{n}} Rechnungen",
-    ausgangOffen: "{{n}} offen",
-    ausgangUeberfaellig: "{{n}} überfällig",
-    emptyZeitraum: "Keine Belege in {{period}}.",
-    unknownSteller: "Unbekannter Steller",
-    ohneNr: "ohne Nr.",
-    belegeCount: "{{n}} Belege",
-    zuPruefenErkannt: "{{zu}} zu prüfen · {{erkannt}} erkannt",
-    erkannt: "{{erkannt}} erkannt",
-    zuPruefenBadge: "{{n}} zu prüfen",
-    volumenLabel: "Rechnungsvolumen",
-    module: {
-      eingangDesc: "Belege prüfen und der richtigen Gesellschaft / dem Objekt zuordnen",
-      lieferantenSub: "im Stamm",
-      objekteSub: "Objekte",
-      auswertungenDesc: "Summen je Lieferant, Gesellschaft, Objekt und Monat",
-      auswertungenSub: "Rohertrag",
-      auswertungenSubZeitraum: "Rohertrag, {{period}}",
-      protokollDesc: "Verarbeitungs-Log der eingehenden Belege",
-      protokollKennzahl: "Log",
-      protokollSub: "Eingang & Fehler",
-      ausgangDesc: "Mieten, Provisionen, Maklergeschäft",
-      ausgangSub: "Ausgangsrechnungen",
     },
   },
 
@@ -1413,7 +1320,7 @@ const de = {
         "Eine Banktransaktion wurde vorgeschlagen, bitte im Abgleich prüfen.",
       bankMatchZugeordnetTitle: "Einer Banktransaktion zugeordnet und bestätigt.",
       bankMatchZugeordnet: "Zugeordnet",
-      // "ohne" in a mono font, next to codes like STAY, read as one more code rather than as the
+      // "ohne" in a mono font, next to codes like ACME, read as one more code rather than as the
       // absence of one. Same wording as the filter option and the counter above the list, so the
       // three name the same thing the same way.
       gesellschaftOhne: "Ohne Gesellschaft",
@@ -1847,7 +1754,6 @@ const de = {
         alleWorkflow: "Alle Workflow-Status",
         belegart: "Belegart",
         alleBelegarten: "Alle Belegarten",
-        zahlung: "Geld",
         alleZahlungen: "Alle Zahlungen",
         zahlungsart: "Zahlungsart",
         alleZahlungsarten: "Alle Zahlungsarten",
@@ -1920,7 +1826,6 @@ const de = {
         // Not "Workflow": the word was identical in both dictionaries, so switching the
         // language left this header looking untranslated.
         workflow: "Workflow-Status",
-        zahlung: "Zahlung",
         // Both badges under one label on the mobile card, where they have no column header.
         zahlungAbgleich: "Zahlung & Bank-Abgleich",
         datev: "DATEV",
@@ -2249,7 +2154,6 @@ const de = {
         beteiligte: "Rechnungssteller & Zuordnung",
         zuordnung: "Zuordnung",
         weitere: "Weitere Angaben",
-        freigabe: "Freigabe",
         rueckfragen: "Rückfragen",
         freigabeVerlauf: "Workflow-Verlauf",
         stufenDauern: "Dauer je Schritt",
@@ -2273,9 +2177,7 @@ const de = {
       rechteAnzahl: "{{n}} von {{gesamt}}",
       rechteAlle: "alle",
       tab: {
-        uebersicht: "Übersicht",
-        freigabe: "Workflow-Verlauf",
-        zahlung: "Zahlung & Abgleich",
+        overview: "Übersicht",
         details: "Details",
         lieferant: "Lieferant",
         verlauf: "Verlauf",
@@ -2415,9 +2317,7 @@ const de = {
         konfidenz: "KI-Konfidenz",
         review: "Prüfung",
         workflow: "Workflow-Status",
-        zahlung: "Zahlung & Abgleich",
         workflowHint: "Wo dieser Beleg im Freigabe- und Zahlungsweg steht.",
-        zahlungHint: "Ob er bezahlt ist, mit einer Bankbuchung abgeglichen und bereit für DATEV.",
       },
       konfidenz: {
         prozent: "KI-Konfidenz: {{percent}} %",
@@ -2751,43 +2651,42 @@ const de = {
       search: "Lieferant oder Adresse suchen …",
       col: {
         name: "Lieferant",
-        adresse: "Adresse",
+        address: "Adresse",
         iban: "IBAN",
-        ustId: "USt-IdNr",
-        verbucht: "Belege",
+        vatId: "USt-IdNr",
+        invoices: "Belege",
         createdAt: "Erstellt",
         updatedAt: "Zuletzt aktualisiert",
       },
-      belegeCount_one: "{{count}} Beleg",
-      belegeCount_other: "{{count}} Belege",
-      alleXTage: "alle {{tage}} Tage",
+      documentCount_one: "{{count}} Beleg",
+      documentCount_other: "{{count}} Belege",
       empty: "Keine Lieferanten gefunden.",
-      zeigeGeloeschte: "Gelöschte anzeigen",
+      showDeleted: "Gelöschte anzeigen",
       // The single "Filter" popover that replaced the loose switches next to the search field.
       filter: {
         button: "Filter",
         title: "Filter",
         reset: "Filter zurücksetzen",
         status: "Status",
-        statusAlle: "Alle",
-        statusAktiv: "Aktiv",
-        statusGeloescht: "Gelöscht",
-        adresse: "Adresse",
-        ohneAdresse_one: "Ohne Adresse ({{count}})",
-        ohneAdresse_other: "Ohne Adresse ({{count}})",
+        statusAll: "Alle",
+        statusActive: "Aktiv",
+        statusDeleted: "Gelöscht",
+        address: "Adresse",
+        withoutAddress_one: "Ohne Adresse ({{count}})",
+        withoutAddress_other: "Ohne Adresse ({{count}})",
       },
-      steuerId: {
-        alleTitle: "Alle Kennungen in diesem Feld",
+      taxId: {
+        allTitle: "Alle Kennungen in diesem Feld",
         weitere_one: "Eine weitere Kennung anzeigen",
         weitere_other: "{{count}} weitere Kennungen anzeigen",
-        ustTitle: "Als USt-IdNr. erkannt.",
-        steuernummerTitle: "Als Steuernummer erkannt, nicht als USt-IdNr.",
-        steuernummerKurz: "St.-Nr.",
-        unbekanntTitle:
+        vatTitle: "Als USt-IdNr. erkannt.",
+        taxNumberTitle: "Als Steuernummer erkannt, nicht als USt-IdNr.",
+        taxNumberShort: "St.-Nr.",
+        unknownTitle:
           "Sieht wie eine USt-IdNr. aus, ist aber keine gültige. Bitte prüfen, bevor darauf vertraut wird.",
-        andereTitle: "Andere Kennung (z. B. ausländische Steuernummer), keine USt-IdNr.",
+        otherTitle: "Andere Kennung (z. B. ausländische Steuernummer), keine USt-IdNr.",
       },
-      geloescht: "gelöscht",
+      deleted: "gelöscht",
       mergeSuggestions: {
         title: "Vorschläge zum Zusammenführen",
         desc: "Diese Lieferanten könnten dieselbe Firma sein. Namen anklicken, um sie zu prüfen, dann zusammenführen.",
@@ -2795,30 +2694,30 @@ const de = {
       duplicates: {
         keyName: "Name",
         keyVatId: "USt-IdNr",
-        keySteuernummer: "Steuernummer",
+        keyTaxNumber: "Steuernummer",
         matchedBy: "Übereinstimmung: {{key}} „{{value}}“",
         merge: "Zusammenführen",
       },
-      neu: {
-        stammdaten: "Stammdaten",
-        bankHinweis:
+      new: {
+        masterData: "Stammdaten",
+        bankHint:
           "Optional. Ohne Bankverbindung lässt sich der Lieferant anlegen, aber nicht bezahlen.",
-        bankHinzufuegen: "Bank hinzufügen",
-        bankEntfernen: "Bankverbindung entfernen",
-        bankNummer: "Bankverbindung {{number}}",
-        alsStandard: "Als Standard",
-        ibanUngueltig: "Bitte eine vollständige IBAN eingeben.",
+        bankAdd: "Bank hinzufügen",
+        bankRemove: "Bankverbindung entfernen",
+        bankNumber: "Bankverbindung {{number}}",
+        makeDefault: "Als Standard",
+        ibanInvalid: "Bitte eine vollständige IBAN eingeben.",
         button: "Neu",
         title: "Neuer Lieferant",
         desc: "Kreditor manuell anlegen. Nur der Name ist erforderlich.",
         cancel: "Abbrechen",
-        anlegen: "Anlegen",
-        anlege: "Lege an …",
+        create: "Anlegen",
+        creating: "Lege an …",
       },
       toast: {
-        namePflicht: "Name ist erforderlich.",
-        angelegt: "Lieferant angelegt.",
-        anlegenFehlgeschlagen: "Anlegen fehlgeschlagen: {{error}}",
+        nameRequired: "Name ist erforderlich.",
+        created: "Lieferant angelegt.",
+        createFailed: "Anlegen fehlgeschlagen: {{error}}",
       },
     },
     merge: {
@@ -2835,15 +2734,15 @@ const de = {
         confirm: "Zusammenführen",
       },
       toast: {
-        erfolgreich: "„{{name}}“ wurde in „{{target}}“ zusammengeführt.",
-        fehlgeschlagen: "Zusammenführen fehlgeschlagen: {{error}}",
+        succeeded: "„{{name}}“ wurde in „{{target}}“ zusammengeführt.",
+        failed: "Zusammenführen fehlgeschlagen: {{error}}",
       },
     },
     detail: {
       back: "Lieferanten",
       notFoundTitle: "Lieferant nicht gefunden",
-      geloeschtBanner: "Dieser Lieferant wurde am {{datum}} gelöscht ({{reason}}).",
-      geloeschtOhneGrund: "kein Grund angegeben",
+      deletedBanner: "Dieser Lieferant wurde am {{datum}} gelöscht ({{reason}}).",
+      deletedNoReason: "kein Grund angegeben",
       restore: {
         button: "Wiederherstellen",
         toast: "Lieferant wiederhergestellt.",
@@ -2852,67 +2751,66 @@ const de = {
       editTitle: "Lieferant bearbeiten",
       editDesc: "Stammdaten & Bankverbindung bearbeiten.",
       section: {
-        standardBankUnbrauchbar:
+        defaultBankUnusable:
           "Auf dem Lieferanten steht „{{wert}}“. Das ist keine zahlbare IBAN, deshalb konnte daraus keine Bankverbindung angelegt werden. Bitte die richtige IBAN über „Bank hinzufügen“ erfassen.",
-        standardBank: "Standard-Bankverbindung",
-        standardBankLeer: "Für diesen Lieferanten ist keine Bankverbindung hinterlegt.",
-        stammdaten: "Details",
-        verbucht: "Belege",
-        lastschrift: "Lastschrift",
-        lastschriftHinweis:
+        defaultBank: "Standard-Bankverbindung",
+        defaultBankEmpty: "Für diesen Lieferanten ist keine Bankverbindung hinterlegt.",
+        masterData: "Details",
+        invoices: "Belege",
+        directDebit: "Lastschrift",
+        directDebitHint:
           "Beobachtet aus den Zahlungsarten der Belege, kein hinterlegtes SEPA-Mandat.",
         aliases: "Bekannte Schreibweisen",
-        bankkonten: "Bankverbindungen",
+        bankAccounts: "Bankverbindungen",
       },
       field: {
         name: "Name",
-        adresse: "Adresse",
-        ustId: "USt-IdNr",
+        address: "Adresse",
+        vatId: "USt-IdNr",
         iban: "IBAN",
         ibanStandard: "IBAN (Standard)",
         bic: "BIC",
         bank: "Bank",
-        telefon: "Telefon",
+        phone: "Telefon",
         email: "E-Mail",
-        ansprechpartner: "Ansprechpartner",
+        contact: "Ansprechpartner",
       },
-      gesamt: "Gesamt ({{count}} Belege)",
-      frequenz: {
+      total: "Gesamt ({{count}} Belege)",
+      frequency: {
         label: "Häufigkeit",
       },
       col: {
-        beleg: "Beleg",
-        ges: "Ges.",
-        datum: "Datum",
-        betrag: "Betrag",
+        document: "Beleg",
+        company: "Ges.",
+        date: "Datum",
+        amount: "Betrag",
         status: "Status",
       },
-      ohneNr: "ohne Nr.",
-      belegeEmpty: "Noch keine Belege.",
-      ibanVerlauf: {
+      noNumber: "ohne Nr.",
+      documentsEmpty: "Noch keine Belege.",
+      ibanHistory: {
         button: "Verlauf",
         title_one: "{{count}} Eintrag im Verlauf",
         title_other: "{{count}} Einträge im Verlauf",
-        hinweis:
-          "Aufgezeichnet werden neue Bankverbindungen und jeder Wechsel der Standard-Verbindung.",
+        hint: "Aufgezeichnet werden neue Bankverbindungen und jeder Wechsel der Standard-Verbindung.",
         event: {
           account_added: "Bankverbindung hinzugefügt",
           default_set: "Als Standard gesetzt",
           default_changed: "Als Standard abgelöst",
         },
-        akteurPipeline: "durch die Pipeline",
-        akteurHub: "im Hub geändert",
-        akteurUnbekannt: "Herkunft unbekannt",
+        actorPipeline: "durch die Pipeline",
+        actorHub: "im Hub geändert",
+        actorUnknown: "Herkunft unbekannt",
       },
-      lastschrift: {
-        anzahl_one: "{{count}} Beleg per Lastschrift",
-        anzahl_other: "{{count}} Belege per Lastschrift",
+      directDebit: {
+        count_one: "{{count}} Beleg per Lastschrift",
+        count_other: "{{count}} Belege per Lastschrift",
         empty: "Keine Lastschriften erfasst.",
       },
       aliases: {
         placeholder: "Neue Schreibweise …",
-        hinzufuegen: "Hinzufügen",
-        entfernen: "Entfernen",
+        add: "Hinzufügen",
+        remove: "Entfernen",
         empty: "Keine bekannten Schreibweisen erfasst.",
         confirm: {
           title: "Schreibweise entfernen?",
@@ -2921,50 +2819,49 @@ const de = {
           confirm: "Entfernen",
         },
         toast: {
-          hinzugefuegt: "Schreibweise „{{alias}}“ hinzugefügt.",
-          entfernt: "Schreibweise „{{alias}}“ entfernt.",
-          bereitsVorhanden: "Diese Schreibweise ist bereits erfasst.",
-          fehlgeschlagen: "Hinzufügen fehlgeschlagen: {{error}}",
+          added: "Schreibweise „{{alias}}“ hinzugefügt.",
+          removed: "Schreibweise „{{alias}}“ entfernt.",
+          alreadyExists: "Diese Schreibweise ist bereits erfasst.",
+          failed: "Hinzufügen fehlgeschlagen: {{error}}",
         },
       },
-      bankkonten: {
-        neu: {
+      bankAccounts: {
+        new: {
           badge: "Neu",
           header: "Neue IBAN",
-          headerHinweis:
+          headerHint:
             "Für diesen Lieferanten wurde eine neue Bankverbindung hinzugefügt. Bitte prüfen und bestätigen.",
-          hinweis:
-            "Diese Bankverbindung wurde aus einer Rechnung übernommen und war bei diesem Lieferanten bisher nicht hinterlegt. Bitte prüfen und bestätigen, bevor eine Zahlung ausgelöst wird.",
-          bestaetigen: "Bankverbindung bestätigen",
-          bestaetigt: "{{iban}} bestätigt.",
+          hint: "Diese Bankverbindung wurde aus einer Rechnung übernommen und war bei diesem Lieferanten bisher nicht hinterlegt. Bitte prüfen und bestätigen, bevor eine Zahlung ausgelöst wird.",
+          confirm: "Bankverbindung bestätigen",
+          confirmed: "{{iban}} bestätigt.",
         },
-        kopieren: "Bankverbindung kopieren",
-        kopierenFehlgeschlagen: "Kopieren nicht möglich.",
-        bearbeiten: "Bankverbindung bearbeiten",
+        copy: "Bankverbindung kopieren",
+        copyFailed: "Kopieren nicht möglich.",
+        edit: "Bankverbindung bearbeiten",
         editDialog: {
           title: "Bankverbindung bearbeiten",
-          speichern: "Speichern",
+          save: "Speichern",
         },
-        seit: "seit {{datum}}",
+        since: "seit {{datum}}",
         col: {
           iban: "IBAN",
           bic: "BIC",
           bank: "Bank",
-          quelle: "Herkunft",
+          source: "Herkunft",
         },
         dialog: {
           title: "Bankverbindung hinzufügen",
-          abbrechen: "Abbrechen",
-          speichern: "Hinzufügen",
+          cancel: "Abbrechen",
+          save: "Hinzufügen",
         },
-        hinzufuegen: "Hinzufügen",
-        entfernen: "Entfernen",
-        standard: "Standard",
-        alsStandard: "Als Standard",
+        add: "Hinzufügen",
+        remove: "Entfernen",
+        default: "Standard",
+        makeDefault: "Als Standard",
         empty: "Keine Bankverbindung erfasst.",
         inaktivTitle_one: "{{count}} deaktiviertes Konto",
         inaktivTitle_other: "{{count}} deaktivierte Konten",
-        quelle: {
+        source: {
           pipeline: "automatisch erkannt",
           human: "manuell erfasst",
           backfill: "übernommen",
@@ -2976,44 +2873,44 @@ const de = {
           confirm: "Entfernen",
         },
         toast: {
-          gespeichert: "Bankverbindung {{iban}} gespeichert.",
-          hinzugefuegt: "Bankverbindung „{{iban}}“ hinzugefügt.",
-          entfernt: "Bankverbindung „{{iban}}“ entfernt.",
-          standardGesetzt: "„{{iban}}“ ist jetzt die Standard-Bankverbindung.",
-          bereitsVorhanden: "Diese IBAN ist bereits erfasst.",
-          ungueltig: "Das ist keine vollständige IBAN. Bitte prüfen und erneut eingeben.",
-          istStandard:
+          saved: "Bankverbindung {{iban}} gespeichert.",
+          added: "Bankverbindung „{{iban}}“ hinzugefügt.",
+          removed: "Bankverbindung „{{iban}}“ entfernt.",
+          defaultSet: "„{{iban}}“ ist jetzt die Standard-Bankverbindung.",
+          alreadyExists: "Diese IBAN ist bereits erfasst.",
+          invalid: "Das ist keine vollständige IBAN. Bitte prüfen und erneut eingeben.",
+          isDefault:
             "Die Standard-Bankverbindung kann nicht deaktiviert werden. Bitte zuerst eine andere als Standard setzen.",
-          fehlgeschlagen: "Speichern fehlgeschlagen: {{error}}",
+          failed: "Speichern fehlgeschlagen: {{error}}",
         },
       },
       merge: {
         button: "Zusammenführen",
       },
-      regel: {
+      rule: {
         button: "Regel anlegen",
       },
       delete: {
         button: "Löschen",
         title: "Lieferant löschen?",
         desc: "Wird ausgeblendet, bleibt aber revisionssicher gespeichert (wiederherstellbar). Verknüpfte Belege bleiben erhalten.",
-        grundPlaceholder: "Grund (optional)",
+        reasonPlaceholder: "Grund (optional)",
         cancel: "Abbrechen",
         confirm: "Endgültig ausblenden",
       },
       action: {
-        mehr: "Weitere Aktionen",
-        bearbeiten: "Bearbeiten",
-        abbrechen: "Abbrechen",
-        speichern: "Speichern",
-        speichere: "Speichere …",
+        more: "Weitere Aktionen",
+        edit: "Bearbeiten",
+        cancel: "Abbrechen",
+        save: "Speichern",
+        saving: "Speichere …",
       },
       toast: {
-        gespeichert: "Gespeichert.",
-        keineAenderungen: "Keine Änderungen.",
-        geloescht: "Lieferant gelöscht (wiederherstellbar).",
-        speichernFehlgeschlagen: "Speichern fehlgeschlagen: {{error}}",
-        loeschenFehlgeschlagen: "Löschen fehlgeschlagen: {{error}}",
+        saved: "Gespeichert.",
+        noChanges: "Keine Änderungen.",
+        deleted: "Lieferant gelöscht (wiederherstellbar).",
+        saveFailed: "Speichern fehlgeschlagen: {{error}}",
+        deleteFailed: "Löschen fehlgeschlagen: {{error}}",
       },
     },
   },
@@ -3023,12 +2920,12 @@ const de = {
   customers: {
     // Field-level validation messages for the customer form. Each one names a fix, and the
     // formats carry an example: a rule you can act on beats a rule that only says "invalid".
-    validierung: {
-      gesellschaft: "Bitte eine Gesellschaft wählen.",
+    validation: {
+      company: "Bitte eine Gesellschaft wählen.",
       name: "Bitte einen Namen eingeben, z. B. Muster GmbH.",
-      strasse: "Bitte Straße und Hausnummer eingeben, z. B. Musterstraße 12.",
-      plz: "Bitte eine gültige PLZ eingeben, z. B. 20095.",
-      ort: "Bitte einen Ort eingeben, z. B. Hamburg.",
+      street: "Bitte Straße und Hausnummer eingeben, z. B. Musterstraße 12.",
+      zip: "Bitte eine gültige PLZ eingeben, z. B. 20095.",
+      city: "Bitte einen Ort eingeben, z. B. Hamburg.",
       email: "Bitte eine gültige E-Mail-Adresse eingeben, z. B. name@firma.de.",
     },
     list: {
@@ -3037,7 +2934,7 @@ const de = {
         button: "Filter",
         title: "Kunden filtern",
         reset: "Filter zurücksetzen",
-        gesellschaftAlle: "Alle Gesellschaften",
+        allCompanies: "Alle Gesellschaften",
         nurUeberfaellig_one: "Nur überfällige ({{count}})",
         nurUeberfaellig_other: "Nur überfällige ({{count}})",
         ohneEmail_one: "{{count}} ohne E-Mail",
@@ -3048,42 +2945,42 @@ const de = {
       search: "Name, E-Mail oder Gesellschaft suchen …",
       col: {
         name: "Name",
-        gesellschaft: "Gesellschaft",
+        company: "Gesellschaft",
         email: "E-Mail",
-        rechnungen: "Rechnungen",
-        betrag: "Betrag",
-        ueberfaellig: "Überfällig",
+        invoices: "Rechnungen",
+        amount: "Betrag",
+        overdue: "Überfällig",
       },
       empty: "Keine Kunden gefunden.",
-      neu: {
+      new: {
         button: "Neu",
         title: "Neuer Kunde",
         desc: "Wird direkt hier angelegt.",
-        gesellschaft: "Gesellschaft",
-        gesellschaftPlaceholder: "Gesellschaft wählen …",
-        istFirma: "Firma (nicht Privatperson)",
+        company: "Gesellschaft",
+        companyPlaceholder: "Gesellschaft wählen …",
+        isCompany: "Firma (nicht Privatperson)",
         cancel: "Abbrechen",
-        anlegen: "Anlegen",
-        anlege: "Lege an …",
+        create: "Anlegen",
+        creating: "Lege an …",
       },
       toast: {
-        formularUnvollstaendig: "Bitte die rot markierten Felder ausfüllen.",
-        gesellschaftPflicht: "Gesellschaft ist erforderlich.",
-        namePflicht: "Name ist erforderlich.",
-        angelegt: "Kunde angelegt.",
-        anlegenFehlgeschlagen: "Anlegen fehlgeschlagen: {{error}}",
+        formIncomplete: "Bitte die rot markierten Felder ausfüllen.",
+        companyRequired: "Gesellschaft ist erforderlich.",
+        nameRequired: "Name ist erforderlich.",
+        created: "Kunde angelegt.",
+        createFailed: "Anlegen fehlgeschlagen: {{error}}",
       },
     },
     detail: {
       action: {
-        mehr: "Weitere Aktionen",
+        more: "Weitere Aktionen",
       },
       // Placeholders on the customer form, so an empty field shows the shape of the answer.
-      beispiel: {
+      example: {
         name: "Muster GmbH",
-        strasse: "Musterstraße 12",
-        plz: "20095",
-        ort: "Hamburg",
+        street: "Musterstraße 12",
+        zip: "20095",
+        city: "Hamburg",
         email: "name@firma.de",
       },
       back: "Kunden",
@@ -3092,36 +2989,36 @@ const de = {
       // The customer row in this Hub IS the master record -- there is no LexOffice or sevDesk behind
       // it -- so edits simply stay here. Until the edit dialog existed this read "Stammdaten sind
       // hier nicht editierbar.", which meant a typo could never be corrected anywhere.
-      editHinweis: "Stammdaten werden im Hub gepflegt. Änderungen wirken sofort.",
+      editHint: "Stammdaten werden im Hub gepflegt. Änderungen wirken sofort.",
       edit: {
         button: "Bearbeiten",
         title: "Kunde bearbeiten",
         desc: "Änderungen werden direkt im Hub gespeichert.",
         cancel: "Abbrechen",
-        speichern: "Speichern",
-        speichere: "Speichert …",
+        save: "Speichern",
+        saving: "Speichert …",
         toast: {
-          gespeichert: "Kunde gespeichert.",
-          fehlgeschlagen: "Speichern fehlgeschlagen: {{error}}",
+          saved: "Kunde gespeichert.",
+          failed: "Speichern fehlgeschlagen: {{error}}",
         },
       },
       section: {
-        stammdaten: "Stammdaten",
-        rechnungen: "Ausgangsrechnungen",
+        masterData: "Stammdaten",
+        invoices: "Ausgangsrechnungen",
       },
       field: {
-        erstellt: "Erstellt",
-        aktualisiert: "Aktualisiert",
+        created: "Erstellt",
+        updated: "Aktualisiert",
         name: "Name",
-        gesellschaft: "Gesellschaft",
-        ansprechpartner: "Ansprechpartner",
-        adresse: "Adresse",
-        strasse: "Straße",
-        plz: "PLZ",
-        ort: "Ort",
-        kundennummer: "Kundennummer",
-        ustId: "USt-IdNr",
-        telefon: "Telefon",
+        company: "Gesellschaft",
+        contact: "Ansprechpartner",
+        address: "Adresse",
+        street: "Straße",
+        zip: "PLZ",
+        city: "Ort",
+        customerNumber: "Kundennummer",
+        vatId: "USt-IdNr",
+        phone: "Telefon",
         email: "E-Mail",
       },
       // Plural forms matter here now that cancellations/drafts are filtered out of the count: a
@@ -3131,24 +3028,24 @@ const de = {
       nichtGezaehlt_one: "{{count}} stornierte oder Entwurfs-Rechnung nicht mitgezählt",
       nichtGezaehlt_other: "{{count}} stornierte oder Entwurfs-Rechnungen nicht mitgezählt",
       col: {
-        nr: "Nr.",
-        datum: "Datum",
-        betrag: "Betrag",
+        number: "Nr.",
+        date: "Datum",
+        amount: "Betrag",
         status: "Status",
       },
-      entwurf: "Entwurf",
-      rechnungenEmpty: "Noch keine Ausgangsrechnungen.",
+      draft: "Entwurf",
+      invoicesEmpty: "Noch keine Ausgangsrechnungen.",
       delete: {
         button: "Löschen",
         title: "Kunde löschen?",
         desc: "Wird hier ausgeblendet (wiederherstellbar).",
-        grundPlaceholder: "Grund (optional)",
+        reasonPlaceholder: "Grund (optional)",
         cancel: "Abbrechen",
         confirm: "Endgültig ausblenden",
       },
       toast: {
-        geloescht: "Kunde ausgeblendet.",
-        loeschenFehlgeschlagen: "Löschen fehlgeschlagen: {{error}}",
+        deleted: "Kunde ausgeblendet.",
+        deleteFailed: "Löschen fehlgeschlagen: {{error}}",
       },
     },
   },
@@ -3157,16 +3054,16 @@ const de = {
   companies: {
     // Field-level validation for the company dialog, in the same shape as kunden.validierung.
     // Each message names a fix rather than only saying that something is wrong.
-    validierung: {
+    validation: {
       code: "Bitte einen Code eingeben, z. B. IMKO.",
       codeFormat: "Nur Buchstaben und Ziffern, ohne Leer- und Sonderzeichen.",
-      codeLaenge: "Der Code darf höchstens 16 Zeichen lang sein.",
+      codeLength: "Der Code darf höchstens 16 Zeichen lang sein.",
       name: "Bitte einen Namen eingeben, z. B. Muster GmbH.",
     },
     // companies.booking_basis decides which date puts an invoice into a period in the
     // Kostenanalyse (see use-bwa-scope.ts). It could only be changed in SQL until the company
     // detail page started offering it.
-    buchungsbasis: {
+    bookingBasis: {
       invoice_date: "Rechnungsdatum",
       payment_date: "Zahlungsdatum",
     },
@@ -3174,13 +3071,13 @@ const de = {
       title: "Gesellschaften",
       subtitle: "Gesellschaften, denen Rechnungen und Objekte zugeordnet werden.",
       search: "Code oder Name suchen …",
-      archiviertBadge: "Archiviert",
+      archivedBadge: "Archiviert",
       col: {
         code: "Code",
         name: "Name",
-        bereich: "Bereich",
-        objekte: "Objekte",
-        verbucht: "Verbuchte Belege",
+        area: "Bereich",
+        properties: "Objekte",
+        invoices: "Verbuchte Belege",
         createdAt: "Erstellt",
         updatedAt: "Aktualisiert",
       },
@@ -3194,16 +3091,16 @@ const de = {
         title: "Filter",
         reset: "Zurücksetzen",
         status: "Status",
-        statusAlle: "Alle",
-        statusAktiv: "Aktiv",
-        statusArchiviert: "Archiviert",
-        bereich: "Bereich",
-        bereichAlle: "Alle Bereiche",
-        bereichOhne: "Ohne Bereich",
-        ablage: "Dropbox-Ordner",
-        ohneAblage: "Ohne Ordner ({{count}})",
+        statusAll: "Alle",
+        statusActive: "Aktiv",
+        statusArchived: "Archiviert",
+        area: "Bereich",
+        areaAll: "Alle Bereiche",
+        areaNone: "Ohne Bereich",
+        folder: "Dropbox-Ordner",
+        withoutFolder: "Ohne Ordner ({{count}})",
       },
-      neu: {
+      new: {
         button: "Neu",
         title: "Neue Gesellschaft",
         desc: "Kürzel (Code) und Name der Gesellschaft. Der Code muss eindeutig sein.",
@@ -3212,22 +3109,22 @@ const de = {
         nameLabel: "Name",
         namePlaceholder: "Name der Gesellschaft",
         cancel: "Abbrechen",
-        anlegen: "Anlegen",
-        anlege: "Lege an …",
+        create: "Anlegen",
+        creating: "Lege an …",
       },
       toast: {
-        pflicht: "Code und Name sind erforderlich.",
-        angelegt: "Gesellschaft angelegt.",
-        anlegenFehlgeschlagen: "Anlegen fehlgeschlagen: {{error}}",
+        required: "Code und Name sind erforderlich.",
+        created: "Gesellschaft angelegt.",
+        createFailed: "Anlegen fehlgeschlagen: {{error}}",
       },
     },
     detail: {
-      archiv: {
+      archive: {
         title: "Gesellschaft archivieren?",
         desc: "Die Gesellschaft verschwindet aus Listen und Auswahlfeldern. Bestehende Belege bleiben unverändert erhalten, und das Archivieren lässt sich jederzeit rückgängig machen.",
         mitBelegen_one: "Achtung: {{count}} Beleg ist dieser Gesellschaft zugeordnet.",
         mitBelegen_other: "Achtung: {{count}} Belege sind dieser Gesellschaft zugeordnet.",
-        grundPlaceholder: "Grund (optional)",
+        reasonPlaceholder: "Grund (optional)",
         cancel: "Abbrechen",
         confirm: "Archivieren",
         banner: "Archiviert am {{datum}}. Grund: {{reason}}",
@@ -3239,88 +3136,88 @@ const de = {
       editTitle: "Gesellschaft bearbeiten",
       editDesc: "Stammdaten der Gesellschaft. Code und Name sind Pflicht.",
       section: {
-        stammdaten: "Details",
-        objekte: "Objekte",
+        masterData: "Details",
+        properties: "Objekte",
         datev: "DATEV-Übergabe",
-        verbucht: "Verbuchte Belege",
+        invoices: "Verbuchte Belege",
       },
       field: {
         code: "Code",
         name: "Name",
         // Area of responsibility for approval routing (migration 0087) -- see
         // docs/APPROVAL_ROUTING.md. Reuses freigabeRegeln.bereich.* for the value labels.
-        bereich: "Zuständigkeitsbereich",
-        buchungsbasis: "Buchungsbasis",
-        buchungsbasisHinweis:
+        area: "Zuständigkeitsbereich",
+        bookingBasis: "Buchungsbasis",
+        bookingBasisHint:
           "Nach diesem Datum ordnet die Kostenanalyse einen Beleg einer Periode zu. Ohne Angabe gilt das Zahlungsdatum.",
-        gemeinkosten: "Kostenstelle Gemeinkosten",
-        gemeinkostenFehlt: "Nicht hinterlegt",
-        gemeinkostenPlatzhalter: "z. B. 10000",
-        gemeinkostenHinweis:
+        overheadCentre: "Kostenstelle Gemeinkosten",
+        overheadCentreMissing: "Nicht hinterlegt",
+        overheadCentrePlaceholder: "z. B. 10000",
+        overheadCentreHint:
           "Diese Nummer tragen alle Belege dieser Gesellschaft, die auf Gemeinkosten gebucht sind. Leer lassen, wenn es keine gibt.",
-        gemeinkostenUngueltig: "Bitte eine positive ganze Zahl eingeben.",
-        ablage: "Dropbox-Ordner",
-        ablagePlaceholder: "Kein Ordner gewählt",
-        ablageHinweis:
+        overheadCentreInvalid: "Bitte eine positive ganze Zahl eingeben.",
+        folder: "Dropbox-Ordner",
+        folderPlaceholder: "Kein Ordner gewählt",
+        folderHint:
           "Belege dieser Gesellschaft werden hier abgelegt. Ohne Ordner wird nichts abgelegt.",
-        erstellt: "Erstellt",
-        aktualisiert: "Aktualisiert",
+        created: "Erstellt",
+        updated: "Aktualisiert",
       },
-      objekteHeading: "Objekte",
-      objekteEmpty: "Dieser Gesellschaft ist noch kein Objekt zugeordnet.",
-      objektHinzufuegen: "Objekt hinzufügen",
-      objektEntfernen: {
-        aktion: "{{property}} von dieser Gesellschaft entfernen",
-        titel: "Objekt von der Gesellschaft entfernen?",
-        beschreibung:
+      propertiesHeading: "Objekte",
+      propertiesEmpty: "Dieser Gesellschaft ist noch kein Objekt zugeordnet.",
+      propertyAdd: "Objekt hinzufügen",
+      propertyRemove: {
+        action: "{{property}} von dieser Gesellschaft entfernen",
+        title: "Objekt von der Gesellschaft entfernen?",
+        description:
           "{{property}} gehört danach nicht mehr zu {{company}}. Bereits gebuchte Belege bleiben unverändert, und die Zuordnung lässt sich beim Objekt wieder hinzufügen.",
-        letzte:
+        onlyCompany:
           "{{property}} gehört nur zu {{company}}. Ein Objekt braucht mindestens eine Gesellschaft. Ordne es zuerst beim Objekt einer anderen Gesellschaft zu.",
-        bestaetigen: "Entfernen",
-        erfolg: "{{property}} wurde von der Gesellschaft entfernt",
+        confirm: "Entfernen",
+        success: "{{property}} wurde von der Gesellschaft entfernt",
       },
-      objekteLink: "Objekte",
+      propertiesLink: "Objekte",
       objekteCount_one: "{{count}} Objekt",
       objekteCount_other: "{{count}} Objekte",
       datevLink: "Adressen",
-      datevKeine: "Für diese Gesellschaft ist noch keine DATEV-Adresse hinterlegt.",
+      datevNone: "Für diese Gesellschaft ist noch keine DATEV-Adresse hinterlegt.",
       gesamt_one: "{{count}} Beleg",
       gesamt_other: "{{count}} Belege",
       fremdeObjekte_one:
         "{{count}} Beleg verweist auf ein Objekt einer anderen Gesellschaft ({{total}}). Bitte die Zuordnung prüfen.",
       fremdeObjekte_other:
         "{{count}} Belege verweisen auf Objekte anderer Gesellschaften ({{total}}). Bitte die Zuordnung prüfen.",
-      fremdesObjektHinweis:
+      foreignPropertyHint:
         "Objekt {{property}} ist {{companies}} zugeordnet, nicht dieser Gesellschaft.",
       col: {
-        beleg: "Beleg",
-        objekt: "Objekt",
-        datum: "Datum",
-        betrag: "Betrag",
+        document: "Beleg",
+        property: "Objekt",
+        date: "Datum",
+        amount: "Betrag",
         status: "Status",
       },
-      ohneNr: "ohne Nr.",
-      belegeEmpty: "Noch keine Belege.",
-      belegeEmptyZeitraum: "Im gewählten Zeitraum wurde nichts verbucht.",
+      noNumber: "ohne Nr.",
+      documentsEmpty: "Noch keine Belege.",
+      documentsEmptyPeriod: "Im gewählten Zeitraum wurde nichts verbucht.",
       action: {
-        archivieren: "Archivieren",
-        wiederherstellen: "Wiederherstellen",
-        bearbeiten: "Bearbeiten",
-        abbrechen: "Abbrechen",
-        speichern: "Speichern",
-        speichere: "Speichere …",
-        mehr: "Weitere Aktionen",
+        archive: "Archivieren",
+        restore: "Wiederherstellen",
+        edit: "Bearbeiten",
+        cancel: "Abbrechen",
+        save: "Speichern",
+        saving: "Speichere …",
+        more: "Weitere Aktionen",
         datev: "DATEV-Adressen",
-        objekte: "Objekte verwalten",
+        properties: "Objekte verwalten",
       },
       toast: {
-        archiviert: "Gesellschaft archiviert.",
-        wiederhergestellt: "Gesellschaft wiederhergestellt.",
-        archivierenFehlgeschlagen: "Fehlgeschlagen: {{error}}",
-        pflicht: "Code und Name dürfen nicht leer sein.",
-        keineAenderungen: "Keine Änderungen.",
-        gespeichert: "Gespeichert.",
-        speichernFehlgeschlagen: "Speichern fehlgeschlagen: {{error}}",
+        archived: "Gesellschaft archiviert.",
+        restored: "Gesellschaft wiederhergestellt.",
+        archiveFailed: "Fehlgeschlagen: {{error}}",
+        required: "Code und Name dürfen nicht leer sein.",
+        noChanges: "Keine Änderungen.",
+        saved: "Gespeichert.",
+        saveFailed: "Speichern fehlgeschlagen: {{error}}",
       },
     },
   },
@@ -3385,15 +3282,15 @@ const de = {
       status: "Direkt im Hub verfügbar",
     },
     fields: {
-      aktiv: "Aktiv",
+      active: "Aktiv",
       mailAdresse: "Belege aus diesem Postfach lesen",
-      quelle: "Belege aus diesen Ordnern lesen",
+      source: "Belege aus diesen Ordnern lesen",
       mailQuelleHint:
         "Leer lassen, um das gesamte Postfach zu prüfen. Mehrere Ordner werden nacheinander geprüft.",
-      ziel: "Verarbeitete Belege hierhin verschieben",
+      destination: "Verarbeitete Belege hierhin verschieben",
       mailZielHint:
         "Nach der Verarbeitung landet die E-Mail hier, damit im Eingang nur Offenes bleibt. Leer lassen, um nichts zu verschieben.",
-      rueckgabe: "Nicht relevante Belege hierhin verschieben",
+      returnFolder: "Nicht relevante Belege hierhin verschieben",
       mailRueckgabeHint:
         "Ist eine E-Mail kein Beleg, landet sie hier. Leer lassen, um sie liegen zu lassen.",
       driveQuelleHint:
@@ -3438,19 +3335,19 @@ const de = {
     title: "Postfach & Ablage",
     subtitle:
       "Woher Belege gelesen werden und wohin eine E-Mail nach der Verarbeitung wandert. Damit funktioniert auch die Rückgabe eines nicht relevanten Belegs ins Postfach.",
-    pipelineHinweis:
+    pipelineHint:
       "Diese Einstellungen werden hier nur gespeichert. Gelesen und ausgeführt werden sie von der Ingest-Pipeline, einem eigenen Python-Prozess, der separat vom Server läuft. Eine Änderung wirkt also erst, wenn die Pipeline sie das nächste Mal liest.",
     folder: {
-      waehlen: "Ordner wählen …",
-      keineAuswahl: "Keine Auswahl",
-      laedt: "Wird geladen …",
-      aktualisieren: "Aktualisieren",
+      choose: "Ordner wählen …",
+      noneSelected: "Keine Auswahl",
+      loading: "Wird geladen …",
+      refresh: "Aktualisieren",
       // One notice for a whole card. Deliberately names no provider: this screen reads a
       // Microsoft mailbox and a Dropbox folder, not one service.
-      ladenFehlgeschlagenBereich:
+      loadFailedArea:
         "Ordner für {{bereich}} konnten nicht geladen werden. Falls diese Meldung bleibt, ist meist der Zugang zum Dienst noch nicht eingerichtet.",
-      ordnerAusklappen: "Ordner ausklappen",
-      ordnerEinklappen: "Ordner einklappen",
+      folderExpand: "Ordner ausklappen",
+      folderCollapse: "Ordner einklappen",
       ordnerFehlt_one:
         "{{count}} ausgewählter Ordner wird aktuell nicht angezeigt (evtl. gelöscht) und bleibt trotzdem gespeichert.",
       ordnerFehlt_other:
@@ -3458,72 +3355,69 @@ const de = {
     },
     mailbox: {
       title: "Mailbox (Microsoft)",
-      aktiv: "Dieses Postfach wird gelesen",
-      aktivHint: "Aus bedeutet: Die Pipeline liest dieses Konto nicht.",
-      adresse: "Postfach-Adresse",
-      quelle: "Gelesene Ordner",
-      quelleHint:
+      active: "Dieses Postfach wird gelesen",
+      activeHint: "Aus bedeutet: Die Pipeline liest dieses Konto nicht.",
+      address: "Postfach-Adresse",
+      source: "Gelesene Ordner",
+      sourceHint:
         "Leer bedeutet: das gesamte Postfach. Wichtig: Wenn im Postfach eigene Regeln Mails am Eingang vorbeisortieren, kommen sie hier nie an.",
-      ziel: "Zielordner für verarbeitete E-Mails",
-      zielHint:
+      destination: "Zielordner für verarbeitete E-Mails",
+      destinationHint:
         "Verarbeitete E-Mails werden hierhin verschoben. Ohne Zielordner bleiben sie im Eingang liegen und werden beim nächsten Lauf erneut geprüft.",
-      rueckgabe: "Ordner für nicht relevante E-Mails",
-      rueckgabeHint:
+      returnFolder: "Ordner für nicht relevante E-Mails",
+      returnFolderHint:
         "Dorthin kommt eine als nicht relevant markierte E-Mail zurück. Leer bedeutet: Sie bleibt liegen, wo sie ist.",
     },
     filing: {
       title: "Ablage (Dropbox)",
-      aktiv: "Dieser Ordner wird gelesen",
-      aktivHint: "Aus bedeutet: Die Pipeline liest diesen Ordner nicht.",
-      quelle: "Quellordner",
-      quelleHint:
+      active: "Dieser Ordner wird gelesen",
+      activeHint: "Aus bedeutet: Die Pipeline liest diesen Ordner nicht.",
+      source: "Quellordner",
+      sourceHint:
         "Manche Belege liegen dort statt im Postfach. Mehrere Ordner werden nacheinander durchsucht.",
-      ziel: "Zielordner für verarbeitete Dateien",
-      zielHint:
+      destination: "Zielordner für verarbeitete Dateien",
+      destinationHint:
         "Verarbeitete Dateien werden hierhin verschoben. Ohne Zielordner bleiben sie am Ursprungsort und werden beim nächsten Lauf erneut eingelesen.",
-      rueckgabe: "Ordner für nicht relevante Dateien",
-      rueckgabeHint:
+      returnFolder: "Ordner für nicht relevante Dateien",
+      returnFolderHint:
         "Dorthin kommt eine als nicht relevant markierte Datei zurück. Leer bedeutet: Sie bleibt liegen, wo sie ist.",
     },
     // User first, technical detail last. This used to read "Bitte Migration 0091 anwenden",
     // which tells the person in front of it nothing except that something is broken.
-    zeileFehlt:
+    rowMissing:
       "Für {{provider}} sind noch keine Einstellungen angelegt, deshalb lässt sich hier gerade nichts speichern. Bitte den technischen Support informieren (die Einstellungszeile fehlt in der Datenbank, Migration 0091).",
-    speichern: "Speichern",
-    nurAdmin: "Nur Administratoren können diese Einstellungen ändern.",
-    speichere: "Speichere …",
-    gespeichert: "Einstellungen gespeichert.",
-    fehlgeschlagen: "Speichern fehlgeschlagen: {{error}}",
-    zuletzt: "Zuletzt geändert von {{by}}",
+    save: "Speichern",
+    adminOnly: "Nur Administratoren können diese Einstellungen ändern.",
+    saving: "Speichere …",
+    saved: "Einstellungen gespeichert.",
+    failed: "Speichern fehlgeschlagen: {{error}}",
+    lastChangedBy: "Zuletzt geändert von {{by}}",
   },
   assignmentRules: {
     list: {
       title: "Zuordnungsregeln",
       subtitle: "Regeln ordnen Belegen ihre Kostenkategorie automatisch zu.",
-      hinweis:
-        "Eine Regel kann Lieferant, Objekt und Gesellschaft in beliebiger Kombination festlegen. Je mehr Angaben eine Regel macht, desto spezifischer ist sie, und die spezifischste Regel gewinnt. Ein von Hand gesetzter Wert wird von keiner Regel überschrieben.",
+      hint: "Eine Regel kann Lieferant, Objekt und Gesellschaft in beliebiger Kombination festlegen. Je mehr Angaben eine Regel macht, desto spezifischer ist sie, und die spezifischste Regel gewinnt. Ein von Hand gesetzter Wert wird von keiner Regel überschrieben.",
       empty: "Noch keine Regeln angelegt.",
       emptyHint:
         "Die schnellste Startvariante: einen Beleg öffnen, Kategorie korrigieren und dort auf „Als Regel speichern“ klicken.",
-      suche: "Regel suchen …",
-      keineTreffer: "Keine Regel passt zur Suche.",
-      keineTrefferHint: "Die Suche prüft Kategorie, Lieferant, Objekt und Gesellschaft.",
+      search: "Regel suchen …",
+      noMatches: "Keine Regel passt zur Suche.",
+      noMatchesHint: "Die Suche prüft Kategorie, Lieferant, Objekt und Gesellschaft.",
     },
     tab: {
-      regeln: "Regeln",
-      kategorien: "Kategorien",
-      kontenrahmen: "Kontenrahmen",
-      vorschlaege: "Vorschläge",
-      spielplatz: "Testen",
+      rules: "Regeln",
+      chartOfAccounts: "Kontenrahmen",
+      suggestions: "Vorschläge",
+      playground: "Testen",
     },
     // Browser tab titles, one per tab. Longer than the tab labels on purpose: „Regeln" alone is
     // ambiguous in a tab bar that may also hold Freigabe-Regeln, Ausschlussregeln and USt-Regeln.
-    doktitel: {
-      kategorien: "Kategorien",
-      regeln: "Zuordnungsregeln",
-      kontenrahmen: "Kontenrahmen",
-      vorschlaege: "Vorschläge",
-      spielplatz: "Testen",
+    docTitle: {
+      rules: "Zuordnungsregeln",
+      chartOfAccounts: "Kontenrahmen",
+      suggestions: "Vorschläge",
+      playground: "Testen",
     },
     target: {
       cost_category: "Kostenkategorie",
@@ -3536,34 +3430,34 @@ const de = {
         "Die Umsatzsteuer hängt am USt-Status des Objekts: dasselbe Objekt kann steuerpflichtig oder steuerfrei sein, je nach Eintrag in den Objekt-Stammdaten.",
     },
     col: {
-      wert: "Wert",
-      geltungsbereich: "Geltungsbereich",
-      wirkung: "Wirkung",
-      wirkungHint:
+      value: "Wert",
+      scope: "Geltungsbereich",
+      impact: "Wirkung",
+      impactHint:
         "Erste Zahl: wie viele bestehende Belege diese Regel jetzt noch ändern würde. Zweite Zahl: wie viele Belege insgesamt in ihren Geltungsbereich fallen. Die Differenz sind Belege, die schon richtig stehen oder von Hand entschieden wurden: Null als erste Zahl ist der gesunde Normalzustand.",
-      aktiv: "Aktiv",
-      aktionen: "Aktionen",
-      abzugsfaehigkeit: "{{percent}} % abzugsfähig",
+      active: "Aktiv",
+      actions: "Aktionen",
+      deductibility: "{{percent}} % abzugsfähig",
     },
-    wirkung: "{{change}} von {{total}}",
+    impact: "{{change}} von {{total}}",
     scope: {
       lieferant: "Lieferant",
-      objekt: "Objekt",
-      gesellschaft: "Gesellschaft",
+      property: "Objekt",
+      company: "Gesellschaft",
       verwendungszweck: "Verwendungszweck enthält",
     },
     vatTreatment: {
-      steuerpflichtig: "steuerpflichtig",
-      steuerfrei: "steuerfrei",
+      taxable: "steuerpflichtig",
+      exempt: "steuerfrei",
       reverse_charge: "Reverse-Charge",
-      kleinunternehmer: "Kleinunternehmer",
+      small_business: "Kleinunternehmer",
     },
-    vatSonderfall: {
+    vatSpecialCase: {
       hospitality: "Bewirtung",
       partial: "Teilweise abzugsfähig",
       down_payment: "Anzahlung",
     },
-    neu: {
+    new: {
       // Per-target labels: cost-category rules come from the Regeln tab, VAT rules only from the
       // USt-Regeln tab (a VAT rule is created from exactly one place, so the dialog's own wording
       // says which kind it is rather than the generic "Regel").
@@ -3581,97 +3475,97 @@ const de = {
         vat_rate:
           "Lege Satz, steuerliche Behandlung und Abzugsfähigkeit fest, und für welche Belege die Regel gilt.",
       },
-      feld: "Welches Feld setzt die Regel?",
-      kategorie: "Kostenkategorie",
-      kategoriePlaceholder: "z. B. Büromaterial",
-      ustSatz: "Umsatzsteuersatz in Prozent",
-      ustUngueltig: "Bitte eine Zahl eingeben, z. B. 19 oder 7.",
+      field: "Welches Feld setzt die Regel?",
+      category: "Kostenkategorie",
+      categoryPlaceholder: "z. B. Büromaterial",
+      vatRate: "Umsatzsteuersatz in Prozent",
+      vatInvalid: "Bitte eine Zahl eingeben, z. B. 19 oder 7.",
       // A VAT rate is a percentage. 199 is not a typo the app should accept and then let someone
       // bulk-apply across every matching invoice.
-      ustAusserhalb: "Bitte einen Satz zwischen 0 und 100 eingeben.",
+      vatOutOfRange: "Bitte einen Satz zwischen 0 und 100 eingeben.",
       // Not an error: 5,5 % or 16 % were real German rates and other EU rates exist. Worth a
       // second look, not a block.
-      ustUnueblich: "Ungewöhnlicher Satz. In Deutschland gelten 0 %, 7 % oder 19 %.",
-      geltungsbereich: "Geltungsbereich",
-      geltungsbereichHint:
+      vatUnusual: "Ungewöhnlicher Satz. In Deutschland gelten 0 %, 7 % oder 19 %.",
+      scope: "Geltungsbereich",
+      scopeHint:
         "Mindestens eine Angabe ist nötig. Alles, was auf „beliebig“ steht, schränkt nicht ein.",
-      beliebig: "beliebig",
-      musterPlaceholder: "z. B. Werkstatt",
-      musterHint:
+      any: "beliebig",
+      patternPlaceholder: "z. B. Werkstatt",
+      patternHint:
         "Trifft zu, wenn der Verwendungszweck diesen Text enthält. Groß- und Kleinschreibung spielt keine Rolle.",
-      steuerbehandlung: "Steuerliche Behandlung (optional)",
-      steuerbehandlungOhne: "keine besondere Behandlung",
-      steuerbehandlungHint:
+      taxTreatment: "Steuerliche Behandlung (optional)",
+      taxTreatmentNone: "keine besondere Behandlung",
+      taxTreatmentHint:
         "Für Fälle, die ein Prozentsatz allein nicht ausdrückt, z. B. Reverse-Charge oder Kleinunternehmer.",
-      abzugsfaehigkeit: "Abzugsfähigkeit in Prozent (optional)",
-      abzugsfaehigkeitHint:
+      deductibility: "Abzugsfähigkeit in Prozent (optional)",
+      deductibilityHint:
         "100 = voll abzugsfähig (Kosten netto), 0 = nicht abzugsfähig (Kosten brutto). Leer lassen, um vom USt-Status des Objekts auszugehen.",
-      abzugsfaehigkeitUngueltig: "Bitte eine Zahl zwischen 0 und 100 eingeben.",
-      sonderfall: "Steuerlicher Sonderfall (optional)",
-      sonderfallOhne: "kein Sonderfall",
-      sonderfallBewirtungHinweis:
+      deductibilityInvalid: "Bitte eine Zahl zwischen 0 und 100 eingeben.",
+      specialCase: "Steuerlicher Sonderfall (optional)",
+      specialCaseNone: "kein Sonderfall",
+      specialCaseHospitalityHint:
         "Schlägt 70 % vor. Das betrifft nach deutschem Steuerrecht eigentlich die einkommensteuerliche Abzugsfähigkeit von Bewirtungskosten, nicht zwingend die Vorsteuer selbst. Bitte mit dem Steuerberater abstimmen.",
-      notiz: "Notiz (optional)",
-      vorschau: "Wirkung auf bestehende Belege",
-      vorschauLaedt: "Wird berechnet …",
-      vorschauFehler: "Die Vorschau konnte nicht berechnet werden.",
-      vorschauText: "Diese Regel würde {{change}} von {{total}} passenden Belegen ändern.",
-      vorschauHint:
+      note: "Notiz (optional)",
+      preview: "Wirkung auf bestehende Belege",
+      previewLoading: "Wird berechnet …",
+      previewError: "Die Vorschau konnte nicht berechnet werden.",
+      previewText: "Diese Regel würde {{change}} von {{total}} passenden Belegen ändern.",
+      previewHint:
         "Die Differenz sind Belege, die schon richtig stehen oder von Hand entschieden wurden. Die tastet die Regel nicht an.",
-      scopeFehlt: "Bitte mindestens eine Angabe im Geltungsbereich machen.",
-      wertFehlt: "Bitte den Wert setzen, den die Regel vergeben soll.",
-      schonVorhanden:
+      scopeMissing: "Bitte mindestens eine Angabe im Geltungsbereich machen.",
+      valueMissing: "Bitte den Wert setzen, den die Regel vergeben soll.",
+      alreadyExists:
         "Für genau diesen Geltungsbereich gibt es bereits eine Regel für dieses Feld. Bitte die bestehende Regel anpassen.",
-      speichern: {
+      save: {
         cost_category: "Kategorie-Regel anlegen",
         vat_rate: "USt-Regel anlegen",
       },
     },
     action: {
-      abbrechen: "Abbrechen",
-      bearbeiten: "Regel bearbeiten",
-      loeschen: "Löschen",
-      loeschenTitle: "Regel löschen?",
-      loeschenDesc:
+      cancel: "Abbrechen",
+      edit: "Regel bearbeiten",
+      delete: "Löschen",
+      deleteTitle: "Regel löschen?",
+      deleteDesc:
         'Die Regel „{{value}}" greift danach nicht mehr. Sie bleibt revisionssicher gespeichert, weil sie bestehende Zuordnungen geprägt hat. Bereits gesetzte Werte auf Belegen bleiben unverändert.',
-      loeschenConfirm: "Regel löschen",
-      grundPlaceholder: "Grund (optional)",
-      anwenden: "Jetzt anwenden",
-      anwendenTitle: "Regel auf bestehende Belege anwenden?",
-      anwendenDesc:
+      deleteConfirm: "Regel löschen",
+      reasonPlaceholder: "Grund (optional)",
+      apply: "Jetzt anwenden",
+      applyTitle: "Regel auf bestehende Belege anwenden?",
+      applyDesc:
         "Diese Regel würde {{change}} von {{total}} passenden Belegen ändern. Von Hand gesetzte Werte werden dabei nie überschrieben. Jede Änderung wird protokolliert.",
-      anwendenKeine: "Diese Regel würde derzeit keinen Beleg ändern.",
-      anwendenConfirm: "{{count}} Belege anwenden",
+      applyNone: "Diese Regel würde derzeit keinen Beleg ändern.",
+      applyConfirm: "{{count}} Belege anwenden",
     },
     toast: {
-      angelegt: "Regel angelegt.",
-      gespeichert: "Regel gespeichert.",
-      aktiviert: "Regel aktiviert.",
-      deaktiviert: "Regel deaktiviert.",
-      geloescht: "Regel gelöscht.",
-      fehlgeschlagen: "Fehlgeschlagen: {{error}}",
-      angewendet: "{{changed}} von {{matches}} Belegen aktualisiert.",
-      angewendetUebersprungen:
+      created: "Regel angelegt.",
+      saved: "Regel gespeichert.",
+      activated: "Regel aktiviert.",
+      deactivated: "Regel deaktiviert.",
+      deleted: "Regel gelöscht.",
+      failed: "Fehlgeschlagen: {{error}}",
+      applied: "{{changed}} von {{matches}} Belegen aktualisiert.",
+      appliedSkipped:
         "{{changed}} von {{matches}} Belegen aktualisiert, {{skipped}} von Hand gesetzt und übersprungen.",
-      angewendetKeine: "Kein Beleg musste geändert werden.",
+      appliedNone: "Kein Beleg musste geändert werden.",
     },
     test: {
       title: "Szenario testen",
       hint: "Einen Beleg beschreiben und prüfen lassen, welche Regel die Kategorie setzen würde.",
       verwendungszweck: "Verwendungszweck",
       verwendungszweckPlaceholder: "Optionaler Text zum Abgleich",
-      pruefen: "Prüfen",
-      zuruecksetzen: "Zurücksetzen",
-      leer: "Noch nichts geprüft",
-      leerHinweis:
+      check: "Prüfen",
+      reset: "Zurücksetzen",
+      empty: "Noch nichts geprüft",
+      emptyHint:
         "So viel vom Beleg eintragen wie bekannt ist und auf Prüfen klicken. Alles, was auf beliebig steht, gilt als nicht eingeschränkt, genau so, wie eine Regel ein Merkmal behandelt, das sie nicht festlegt.",
-      trifftZu: "Diese Regel greift",
-      verdraengtTitel: "Passen ebenfalls, werden aber verdrängt",
+      applies: "Diese Regel greift",
+      outrankedTitle: "Passen ebenfalls, werden aber verdrängt",
       weitere_one: "{{count}} weitere Regel passt ebenfalls, wird aber verdrängt.",
       weitere_other: "{{count}} weitere Regeln passen ebenfalls, werden aber verdrängt.",
-      einzige: "Keine andere Regel passt.",
-      keine: "Keine Regel trifft zu.",
-      keineHinweis: "Der Beleg behält die Kategorie, die er bereits hat.",
+      onlyOne: "Keine andere Regel passt.",
+      none: "Keine Regel trifft zu.",
+      noneHint: "Der Beleg behält die Kategorie, die er bereits hat.",
     },
   },
   vatRules: {
@@ -3680,45 +3574,43 @@ const de = {
       subtitle:
         "Regeln, die Satz, steuerliche Behandlung und Abzugsfähigkeit der Umsatzsteuer setzen.",
     },
-    gesellschaft: "Gesellschaft",
-    alleGesellschaften: "Alle Gesellschaften",
+    company: "Gesellschaft",
+    allCompanies: "Alle Gesellschaften",
     tabs: {
-      regeln: "USt-Regeln",
-      ruecklage: "Steuerrücklage",
+      rules: "USt-Regeln",
+      reserve: "Steuerrücklage",
     },
-    hinweis:
-      "USt-Regeln setzen Satz, steuerliche Behandlung und Abzugsfähigkeit gemeinsam. Dieselbe Regel wie bei den Zuordnungsregeln, hier auf eine Gesellschaft gefiltert. Eine Regel schlägt die KI, ein von Hand gesetzter Wert schlägt beides.",
+    hint: "USt-Regeln setzen Satz, steuerliche Behandlung und Abzugsfähigkeit gemeinsam. Dieselbe Regel wie bei den Zuordnungsregeln, hier auf eine Gesellschaft gefiltert. Eine Regel schlägt die KI, ein von Hand gesetzter Wert schlägt beides.",
     empty: "Für diese Auswahl gibt es noch keine USt-Regeln.",
     // Names the button that is actually on this screen. It used to say „Neue Regel", which is not
     // a label anything here carries.
     emptyHint:
       "Über „Neue USt-Regel“ eine USt-Regel für Lieferant, Objekt oder Gesellschaft anlegen.",
-    ruecklage: {
-      kpiErstattung: "Erstattung erwartet",
-      kpiFaellig: "Gesellschaften mit fälliger Rücklage",
-      kpiUngeklaert: "Ungeklärte Belege",
-      titel: "Steuerrücklage",
-      hinweis:
-        "Nur eine Empfehlung, keine Buchung. Rücklage = Umsatzsteuer aus Ausgangsrechnungen minus abzugsfähige Vorsteuer.",
-      gesamt: "Vorsteuer gesamt",
-      abzugsfaehig: "davon abzugsfähig",
-      nichtAbzugsfaehig: "davon nicht abzugsfähig",
-      umsatzsteuer: "Umsatzsteuer (Ausgang)",
-      ruecklage: "Empfohlene Rücklage",
+    reserve: {
+      kpiRefund: "Erstattung erwartet",
+      kpiDue: "Gesellschaften mit fälliger Rücklage",
+      kpiUnresolved: "Ungeklärte Belege",
+      title: "Steuerrücklage",
+      hint: "Nur eine Empfehlung, keine Buchung. Rücklage = Umsatzsteuer aus Ausgangsrechnungen minus abzugsfähige Vorsteuer.",
+      total: "Vorsteuer gesamt",
+      deductible: "davon abzugsfähig",
+      notDeductible: "davon nicht abzugsfähig",
+      outputVat: "Umsatzsteuer (Ausgang)",
+      reserve: "Empfohlene Rücklage",
       unresolved:
         "{{count}} Beleg(e) mit {{amount}} Vorsteuer noch ohne bestimmte Abzugsfähigkeit, nicht in der Rücklage berücksichtigt.",
       // Same fact as `unresolved`, short enough to sit visibly in a table row instead of inside a
       // hover tooltip no touchscreen can open.
-      unresolvedKurz: "{{count}} Beleg(e) · {{amount}} noch ohne Abzugsfähigkeit",
+      unresolvedShort: "{{count}} Beleg(e) · {{amount}} noch ohne Abzugsfähigkeit",
       // A negative reserve is the OPPOSITE of every other figure here. Everything else is money
       // the company owes; this is money it is owed.
-      erstattung: "Vorsteuerüberhang, Erstattung zu erwarten",
-      leer: "Noch keine Gesellschaften vorhanden.",
+      refund: "Vorsteuerüberhang, Erstattung zu erwarten",
+      empty: "Noch keine Gesellschaften vorhanden.",
     },
-    anzahl: {
+    count: {
       lieferant: "{{count}} nach Lieferant",
-      objekt: "{{count}} nach Objekt",
-      gesellschaft: "{{count}} nach Gesellschaft",
+      property: "{{count}} nach Objekt",
+      company: "{{count}} nach Gesellschaft",
       global: "{{count}} für alle Gesellschaften",
     },
   },
@@ -3727,35 +3619,34 @@ const de = {
       title: "Kategorien",
       subtitle: "Kosten und Erlöse in Kategorien bündeln, auf die Zuordnungsregeln verweisen.",
     },
-    suche: "Kategorie suchen …",
-    keineTreffer: "Keine Kategorie passt zur Suche.",
-    keineTrefferHint: "Suchbegriff kürzen oder leeren, um wieder alle Gruppen zu sehen.",
-    leer: "Noch keine Kategorien angelegt.",
-    hinweis:
-      "Jede Kategorie kann Unterkategorien haben. Wenn Sie eine löschen, verschwindet sie aus den Listen. Belege, die sie schon nutzen, behalten den Namen.",
+    search: "Kategorie suchen …",
+    noMatches: "Keine Kategorie passt zur Suche.",
+    noMatchesHint: "Suchbegriff kürzen oder leeren, um wieder alle Gruppen zu sehen.",
+    empty: "Noch keine Kategorien angelegt.",
+    hint: "Jede Kategorie kann Unterkategorien haben. Wenn Sie eine löschen, verschwindet sie aus den Listen. Belege, die sie schon nutzen, behalten den Namen.",
     col: {
       name: "Name",
-      hinweis: "Notiz",
-      aktionen: "Aktionen",
+      hint: "Notiz",
+      actions: "Aktionen",
     },
     action: {
-      bearbeiten: "Bearbeiten",
+      edit: "Bearbeiten",
     },
     edit: {
       title: "Kategorie bearbeiten",
-      speichern: "Speichern",
+      save: "Speichern",
     },
-    feld: {
-      unterVon: "Wird unter „{{name}}“ angelegt.",
-      art: "Art",
+    field: {
+      childOf: "Wird unter „{{name}}“ angelegt.",
+      type: "Art",
       name: "Name",
-      notiz: "Notiz (optional)",
+      note: "Notiz (optional)",
       parent: "Übergeordnete Kostengruppe",
-      parentKeiner: "Keine (neue Kostengruppe)",
+      parentNone: "Keine (neue Kostengruppe)",
       code: "Code (eindeutig, z. B. OCC_SOLAR)",
       block: "BWA-Block",
       line: "BWA-Zeile (technischer Schlüssel)",
-      blockGeerbt: "Übernimmt BWA-Block und -Zeile von „{{name}}“.",
+      blockInherited: "Übernimmt BWA-Block und -Zeile von „{{name}}“.",
     },
     block: {
       einnahmen: "Einnahmen",
@@ -3765,24 +3656,24 @@ const de = {
       steuern: "Steuern",
       sonderfall: "Sonderfall",
     },
-    neu: {
-      unterkategorie: "Unterkategorie anlegen",
+    new: {
+      subcategory: "Unterkategorie anlegen",
       button: "Neue Kategorie",
       title: "Kategorie anlegen",
       desc: "Als Kind einer bestehenden Kostengruppe oder als neue, eigenständige Kostengruppe.",
-      wertFehlt: "Bitte Code, deutschen Namen und BWA-Zeile ausfüllen.",
-      codeSchonVorhanden: "Dieser Code ist bereits vergeben. Bitte einen anderen wählen.",
-      speichern: "Kategorie anlegen",
+      valueMissing: "Bitte Code, deutschen Namen und BWA-Zeile ausfüllen.",
+      codeAlreadyExists: "Dieser Code ist bereits vergeben. Bitte einen anderen wählen.",
+      save: "Kategorie anlegen",
     },
-    loeschen: {
+    delete: {
       title: "Kategorie löschen?",
       desc: "„{{name}}“ verschwindet danach aus der Auswahl für neue Zuordnungen. Belege und Regeln, die sie bereits verwenden, zeigen ihren Namen weiterhin an.",
     },
     toast: {
-      sortiert: "Reihenfolge gespeichert.",
-      angelegt: "Kategorie angelegt.",
-      gespeichert: "Kategorie gespeichert.",
-      geloescht: "Kategorie gelöscht.",
+      sorted: "Reihenfolge gespeichert.",
+      created: "Kategorie angelegt.",
+      saved: "Kategorie gespeichert.",
+      deleted: "Kategorie gelöscht.",
     },
   },
   chartOfAccounts: {
@@ -3797,61 +3688,60 @@ const de = {
     empty: "Für dieses Jahr ist noch kein Kontenrahmen hinterlegt.",
     emptyHint: "Über „Mit KI importieren“ die Liste vom Steuerberater einspielen.",
     col: {
-      konto: "Konto",
-      kategorie: "Kategorie",
-      notiz: "Notiz",
+      account: "Konto",
+      category: "Kategorie",
+      note: "Notiz",
     },
-    kiImport: {
+    aiImport: {
       button: "Mit KI importieren",
       title: "Kontenrahmen mit KI importieren",
-      jahre: "Wirtschaftsjahre",
+      fiscalYears: "Wirtschaftsjahre",
       desc: "Gesellschaft und Wirtschaftsjahr(e) wählen, dann die Datei vom Steuerberater hochladen (CSV, Excel, PDF oder Bild). Die KI erkennt Kontonummer, Bezeichnung und schlägt pro Konto eine Kategorie vor, vor dem Import bleibt jede Zeile änderbar. Bei mehreren Jahren wird derselbe Kontenrahmen in jedes gewählte Jahr importiert.",
-      auswahlFehlt: "Bitte zuerst Gesellschaft und mindestens ein Wirtschaftsjahr wählen.",
+      selectionMissing: "Bitte zuerst Gesellschaft und mindestens ein Wirtschaftsjahr wählen.",
       dropHint: "Datei hierher ziehen oder auswählen",
       dropRelease: "Datei loslassen",
       fileTypes: "CSV, Excel, PDF oder Bild, max. 15 MB",
       chooseFile: "Datei auswählen",
-      analysiere: "Die KI analysiert die Datei …",
-      vorschau: "{{recognized}} von {{total}} Konten einer Kategorie zugeordnet.",
-      keineKategorie: "Kategorie wählen …",
-      abbrechen: "Abbrechen",
-      speichere: "Speichert …",
-      speichernConfirm: "{{count}} Konten importieren ({{years}} Jahr(e))",
-      fehler: {
+      analyzing: "Die KI analysiert die Datei …",
+      preview: "{{recognized}} von {{total}} Konten einer Kategorie zugeordnet.",
+      noCategory: "Kategorie wählen …",
+      cancel: "Abbrechen",
+      saving: "Speichert …",
+      saveConfirm: "{{count}} Konten importieren ({{years}} Jahr(e))",
+      error: {
         title: "Datei konnte nicht ausgewertet werden.",
-        andereDatei: "Andere Datei wählen",
+        differentFile: "Andere Datei wählen",
       },
       toast: {
-        zuGrossFuerAnalyse:
+        tooLargeForAnalysis:
           "Die Datei ist zu groß für die automatische Erkennung. Bitte die Felder selbst ausfüllen.",
-        zuGross: "Datei ist zu groß (max. 15 MB).",
-        typUngueltig: "Dateityp wird nicht unterstützt.",
-        keineKonten: "In dieser Datei konnten keine Konten erkannt werden.",
-        analyseFehlgeschlagen: "Analyse fehlgeschlagen: {{error}}",
-        importiert: "{{count}} Konten importiert (Jahre: {{years}}).",
-        jahrFehlgeschlagen:
+        tooLarge: "Datei ist zu groß (max. 15 MB).",
+        invalidType: "Dateityp wird nicht unterstützt.",
+        noAccounts: "In dieser Datei konnten keine Konten erkannt werden.",
+        analysisFailed: "Analyse fehlgeschlagen: {{error}}",
+        imported: "{{count}} Konten importiert (Jahre: {{years}}).",
+        yearFailed:
           "Import für {{year}} fehlgeschlagen: {{error}}. Bereits importierte Jahre bleiben gespeichert.",
       },
     },
   },
   suggestions: {
-    suche: "Lieferant oder Kategorie suchen …",
-    keineTreffer: "Kein Vorschlag passt zur Suche.",
-    keineTrefferHint: "Die Suche prüft Lieferantenname und vorgeschlagene Kategorie.",
-    hinweis:
-      "Nur zur Ansicht: Lieferanten ohne aktive Regel, mit der Kategorie, die ihre bisherigen Belege nahelegen. Hier wird nichts gespeichert. „Regel anlegen“ übergibt Lieferant und Kategorie an den Regel-Dialog im Reiter Regeln, der vor dem Speichern zeigt, wie viele vorhandene Belege sich dadurch ändern.",
+    search: "Lieferant oder Kategorie suchen …",
+    noResults: "Kein Vorschlag passt zur Suche.",
+    noResultsHint: "Die Suche prüft Lieferantenname und vorgeschlagene Kategorie.",
+    hint: "Nur zur Ansicht: Lieferanten ohne aktive Regel, mit der Kategorie, die ihre bisherigen Belege nahelegen. Hier wird nichts gespeichert. „Regel anlegen“ übergibt Lieferant und Kategorie an den Regel-Dialog im Reiter Regeln, der vor dem Speichern zeigt, wie viele vorhandene Belege sich dadurch ändern.",
     empty: "Aktuell keine Vorschläge.",
     emptyHint:
       "Ein Vorschlag erscheint nur, wenn die bisherigen Belege eines Lieferanten auf eine echte Kategorie zeigen. „Nicht zugeordnet“ zählt nicht dazu.",
-    belegeCount: "{{n}} von {{total}} Belegen",
+    documentsCount: "{{n}} von {{total}} Belegen",
     col: {
-      lieferant: "Lieferant",
-      belege: "Belege",
-      kategorie: "Vorgeschlagene Kategorie",
-      aktion: "Aktion",
+      supplier: "Lieferant",
+      documents: "Belege",
+      category: "Vorgeschlagene Kategorie",
+      action: "Aktion",
     },
     action: {
-      regelAnlegen: "Regel anlegen →",
+      createRule: "Regel anlegen →",
     },
   },
   exclusionRules: {
@@ -3864,20 +3754,20 @@ const de = {
       search: "Suche (Begriff, Notiz) …",
       count_one: "{{count}} Regel",
       count_other: "{{count}} Regeln",
-      keineTreffer: "Keine Regel passt zu den Filtern.",
-      filterZuruecksetzen: "Filter zurücksetzen",
+      noResults: "Keine Regel passt zu den Filtern.",
+      resetFilters: "Filter zurücksetzen",
       filter: {
         button: "Filter",
         title: "Filter",
-        zuruecksetzen: "Filter zurücksetzen",
-        alleBereiche: "Alle Bereiche",
+        resetAll: "Filter zurücksetzen",
+        allScopes: "Alle Bereiche",
         status: "Status",
-        alle: "Alle",
-        aktiv: "Aktiv",
-        inaktiv: "Inaktiv",
+        all: "Alle",
+        active: "Aktiv",
+        inactive: "Inaktiv",
       },
-      neu: { button: "Neue Regel" },
-      action: { loeschen: "Löschen" },
+      new: { button: "Neue Regel" },
+      action: { delete: "Löschen" },
     },
     scope: {
       sender: "Absender (E-Mail)",
@@ -3892,18 +3782,18 @@ const de = {
       groupPre: "Vor der KI-Auslesung (E-Mail/Datei)",
       groupPost: "Nach der Auslesung (erkannte Felder)",
     },
-    vorschau: {
-      laeuft: "Prüfe, was diese Regel treffen würde …",
-      fehler:
+    preview: {
+      running: "Prüfe, was diese Regel treffen würde …",
+      error:
         "Die Vorschau konnte nicht ermittelt werden. Die Regel kann trotzdem angelegt werden, ihre Reichweite ist dann aber ungeprüft.",
-      nichtVerfuegbar:
+      notAvailable:
         "Für diesen Bereich gibt es keine Vorschau: es existiert im Hub keine Spalte, die dasselbe bedeutet.",
-      keine: "Kein Treffer unter {{total}} bisher verarbeiteten Einträgen.",
-      treffer:
+      none: "Kein Treffer unter {{total}} bisher verarbeiteten Einträgen.",
+      matches:
         "Würde {{count}} von {{total}} bisher verarbeiteten Einträgen betreffen ({{percent}} %). Betroffene Belege entstehen gar nicht erst.",
     },
     dialog: {
-      neu: { title: "Neue Ausschlussregel", desc: "Bereich, Suchbegriff und optional eine Notiz." },
+      new: { title: "Neue Ausschlussregel", desc: "Bereich, Suchbegriff und optional eine Notiz." },
       field: { scope: "Bereich", term: "Begriff", note: "Notiz (optional)" },
       termPlaceholder: "z. B. Newsletter, ACME, PROP12 …",
       notePlaceholder: "Warum diese Regel?",
@@ -3911,16 +3801,16 @@ const de = {
       save: "Anlegen",
       saving: "Speichere …",
       toast: {
-        termPflicht: "Begriff ist erforderlich.",
-        scopePflicht: "Bereich ist erforderlich.",
-        angelegt: "Regel angelegt.",
-        anlegenFehlgeschlagen: "Anlegen fehlgeschlagen: {{error}}",
+        termRequired: "Begriff ist erforderlich.",
+        scopeRequired: "Bereich ist erforderlich.",
+        created: "Regel angelegt.",
+        createFailed: "Anlegen fehlgeschlagen: {{error}}",
       },
     },
     toggle: {
-      aktiviert: "Regel aktiviert.",
-      deaktiviert: "Regel deaktiviert.",
-      fehlgeschlagen: "Aktualisieren fehlgeschlagen: {{error}}",
+      activated: "Regel aktiviert.",
+      deactivated: "Regel deaktiviert.",
+      failed: "Aktualisieren fehlgeschlagen: {{error}}",
     },
     delete: {
       title: "Regel löschen?",
@@ -3928,8 +3818,8 @@ const de = {
       cancel: "Abbrechen",
       confirm: "Löschen",
       toast: {
-        geloescht: "Regel gelöscht.",
-        fehlgeschlagen: "Löschen fehlgeschlagen: {{error}}",
+        deleted: "Regel gelöscht.",
+        failed: "Löschen fehlgeschlagen: {{error}}",
       },
     },
   },
@@ -3939,88 +3829,88 @@ const de = {
   profile: {
     title: "Mein Profil",
     subtitle: "Ihr Name, Ihre Anmeldedaten und was Ihr Konto darf.",
-    bild: {
+    picture: {
       title: "Profilbild",
       desc: "Wird überall neben Ihrem Namen angezeigt.",
-      waehlen: "Bild hochladen",
-      ersetzen: "Bild ersetzen",
-      entfernen: "Entfernen",
-      laedt: "Wird hochgeladen …",
-      hinweis: "Ein quadratisches Bild passt am besten. Höchstens {{size}}.",
-      falscherTyp: "Diese Datei ist kein Bild, das wir verwenden können.",
-      zuGross: "Dieses Bild ist größer als {{size}}.",
-      gespeichert: "Profilbild aktualisiert.",
-      entfernt: "Profilbild entfernt.",
-      fehler: "Das Bild konnte nicht gespeichert werden: {{error}}",
-      entfernenTitel: "Profilbild entfernen?",
-      entfernenText:
+      choose: "Bild hochladen",
+      replace: "Bild ersetzen",
+      remove: "Entfernen",
+      uploading: "Wird hochgeladen …",
+      hint: "Ein quadratisches Bild passt am besten. Höchstens {{size}}.",
+      wrongType: "Diese Datei ist kein Bild, das wir verwenden können.",
+      tooLarge: "Dieses Bild ist größer als {{size}}.",
+      saved: "Profilbild aktualisiert.",
+      removed: "Profilbild entfernt.",
+      error: "Das Bild konnte nicht gespeichert werden: {{error}}",
+      removeTitle: "Profilbild entfernen?",
+      removeText:
         "Stattdessen werden Ihre Initialen angezeigt. Sie können jederzeit ein neues Bild hochladen.",
-      entfernenBestaetigen: "Entfernen",
-      abbrechen: "Abbrechen",
+      removeConfirm: "Entfernen",
+      cancel: "Abbrechen",
     },
-    daten: {
+    details: {
       title: "Name und E-Mail",
       desc: "Wie Sie für Ihre Kolleginnen und Kollegen erscheinen und womit Sie sich anmelden.",
       name: "Name",
       email: "E-Mail",
-      emailHinweis: "Mit der E-Mail-Adresse ändert sich auch die Anmeldung.",
-      emailGesperrt:
+      emailHint: "Mit der E-Mail-Adresse ändert sich auch die Anmeldung.",
+      emailLocked:
         "Ihre E-Mail-Adresse ändert eine Administratorin oder ein Administrator unter Verwaltung › Team.",
-      nameErforderlich: "Bitte geben Sie einen Namen ein.",
-      emailErforderlich: "Bitte geben Sie eine E-Mail-Adresse ein.",
-      emailUngueltig: "Diese E-Mail-Adresse sieht nicht gültig aus.",
-      speichern: "Speichern",
-      speichert: "Wird gespeichert …",
-      gespeichert: "Gespeichert.",
-      fehler: "Speichern fehlgeschlagen: {{error}}",
+      nameRequired: "Bitte geben Sie einen Namen ein.",
+      emailRequired: "Bitte geben Sie eine E-Mail-Adresse ein.",
+      emailInvalid: "Diese E-Mail-Adresse sieht nicht gültig aus.",
+      save: "Speichern",
+      saving: "Wird gespeichert …",
+      saved: "Gespeichert.",
+      error: "Speichern fehlgeschlagen: {{error}}",
     },
-    passwort: {
+    password: {
       title: "Passwort",
       desc: "Wählen Sie ein Passwort, das Sie nirgendwo sonst verwenden.",
-      aktuell: "Aktuelles Passwort",
-      neu: "Neues Passwort",
-      wiederholen: "Neues Passwort wiederholen",
-      anzeigen: "Passwörter anzeigen",
-      verbergen: "Passwörter verbergen",
-      zuKurz: "Das neue Passwort braucht mindestens {{count}} Zeichen.",
-      stimmtNicht: "Die beiden neuen Passwörter sind nicht gleich.",
-      wieBisher: "Das neue Passwort ist dasselbe wie das aktuelle.",
-      aendern: "Passwort ändern",
-      aendert: "Wird geändert …",
-      geaendert: "Passwort geändert.",
-      fehler: "Das Passwort konnte nicht geändert werden: {{error}}",
-      gesperrt: "Ihr Passwort wird außerhalb dieser Anwendung verwaltet.",
+      current: "Aktuelles Passwort",
+      new: "Neues Passwort",
+      repeat: "Neues Passwort wiederholen",
+      show: "Passwörter anzeigen",
+      hide: "Passwörter verbergen",
+      tooShort: "Das neue Passwort braucht mindestens {{count}} Zeichen.",
+      mismatch: "Die beiden neuen Passwörter sind nicht gleich.",
+      sameAsCurrent: "Das neue Passwort ist dasselbe wie das aktuelle.",
+      change: "Passwort ändern",
+      changing: "Wird geändert …",
+      changed: "Passwort geändert.",
+      error: "Das Passwort konnte nicht geändert werden: {{error}}",
+      locked: "Ihr Passwort wird außerhalb dieser Anwendung verwaltet.",
     },
-    zugriff: {
+    access: {
       title: "Rolle und Rechte",
       desc: "Was Ihr Konto darf.",
-      rolle: "Rolle",
-      rechte: "Rechte",
-      nurLesen:
+      role: "Rolle",
+      permissions: "Rechte",
+      readOnly:
         "Diese Liste zeigt, was Sie haben. Für eine Änderung wenden Sie sich an eine Administratorin oder einen Administrator.",
-      nurLesenEigentuemer: "Das Eigentümerkonto hält immer alle Rechte.",
-      nurLesenAdmin: "Diese Liste zeigt, was Sie haben. Ändern können Sie das unter Team & Rollen.",
-      leer: "Für Ihr Konto sind keine Rechte hinterlegt.",
+      readOnlyOwner: "Das Eigentümerkonto hält immer alle Rechte.",
+      readOnlyAdmin: "Diese Liste zeigt, was Sie haben. Ändern können Sie das unter Team & Rollen.",
+      empty: "Für Ihr Konto sind keine Rechte hinterlegt.",
     },
-    fehler: {
-      keinKonto: "Zu dieser Anmeldung wurde kein Konto gefunden.",
-      passwortFalsch: "Das aktuelle Passwort stimmt nicht.",
-      passwortAenderung: "Das Passwort konnte nicht geändert werden.",
+    error: {
+      noAccount: "Zu dieser Anmeldung wurde kein Konto gefunden.",
+      passwordWrong: "Das aktuelle Passwort stimmt nicht.",
+      passwordChangeFailed: "Das Passwort konnte nicht geändert werden.",
     },
   },
   fileNaming: {
     readOnlyHint:
       "Nur Administratoren können diese Einstellungen ändern. Wer das darf, steht unter Verwaltung › Team.",
-    wirkungHinweis:
+    effectHint:
       "Gilt für alle Gesellschaften dieses Hubs und wirkt ab dem Speichern: bereits abgelegte Dateien behalten ihren bisherigen Namen.",
-    zuletztGeaendert: "Zuletzt geändert von {{who}} am {{when}}.",
-    unbekannt: "unbekannt",
-    abweichung: "Diese Einstellungen weichen vom vorgegebenen Namensschema ab.",
-    standardWiederherstellen: "Standard wiederherstellen",
-    trennzeichenUngueltig:
+    lastChangedBy: "Zuletzt geändert von {{who}} am {{when}}.",
+    unknown: "unbekannt",
+    deviation: "Diese Einstellungen weichen vom vorgegebenen Namensschema ab.",
+    restoreDefaults: "Standard wiederherstellen",
+    separatorInvalid:
       'Nicht erlaubt: \\ / : * ? " < > | und leer. Diese Zeichen werden aus dem Dateinamen entfernt, die Bestandteile würden zusammenkleben.',
-    ustKennzeichenUngueltig: 'Nicht erlaubt: \\ / : * ? " < > | und leer.',
-    ustKennzeichenHinweis:
+    vatSuffixInvalid: 'Nicht erlaubt: \\ / : * ? " < > | und leer.',
+    vatSuffixHint:
       "Wird mit einem festen Unterstrich an die Gesellschaft gehängt (z. B. IMKO_UST), unabhängig vom Trennzeichen oben.",
     title: "Dateibenennung",
     subtitle:
@@ -4073,28 +3963,28 @@ const de = {
   properties: {
     // Feldbezogene Prüfung für den Objekt-Dialog, gleiche Form wie gesellschaften.validierung.
     // Kein Format-Hinweis: Objektcodes enthalten hier Bindestriche und Umlaute.
-    validierung: {
+    validation: {
       code: "Bitte einen Code eingeben, z. B. MA-OMS.",
-      codeLaenge: "Der Code darf höchstens 32 Zeichen lang sein.",
-      codeVergeben: "Dieser Code ist bereits vergeben.",
+      codeLength: "Der Code darf höchstens 32 Zeichen lang sein.",
+      codeTaken: "Dieser Code ist bereits vergeben.",
     },
-    zuordnung: {
+    assignment: {
       // Direct property↔company assignment (migration 0083) — a property may belong to more than
       // one company (Eigentümer vermietet, Mieter bucht Aufwand), but at least one is required.
-      keineZuordnung: "Mindestens eine Gesellschaft ist erforderlich.",
-      gesellschaft: "Gesellschaft(en)",
-      gesellschaftWaehlen: "Gesellschaft(en) wählen",
+      required: "Mindestens eine Gesellschaft ist erforderlich.",
+      company: "Gesellschaft(en)",
+      selectCompany: "Gesellschaft(en) wählen",
     },
-    ohne: "Ohne",
+    none: "Ohne",
     // VAT-status enum labels — the value stored in ust_status stays the DB literal.
-    ustStatus: {
-      steuerpflichtig: "Steuerpflichtig",
-      steuerfrei: "Steuerfrei",
-      gemischt: "Gemischt",
+    vatStatus: {
+      taxable: "Steuerpflichtig",
+      exempt: "Steuerfrei",
+      mixed: "Gemischt",
     },
     // Eigenbestand vs. Fremdverwaltung. this clients properties-Tabelle hat die Spalte nicht; die Labels
     // stehen hier, damit ein Umlegen des Capability-Flags keinen Übersetzungslauf nachzieht.
-    eigentum: {
+    ownership: {
       own: "Eigenbestand",
       client: "Fremdverwaltung (Kunde)",
     },
@@ -4105,35 +3995,35 @@ const de = {
         title: "Objekte filtern",
         reset: "Filter zurücksetzen",
         status: "Status",
-        statusAlle: "Alle",
-        statusAktiv: "Aktiv",
-        statusArchiviert: "Archiviert",
-        gesellschaftAlle: "Alle Gesellschaften",
-        eigentumAlle: "Alle Eigentumsarten",
-        adresse: "Adresse",
+        statusAll: "Alle",
+        statusActive: "Aktiv",
+        statusArchived: "Archiviert",
+        allCompanies: "Alle Gesellschaften",
+        allOwnership: "Alle Eigentumsarten",
+        address: "Adresse",
         ohneAdresse_one: "{{count}} ohne Adresse",
         ohneAdresse_other: "{{count}} ohne Adresse",
-        pruefung: "Prüfung",
+        review: "Prüfung",
       },
       title: "Objekte",
       subtitle: "Objektstamm: Immobilien/Projekte, denen Rechnungen zugeordnet werden.",
       search: "Objekt suchen …",
       col: {
-        objekt: "Objekt (Code / Adresse)",
-        gesellschaft: "Gesellschaft",
-        verbucht: "Verbucht",
+        property: "Objekt (Code / Adresse)",
+        company: "Gesellschaft",
+        booked: "Verbucht",
         createdAt: "Erstellt",
         updatedAt: "Aktualisiert",
       },
-      belegeCount_one: "{{count}} Beleg",
-      belegeCount_other: "{{count}} Belege",
+      documentsCount_one: "{{count}} Beleg",
+      documentsCount_other: "{{count}} Belege",
       empty: "Keine Objekte im Stammdaten.",
-      archiviert: "Archiviert",
-      pruefenBadge: "Prüfen",
-      pruefenTitle: "Stammdaten seit über 180 Tagen nicht bestätigt.",
-      nurPruefen_one: "Nur zu prüfen ({{count}})",
-      nurPruefen_other: "Nur zu prüfen ({{count}})",
-      neu: {
+      archived: "Archiviert",
+      reviewBadge: "Prüfen",
+      reviewTitle: "Stammdaten seit über 180 Tagen nicht bestätigt.",
+      dueForReview_one: "Nur zu prüfen ({{count}})",
+      dueForReview_other: "Nur zu prüfen ({{count}})",
+      new: {
         button: "Neu",
         title: "Neues Objekt",
         desc: "Objektstammdaten anlegen. Der Code muss eindeutig sein.",
@@ -4141,132 +4031,132 @@ const de = {
         codePlaceholder: "z. B. WIBO7",
         nameLabel: "Name",
         namePlaceholder: "Bezeichnung",
-        adresseLabel: "Adresse",
-        adressePlaceholder: "Straße, Ort",
-        gesellschaftLabel: "Gesellschaft",
-        ustStatusLabel: "USt-Status",
+        addressLabel: "Adresse",
+        addressPlaceholder: "Straße, Ort",
+        companyLabel: "Gesellschaft",
+        vatStatusLabel: "USt-Status",
         cancel: "Abbrechen",
-        anlegen: "Anlegen",
-        anlege: "Lege an …",
+        create: "Anlegen",
+        creating: "Lege an …",
       },
       toast: {
-        codePflicht: "Code ist erforderlich.",
-        angelegt: "Objekt angelegt.",
-        angelegtOhneGesellschaft:
+        codeRequired: "Code ist erforderlich.",
+        created: "Objekt angelegt.",
+        createdWithoutCompany:
           "Objekt {{code}} angelegt, aber die Gesellschaft(en) konnten nicht gespeichert werden: {{error}}. Bitte auf der Objektseite ergänzen.",
-        anlegenFehlgeschlagen: "Anlegen fehlgeschlagen: {{error}}",
+        createFailed: "Anlegen fehlgeschlagen: {{error}}",
       },
     },
     detail: {
       back: "Objekte",
       editTitle: "Objekt bearbeiten",
       editDesc: "Objektstammdaten bearbeiten.",
-      notInStammBefore: "Dieses Objekt (",
-      notInStammAfter:
+      notInMasterDataBefore: "Dieses Objekt (",
+      notInMasterDataAfter:
         ") ist nicht im Objektstamm hinterlegt, der Code stammt aus der KI-Extraktion. Lege es unter „Objekte“ an, um es Rechnungen fest zuordnen zu können.",
       section: {
-        stammdaten: "Stammdaten",
-        verbucht: "Auf dieses Objekt verbucht",
-        gesellschaften: "Gesellschaften",
+        masterData: "Stammdaten",
+        booked: "Auf dieses Objekt verbucht",
+        companies: "Gesellschaften",
       },
       field: {
         code: "Code",
         name: "Name",
-        adresse: "Adresse",
-        gesellschaft: "Gesellschaft",
-        ustStatus: "USt-Status",
-        eigentum: "Eigentum",
+        address: "Adresse",
+        company: "Gesellschaft",
+        vatStatus: "USt-Status",
+        ownership: "Eigentum",
         driveFolder: "Ordner-Link",
-        erstellt: "Erstellt",
-        aktualisiert: "Aktualisiert",
+        createdAt: "Erstellt",
+        updatedAt: "Aktualisiert",
       },
-      belegeCount_one: "{{count}} Beleg",
-      belegeCount_other: "{{count}} Belege",
-      noBelege: "Für dieses Objekt sind keine Belege verbucht.",
+      documentsCount_one: "{{count}} Beleg",
+      documentsCount_other: "{{count}} Belege",
+      noDocuments: "Für dieses Objekt sind keine Belege verbucht.",
       // Dieselbe Liste, nur vom Zeitraum-Filter eingegrenzt: nichts hier heißt nicht nichts.
-      noBelegeZeitraum: "In diesem Zeitraum sind keine Belege verbucht.",
+      noDocumentsInPeriod: "In diesem Zeitraum sind keine Belege verbucht.",
       // Direkte Zuordnung Objekt -> Gesellschaft, auf dieser Seite bearbeitbar.
-      gesellschaftenHint:
+      companiesHint:
         "Ein Objekt kann zu mehreren Gesellschaften gehören, z. B. wenn Eigentümer und Mieter denselben Aufwand jeweils in ihrer eigenen Gesellschaft buchen.",
-      gesellschaftenEmpty: "Noch keine Gesellschaft zugeordnet.",
+      companiesEmpty: "Noch keine Gesellschaft zugeordnet.",
       // Per assignment, because the same Objekt has a different number in each company.
-      kostenstelle: "Kostenstelle {{nr}}",
-      kostenstelleFehlt: "Kostenstelle fehlt",
-      kostenstelleLabel: "Kostenstellen-Nummer",
-      kostenstellePlatzhalter: "z. B. 6",
-      kostenstelleHinweis:
+      costCentre: "Kostenstelle {{nr}}",
+      costCentreMissing: "Kostenstelle fehlt",
+      costCentreLabel: "Kostenstellen-Nummer",
+      costCentrePlaceholder: "z. B. 6",
+      costCentreHint:
         "Die Nummer, unter der der Steuerberater dieses Objekt in dieser Gesellschaft bucht. Leer lassen, wenn sie noch nicht bekannt ist.",
-      kostenstelleNurAdmin: "Kostenstellen-Nummern können nur Administratoren eintragen.",
-      kostenstelleUngueltig: "Bitte eine positive ganze Zahl eingeben.",
-      zuordnungHinzufuegen: "Gesellschaft hinzufügen",
-      zuordnungBearbeiten: "Zuordnung bearbeiten",
-      zuordnungDialogNeu: "Gesellschaft hinzufügen",
-      zuordnungDialogBearbeiten: "Zuordnung bearbeiten",
-      zuordnungDialogBeschreibung:
+      costCentreAdminOnly: "Kostenstellen-Nummern können nur Administratoren eintragen.",
+      costCentreInvalid: "Bitte eine positive ganze Zahl eingeben.",
+      assignmentAdd: "Gesellschaft hinzufügen",
+      assignmentEdit: "Zuordnung bearbeiten",
+      assignmentDialogNew: "Gesellschaft hinzufügen",
+      assignmentDialogEdit: "Zuordnung bearbeiten",
+      assignmentDialogDesc:
         "Wähle die Gesellschaft und die Kostenstellen-Nummer, unter der dieses Objekt dort gebucht wird.",
-      zuordnungFirmaFehlt: "Bitte eine Gesellschaft auswählen.",
-      zuordnungObjektFehlt: "Bitte ein Objekt auswählen.",
-      zuordnungObjekt: "Objekt",
-      zuordnungObjektWaehlen: "Objekt auswählen",
-      zuordnungDialogNeuObjekt: "Objekt hinzufügen",
-      zuordnungDialogBeschreibungObjekt:
+      assignmentCompanyMissing: "Bitte eine Gesellschaft auswählen.",
+      assignmentPropertyMissing: "Bitte ein Objekt auswählen.",
+      assignmentProperty: "Objekt",
+      assignmentSelectProperty: "Objekt auswählen",
+      assignmentDialogNewProperty: "Objekt hinzufügen",
+      assignmentDialogDescProperty:
         "Wähle das Objekt und die Kostenstellen-Nummer, unter der es in dieser Gesellschaft gebucht wird.",
-      zuordnungEntfernen: "Gesellschaft entfernen",
-      zuordnungEntfernenTitel: "Gesellschaft vom Objekt entfernen?",
-      zuordnungEntfernenBeschreibung:
+      assignmentRemove: "Gesellschaft entfernen",
+      assignmentRemoveTitle: "Gesellschaft vom Objekt entfernen?",
+      assignmentRemoveDesc:
         "Das Objekt gehört danach nicht mehr zu {{company}}. Bereits gebuchte Belege bleiben unverändert.",
-      zuordnungEntfernenBestaetigen: "Entfernen",
-      zuordnungLetzte:
+      assignmentRemoveConfirm: "Entfernen",
+      assignmentLast:
         "Ein Objekt braucht mindestens eine Gesellschaft. Füge zuerst eine andere hinzu.",
       // Für die Capabilities, die this client nicht einschaltet (Archiv, Prüfung, Ordner-Link).
       reviewBanner: "Zuletzt geprüft am {{datum}}: Sind diese Angaben noch korrekt?",
       archivedNotice: "Dieses Objekt ist archiviert ({{reason}}), nicht mehr im aktiven Bestand.",
-      archivedNoticeOhneGrund: "kein Grund angegeben",
+      archivedNoticeNoReason: "kein Grund angegeben",
       archiveDialog: {
         title: "Objekt archivieren?",
         desc: "Das Objekt verschwindet nicht, es gilt nur nicht mehr als aktiv (z. B. nach einem Verkauf). Bestehende Belege bleiben unverändert zugeordnet.",
-        grundPlaceholder: "Grund (optional), z. B. Verkauf",
-        mitBelegen_one: "{{count}} Beleg bleibt zugeordnet.",
-        mitBelegen_other: "{{count}} Belege bleiben zugeordnet.",
-        bestaetigen: "Archivieren",
+        reasonPlaceholder: "Grund (optional), z. B. Verkauf",
+        withDocuments_one: "{{count}} Beleg bleibt zugeordnet.",
+        withDocuments_other: "{{count}} Belege bleiben zugeordnet.",
+        confirm: "Archivieren",
       },
       col: {
-        steller: "Steller / Nr.",
-        ges: "Ges.",
-        datum: "Datum",
-        ust: "USt",
-        betrag: "Betrag",
+        supplier: "Steller / Nr.",
+        company: "Ges.",
+        date: "Datum",
+        vat: "USt",
+        amount: "Betrag",
         status: "Status",
       },
-      ohneNr: "ohne Nr.",
+      noNumber: "ohne Nr.",
       action: {
-        mehr: "Weitere Aktionen",
-        archivieren: "Archivieren",
-        wiederherstellen: "Wiederherstellen",
-        nochKorrekt: "Noch korrekt",
-        ordnerOeffnen: "Ordner öffnen",
-        bearbeiten: "Bearbeiten",
-        abbrechen: "Abbrechen",
-        speichern: "Speichern",
-        speichere: "Speichere …",
-        jetztAnlegen: "Jetzt anlegen",
+        more: "Weitere Aktionen",
+        archive: "Archivieren",
+        restore: "Wiederherstellen",
+        stillCorrect: "Noch korrekt",
+        openFolder: "Ordner öffnen",
+        edit: "Bearbeiten",
+        cancel: "Abbrechen",
+        save: "Speichern",
+        saving: "Speichere …",
+        createNow: "Jetzt anlegen",
       },
       // Beleg-Gesellschaft passt nicht zur hinterlegten Zuordnung des Objekts.
-      gesellschaftAbweichung_one:
+      companyMismatch_one:
         "{{count}} Beleg ist auf eine Gesellschaft gebucht, der dieses Objekt nicht zugeordnet ist (zugeordnet: {{companies}}).",
-      gesellschaftAbweichung_other:
+      companyMismatch_other:
         "{{count}} Belege sind auf Gesellschaften gebucht, denen dieses Objekt nicht zugeordnet ist (zugeordnet: {{companies}}).",
-      gesellschaftAbweichungZeile: "Gesellschaft weicht von der Zuordnung dieses Objekts ab.",
+      companyMismatchRow: "Gesellschaft weicht von der Zuordnung dieses Objekts ab.",
       toast: {
-        keineAenderungen: "Keine Änderungen.",
-        gespeichert: "Gespeichert.",
-        zuordnungGeaendert: "Gesellschaft(en) geändert.",
-        geprueft: "Als geprüft markiert.",
-        archiviert: "Objekt archiviert.",
-        wiederhergestellt: "Objekt wiederhergestellt.",
-        teilweiseGespeichert:
+        noChanges: "Keine Änderungen.",
+        saved: "Gespeichert.",
+        assignmentChanged: "Gesellschaft(en) geändert.",
+        reviewed: "Als geprüft markiert.",
+        archived: "Objekt archiviert.",
+        restored: "Objekt wiederhergestellt.",
+        partiallySaved:
           "Stammdaten gespeichert, aber die Gesellschaft(en) konnten nicht aktualisiert werden: {{error}}",
-        speichernFehlgeschlagen: "Speichern fehlgeschlagen: {{error}}",
+        saveFailed: "Speichern fehlgeschlagen: {{error}}",
       },
     },
   },
@@ -4275,48 +4165,48 @@ const de = {
   // Badge label keys are keyed by the DB enum value and mirror the META maps in format.ts.
   bankSettings: {
     title: "Bank-Einstellungen",
-    nurAdmin: "Ändern darf diesen Wert nur ein Administrator.",
-    ungespeichert: "Nicht gespeichert",
+    adminOnly: "Ändern darf diesen Wert nur ein Administrator.",
+    unsaved: "Nicht gespeichert",
   },
   bank: {
     list: {
       title: "Banktransaktionen",
       subtitle: "Kontoumsätze aus BANKSapi, zum Abgleich mit Eingangsrechnungen.",
-      bankkonten: "Bankkonten",
+      bankAccounts: "Bankkonten",
       sync: "Jetzt synchronisieren",
       syncing: "Synchronisiere …",
       syncDisabled:
         "Noch deaktiviert: BANKSapi ist noch nicht live, es gibt aktuell nichts Echtes zu synchronisieren.",
       search: "Suche (Verwendungszweck, Gegenkonto, Betrag) …",
-      beleg: {
-        vorhanden: "Beleg",
-        titel: "Beleg vorhanden: {{source}}",
+      document: {
+        available: "Beleg",
+        title: "Beleg vorhanden: {{source}}",
       },
-      bezahltVonKurz: "Bezahlt von {{who}}",
+      paidByShort: "Bezahlt von {{who}}",
       filter: {
-        beleg: "Beleg",
-        alleBelege: "Alle",
-        mitBeleg: "Mit Beleg",
-        ohneBeleg: "Ohne Beleg",
-        konto: "Konto",
-        alleKonten: "Alle Konten",
-        typ: "Umsatzart",
-        alleTypen: "Alle Umsatzarten",
+        document: "Beleg",
+        allDocuments: "Alle",
+        withDocument: "Mit Beleg",
+        withoutDocument: "Ohne Beleg",
+        account: "Konto",
+        allAccounts: "Alle Konten",
+        type: "Umsatzart",
+        allTypes: "Alle Umsatzarten",
         richtung: "Richtung",
-        alleRichtungen: "Alle Richtungen",
+        allDirections: "Alle Richtungen",
         abgleich: "Abgleich",
-        alle: "Alle",
-        quelle: "Quelle",
-        alleQuellen: "Alle Quellen",
+        all: "Alle",
+        source: "Quelle",
+        allSources: "Alle Quellen",
         button: "Filter",
         title: "Filter",
         reset: "Filter zurücksetzen",
       },
-      zeileOeffnen: "Transaktion öffnen: {{contraAccount}}, {{amount}}",
-      keineTreffer: "Keine Treffer",
-      keineTrefferHint:
+      openRow: "Transaktion öffnen: {{contraAccount}}, {{amount}}",
+      noMatches: "Keine Treffer",
+      noMatchesHint:
         "Keine Banktransaktion passt zu Suche und Filtern. Suchbegriff ändern oder Filter zurücksetzen.",
-      filterZuruecksetzen: "Filter zurücksetzen",
+      resetFilters: "Filter zurücksetzen",
       emptyTitle: "Keine Banktransaktionen",
       emptyHint:
         "Noch keine Umsätze importiert. Verbinde ein Konto unter „Bankverbindungen“ und starte einen Sync.",
@@ -4324,12 +4214,12 @@ const de = {
       count_other: "{{count}} Transaktionen",
       updating: "aktualisiere …",
       col: {
-        datum: "Datum",
-        gegenkonto: "Gegenkonto",
-        verwendungszweck: "Verwendungszweck",
-        konto: "Konto",
-        betrag: "Betrag",
-        typ: "Umsatzart",
+        date: "Datum",
+        counterparty: "Gegenkonto",
+        paymentReference: "Verwendungszweck",
+        account: "Konto",
+        amount: "Betrag",
+        type: "Umsatzart",
         abgleich: "Abgleich",
       },
       toast: {
@@ -4358,96 +4248,96 @@ const de = {
       toOverview: "Zur Übersicht",
       section: {
         belege: "Beleg zur Zahlung",
-        transaktion: "Transaktion",
-        passendeBelege: "Passende Belege",
-        passendeAusgangsrechnungen: "Passende Ausgangsrechnungen",
+        transaction: "Transaktion",
+        matchingInvoices: "Passende Belege",
+        matchingOutgoingInvoices: "Passende Ausgangsrechnungen",
       },
       // ---- invoice detail ----
       // Closing the remainder of a match that is already made. A write-off, so the reason is
       // required and ends up in the history.
-      restschliessen: {
-        aktion: "Rest abschließen",
-        aktionZahlung: "Rest als verbraucht markieren",
-        aktionRechnung: "Restbetrag abschreiben",
-        titelZahlung: "Zahlung als vollständig verwendet markieren?",
-        beschreibungZahlung:
+      closeRemainder: {
+        action: "Rest abschließen",
+        actionPayment: "Rest als verbraucht markieren",
+        actionInvoice: "Restbetrag abschreiben",
+        titlePayment: "Zahlung als vollständig verwendet markieren?",
+        descPayment:
           "Der Restbetrag gilt danach als verbraucht und die Zahlung verschwindet aus den offenen Posten. Rückgängig zu machen.",
-        titelRechnung: "Rechnung als vollständig bezahlt markieren?",
-        beschreibungRechnung:
+        titleInvoice: "Rechnung als vollständig bezahlt markieren?",
+        descInvoice:
           "Der Restbetrag gilt danach als abgeschrieben und die Rechnung verschwindet aus den offenen Posten.",
-        betrag: "Es werden {{amount}} abgeschrieben.",
-        grund: "Grund",
-        grundPlaceholder: "z. B. Skonto, Bankgebühr, Rundungsdifferenz",
-        abbrechen: "Abbrechen",
-        bestaetigen: "Rest abschließen",
-        laeuft: "Wird gespeichert …",
-        erledigt: "Restbetrag abgeschlossen.",
-        offenZahlung: "Von dieser Zahlung sind {{amount}} noch keiner Rechnung zugeordnet.",
-        offenRechnung: "Von dieser Rechnung sind {{amount}} noch durch keine Zahlung gedeckt.",
-        istGeschlossen: "Restbetrag als verbraucht markiert.",
-        istGeschlossenGrund: "Restbetrag als verbraucht markiert. Grund: {{reason}}",
-        istAbgeschrieben: "Restbetrag abgeschrieben. Der Grund steht im Verlauf.",
-        wiederOeffnen: "Wieder öffnen",
-        wiederGeoeffnet: "Restbetrag wieder offen.",
-        keineBerechtigung: "Dafür fehlt Ihnen die Berechtigung für Zahlungen.",
+        amount: "Es werden {{amount}} abgeschrieben.",
+        reason: "Grund",
+        reasonPlaceholder: "z. B. Skonto, Bankgebühr, Rundungsdifferenz",
+        cancel: "Abbrechen",
+        confirm: "Rest abschließen",
+        saving: "Wird gespeichert …",
+        done: "Restbetrag abgeschlossen.",
+        openPayment: "Von dieser Zahlung sind {{amount}} noch keiner Rechnung zugeordnet.",
+        openInvoice: "Von dieser Rechnung sind {{amount}} noch durch keine Zahlung gedeckt.",
+        isClosed: "Restbetrag als verbraucht markiert.",
+        isClosedReason: "Restbetrag als verbraucht markiert. Grund: {{reason}}",
+        isWrittenOff: "Restbetrag abgeschrieben. Der Grund steht im Verlauf.",
+        reopen: "Wieder öffnen",
+        reopened: "Restbetrag wieder offen.",
+        noPermission: "Dafür fehlt Ihnen die Berechtigung für Zahlungen.",
       },
-      belegeHint:
+      receiptHint:
         "Der Beleg, der zu dieser Buchung selbst gehört. Bei Kartenzahlungen fotografiert der Mitarbeiter ihn in Pleo; eine Rechnung gibt es dazu nicht.",
       belege: {
-        nachfragen: "Jemanden benachrichtigen",
-        hochladen: "Rechnung hochladen",
-        uploadLaeuft: "Rechnung hochgeladen",
-        uploadLaeuftHint:
+        notify: "Jemanden benachrichtigen",
+        upload: "Rechnung hochladen",
+        uploading: "Rechnung hochgeladen",
+        uploadingHint:
           "Sie ist in der Warteschlange und wird in Kürze automatisch ins System übernommen.",
-        uploadGelesen: "Rechnung übernommen",
-        uploadGelesenHint: "Sie wird dieser Zahlung gerade zugeordnet.",
-        uploadOeffnen: "Öffnen",
-        neuerTab: "In neuem Tab öffnen",
-        vorhanden: "Beleg hinterlegt",
-        anzahl_one: "{{count}} Datei",
-        anzahl_other: "{{count}} Dateien",
-        vergroessern: "Vergrößern",
-        vergroessernAria: "Beleg vergrößert anzeigen",
-        nichtDarstellbar: "Dieser Dateityp ({{type}}) kann hier nicht angezeigt werden.",
-        keine: "Kein Beleg zu dieser Transaktion hinterlegt.",
-        fehler: "Die Belege konnten nicht geladen werden.",
-        datei: "Datei",
-        herunterladen: "Herunterladen",
-        quelle: "Aus {{source}} übernommen",
-        zuordnen: "Vorhandene Rechnung zuordnen",
+        uploadRead: "Rechnung übernommen",
+        uploadReadHint: "Sie wird dieser Zahlung gerade zugeordnet.",
+        uploadOpen: "Öffnen",
+        newTab: "In neuem Tab öffnen",
+        available: "Beleg hinterlegt",
+        count_one: "{{count}} Datei",
+        count_other: "{{count}} Dateien",
+        enlarge: "Vergrößern",
+        enlargeAria: "Beleg vergrößert anzeigen",
+        cannotDisplay: "Dieser Dateityp ({{type}}) kann hier nicht angezeigt werden.",
+        none: "Kein Beleg zu dieser Transaktion hinterlegt.",
+        error: "Die Belege konnten nicht geladen werden.",
+        file: "Datei",
+        download: "Herunterladen",
+        source: "Aus {{source}} übernommen",
+        link: "Vorhandene Rechnung zuordnen",
       },
-      passendeBelegeHint:
+      matchingInvoicesHint:
         "Welche Rechnung diese Zahlung begleicht. Zuordnen verknüpft nur die Datensätze, es wird keine Zahlung ausgelöst.",
       // Gutschrift (migration 0045): confirming a match also updates the invoice's own paid
       // status via a DB trigger (migration 0085's sync_uploaded_outgoing_invoice_status_from_matches).
-      passendeAusgangsrechnungenHint:
+      matchingOutgoingInvoicesHint:
         "Welche Ausgangsrechnung durch diese Zahlung beglichen wird. Zuordnen aktualisiert den Zahlungsstatus der Rechnung automatisch.",
-      keineGesellschaft: "Keine Gesellschaft",
-      kategorieOhne: "Ohne Kategorie",
-      kategorieRegel: "aus Regel",
-      kategorieGutschrift: "Wird über die Ausgangsrechnung gebucht.",
-      kategorieGespeichert: "Kategorie gespeichert.",
-      kategorieFehlgeschlagen: "Kategorie konnte nicht gespeichert werden: {{error}}",
+      noCompany: "Keine Gesellschaft",
+      categoryNone: "Ohne Kategorie",
+      categoryFromRule: "aus Regel",
+      categoryFromCreditNote: "Wird über die Ausgangsrechnung gebucht.",
+      categorySaved: "Kategorie gespeichert.",
+      categoryFailed: "Kategorie konnte nicht gespeichert werden: {{error}}",
       row: {
-        buchungsdatum: "Buchungsdatum",
-        wertstellung: "Wertstellung",
-        buchungstext: "Buchungstext",
-        konto: "Konto",
-        kontoIban: "Konto-IBAN",
-        gesellschaft: "Gesellschaft",
-        kategorie: "Kategorie (BWA)",
-        gegenkonto: "Gegenpartei",
+        bookingDate: "Buchungsdatum",
+        valueDate: "Wertstellung",
+        bookingText: "Buchungstext",
+        account: "Konto",
+        accountIban: "Konto-IBAN",
+        company: "Gesellschaft",
+        category: "Kategorie (BWA)",
+        counterparty: "Gegenpartei",
         iban: "IBAN",
         bic: "BIC",
-        bezahltVon: "Bezahlt von",
-        verwendungszweck: "Verwendungszweck",
+        paidBy: "Bezahlt von",
+        paymentReference: "Verwendungszweck",
       },
     },
     richtung: {
       ausgehend: "Ausgehend",
       eingehend: "Eingehend",
     },
-    quelle: {
+    source: {
       banksapi: "Bank",
       pleo: "Pleo",
       manual: "Manuell",
@@ -4465,10 +4355,10 @@ const de = {
       unbekannt: "Nicht klassifiziert",
     },
     matchStatus: {
-      kandidat: "Vorschlag",
+      candidate: "Vorschlag",
       auto: "Auto-Abgleich",
-      bestaetigt: "Bestätigt",
-      abgelehnt: "Abgelehnt",
+      confirmed: "Bestätigt",
+      rejected: "Abgelehnt",
     },
     matchScore: {
       confidence: {
@@ -4476,7 +4366,7 @@ const de = {
         mittel: "Wahrscheinlich der richtige Treffer",
         niedrig: "Möglicherweise der richtige Treffer",
       },
-      warum: "Warum vorgeschlagen:",
+      why: "Warum vorgeschlagen:",
       signal: {
         amountTolerated: "Betrag (Abweichung {{difference}})",
         amountToleratedPlain: "Betrag (innerhalb der erlaubten Abweichung)",
@@ -4492,16 +4382,16 @@ const de = {
       days_other: "{{count}} Tage",
     },
     txnMatching: {
-      vorschlag: "Vorschlag prüfen",
-      offen: "Offen",
-      zugeordnet: "Zugeordnet",
-      ignoriert: "Ignoriert",
+      suggestion: "Vorschlag prüfen",
+      open: "Offen",
+      matched: "Zugeordnet",
+      ignored: "Ignoriert",
     },
     abgleich: {
-      offen: "Nicht abgeglichen",
-      vorgeschlagen: "Vorschlag offen",
-      teilweise: "Teilweise",
-      abgeglichen: "Abgeglichen",
+      open: "Nicht abgeglichen",
+      suggested: "Vorschlag offen",
+      partial: "Teilweise",
+      reconciled: "Abgeglichen",
     },
     syncStatus: {
       active: "Aktiv",
@@ -4510,38 +4400,38 @@ const de = {
       expired: "Abgelaufen",
     },
     matches: {
-      keineZahlBerechtigung:
+      noPaymentPermission:
         "Ein bestätigter Abgleich markiert die Rechnung als bezahlt. Dafür fehlt Ihnen die Berechtigung — bitte wenden Sie sich an jemanden, der Zahlungen buchen darf.",
       empty: "Kein passender Beleg gefunden.",
       // Invoice-seitiges Gegenstück zu "empty" oben: InvoiceMatches sucht Banktransaktionen statt
       // Belegen, braucht also einen eigenen Leertext statt "Kein passender Beleg ...".
       emptyTransactions: "Keine passende Zahlung gefunden.",
-      beleg: "Beleg",
-      belegEntfernt: "Beleg entfernt",
-      transaktion: "Transaktion",
-      transaktionEntfernt: "Transaktion entfernt",
+      document: "Beleg",
+      documentRemoved: "Beleg entfernt",
+      transaction: "Transaktion",
+      transactionRemoved: "Transaktion entfernt",
       nr: "Nr. {{nr}}",
-      ohneNr: "ohne Nr.",
+      noNumber: "ohne Nr.",
       // Sammelzahlung: wie viel dieser Transaktion schon durch Belege erklärt ist (Migration 0024).
-      zugeordnetVon: "{{matched}} von {{total}} zugeordnet",
-      restOffen: "{{rest}} ohne Beleg",
-      davon: "davon {{amount}}",
-      gruppeAbgeglichen: "Bereits abgeglichen",
-      gruppeVorschlaege: "Vorschläge zur Prüfung",
-      gruppeAbgelehnt: "Als kein Treffer markiert",
-      ablehnen: "Ablehnen",
-      zuordnen: "Zuordnen",
-      bestaetigenZahlung: "Bestätigen, diese Zahlung abgleichen",
-      bestaetigenBeleg: "Bestätigen, diesen Beleg abgleichen",
-      keinTreffer: "Kein Treffer",
-      trennen: "Verknüpfung entfernen",
-      trennenDialog: {
-        grund: "Grund",
+      matchedOf: "{{matched}} von {{total}} zugeordnet",
+      restOpen: "{{rest}} ohne Beleg",
+      ofWhich: "davon {{amount}}",
+      groupReconciled: "Bereits abgeglichen",
+      groupSuggestions: "Vorschläge zur Prüfung",
+      groupRejected: "Als kein Treffer markiert",
+      reject: "Ablehnen",
+      link: "Zuordnen",
+      confirmPayment: "Bestätigen, diese Zahlung abgleichen",
+      confirmInvoice: "Bestätigen, diesen Beleg abgleichen",
+      noMatch: "Kein Treffer",
+      unlink: "Verknüpfung entfernen",
+      unlinkDialog: {
+        reason: "Grund",
         title: "Zuordnung trennen?",
         desc: "Die Verknüpfung wird aufgehoben: Beleg und Transaktion gelten wieder als offen, und der Vorschlag bleibt bestehen und kann jederzeit erneut zugeordnet werden.",
-        grundPlaceholder: "Warum stimmt die Zuordnung nicht?",
-        abbrechen: "Abbrechen",
-        bestaetigen: "Trennen",
+        reasonPlaceholder: "Warum stimmt die Zuordnung nicht?",
+        cancel: "Abbrechen",
+        confirm: "Trennen",
       },
       reason: {
         amount: "Betrag",
@@ -4551,10 +4441,10 @@ const de = {
         manual: "Manuell",
       },
       toast: {
-        abgelehnt: "Als kein Treffer markiert. Der Vorschlag bleibt in der Liste.",
-        getrennt: "Verknüpfung entfernt. Rechnung und Zahlung sind wieder offen.",
-        bestaetigt: "Abgeglichen. Rechnung und Zahlung sind jetzt verknüpft.",
-        fehlgeschlagen: "Fehlgeschlagen: {{error}}",
+        rejected: "Als kein Treffer markiert. Der Vorschlag bleibt in der Liste.",
+        unlinked: "Verknüpfung entfernt. Rechnung und Zahlung sind wieder offen.",
+        confirmed: "Abgeglichen. Rechnung und Zahlung sind jetzt verknüpft.",
+        failed: "Fehlgeschlagen: {{error}}",
       },
     },
     manualImport: {
@@ -4649,10 +4539,10 @@ const de = {
         duplicateWarning_one: "{{count}} Zeile sieht wie ein mögliches Duplikat aus. Bitte prüfen.",
         duplicateWarning_other: "{{count}} Zeilen sehen wie mögliche Duplikate aus. Bitte prüfen.",
         col: {
-          datum: "Datum",
-          betrag: "Betrag",
-          verwendungszweck: "Verwendungszweck",
-          gegenkonto: "Gegenkonto",
+          date: "Datum",
+          amount: "Betrag",
+          paymentReference: "Verwendungszweck",
+          counterparty: "Gegenkonto",
         },
         back: "Zurück",
         import: "Importieren",
@@ -4701,143 +4591,143 @@ const de = {
     },
     title: "Bankabgleich",
     subtitle: "Rechnungen mit Bankzahlungen abgleichen.",
-    subtitleFehlend: "Banktransaktionen den passenden Rechnungen zuordnen.",
-    ohneGesellschaft: "Ohne Gesellschaft",
-    filterZuruecksetzen: "Filter zurücksetzen",
+    subtitleMissing: "Banktransaktionen den passenden Rechnungen zuordnen.",
+    noCompany: "Ohne Gesellschaft",
+    filterReset: "Filter zurücksetzen",
     // Same grouped-filters pattern as eingangsrechnungen (Popover + count badge + removable
     // chips), reused here even though there are only two fields, for a consistent filter UI
     // across list pages.
     filterButton: "Filter",
-    filterChipEntfernen: "Filter entfernen",
-    filterSchliessen: "Filter schließen",
+    filterChipRemove: "Filter entfernen",
+    filterClose: "Filter schließen",
     col: {
       // Decided with the user to match the mockup exactly: this column shows the customer name on
       // an outgoing-invoice row too, not just the supplier, but the label stays "Lieferant".
-      gegenpartei: "Lieferant",
+      counterparty: "Lieferant",
     },
     emptyTitle: "Keine offenen Posten",
     emptyHint:
       "Alle Rechnungen sind vollständig per Bankabgleich gedeckt, oder es sind noch keine vorhanden.",
     tab: {
-      belege: "Rechnungen zuordnen",
-      fehlend: "Zahlungen zuordnen",
+      invoices: "Rechnungen zuordnen",
+      missing: "Zahlungen zuordnen",
     },
     // Belege, die diese Liste nie von selbst verlassen können: ohne Bruttobetrag gibt es nichts,
     // wogegen eine Zahlung gemessen werden könnte; eine Gutschrift ist Geld zurück und wird nicht
     // per Bankabgang gedeckt; privat bezahlt heißt, es wird nie einen Firmenkonto-Umsatz geben.
     // Sie werden gezählt und auf Wunsch angezeigt, nicht stillschweigend entfernt.
     blocker: {
-      anzeigen_one: "{{count}} nicht abgleichbaren Beleg anzeigen",
-      anzeigen_other: "{{count}} nicht abgleichbare Belege anzeigen",
+      show_one: "{{count}} nicht abgleichbaren Beleg anzeigen",
+      show_other: "{{count}} nicht abgleichbare Belege anzeigen",
       emptyTitle: "Keine nicht abgleichbaren Belege",
       emptyHint: "Zu jedem Beleg gibt es einen Bruttobetrag, gegen den eine Zahlung laufen kann.",
       label: {
-        kein_betrag: "Kein Betrag",
-        gutschrift: "Gutschrift",
-        privat_bezahlt: "Privat bezahlt",
+        no_amount: "Kein Betrag",
+        credit_note: "Gutschrift",
+        paid_privately: "Privat bezahlt",
       },
       hint: {
-        kein_betrag:
+        no_amount:
           "Ohne Bruttobetrag lässt sich keine Zahlung zuordnen. Betrag im Beleg nachtragen, dann erscheint er wieder unter den offenen Posten.",
-        gutschrift:
+        credit_note:
           "Negativer Betrag: Geld kommt zurück. Eine Gutschrift wird nicht durch einen Bankabgang gedeckt.",
-        privat_bezahlt:
+        paid_privately:
           "Privat bezahlt. Dazu wird es nie einen Umsatz auf einem Firmenkonto geben.",
       },
     },
-    belege: {
+    invoices: {
       filter: {
         label: "Rechnungstyp",
-        dringlichkeit: "Zahlungsfrist",
-        alle: "Alle Rechnungstypen",
+        urgency: "Zahlungsfrist",
+        all: "Alle Rechnungstypen",
         incoming: "Eingangsrechnungen",
         outgoing: "Ausgangsrechnungen",
       },
       // Shown short ("Rechnung oder Lieferant suchen"), searches wide: gegenpartei, invoice
       // number, company, property, cost category and amount (see suchtextFuer in index.tsx) —
       // the placeholder names the common case, the search itself stays as capable as before.
-      gegenparteiPlaceholder: "Rechnung oder Lieferant suchen",
+      counterpartyPlaceholder: "Rechnung oder Lieferant suchen",
       // Teilzahlung: die Rechnung bleibt offen, bis die Summe stimmt.
-      restOffen: "Teilweise bezahlt: {{paid}} bezahlt, {{rest}} noch zu zahlen",
+      remainingOpen: "Teilweise bezahlt: {{paid}} bezahlt, {{rest}} noch zu zahlen",
       emptyTitle: "Keine offenen Belege",
       emptyHint:
         "Alle Belege sind vollständig per Bankabgleich gedeckt, oder es sind noch keine Belege vorhanden.",
-      gefiltertEmptyTitle: "Keine Treffer",
-      gefiltertEmptyHint: "Zu diesen Filtern gibt es keinen offenen Posten. Filter zurücksetzen?",
+      filteredEmptyTitle: "Keine Treffer",
+      filteredEmptyHint: "Zu diesen Filtern gibt es keinen offenen Posten. Filter zurücksetzen?",
       col: {
         nr: "Rechnung",
-        betrag: "Betrag",
-        rechnungsdatum: "Rechnungsdatum",
+        amount: "Betrag",
+        invoiceDate: "Rechnungsdatum",
         // Ein Fälligkeitsdatum steht heute an keinem Beleg (die Pipeline liest keines aus). Damit
         // die Spalte trotzdem etwas sagt, zeigt sie ersatzweise, wie lange der Beleg schon liegt
         // (siehe FaelligZelle) -- der Spaltenkopf bleibt bewusst schlicht "Fällig".
-        faelligAlter: "Fällig",
+        dueAge: "Fällig",
       },
-      ueberfaellig: "Überfällig",
-      ueberfaelligTage_one: "{{count}} Tag überfällig",
-      ueberfaelligTage_other: "{{count}} Tage überfällig",
-      faelligAm: "Fällig am {{datum}}",
-      offenSeit_one: "seit {{count}} Tag offen",
-      offenSeit_other: "seit {{count}} Tagen offen",
-      zurListe:
+      overdue: "Überfällig",
+      overdueDays_one: "{{count}} Tag überfällig",
+      overdueDays_other: "{{count}} Tage überfällig",
+      dueOn: "Fällig am {{datum}}",
+      openSince_one: "seit {{count}} Tag offen",
+      openSince_other: "seit {{count}} Tagen offen",
+      backToList:
         "Ausgangsrechnungen haben keine Detailseite. In der Liste der Ausgangsrechnungen öffnen.",
       // Öffnet das Match-Panel für diese Zeile (siehe matchPanel.* oben).
-      verknuepfen: "Zahlung zuordnen",
+      link: "Zahlung zuordnen",
     },
     // Ausgangsrechnungen-Spiegel (Migration 0045) — dieselbe "offen, bis vollständig gedeckt"-Logik
     // wie oben, nur für die Umsatzseite; teilt sich die Spalten oben (EINE Tabelle, Typ-Spalte statt
     // zwei getrennte). Die Zeile führt in
     // die Liste der Ausgangsrechnungen, weil es hier keine eigene Detailseite gibt.
-    ausgangsrechnungen: {
+    outgoing: {
       emptyTitle: "Keine offenen Ausgangsrechnungen",
       emptyHint:
         "Alle Ausgangsrechnungen sind vollständig per Bankabgleich gedeckt, oder es sind noch keine vorhanden.",
     },
-    fehlend: {
+    missing: {
       filter: {
-        alleRichtungen: "Alle Richtungen",
-        alleQuellen: "Alle Quellen",
-        eingehend: "Eingehend (Gutschriften)",
-        ausgehend: "Ausgehend (Abgänge)",
+        allDirections: "Alle Richtungen",
+        allSources: "Alle Quellen",
+        incoming: "Eingehend (Gutschriften)",
+        outgoing: "Ausgehend (Abgänge)",
       },
       // Teilweise erklärte Sammelzahlung: bleibt in der Liste, bis alles belegt ist.
-      restOffen: "{{rest}} ohne Beleg ({{matched}} zugeordnet)",
+      remainingOpen: "{{rest}} ohne Beleg ({{matched}} zugeordnet)",
       emptyTitle: "Keine offenen Banktransaktionen",
       emptyHint:
         "Zu allen ausgehenden Bankabgängen gibt es einen zugeordneten Beleg, oder es sind noch keine Umsätze importiert.",
-      gefiltertEmptyTitle: "Keine Treffer",
-      gefiltertEmptyHint:
+      filteredEmptyTitle: "Keine Treffer",
+      filteredEmptyHint:
         "Zu diesen Filtern gibt es keine offene Banktransaktion. Filter zurücksetzen?",
       col: {
-        quelle: "Quelle",
-        datum: "Datum",
-        richtung: "Richtung",
-        gesellschaft: "Gesellschaft",
-        gegenkonto: "Gegenkonto",
-        verwendungszweck: "Verwendungszweck",
-        betrag: "Betrag",
+        source: "Quelle",
+        date: "Datum",
+        direction: "Richtung",
+        company: "Gesellschaft",
+        counterAccount: "Gegenkonto",
+        paymentReference: "Verwendungszweck",
+        amount: "Betrag",
         // Kategorie einer beleglosen Transaktion — automatisch aus einer gelernten
         // Zuordnungsregel gesetzt (Migration 0030/0057) oder von Hand korrigiert.
-        kategorie: "Kategorie",
+        category: "Kategorie",
       },
-      quelle: {
+      source: {
         banksapi: "Bank",
         pleo: "Pleo",
       },
       // Öffnet das Match-Panel für diese Zeile (siehe matchPanel.* oben).
-      belegFinden: "Rechnung zuordnen",
-      kategorieOhne: "Ohne Kategorie",
-      kategoriePlaceholder: "Kategorie wählen",
-      kategorieRegel: "Regel",
-      kategorieRegelHint:
+      findInvoice: "Rechnung zuordnen",
+      categoryNone: "Ohne Kategorie",
+      categoryPlaceholder: "Kategorie wählen",
+      categoryRule: "Regel",
+      categoryRuleHint:
         "Automatisch aus einer gelernten Zuordnungsregel gesetzt. Von Hand korrigierbar.",
-      kategorieGesetzt: "Kategorie gespeichert",
-      kategorieEntfernt: "Kategorie entfernt",
-      kategorieFehler: "Kategorie konnte nicht gespeichert werden: {{error}}",
-      versteckt: "{{count}} Transaktion(en) ausgeblendet (kein Beleg zu erwarten).",
-      verstecktLink: "Ausgeblendete anzeigen",
-      alleGesellschaften: "Alle Gesellschaften",
-      gegenparteiPlaceholder: "Lieferant oder Verwendungszweck suchen",
+      categorySaved: "Kategorie gespeichert",
+      categoryRemoved: "Kategorie entfernt",
+      categoryError: "Kategorie konnte nicht gespeichert werden: {{error}}",
+      hidden: "{{count}} Transaktion(en) ausgeblendet (kein Beleg zu erwarten).",
+      hiddenLink: "Ausgeblendete anzeigen",
+      allCompanies: "Alle Gesellschaften",
+      counterpartyPlaceholder: "Lieferant oder Verwendungszweck suchen",
     },
   },
 
@@ -4850,9 +4740,9 @@ const de = {
     infoTransaction:
       "Wählen Sie die Rechnung, die mit dieser Zahlung beglichen wurde. Oben stehen die Rechnungen, die am ehesten passen. Ist die richtige nicht dabei, suchen Sie nach Lieferant, Nummer oder Betrag.",
     invoiceTitle: "Zahlung zur Rechnung zuordnen",
-    teilzahlungHinweis:
+    partialPaymentHint:
       "Ein Teil dieser Rechnung ist schon bezahlt. {{rest}} müssen noch bezahlt werden. Sobald das passiert ist, suchen Sie die Zahlung und ordnen Sie sie hier zu.",
-    teilzahlungSuchen: "Fehlende Zahlung suchen",
+    findMissingPayment: "Fehlende Zahlung suchen",
     transactionTitle: "Rechnung zur Zahlung zuordnen",
     nr: "Nr. {{nr}}",
     documentDate: "Rechnungsdatum: {{datum}}",
@@ -4861,7 +4751,7 @@ const de = {
     findPaymentHeading: "Zahlung finden",
     findInvoiceHeading: "Beleg finden",
     noMatchQuestionTransactions: "Keine passende Zahlung gefunden?",
-    zurueckZuVorschlaegen: "Zurück zu den Vorschlägen",
+    backToSuggestions: "Zurück zu den Vorschlägen",
     searchAllTransactions: "In allen Banktransaktionen suchen",
     noMatchQuestionInvoices: "Keinen passenden Beleg gefunden?",
     searchAllInvoices: "In allen Belegen suchen",
@@ -4884,40 +4774,40 @@ const de = {
   openItemWhitelist: {
     list: {
       title: "Ausgeschlossene Zahlungen",
-      nurLesen:
+      readOnlyHint:
         "Regeln gelten für alle Gesellschaften. Anlegen, Ändern und Löschen ist Admins und Supervisoren vorbehalten.",
       empty: "Noch keine Regeln angelegt.",
-      keineTreffer: "Keine Regel passt zu den Filtern.",
+      noMatches: "Keine Regel passt zu den Filtern.",
       count_one: "{{count}} Regel",
       count_other: "{{count}} Regeln",
-      angelegtVon: "Angelegt am {{datum}} von {{person}}",
-      unbekannt: "unbekannt",
+      createdBy: "Angelegt am {{datum}} von {{person}}",
+      unknown: "unbekannt",
       col: {
         category: "Kategorie",
         scope: "Feld",
         term: "Suchbegriff",
         hits: "Ausgeblendete Zahlungen",
         note: "Notiz",
-        angelegt: "Angelegt",
+        createdAt: "Angelegt",
         active: "Aktiv",
       },
-      neu: { button: "Regel anlegen" },
-      action: { loeschen: "Regel löschen", bearbeiten: "Regel bearbeiten" },
+      new: { button: "Regel anlegen" },
+      action: { delete: "Regel löschen", edit: "Regel bearbeiten" },
     },
     filter: {
       button: "Filter",
       title: "Filter",
-      suche: "Suchbegriff oder Notiz durchsuchen",
-      kategorieAlle: "Alle Kategorien",
-      statusAlle: "Aktiv und inaktiv",
-      statusAktiv: "Nur aktive",
-      statusInaktiv: "Nur inaktive",
-      trefferAlle: "Blendet aus oder nicht",
-      trefferMit: "Blendet Zahlungen aus",
-      trefferOhne: "Blendet nichts aus",
-      zuruecksetzen: "Filter zurücksetzen",
+      search: "Suchbegriff oder Notiz durchsuchen",
+      categoryAll: "Alle Kategorien",
+      statusAll: "Aktiv und inaktiv",
+      statusActive: "Nur aktive",
+      statusInactive: "Nur inaktive",
+      matchAll: "Blendet aus oder nicht",
+      matchWith: "Blendet Zahlungen aus",
+      matchWithout: "Blendet nichts aus",
+      reset: "Filter zurücksetzen",
     },
-    ueberdeckt: "Zählt nie: „{{rule}}“ ist älter und greift zuerst",
+    overridden: "Zählt nie: „{{rule}}“ ist älter und greift zuerst",
     category: {
       salary: "Lohn/Gehalt",
       tax_prepayment: "Steuervorauszahlung",
@@ -4936,46 +4826,46 @@ const de = {
       any: "Beliebiges Feld",
     },
     toggle: {
-      aktiviert: "Regel aktiviert.",
-      deaktiviert: "Regel deaktiviert.",
-      hinweisNeuBewerten:
+      activated: "Regel aktiviert.",
+      deactivated: "Regel deaktiviert.",
+      reevaluateHint:
         "Bereits ausgeblendete Buchungen bleiben ausgeblendet, bis Sie „Buchungen neu bewerten“ ausführen.",
-      fehlgeschlagen: "Umschalten fehlgeschlagen: {{error}}",
+      failed: "Umschalten fehlgeschlagen: {{error}}",
     },
-    neuBewerten: {
+    reevaluate: {
       button: "Buchungen neu bewerten",
-      titel: "Ausgeblendete Buchungen neu bewerten?",
-      beschreibung:
+      title: "Ausgeblendete Buchungen neu bewerten?",
+      description:
         "Alle Buchungen, die aktuell durch eine Regel ausgeblendet sind, werden erneut gegen die aktiven Regeln geprüft. Was keine Regel mehr trifft, taucht wieder in den offenen Posten auf. Von Hand ausgeblendete Buchungen und bereits zugeordnete Zahlungen bleiben unberührt.",
-      abbrechen: "Abbrechen",
-      bestaetigen: "Neu bewerten",
-      laeuft: "Wird geprüft …",
+      cancel: "Abbrechen",
+      confirm: "Neu bewerten",
+      running: "Wird geprüft …",
       toastOk_one: "{{count}} Buchung neu bewertet.",
       toastOk_other: "{{count}} Buchungen neu bewertet.",
-      toastFehler: "Neu bewerten fehlgeschlagen: {{error}}",
+      toastError: "Neu bewerten fehlgeschlagen: {{error}}",
     },
-    vorschau: {
-      laeuft: "Treffer werden gezählt …",
-      fehler: "Treffer konnten nicht gezählt werden.",
-      keine: "Trifft aktuell keine der {{total}} ausgehenden Buchungen.",
-      treffer:
+    preview: {
+      running: "Treffer werden gezählt …",
+      error: "Treffer konnten nicht gezählt werden.",
+      none: "Trifft aktuell keine der {{total}} ausgehenden Buchungen.",
+      matches:
         "Blendet aktuell {{count}} von {{total}} ausgehenden Buchungen aus ({{percent}} %, geschätzt).",
     },
     dialog: {
-      neu: {
+      new: {
         title: "Neue Whitelist-Regel",
         desc: "Buchungen, die diesen Begriff enthalten, erwarten keinen Beleg mehr.",
       },
-      bearbeiten: {
+      edit: {
         title: "Regel bearbeiten",
         desc: "Änderungen gelten ab sofort für neue Treffer. Bereits ausgeblendete Buchungen bewerten Sie über „Buchungen neu bewerten“ neu.",
       },
       field: { category: "Kategorie", scope: "Feld", term: "Suchbegriff", note: "Notiz" },
       termPlaceholder: "z. B. Kontoführungsgebühr",
-      termHinweis:
+      termHint:
         "Möglichst genau wählen, der Begriff wird als Teiltext gesucht: „Lohn“ trifft auch „Lohnert GmbH“.",
-      termZuKurz: "Mindestens {{min}} Zeichen, sonst trifft die Regel fast jeden Buchungstext.",
-      umlautHinweis:
+      termTooShort: "Mindestens {{min}} Zeichen, sonst trifft die Regel fast jeden Buchungstext.",
+      umlautHint:
         "Umlaute werden nicht automatisch übersetzt. Zusätzlich eine Regel für „{{ascii}}“ anlegen, damit auch diese Schreibweise erfasst wird.",
       notePlaceholder: "Warum gibt es hier keinen Beleg?",
       cancel: "Abbrechen",
@@ -4983,34 +4873,34 @@ const de = {
       saveEdit: "Speichern",
       saving: "Speichern …",
       toast: {
-        termPflicht: "Bitte einen Suchbegriff eingeben.",
-        termZuKurz: "Der Suchbegriff braucht mindestens {{min}} Zeichen.",
-        angelegt: "Regel angelegt.",
-        angelegtBeide: "Regel angelegt, zusätzlich für „{{second}}“.",
-        gespeichert: "Regel gespeichert.",
-        anlegenFehlgeschlagen: "Anlegen fehlgeschlagen: {{error}}",
-        speichernFehlgeschlagen: "Speichern fehlgeschlagen: {{error}}",
+        termRequired: "Bitte einen Suchbegriff eingeben.",
+        termTooShort: "Der Suchbegriff braucht mindestens {{min}} Zeichen.",
+        createdAt: "Regel angelegt.",
+        createdBoth: "Regel angelegt, zusätzlich für „{{second}}“.",
+        saved: "Regel gespeichert.",
+        createFailed: "Anlegen fehlgeschlagen: {{error}}",
+        saveFailed: "Speichern fehlgeschlagen: {{error}}",
       },
     },
     delete: {
       title: "Regel löschen?",
       desc: "„{{term}}“ ({{category}}) wird deaktiviert und aus der Liste entfernt.",
-      freigeben_one:
+      release_one:
         "Die {{count}} aktuell ausgeblendete Buchung wieder freigeben, sonst bleibt sie ohne erkennbare Regel ausgeblendet.",
-      freigeben_other:
+      release_other:
         "Die {{count}} aktuell ausgeblendeten Buchungen wieder freigeben, sonst bleiben sie ohne erkennbare Regel ausgeblendet.",
-      grund: "Löschgrund",
-      grundPlatzhalter: "Warum wird diese Regel entfernt?",
+      reason: "Löschgrund",
+      reasonPlaceholder: "Warum wird diese Regel entfernt?",
       cancel: "Abbrechen",
       confirm: "Löschen",
-      laeuft: "Wird gelöscht …",
+      running: "Wird gelöscht …",
       toast: {
-        geloescht: "Regel gelöscht.",
-        freigebenFehlgeschlagen:
+        deleted: "Regel gelöscht.",
+        releaseFailed:
           "Regel gelöscht, aber die ausgeblendeten Buchungen konnten nicht freigegeben werden. „Buchungen neu bewerten“ holt das nach.",
-        freigegeben_one: "{{count}} Buchung wieder freigegeben.",
-        freigegeben_other: "{{count}} Buchungen wieder freigegeben.",
-        fehlgeschlagen: "Löschen fehlgeschlagen: {{error}}",
+        released_one: "{{count}} Buchung wieder freigegeben.",
+        released_other: "{{count}} Buchungen wieder freigegeben.",
+        failed: "Löschen fehlgeschlagen: {{error}}",
       },
     },
   },
@@ -5120,14 +5010,14 @@ const de = {
     loadingSide: "Wird geladen …",
     loadingMore: "Weitere werden geladen …",
     pickBoth: "Beide Seiten wählen, um die Konfidenz zu sehen.",
-    nochNichtGewaehlt: "noch nicht gewählt",
-    auswahlAufheben: "Auswahl aufheben",
+    notPickedYet: "noch nicht gewählt",
+    clearPick: "Auswahl aufheben",
     // Vorher der untranslated Literal "Details", auf jeder Zeile identisch.
     detailsToggle: "Details zu {{name}} ein-/ausblenden",
     band: {
       auto: "Sichere Zuordnung",
-      kandidat: "Kandidat",
-      schwach: "Schwach, der Abgleich würde das nicht vorschlagen",
+      candidate: "Kandidat",
+      weak: "Schwach, der Abgleich würde das nicht vorschlagen",
     },
     reason: {
       amount: "Betrag",
@@ -5142,109 +5032,109 @@ const de = {
     // Bestätigung vor dem Schreiben: sagt vorher, was die Verknüpfung auslöst.
     confirm: {
       close: {
-        rechnung: "Rechnung als vollständig bezahlt markieren",
-        rechnungHint: "Die offenen {{rest}} werden nicht mehr erwartet.",
-        transaktion: "Transaktion als vollständig verwendet markieren",
-        transaktionHint: "Die freien {{rest}} stehen keiner weiteren Rechnung mehr zur Verfügung.",
-        grund: "Grund",
-        grundPlatzhalter: "z. B. Skonto, Rundungsdifferenz, Bankgebühr",
+        invoice: "Rechnung als vollständig bezahlt markieren",
+        invoiceHint: "Die offenen {{rest}} werden nicht mehr erwartet.",
+        transaction: "Transaktion als vollständig verwendet markieren",
+        transactionHint: "Die freien {{rest}} stehen keiner weiteren Rechnung mehr zur Verfügung.",
+        reason: "Grund",
+        reasonPlaceholder: "z. B. Skonto, Rundungsdifferenz, Bankgebühr",
       },
       info: "Die Zuordnung löst keine Zahlung aus. Sie hält fest, dass diese Zahlung diese Rechnung begleicht, setzt die Rechnung auf bezahlt, sobald sie vollständig gedeckt ist, und lässt einen Restbetrag der Zahlung für eine weitere Rechnung frei.",
       title: "Treffer bestätigen",
       intro: "Was passiert:",
-      rechnung: "Rechnung",
-      ausgangsrechnung: "Ausgangsrechnung",
-      transaktion: "Banktransaktion",
-      betrag: "Zugeordneter Betrag",
-      ohneNr: "ohne Nr.",
-      restRechnung: "Rest auf der Rechnung",
-      restZahlung: "Rest auf der Banktransaktion",
-      folge: {
-        bezahlt: "Die Rechnung ist damit vollständig bezahlt.",
-        bezahltSkonto:
+      invoice: "Rechnung",
+      outgoingInvoice: "Ausgangsrechnung",
+      transaction: "Banktransaktion",
+      amount: "Zugeordneter Betrag",
+      noNumber: "ohne Nr.",
+      remainingInvoice: "Rest auf der Rechnung",
+      remainingPayment: "Rest auf der Banktransaktion",
+      consequence: {
+        paid: "Die Rechnung ist damit vollständig bezahlt.",
+        paidDiscount:
           "Die Rechnung ist damit vollständig bezahlt. {{difference}} gelten als Skonto.",
-        teilweise: "Die Rechnung ist damit nicht vollständig bezahlt. {{rest}} bleiben unbezahlt.",
-        transaktionVoll: "Die gesamte Banktransaktion wird für diese Rechnung verwendet.",
-        transaktionAbgeschlossen:
+        partial: "Die Rechnung ist damit nicht vollständig bezahlt. {{rest}} bleiben unbezahlt.",
+        transactionFull: "Die gesamte Banktransaktion wird für diese Rechnung verwendet.",
+        transactionClosed:
           "Die restlichen {{rest}} werden abgeschlossen und keiner weiteren Rechnung zugeordnet.",
-        transaktionRest: "{{rest}} der Banktransaktion bleiben für eine andere Rechnung frei.",
+        transactionRemaining: "{{rest}} der Banktransaktion bleiben für eine andere Rechnung frei.",
         // Outgoing invoices: confirming a match sets the invoice's own paid status locally now
         // (migration 0085's sync_uploaded_outgoing_invoice_status_from_matches trigger), same as
         // an incoming invoice — no external system of record anymore.
-        bezahltOutgoing: "Der Kunde hat diese Rechnung damit vollständig bezahlt.",
-        teilweiseOutgoing: "Der Kunde hat nicht vollständig bezahlt. {{rest}} bleiben offen.",
+        paidOutgoing: "Der Kunde hat diese Rechnung damit vollständig bezahlt.",
+        partialOutgoing: "Der Kunde hat nicht vollständig bezahlt. {{rest}} bleiben offen.",
       },
-      abbrechen: "Abbrechen",
-      bestaetigen: "Abgleichen",
+      cancel: "Abbrechen",
+      confirm: "Abgleichen",
       differenceReason: {
         label: "Differenzgrund (für Buchhaltung)",
         markFullyPaid: "Rechnung vollständig als bezahlt/ausgeglichen markieren",
-        skonto: "Gewährter Skonto",
-        rundungsdifferenz: "Rundungsdifferenz / Cent-Betrag",
-        bankgebuehren: "Bankgebühren / Abzüge",
-        teilzahlung: "Teilzahlung (Rest bleibt offen)",
-        sonstiges: "Sonstiges",
+        discount: "Gewährter Skonto",
+        roundingDifference: "Rundungsdifferenz / Cent-Betrag",
+        bankFees: "Bankgebühren / Abzüge",
+        partialPayment: "Teilzahlung (Rest bleibt offen)",
+        other: "Sonstiges",
       },
     },
     // Teilweise erledigte Zeilen bleiben in der Liste, bis nichts mehr offen ist.
     rest: {
-      offen: "{{betrag}} offen",
-      bezahlt: "{{betrag}} bezahlt",
-      frei: "{{betrag}} frei",
-      zugeordnet: "{{betrag}} zugeordnet",
+      open: "{{betrag}} offen",
+      paid: "{{betrag}} bezahlt",
+      unallocated: "{{betrag}} frei",
+      matched: "{{betrag}} zugeordnet",
     },
     // Teilbetrag je Verknüpfung (Migration 0024). Eine Sammelzahlung wird auf mehrere Rechnungen
     // verteilt, eine Ratenzahlung deckt nur einen Teil.
-    betrag: {
+    amount: {
       label: "Betrag dieser Verknüpfung",
-      rechnungOffen: "Rechnung offen",
-      ausgangsrechnungOffen: "Ausgangsrechnung offen",
-      transaktionFrei: "Transaktion frei",
+      invoiceOpen: "Rechnung offen",
+      outgoingInvoiceOpen: "Ausgangsrechnung offen",
+      transactionUnallocated: "Transaktion frei",
       // Deckungsbalken: wie viel dieser Verknüpfung von einer Seite aufgeht, und was danach bleibt.
-      vonGesamt: "{{betrag}} von {{gesamt}}",
-      danachOffen: "danach noch {{rest}} offen",
-      danachGedeckt: "danach vollständig gedeckt",
-      danachFrei: "danach noch {{rest}} frei",
-      danachVerbraucht: "danach vollständig zugeordnet",
-      deckt: "Deckt die Rechnung vollständig ab und markiert sie als bezahlt.",
-      decktOutgoing: "Deckt die Ausgangsrechnung vollständig ab.",
-      teilzahlung:
+      ofTotal: "{{betrag}} von {{gesamt}}",
+      thenOpen: "danach noch {{rest}} offen",
+      thenCovered: "danach vollständig gedeckt",
+      thenUnallocated: "danach noch {{rest}} frei",
+      thenAllocated: "danach vollständig zugeordnet",
+      covers: "Deckt die Rechnung vollständig ab und markiert sie als bezahlt.",
+      coversOutgoing: "Deckt die Ausgangsrechnung vollständig ab.",
+      partialPayment:
         "Teilzahlung: danach bleiben {{rest}} offen. Bezahlt erst, wenn die Summe stimmt.",
-      teilzahlungOutgoing:
+      partialPaymentOutgoing:
         "Teilzahlung: danach bleiben {{rest}} offen. Vollständig gedeckt erst, wenn die Summe stimmt.",
-      skonto:
+      discount:
         "Innerhalb der Skonto-Toleranz ({{differenz}} Abzug), die Rechnung gilt damit als bezahlt.",
-      skontoOutgoing:
+      discountOutgoing:
         "Innerhalb der Toleranz ({{differenz}} Differenz) gilt die Ausgangsrechnung als vollständig gedeckt.",
-      ungueltig: "Für diese Auswahl ist auf keiner Seite noch etwas offen.",
+      invalid: "Für diese Auswahl ist auf keiner Seite noch etwas offen.",
     },
     linking: "Verknüpfe …",
     cancel: "Abbrechen",
     toast: {
-      verknuepft:
+      linked:
         "Verknüpft. Beleg und Transaktion sind aus den offenen Posten verschwunden; konkurrierende Vorschläge wurden zurückgezogen.",
-      verknuepftOutgoing:
+      linkedOutgoing:
         "Verknüpft. Ausgangsrechnung und Transaktion sind aus den offenen Posten verschwunden; konkurrierende Vorschläge wurden zurückgezogen.",
-      fehlgeschlagen: "Verknüpfen fehlgeschlagen: {{error}}",
+      failed: "Verknüpfen fehlgeschlagen: {{error}}",
     },
   },
 
   // Manuelles Ausblenden einer einzelnen Buchung ("kein Beleg zu erwarten").
   noReceipt: {
     action: {
-      keinBeleg: "Dazu gibt es keine Rechnung",
-      wiederAufnehmen: "Wieder in die Liste aufnehmen",
-      grundWaehlen: "Grund wählen",
+      noInvoice: "Dazu gibt es keine Rechnung",
+      putBack: "Wieder in die Liste aufnehmen",
+      pickReason: "Grund wählen",
     },
     detail: {
-      grund: "Kein Beleg zu erwarten: {{reason}}.",
-      durchRegel: "Ausgeblendet durch eine Whitelist-Regel.",
-      manuell: "Manuell ausgeblendet von {{actor}}.",
+      reason: "Kein Beleg zu erwarten: {{reason}}.",
+      byRule: "Ausgeblendet durch eine Whitelist-Regel.",
+      manual: "Manuell ausgeblendet von {{actor}}.",
     },
     toast: {
-      versteckt: "Buchung ausgeblendet, kein Beleg zu erwarten.",
-      wiederAufgenommen: "Buchung wieder in den offenen Posten.",
-      fehlgeschlagen: "Aktion fehlgeschlagen: {{error}}",
+      hidden: "Buchung ausgeblendet, kein Beleg zu erwarten.",
+      restored: "Buchung wieder in den offenen Posten.",
+      failed: "Aktion fehlgeschlagen: {{error}}",
     },
   },
 
@@ -5309,120 +5199,120 @@ const de = {
     },
     list: {
       queue: {
-        offen: { label: "Offen", desc: "Gestellt, noch nicht bezahlt" },
-        ueberfaellig: { label: "Überfällig", desc: "Das Zahlungsziel ist abgelaufen" },
-        bezahlt: { label: "Bezahlt", desc: "Vom Kunden beglichen" },
+        open: { label: "Offen", desc: "Gestellt, noch nicht bezahlt" },
+        overdue: { label: "Überfällig", desc: "Das Zahlungsziel ist abgelaufen" },
+        paid: { label: "Bezahlt", desc: "Vom Kunden beglichen" },
       },
       // KPI tiles, the same row the incoming-invoice screen has.
       kpi: {
-        gesamt: "Rechnungen",
-        offen: "Offen",
-        ueberfaellig: "Überfällig",
-        volumen: "Volumen (Brutto)",
-        volumenHint: "Brutto-Summe aller Rechnungen in dieser Auswahl, stornierte ausgenommen.",
+        total: "Rechnungen",
+        open: "Offen",
+        overdue: "Überfällig",
+        volume: "Volumen (Brutto)",
+        volumeHint: "Brutto-Summe aller Rechnungen in dieser Auswahl, stornierte ausgenommen.",
         // The line under the KPI row. Not a fourth card: a card is a filter, and this is a total.
-        volumenZeile_one: "{{count}} Rechnung, {{total}} brutto",
-        volumenZeile_other: "{{count}} Rechnungen, {{total}} brutto",
-        offenerBetrag: "Noch offen",
-        offenerBetragHint:
+        volumeLine_one: "{{count}} Rechnung, {{total}} brutto",
+        volumeLine_other: "{{count}} Rechnungen, {{total}} brutto",
+        stillOutstanding: "Noch offen",
+        stillOutstandingHint:
           "Brutto-Summe der offenen und überfälligen Rechnungen, also was noch hereinkommen muss.",
       },
       search: "Kunde oder Rechnungsnummer suchen …",
-      entwurf: "Entwurf",
+      draft: "Entwurf",
       empty: "Keine Ausgangsrechnungen gefunden.",
-      dateiAnsehen: "Datei ansehen",
-      dateiFehlgeschlagen: "Die Datei konnte nicht geöffnet werden.",
-      dateiFehlgeschlagenMitFehler: "Die Datei konnte nicht geöffnet werden: {{error}}",
-      statusFehlgeschlagen: "Status konnte nicht geändert werden: {{error}}",
+      viewFile: "Datei ansehen",
+      fileFailed: "Die Datei konnte nicht geöffnet werden.",
+      fileFailedWithError: "Die Datei konnte nicht geöffnet werden: {{error}}",
+      statusFailed: "Status konnte nicht geändert werden: {{error}}",
       filter: {
-        gesellschaft: "Gesellschaft",
-        alleGesellschaften: "Alle Gesellschaften",
+        company: "Gesellschaft",
+        allCompanies: "Alle Gesellschaften",
         status: "Status",
-        alleStatus: "Alle",
+        allStatuses: "Alle",
       },
       col: {
         nr: "Nr.",
-        kunde: "Kunde",
-        gesellschaft: "Gesellschaft",
-        datum: "Datum",
-        faellig: "Fällig",
-        betrag: "Betrag",
+        customer: "Kunde",
+        company: "Gesellschaft",
+        date: "Datum",
+        due: "Fällig",
+        amount: "Betrag",
         status: "Status",
       },
       delete: {
         button: "Löschen",
         title: "Ausgangsrechnung löschen?",
         desc: "Die Rechnung wird ausgeblendet, bleibt aber revisionssicher gespeichert (im Papierkorb wiederherstellbar). Optional ein Grund:",
-        grundPlaceholder: "Grund (optional), z. B. versehentlich doppelt angelegt",
+        reasonPlaceholder: "Grund (optional), z. B. versehentlich doppelt angelegt",
         cancel: "Abbrechen",
         confirm: "Löschen",
         toastOk: "Ausgangsrechnung gelöscht (im Papierkorb wiederherstellbar).",
-        toastFehlgeschlagen: "Löschen fehlgeschlagen: {{error}}",
+        toastFailed: "Löschen fehlgeschlagen: {{error}}",
       },
     },
-    hochladen: {
+    upload: {
       button: "Rechnung hochladen",
-      zurueck: "Ausgangsrechnungen",
+      back: "Ausgangsrechnungen",
       title: "Ausgangsrechnung hochladen",
       subtitle: "Datei hochladen, KI liest die Angaben aus, prüfen und speichern.",
       dropHint: "Rechnung hierher ziehen",
       dropRelease: "Datei loslassen zum Hochladen",
       fileTypes: "PDF, JPG oder PNG, max. 15 MB",
       chooseFile: "Datei auswählen",
-      analysiere: "KI liest die Rechnung …",
-      abgelehnt: {
+      analyzing: "KI liest die Rechnung …",
+      rejected: {
         title: "Dokument nicht erkannt",
-        andereDatei: "Andere Datei wählen",
+        differentFile: "Andere Datei wählen",
       },
-      feld: {
-        gesellschaft: "Gesellschaft",
-        gesellschaftPlaceholder: "Gesellschaft wählen …",
-        rechnungsnummer: "Rechnungsnummer",
-        kunde: "Kunde",
-        kundePlaceholder: "Kunde wählen …",
-        kundeErstGesellschaft: "Erst Gesellschaft wählen",
-        keinKunde: "Kein Kunde gefunden.",
-        neuerKundeLink: "Neuen Kunden anlegen",
-        bestehenderKundeLink: "Bestehenden Kunden wählen",
-        kundeName: "Name",
-        kundeAdresse: "Adresse (optional)",
-        datum: "Rechnungsdatum",
-        faelligkeit: "Fälligkeitsdatum (optional)",
-        nettobetrag: "Nettobetrag",
-        bruttobetrag: "Bruttobetrag",
-        ust: "USt. in %",
+      field: {
+        company: "Gesellschaft",
+        companyPlaceholder: "Gesellschaft wählen …",
+        invoiceNumber: "Rechnungsnummer",
+        customer: "Kunde",
+        customerPlaceholder: "Kunde wählen …",
+        customerPickCompanyFirst: "Erst Gesellschaft wählen",
+        noCustomerFound: "Kein Kunde gefunden.",
+        newCustomerLink: "Neuen Kunden anlegen",
+        existingCustomerLink: "Bestehenden Kunden wählen",
+        customerName: "Name",
+        customerAddress: "Adresse (optional)",
+        date: "Rechnungsdatum",
+        dueDate: "Fälligkeitsdatum (optional)",
+        netAmount: "Nettobetrag",
+        grossAmount: "Bruttobetrag",
+        vat: "USt. in %",
       },
-      abbrechen: "Abbrechen",
-      speichern: "Rechnung speichern",
-      speichere: "Speichere …",
-      erfolg: {
+      cancel: "Abbrechen",
+      save: "Rechnung speichern",
+      saving: "Speichere …",
+      success: {
         title: "Rechnung gespeichert",
         desc: "Rechnung {{number}} wurde erfasst und ist in der Liste sichtbar.",
-        weitere: "Weitere Rechnung hochladen",
-        zurListe: "Zur Liste",
+        uploadAnother: "Weitere Rechnung hochladen",
+        backToList: "Zur Liste",
       },
       // Field-level messages for the upload form, each naming the fix rather than the rule.
-      validierung: {
-        gesellschaft: "Bitte eine Gesellschaft wählen.",
-        kunde: "Bitte einen Kunden wählen oder einen Namen eintragen.",
-        rechnungsnummer: "Bitte die Rechnungsnummer eintragen.",
-        datum: "Bitte das Rechnungsdatum wählen.",
-        bruttoFehlt: "Bitte den Bruttobetrag eintragen.",
-        bruttoPositiv: "Der Bruttobetrag muss größer als 0 sein.",
-        zahl: "Bitte eine Zahl eintragen, z. B. 1.234,56.",
+      validation: {
+        company: "Bitte eine Gesellschaft wählen.",
+        customer: "Bitte einen Kunden wählen oder einen Namen eintragen.",
+        invoiceNumber: "Bitte die Rechnungsnummer eintragen.",
+        date: "Bitte das Rechnungsdatum wählen.",
+        grossMissing: "Bitte den Bruttobetrag eintragen.",
+        grossMustBePositive: "Der Bruttobetrag muss größer als 0 sein.",
+        number: "Bitte eine Zahl eintragen, z. B. 1.234,56.",
       },
       toast: {
         // Over 15 MB the file is still uploaded, only the AI extraction is skipped, so this is an
         // info and not an error.
-        zuGrossFuerAnalyse:
+        tooLargeForAnalysis:
           "Die Datei ist zu groß für die automatische Erkennung. Sie wird hochgeladen, die Felder müssen aber von Hand ausgefüllt werden.",
-        typUngueltig: "Nur PDF, JPG oder PNG werden unterstützt.",
-        zuGross: "Die Datei ist zu groß (max. 15 MB).",
-        analyseFehlgeschlagen: "Analyse fehlgeschlagen: {{error}}",
-        dateiFehlt: "Die Datei fehlt. Bitte noch einmal hochladen.",
-        unvollstaendig: "Bitte die rot markierten Felder ausfüllen.",
-        erstellt: "Rechnung gespeichert.",
-        fehlgeschlagen: "Fehlgeschlagen: {{error}}",
+        typeInvalid: "Nur PDF, JPG oder PNG werden unterstützt.",
+        tooLarge: "Die Datei ist zu groß (max. 15 MB).",
+        analysisFailed: "Analyse fehlgeschlagen: {{error}}",
+        fileMissing: "Die Datei fehlt. Bitte noch einmal hochladen.",
+        incomplete: "Bitte die rot markierten Felder ausfüllen.",
+        created: "Rechnung gespeichert.",
+        failed: "Fehlgeschlagen: {{error}}",
       },
     },
   },
@@ -5433,318 +5323,316 @@ const de = {
     title: "Manuelle Buchungen",
     subtitle:
       "Personalkosten, Abschreibungen und Steuern: Posten ohne Beleg und ohne Banktransaktion, die von Hand erfasst werden.",
-    alleGesellschaften: "Alle Gesellschaften",
-    hinweis:
-      "Manuelle Buchungen fließen gleichberechtigt in die Auswertung ein: derselbe Gesamtbetrag wie bei den Belegen, nicht nur ein Anhängsel. Die gewählte BWA-Zeile/Kategorie entscheidet, wo die Buchung landet: nur „Materialaufwand / Wareneinsatz“ wirkt sich auf den Rohertrag aus, alles andere (Personal, Raumkosten, Kfz, Sonstige Kosten, …) erscheint erst weiter unten, im vorläufigen Ergebnis.",
-    keinObjekt: "Kein Objekt",
-    offenesEnde: "offenes Ende",
-    suche: "Notiz, Kategorie, Objekt oder Gesellschaft suchen …",
+    allCompanies: "Alle Gesellschaften",
+    hint: "Manuelle Buchungen fließen gleichberechtigt in die Auswertung ein: derselbe Gesamtbetrag wie bei den Belegen, nicht nur ein Anhängsel. Die gewählte BWA-Zeile/Kategorie entscheidet, wo die Buchung landet: nur „Materialaufwand / Wareneinsatz“ wirkt sich auf den Rohertrag aus, alles andere (Personal, Raumkosten, Kfz, Sonstige Kosten, …) erscheint erst weiter unten, im vorläufigen Ergebnis.",
+    noProperty: "Kein Objekt",
+    openEnded: "offenes Ende",
+    search: "Notiz, Kategorie, Objekt oder Gesellschaft suchen …",
     sort: {
-      zeitraumAsc: "Zeitraum (aufsteigend)",
-      zeitraumDesc: "Zeitraum (absteigend)",
-      betragDesc: "Betrag (größte zuerst)",
-      betragAsc: "Betrag (kleinste zuerst)",
-      kategorie: "Kategorie (A–Z)",
+      periodAsc: "Zeitraum (aufsteigend)",
+      periodDesc: "Zeitraum (absteigend)",
+      amountDesc: "Betrag (größte zuerst)",
+      amountAsc: "Betrag (kleinste zuerst)",
+      category: "Kategorie (A–Z)",
     },
     // Das Jahr wird in ein Datum eingesetzt (`JJJJ-01-01`); eine ein- bis dreistellige Zahl lehnt
     // Postgres rundweg ab, was vorher als roher 22008-Fehler auf dem Bildschirm landete.
-    jahrUngueltig:
+    yearInvalid:
       "Bitte ein Jahr zwischen {{fromDate}} und {{toDate}} eingeben. Angezeigt wird weiterhin {{year}}.",
     // Ein Ende vor dem Start ergibt null Monate — die Buchung wäre gespeichert, aber auf keinem
     // Bildschirm sichtbar und damit weder änderbar noch löschbar.
-    endeVorStart: "Das Ende darf nicht vor dem Startmonat liegen.",
-    bisJahrFehlt: "Bitte auch ein „Bis Jahr“ angeben oder „offenes Ende“ wählen.",
-    betragHinweis:
+    endBeforeStart: "Das Ende darf nicht vor dem Startmonat liegen.",
+    endYearMissing: "Bitte auch ein „Bis Jahr“ angeben oder „offenes Ende“ wählen.",
+    amountHint:
       "Kosten positiv erfassen. Ein negativer Betrag wirkt als Korrektur und dreht die Zeile in der Auswertung um. 0,00 € ist nicht möglich.",
-    wiederkehrend: "wiederkehrend",
+    recurring: "wiederkehrend",
     empty: "Keine manuellen Buchungen in diesem Zeitraum.",
-    feld: {
-      grund: "Grund (optional)",
-      gesellschaft: "Gesellschaft",
-      jahr: "Jahr",
-      kategorie: "BWA-Linie / Kategorie",
-      monat: "Monat",
-      objekt: "Objekt (optional)",
-      betrag: "Betrag (EUR)",
-      notiz: "Notiz",
-      wiederkehrend: "Monatlich wiederkehrend",
-      wiederkehrendHint: "Wird jeden Monat automatisch berücksichtigt, ohne erneute Eingabe.",
-      bisMonat: "Bis Monat",
-      bisJahr: "Bis Jahr",
+    field: {
+      reason: "Grund (optional)",
+      company: "Gesellschaft",
+      year: "Jahr",
+      category: "BWA-Linie / Kategorie",
+      month: "Monat",
+      property: "Objekt (optional)",
+      amount: "Betrag (EUR)",
+      note: "Notiz",
+      recurring: "Monatlich wiederkehrend",
+      recurringHint: "Wird jeden Monat automatisch berücksichtigt, ohne erneute Eingabe.",
+      untilMonth: "Bis Monat",
+      untilYear: "Bis Jahr",
     },
     col: {
-      gesellschaft: "Gesellschaft",
-      zeitraum: "Zeitraum",
-      kategorie: "BWA-Linie",
-      objekt: "Objekt",
-      notiz: "Notiz",
-      betrag: "Betrag",
-      aktionen: "Aktionen",
+      company: "Gesellschaft",
+      period: "Zeitraum",
+      category: "BWA-Linie",
+      property: "Objekt",
+      note: "Notiz",
+      amount: "Betrag",
+      actions: "Aktionen",
     },
-    neu: {
+    create: {
       button: "Neue Buchung",
       title: "Neue manuelle Buchung",
       desc: "Gesellschaft, BWA-Linie, Zeitraum und Betrag: optional wiederkehrend.",
-      speichern: "Speichern",
+      save: "Speichern",
     },
     action: {
-      bearbeiten: "Bearbeiten",
+      edit: "Bearbeiten",
     },
     edit: {
       title: "Buchung bearbeiten",
-      wiederkehrendHint:
+      recurringHint:
         "Diese Buchung ist wiederkehrend: Änderungen gelten für alle künftigen Monate.",
-      speichern: "Speichern",
+      save: "Speichern",
     },
-    loeschen: {
+    delete: {
       // Vorher aus Zuordnungsregeln geliehen und las sich als „Regel löschen“.
       confirm: "Buchung löschen",
       title: "Buchung löschen?",
       desc: "Diese manuelle Buchung wird aus der Auswertung entfernt.",
-      descWiederkehrend:
+      descRecurring:
         "Diese wiederkehrende Buchung wird komplett entfernt, auch aus allen künftigen Monaten.",
     },
     toast: {
-      gespeichert: "Gespeichert.",
-      geloescht: "Gelöscht.",
-      fehlgeschlagen: "Fehlgeschlagen: {{error}}",
+      saved: "Gespeichert.",
+      deleted: "Gelöscht.",
+      failed: "Fehlgeschlagen: {{error}}",
     },
   },
 
   // Approval workflow admin (Briefing Screen 6): approvers + dynamic assignment-chain rules.
   approvalRules: {
-    leiter: {
+    lead: {
       title: "Freigabe-Regeln",
-      beliebig: "beliebig",
+      any: "beliebig",
       tabs: {
-        regeln: "Regeln",
-        szenario: "Playground",
+        rules: "Regeln",
+        playground: "Playground",
       },
       dimension: {
-        gesellschaft: "Gesellschaft",
-        lieferant: "Lieferant",
-        objekt: "Objekt",
-        bereich: "Geschäftsbereich",
+        company: "Gesellschaft",
+        supplier: "Lieferant",
+        property: "Objekt",
+        area: "Geschäftsbereich",
       },
       test: {
         title: "Szenario testen",
         hint: "Eine Rechnung beschreiben und prüfen lassen, welche Regel sie freigibt.",
-        betrag: "Bruttobetrag",
-        pruefen: "Prüfen",
-        zuruecksetzen: "Zurücksetzen",
-        leer: "Noch nichts geprüft",
-        leerHinweis:
+        amount: "Bruttobetrag",
+        check: "Prüfen",
+        reset: "Zurücksetzen",
+        empty: "Noch nichts geprüft",
+        emptyHint:
           "So viel von der Rechnung eintragen wie bekannt ist und auf Prüfen klicken. Alles, was auf beliebig steht, gilt als nicht eingeschränkt, genau so, wie eine Regel ein Merkmal behandelt, das sie nicht festlegt.",
-        trifftZu: "Diese Regel greift",
-        verdraengtTitel: "Passen ebenfalls, werden aber verdrängt",
-        weitere_one: "{{count}} weitere Regel passt ebenfalls, wird aber verdrängt.",
-        weitere_other: "{{count}} weitere Regeln passen ebenfalls, werden aber verdrängt.",
-        einzige: "Keine andere Regel passt.",
-        keine: "Keine Regel trifft zu.",
-        keineWarum: "Die Rechnung läuft über die Standard-Kette: {{chain}}.",
+        applies: "Diese Regel greift",
+        outrankedTitle: "Passen ebenfalls, werden aber verdrängt",
+        other_one: "{{count}} weitere Regel passt ebenfalls, wird aber verdrängt.",
+        other_other: "{{count}} weitere Regeln passen ebenfalls, werden aber verdrängt.",
+        onlyOne: "Keine andere Regel passt.",
+        none: "Keine Regel trifft zu.",
+        noneWhy: "Die Rechnung läuft über die Standard-Kette: {{chain}}.",
       },
-      uebersicht: {
-        aktiv_one: "{{count}} aktiv",
-        aktiv_other: "{{count}} aktiv",
-        probleme_one: "{{count}} Konfigurationsproblem",
-        probleme_other: "{{count}} Konfigurationsprobleme",
-        problemeTitel: "Konfigurationsprobleme",
-        problemeHinweis:
+      overview: {
+        active_one: "{{count}} aktiv",
+        active_other: "{{count}} aktiv",
+        issues_one: "{{count}} Konfigurationsproblem",
+        issues_other: "{{count}} Konfigurationsprobleme",
+        issuesTitle: "Konfigurationsprobleme",
+        issuesHint:
           "Ein Problem liegt vor, wenn ein Schritt einer Regel eine Person nennt, die sich nicht mehr anmelden kann. Die Regel greift trotzdem, Belege bleiben an diesem Schritt liegen und niemand wird benachrichtigt.",
       },
-      karte: {
-        wenn: "Wenn",
-        betrag: "Betrag",
-        genehmiger: "Genehmigende",
-        jederBetrag: "Jeder Betrag",
-        abBetrag: "\u2265 {{amount}}",
-        prioritaet: "Priorität",
-        prioritaetVon: "{{position}} von {{total}}",
-        aktionen: "Aktionen",
+      card: {
+        when: "Wenn",
+        amount: "Betrag",
+        approvers: "Genehmigende",
+        anyAmount: "Jeder Betrag",
+        fromAmount: "\u2265 {{amount}}",
+        priority: "Priorität",
+        priorityOf: "{{position}} von {{total}}",
+        actions: "Aktionen",
       },
-      liste: {
-        neueRegel: "Neue Regel",
-        leer: "Noch keine Regeln angelegt.",
+      list: {
+        newRule: "Neue Regel",
+        empty: "Noch keine Regeln angelegt.",
       },
-      zeile: {
-        bearbeiten: "Regel bearbeiten",
-        aktiv: "Regel ist aktiv",
-        inaktiv: "Regel ist ausgeschaltet",
-        aktivKurz: "Aktiv",
-        inaktivBadge: "Inaktiv",
-        hinweisInaktiv: "Regel ist ausgeschaltet und wird bei der Freigabe übersprungen.",
-        hinweisGestrandet:
+      row: {
+        edit: "Regel bearbeiten",
+        active: "Regel ist aktiv",
+        inactive: "Regel ist ausgeschaltet",
+        activeShort: "Aktiv",
+        inactiveBadge: "Inaktiv",
+        inactiveHint: "Regel ist ausgeschaltet und wird bei der Freigabe übersprungen.",
+        strandedHint:
           "Ein Schritt nennt eine Person, die sich nicht mehr anmelden kann, Belege bleiben hier liegen.",
-        hinweisVerdraengt: "Passt auf den Test, wird aber von einer genaueren Regel verdrängt.",
-        unbekannt: "Unbekannt",
-        deaktiviert: "deaktiviert",
-        autoSchritt: "Bereichsleitung (automatisch)",
+        outrankedHint: "Passt auf den Test, wird aber von einer genaueren Regel verdrängt.",
+        unknown: "Unbekannt",
+        deactivated: "deaktiviert",
+        autoStep: "Bereichsleitung (automatisch)",
       },
       editor: {
-        abBetrag: "Ab Bruttobetrag",
-        abBetragHinweis:
+        fromAmount: "Ab Bruttobetrag",
+        fromAmountHint:
           "Diese Regel gilt für Belege ab diesem Betrag; 0 heißt für alle. Die Kette der Regel gilt immer ganz: für gestaffelte Freigaben zwei Regeln mit gleichem Geltungsbereich und verschiedenen Beträgen anlegen, die passende Regel mit dem höchsten Betrag gewinnt.",
-        kette: "Freigabe-Kette",
-        schritt: "Schritt {{n}}",
-        keinWeiterer: "(kein weiterer Schritt)",
-        genehmigerWaehlen: "Genehmigende Person wählen",
-        merkmalNoetig:
+        chain: "Freigabe-Kette",
+        step: "Schritt {{n}}",
+        noFurtherStep: "(kein weiterer Schritt)",
+        chooseApprover: "Genehmigende Person wählen",
+        attributeRequired:
           "Mindestens ein Merkmal muss festgelegt sein, sonst würde die Regel für jede Rechnung gelten.",
-        ketteHinweis:
+        chainHint:
           "Der letzte Schritt ist die endgültige Freigabe und gibt die Zahlung frei. Dieselbe Person darf in einer Kette nicht zweimal vorkommen.",
-        gleichePerson: "Jede Person darf in der Kette nur einmal vorkommen.",
-        schrittBrauchtVorherigen: "Dieser Schritt setzt den vorherigen voraus.",
-        schonVorhanden: "Für diese Kombination existiert bereits eine Regel.",
-        speichern: "Speichern",
-        speichert: "Speichert …",
-        abbrechen: "Abbrechen",
-        loeschen: "Regel löschen",
+        samePerson: "Jede Person darf in der Kette nur einmal vorkommen.",
+        stepNeedsPrevious: "Dieser Schritt setzt den vorherigen voraus.",
+        alreadyExists: "Für diese Kombination existiert bereits eine Regel.",
+        save: "Speichern",
+        saving: "Speichert …",
+        cancel: "Abbrechen",
+        delete: "Regel löschen",
       },
-      loeschen: {
+      delete: {
         title: "Regel löschen?",
         desc: "Die Regel wird deaktiviert, bleibt aber für die Historie nachvollziehbar.",
         grund: "Grund für das Löschen",
-        grundPlaceholder: "Grund",
-        bestaetigen: "Löschen",
-        abbrechen: "Abbrechen",
+        reasonPlaceholder: "Grund",
+        confirm: "Löschen",
+        cancel: "Abbrechen",
       },
       toast: {
-        gespeichert: "Gespeichert.",
-        geloescht: "Gelöscht.",
-        aktiviert: "Regel aktiviert.",
-        deaktiviert: "Regel ausgeschaltet.",
-        fehlgeschlagen: "Fehlgeschlagen: {{error}}",
-        unbekannterFehler: "Unbekannter Fehler",
+        saved: "Gespeichert.",
+        deleted: "Gelöscht.",
+        activated: "Regel aktiviert.",
+        deactivated: "Regel ausgeschaltet.",
+        failed: "Fehlgeschlagen: {{error}}",
+        unknownError: "Unbekannter Fehler",
       },
     },
     title: "Freigabe-Regeln",
     subtitle: "Wer prüft und freigibt, und ab welchem Betrag ein zweiter Schritt nötig ist.",
-    beliebig: "beliebig",
+    any: "beliebig",
     tab: {
-      genehmiger: "Genehmiger",
-      regeln: "Regeln",
+      approvers: "Genehmiger",
+      rules: "Regeln",
     },
     col: {
       name: "Name",
-      rolle: "Rolle",
-      bereich: "Bereich",
-      vertretung: "Vertretung",
-      eskalation: "Eskalation",
-      zahlung: "Zahlungsabwicklung",
-      aktionen: "Aktionen",
-      gesellschaft: "Gesellschaft",
-      lieferant: "Lieferant",
-      objekt: "Objekt",
-      mindestbetrag: "Mindestbetrag",
-      schritt1: "Schritt 1",
-      schritt2: "Schritt 2",
+      role: "Rolle",
+      area: "Bereich",
+      deputy: "Vertretung",
+      escalation: "Eskalation",
+      payment: "Zahlungsabwicklung",
+      actions: "Aktionen",
+      company: "Gesellschaft",
+      supplier: "Lieferant",
+      property: "Objekt",
+      minAmount: "Mindestbetrag",
+      step1: "Schritt 1",
+      step2: "Schritt 2",
     },
     // Area of responsibility (migration 0087; client: "each department head approves their own
     // area"). One combined field in the UI, split into approvers.area/covers_all_areas at save.
-    bereich: {
-      keiner: "Kein Bereich",
+    area: {
+      noneOption: "Kein Bereich",
       hospitality: "Hospitality",
       stay_re: "this client RE und Projekte",
-      alle: "Alle Bereiche",
+      all: "Alle Bereiche",
     },
-    leerGenehmiger: "Noch keine Genehmiger angelegt.",
-    leerRegeln: "Noch keine Regeln angelegt: jede Gesellschaft hat eine Standardkette.",
-    regelnHinweis:
+    emptyApprovers: "Noch keine Genehmiger angelegt.",
+    emptyRules: "Noch keine Regeln angelegt: jede Gesellschaft hat eine Standardkette.",
+    rulesHint:
       "Die spezifischste passende Regel gewinnt. Ohne passende Regel gilt die Standardkette der Gesellschaft.",
-    aktivTitle: "Aktiv/Inaktiv",
-    inaktivBadge: "Inaktiv",
-    keineVertretung: "Keine Vertretung",
-    tageAnzahl_one: "{{count}} Tag",
-    tageAnzahl_other: "{{count}} Tage",
+    activeTitle: "Aktiv/Inaktiv",
+    inactiveBadge: "Inaktiv",
+    noDeputy: "Keine Vertretung",
+    daysCount_one: "{{count}} Tag",
+    daysCount_other: "{{count}} Tage",
     paymentHandler: {
-      keine: "Nicht festgelegt",
+      none: "Nicht festgelegt",
       boss: "Vorgesetzter überweist selbst",
       account_holder: "Person mit Kontovollmacht",
     },
     feld: {
-      mitarbeiter: "Mitarbeiter",
-      mitarbeiterWaehlen: "Mitarbeiter wählen",
-      mitarbeiterLeer: "Noch keine Mitarbeiter angelegt: zuerst unter Team & Rollen anlegen.",
-      mitarbeiterAlleVergeben: "Alle Mitarbeiter sind bereits als Genehmiger angelegt.",
-      mitarbeiterHint:
-        "Nur Mitarbeiter, die unter Team & Rollen angelegt sind, stehen zur Auswahl.",
-      mitarbeiterFixiert:
+      employee: "Mitarbeiter",
+      chooseEmployee: "Mitarbeiter wählen",
+      noEmployees: "Noch keine Mitarbeiter angelegt: zuerst unter Team & Rollen anlegen.",
+      allEmployeesAssigned: "Alle Mitarbeiter sind bereits als Genehmiger angelegt.",
+      employeeHint: "Nur Mitarbeiter, die unter Team & Rollen angelegt sind, stehen zur Auswahl.",
+      employeeFixed:
         "Wer dieser Genehmiger ist, kann nachträglich nicht geändert werden, nur Vertretung, Eskalation und Zahlungsabwicklung.",
-      bereich: "Zuständigkeitsbereich",
-      bereichHint:
+      area: "Zuständigkeitsbereich",
+      areaHint:
         "Bestimmt, für welche Gesellschaften diese Person automatisch als Schritt 2 vorgeschlagen wird.",
-      bereichNurManager: "Nur für Genehmiger mit der Rolle „Vorgesetzter“ verfügbar.",
-      vertretung: "Vertretung (bei Abwesenheit)",
-      eskalation: "Eskalation nach (Tagen)",
-      eskalationPlaceholder: "z. B. 5",
-      eskalationUngueltig: "Bitte eine positive Anzahl Tage eingeben.",
-      zahlung: "Zahlungsabwicklung",
-      mindestbetrag: "Mindestbetrag (EUR)",
-      mindestbetragHint:
+      areaManagerOnly: "Nur für Genehmiger mit der Rolle „Vorgesetzter“ verfügbar.",
+      deputy: "Vertretung (bei Abwesenheit)",
+      escalation: "Eskalation nach (Tagen)",
+      escalationPlaceholder: "z. B. 5",
+      escalationInvalid: "Bitte eine positive Anzahl Tage eingeben.",
+      payment: "Zahlungsabwicklung",
+      minAmount: "Mindestbetrag (EUR)",
+      minAmountHint:
         "Diese Regel gilt für Belege ab diesem Betrag; 0 heißt für alle. Die Kette der Regel gilt immer ganz: für gestaffelte Freigaben zwei Regeln mit gleichem Geltungsbereich und verschiedenen Beträgen anlegen (die passende Regel mit dem höchsten Betrag gewinnt).",
-      schritt1: "Schritt 1 (Prüfung)",
-      schritt2: "Schritt 2 (Endgültige Freigabe)",
-      schritt2Auto: "Automatisch nach Zuständigkeitsbereich",
-      schritt2Ohne: "Einstufige Kette",
-      schritt2Hint:
+      step1: "Schritt 1 (Prüfung)",
+      step2: "Schritt 2 (Endgültige Freigabe)",
+      step2Auto: "Automatisch nach Zuständigkeitsbereich",
+      step2None: "Einstufige Kette",
+      step2Hint:
         "„Automatisch“ (empfohlen) gibt an den Genehmiger mit dem passenden Zuständigkeitsbereich der Gesellschaft weiter. Eine feste Person überschreibt das. „Einstufige Kette“ überspringt Schritt 2 vollständig.",
-      schritt2GleichWieSchritt1: "Schritt 2 darf nicht dieselbe Person wie Schritt 1 sein.",
-      schritt2AutoKoennteKollidieren:
+      step2SameAsStep1: "Schritt 2 darf nicht dieselbe Person wie Schritt 1 sein.",
+      step2AutoCouldCollide:
         "Achtung: Schritt 1 ist selbst einem Zuständigkeitsbereich zugeordnet: „Automatisch“ könnte auf dieselbe Person auflösen.",
-      schrittWaehlen: "Genehmiger wählen",
-      optionInaktiv: "deaktiviert",
-      genehmigerInaktiv:
+      chooseStep: "Genehmiger wählen",
+      optionInactive: "deaktiviert",
+      approverInactive:
         "{{name}} ist deaktiviert und kann nicht freigeben. Bitte unter „Team & Rollen“ reaktivieren oder eine andere Person wählen.",
-      schritt2OhneRecht:
+      step2NoRight:
         "{{name}} hat nicht das Recht „Endgültig freigeben“. Die Rechnung würde diesen Schritt erreichen, ohne dass jemand sie freigeben kann.",
     },
-    unbekannt: "Unbekannte Person",
+    unknown: "Unbekannte Person",
     scope: {
-      gesellschaft: "Gesellschaft",
-      lieferant: "Lieferant",
-      objekt: "Objekt",
+      company: "Gesellschaft",
+      supplier: "Lieferant",
+      property: "Objekt",
     },
-    neuerGenehmiger: {
+    newApprover: {
       button: "Neuer Genehmiger",
       title: "Neuer Genehmiger",
     },
-    genehmigerBearbeiten: {
+    editApprover: {
       title: "Genehmiger bearbeiten",
     },
-    neueRegel: {
+    newRule: {
       button: "Neue Regel",
       title: "Neue Regel",
       desc: "Gilt für die ausgewählte Kombination: mindestens ein Feld muss gesetzt sein.",
-      schonVorhanden: "Für diese Kombination existiert bereits eine Regel.",
+      alreadyExists: "Für diese Kombination existiert bereits eine Regel.",
     },
-    regelBearbeiten: {
+    editRule: {
       title: "Regel bearbeiten",
     },
-    loeschen: {
+    delete: {
       title: "Regel löschen?",
       desc: "Die Regel wird deaktiviert, bleibt aber für die Historie nachvollziehbar.",
-      grundPlaceholder: "Grund (optional)",
+      reasonPlaceholder: "Grund (optional)",
     },
-    genehmigerLoeschen: {
+    deleteApprover: {
       title: "Genehmiger löschen?",
       desc: "{{name}} wird in den Papierkorb verschoben und steht nicht mehr zur Auswahl. Bestehende Regeln, die diesen Namen nennen, bleiben unverändert.",
-      nochInRegeln:
+      stillInRules:
         "Achtung: {{count}} Freigabe-Regel(n) nennen diese Person weiterhin. Belege, die an diesem Schritt stehen, lassen sich danach von niemandem mehr weiterbewegen, bis die Regel geändert oder der Genehmiger wiederhergestellt wird.",
     },
     action: {
-      abbrechen: "Abbrechen",
-      speichern: "Speichern",
-      loeschen: "Löschen",
+      cancel: "Abbrechen",
+      save: "Speichern",
+      delete: "Löschen",
     },
-    sucheGenehmiger: "Genehmiger oder Vertretung suchen …",
-    sucheRegeln: "Nach Gesellschaft, Lieferant, Objekt oder Person suchen …",
+    searchApprover: "Genehmiger oder Vertretung suchen …",
+    searchRules: "Nach Gesellschaft, Lieferant, Objekt oder Person suchen …",
     toast: {
-      aktiviert: "Genehmiger aktiviert.",
-      deaktiviert: "Genehmiger deaktiviert.",
-      gespeichert: "Gespeichert.",
-      geloescht: "Gelöscht.",
-      fehlgeschlagen: "Fehlgeschlagen: {{error}}",
-      bereichKonflikt:
+      activated: "Genehmiger aktiviert.",
+      deactivated: "Genehmiger deaktiviert.",
+      saved: "Gespeichert.",
+      deleted: "Gelöscht.",
+      failed: "Fehlgeschlagen: {{error}}",
+      areaConflict:
         "Für „{{bereich}}“ gibt es bereits einen aktiven Genehmiger. Bitte diesen zuerst deaktivieren oder umverteilen.",
     },
   },
@@ -5752,45 +5640,44 @@ const de = {
   // DATEV handover (Briefing Screen 9).
   handover: {
     title: "DATEV-Übergabe",
-    leerGesellschaften: "Keine Gesellschaften vorhanden.",
-    leerFilter: "Keine Gesellschaft passt zu dieser Suche.",
-    suche: "Gesellschaft suchen …",
-    nie: "Noch nie",
-    letzterVersuchFehler: "Letzter Versuch fehlgeschlagen",
-    dateien: "{{count}} Dateien",
-    uebersprungenKurz: "{{count}} wird übersprungen",
-    richtungInaktiv: "noch nicht aktiv",
+    noCompanies: "Keine Gesellschaften vorhanden.",
+    noFilterMatch: "Keine Gesellschaft passt zu dieser Suche.",
+    search: "Gesellschaft suchen …",
+    never: "Noch nie",
+    lastAttemptFailed: "Letzter Versuch fehlgeschlagen",
+    files: "{{count}} Dateien",
+    skippedShort: "{{count}} wird übersprungen",
+    directionInactive: "noch nicht aktiv",
     summary: {
-      gesellschaften: "{{count}} Gesellschaften",
-      bereit: "{{count}} Datei(en) bereit",
-      gesendet: "{{count}} bereits gesendet",
-      offen: "{{count}} ohne Einrichtung",
+      companies: "{{count}} Gesellschaften",
+      ready: "{{count}} Datei(en) bereit",
+      sent: "{{count}} bereits gesendet",
+      pending: "{{count}} ohne Einrichtung",
     },
     bounce: {
       title: "{{count}} DATEV-Übergabe wurde nicht zugestellt",
       body: "Die E-Mail wurde angenommen, kam aber als unzustellbar zurück. Der Steuerberater hat sie nie erhalten. Die Belege stehen wieder auf der Liste. Bitte die Adresse prüfen, bevor erneut gesendet wird.",
-      belege: "{{count}} Belege",
-      erledigt: "Als erledigt markieren",
+      receipts: "{{count}} Belege",
+      markHandled: "Als erledigt markieren",
       toast: {
         ok: "Als erledigt markiert.",
-        fehlgeschlagen: "Fehlgeschlagen: {{error}}",
+        failed: "Fehlgeschlagen: {{error}}",
       },
     },
     export: {
       title: "Monatsexport",
       desc: "Alle Belege eines Monats als ZIP-Archiv herunterladen.",
-      gesellschaft: "Gesellschaft",
-      gesellschaftWaehlen: "Gesellschaft wählen",
-      monat: "Monat",
-      jahr: "Jahr",
-      hinweis:
-        "Das Archiv enthält alle Belege mit Belegdatum in diesem Monat, unabhängig vom Status, dazu eine Übersicht als CSV. Es wird nichts als an DATEV übergeben markiert.",
-      starten: "Archiv herunterladen",
-      laeuft: "Wird erstellt …",
-      fertig: "{{count}} Belege heruntergeladen.",
-      ergebnis: "{{included}} von {{total}} Belegen im Archiv.",
-      weitere: "und {{count}} weitere",
-      monatName: {
+      company: "Gesellschaft",
+      chooseCompany: "Gesellschaft wählen",
+      month: "Monat",
+      year: "Jahr",
+      hint: "Das Archiv enthält alle Belege mit Belegdatum in diesem Monat, unabhängig vom Status, dazu eine Übersicht als CSV. Es wird nichts als an DATEV übergeben markiert.",
+      start: "Archiv herunterladen",
+      running: "Wird erstellt …",
+      done: "{{count}} Belege heruntergeladen.",
+      result: "{{included}} von {{total}} Belegen im Archiv.",
+      more: "und {{count}} weitere",
+      monthName: {
         "1": "Januar",
         "2": "Februar",
         "3": "März",
@@ -5805,39 +5692,39 @@ const de = {
         "12": "Dezember",
       },
     },
-    spalte: {
-      gesellschaft: "Gesellschaft",
-      einrichtung: "DATEV-Einrichtung",
-      bereit: "Bereit zum Senden",
-      gesendet: "Gesendet",
-      zuletzt: "Zuletzt gesendet",
-      aktionen: "Aktionen",
+    col: {
+      company: "Gesellschaft",
+      setup: "DATEV-Einrichtung",
+      ready: "Bereit zum Senden",
+      sent: "Gesendet",
+      lastSent: "Zuletzt gesendet",
+      actions: "Aktionen",
     },
     status: {
-      eingerichtet: "Eingerichtet",
-      nichtEingerichtet: "Nicht eingerichtet",
-      pausiert: "Pausiert",
+      configured: "Eingerichtet",
+      notConfigured: "Nicht eingerichtet",
+      paused: "Pausiert",
     },
     filter: {
-      alle: "Alle",
-      eingerichtet: "Eingerichtet",
-      offen: "Nicht eingerichtet",
-      bereit: "Bereit zum Senden",
-      gesendet: "Bereits gesendet",
+      all: "Alle",
+      configured: "Eingerichtet",
+      pending: "Nicht eingerichtet",
+      ready: "Bereit zum Senden",
+      sent: "Bereits gesendet",
     },
-    aktion: {
-      anDatevSenden: "An DATEV senden",
-      monatsexport: "Monatsexport",
-      sammelversand: "Sammelversand",
-      senden: "Senden",
-      einrichten: "Einrichten",
-      einrichtungBearbeiten: "DATEV-Einrichtung bearbeiten",
-      verlaufAnzeigen: "Verlauf anzeigen",
-      abbrechen: "Abbrechen",
-      schliessen: "Schließen",
+    action: {
+      sendToDatev: "An DATEV senden",
+      monthlyExport: "Monatsexport",
+      bulkSend: "Sammelversand",
+      send: "Senden",
+      configure: "Einrichten",
+      editSetup: "DATEV-Einrichtung bearbeiten",
+      viewHistory: "Verlauf anzeigen",
+      cancel: "Abbrechen",
+      close: "Schließen",
     },
     setup: {
-      adresseFuer: {
+      addressFor: {
         incoming: "Adresse für Eingangsrechnungen",
         outgoing: "Adresse für Ausgangsrechnungen",
         other: "Adresse für sonstige Belege",
@@ -5845,53 +5732,53 @@ const de = {
       title: "DATEV-Einrichtung",
       titleEdit: "DATEV-Einrichtung bearbeiten",
       desc: "Legt fest, wohin die Belege dieser Gesellschaft gesendet werden.",
-      gesellschaft: "Gesellschaft",
-      adresse: "DATEV-Upload-Adresse",
-      adresseHilfe: "An diese Adresse werden die Belege dieser Gesellschaft gesendet.",
-      adresseVorhanden: "Gespeichert. Zum Ändern neue Adresse eingeben.",
-      aktivKurz: "Aktiv",
-      speichern: "Änderungen speichern",
-      gespeichert: "DATEV-Einrichtung gespeichert.",
-      fehlgeschlagen: "Speichern fehlgeschlagen: {{error}}",
+      company: "Gesellschaft",
+      address: "DATEV-Upload-Adresse",
+      addressHelp: "An diese Adresse werden die Belege dieser Gesellschaft gesendet.",
+      addressOnFile: "Gespeichert. Zum Ändern neue Adresse eingeben.",
+      activeShort: "Aktiv",
+      save: "Änderungen speichern",
+      saved: "DATEV-Einrichtung gespeichert.",
+      failed: "Speichern fehlgeschlagen: {{error}}",
     },
-    senden: {
+    send: {
       title: "Dateien an DATEV senden",
       desc: "Diese Dateien sind bereit für DATEV.",
-      descEine: "{{count}} Dateien von {{company}} sind bereit für DATEV.",
-      summe: "{{count}} Dateien bereit zum Senden",
-      auswahl: "{{count}} von {{total}} Dateien ausgewählt",
-      alleWaehlen: "Alle auswählen",
-      uebersprungen:
+      descOne: "{{count}} Dateien von {{company}} sind bereit für DATEV.",
+      total: "{{count}} Dateien bereit zum Senden",
+      selection: "{{count}} von {{total}} Dateien ausgewählt",
+      selectAll: "Alle auswählen",
+      skipped:
         "{{count}} Dateien werden übersprungen: Die hinterlegte Datei ist für DATEV nicht geeignet.",
-      leer: "Zurzeit ist keine Datei bereit.",
-      laeuft: "Wird gesendet …",
-      laeuftCompany: "{{company}} wird gesendet …",
+      empty: "Zurzeit ist keine Datei bereit.",
+      running: "Wird gesendet …",
+      runningCompany: "{{company}} wird gesendet …",
       resultTitle: "An DATEV gesendet",
       resultDesc: "Ergebnis je Gesellschaft.",
       result: {
-        gesendet: "{{count}} Dateien gesendet",
-        fehlgeschlagen: "Fehlgeschlagen",
-        mails: "{{count}} E-Mails · {{size}}",
-        uebersprungen: "{{count}} Dateien übersprungen",
+        sent: "{{count}} Dateien gesendet",
+        failed: "Fehlgeschlagen",
+        emails: "{{count}} E-Mails · {{size}}",
+        skipped: "{{count}} Dateien übersprungen",
       },
     },
-    blockGrund: {
+    blockReason: {
       "no-file": "Keine Datei hinterlegt",
       unsupported: "Dateityp ungeeignet",
       "too-large": "Datei zu groß",
     },
-    verlauf: {
+    history: {
       title: "Übergabe-Verlauf",
-      gesendetTitel: "Gesendet",
-      uebersprungenTitel: "{{count}} Belege wurden übersprungen",
-      uebersprungenHilfe:
+      sentTitle: "Gesendet",
+      skippedTitle: "{{count}} Belege wurden übersprungen",
+      skippedHelp:
         "Diese Belege wurden bei der letzten Übergabe nicht mitgesendet und bleiben offen, bis die Datei in Ordnung ist.",
-      leer: "Für diese Gesellschaft wurde noch nichts an DATEV gesendet.",
-      zeile: "{{count}} Dateien · {{size}}",
+      empty: "Für diese Gesellschaft wurde noch nichts an DATEV gesendet.",
+      row: "{{count}} Dateien · {{size}}",
       status: { success: "Abgeschlossen", error: "Fehlgeschlagen", bounced: "Nicht zugestellt" },
-      von: "durch {{who}}",
+      by: "durch {{who}}",
     },
-    richtung: {
+    direction: {
       incoming: "Eingangsrechnungen",
       outgoing: "Ausgangsrechnungen",
       other: "Sonstiges",
@@ -5900,91 +5787,90 @@ const de = {
 
   // Reports (Auswertungen).
   reports: {
-    ustUngeklaert: {
-      karte_one:
+    vatUnresolved: {
+      card_one:
         "{{count}} Beleg über {{amount}} braucht noch die Angabe, ob die Vorsteuer abziehbar ist.",
-      karte_other:
+      card_other:
         "{{count}} Belege über {{amount}} brauchen noch die Angabe, ob die Vorsteuer abziehbar ist.",
-      titel: "Vorsteuer noch ungeklärt",
-      hinweis:
-        "Solange offen ist, ob die Vorsteuer erstattet wird, ist auch offen, mit welchem Betrag diese Belege in die Kosten eingehen. Die Angabe wird im Beleg selbst gesetzt. Dafür einen Beleg unten öffnen.",
+      title: "Vorsteuer noch ungeklärt",
+      hint: "Solange offen ist, ob die Vorsteuer erstattet wird, ist auch offen, mit welchem Betrag diese Belege in die Kosten eingehen. Die Angabe wird im Beleg selbst gesetzt. Dafür einen Beleg unten öffnen.",
     },
-    aufschluesselung: {
-      untertitel: "Kategorien und die Belege dahinter ansehen.",
-      betriebskosten: "Betriebskosten",
-      material: "Material und Waren",
-      spalteKategorie: "Kategorie",
-      spalteAnteil: "Anteil",
-      spalteAnzahl: "Belege",
-      spalteBeleg: "Lieferant / Beschreibung",
-      spalteDatum: "Datum",
-      spalteBetrag: "Betrag",
-      summe: "Summe {{group}}",
-      schliessen: "Schließen",
-      gesamtbetrag: "Gesamtbetrag",
-      anzahl_one: "{{count}} Beleg",
-      anzahl_other: "{{count}} Belege",
-      platzhalter: "Eine Kategorie links auswählen, um die einzelnen Belege zu sehen.",
-      keineEintraege: "Zu dieser Kategorie gibt es im gewählten Zeitraum keine Belege.",
-      gesamtkosten: "Gesamtkosten (beide Gruppen)",
-      direktAufKategorie: "Ohne Unterkategorie",
-      materialUntertitel: "nach Unterkategorie",
+    breakdown: {
+      subtitle: "Kategorien und die Belege dahinter ansehen.",
+      operatingCosts: "Betriebskosten",
+      materials: "Material und Waren",
+      colCategory: "Kategorie",
+      colShare: "Anteil",
+      colCount: "Belege",
+      colSupplier: "Lieferant / Beschreibung",
+      colDate: "Datum",
+      colAmount: "Betrag",
+      total: "Summe {{group}}",
+      close: "Schließen",
+      totalAmount: "Gesamtbetrag",
+      count_one: "{{count}} Beleg",
+      count_other: "{{count}} Belege",
+      placeholder: "Eine Kategorie links auswählen, um die einzelnen Belege zu sehen.",
+      noEntries: "Zu dieser Kategorie gibt es im gewählten Zeitraum keine Belege.",
+      totalCosts: "Gesamtkosten (beide Gruppen)",
+      directOnCategory: "Ohne Unterkategorie",
+      materialSubtitle: "nach Unterkategorie",
     },
     infoLabel: "Über diese Auswertung",
     title: "Kostenanalyse",
     subtitle: "Umsatz, Kosten und Betriebsergebnis für den gewählten Zeitraum.",
     // Also used by manuelle-buchungen/index.tsx for its own month-picker — not specific to this page.
-    monate: ["Jan", "Feb", "Mär", "Apr", "Mai", "Jun", "Jul", "Aug", "Sep", "Okt", "Nov", "Dez"],
+    months: ["Jan", "Feb", "Mär", "Apr", "Mai", "Jun", "Jul", "Aug", "Sep", "Okt", "Nov", "Dez"],
     disclosure:
       "Diese Zahlen beruhen auf abgeglichenen Belegen und manuell erfassten Kosten. Sie sind keine geprüfte BWA.",
     accessNotice: "Diese Auswertung ist für die Geschäftsführung gedacht.",
     filter: {
       // Über jedem Filter, damit ein gesetzter Filter noch sagt, welche Dimension er einschränkt.
       // "IMKO · Immo Kontor" allein verrät nicht mehr, dass es der Gesellschaftsfilter ist.
-      labelGesellschaft: "Gesellschaft",
+      labelCompany: "Gesellschaft",
       button: "Filter",
       title: "Filter",
-      labelObjekt: "Objekt",
-      labelKategorie: "Kategorie",
-      labelKonto: "Konto",
-      labelZeitraum: "Zeitraum",
-      zeitraumBereich: "{{fromDate}} bis {{toDate}}",
-      zeitraumOhneGrenze: "Gesamter erfasster Zeitraum",
+      labelProperty: "Objekt",
+      labelCategory: "Kategorie",
+      labelAccount: "Konto",
+      labelPeriod: "Zeitraum",
+      periodRange: "{{fromDate}} bis {{toDate}}",
+      periodUnbounded: "Gesamter erfasster Zeitraum",
       imkoImgm: "IMKO + IMGM",
-      alleGesellschaften: "Alle Gesellschaften",
-      alleObjekte: "Alle Objekte",
-      alleKategorien: "Alle Kategorien",
-      alleKonten: "Alle Konten",
-      allePerioden: "Alle Perioden",
-      vormonat: "Vormonat",
-      vorjahr: "Vorjahr",
+      allCompanies: "Alle Gesellschaften",
+      allProperties: "Alle Objekte",
+      allCategories: "Alle Kategorien",
+      allAccounts: "Alle Konten",
+      allPeriods: "Alle Perioden",
+      previousMonth: "Vormonat",
+      previousYear: "Vorjahr",
       // Vormonat/Vorjahr sind relativ. Steht in der Liste schon derselbe konkrete Zeitraum, wird
       // dieser mit dem Zusatz beschriftet, statt zweimal derselbe Wert angeboten zu werden.
-      vormonatZusatz: "{{label}} (Vormonat)",
-      vorjahrZusatz: "{{label}} (Vorjahr)",
-      zuruecksetzen: "Filter zurücksetzen",
+      previousMonthSuffix: "{{label}} (Vormonat)",
+      previousYearSuffix: "{{label}} (Vorjahr)",
+      reset: "Filter zurücksetzen",
     },
-    summe: {
-      umsatz: "Umsatz",
-      gesamtkosten: "Gesamtkosten",
-      betriebsergebnis: "Betriebsergebnis",
-      marge: "Marge",
-      vomUmsatz: "vom Umsatz",
+    total: {
+      revenue: "Umsatz",
+      totalCosts: "Gesamtkosten",
+      operatingResult: "Betriebsergebnis",
+      margin: "Marge",
+      ofRevenue: "vom Umsatz",
       // Die drei Zahlen gehen exakt auf: Umsatz minus Gesamtkosten ergibt das Betriebsergebnis.
-      erklaerungUmsatz:
+      explainRevenue:
         "Alle Erlöse des Zeitraums, netto. Es zählen nur Ausgangsrechnungen, die als bezahlt abgeglichen sind.",
-      erklaerungGesamtkosten:
+      explainTotalCosts:
         "Alle Kosten des Zeitraums zusammen: Material und Waren plus sämtliche Betriebskosten.",
-      erklaerungBetriebsergebnis:
+      explainOperatingResult:
         "Umsatz minus Gesamtkosten. Was das laufende Geschäft im gewählten Zeitraum übrig lässt.",
-      vergleichGegen: "ggü. {{label}}",
-      vergleichUnveraendert: "unverändert ggü. {{label}}",
-      margeErklaerung:
+      comparedTo: "ggü. {{label}}",
+      comparedUnchanged: "unverändert ggü. {{label}}",
+      marginExplain:
         "Von {{umsatz}} Umsatz bleiben hier {{wert}} übrig. Das entspricht {{prozent}} % des Umsatzes.",
-      kostenanteilErklaerung:
+      costShareExplain:
         "Von {{umsatz}} Umsatz gehen {{wert}} für Kosten weg. Das entspricht {{prozent}} % des Umsatzes.",
-      margenHinweisTitel: "Warum keine Marge angezeigt wird:",
-      margenHinweisText:
+      marginHintTitle: "Warum keine Marge angezeigt wird:",
+      marginHintText:
         "Margen sind ein Anteil am Umsatz. Da im gewählten Zeitraum kein Umsatz erfasst ist, lässt sich keine Marge berechnen.",
     },
     // Net is the standard: VAT is a pass-through item and belongs in no evaluation line.
@@ -5993,11 +5879,11 @@ const de = {
       label: "Netto oder brutto",
       net: "Netto",
       gross: "Brutto",
-      gruppe: "Beträge",
-      erklaerungTitel: "Wie die Beträge gezählt werden",
-      erklaerungNetto:
+      group: "Beträge",
+      explainTitle: "Wie die Beträge gezählt werden",
+      explainNet:
         "Beträge ohne Umsatzsteuer. Bei Kosten wird die Vorsteuer mitgezählt, die nicht erstattet wird. Standard, weil die Umsatzsteuer nur durchläuft und kein Ertrag und kein Aufwand ist.",
-      erklaerungBrutto:
+      explainGross:
         "Beträge genau so, wie sie auf der Rechnung stehen, inklusive Umsatzsteuer. Sinnvoll, wenn die Vorsteuer nicht erstattet wird und der volle Betrag wirklich getragen wird.",
     },
     kpi: {
@@ -6006,121 +5892,121 @@ const de = {
       // (Rohertrag)" — eine Kachel, die -135,00 € zeigte, während unterm Strich -13.605,41 €
       // standen. Wer die BWA kennt, findet den Begriff weiterhin; wer sie nicht kennt, muss ihn
       // nicht mehr kennen.
-      rohertrag: "Einnahmen minus Material",
-      rohertragErklaerung:
+      grossProfit: "Einnahmen minus Material",
+      grossProfitExplain:
         "Was von den Einnahmen übrig bleibt, wenn nur Material und Wareneinsatz abgezogen sind. Alle übrigen Kosten wie Personal, Raum oder Reparaturen stecken hier noch drin. In der Tabelle unten heißt diese Zeile „Rohertrag“.",
-      betriebsergebnis: "Ergebnis aus dem Betrieb",
-      betriebsergebnisErklaerung:
+      operatingResult: "Ergebnis aus dem Betrieb",
+      operatingResultExplain:
         "Was das laufende Geschäft übrig lässt, nachdem alle Betriebskosten abgezogen sind: Personal, Raum, Versicherungen, Reparaturen und so weiter. Zinsen und Steuern fehlen noch. In der Tabelle unten heißt diese Zeile „Betriebsergebnis“.",
-      vorlaeufigesErgebnis: "Unterm Strich",
-      vorlaeufigesErgebnisErklaerung:
+      preliminaryResult: "Unterm Strich",
+      preliminaryResultExplain:
         "Das Ergebnis nach allen Kosten, Zinsen und Steuern. Vorläufig, weil nur vollständig abgeglichene Belege zählen. In der Tabelle unten heißt diese Zeile „Vorläufiges Ergebnis“.",
-      ust: "Umsatzsteuer",
+      vat: "Umsatzsteuer",
       // Regel 1 des Briefings: die USt ist ein durchlaufender Posten und gehört in keine
       // Auswertungszeile. Sie wird daneben ausgewiesen, nicht eingerechnet.
-      ustErklaerung:
+      vatExplain:
         "Die Umsatzsteuer auf den Belegen dieses Zeitraums. Sie ist weder Gewinn noch Kosten, sie läuft nur durch: Sie ziehen sie als Vorsteuer ab oder führen sie ab. Deshalb steht sie neben dem Ergebnis und nicht darin.",
-      offenePostenErklaerung:
+      openItemsExplain:
         "Rechnungen, die noch offen sind, eingehende wie ausgehende. Sie zählen noch nicht ins Ergebnis, weil sie noch nicht bezahlt oder noch nicht mit dem Kontoauszug abgeglichen sind. Zum Öffnen der Liste anklicken.",
-      nichtZugeordnetErklaerung:
+      unassignedExplain:
         "Abgeglichene Belege, denen noch niemand eine Kategorie gegeben hat. Sie gehören in keine Zeile der Auswertung und fehlen deshalb in jedem Ergebnis oben. Aufklappen können Sie sie unten in der Tabelle.",
-      nichtGuvErklaerung:
+      notPnlExplain:
         "Beträge, die bewusst aus der Ergebnisrechnung herausgehalten werden, etwa Durchlaufposten oder Privatentnahmen.",
       // Mit Betrag: die Kopfzahl der Kachel muss sich erklären. "939,01 €" über
       // "0,00 € abzugsfähig · 0,00 € nicht abzugsfähig" liest sich wie eine berechnete Aufteilung,
       // gemeint ist aber "für diesen Betrag ist die Abzugsfähigkeit noch ungeklärt".
-      nichtZugeordnet: "Ohne Kategorie",
+      unassigned: "Ohne Kategorie",
       // Aufklapp-Bucket der Umsatzlinie (Migration 0045) — Ausgangsrechnungen haben keine
       // Feinkategorie, das ist also NICHT dasselbe wie "nicht zugeordnet" bei Kosten.
-      ausgangsrechnungen: "Ausgangsrechnungen",
-      nichtGuv: "Zählt nicht ins Ergebnis",
-      offenePosten: "Unbezahlte Rechnungen",
+      outgoingInvoices: "Ausgangsrechnungen",
+      notPnl: "Zählt nicht ins Ergebnis",
+      openItems: "Unbezahlte Rechnungen",
       // Rohertrag & Co. rechnen Umsatz gegen Kosten. Fällt der Umsatz durch einen Filter weg, ist
       // die Zahl nur noch die Kostenseite und trägt trotzdem den Namen "Rohertrag".
-      ohneUmsatzHinweis: "Ohne Umsatzerlöse, nur Kostenseite",
-      ustAufteilung:
+      noRevenueHint: "Ohne Umsatzerlöse, nur Kostenseite",
+      vatSplit:
         "Davon bekommen Sie {{deductible}} als Vorsteuer vom Finanzamt zurück. {{nondeductible}} tragen Sie selbst, weil dafür kein Vorsteuerabzug möglich ist.",
-      ustHinweisLang:
+      vatHintLong:
         "Umsatzsteuer ist weder Einnahme noch Kosten: Sie ziehen sie für das Finanzamt ein und geben sie weiter. Deshalb steckt sie in keiner Zahl oben drin.",
     },
     chart: {
       // Die Tabelle nennt die Zahlen, sie sagt aber nicht, dass eine Zeile 98 % von allem ist.
-      titel: "Kostenverteilung",
-      verlaufTitel: "Umsatz vs. Kosten",
-      rest: "Übrige Kategorien",
-      kosten: "Kosten",
-      verlaufUntertitel: "Zeigt, ob der Umsatz die Kosten im jeweiligen Zeitraum gedeckt hat.",
-      gewinn: "Gewinn",
-      verlust: "Verlust",
-      gewinnFlaeche: "Grüne Fläche = Gewinn (Umsatz über Kosten)",
-      verlustFlaeche: "Rote Fläche = Verlust (Kosten über Umsatz)",
+      title: "Kostenverteilung",
+      historyTitle: "Umsatz vs. Kosten",
+      other: "Übrige Kategorien",
+      costs: "Kosten",
+      historySubtitle: "Zeigt, ob der Umsatz die Kosten im jeweiligen Zeitraum gedeckt hat.",
+      profit: "Gewinn",
+      loss: "Verlust",
+      profitArea: "Grüne Fläche = Gewinn (Umsatz über Kosten)",
+      lossArea: "Rote Fläche = Verlust (Kosten über Umsatz)",
     },
-    spalte: {
+    col: {
       // "BWA-Linie" war Fachsprache in der Spaltenüberschrift. Die Zeilennamen selbst bleiben
       // DATEV-Wortlaut, die Überschrift muss es nicht sein.
-      linie: "Position",
-      betrag: "Betrag",
-      vorperiode: "Vorperiode ({{label}})",
-      differenz: "Differenz",
+      lineItem: "Position",
+      amount: "Betrag",
+      priorPeriod: "Vorperiode ({{label}})",
+      difference: "Differenz",
     },
-    ohneKategorie: {
+    noCategory: {
       // Der Betrag steht NICHT in den Gesamtkosten oben. Der Text muss das sagen, ohne zu
       // suggerieren, dass er dort schon enthalten wäre.
-      titel: "Braucht Kategorie",
+      title: "Braucht Kategorie",
       // Diese Belege laufen in KEINE Zeile der Auswertung ein. Der Hinweis muss sagen, dass die
       // Zahlen oben deshalb unvollständig sind, und nicht nur, dass es die Belege gibt.
-      warnung_one: "{{amount}} aus {{count}} Beleg ohne Kategorie fehlen in allen Zahlen oben.",
-      warnung_other: "{{amount}} aus {{count}} Belegen ohne Kategorie fehlen in allen Zahlen oben.",
+      warning_one: "{{amount}} aus {{count}} Beleg ohne Kategorie fehlen in allen Zahlen oben.",
+      warning_other: "{{amount}} aus {{count}} Belegen ohne Kategorie fehlen in allen Zahlen oben.",
       hinweis_one:
         "Diesem Beleg fehlt eine Kategorie, deshalb zählt er in keiner Zeile oben mit. Zum Öffnen anklicken und dort eine Kategorie setzen.",
       hinweis_other:
         "Diesen {{count}} Belegen fehlt eine Kategorie, deshalb zählen sie in keiner Zeile oben mit. Zum Öffnen anklicken und dort eine Kategorie setzen.",
     },
-    belegListe: {
-      weitere: "{{count}} weitere werden geladen …",
+    receiptList: {
+      more: "{{count}} weitere werden geladen …",
     },
-    glossar: {
-      oeffnen: "Was bedeuten diese Zeilen?",
-      titel: "Die Zeilen der Auswertung",
-      untertitel: "Die Bezeichnungen stammen aus der DATEV-BWA. Hier stehen sie im Klartext.",
+    glossary: {
+      open: "Was bedeuten diese Zeilen?",
+      title: "Die Zeilen der Auswertung",
+      subtitle: "Die Bezeichnungen stammen aus der DATEV-BWA. Hier stehen sie im Klartext.",
     },
-    tabelle: {
-      titel: "Aufschlüsselung",
-      untertitel: "So entsteht das Ergebnis. Einzelne Kostenkategorien lassen sich aufklappen.",
-      nurMitBetrag: "Nur Kategorien mit Beträgen",
-      alleZeilen: "Alle Kategorien anzeigen",
-      ausgeblendet_one: "{{count}} Zeile ohne Betrag ausgeblendet",
-      ausgeblendet_other: "{{count}} Zeilen ohne Betrag ausgeblendet",
-      nichtImErgebnis: "Nicht im Ergebnis enthalten",
+    table: {
+      title: "Aufschlüsselung",
+      subtitle: "So entsteht das Ergebnis. Einzelne Kostenkategorien lassen sich aufklappen.",
+      amountOnly: "Nur Kategorien mit Beträgen",
+      allRows: "Alle Kategorien anzeigen",
+      hidden_one: "{{count}} Zeile ohne Betrag ausgeblendet",
+      hidden_other: "{{count}} Zeilen ohne Betrag ausgeblendet",
+      notInResult: "Nicht im Ergebnis enthalten",
     },
     export: {
       csv: "CSV exportieren",
       // Zeilenbeschriftungen im Kopf der CSV-Datei: die Datei muss festhalten, WONACH gefiltert
       // wurde, sonst ist ein gespeicherter Export eine Woche später nicht mehr zuzuordnen.
-      filterGesellschaft: "Gesellschaft",
-      filterObjekt: "Objekt",
-      filterKategorie: "Kategorie",
-      filterKonto: "Konto",
-      filterZeitraum: "Zeitraum",
+      filterCompany: "Gesellschaft",
+      filterProperty: "Objekt",
+      filterCategory: "Kategorie",
+      filterAccount: "Konto",
+      filterPeriod: "Zeitraum",
     },
-    manuelleBuchung: "Manuelle Buchung",
-    nichtEingeteilt:
+    manualBooking: "Manuelle Buchung",
+    notInPeriod:
       "{{count}} Beleg(e) ohne gültiges Buchungsdatum im aktuellen Zeitraum ausgeschlossen.",
-    kontoAusschluss:
+    accountExclusion:
       "{{count}} manuelle Buchung(en) haben kein Konto und sind beim aktiven Konto-Filter ausgeschlossen.",
     // LexOffice liefert beim Sync nicht immer eine Steueraufschlüsselung — dann zählt die
     // Ausgangsrechnung mit ihrem Bruttobetrag statt Netto, damit der Umsatz nie einfach auf 0 fällt.
-    ausgangNettoUngeklaert:
+    outgoingNetUnresolved:
       "{{count}} Ausgangsrechnung(en) ohne bekannten Nettobetrag, mit Bruttobetrag verbucht.",
     // Kostenseitiges Gegenstück. Vorher trug ein abgeglichener Beleg ohne Nettobetrag stillschweigend
     // 0,00 € zur Auswertung bei — er zählte als "im Umfang" und buchte dann nichts.
-    kostenNettoUngeklaert:
+    costNetUnresolved:
       "{{count}} abgeglichene(r) Beleg(e) ohne bekannten Nettobetrag, mit Bruttobetrag verbucht.",
     // Ausgangsrechnungen tragen weder Objekt noch abgeglichenes Konto. Beide Filter entfernen den
     // Umsatz daher vollständig — das muss über den Kacheln stehen, nicht nur in einer grauen Zeile.
-    umsatzDurchFilterAusgeblendet:
+    revenueHiddenByFilter:
       "Objekt- bzw. Konto-Filter aktiv: {{count}} Ausgangsrechnung(en) und damit sämtliche Umsatzerlöse sind ausgeschlossen. Rohertrag und Ergebnis zeigen nur die Kostenseite.",
-    zeile: {
+    row: {
       revenue: "Umsatzerlöse",
       change_in_inventory: "Bestandsveränderung",
       capitalized_own_work: "Aktivierte Eigenleistungen",
@@ -6161,12 +6047,12 @@ const de = {
     // Erklärung kommt daneben, nicht an ihre Stelle.
     // Eine Zeile Klartext unter den beiden Ergebniszeilen. Der DATEV-Name bleibt stehen, das hier
     // ist das, was ihn ohne Buchhaltungskenntnisse lesbar macht.
-    zeileKurz: {
+    rowShort: {
       gross_profit: "Umsatz minus Material und Waren",
       operating_result: "Nach allen laufenden Kosten",
       preliminary_result: "Nach Zinsen und Steuern",
     },
-    zeileHinweis: {
+    rowHint: {
       revenue: "Was Sie Ihren Kunden in Rechnung gestellt haben, netto und bereits bezahlt.",
       change_in_inventory:
         "Veränderung der eigenen Bestände. In diesem Betrieb üblicherweise null.",
@@ -6207,17 +6093,17 @@ const de = {
   bankAccountForm: {
     field: {
       name: "Kontobezeichnung",
-      gesellschaft: "Gesellschaft",
-      gesellschaftKeine: "Keine Gesellschaft",
-      gesellschaftWarnung:
+      company: "Gesellschaft",
+      companyNone: "Keine Gesellschaft",
+      companyWarning:
         "Ohne Gesellschaft sind die Umsätze dieses Kontos für alle angemeldeten Benutzer sichtbar und fehlen in gesellschaftsbezogenen Auswertungen.",
       iban: "IBAN",
       bic: "BIC",
       bank: "Kreditinstitut",
       holder: "Kontoinhaber",
-      art: "Art",
-      artPlaceholder: "Art auswählen …",
-      waehrung: "Währung",
+      type: "Art",
+      typePlaceholder: "Art auswählen …",
+      currency: "Währung",
     },
     invalid: {
       nameMissing: "Bitte eine Kontobezeichnung angeben.",
@@ -6240,104 +6126,104 @@ const de = {
   bankAccounts: {
     // The "Manuell angelegt" tab with nothing in it. Not a fault: most Hubs get every account
     // through a bank connection, and this tab exists so one can be added without one.
-    emptyManuell: {
+    emptyManual: {
       title: "Keine Konten ohne Bankverbindung",
     },
     title: "Bankkonten",
     // The two subjects on this screen. "Bankkonten" and not "BANKSapi": the provider is an
     // implementation detail of how the rows arrive, the tab names what the reader is looking at.
     tab: {
-      konten: "BANKSapi",
+      accounts: "BANKSapi",
       // Not "Manuell angelegt": some of these were seeded with their IBAN so a future connection
       // adopts them rather than inserting a duplicate, and nobody typed those in. What they have in
       // common is that no connection delivers them.
-      manuell: "Manuell angelegt",
+      manual: "Manuell angelegt",
       pleo: "Pleo",
     },
-    verbindungen_one: "{{count}} Bankverbindung",
-    verbindungen_other: "{{count}} Bankverbindungen",
+    connections_one: "{{count}} Bankverbindung",
+    connections_other: "{{count}} Bankverbindungen",
     // Group headers of the accounts table. Each connection is one group; the two buckets below it
     // are the accounts that belong to no readable connection.
-    gruppe: {
-      konten_one: "{{count}} Konto",
-      konten_other: "{{count}} Konten",
-      andere: "Weitere Konten",
-      unbekannteBank: "Unbenannte Bankverbindung",
-      letzterSync: "Letzter Abgleich {{datum}}",
-      verbundenVon: "verbunden von {{name}}",
-      verbundenVonUnbekannt: "wer verbunden hat, ist nicht erfasst",
+    group: {
+      accounts_one: "{{count}} Konto",
+      accounts_other: "{{count}} Konten",
+      other: "Weitere Konten",
+      unknownBank: "Unbenannte Bankverbindung",
+      lastSync: "Letzter Abgleich {{datum}}",
+      connectedBy: "verbunden von {{name}}",
+      connectedByUnknown: "wer verbunden hat, ist nicht erfasst",
     },
     col: {
-      konto: "Konto",
-      gesellschaft: "Gesellschaft",
+      account: "Konto",
+      company: "Gesellschaft",
       iban: "IBAN",
       bank: "Kreditinstitut",
-      art: "Art",
-      anbindung: "Anbindung",
+      type: "Art",
+      connection: "Anbindung",
     },
-    karten: {
-      suche: "Mitarbeiter, E-Mail oder Position suchen …",
+    cards: {
+      search: "Mitarbeiter, E-Mail oder Position suchen …",
       // The list comes live from Pleo, so "nobody" means nobody has a Pleo account, not that
       // nothing has been imported yet.
-      keineMitarbeiter: "Keine Mitarbeiter bei Pleo",
-      ohneName: "Ohne Namen",
+      noEmployees: "Keine Mitarbeiter bei Pleo",
+      noName: "Ohne Namen",
       col: {
-        mitarbeiter: "Mitarbeiter",
+        employee: "Mitarbeiter",
         email: "E-Mail",
         position: "Position",
         code: "Personalnummer",
       },
       dialog: {
         // Not "Karte bearbeiten": there is one row for the whole Pleo programme, not one per card.
-        titel: "Pleo bearbeiten",
+        title: "Pleo bearbeiten",
         button: "Pleo bearbeiten",
         // The same control, when there is no company yet. Naming the gap rather than the action,
         // because an unassigned programme means every Pleo movement is readable by everyone.
-        zuordnen: "Gesellschaft zuordnen",
+        assign: "Gesellschaft zuordnen",
         text: "Zu welcher Gesellschaft die Pleo-Ausgaben gehören. Alle Umsätze folgen dieser Zuordnung.",
-        gesellschaftPlaceholder: "Gesellschaft auswählen …",
-        gesellschaftHinweis: "Gilt für alle Umsätze dieser Karte.",
+        companyPlaceholder: "Gesellschaft auswählen …",
+        companyHint: "Gilt für alle Umsätze dieser Karte.",
         toastSaved: "Pleo aktualisiert.",
       },
     },
-    keineGesellschaft: "Keine Gesellschaft",
-    ohneGesellschaftTitle:
+    noCompany: "Keine Gesellschaft",
+    noCompanyTitle:
       "Ohne Gesellschaft sind die Umsätze dieses Kontos für ALLE angemeldeten Benutzer sichtbar, auch für auf eine Gesellschaft eingeschränkte. Außerdem fehlt das Konto in jeder gesellschaftsbezogenen Auswertung.",
-    namensdubletteTitle:
+    duplicateNameTitle:
       "Mehrere Konten tragen diesen Namen. Der Name kommt von BANKSapi und ist die Produktart, keine Bezeichnung. Über „Bearbeiten“ umbenennen; der Name bleibt dann beim nächsten Abgleich erhalten.",
-    keineTreffer: {
+    noMatches: {
       title: "Keine Treffer",
       hint: "Kein Konto passt zu Suche und Filtern. Suchbegriff ändern oder Filter zurücksetzen.",
     },
     filter: {
-      suche: "Konten suchen (Name, IBAN, Inhaber) …",
+      search: "Konten suchen (Name, IBAN, Inhaber) …",
       button: "Filter",
       title: "Konten filtern",
       // On and off is the only state an account has, so that is what the filter says. It used to
       // read Aktiv | Entfernt, over excluded_at, which meant a switched-off account was an "Aktiv"
       // row and the word was doing double duty.
       status: "Status",
-      statusAktiv: "Aktive Konten",
-      statusInaktiv: "Inaktive Konten",
-      statusAlle: "Alle Konten",
-      alleGesellschaften: "Alle Gesellschaften",
-      alleBanksapi: "Alle Anbindungen",
-      nurSandbox: "Nur Sandbox-Konten",
-      zuruecksetzen: "Filter zurücksetzen",
+      statusActive: "Aktive Konten",
+      statusInactive: "Inaktive Konten",
+      statusAll: "Alle Konten",
+      allCompanies: "Alle Gesellschaften",
+      allConnectionStates: "Alle Anbindungen",
+      sandboxOnly: "Nur Sandbox-Konten",
+      reset: "Filter zurücksetzen",
     },
     // On/off for a single account. Deliberately not called "löschen": a BANKSapi-fed account
     // cannot be deleted at the source, so the next Abgleich would bring it straight back.
-    aktiv: {
+    active: {
       label: "Konto aktiv",
-      ausschalten: "Konto deaktivieren: keine neuen Umsätze mehr importieren",
-      einschalten: "Konto wieder aktivieren: Umsätze werden wieder importiert",
-      inaktivTitle:
+      deactivate: "Konto deaktivieren: keine neuen Umsätze mehr importieren",
+      reactivate: "Konto wieder aktivieren: Umsätze werden wieder importiert",
+      inactiveTitle:
         "Deaktiviert. Bereits importierte Umsätze bleiben erhalten, es kommen aber keine neuen mehr dazu.",
-      toastAn: "Konto wieder aktiv.",
-      toastAus: "Konto deaktiviert.",
-      toastAusHinweis:
+      toastOn: "Konto wieder aktiv.",
+      toastOff: "Konto deaktiviert.",
+      toastOffHint:
         "Bereits importierte Umsätze bleiben erhalten. Der nächste Abgleich holt für dieses Konto nichts Neues.",
-      toastFehler: "Umschalten fehlgeschlagen: {{error}}",
+      toastError: "Umschalten fehlgeschlagen: {{error}}",
     },
     // Detaching a whole bank. "Löschen" would be the wrong word: the accounts live at BANKSapi and
     // our tables mirror them, so what happens is that the ACCESS is removed at the bank.
@@ -6345,54 +6231,54 @@ const de = {
     // live there and our tables mirror them, so what happens is that the ACCESS is removed.
     // Detaching a whole bank. Nothing leaves the database: the access is removed at BANKSapi and
     // everything it delivered is hidden, so a reconnect brings the accounts back untouched.
-    trennen: {
+    disconnect: {
       button: "Trennen",
-      titel: "Verbindung zu {{bank}} trennen?",
+      title: "Verbindung zu {{bank}} trennen?",
       text: "Der Zugang wird zuerst bei der Bank entfernt. Schlägt das fehl, passiert hier nichts. Danach verschwindet alles, was diese Verbindung geliefert hat, aus dem Hub. Gelöscht wird nichts: Wird dieselbe Bank später erneut verbunden, kommen die Konten mit Gesellschaft, Namen und Einstellungen zurück, die alten Umsätze bleiben ausgeblendet und nur neue kommen hinzu.",
-      wirdEntfernt: "Das verschwindet aus dem Hub:",
-      zaehle: "Wird ermittelt …",
-      zaehlenFehlgeschlagen:
+      willBeRemoved: "Das verschwindet aus dem Hub:",
+      counting: "Wird ermittelt …",
+      countingFailed:
         "Der Umfang konnte nicht ermittelt werden. Konten, Umsätze und Protokoll dieser Verbindung werden trotzdem ausgeblendet.",
-      postenZugang: "Der Bankzugang bei BANKSapi (wird dort gelöscht)",
-      postenKonten: "{{count}} Konten dieser Verbindung",
-      postenUmsaetze: "{{count}} Umsätze dieser Verbindung",
-      postenProtokoll: "{{count}} Protokolleinträge dieser Verbindung",
-      zugeordnet: "{{count}} davon sind einem Beleg zugeordnet",
-      zugeordnetHinweis:
+      itemAccess: "Der Bankzugang bei BANKSapi (wird dort gelöscht)",
+      itemAccounts: "{{count}} Konten dieser Verbindung",
+      itemTransactions: "{{count}} Umsätze dieser Verbindung",
+      itemLog: "{{count}} Protokolleinträge dieser Verbindung",
+      matched: "{{count}} davon sind einem Beleg zugeordnet",
+      matchedHint:
         "Die Zuordnungen und die Bezahlt-Markierungen bleiben bestehen. Der Umsatz dahinter ist bis zum erneuten Verbinden aber nicht mehr einsehbar.",
-      wort: "ENTFERNEN",
-      tippen: "Zum Bestätigen „{{word}}“ eingeben",
-      abbrechen: "Abbrechen",
-      bestaetigen: "Verbindung trennen",
-      laeuft: "Trenne …",
-      getrennt: "Getrennt",
-      getrenntTitle: "Der Zugang wurde am {{datum}} im Hub getrennt.",
+      word: "ENTFERNEN",
+      typeToConfirm: "Zum Bestätigen „{{word}}“ eingeben",
+      cancel: "Abbrechen",
+      confirm: "Verbindung trennen",
+      running: "Trenne …",
+      disconnected: "Getrennt",
+      disconnectedTitle: "Der Zugang wurde am {{datum}} im Hub getrennt.",
       toastOk: "Verbindung zu {{bank}} getrennt.",
-      toastOkHinweis:
+      toastOkHint:
         "{{accounts}} Konten und {{transactions}} Umsätze ausgeblendet. Beim erneuten Verbinden kommen die Konten zurück.",
-      toastFehler: "Trennen fehlgeschlagen: {{error}}",
+      toastError: "Trennen fehlgeschlagen: {{error}}",
     },
     sandbox: "Sandbox",
     sandboxTitle: "Test-/Demodaten aus BANKSapi, kein echtes Konto.",
-    banksapiVerbunden: "Verbunden",
-    banksapiVerbundenTitle:
+    providerConnected: "Verbunden",
+    providerConnectedTitle:
       "Konto kommt über eine BANKSapi-Bankverbindung herein. Umsätze werden automatisch abgerufen.",
-    banksapiJa: "Verknüpfbar",
-    banksapiNein: "Kein Provider",
-    banksapiJaTitle: "BANKSapi-Provider hinterlegt: Konto kann verbunden werden.",
-    banksapiNeinTitle: "Kein BANKSapi-Provider für diese Bank, nur EBICS/manuell.",
+    providerYes: "Verknüpfbar",
+    providerNo: "Kein Provider",
+    providerYesTitle: "BANKSapi-Provider hinterlegt: Konto kann verbunden werden.",
+    providerNoTitle: "Kein BANKSapi-Provider für diese Bank, nur EBICS/manuell.",
     empty: {
       title: "Keine Bankkonten",
       hint: "Konten kommen über eine Bankverbindung (BANKSapi) herein oder werden hier manuell angelegt.",
       // Without the permission for bank connections there is no "Bank verbinden" button on the
       // page, so pointing at that route would name a door this reader has no handle for.
-      hintManuell:
+      hintManual:
         "Es ist noch kein Konto hinterlegt. Konten legt hier ein Administrator an oder sie kommen über eine Bankverbindung herein.",
     },
     // The sync log, now behind a button beside the sync state instead of filling its own screen.
     syncLog: {
       button: "Protokoll",
-      titel: "Sync-Protokoll",
+      title: "Sync-Protokoll",
     },
     // The compact form beside the section heading. The long form below is the tooltip, so the
     // timestamp and the failure message are one hover away rather than gone.
@@ -6416,25 +6302,25 @@ const de = {
       stale: "Seit {{ago}} kein Abgleich mehr gelaufen ({{when}})",
       never: "Es ist noch nie ein Abgleich gelaufen",
       detail: "{{transactions}} neue Umsätze · {{assignments}} automatische Zuordnungen",
-      uebersprungen_one: "{{count}} Lauf übersprungen, weil der vorige noch lief",
-      uebersprungen_other: "{{count}} Läufe übersprungen, weil der vorige noch lief",
+      skipped_one: "{{count}} Lauf übersprungen, weil der vorige noch lief",
+      skipped_other: "{{count}} Läufe übersprungen, weil der vorige noch lief",
       ago: {
-        jetzt: "gerade eben",
+        now: "gerade eben",
         min_one: "vor {{count}} Minute",
         min_other: "vor {{count}} Minuten",
-        std_one: "vor {{count}} Stunde",
-        std_other: "vor {{count}} Stunden",
-        tage_one: "vor {{count}} Tag",
-        tage_other: "vor {{count}} Tagen",
+        hour_one: "vor {{count}} Stunde",
+        hour_other: "vor {{count}} Stunden",
+        day_one: "vor {{count}} Tag",
+        day_other: "vor {{count}} Tagen",
       },
     },
     // Shown after the customer returns from the BANKSapi webform (?bank=connected|error).
-    verbunden: {
-      titel: "Bankverbindung hergestellt",
+    connected: {
+      title: "Bankverbindung hergestellt",
       text: "Die Konten und Umsätze werden jetzt im Hintergrund importiert. Das kann einige Minuten dauern.",
     },
-    verbindungFehler: {
-      titel: "Bankverbindung nicht hergestellt",
+    connectionError: {
+      title: "Bankverbindung nicht hergestellt",
       text: "Die Verbindung wurde abgebrochen oder von der Bank abgelehnt. Bitte versuchen Sie es noch einmal.",
     },
     dialog: {
@@ -6450,65 +6336,65 @@ const de = {
       toastUpdated: "Konto aktualisiert.",
       toastFailed: "Fehlgeschlagen: {{error}}",
     },
-    entfernen: {
-      toastZuordnungen: "{{count}} Belegzuordnungen aufgehoben.",
-      toastDateien: "{{count}} Belegdateien gelöscht.",
-      zaehle: "Ermittle, was gelöscht würde …",
-      zaehlenFehlgeschlagen:
+    remove: {
+      toastMatches: "{{count}} Belegzuordnungen aufgehoben.",
+      toastFiles: "{{count}} Belegdateien gelöscht.",
+      counting: "Ermittle, was gelöscht würde …",
+      countingFailed:
         "Der Umfang konnte nicht ermittelt werden. Es können trotzdem Umsätze, Belegzuordnungen und Belegdateien betroffen sein.",
-      vorschau:
+      preview:
         "Gelöscht werden: {{transactions}} Umsätze, {{assignments}} Belegzuordnungen und {{files}} Belegdateien. Das lässt sich nicht rückgängig machen.",
-      vorschauLeer: "Dieses Konto hat noch keine Umsätze. Es geht nichts verloren.",
+      previewEmpty: "Dieses Konto hat noch keine Umsätze. Es geht nichts verloren.",
       button: "Konto entfernen",
-      titel: "Konto „{{account}}“ entfernen?",
-      beschreibung:
+      title: "Konto „{{account}}“ entfernen?",
+      description:
         "Das Konto verschwindet aus dem Hub und wird nicht mehr importiert, auch wenn die Bank es weiterhin liefert. Bereits importierte Umsätze dieses Kontos werden gelöscht, samt ihrer Zuordnungen zu Belegen. Gedacht für private Konten, die versehentlich mitverbunden wurden, und für doppelte Konten.",
-      grund: "Grund (optional)",
-      grundPlatzhalter: "z. B. Privatkonto, gehört nicht in die Buchhaltung",
-      abbrechen: "Abbrechen",
-      bestaetigen: "Entfernen",
-      laeuft: "Entferne …",
+      reason: "Grund (optional)",
+      reasonPlaceholder: "z. B. Privatkonto, gehört nicht in die Buchhaltung",
+      cancel: "Abbrechen",
+      confirm: "Entfernen",
+      running: "Entferne …",
       toastOk: "Konto entfernt.",
-      toastUmsaetze: "{{count}} Umsätze gelöscht.",
-      toastFehler: "Entfernen fehlgeschlagen: {{error}}",
+      toastTransactions: "{{count}} Umsätze gelöscht.",
+      toastError: "Entfernen fehlgeschlagen: {{error}}",
     },
-    entfernt: {
-      bestaetigenTitel: "Konto „{{konto}}“ wiederherstellen?",
-      bestaetigenText:
+    removed: {
+      confirmTitle: "Konto „{{konto}}“ wiederherstellen?",
+      confirmText:
         "Das Konto wird wieder importiert. Die früher gelöschten Umsätze kommen dabei NICHT zurück: der nächste Abgleich holt nur, was die Bank noch vorhält. Belegzuordnungen und Belegdateien aus der Zeit davor sind endgültig verloren.",
-      abbrechen: "Abbrechen",
-      laeuft: "Stelle wieder her …",
+      cancel: "Abbrechen",
+      running: "Stelle wieder her …",
       meta: "Entfernt am {{datum}} von {{von}}",
-      wiederherstellen: "Wiederherstellen",
+      restore: "Wiederherstellen",
       toastOk: "Konto wiederhergestellt.",
-      toastFehler: "Wiederherstellen fehlgeschlagen: {{error}}",
+      toastError: "Wiederherstellen fehlgeschlagen: {{error}}",
     },
   },
   bankConnections: {
     connectDialog: {
       button: "Bank verbinden",
-      titel: "Bankkonto verbinden",
-      beschreibung:
+      title: "Bankkonto verbinden",
+      description:
         "Der Kontoinhaber meldet sich bei seiner Bank an und bestätigt per TAN. Das passiert im Formular der BANKSapi, nicht hier.",
-      warnungTitel: "Zwei Häkchen, die zwingend gesetzt werden müssen",
+      warningTitle: "Zwei Häkchen, die zwingend gesetzt werden müssen",
       checkbox1:
         "„Speicherung Ihrer Login-Daten erlauben“, sonst kann später nichts aktualisiert werden.",
       checkbox2:
         "„Hiermit willige ich ein, dass Finanzdaten … zum Abruf zur Verfügung gestellt werden“, steht UNTER der Kontoliste und ist NICHT vorausgewählt.",
-      warnungHinweis:
+      warningHint:
         "Die Konten selbst sind vorausgewählt. Wer hier aufhört, glaubt alles verbunden zu haben, es kommt aber nichts an.",
       ipLabel: "Öffentliche IP-Adresse des Kontoinhabers",
-      ipPlatzhalter: "z. B. 84.123.45.67 (leer lassen = automatisch erkennen)",
-      ipHinweis:
+      ipPlaceholder: "z. B. 84.123.45.67 (leer lassen = automatisch erkennen)",
+      ipHint:
         "Die Bank verlangt sie als Nachweis, dass ein echter Mensch den Vorgang auslöst. Bei einem begleiteten Termin hier die IP des Kontoinhabers eintragen: automatisch erkannt wird die IP des Aufrufers.",
-      bestaetigung: "Ich habe den Kontoinhaber auf die beiden Häkchen hingewiesen.",
-      starten: "Link erzeugen und öffnen",
-      starte: "Erzeuge Link …",
-      geoeffnet: "Das Formular wurde in einem neuen Fenster geöffnet.",
+      confirmation: "Ich habe den Kontoinhaber auf die beiden Häkchen hingewiesen.",
+      start: "Link erzeugen und öffnen",
+      starting: "Erzeuge Link …",
+      opened: "Das Formular wurde in einem neuen Fenster geöffnet.",
       linkLabel: "Link (falls das Fenster blockiert wurde)",
-      einmalig:
+      oneTime:
         "Der Link ist nur EINMAL aufrufbar und nur kurz gültig. Zweimal öffnen macht ihn ungültig.",
-      schliessen: "Schließen",
+      close: "Schließen",
     },
     title: "Bankverbindungen",
     subtitle: "Verbundene Konten (BANKSapi) und die letzten Synchronisationen.",
@@ -6523,38 +6409,38 @@ const de = {
     },
     col: {
       bankProvider: "Bank / Provider",
-      konten: "Konten",
+      accounts: "Konten",
       status: "Status",
-      letzterSync: "Letzter Sync",
-      modus: "Modus",
+      lastSync: "Letzter Sync",
+      mode: "Modus",
     },
-    weitereKonten: "+{{anzahl}} weitere anzeigen",
-    wenigerKonten: "Weniger anzeigen",
+    showMore: "+{{anzahl}} weitere anzeigen",
+    showLess: "Weniger anzeigen",
     sandbox: "Sandbox / Mock",
     live: "Live",
     noLogs: "Noch keine Sync-Läufe.",
     logCol: {
-      zeitpunkt: "Zeitpunkt",
-      ereignis: "Ereignis",
+      time: "Zeitpunkt",
+      event: "Ereignis",
       details: "Details",
     },
-    keineKonten: "Liefert keine Konten",
-    keineKontenTitle:
+    noAccounts: "Liefert keine Konten",
+    noAccountsTitle:
       "Diese Bankverbindung liefert derzeit kein Konto. Entweder wurde das Bank-Formular abgebrochen, die Zustimmung ist abgelaufen oder alle Konten wurden entfernt. bank-sync läuft weiterhin gegen sie.",
-    leereHinweis:
+    emptyHint:
       "{{anzahl}} Verbindung(en) liefern kein Konto. Sie wurden bisher ausgeblendet, obwohl der Abgleich weiterhin gegen sie läuft.",
-    eingerichtet: "Eingerichtet {{datum}}",
-    syncBestaetigen: {
-      titel: "Jetzt synchronisieren?",
+    setUp: "Eingerichtet {{datum}}",
+    syncConfirm: {
+      title: "Jetzt synchronisieren?",
       textLive:
         "Der Abgleich läuft für alle {{count}} Bankverbindungen und ruft dabei echte Daten bei der Bank ab. Es gibt keine Möglichkeit, nur eine einzelne Verbindung zu synchronisieren.",
       textSandbox:
         "Im Mock-/Sandbox-Modus erzeugt der Abgleich BEISPIELDATEN und schreibt sie in dieselben Tabellen wie echte Konten und Umsätze. Nur das Kennzeichen „Sandbox“ unterscheidet sie danach.",
-      abbrechen: "Abbrechen",
-      starten: "Synchronisieren",
+      cancel: "Abbrechen",
+      start: "Synchronisieren",
     },
     webformBlocked: {
-      hinweis: "Der Browser hat das Fenster der Bank blockiert.",
+      hint: "Der Browser hat das Fenster der Bank blockiert.",
       link: "Bank-Formular jetzt öffnen",
     },
     syncEvent: {
@@ -6601,31 +6487,31 @@ const de = {
     subtitle: "Verarbeitungs-Log der eingehenden Belege: Eingang, Erkennung und Fehler.",
     search: "Betreff, Absender oder Grund suchen …",
     filterStatus: "Status",
-    alleStatus: "Alle Status",
+    allStatuses: "Alle Status",
     chip: { filter: "Nach diesem Status filtern", clear: "Status-Filter aufheben" },
     count_one: "{{count}} Eintrag",
     count_other: "{{count}} Einträge",
     col: {
-      zeitpunkt: "Zeitpunkt",
-      betreff: "Betreff",
-      absender: "Absender",
+      time: "Zeitpunkt",
+      subject: "Betreff",
+      sender: "Absender",
       status: "Status",
-      grund: "Grund",
-      aktionen: "Details",
+      reason: "Grund",
+      actions: "Details",
     },
     empty: "Keine Protokoll-Einträge.",
     // Tabs: the screen is named "Protokoll" but only ever showed the ingestion pipeline. The change
     // history lived in change_history with no screen at all -- now the second tab (audit issue #10).
-    tabs: { verarbeitung: "Verarbeitung", aenderungen: "Änderungen" },
+    tabs: { processing: "Verarbeitung", changes: "Änderungen" },
     // The pipeline's overall verdict on a mail, lifted out of the reason string and shown as a tag
     // rather than as an English phrase leading the cell (audit issue #5).
     verdict: { needsReview: "Prüfung nötig", accepted: "Automatisch übernommen" },
     filter: {
-      zeitraum: "Zeitraum",
-      gesamterZeitraum: "Gesamter Zeitraum",
-      heute: "Heute",
-      letzte7Tage: "Letzte 7 Tage",
-      letzte30Tage: "Letzte 30 Tage",
+      period: "Zeitraum",
+      allTime: "Gesamter Zeitraum",
+      today: "Heute",
+      last7Days: "Letzte 7 Tage",
+      last30Days: "Letzte 30 Tage",
     },
     // Shown when the search term consists only of the filter's own delimiters, which cannot be
     // searched for. Previously the filter was silently dropped and the whole table came back.
@@ -6635,32 +6521,32 @@ const de = {
     row: { openInvoice: "Rechnung öffnen", details: "Eintrag anzeigen" },
     detail: {
       title: "Protokoll-Eintrag",
-      zeitpunkt: "Zeitpunkt",
-      betreff: "Betreff",
-      absender: "Absender",
-      absenderRoh: "Absender (Kopfzeile)",
+      time: "Zeitpunkt",
+      subject: "Betreff",
+      sender: "Absender",
+      senderRaw: "Absender (Kopfzeile)",
       status: "Status",
-      grund: "Grund",
-      keinGrund: "Kein Grund hinterlegt.",
-      beleg: "Zugeordnete Rechnung",
-      belegOeffnen: "Rechnung öffnen",
-      keinBeleg: "Diese Mail wurde zu keiner Rechnung verarbeitet.",
-      schliessen: "Schließen",
-      kopieren: "Volltext kopieren",
-      kopiert: "Kopiert",
+      reason: "Grund",
+      noReason: "Kein Grund hinterlegt.",
+      invoice: "Zugeordnete Rechnung",
+      openInvoice: "Rechnung öffnen",
+      noInvoice: "Diese Mail wurde zu keiner Rechnung verarbeitet.",
+      close: "Schließen",
+      copy: "Volltext kopieren",
+      copied: "Kopiert",
     },
-    aenderungen: {
+    changes: {
       subtitle: "Änderungs-Historie: wer hat was an welchem Datensatz geändert.",
       count_one: "{{count}} Änderung",
       count_other: "{{count}} Änderungen",
       search: "Akteur, Typ, Tabelle oder Text suchen …",
       empty: "Keine Änderungen.",
       col: {
-        zeitpunkt: "Zeitpunkt",
-        akteur: "Benutzer",
-        typ: "Typ",
-        tabelle: "Tabelle",
-        datensatz: "Datensatz",
+        time: "Zeitpunkt",
+        user: "Benutzer",
+        type: "Typ",
+        table: "Tabelle",
+        record: "Datensatz",
         text: "Beschreibung",
       },
     },
@@ -6727,7 +6613,7 @@ const de = {
         desc: "Ein Bankkonto aus dem Hub entfernen. Die dazugehörigen Umsätze verschwinden mit. Lässt sich nicht rückgängig machen.",
       },
     },
-    postfach: {
+    mailbox: {
       settings: {
         label: "Postfach und Ablage einrichten",
         desc: "Festlegen, aus welchem E-Mail-Postfach Rechnungen geholt und in welchem Ordner sie abgelegt werden. Gilt für alle.",
@@ -6744,27 +6630,27 @@ const de = {
         label: "Team & Rollen öffnen",
         desc: "Die Liste der Personen und ihrer Rechte ansehen. Zum Anlegen oder Ändern von Personen braucht es zusätzlich die Rolle Administrator.",
       },
-      papierkorb: {
+      trash: {
         label: "Papierkorb öffnen",
         desc: "Gelöschte Einträge ansehen und wiederherstellen.",
       },
-      freigabe_regeln: {
+      approval_rules: {
         label: "Freigabe-Regeln verwalten",
         desc: "Festlegen, wer welche Rechnungen prüft und freigibt.",
       },
-      dateibenennung: {
+      file_naming: {
         label: "Dateibenennung festlegen",
         desc: "Bestimmen, wie abgelegte Belege benannt werden.",
       },
-      auswertungen: {
+      reports: {
         label: "Auswertungen öffnen",
         desc: "Kosten und Zahlen je Gesellschaft ansehen.",
       },
-      protokoll: {
+      activity_log: {
         label: "Änderungsprotokoll öffnen",
         desc: "Nachvollziehen, wer wann was geändert hat.",
       },
-      bankverbindungen: {
+      bank_connections: {
         label: "Bankverbindungen verwalten",
         desc: "Bankzugänge verbinden und trennen.",
       },
@@ -6772,11 +6658,11 @@ const de = {
   },
   team: {
     edit: {
-      selbstHinweis:
+      selfHint:
         "Das ist Ihr eigenes Konto. Rolle und Aktiv-Status lassen sich hier nicht ändern, sonst sperren Sie sich aus einem Bereich aus, den nur ein aktiver Administrator erreicht.",
-      rollenwechsel:
+      roleChange:
         "Rollenwechsel: {{fromDate}} → {{nach}}. Damit ändern sich die Bereiche, die diese Person sehen und ändern darf.",
-      zugriffAusweitung:
+      accessWidened:
         "Keine Gesellschaft ausgewählt bedeutet Zugriff auf ALLE Gesellschaften, das erweitert den Zugriff, statt ihn zu entziehen.",
       emailChangeHint:
         "Ändert auch die Anmelde-E-Mail, die Person meldet sich künftig mit dieser Adresse an.",
@@ -6785,14 +6671,14 @@ const de = {
       superAdminCannotBeDeactivated: "Der Super-Admin kann nicht deaktiviert werden.",
     },
     list: {
-      rechteAnzahl: "{{n}} von {{total}}",
-      rechteAlle: "alle",
-      suche: "Name, E-Mail oder Rolle suchen …",
-      nurInaktive: "Nur inaktive",
+      rightsCount: "{{n}} von {{total}}",
+      rightsAll: "alle",
+      search: "Name, E-Mail oder Rolle suchen …",
+      inactiveOnly: "Nur inaktive",
       title: "Team & Rollen",
       subtitle: "Mitarbeiter, Rollen und Firmenzugriff verwalten.",
       col: {
-        rechte: "Rechte",
+        rights: "Rechte",
         name: "Name",
         email: "E-Mail",
         role: "Rolle",
@@ -6800,12 +6686,12 @@ const de = {
         active: "Aktiv",
       },
       empty: "Noch keine Mitarbeiter angelegt.",
-      neu: { button: "Neuer Mitarbeiter" },
+      create: { button: "Neuer Mitarbeiter" },
       action: {
-        bearbeiten: "Bearbeiten",
-        deaktivieren: "Deaktivieren",
-        reaktivieren: "Reaktivieren",
-        passwortZuruecksetzen: "Passwort zurücksetzen",
+        edit: "Bearbeiten",
+        deactivate: "Deaktivieren",
+        reactivate: "Reaktivieren",
+        resetPassword: "Passwort zurücksetzen",
       },
     },
     role: {
@@ -6816,82 +6702,66 @@ const de = {
       toast: { fehlgeschlagen: "Rolle konnte nicht geändert werden: {{error}}" },
     },
     tab: {
-      personen: "Personen",
-      rollen: "Rollen & Rechte",
+      people: "Personen",
+      roles: "Rollen & Rechte",
     },
-    rollenrechte: {
-      titel: "Rollen & Rechte",
-      hinweis:
-        "Legt fest, was eine Rolle standardmäßig erlaubt. Eine Änderung gilt sofort für alle Personen mit dieser Rolle, außer für die, bei denen unter „Personen“ eine Ausnahme gesetzt ist.",
-      spalte: "Was erlaubt ist",
+    rolePermissions: {
+      title: "Rollen & Rechte",
+      hint: "Legt fest, was eine Rolle standardmäßig erlaubt. Eine Änderung gilt sofort für alle Personen mit dieser Rolle, außer für die, bei denen unter „Personen“ eine Ausnahme gesetzt ist.",
+      col: "Was erlaubt ist",
     },
     chain: {
-      titel: "Freigabe-Einstellungen",
-      bereich: "Zuständigkeitsbereich",
-      bereichHint:
+      title: "Freigabe-Einstellungen",
+      area: "Zuständigkeitsbereich",
+      areaHint:
         "Bestimmt, für welche Gesellschaften diese Person automatisch als Schritt 2 vorgeschlagen wird.",
-      bereichBrauchtRecht:
+      areaNeedsRight:
         "Nur für Personen mit dem Recht „Endgültig freigeben“. Ohne dieses Recht würde die Rechnung bei jemandem landen, der sie nicht freigeben kann.",
-      bereichKonflikt:
+      areaConflict:
         "Für den Bereich „{{area}}“ ist bereits eine andere aktive Person zuständig. Bitte diese zuerst entfernen.",
-      vertretung: "Vertretung (bei Abwesenheit)",
-      vertretungHint:
+      deputy: "Vertretung (bei Abwesenheit)",
+      deputyHint:
         "Wird in der Überfälligkeits-Warnung genannt. Die Vertretung erhält dadurch keine zusätzlichen Rechte.",
-      eskalation: "Eskalation nach (Tagen)",
-      eskalationHint:
+      escalation: "Eskalation nach (Tagen)",
+      escalationHint:
         "Nach so vielen Tagen ohne Bewegung wird eine Rechnung, die auf diese Person wartet, als überfällig markiert. Leer lassen für keine Warnung.",
-      gespeichert: "Gespeichert.",
+      saved: "Gespeichert.",
     },
     permissions: {
-      titel: "Was diese Person darf",
-      hinweis:
-        "Standardmäßig gilt, was die Rolle erlaubt. Hier setzen Sie Ausnahmen für diese eine Person — an- oder abwählen.",
+      title: "Was diese Person darf",
+      hint: "Standardmäßig gilt, was die Rolle erlaubt. Hier setzen Sie Ausnahmen für diese eine Person — an- oder abwählen.",
       // Group headings above the checkboxes. Named after what the group lets somebody DO, not
       // after the part of the system it belongs to: "Seiten" told the reader nothing about what
       // ticking a box in it would allow.
-      kategorie: {
-        buchhaltung: "Rechnungen bearbeiten",
-        freigabe: "Freigeben",
-        zahlung: "Geld und Bank",
-        system: "Einstellungen fürs Team",
-        seiten: "Zugang zu Bereichen",
-      },
     },
     rights: {
-      buchhaltung: "Buchhaltung",
-      buchhaltungHint: "Darf Belege buchen/prüfen.",
-      freigabe: "Freigabe",
-      freigabeHint: "Darf Belege freigeben.",
-      zahlung: "Zahlung",
-      zahlungHint: "Darf Belege als bezahlt markieren / Zahlungslauf ausführen.",
-      impliedByAdmin: "Admins sind für alle drei Rechte automatisch berechtigt.",
       nichtVergebbar:
         "Ausgegraute Rechte haben Sie selbst nicht und können sie deshalb nicht weitergeben.",
       nurAdmin: "Nur ein Administrator kann ändern, was eine Person darf.",
       impliedBySuperAdmin: "Der Super-Admin hat immer alle Rechte.",
     },
     access: {
-      weitere: "+{{count}} weitere",
-      schritt: {
-        profil: "Profil",
-        rolle: "Rolle",
-        zugriff: "Gesellschafts-Zugriff",
-        rechte: "Rechte",
+      more: "+{{count}} weitere",
+      step: {
+        profile: "Profil",
+        role: "Rolle",
+        access: "Gesellschafts-Zugriff",
+        rights: "Rechte",
       },
-      alle: "Alle",
+      all: "Alle",
       dialog: {
         title: "Person bearbeiten",
         desc: "Profil, Rolle, Gesellschaften und Rechte dieser Person.",
-        leerHinweis: "Keine Auswahl = uneingeschränkter Zugriff auf alle Gesellschaften.",
+        emptyHint: "Keine Auswahl = uneingeschränkter Zugriff auf alle Gesellschaften.",
         cancel: "Abbrechen",
         save: "Speichern",
         saving: "Speichert …",
       },
       toast: {
-        teilweise:
+        partial:
           "Speichern fehlgeschlagen beim Schritt „{{step}}“. Vorherige Schritte wurden bereits gespeichert: {{error}}",
-        gespeichert: "Firmenzugriff gespeichert.",
-        fehlgeschlagen: "Firmenzugriff konnte nicht gespeichert werden: {{error}}",
+        saved: "Firmenzugriff gespeichert.",
+        failed: "Firmenzugriff konnte nicht gespeichert werden: {{error}}",
       },
     },
     status: { aktiv: "Aktiv", inaktiv: "Inaktiv", nieAngemeldet: "noch nie angemeldet" },
@@ -6902,7 +6772,7 @@ const de = {
       confirm: "Deaktivieren",
       toast: {
         ok: "Mitarbeiter deaktiviert.",
-        fehlgeschlagen: "Konnte nicht geändert werden: {{error}}",
+        failed: "Konnte nicht geändert werden: {{error}}",
       },
     },
     reactivate: {
@@ -6919,21 +6789,21 @@ const de = {
         email: "E-Mail",
         role: "Rolle",
         companies: "Gesellschaften",
-        companiesAlle: "Alle Gesellschaften",
-        companiesWaehlen: "Gesellschaften wählen …",
-        companiesLeerHinweis: "Keine Auswahl = uneingeschränkter Zugriff auf alle Gesellschaften.",
+        companiesAll: "Alle Gesellschaften",
+        companiesChoose: "Gesellschaften wählen …",
+        companiesEmptyHint: "Keine Auswahl = uneingeschränkter Zugriff auf alle Gesellschaften.",
       },
       cancel: "Abbrechen",
       save: "Anlegen",
       saving: "Legt an …",
       toast: {
-        emailUngueltig: "Bitte eine gültige E-Mail-Adresse eingeben.",
-        emailVergeben: "Diese E-Mail-Adresse ist bereits vergeben.",
-        rechteFehlgeschlagen:
+        emailInvalid: "Bitte eine gültige E-Mail-Adresse eingeben.",
+        emailTaken: "Diese E-Mail-Adresse ist bereits vergeben.",
+        rightsFailed:
           "Konto angelegt, aber die Rechte-Ausnahmen konnten nicht gespeichert werden: {{error}}",
-        emailPflicht: "Bitte E-Mail-Adresse eingeben.",
-        namePflicht: "Bitte Namen eingeben.",
-        fehlgeschlagen: "Mitarbeiter konnte nicht angelegt werden: {{error}}",
+        emailRequired: "Bitte E-Mail-Adresse eingeben.",
+        nameRequired: "Bitte Namen eingeben.",
+        failed: "Mitarbeiter konnte nicht angelegt werden: {{error}}",
       },
     },
     tempPassword: {
@@ -6953,7 +6823,7 @@ const de = {
       tempPasswordDesc:
         "Neues Einmal-Passwort für {{email}}. Bitte jetzt sicher weitergeben, es wird nicht erneut angezeigt.",
       toast: {
-        fehlgeschlagen: "Passwort konnte nicht zurückgesetzt werden: {{error}}",
+        failed: "Passwort konnte nicht zurückgesetzt werden: {{error}}",
       },
     },
   },
@@ -6965,76 +6835,67 @@ const de = {
       subtitle: "Gelöschte Datensätze: wiederherstellbar oder endgültig löschbar.",
       empty: "Papierkorb ist leer.",
     },
-    filter: { alle: "Alle Typen" },
+    filter: { all: "Alle Typen" },
     search: {
       label: "Papierkorb durchsuchen",
       placeholder: "Bezeichnung, Grund oder Person suchen",
     },
-    alter: {
+    ageFilter: {
       label: "Alter",
-      alle: "Jedes Alter",
+      all: "Jedes Alter",
       d30: "Älter als 30 Tage",
       d90: "Älter als 90 Tage",
       d365: "Älter als 1 Jahr",
     },
     age: {
-      heute: "heute gelöscht",
-      tage_one: "vor {{count}} Tag",
-      tage_other: "vor {{count}} Tagen",
-      monate_one: "vor {{count}} Monat",
-      monate_other: "vor {{count}} Monaten",
-      jahre_one: "vor {{count}} Jahr",
-      jahre_other: "vor {{count}} Jahren",
+      today: "heute gelöscht",
+      days_one: "vor {{count}} Tag",
+      days_other: "vor {{count}} Tagen",
+      months_one: "vor {{count}} Monat",
+      months_other: "vor {{count}} Monaten",
+      years_one: "vor {{count}} Jahr",
+      years_other: "vor {{count}} Jahren",
     },
     sort: { asc: "aufsteigend sortieren", desc: "absteigend sortieren" },
-    auswahl: {
-      anzahl_one: "{{count}} ausgewählt",
-      anzahl_other: "{{count}} ausgewählt",
-      seite: "Alle auf dieser Seite auswählen",
-      alleGefiltert: "Alle {{count}} Einträge auswählen",
-      alleGewaehlt: "Alle {{count}} Einträge sind ausgewählt.",
-      zeile: "'{{label}}' auswählen",
-      aufheben: "Auswahl aufheben",
-      wiederherstellen: "Wiederherstellen ({{count}})",
-      loeschen: "Endgültig löschen ({{count}})",
-      nichtsPurgebar:
+    selection: {
+      count_one: "{{count}} ausgewählt",
+      count_other: "{{count}} ausgewählt",
+      page: "Alle auf dieser Seite auswählen",
+      selectAllFiltered: "Alle {{count}} Einträge auswählen",
+      allSelected: "Alle {{count}} Einträge sind ausgewählt.",
+      row: "'{{label}}' auswählen",
+      clear: "Auswahl aufheben",
+      restore: "Wiederherstellen ({{count}})",
+      delete: "Endgültig löschen ({{count}})",
+      someNotPurgeable:
         "Von der Auswahl können {{count}} Datensätze nicht endgültig gelöscht werden; sie bleiben im Papierkorb.",
     },
-    seiten: {
-      label: "Seitennummerierung",
-      zurueck: "Vorherige Seite",
-      weiter: "Nächste Seite",
-      status: "Seite {{seite}} von {{gesamt}}",
-      eintraege_one: "{{count}} Eintrag",
-      eintraege_other: "{{count}} Einträge",
-      gefiltert: "{{gezeigt}} von {{gesamt}} Einträgen",
-    },
-    grundVoll: { mehr: "Ganzen Grund anzeigen", titel: "Löschgrund", schliessen: "Schließen" },
+    reasonFull: { more: "Ganzen Grund anzeigen", title: "Löschgrund", close: "Schließen" },
     guard: {
-      titel: "Kein Zugriff auf den Papierkorb",
+      title: "Kein Zugriff auf den Papierkorb",
       text: "Der Papierkorb ist nur für Administratoren. Ihr Konto hat diese Rolle nicht, deshalb sehen Sie hier keine gelöschten Datensätze. Wenn Sie etwas wiederherstellen müssen, wenden Sie sich an eine Administratorin oder einen Administrator.",
-      zurueck: "Zur Übersicht",
+      back: "Zur Übersicht",
     },
     col: {
-      typ: "Typ",
-      bezeichnung: "Bezeichnung",
-      gelöschtAm: "Gelöscht am",
-      gelöschtVon: "Gelöscht von",
-      grund: "Grund",
+      type: "Typ",
+      label: "Bezeichnung",
+      deletedAt: "Gelöscht am",
+      deletedBy: "Gelöscht von",
+      reason: "Grund",
     },
-    action: { wiederherstellen: "Wiederherstellen", endgueltigLoeschen: "Endgültig löschen" },
+    action: { restore: "Wiederherstellen", deletePermanently: "Endgültig löschen" },
     restore: {
       title: "Wiederherstellen",
       desc: "'{{label}}' wird wieder in die aktive Liste aufgenommen und wirkt sofort wieder, Regeln greifen erneut, Belege laufen wieder im Workflow mit.",
-      grundLabel: "Grund (optional)",
-      grundPlaceholder: "Warum wird das wiederhergestellt?",
+      reasonLabel: "Grund (optional)",
+      reasonPlaceholder: "Warum wird das wiederhergestellt?",
       cancel: "Abbrechen",
       confirm: "Wiederherstellen",
       toast: {
         ok: "'{{label}}' wiederhergestellt.",
-        fehlgeschlagen: "Wiederherstellen fehlgeschlagen: {{error}}",
-        mehrere_one: "{{count}} Datensatz wiederhergestellt.",
-        mehrere_other: "{{count}} Datensätze wiederhergestellt.",
+        failed: "Wiederherstellen fehlgeschlagen: {{error}}",
+        multiple_one: "{{count}} Datensatz wiederhergestellt.",
+        multiple_other: "{{count}} Datensätze wiederhergestellt.",
       },
     },
     purge: {
@@ -7042,18 +6903,18 @@ const de = {
       desc: "'{{label}}' wird unwiderruflich gelöscht. Dies kann nicht rückgängig gemacht werden.",
       cancel: "Abbrechen",
       confirm: "Endgültig löschen",
-      gobdGesperrt:
+      gobdBlocked:
         "Eingangsrechnungen können nicht endgültig gelöscht werden (GoBD: Belege dürfen nur deaktiviert, nie hart gelöscht werden). Wiederherstellen ist weiterhin möglich.",
-      referenzGesperrt:
+      referenceBlocked:
         "Kann nicht endgültig gelöscht werden: Freigabe-Regeln und Vertretungen verweisen auf diesen Namen. Wiederherstellen ist weiterhin möglich.",
-      titelMehrere: "{{count}} Datensätze endgültig löschen",
-      descMehrere:
+      titleMultiple: "{{count}} Datensätze endgültig löschen",
+      descMultiple:
         "{{count}} Datensätze werden unwiderruflich gelöscht. Dies kann nicht rückgängig gemacht werden.",
       toast: {
         ok: "'{{label}}' endgültig gelöscht.",
-        fehlgeschlagen: "Löschen fehlgeschlagen: {{error}}",
-        mehrere_one: "{{count}} Datensatz endgültig gelöscht.",
-        mehrere_other: "{{count}} Datensätze endgültig gelöscht.",
+        failed: "Löschen fehlgeschlagen: {{error}}",
+        multiple_one: "{{count}} Datensatz endgültig gelöscht.",
+        multiple_other: "{{count}} Datensätze endgültig gelöscht.",
       },
     },
     table: {

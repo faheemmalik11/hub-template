@@ -233,7 +233,7 @@ export function CostAnalysis({
       const rows = keys
         .map((rowKey) => ({
           key: rowKey,
-          label: t(`reports.zeile.${rowKey}`),
+          label: t(`reports.row.${rowKey}`),
           amount: Math.abs(rowByKey.get(rowKey)?.amount ?? 0),
           items: [...(drilldown.get(rowKey)?.values() ?? [])].flat(),
         }))
@@ -267,7 +267,7 @@ export function CostAnalysis({
         return {
           key: catId,
           // A receipt sitting on the top-level category itself has no finer name to show.
-          label: cat && cat.parent_id ? cat.name : t("reports.aufschluesselung.direktAufKategorie"),
+          label: cat && cat.parent_id ? cat.name : t("reports.breakdown.directOnCategory"),
           amount: Math.abs(items.reduce((n, i) => n + i.amount, 0)),
           items,
         };
@@ -289,11 +289,11 @@ export function CostAnalysis({
     })();
 
     return [
-      build(OPERATING_COST_KEYS, t("reports.aufschluesselung.betriebskosten"), "betrieb"),
+      build(OPERATING_COST_KEYS, t("reports.breakdown.operatingCosts"), "betrieb"),
       {
         key: "material",
-        label: t("reports.aufschluesselung.material"),
-        subtitle: t("reports.aufschluesselung.materialUntertitel"),
+        label: t("reports.breakdown.materials"),
+        subtitle: t("reports.breakdown.materialSubtitle"),
         rows: materialRows,
         total: materialRows.reduce((n, z) => n + z.amount, 0),
         // The rows are category ids, so they carry the DATEV line's own colour rather than falling
@@ -321,23 +321,23 @@ export function CostAnalysis({
     group.codes.every((code) => companies.some((g) => g.code === code)),
   );
   const companyOptions = [
-    { value: ALL, label: t("reports.filter.alleGesellschaften") },
+    { value: ALL, label: t("reports.filter.allCompanies") },
     ...availableGroups.map((group) => ({ value: group.key, label: t(group.labelKey) })),
     ...companies.map((g) => ({ value: g.code, label: `${g.code} · ${g.name}` })),
   ];
   const propertyOptions = [
-    { value: ALL, label: t("reports.filter.alleObjekte") },
+    { value: ALL, label: t("reports.filter.allProperties") },
     ...(propertiesQ.data ?? []).map((o) => ({
       value: o.code,
       label: o.name ? `${o.code} · ${o.name}` : o.code,
     })),
   ];
   const categoryOptions = [
-    { value: ALL, label: t("reports.filter.alleKategorien") },
+    { value: ALL, label: t("reports.filter.allCategories") },
     ...coarseCategories.map((c) => ({ value: c.id, label: c.name })),
   ];
   const accountOptions = [
-    { value: ALL, label: t("reports.filter.alleKonten") },
+    { value: ALL, label: t("reports.filter.allAccounts") },
     // Every bank account (Bankkonten section), not just ones with an existing confirmed match —
     // filtering to only "used" accounts hid accounts with no matched activity YET from the
     // filter entirely, when the point of the filter is to let someone check exactly that.
@@ -359,7 +359,7 @@ export function CostAnalysis({
   // scrolling to an arbitrary month; the invoice list is where you go to find one document.
   const periodOptions = OVERVIEW_PERIODS.map((p) => ({
     value: p,
-    label: t(`home.zeitraumKurz.${p}`),
+    label: t(`home.periodShort.${p}`),
   }));
 
   // The export stays the FULL DATEV skeleton, all 26 lines in Form 01 order, not the grouped
@@ -388,7 +388,7 @@ export function CostAnalysis({
   function exportCsv() {
     const rows: CostAnalysisExportRow[] = computed.rows.map((row) => ({
       key: row.key,
-      label: t(`reports.zeile.${row.key}`),
+      label: t(`reports.row.${row.key}`),
       kind: row.kind,
       amount: row.kind === "line" ? signedAmount(row.key, row.amount) : row.amount,
       compareAmount: showComparison
@@ -400,20 +400,20 @@ export function CostAnalysis({
     const csv = buildCostAnalysisCsv(rows, {
       filters: [
         {
-          label: t("reports.export.filterGesellschaft"),
+          label: t("reports.export.filterCompany"),
           value: optionLabel(fCompany, companyOptions),
         },
         {
-          label: t("reports.export.filterObjekt"),
+          label: t("reports.export.filterProperty"),
           value: optionLabel(fProperty, propertyOptions),
         },
         {
-          label: t("reports.export.filterKategorie"),
+          label: t("reports.export.filterCategory"),
           value: optionLabel(fCategory, categoryOptions),
         },
-        { label: t("reports.export.filterKonto"), value: optionLabel(fAccount, accountOptions) },
+        { label: t("reports.export.filterAccount"), value: optionLabel(fAccount, accountOptions) },
         {
-          label: t("reports.export.filterZeitraum"),
+          label: t("reports.export.filterPeriod"),
           value: optionLabel(period, periodOptions),
         },
       ],
@@ -516,7 +516,7 @@ export function CostAnalysis({
     {
       kind: "select",
       key: "gesellschaft",
-      label: t("reports.filter.labelGesellschaft"),
+      label: t("reports.filter.labelCompany"),
       value: fCompany,
       defaultValue: ALL,
       options: companyOptions,
@@ -525,7 +525,7 @@ export function CostAnalysis({
     {
       kind: "select",
       key: "objekt",
-      label: t("reports.filter.labelObjekt"),
+      label: t("reports.filter.labelProperty"),
       value: fProperty,
       defaultValue: ALL,
       options: propertyOptions,
@@ -534,7 +534,7 @@ export function CostAnalysis({
     {
       kind: "select",
       key: "kategorie",
-      label: t("reports.filter.labelKategorie"),
+      label: t("reports.filter.labelCategory"),
       value: fCategory,
       defaultValue: ALL,
       options: categoryOptions,
@@ -543,7 +543,7 @@ export function CostAnalysis({
     {
       kind: "select",
       key: "konto",
-      label: t("reports.filter.labelKonto"),
+      label: t("reports.filter.labelAccount"),
       value: fAccount,
       defaultValue: ALL,
       options: accountOptions,
@@ -661,7 +661,7 @@ export function CostAnalysis({
             labels={{
               button: t("reports.filter.button"),
               title: t("reports.filter.title"),
-              reset: t("reports.filter.zuruecksetzen"),
+              reset: t("reports.filter.reset"),
             }}
           />
         </div>
@@ -674,7 +674,7 @@ export function CostAnalysis({
         data-tour="analysis-filters"
         className="mt-4 flex flex-wrap items-center gap-x-3 gap-y-2"
       >
-        <span className="text-sm text-muted-foreground">{t("reports.filter.labelZeitraum")}</span>
+        <span className="text-sm text-muted-foreground">{t("reports.filter.labelPeriod")}</span>
         <PeriodPicker
           value={period}
           onValueChange={setPeriod}
@@ -690,8 +690,8 @@ export function CostAnalysis({
           }
           locale={dateLocale()}
           formatDay={(iso) => formatDate(iso)}
-          backLabel={t("home.zeitraumAktion.zurueck")}
-          ariaLabel={t("reports.filter.labelZeitraum")}
+          backLabel={t("home.periodAction.back")}
+          ariaLabel={t("reports.filter.labelPeriod")}
           className="w-full sm:w-[210px]"
           rangeLabels={{
             placeholder: t("documents.list.filter.zeitraumWaehlen"),
@@ -717,11 +717,11 @@ export function CostAnalysis({
               key: "zeitraum",
               label:
                 range.fromDate && range.toDate
-                  ? t("reports.filter.zeitraumBereich", {
+                  ? t("reports.filter.periodRange", {
                       fromDate: formatDate(range.fromDate),
                       toDate: formatDate(range.toDate),
                     })
-                  : t("reports.filter.zeitraumOhneGrenze"),
+                  : t("reports.filter.periodUnbounded"),
               // Shown only when the period actually narrows something. Keying this off the period
               // NAME was wrong: picking "Custom range" sets the name immediately, but until two
               // dates are chosen it resolves to no bounds at all — so the chip read "All periods"
@@ -744,7 +744,7 @@ export function CostAnalysis({
         {costAnalysis.revenueSuppressedByFilter && !isLoading && (
           <p className="mt-6 flex items-start gap-2 text-base text-amber-700">
             <TriangleAlert className="mt-0.5 size-4 shrink-0" />
-            {t("reports.umsatzDurchFilterAusgeblendet", {
+            {t("reports.revenueHiddenByFilter", {
               count: costAnalysis.revenueExcludedByDimensionFilter,
             })}
           </p>
@@ -761,16 +761,16 @@ export function CostAnalysis({
             marginsHint={
               !isLoading && report.revenue === 0
                 ? {
-                    title: t("reports.summe.margenHinweisTitel"),
-                    text: t("reports.summe.margenHinweisText"),
+                    title: t("reports.total.marginHintTitle"),
+                    text: t("reports.total.marginHintText"),
                   }
                 : null
             }
             fields={[
               {
                 key: "revenue",
-                label: t("reports.summe.umsatz"),
-                description: t("reports.summe.erklaerungUmsatz"),
+                label: t("reports.total.revenue"),
+                description: t("reports.total.explainRevenue"),
                 icon: Wallet,
                 ton: "revenue" as const,
                 value: report.revenue,
@@ -780,20 +780,20 @@ export function CostAnalysis({
               },
               {
                 key: "grossProfit",
-                label: t("reports.zeile.gross_profit"),
-                description: t("reports.zeileHinweis.gross_profit"),
+                label: t("reports.row.gross_profit"),
+                description: t("reports.rowHint.gross_profit"),
                 icon: Layers,
                 ton: "grossProfit" as const,
                 value: grossProfit,
                 marge: marge(grossProfit),
-                margeLabel: t("reports.summe.marge"),
-                margeExplanation: margeExplanation(grossProfit, "reports.summe.margeErklaerung"),
+                margeLabel: t("reports.total.margin"),
+                margeExplanation: margeExplanation(grossProfit, "reports.total.marginExplain"),
                 comparison: delta(grossProfit, grossProfitComparison),
               },
               {
                 key: "cost",
-                label: t("reports.summe.gesamtkosten"),
-                description: t("reports.summe.erklaerungGesamtkosten"),
+                label: t("reports.total.totalCosts"),
+                description: t("reports.total.explainTotalCosts"),
                 icon: Receipt,
                 ton: "cost" as const,
                 // A positive magnitude. The label already says these are costs, so printing
@@ -801,10 +801,10 @@ export function CostAnalysis({
                 // as money gained. The subtraction is shown where it belongs, in the report.
                 value: report.totalCosts,
                 marge: marge(report.totalCosts),
-                margeLabel: t("reports.summe.vomUmsatz"),
+                margeLabel: t("reports.total.ofRevenue"),
                 margeExplanation: margeExplanation(
                   report.totalCosts,
-                  "reports.summe.kostenanteilErklaerung",
+                  "reports.total.costShareExplain",
                 ),
                 comparison: delta(report.totalCosts, comparisonReport?.totalCosts ?? 0),
                 // The one figure on this screen where a rise is bad news.
@@ -812,16 +812,16 @@ export function CostAnalysis({
               },
               {
                 key: "result",
-                label: t("reports.summe.betriebsergebnis"),
-                description: t("reports.summe.erklaerungBetriebsergebnis"),
+                label: t("reports.total.operatingResult"),
+                description: t("reports.total.explainOperatingResult"),
                 icon: PieChart,
                 ton: "result" as const,
                 value: report.operatingResult,
                 marge: marge(report.operatingResult),
-                margeLabel: t("reports.summe.marge"),
+                margeLabel: t("reports.total.margin"),
                 margeExplanation: margeExplanation(
                   report.operatingResult,
-                  "reports.summe.margeErklaerung",
+                  "reports.total.marginExplain",
                 ),
                 comparison: delta(report.operatingResult, comparisonReport?.operatingResult ?? 0),
                 emphasis: true,
@@ -843,7 +843,7 @@ export function CostAnalysis({
           // all. Same three facts, in sentences.
           <div className="mt-4 rounded-lg bg-muted/60 px-4 py-3">
             <div className="flex flex-wrap items-baseline gap-x-2">
-              <span className="text-base font-medium text-foreground">{t("reports.kpi.ust")}</span>
+              <span className="text-base font-medium text-foreground">{t("reports.kpi.vat")}</span>
               <span className="text-base font-semibold tabular-nums text-foreground">
                 {formatEUR(costAnalysis.vatAmountTotal)}
               </span>
@@ -858,7 +858,7 @@ export function CostAnalysis({
                 (costAnalysis.vatDeductibleTotal !== 0 ||
                   costAnalysis.vatNondeductibleTotal !== 0) && (
                   <p className="text-sm leading-relaxed text-muted-foreground">
-                    {t("reports.kpi.ustAufteilung", {
+                    {t("reports.kpi.vatSplit", {
                       deductible: formatEUR(costAnalysis.vatDeductibleTotal),
                       nondeductible: formatEUR(costAnalysis.vatNondeductibleTotal),
                     })}
@@ -867,7 +867,7 @@ export function CostAnalysis({
               )}
             </div>
             <p className="mt-1 text-sm leading-relaxed text-muted-foreground">
-              {t("reports.kpi.ustHinweisLang")}
+              {t("reports.kpi.vatHintLong")}
             </p>
           </div>
         }
@@ -888,7 +888,7 @@ export function CostAnalysis({
             {isLoading ? (
               <section className="mt-8 rounded-xl bg-muted/30 p-4">
                 <h2 className="text-base font-semibold tracking-tight text-foreground">
-                  {t("reports.chart.verlaufTitel")}
+                  {t("reports.chart.historyTitle")}
                 </h2>
                 <Skeleton className="mt-3 h-[280px] w-full rounded-lg" />
               </section>
@@ -900,7 +900,7 @@ export function CostAnalysis({
                 // carries its own axes and frame.
                 <section className="mt-8 rounded-xl bg-muted/30 p-4">
                   <h2 className="text-base font-semibold tracking-tight text-foreground">
-                    {t("reports.chart.verlaufTitel")}
+                    {t("reports.chart.historyTitle")}
                   </h2>
                   <div className="mt-3">
                     <RevenueCostHistory points={historyEntries.points} />
@@ -922,12 +922,12 @@ export function CostAnalysis({
                   <div className="flex flex-wrap items-start gap-3 lg:justify-end">
                     <HintCard
                       icon={TriangleAlert}
-                      cardText={t("reports.ustUngeklaert.karte", {
+                      cardText={t("reports.vatUnresolved.karte", {
                         count: costAnalysis.vatUnresolvedCount,
                         amount: formatEUR(costAnalysis.vatUnresolvedAmount),
                       })}
-                      title={t("reports.ustUngeklaert.titel")}
-                      hint={t("reports.ustUngeklaert.hinweis")}
+                      title={t("reports.vatUnresolved.title")}
+                      hint={t("reports.vatUnresolved.hint")}
                       amount={costAnalysis.vatUnresolvedAmount}
                       items={costAnalysis.vatUnresolvedItems}
                       categoryFor={categoryPathFor}
@@ -936,12 +936,12 @@ export function CostAnalysis({
                     />
                     <HintCard
                       icon={TriangleAlert}
-                      cardText={t("reports.ohneKategorie.warnung", {
+                      cardText={t("reports.noCategory.warnung", {
                         count: withoutCategoryItems.length,
                         amount: formatEUR(computed.unassignedAmount),
                       })}
-                      title={t("reports.ohneKategorie.titel")}
-                      hint={t("reports.ohneKategorie.hinweis", {
+                      title={t("reports.noCategory.title")}
+                      hint={t("reports.noCategory.hint", {
                         count: withoutCategoryItems.length,
                       })}
                       amount={computed.unassignedAmount}
@@ -970,13 +970,13 @@ export function CostAnalysis({
                     >
                       <span className="text-base text-foreground">
                         <Explanation
-                          label={t(`reports.zeile.${row.key}`)}
-                          explanation={t(`reports.zeileHinweis.${row.key}`, {
+                          label={t(`reports.row.${row.key}`)}
+                          explanation={t(`reports.rowHint.${row.key}`, {
                             defaultValue: "",
                           })}
                         />
                         <span className="ml-2 text-sm text-amber-700">
-                          {t("reports.tabelle.nichtImErgebnis")}
+                          {t("reports.table.notInResult")}
                         </span>
                       </span>
                       <span className="text-base tabular-nums text-foreground">
@@ -1000,7 +1000,7 @@ export function CostAnalysis({
               <div className="mt-6 space-y-1 border-t border-border pt-4 text-sm text-muted-foreground">
                 {costAnalysis.notBucketedCount + costAnalysis.revenueNotBucketedCount > 0 && (
                   <p>
-                    {t("reports.nichtEingeteilt", {
+                    {t("reports.notInPeriod", {
                       count: costAnalysis.notBucketedCount + costAnalysis.revenueNotBucketedCount,
                     })}
                   </p>
@@ -1009,7 +1009,7 @@ export function CostAnalysis({
                   costAnalysis.revenueExcludedByDimensionFilter >
                   0 && (
                   <p>
-                    {t("reports.kontoAusschluss", {
+                    {t("reports.accountExclusion", {
                       count:
                         costAnalysis.manualExcludedByAccountFilter +
                         costAnalysis.revenueExcludedByDimensionFilter,
@@ -1018,14 +1018,14 @@ export function CostAnalysis({
                 )}
                 {costAnalysis.revenueNetUnknownCount > 0 && (
                   <p>
-                    {t("reports.ausgangNettoUngeklaert", {
+                    {t("reports.outgoingNetUnresolved", {
                       count: costAnalysis.revenueNetUnknownCount,
                     })}
                   </p>
                 )}
                 {costAnalysis.costNetUnknownCount > 0 && (
                   <p>
-                    {t("reports.kostenNettoUngeklaert", {
+                    {t("reports.costNetUnresolved", {
                       count: costAnalysis.costNetUnknownCount,
                     })}
                   </p>

@@ -141,12 +141,12 @@ function BankAccountsPage() {
     if (!bank || outcomeShown.current) return;
     outcomeShown.current = true;
     if (bank === "connected") {
-      toast.success(t("bankAccounts.verbunden.titel"), {
-        description: t("bankAccounts.verbunden.text"),
+      toast.success(t("bankAccounts.connected.title"), {
+        description: t("bankAccounts.connected.text"),
       });
     } else {
-      toast.error(t("bankAccounts.verbindungFehler.titel"), {
-        description: t("bankAccounts.verbindungFehler.text"),
+      toast.error(t("bankAccounts.connectionError.title"), {
+        description: t("bankAccounts.connectionError.text"),
       });
     }
     // Only `bank` is cleared. Replacing the whole search object would take `tab` with it and throw
@@ -202,21 +202,21 @@ function BankAccountsPage() {
       defaultValue: ACTIVE,
       onChange: setStatusFilter,
       options: [
-        { value: ACTIVE, label: t("bankAccounts.filter.statusAktiv") },
-        { value: INACTIVE, label: t("bankAccounts.filter.statusInaktiv") },
-        { value: ALL_STATUS, label: t("bankAccounts.filter.statusAlle") },
+        { value: ACTIVE, label: t("bankAccounts.filter.statusActive") },
+        { value: INACTIVE, label: t("bankAccounts.filter.statusInactive") },
+        { value: ALL_STATUS, label: t("bankAccounts.filter.statusAll") },
       ],
     },
     {
       kind: "select",
       key: "gesellschaft",
-      label: t("bankAccounts.col.gesellschaft"),
+      label: t("bankAccounts.col.company"),
       value: companyFilter,
       defaultValue: ALL,
       onChange: setCompanyFilter,
       options: [
-        { value: ALL, label: t("bankAccounts.filter.alleGesellschaften") },
-        { value: WITHOUT_COMPANY, label: t("bankAccounts.keineGesellschaft") },
+        { value: ALL, label: t("bankAccounts.filter.allCompanies") },
+        { value: WITHOUT_COMPANY, label: t("bankAccounts.noCompany") },
         ...(companiesQ.data ?? []).map((c) => ({ value: c.id, label: `${c.code} · ${c.name}` })),
       ],
     },
@@ -226,15 +226,15 @@ function BankAccountsPage() {
           {
             kind: "select",
             key: "banksapi",
-            label: t("bankAccounts.col.anbindung"),
+            label: t("bankAccounts.col.connection"),
             value: banksapiFilter,
             defaultValue: ALL,
             onChange: setBanksapiFilter,
             options: [
-              { value: ALL, label: t("bankAccounts.filter.alleBanksapi") },
-              { value: "connected", label: t("bankAccounts.banksapiVerbunden") },
-              { value: "linkable", label: t("bankAccounts.banksapiJa") },
-              { value: "none", label: t("bankAccounts.banksapiNein") },
+              { value: ALL, label: t("bankAccounts.filter.allConnectionStates") },
+              { value: "connected", label: t("bankAccounts.providerConnected") },
+              { value: "linkable", label: t("bankAccounts.providerYes") },
+              { value: "none", label: t("bankAccounts.providerNo") },
             ],
           },
         ] as FilterField[])),
@@ -246,7 +246,7 @@ function BankAccountsPage() {
             kind: "toggle",
             key: "sandbox",
             fieldLabel: t("bankAccounts.sandbox"),
-            label: t("bankAccounts.filter.nurSandbox"),
+            label: t("bankAccounts.filter.sandboxOnly"),
             value: onlySandbox,
             onChange: setOnlySandbox,
           },
@@ -309,7 +309,7 @@ function BankAccountsPage() {
               <TabsTrigger value="konten">
                 <img
                   src="/brand/banksapi.svg"
-                  alt={t("bankAccounts.tab.konten")}
+                  alt={t("bankAccounts.tab.accounts")}
                   className={cn(
                     "h-4 w-auto transition-opacity",
                     active === "konten" ? "opacity-100" : "opacity-60",
@@ -328,13 +328,13 @@ function BankAccountsPage() {
                   />
                 </TabsTrigger>
               )}
-              <TabsTrigger value="manuell">{t("bankAccounts.tab.manuell")}</TabsTrigger>
+              <TabsTrigger value="manuell">{t("bankAccounts.tab.manual")}</TabsTrigger>
             </TabsList>
           }
           value={active === "pleo" ? pleoSearch : search}
           onValueChange={active === "pleo" ? setPleoSearch : setSearch}
           placeholder={
-            active === "pleo" ? t("bankAccounts.karten.suche") : t("bankAccounts.filter.suche")
+            active === "pleo" ? t("bankAccounts.cards.search") : t("bankAccounts.filter.search")
           }
           actions={
             <>
@@ -352,7 +352,7 @@ function BankAccountsPage() {
                   labels={{
                     button: t("bankAccounts.filter.button"),
                     title: t("bankAccounts.filter.title"),
-                    reset: t("bankAccounts.filter.zuruecksetzen"),
+                    reset: t("bankAccounts.filter.reset"),
                   }}
                 />
               )}
@@ -569,7 +569,7 @@ function AccountsTab({
         group: {
           key: c.id,
           connectionId: c.id,
-          label: c.bank_name ?? c.provider_name ?? t("bankAccounts.gruppe.unbekannteBank"),
+          label: c.bank_name ?? c.provider_name ?? t("bankAccounts.group.unknownBank"),
           status: c.status ?? null,
           sandbox: c.is_sandbox,
           createdAt: c.created_at ?? null,
@@ -606,7 +606,7 @@ function AccountsTab({
       (a) => a.connection_id && !known.has(a.connection_id),
     ).length;
     if (unknownTotal > 0) {
-      out.push(attachment(GROUP_UNKNOWN, t("bankAccounts.gruppe.andere"), unknown, unknownTotal));
+      out.push(attachment(GROUP_UNKNOWN, t("bankAccounts.group.other"), unknown, unknownTotal));
     }
     return out;
   }, [grouped, connections, accounts, allAccounts, t]);
@@ -726,26 +726,26 @@ function BankAccountsEmptyState({
     return (
       // Title only. The create button is one line above, in the header, so a sentence pointing at
       // it would be describing what the reader can already see.
-      <EmptyState title={t("bankAccounts.emptyManuell.title")} />
+      <EmptyState title={t("bankAccounts.emptyManual.title")} />
     );
   }
   if (leer) {
     return (
       <EmptyState
         title={t("bankAccounts.empty.title")}
-        hint={canConnections ? t("bankAccounts.empty.hint") : t("bankAccounts.empty.hintManuell")}
+        hint={canConnections ? t("bankAccounts.empty.hint") : t("bankAccounts.empty.hintManual")}
       />
     );
   }
   return (
     <div>
       <EmptyState
-        title={t("bankAccounts.keineTreffer.title")}
-        hint={t("bankAccounts.keineTreffer.hint")}
+        title={t("bankAccounts.noMatches.title")}
+        hint={t("bankAccounts.noMatches.hint")}
       />
       <div className="mt-3 flex justify-center">
         <Button variant="outline" onClick={onReset}>
-          {t("bankAccounts.filter.zuruecksetzen")}
+          {t("bankAccounts.filter.reset")}
         </Button>
       </div>
     </div>

@@ -253,7 +253,7 @@ export function PropertyDetail({ code, config }: { code: string; config: Propert
       changes.ownership_type = f.ownership_type as PropertyData["ownership_type"];
     }
     if (Object.keys(changes).length === 0) {
-      toast.info(t("properties.detail.toast.keineAenderungen"));
+      toast.info(t("properties.detail.toast.noChanges"));
       setEdit(false);
       return;
     }
@@ -261,12 +261,11 @@ export function PropertyDetail({ code, config }: { code: string; config: Propert
     // narrower on a Hub without the optional columns.
     updateO.mutate(changes as Parameters<typeof updateO.mutate>[0], {
       onSuccess: () => {
-        toast.success(t("properties.detail.toast.gespeichert"));
+        toast.success(t("properties.detail.toast.saved"));
         setForm(null);
         setEdit(false);
       },
-      onError: (e) =>
-        toast.error(t("properties.detail.toast.speichernFehlgeschlagen", { error: errorText(e) })),
+      onError: (e) => toast.error(t("properties.detail.toast.saveFailed", { error: errorText(e) })),
     });
   }
 
@@ -290,11 +289,11 @@ export function PropertyDetail({ code, config }: { code: string; config: Propert
           ),
         },
         { label: t("properties.detail.field.name"), value: property.name },
-        { label: t("properties.detail.field.adresse"), value: property.address, wide: true },
+        { label: t("properties.detail.field.address"), value: property.address, wide: true },
         {
-          label: t("properties.detail.field.ustStatus"),
+          label: t("properties.detail.field.vatStatus"),
           value: property.vat_status
-            ? t(`properties.ustStatus.${property.vat_status}`, {
+            ? t(`properties.vatStatus.${property.vat_status}`, {
                 defaultValue: property.vat_status,
               })
             : null,
@@ -302,8 +301,8 @@ export function PropertyDetail({ code, config }: { code: string; config: Propert
         ...(config.ownership
           ? [
               {
-                label: t("properties.detail.field.eigentum"),
-                value: t(`properties.eigentum.${property.ownership_type ?? "own"}`),
+                label: t("properties.detail.field.ownership"),
+                value: t(`properties.ownership.${property.ownership_type ?? "own"}`),
               },
             ]
           : []),
@@ -320,7 +319,7 @@ export function PropertyDetail({ code, config }: { code: string; config: Propert
                     rel="noreferrer"
                     className="inline-flex items-center gap-1 text-brand underline-offset-4 hover:underline"
                   >
-                    {t("properties.detail.action.ordnerOeffnen")}
+                    {t("properties.detail.action.openFolder")}
                     <ExternalLink className="size-3.5" />
                   </a>
                 ) : undefined,
@@ -381,7 +380,7 @@ export function PropertyDetail({ code, config }: { code: string; config: Propert
               }}
               className="gap-2"
             >
-              <Pencil className="size-4" /> {t("properties.detail.action.bearbeiten")}
+              <Pencil className="size-4" /> {t("properties.detail.action.edit")}
             </Button>
             {/* The destructive action moved into a menu, matching the company page: it was a
                 full-width red button sitting beside Edit, given the same weight as the thing
@@ -396,7 +395,7 @@ export function PropertyDetail({ code, config }: { code: string; config: Propert
                   <Button
                     variant="outline"
                     size="icon"
-                    aria-label={t("properties.detail.action.mehr")}
+                    aria-label={t("properties.detail.action.more")}
                   >
                     <MoreVertical className="size-4" />
                   </Button>
@@ -410,7 +409,7 @@ export function PropertyDetail({ code, config }: { code: string; config: Propert
                       <DropdownMenuItem asChild className="cursor-pointer">
                         <a href={property.drive_folder_url} target="_blank" rel="noreferrer">
                           <ExternalLink className="size-4" />{" "}
-                          {t("properties.detail.action.ordnerOeffnen")}
+                          {t("properties.detail.action.openFolder")}
                         </a>
                       </DropdownMenuItem>
                       <DropdownMenuSeparator />
@@ -424,26 +423,24 @@ export function PropertyDetail({ code, config }: { code: string; config: Propert
                       disabled={unarchiveO.isPending}
                       onSelect={() =>
                         unarchiveO.mutate(undefined, {
-                          onSuccess: () =>
-                            toast.success(t("properties.detail.toast.wiederhergestellt")),
+                          onSuccess: () => toast.success(t("properties.detail.toast.restored")),
                           onError: (e) =>
                             toast.error(
-                              t("properties.detail.toast.speichernFehlgeschlagen", {
+                              t("properties.detail.toast.saveFailed", {
                                 error: errorText(e),
                               }),
                             ),
                         })
                       }
                     >
-                      <RotateCcw className="size-4" />{" "}
-                      {t("properties.detail.action.wiederherstellen")}
+                      <RotateCcw className="size-4" /> {t("properties.detail.action.restore")}
                     </DropdownMenuItem>
                   ) : (
                     <DropdownMenuItem
                       className="cursor-pointer text-destructive focus:text-destructive"
                       onSelect={() => setArchiveOpen(true)}
                     >
-                      <Archive className="size-4" /> {t("properties.detail.action.archivieren")}
+                      <Archive className="size-4" /> {t("properties.detail.action.archive")}
                     </DropdownMenuItem>
                   )}
                 </DropdownMenuContent>
@@ -470,36 +467,38 @@ export function PropertyDetail({ code, config }: { code: string; config: Propert
                 {t("properties.detail.archiveDialog.desc")}
                 {totalsReady && allDocuments.length > 0
                   ? " " +
-                    t("properties.detail.archiveDialog.mitBelegen", { count: allDocuments.length })
+                    t("properties.detail.archiveDialog.withDocuments", {
+                      count: allDocuments.length,
+                    })
                   : ""}
               </AlertDialogDescription>
             </AlertDialogHeader>
             <Input
               value={archiveReason}
               onChange={(e) => setArchiveReason(e.target.value)}
-              placeholder={t("properties.detail.archiveDialog.grundPlaceholder")}
+              placeholder={t("properties.detail.archiveDialog.reasonPlaceholder")}
             />
             <AlertDialogFooter>
-              <AlertDialogCancel>{t("properties.detail.action.abbrechen")}</AlertDialogCancel>
+              <AlertDialogCancel>{t("properties.detail.action.cancel")}</AlertDialogCancel>
               <AlertDialogAction
                 disabled={!archiveReason.trim()}
                 className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
                 onClick={() =>
                   archiveO.mutate(archiveReason.trim(), {
                     onSuccess: () => {
-                      toast.success(t("properties.detail.toast.archiviert"));
+                      toast.success(t("properties.detail.toast.archived"));
                       setArchiveReason("");
                     },
                     onError: (e) =>
                       toast.error(
-                        t("properties.detail.toast.speichernFehlgeschlagen", {
+                        t("properties.detail.toast.saveFailed", {
                           error: errorText(e),
                         }),
                       ),
                   })
                 }
               >
-                {t("properties.detail.archiveDialog.bestaetigen")}
+                {t("properties.detail.archiveDialog.confirm")}
               </AlertDialogAction>
             </AlertDialogFooter>
           </AlertDialogContent>
@@ -510,8 +509,7 @@ export function PropertyDetail({ code, config }: { code: string; config: Propert
         <div className="mt-4 flex items-center gap-2 rounded-lg border border-border bg-muted/40 px-3 py-2.5 text-sm text-muted-foreground">
           <Archive className="size-4 shrink-0" />
           {t("properties.detail.archivedNotice", {
-            reason:
-              property.delete_reason?.trim() || t("properties.detail.archivedNoticeOhneGrund"),
+            reason: property.delete_reason?.trim() || t("properties.detail.archivedNoticeNoReason"),
           })}
         </div>
       )}
@@ -535,11 +533,11 @@ export function PropertyDetail({ code, config }: { code: string; config: Propert
                   // Same seam as in speichern(): only reached where the column exists, and cast
                   // because a Hub without it has a narrower update type.
                   { reviewed_at: new Date().toISOString() } as Parameters<typeof updateO.mutate>[0],
-                  { onSuccess: () => toast.success(t("properties.detail.toast.geprueft")) },
+                  { onSuccess: () => toast.success(t("properties.detail.toast.reviewed")) },
                 )
               }
             >
-              <CheckCircle2 className="size-4" /> {t("properties.detail.action.nochKorrekt")}
+              <CheckCircle2 className="size-4" /> {t("properties.detail.action.stillCorrect")}
             </Button>
           </div>
         )}
@@ -554,27 +552,27 @@ export function PropertyDetail({ code, config }: { code: string; config: Propert
           ) : !property ? (
             <div className="rounded-xl border border-amber-300 bg-amber-50 p-4 text-sm text-amber-900 dark:border-amber-900/60 dark:bg-amber-950/40 dark:text-amber-200">
               <p>
-                {t("properties.detail.notInStammBefore")}
+                {t("properties.detail.notInMasterDataBefore")}
                 <span className="font-mono">{code}</span>
-                {t("properties.detail.notInStammAfter")}
+                {t("properties.detail.notInMasterDataAfter")}
               </p>
               {/* The text told you to go create it and then left you to find the way there
                   yourself. The list page already accepts `?neu=<code>` and opens its create dialog
                   pre-filled with exactly this code, which is the mechanism it was describing. */}
               <Button size="sm" className="mt-3 gap-1.5" onClick={() => config.openNew(code)}>
-                <Plus className="size-4" /> {t("properties.detail.action.jetztAnlegen")}
+                <Plus className="size-4" /> {t("properties.detail.action.createNow")}
               </Button>
             </div>
           ) : (
             <section className="rounded-xl border border-border bg-card p-5">
               <h2 className="mb-4 text-sm font-semibold uppercase tracking-wide text-muted-foreground">
-                {t("properties.detail.section.stammdaten")}
+                {t("properties.detail.section.masterData")}
               </h2>
               <FactList facts={masterData} columns={2} />
               <div className="mt-3.5 grid grid-cols-2 gap-4 border-t border-border/60 pt-3.5">
                 <div>
                   <dt className="text-xs uppercase tracking-wide text-muted-foreground">
-                    {t("properties.detail.field.erstellt")}
+                    {t("properties.detail.field.createdAt")}
                   </dt>
                   <dd className="mt-0.5 text-base text-foreground">
                     {formatDate(property.created_at)}
@@ -582,7 +580,7 @@ export function PropertyDetail({ code, config }: { code: string; config: Propert
                 </div>
                 <div>
                   <dt className="text-xs uppercase tracking-wide text-muted-foreground">
-                    {t("properties.detail.field.aktualisiert")}
+                    {t("properties.detail.field.updatedAt")}
                   </dt>
                   <dd className="mt-0.5 text-base text-foreground">
                     {formatDate(property.updated_at ?? property.created_at)}
@@ -598,12 +596,12 @@ export function PropertyDetail({ code, config }: { code: string; config: Propert
             <section className="rounded-xl border border-border bg-card p-5">
               <div className="mb-1 flex flex-wrap items-center justify-between gap-2">
                 <h2 className="text-sm font-semibold uppercase tracking-wide text-muted-foreground">
-                  {t("properties.detail.section.gesellschaften")}
+                  {t("properties.detail.section.companies")}
                 </h2>
                 {config.assignmentAction?.(property)}
               </div>
               <p className="mb-3 text-xs text-muted-foreground">
-                {t("properties.detail.gesellschaftenHint")}
+                {t("properties.detail.companiesHint")}
               </p>
               {config.assignmentEditor ? (
                 config.assignmentEditor(property)
@@ -611,7 +609,7 @@ export function PropertyDetail({ code, config }: { code: string; config: Propert
                 <SectionSkeleton className="h-20" />
               ) : assignments.length === 0 ? (
                 <p className="rounded-md border border-dashed border-border py-6 text-center text-xs text-muted-foreground">
-                  {t("properties.detail.gesellschaftenEmpty")}
+                  {t("properties.detail.companiesEmpty")}
                 </p>
               ) : (
                 <div className="space-y-1.5">
@@ -663,8 +661,8 @@ export function PropertyDetail({ code, config }: { code: string; config: Propert
                       {z.costCentre !== undefined && (
                         <span className="ml-auto text-xs text-muted-foreground">
                           {z.costCentre != null
-                            ? t("properties.detail.kostenstelle", { nr: z.costCentre })
-                            : t("properties.detail.kostenstelleFehlt")}
+                            ? t("properties.detail.costCentre", { nr: z.costCentre })
+                            : t("properties.detail.costCentreMissing")}
                         </span>
                       )}
                     </div>
@@ -688,13 +686,13 @@ export function PropertyDetail({ code, config }: { code: string; config: Propert
               {/* Count and total sit ON the heading line. As a tinted tile underneath they were a
                   box competing with the table for the eye, for two numbers that are a subtitle. */}
               <h2 className="flex flex-wrap items-baseline gap-x-2 gap-y-0.5 text-sm font-semibold uppercase tracking-wide text-muted-foreground">
-                {t("properties.detail.section.verbucht")}
+                {t("properties.detail.section.booked")}
                 {/* Count and total come from two different queries -- the count from the paged row
                     query's exact count, the sum from the aggregate projection -- so they are gated
                     separately rather than one publishing the other's zero. */}
                 {documentsReady ? (
                   <span className="text-sm font-normal normal-case tracking-normal text-muted-foreground">
-                    {t("properties.detail.belegeCount", { count: documentsTotal })}
+                    {t("properties.detail.documentsCount", { count: documentsTotal })}
                   </span>
                 ) : (
                   <Skeleton className="h-4 w-20" />
@@ -719,7 +717,7 @@ export function PropertyDetail({ code, config }: { code: string; config: Propert
                 }}
                 locale={dateLocale()}
                 formatDay={(iso) => formatDate(iso)}
-                backLabel={t("home.zeitraumAktion.zurueck")}
+                backLabel={t("home.periodAction.back")}
                 placeholder={t("documents.list.filter.zeitraum")}
                 ariaLabel={t("documents.list.filter.zeitraum")}
                 className="w-full sm:w-[190px]"
@@ -740,7 +738,7 @@ export function PropertyDetail({ code, config }: { code: string; config: Propert
               <div className="mb-4 flex items-start gap-2 rounded-lg border border-amber-300 bg-amber-50 px-3 py-2 text-amber-900 dark:border-amber-900/60 dark:bg-amber-950/40 dark:text-amber-200">
                 <TriangleAlert className="mt-0.5 size-4 shrink-0" />
                 <p className="text-xs">
-                  {t("properties.detail.gesellschaftAbweichung", {
+                  {t("properties.detail.companyMismatch", {
                     count: differingDocuments,
                     companies: companies.map((c) => c.code).join(", "),
                   })}
@@ -756,12 +754,12 @@ export function PropertyDetail({ code, config }: { code: string; config: Propert
               <Table containerClassName="max-h-[26rem]">
                 <TableHeader>
                   <TableRow className="bg-muted/40 [&>th]:sticky [&>th]:top-0 [&>th]:z-10 [&>th]:bg-muted">
-                    <TableHead>{t("properties.detail.col.steller")}</TableHead>
-                    <TableHead>{t("properties.detail.col.ges")}</TableHead>
-                    <TableHead>{t("properties.detail.col.datum")}</TableHead>
-                    <TableHead>{t("properties.detail.col.ust")}</TableHead>
+                    <TableHead>{t("properties.detail.col.supplier")}</TableHead>
+                    <TableHead>{t("properties.detail.col.company")}</TableHead>
+                    <TableHead>{t("properties.detail.col.date")}</TableHead>
+                    <TableHead>{t("properties.detail.col.vat")}</TableHead>
                     <TableHead className="text-right">
-                      {t("properties.detail.col.betrag")}
+                      {t("properties.detail.col.amount")}
                     </TableHead>
                     <TableHead>{t("properties.detail.col.status")}</TableHead>
                   </TableRow>
@@ -778,17 +776,17 @@ export function PropertyDetail({ code, config }: { code: string; config: Propert
                           {issuerName(b.supplier_id, b.issuer)}
                         </div>
                         <div className="text-xs text-muted-foreground">
-                          {b.invoice_number ?? t("properties.detail.ohneNr")}
+                          {b.invoice_number ?? t("properties.detail.noNumber")}
                         </div>
                       </TableCell>
                       <TableCell>
                         <span className="inline-flex items-center gap-1.5">
                           <CompanyChip code={b.company_code} />
                           {companyMatchesNot(b.company_code) && (
-                            <span title={t("properties.detail.gesellschaftAbweichungZeile")}>
+                            <span title={t("properties.detail.companyMismatchRow")}>
                               <TriangleAlert
                                 className="size-3.5 shrink-0 text-amber-600"
-                                aria-label={t("properties.detail.gesellschaftAbweichungZeile")}
+                                aria-label={t("properties.detail.companyMismatchRow")}
                               />
                             </span>
                           )}
@@ -820,8 +818,8 @@ export function PropertyDetail({ code, config }: { code: string; config: Propert
                     <TableRow>
                       <TableCell colSpan={6} className="py-12 text-center text-muted-foreground">
                         {allDocuments.length === 0
-                          ? t("properties.detail.noBelege")
-                          : t("properties.detail.noBelegeZeitraum")}
+                          ? t("properties.detail.noDocuments")
+                          : t("properties.detail.noDocumentsInPeriod")}
                       </TableCell>
                     </TableRow>
                   )}
@@ -860,7 +858,7 @@ export function PropertyDetail({ code, config }: { code: string; config: Propert
                         {issuerName(b.supplier_id, b.issuer)}
                       </div>
                       <div className="text-xs text-muted-foreground">
-                        {b.invoice_number ?? t("properties.detail.ohneNr")}
+                        {b.invoice_number ?? t("properties.detail.noNumber")}
                       </div>
                     </div>
                     <div className="shrink-0 text-right font-medium tabular-nums text-foreground">
@@ -872,7 +870,7 @@ export function PropertyDetail({ code, config }: { code: string; config: Propert
                     {companyMatchesNot(b.company_code) && (
                       <TriangleAlert
                         className="size-3.5 shrink-0 text-amber-600"
-                        aria-label={t("properties.detail.gesellschaftAbweichungZeile")}
+                        aria-label={t("properties.detail.companyMismatchRow")}
                       />
                     )}
                     <VatBadge vatRate={b.vat_rate} tax={b.tax} />
@@ -887,8 +885,8 @@ export function PropertyDetail({ code, config }: { code: string; config: Propert
               {documentsReady && documents.length === 0 && (
                 <p className="rounded-lg border border-border px-4 py-12 text-center text-sm text-muted-foreground">
                   {allDocuments.length === 0
-                    ? t("properties.detail.noBelege")
-                    : t("properties.detail.noBelegeZeitraum")}
+                    ? t("properties.detail.noDocuments")
+                    : t("properties.detail.noDocumentsInPeriod")}
                 </p>
               )}
               {documentsQ.hasNextPage && (
@@ -921,23 +919,23 @@ export function PropertyDetail({ code, config }: { code: string; config: Propert
               </div>
               <div className="space-y-1 sm:col-span-2">
                 <Label className="text-xs text-muted-foreground">
-                  {t("properties.detail.field.adresse")}
+                  {t("properties.detail.field.address")}
                 </Label>
                 <Input value={f.address} onChange={(e) => setF("address", e.target.value)} />
               </div>
               <div className="space-y-1">
                 <Label className="text-xs text-muted-foreground">
-                  {t("properties.detail.field.ustStatus")}
+                  {t("properties.detail.field.vatStatus")}
                 </Label>
                 <Combobox
                   value={f.vat_status}
                   onValueChange={(v) => setF("vat_status", v)}
                   placeholder="—"
                   options={[
-                    { value: "__none", label: t("properties.ohne") },
+                    { value: "__none", label: t("properties.none") },
                     ...VAT_STATUS_OPTIONS.map((s) => ({
                       value: s,
-                      label: t(`properties.ustStatus.${s}`),
+                      label: t(`properties.vatStatus.${s}`),
                     })),
                   ]}
                 />
@@ -945,14 +943,14 @@ export function PropertyDetail({ code, config }: { code: string; config: Propert
               {config.ownership && (
                 <div className="space-y-1">
                   <Label className="text-xs text-muted-foreground">
-                    {t("properties.detail.field.eigentum")}
+                    {t("properties.detail.field.ownership")}
                   </Label>
                   <Combobox
                     value={f.ownership_type}
                     onValueChange={(v) => setF("ownership_type", v)}
                     options={OWNERSHIP_OPTIONS.map((o) => ({
                       value: o,
-                      label: t(`properties.eigentum.${o}`),
+                      label: t(`properties.ownership.${o}`),
                     }))}
                   />
                 </div>
@@ -972,12 +970,12 @@ export function PropertyDetail({ code, config }: { code: string; config: Propert
           )}
           <DialogFooter>
             <Button variant="outline" onClick={cancel}>
-              {t("properties.detail.action.abbrechen")}
+              {t("properties.detail.action.cancel")}
             </Button>
             <Button onClick={save} disabled={updateO.isPending}>
               {updateO.isPending
-                ? t("properties.detail.action.speichere")
-                : t("properties.detail.action.speichern")}
+                ? t("properties.detail.action.saving")
+                : t("properties.detail.action.save")}
             </Button>
           </DialogFooter>
         </DialogContent>

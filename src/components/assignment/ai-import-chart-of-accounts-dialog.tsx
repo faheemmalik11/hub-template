@@ -1,11 +1,4 @@
-// "Mit KI importieren" — the ONLY way to import a chart of accounts (the previous manual
-// "Konto;Kategorie-Code" textarea import was removed; every account file goes through this
-// dialog now). The user picks company + one or more fiscal years right here (a chart of accounts
-// from the tax advisor is usually identical across several years, so importing the same extracted
-// mapping into more than one year at once is the common case, not an edge case), then drops a
-// file (CSV/Excel/PDF/image). The AI extracts account + description and suggests a category per
-// row from the client's own bwa_categories; every row stays editable in a preview before anything
-// is written. The write itself reuses useImportBwaAccountMapping, once per selected year.
+// The only way to import a chart of accounts now — the old manual textarea import was removed.
 import { useRef, useState } from "react";
 import * as XLSX from "xlsx";
 import { AlertTriangle, FileText, Loader2, Sparkles, UploadCloud } from "lucide-react";
@@ -43,9 +36,7 @@ import { errorText } from "@/lib/data/format";
 const MAX_BYTES = 15 * 1024 * 1024;
 const ALLOWED = [".pdf", ".jpg", ".jpeg", ".png", ".csv", ".xlsx", ".xls"];
 
-// Same reasoning as the tab's own FISCAL_YEAR_OPTIONS: a plain number input lets the mouse scroll
-// wheel silently change the year. Kept as its own module-scope copy rather than importing the
-// route's private constant, since this dialog is meant to be reusable outside this one route.
+// Deliberately not importing the route's private FISCAL_YEAR_OPTIONS: this dialog is reusable outside that route.
 const FISCAL_YEAR_OPTIONS: ComboboxOption[] = Array.from({ length: 2099 - 1999 + 1 }, (_, i) => {
   const year = 1999 + i;
   return { value: String(year), label: String(year) };
@@ -77,9 +68,7 @@ async function fileToBase64(file: File): Promise<string> {
   return btoa(binary);
 }
 
-// XLSX/XLS are a binary format, so they're converted to a CSV-shaped text blob first, then sent
-// exactly like a raw CSV upload — the AI reads text either way, there is no benefit to a richer
-// structured parse here since the AI (not the app) is the one interpreting arbitrary columns.
+// Converted to CSV text, not parsed further: the AI interprets the columns, so a richer structured parse buys nothing.
 function xlsxToCsvText(buffer: ArrayBuffer): string {
   const workbook = XLSX.read(buffer, { type: "array" });
   const sheetName = workbook.SheetNames[0];
@@ -87,7 +76,7 @@ function xlsxToCsvText(buffer: ArrayBuffer): string {
   return XLSX.utils.sheet_to_csv(workbook.Sheets[sheetName]);
 }
 
-export function KiImportChartOfAccountsDialog({
+export function AiImportChartOfAccountsDialog({
   companies,
   categories,
   defaultCompanyId,
@@ -123,7 +112,7 @@ export function KiImportChartOfAccountsDialog({
 
   async function onFilePicked(picked: File) {
     if (picked.size > MAX_BYTES) {
-      toast.error(t("chartOfAccounts.kiImport.toast.zuGross"));
+      toast.error(t("chartOfAccounts.aiImport.toast.tooLarge"));
       return;
     }
     const name = picked.name.toLowerCase();
@@ -140,7 +129,7 @@ export function KiImportChartOfAccountsDialog({
       } else {
         const mime = guessMimeFromName(picked.name);
         if (!(CHART_OF_ACCOUNTS_FILE_MIME as readonly string[]).includes(mime)) {
-          toast.error(t("chartOfAccounts.kiImport.toast.typUngueltig"));
+          toast.error(t("chartOfAccounts.aiImport.toast.invalidType"));
           setPhase("drop");
           return;
         }
@@ -156,7 +145,7 @@ export function KiImportChartOfAccountsDialog({
       extract.mutate(args, {
         onSuccess: (result) => {
           if (result.rows.length === 0) {
-            setErrorMsg(t("chartOfAccounts.kiImport.toast.keineKonten"));
+            setErrorMsg(t("chartOfAccounts.aiImport.toast.noAccounts"));
             setPhase("error");
             return;
           }
@@ -171,7 +160,7 @@ export function KiImportChartOfAccountsDialog({
         },
         onError: (err) => {
           toast.error(
-            t("chartOfAccounts.kiImport.toast.analyseFehlgeschlagen", {
+            t("chartOfAccounts.aiImport.toast.analysisFailed", {
               error: errorText(err),
             }),
           );
@@ -203,10 +192,7 @@ export function KiImportChartOfAccountsDialog({
     }));
 
     setSaving(true);
-    // Sequential, not Promise.all: the same import mutation object is reused for every year, and
-    // the point of picking multiple years is "the same file applies to each of them" — a partial
-    // failure should say exactly which year broke, not report a mixed race of successes/errors.
-    // currentYear is tracked outside the try so the catch block can name it in the error toast.
+    // Sequential, not Promise.all: a partial failure must name exactly which year broke.
     let currentYear: string | null = null;
     try {
       for (const yearStr of years) {
@@ -218,7 +204,7 @@ export function KiImportChartOfAccountsDialog({
         });
       }
       toast.success(
-        t("chartOfAccounts.kiImport.toast.importiert", {
+        t("chartOfAccounts.aiImport.toast.imported", {
           count: payload.length,
           years: years.join(", "),
         }),
@@ -227,7 +213,7 @@ export function KiImportChartOfAccountsDialog({
       reset();
     } catch (e) {
       toast.error(
-        t("chartOfAccounts.kiImport.toast.jahrFehlgeschlagen", {
+        t("chartOfAccounts.aiImport.toast.yearFailed", {
           year: currentYear,
           error: errorText(e),
         }),
@@ -243,9 +229,7 @@ export function KiImportChartOfAccountsDialog({
       onOpenChange={(o) => {
         setOpen(o);
         if (o) {
-          // Re-seed from the tab's current filters every time the dialog opens — it doesn't
-          // remount between opens, so without this a stale company/year from a previous open
-          // (or from before the tab's own filters changed) would silently carry over.
+          // Re-seeds on every open: the dialog doesn't remount, so a stale value would otherwise carry over.
           setCompanyId(defaultCompanyId ?? null);
           setYears([String(defaultYear ?? new Date().getFullYear())]);
         } else {
@@ -255,18 +239,18 @@ export function KiImportChartOfAccountsDialog({
     >
       <DialogTrigger asChild>
         <Button variant="outline" className="gap-2">
-          <Sparkles className="size-4" /> {t("chartOfAccounts.kiImport.button")}
+          <Sparkles className="size-4" /> {t("chartOfAccounts.aiImport.button")}
         </Button>
       </DialogTrigger>
       <DialogContent className="sm:max-w-2xl">
         <DialogHeader>
-          <DialogTitle>{t("chartOfAccounts.kiImport.title")}</DialogTitle>
-          <DialogDescription>{t("chartOfAccounts.kiImport.desc")}</DialogDescription>
+          <DialogTitle>{t("chartOfAccounts.aiImport.title")}</DialogTitle>
+          <DialogDescription>{t("chartOfAccounts.aiImport.desc")}</DialogDescription>
         </DialogHeader>
 
         <div className="grid gap-4 sm:grid-cols-2">
           <div className="space-y-1.5">
-            <Label>{t("chartOfAccounts.gesellschaft")}</Label>
+            <Label>{t("chartOfAccounts.company")}</Label>
             <Combobox
               value={companyId}
               onValueChange={setCompanyId}
@@ -278,7 +262,7 @@ export function KiImportChartOfAccountsDialog({
             />
           </div>
           <div className="space-y-1.5">
-            <Label>{t("chartOfAccounts.kiImport.jahre")}</Label>
+            <Label>{t("chartOfAccounts.aiImport.fiscalYears")}</Label>
             <MultiCombobox values={years} onValuesChange={setYears} options={FISCAL_YEAR_OPTIONS} />
           </div>
         </div>
@@ -311,13 +295,13 @@ export function KiImportChartOfAccountsDialog({
             <div>
               <p className="text-sm font-medium text-foreground">
                 {!canUpload
-                  ? t("chartOfAccounts.kiImport.auswahlFehlt")
+                  ? t("chartOfAccounts.aiImport.selectionMissing")
                   : dragOver
-                    ? t("chartOfAccounts.kiImport.dropRelease")
-                    : t("chartOfAccounts.kiImport.dropHint")}
+                    ? t("chartOfAccounts.aiImport.dropRelease")
+                    : t("chartOfAccounts.aiImport.dropHint")}
               </p>
               <p className="mt-1 text-xs text-muted-foreground">
-                {t("chartOfAccounts.kiImport.fileTypes")}
+                {t("chartOfAccounts.aiImport.fileTypes")}
               </p>
             </div>
             <Button
@@ -326,7 +310,7 @@ export function KiImportChartOfAccountsDialog({
               disabled={!canUpload}
               onClick={() => inputRef.current?.click()}
             >
-              {t("chartOfAccounts.kiImport.chooseFile")}
+              {t("chartOfAccounts.aiImport.chooseFile")}
             </Button>
             <input
               ref={inputRef}
@@ -347,7 +331,7 @@ export function KiImportChartOfAccountsDialog({
           <div className="flex flex-col items-center justify-center gap-3 rounded-2xl border border-border bg-card px-6 py-14 text-center">
             <Loader2 className="size-8 animate-spin text-brand" />
             <p className="text-sm font-medium text-foreground">
-              {t("chartOfAccounts.kiImport.analysiere")}
+              {t("chartOfAccounts.aiImport.analyzing")}
             </p>
             <p className="text-xs text-muted-foreground">{filename}</p>
           </div>
@@ -357,11 +341,11 @@ export function KiImportChartOfAccountsDialog({
           <div className="rounded-2xl border border-destructive/30 bg-destructive/5 px-6 py-10 text-center">
             <AlertTriangle className="mx-auto size-8 text-destructive" />
             <p className="mt-3 text-sm font-medium text-foreground">
-              {t("chartOfAccounts.kiImport.fehler.title")}
+              {t("chartOfAccounts.aiImport.error.title")}
             </p>
             {errorMsg && <p className="mt-1 text-sm text-muted-foreground">{errorMsg}</p>}
             <Button variant="outline" className="mt-5" onClick={reset}>
-              {t("chartOfAccounts.kiImport.fehler.andereDatei")}
+              {t("chartOfAccounts.aiImport.error.differentFile")}
             </Button>
           </div>
         )}
@@ -373,7 +357,7 @@ export function KiImportChartOfAccountsDialog({
               <span className="truncate">{filename}</span>
             </div>
             <p className="text-sm font-medium text-foreground">
-              {t("chartOfAccounts.kiImport.vorschau", {
+              {t("chartOfAccounts.aiImport.preview", {
                 recognized: recognized.length,
                 total: rows.length,
               })}
@@ -382,9 +366,9 @@ export function KiImportChartOfAccountsDialog({
               <Table containerClassName="max-h-96">
                 <TableHeader>
                   <TableRow>
-                    <TableHead>{t("chartOfAccounts.col.konto")}</TableHead>
-                    <TableHead>{t("chartOfAccounts.col.notiz")}</TableHead>
-                    <TableHead>{t("chartOfAccounts.col.kategorie")}</TableHead>
+                    <TableHead>{t("chartOfAccounts.col.account")}</TableHead>
+                    <TableHead>{t("chartOfAccounts.col.note")}</TableHead>
+                    <TableHead>{t("chartOfAccounts.col.category")}</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
@@ -407,7 +391,7 @@ export function KiImportChartOfAccountsDialog({
                             label: c.name,
                             keywords: c.code,
                           }))}
-                          placeholder={t("chartOfAccounts.kiImport.keineKategorie")}
+                          placeholder={t("chartOfAccounts.aiImport.noCategory")}
                           className="min-w-48"
                         />
                       </TableCell>
@@ -422,12 +406,12 @@ export function KiImportChartOfAccountsDialog({
         {phase === "preview" && (
           <DialogFooter>
             <Button variant="ghost" onClick={reset}>
-              {t("chartOfAccounts.kiImport.abbrechen")}
+              {t("chartOfAccounts.aiImport.cancel")}
             </Button>
             <Button onClick={save} disabled={recognized.length === 0 || saving || !canUpload}>
               {saving
-                ? t("chartOfAccounts.kiImport.speichere")
-                : t("chartOfAccounts.kiImport.speichernConfirm", {
+                ? t("chartOfAccounts.aiImport.saving")
+                : t("chartOfAccounts.aiImport.saveConfirm", {
                     count: recognized.length,
                     years: years.length,
                   })}

@@ -61,9 +61,8 @@ export function ManualSearch({
 }) {
   if (target.kind === "invoice") {
     // Direction mirrors the retired ManualLinkTab's own convention: an incoming invoice is
-    // settled by an outgoing (ausgehend) bank movement, an outgoing invoice by an incoming
-    // (eingehend) one.
-    const direction = target.type === "outgoing" ? "eingehend" : "ausgehend";
+    // settled by an outgoing bank movement, an outgoing invoice by an incoming one.
+    const direction = target.type === "outgoing" ? "incoming" : "outgoing";
     const { fromDate, toDate } = windowBounds(target.dueDate ?? target.documentDate);
     return (
       <TransactionSearchList
@@ -118,7 +117,7 @@ function TransactionSearchList({
   invoiceGross,
   onLinked,
 }: {
-  direction: "eingehend" | "ausgehend";
+  direction: "incoming" | "outgoing";
   fromDate?: string;
   toDate?: string;
   search: string;

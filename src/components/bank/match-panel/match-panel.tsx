@@ -212,7 +212,7 @@ export function MatchPanel({
                 </div>
                 {partialPayment && display.kind === "invoice" && (
                   <div className="mt-0.5 text-xs font-medium tabular-nums text-amber-700">
-                    {t("openItems.belege.restOffen", {
+                    {t("openItems.invoices.remainingOpen", {
                       rest: formatEUR(Math.abs(display.amount ?? 0) - paidTotal),
                       paid: formatEUR(paidTotal),
                     })}
@@ -230,7 +230,7 @@ export function MatchPanel({
                         {t("matchPanel.dueDate", { datum: formatDate(display.dueDate) })}
                         {display.dueDate < todayLocal() && (
                           <span className="ml-1 font-medium text-red-600">
-                            · {t("openItems.belege.ueberfaellig")}
+                            · {t("openItems.invoices.overdue")}
                           </span>
                         )}
                       </span>
@@ -244,7 +244,7 @@ export function MatchPanel({
               {partialPayment && display.kind === "invoice" && (
                 <div className="mt-3 flex flex-wrap items-center justify-between gap-x-3 gap-y-2 rounded-lg border border-amber-200 bg-amber-50 px-3 py-2">
                   <span className="min-w-0 flex-1 text-xs text-amber-900">
-                    {t("matchPanel.teilzahlungHinweis", {
+                    {t("matchPanel.partialPaymentHint", {
                       rest: formatEUR(Math.abs(display.amount ?? 0) - paidTotal),
                     })}
                   </span>
@@ -256,7 +256,7 @@ export function MatchPanel({
                       onClick={() => setShowSearch(true)}
                     >
                       <Search className="size-3.5" aria-hidden />
-                      {t("matchPanel.teilzahlungSuchen")}
+                      {t("matchPanel.findMissingPayment")}
                     </Button>
                   )}
                 </div>
@@ -286,7 +286,7 @@ export function MatchPanel({
                         onClick={() => setShowSearch(false)}
                       >
                         <ChevronLeft />
-                        {t("matchPanel.zurueckZuVorschlaegen")}
+                        {t("matchPanel.backToSuggestions")}
                       </Button>
                     )}
                   </div>

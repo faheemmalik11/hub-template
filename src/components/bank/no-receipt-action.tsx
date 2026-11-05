@@ -47,10 +47,10 @@ export function NoReceiptAction({
     set.mutate(
       { transactionId: txn.id, reason },
       {
-        onSuccess: () => toast.success(t("noReceipt.toast.versteckt")),
+        onSuccess: () => toast.success(t("noReceipt.toast.hidden")),
         onError: (e) =>
           toast.error(
-            t("noReceipt.toast.fehlgeschlagen", {
+            t("noReceipt.toast.failed", {
               error: errorText(e),
             }),
           ),
@@ -65,14 +65,14 @@ export function NoReceiptAction({
         size={variant === "icon" ? "icon" : "default"}
         className={cn(variant === "button" && "gap-2", className)}
         disabled={clear.isPending}
-        aria-label={t("noReceipt.action.wiederAufnehmen")}
+        aria-label={t("noReceipt.action.putBack")}
         onClick={(e) => {
           e.stopPropagation();
           clear.mutate(txn.id, {
-            onSuccess: () => toast.success(t("noReceipt.toast.wiederAufgenommen")),
+            onSuccess: () => toast.success(t("noReceipt.toast.restored")),
             onError: (err) =>
               toast.error(
-                t("noReceipt.toast.fehlgeschlagen", {
+                t("noReceipt.toast.failed", {
                   error: errorText(err),
                 }),
               ),
@@ -80,7 +80,7 @@ export function NoReceiptAction({
         }}
       >
         <Eye className="size-4" />
-        {variant === "button" && t("noReceipt.action.wiederAufnehmen")}
+        {variant === "button" && t("noReceipt.action.putBack")}
       </Button>
     );
   }
@@ -93,14 +93,14 @@ export function NoReceiptAction({
           size={variant === "icon" ? "icon" : "default"}
           className={cn(variant === "button" && "gap-2", className)}
           disabled={set.isPending}
-          aria-label={t("noReceipt.action.keinBeleg")}
+          aria-label={t("noReceipt.action.noInvoice")}
         >
           <EyeOff className="size-4" />
-          {variant === "button" && t("noReceipt.action.keinBeleg")}
+          {variant === "button" && t("noReceipt.action.noInvoice")}
         </Button>
       </DropdownMenuTrigger>
       <DropdownMenuContent align="end" onClick={(e) => e.stopPropagation()}>
-        <DropdownMenuLabel>{t("noReceipt.action.grundWaehlen")}</DropdownMenuLabel>
+        <DropdownMenuLabel>{t("noReceipt.action.pickReason")}</DropdownMenuLabel>
         {OPOS_CATEGORIES.map((c) => (
           <DropdownMenuItem key={c} onClick={() => hide(c)}>
             {t(`openItemWhitelist.category.${c}`)}

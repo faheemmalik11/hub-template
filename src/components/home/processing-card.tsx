@@ -113,25 +113,25 @@ export function ProcessingCard() {
       <div className="mt-3 grid flex-1 grid-cols-2 gap-2">
         <StatTile
           to="/activity-log"
-          label={t("home.processing.verarbeitet")}
+          label={t("home.processing.processed")}
           value={val(stats.processed)}
         />
         <StatTile
           to="/incoming-invoices"
           search={{ status: "recognised" }}
-          label={t("home.processing.erkannt")}
+          label={t("home.processing.recognized")}
           value={val(stats.recognised)}
         />
         <StatTile
           to="/incoming-invoices"
           search={{ status: "needs_review" }}
-          label={t("home.processing.zuPruefen")}
+          label={t("home.processing.needsReview")}
           value={val(stats.zuCheck)}
           valueCls={stats.zuCheck > 0 ? "text-warning" : undefined}
         />
         <StatTile
           to="/activity-log"
-          label={t("home.processing.fehler")}
+          label={t("home.processing.failed")}
           value={val(stats.error)}
           valueCls={stats.error > 0 ? "text-danger" : undefined}
         />
@@ -139,7 +139,7 @@ export function ProcessingCard() {
       <div className="mt-auto flex flex-wrap items-center justify-between gap-x-3 gap-y-0.5 pt-2">
         {stats.channels.length > 0 && (
           <p className="text-xs text-muted-foreground">
-            {t("home.processing.kanaele")}{" "}
+            {t("home.processing.byChannel")}{" "}
             {stats.channels
               .map(
                 ([channel, n]) =>

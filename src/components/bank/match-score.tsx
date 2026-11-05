@@ -70,7 +70,7 @@ export function MatchScoreBreakdown({
       {match.length > 0 && (
         <>
           <p className={cn("font-medium text-foreground", score != null && "mt-2")}>
-            {t("bank.matchScore.warum")}
+            {t("bank.matchScore.why")}
           </p>
           <ul className="mt-1 space-y-1 text-muted-foreground">
             {match.map((label) => (

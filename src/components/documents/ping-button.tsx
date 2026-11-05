@@ -55,20 +55,20 @@ function useNotifyLabels(): NotifySomeoneLabels {
   const { t } = useTranslation();
   return useMemo(
     () => ({
-      action: t("ping.aktion"),
-      title: t("ping.titel"),
+      action: t("ping.action"),
+      title: t("ping.title"),
       description: t("ping.desc"),
-      recipientLabel: t("ping.empfaenger"),
-      recipientPlaceholder: t("ping.empfaengerPlaceholder"),
-      noteLabel: t("ping.notiz"),
-      notePlaceholder: t("ping.notizPlaceholder"),
-      cancel: t("ping.abbrechen"),
-      send: t("ping.senden"),
-      sending: t("ping.wirdGesendet"),
-      sent: t("ping.gesendet"),
-      failed: (message: string) => t("ping.fehlgeschlagen", { error: message }),
-      unknownError: t("ping.unbekannterFehler"),
-      noRecipients: t("ping.keineEmpfaenger"),
+      recipientLabel: t("ping.recipient"),
+      recipientPlaceholder: t("ping.recipientPlaceholder"),
+      noteLabel: t("ping.note"),
+      notePlaceholder: t("ping.notePlaceholder"),
+      cancel: t("ping.cancel"),
+      send: t("ping.send"),
+      sending: t("ping.sending"),
+      sent: t("ping.sent"),
+      failed: (message: string) => t("ping.failed", { error: message }),
+      unknownError: t("ping.unknownError"),
+      noRecipients: t("ping.noRecipients"),
     }),
     [t],
   );
@@ -157,9 +157,9 @@ export function PingNotice({ kind, id, className }: PingTarget & { className?: s
 
   const labels: NotifyBannerLabels = useMemo(
     () => ({
-      fromUnknown: t("ping.banner.vonUnbekannt"),
-      noNote: t("ping.banner.ohneNotiz"),
-      dismiss: t("ping.banner.schliessen"),
+      fromUnknown: t("ping.banner.fromUnknown"),
+      noNote: t("ping.banner.noNote"),
+      dismiss: t("ping.banner.dismiss"),
     }),
     [t],
   );

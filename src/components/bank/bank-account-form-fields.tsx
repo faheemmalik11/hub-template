@@ -99,7 +99,7 @@ export function BankAccountFormFields({
     ];
     return (
       <div key="productType" className="space-y-1.5">
-        {label("productType", t("bankAccountForm.field.art"))}
+        {label("productType", t("bankAccountForm.field.type"))}
         <Combobox
           id={`${idPrefix}-productType`}
           value={current ?? ""}
@@ -108,7 +108,7 @@ export function BankAccountFormFields({
             markTouched("productType");
           }}
           options={options}
-          placeholder={t("bankAccountForm.field.artPlaceholder")}
+          placeholder={t("bankAccountForm.field.typePlaceholder")}
           invalid={!!error}
         />
         {error && <p className="text-xs text-destructive">{error}</p>}
@@ -121,7 +121,7 @@ export function BankAccountFormFields({
     bic: t("bankAccountForm.field.bic"),
     bankName: t("bankAccountForm.field.bank"),
     holder: t("bankAccountForm.field.holder"),
-    currency: t("bankAccountForm.field.waehrung"),
+    currency: t("bankAccountForm.field.currency"),
   };
 
   const companyError = message("companyId");
@@ -144,7 +144,7 @@ export function BankAccountFormFields({
       </div>
 
       <div className="space-y-1.5">
-        {label("companyId", t("bankAccountForm.field.gesellschaft"))}
+        {label("companyId", t("bankAccountForm.field.company"))}
         <Combobox
           id={`${idPrefix}-companyId`}
           value={values.companyId ?? NO_COMPANY}
@@ -157,7 +157,7 @@ export function BankAccountFormFields({
           options={[
             ...(rules.requireCompany
               ? []
-              : [{ value: NO_COMPANY, label: t("bankAccountForm.field.gesellschaftKeine") }]),
+              : [{ value: NO_COMPANY, label: t("bankAccountForm.field.companyNone") }]),
             ...companies.map((c) => ({
               value: c.id,
               label: `${c.code} · ${c.name}`,
@@ -169,7 +169,7 @@ export function BankAccountFormFields({
         {!rules.requireCompany && values.companyId === null && (
           <p className="flex items-start gap-1.5 text-xs text-amber-700">
             <AlertTriangle className="mt-0.5 size-3 shrink-0" />
-            {t("bankAccountForm.field.gesellschaftWarnung")}
+            {t("bankAccountForm.field.companyWarning")}
           </p>
         )}
       </div>

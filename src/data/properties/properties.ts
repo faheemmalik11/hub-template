@@ -231,7 +231,6 @@ export function useProperty(id: string) {
   });
 }
 
-// Objekt (Stammdaten) anlegen. Gibt die neue Zeile zurück.
 export function useCreateProperty() {
   const qc = useQueryClient();
   return useMutation({
@@ -249,14 +248,6 @@ export function useCreateProperty() {
   });
 }
 
-/**
- * Archive a property: out of the everyday list, still there for its historical invoices.
- *
- * A reason is required, same as every other soft delete in the Hub, so the Papierkorb can say why
- * a row is there. `properties` was already in trash_eligible_tables() (migration 0062) and the
- * columns were already on the table, so restore worked from the trash before anything here could
- * archive in the first place.
- */
 export function useArchiveProperty(propertyId: string) {
   const qc = useQueryClient();
   return useMutation({
@@ -296,7 +287,6 @@ export function useUnarchiveProperty(propertyId: string) {
   });
 }
 
-// Objekt-Stammdaten aktualisieren.
 export function useUpdateProperty(propertyId: string) {
   const qc = useQueryClient();
   return useMutation({

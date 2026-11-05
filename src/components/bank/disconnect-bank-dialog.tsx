@@ -50,7 +50,7 @@ export function DisconnectBankDialog({
     if (open) setInput("");
   }, [open]);
 
-  const word = t("bankAccounts.trennen.wort");
+  const word = t("bankAccounts.disconnect.word");
   // Case-sensitive on purpose. The label shows the word in capitals, so typing it in capitals is
   // what was asked for; accepting "remove" would make the caps decorative. Still trimmed, because
   // a trailing space from a paste is not a different answer.
@@ -73,39 +73,41 @@ export function DisconnectBankDialog({
           ) : (
             <Unlink className="size-3.5" />
           )}
-          {t("bankAccounts.trennen.button")}
+          {t("bankAccounts.disconnect.button")}
         </Button>
       </AlertDialogTrigger>
 
       <AlertDialogContent onClick={(e) => e.stopPropagation()}>
         <AlertDialogHeader>
-          <AlertDialogTitle>{t("bankAccounts.trennen.titel", { bank })}</AlertDialogTitle>
-          <AlertDialogDescription>{t("bankAccounts.trennen.text")}</AlertDialogDescription>
+          <AlertDialogTitle>{t("bankAccounts.disconnect.title", { bank })}</AlertDialogTitle>
+          <AlertDialogDescription>{t("bankAccounts.disconnect.text")}</AlertDialogDescription>
         </AlertDialogHeader>
 
         <div className="space-y-4">
           <div className="rounded-lg border border-danger/25 bg-danger-soft px-3 py-2.5">
             <p className="flex items-center gap-1.5 text-sm font-medium text-danger">
               <AlertTriangle className="size-4 shrink-0" />
-              {t("bankAccounts.trennen.wirdEntfernt")}
+              {t("bankAccounts.disconnect.willBeRemoved")}
             </p>
             {preview.isLoading ? (
               <p className="mt-1.5 text-sm text-muted-foreground">
-                {t("bankAccounts.trennen.zaehle")}
+                {t("bankAccounts.disconnect.counting")}
               </p>
             ) : preview.isError ? (
               // A failed count must not read as "nothing to lose". The action stays available,
               // because refusing to disconnect because a COUNT failed would be the wrong refusal.
               <p className="mt-1.5 text-sm text-danger">
-                {t("bankAccounts.trennen.zaehlenFehlgeschlagen")}
+                {t("bankAccounts.disconnect.countingFailed")}
               </p>
             ) : (
               p && (
                 <ul className="mt-1.5 space-y-0.5 text-sm text-foreground">
-                  <li>{t("bankAccounts.trennen.postenZugang")}</li>
-                  <li>{t("bankAccounts.trennen.postenKonten", { count: p.accounts })}</li>
-                  <li>{t("bankAccounts.trennen.postenUmsaetze", { count: p.transactions })}</li>
-                  <li>{t("bankAccounts.trennen.postenProtokoll", { count: p.activityLog })}</li>
+                  <li>{t("bankAccounts.disconnect.itemAccess")}</li>
+                  <li>{t("bankAccounts.disconnect.itemAccounts", { count: p.accounts })}</li>
+                  <li>
+                    {t("bankAccounts.disconnect.itemTransactions", { count: p.transactions })}
+                  </li>
+                  <li>{t("bankAccounts.disconnect.itemLog", { count: p.activityLog })}</li>
                 </ul>
               )
             )}
@@ -117,17 +119,17 @@ export function DisconnectBankDialog({
           {p && p.transactionsAssigned > 0 && (
             <div className="rounded-lg border border-warning/25 bg-warning-soft px-3 py-2.5">
               <p className="text-sm font-medium text-warning">
-                {t("bankAccounts.trennen.zugeordnet", { count: p.transactionsAssigned })}
+                {t("bankAccounts.disconnect.matched", { count: p.transactionsAssigned })}
               </p>
               <p className="mt-0.5 text-sm text-muted-foreground">
-                {t("bankAccounts.trennen.zugeordnetHinweis")}
+                {t("bankAccounts.disconnect.matchedHint")}
               </p>
             </div>
           )}
 
           <div className="space-y-1.5">
             <Label htmlFor="trennen-bestaetigung">
-              {t("bankAccounts.trennen.tippen", { word })}
+              {t("bankAccounts.disconnect.typeToConfirm", { word })}
             </Label>
             <Input
               id="trennen-bestaetigung"
@@ -142,7 +144,7 @@ export function DisconnectBankDialog({
 
         <AlertDialogFooter>
           <AlertDialogCancel disabled={disconnect.isPending}>
-            {t("bankAccounts.trennen.abbrechen")}
+            {t("bankAccounts.disconnect.cancel")}
           </AlertDialogCancel>
           {/* A plain Button, not AlertDialogAction: the action element closes the dialog on click,
               which would dismiss it while the request is still in flight and while the typed word
@@ -156,22 +158,22 @@ export function DisconnectBankDialog({
                 {
                   onSuccess: (res) => {
                     setOpen(false);
-                    toast.success(t("bankAccounts.trennen.toastOk", { bank }), {
-                      description: t("bankAccounts.trennen.toastOkHinweis", {
+                    toast.success(t("bankAccounts.disconnect.toastOk", { bank }), {
+                      description: t("bankAccounts.disconnect.toastOkHint", {
                         accounts: res.accountsHidden ?? 0,
                         transactions: res.transactionsHidden ?? 0,
                       }),
                     });
                   },
                   onError: (e) =>
-                    toast.error(t("bankAccounts.trennen.toastFehler", { error: errorText(e) })),
+                    toast.error(t("bankAccounts.disconnect.toastError", { error: errorText(e) })),
                 },
               )
             }
           >
             {disconnect.isPending
-              ? t("bankAccounts.trennen.laeuft")
-              : t("bankAccounts.trennen.bestaetigen")}
+              ? t("bankAccounts.disconnect.running")
+              : t("bankAccounts.disconnect.confirm")}
           </Button>
         </AlertDialogFooter>
       </AlertDialogContent>

@@ -92,10 +92,10 @@ function useCanWrite() {
   return can(PERMISSIONS.bankWrite);
 }
 
-type StatusFilter = "alle" | "aktiv" | "inaktiv";
-type MatchFilter = "alle" | "mit" | "ohne";
+type StatusFilter = "all" | "active" | "inactive";
+type MatchFilter = "all" | "with" | "without";
 
-const ALL = "alle";
+const ALL = "all";
 
 function OposWhitelistPage() {
   const { t } = useTranslation();
@@ -108,7 +108,7 @@ function OposWhitelistPage() {
 
   const [search, setSearch] = useState("");
   const suchTerm = useDebouncedValue(search, 300);
-  const [category, setCategory] = useState<OposCategory | "alle">(ALL);
+  const [category, setCategory] = useState<OposCategory | "all">(ALL);
   const [status, setStatus] = useState<StatusFilter>(ALL);
   const [match, setMatch] = useState<MatchFilter>(ALL);
 
@@ -117,11 +117,11 @@ function OposWhitelistPage() {
     return rules.filter((r) => {
       if (needle && !`${r.term} ${r.note ?? ""}`.toLowerCase().includes(needle)) return false;
       if (category !== ALL && r.category !== category) return false;
-      if (status === "aktiv" && !r.is_active) return false;
-      if (status === "inaktiv" && r.is_active) return false;
+      if (status === "active" && !r.is_active) return false;
+      if (status === "inactive" && r.is_active) return false;
       const count = hits.get(r.id) ?? 0;
-      if (match === "mit" && count === 0) return false;
-      if (match === "ohne" && count > 0) return false;
+      if (match === "with" && count === 0) return false;
+      if (match === "without" && count > 0) return false;
       return true;
     });
   }, [rules, hits, suchTerm, category, status, match]);
@@ -165,9 +165,9 @@ function OposWhitelistPage() {
       label: t("openItemWhitelist.list.col.category"),
       value: category,
       defaultValue: ALL,
-      onChange: (v) => setCategory(v as OposCategory | "alle"),
+      onChange: (v) => setCategory(v as OposCategory | "all"),
       options: [
-        { value: ALL, label: t("openItemWhitelist.filter.kategorieAlle") },
+        { value: ALL, label: t("openItemWhitelist.filter.categoryAll") },
         ...OPOS_CATEGORIES.map((c) => ({
           value: c,
           label: t(`openItemWhitelist.category.${c}`),
@@ -182,9 +182,9 @@ function OposWhitelistPage() {
       defaultValue: ALL,
       onChange: (v) => setStatus(v as StatusFilter),
       options: [
-        { value: ALL, label: t("openItemWhitelist.filter.statusAlle") },
-        { value: "aktiv", label: t("openItemWhitelist.filter.statusAktiv") },
-        { value: "inaktiv", label: t("openItemWhitelist.filter.statusInaktiv") },
+        { value: ALL, label: t("openItemWhitelist.filter.statusAll") },
+        { value: "active", label: t("openItemWhitelist.filter.statusActive") },
+        { value: "inactive", label: t("openItemWhitelist.filter.statusInactive") },
       ],
     },
     {
@@ -195,9 +195,9 @@ function OposWhitelistPage() {
       defaultValue: ALL,
       onChange: (v) => setMatch(v as MatchFilter),
       options: [
-        { value: ALL, label: t("openItemWhitelist.filter.trefferAlle") },
-        { value: "mit", label: t("openItemWhitelist.filter.trefferMit") },
-        { value: "ohne", label: t("openItemWhitelist.filter.trefferOhne") },
+        { value: ALL, label: t("openItemWhitelist.filter.matchAll") },
+        { value: "with", label: t("openItemWhitelist.filter.matchWith") },
+        { value: "without", label: t("openItemWhitelist.filter.matchWithout") },
       ],
     },
   ];
@@ -229,7 +229,7 @@ function OposWhitelistPage() {
 
       {!canWrite && (
         <p className="mt-4 max-w-2xl text-xs text-muted-foreground">
-          {t("openItemWhitelist.list.nurLesen")}
+          {t("openItemWhitelist.list.readOnlyHint")}
         </p>
       )}
 
@@ -239,7 +239,7 @@ function OposWhitelistPage() {
         <SearchInput
           value={search}
           onValueChange={setSearch}
-          placeholder={t("openItemWhitelist.filter.suche")}
+          placeholder={t("openItemWhitelist.filter.search")}
           className="min-w-[240px] flex-1 max-w-none"
         />
         <FilterPopover
@@ -247,7 +247,7 @@ function OposWhitelistPage() {
           labels={{
             button: t("openItemWhitelist.filter.button"),
             title: t("openItemWhitelist.filter.title"),
-            reset: t("openItemWhitelist.filter.zuruecksetzen"),
+            reset: t("openItemWhitelist.filter.reset"),
           }}
         />
       </div>
@@ -259,7 +259,7 @@ function OposWhitelistPage() {
             ? [
                 {
                   key: "suche",
-                  label: t("openItemWhitelist.filter.suche"),
+                  label: t("openItemWhitelist.filter.search"),
                   valueLabel: suchTerm,
                   clear: () => setSearch(""),
                 },
@@ -282,11 +282,11 @@ function OposWhitelistPage() {
           <p className="text-muted-foreground">
             {rules.length === 0
               ? t("openItemWhitelist.list.empty")
-              : t("openItemWhitelist.list.keineTreffer")}
+              : t("openItemWhitelist.list.noMatches")}
           </p>
           {filterActive && (
             <Button variant="outline" className="mt-4" onClick={filterReset}>
-              {t("openItemWhitelist.filter.zuruecksetzen")}
+              {t("openItemWhitelist.filter.reset")}
             </Button>
           )}
         </div>
@@ -336,7 +336,7 @@ function OposWhitelistPage() {
                     direction={view.direction}
                     onSort={view.toggleSort}
                   >
-                    {t("openItemWhitelist.list.col.angelegt")}
+                    {t("openItemWhitelist.list.col.createdAt")}
                   </SortableColumnHeader>
                   <TableHead className="w-[80px] text-center">
                     {t("openItemWhitelist.list.col.active")}
@@ -411,9 +411,9 @@ function OposWhitelistPage() {
                 <CoveredBadge rule={r} winner={covered.get(r.id)} />
                 {r.note && <p className="mt-1 text-sm text-muted-foreground">{r.note}</p>}
                 <p className="mt-1 text-xs text-muted-foreground">
-                  {t("openItemWhitelist.list.angelegtVon", {
+                  {t("openItemWhitelist.list.createdBy", {
                     datum: formatDate(r.created_at),
-                    person: r.created_by ?? t("openItemWhitelist.list.unbekannt"),
+                    person: r.created_by ?? t("openItemWhitelist.list.unknown"),
                   })}
                 </p>
                 <div className="mt-3 flex items-center justify-between border-t border-border pt-3">
@@ -449,15 +449,7 @@ function OposWhitelistPage() {
   );
 }
 
-/**
- * "Wird von … überdeckt".
- *
- * The Treffer column reads as "what this rule does", and it is not: the matcher credits a
- * transaction to exactly one rule, the oldest that matches, so a rule whose term contains an older
- * rule's term can only ever show 0 — no matter how much it would otherwise catch. Deleting it on
- * the strength of that 0 is safe; deleting the OLDER one silently moves its hits here. Neither is
- * visible without this line (#2).
- */
+// The matcher credits a transaction to exactly one rule, the oldest match, so a rule whose term contains an older rule's term always shows 0 hits.
 function CoveredBadge({
   rule,
   winner,
@@ -470,7 +462,7 @@ function CoveredBadge({
   return (
     <span className="mt-1 flex items-start gap-1 text-xs font-normal text-amber-700">
       <Layers className="mt-0.5 size-3 shrink-0" />
-      {t("openItemWhitelist.ueberdeckt", { rule: winner.term })}
+      {t("openItemWhitelist.overridden", { rule: winner.term })}
     </span>
   );
 }
@@ -491,18 +483,18 @@ function ActiveToggle({ rule }: { rule: OposWhitelistRule }) {
             onSuccess: () =>
               toast.success(
                 t(
-                  v ? "openItemWhitelist.toggle.aktiviert" : "openItemWhitelist.toggle.deaktiviert",
+                  v ? "openItemWhitelist.toggle.activated" : "openItemWhitelist.toggle.deactivated",
                 ),
                 {
                   // Switching a rule off stops it matching from here on; it does not by itself put
                   // the transactions it already hid back into Offene Posten. That used to be true
                   // and undocumented on screen except as a Python command.
-                  description: v ? undefined : t("openItemWhitelist.toggle.hinweisNeuBewerten"),
+                  description: v ? undefined : t("openItemWhitelist.toggle.reevaluateHint"),
                 },
               ),
             onError: (e) =>
               toast.error(
-                t("openItemWhitelist.toggle.fehlgeschlagen", {
+                t("openItemWhitelist.toggle.failed", {
                   error: errorText(e),
                 }),
               ),
@@ -524,39 +516,39 @@ function ReapplyAllButton() {
       <AlertDialogTrigger asChild>
         <Button variant="outline" className="gap-2">
           <RefreshCw className={cn("size-4", reapply.isPending && "animate-spin")} />
-          {t("openItemWhitelist.neuBewerten.button")}
+          {t("openItemWhitelist.reevaluate.button")}
         </Button>
       </AlertDialogTrigger>
       <AlertDialogContent>
         <AlertDialogHeader>
-          <AlertDialogTitle>{t("openItemWhitelist.neuBewerten.titel")}</AlertDialogTitle>
+          <AlertDialogTitle>{t("openItemWhitelist.reevaluate.title")}</AlertDialogTitle>
           <AlertDialogDescription>
-            {t("openItemWhitelist.neuBewerten.beschreibung")}
+            {t("openItemWhitelist.reevaluate.description")}
           </AlertDialogDescription>
         </AlertDialogHeader>
         <AlertDialogFooter>
           <AlertDialogCancel disabled={reapply.isPending}>
-            {t("openItemWhitelist.neuBewerten.abbrechen")}
+            {t("openItemWhitelist.reevaluate.cancel")}
           </AlertDialogCancel>
           <AlertDialogAction
             onClick={(e) => {
               e.preventDefault();
               reapply.mutate(null, {
                 onSuccess: (count) => {
-                  toast.success(t("openItemWhitelist.neuBewerten.toastOk", { count: count }));
+                  toast.success(t("openItemWhitelist.reevaluate.toastOk", { count: count }));
                   setOpen(false);
                 },
                 onError: (err) =>
                   toast.error(
-                    t("openItemWhitelist.neuBewerten.toastFehler", { error: errorText(err) }),
+                    t("openItemWhitelist.reevaluate.toastError", { error: errorText(err) }),
                   ),
               });
             }}
             disabled={reapply.isPending}
           >
             {reapply.isPending
-              ? t("openItemWhitelist.neuBewerten.laeuft")
-              : t("openItemWhitelist.neuBewerten.bestaetigen")}
+              ? t("openItemWhitelist.reevaluate.running")
+              : t("openItemWhitelist.reevaluate.confirm")}
           </AlertDialogAction>
         </AlertDialogFooter>
       </AlertDialogContent>
@@ -576,13 +568,11 @@ function ImpactPreview({
   if (term.trim().length < OPOS_TERM_MIN_LENGTH) return null;
   if (impact.isLoading) {
     return (
-      <p className="text-xs text-muted-foreground">{t("openItemWhitelist.vorschau.laeuft")}</p>
+      <p className="text-xs text-muted-foreground">{t("openItemWhitelist.preview.running")}</p>
     );
   }
   if (impact.isError || !impact.data) {
-    return (
-      <p className="text-xs text-muted-foreground">{t("openItemWhitelist.vorschau.fehler")}</p>
-    );
+    return <p className="text-xs text-muted-foreground">{t("openItemWhitelist.preview.error")}</p>;
   }
   const { match, population } = impact.data;
   const share = population > 0 ? (match / population) * 100 : 0;
@@ -598,8 +588,8 @@ function ImpactPreview({
     >
       {wide && <AlertTriangle className="mt-0.5 size-3 shrink-0" />}
       {match === 0
-        ? t("openItemWhitelist.vorschau.keine", { total: population })
-        : t("openItemWhitelist.vorschau.treffer", {
+        ? t("openItemWhitelist.preview.none", { total: population })
+        : t("openItemWhitelist.preview.matches", {
             count: match,
             total: population,
             percent: share.toFixed(share < 10 ? 1 : 0),
@@ -644,22 +634,22 @@ function RuleDialog({ mode, rule }: { mode: "new" | "edit"; rule?: OposWhitelist
 
   async function save() {
     if (zuShort) {
-      toast.error(t("openItemWhitelist.dialog.toast.termZuKurz", { min: OPOS_TERM_MIN_LENGTH }));
+      toast.error(t("openItemWhitelist.dialog.toast.termTooShort", { min: OPOS_TERM_MIN_LENGTH }));
       return;
     }
     try {
       if (mode === "edit" && rule) {
         await update.mutateAsync({ scope, category, term, note: note.trim() || null });
-        toast.success(t("openItemWhitelist.dialog.toast.gespeichert"));
+        toast.success(t("openItemWhitelist.dialog.toast.saved"));
       } else {
         await create.mutateAsync({ scope, category, term, note });
         // The twin spelling is a second, independent rule — the same thing the seeded set does by
         // hand for Annuitaet/Annuität and Übertrag/Uebertrag.
         if (secondSpelling && ascii) {
           await create.mutateAsync({ scope, category, term: ascii, note });
-          toast.success(t("openItemWhitelist.dialog.toast.angelegtBeide", { second: ascii }));
+          toast.success(t("openItemWhitelist.dialog.toast.createdBoth", { second: ascii }));
         } else {
-          toast.success(t("openItemWhitelist.dialog.toast.angelegt"));
+          toast.success(t("openItemWhitelist.dialog.toast.createdAt"));
         }
         reset();
       }
@@ -668,8 +658,8 @@ function RuleDialog({ mode, rule }: { mode: "new" | "edit"; rule?: OposWhitelist
       toast.error(
         t(
           mode === "edit"
-            ? "openItemWhitelist.dialog.toast.speichernFehlgeschlagen"
-            : "openItemWhitelist.dialog.toast.anlegenFehlgeschlagen",
+            ? "openItemWhitelist.dialog.toast.saveFailed"
+            : "openItemWhitelist.dialog.toast.createFailed",
           { error: errorText(e) },
         ),
       );
@@ -687,14 +677,14 @@ function RuleDialog({ mode, rule }: { mode: "new" | "edit"; rule?: OposWhitelist
       <DialogTrigger asChild>
         {mode === "new" ? (
           <Button className="gap-2">
-            <Plus className="size-4" /> {t("openItemWhitelist.list.neu.button")}
+            <Plus className="size-4" /> {t("openItemWhitelist.list.new.button")}
           </Button>
         ) : (
           <Button
             variant="ghost"
             size="icon"
             className="text-muted-foreground hover:text-foreground"
-            aria-label={t("openItemWhitelist.list.action.bearbeiten")}
+            aria-label={t("openItemWhitelist.list.action.edit")}
           >
             <Pencil className="size-4" />
           </Button>
@@ -705,15 +695,15 @@ function RuleDialog({ mode, rule }: { mode: "new" | "edit"; rule?: OposWhitelist
           <DialogTitle>
             {t(
               mode === "new"
-                ? "openItemWhitelist.dialog.neu.title"
-                : "openItemWhitelist.dialog.bearbeiten.title",
+                ? "openItemWhitelist.dialog.new.title"
+                : "openItemWhitelist.dialog.edit.title",
             )}
           </DialogTitle>
           <DialogDescription>
             {t(
               mode === "new"
-                ? "openItemWhitelist.dialog.neu.desc"
-                : "openItemWhitelist.dialog.bearbeiten.desc",
+                ? "openItemWhitelist.dialog.new.desc"
+                : "openItemWhitelist.dialog.edit.desc",
             )}
           </DialogDescription>
         </DialogHeader>
@@ -763,11 +753,11 @@ function RuleDialog({ mode, rule }: { mode: "new" | "edit"; rule?: OposWhitelist
               placeholder={t("openItemWhitelist.dialog.termPlaceholder")}
             />
             <p className="text-xs text-muted-foreground">
-              {t("openItemWhitelist.dialog.termHinweis")}
+              {t("openItemWhitelist.dialog.termHint")}
             </p>
             {term.trim().length > 0 && zuShort && (
               <p className="text-xs text-amber-700">
-                {t("openItemWhitelist.dialog.termZuKurz", { min: OPOS_TERM_MIN_LENGTH })}
+                {t("openItemWhitelist.dialog.termTooShort", { min: OPOS_TERM_MIN_LENGTH })}
               </p>
             )}
             <ImpactPreview impact={impact} term={debouncedTerm} />
@@ -781,7 +771,7 @@ function RuleDialog({ mode, rule }: { mode: "new" | "edit"; rule?: OposWhitelist
                   checked={secondSpelling}
                   onChange={(e) => setSecondSpelling(e.target.checked)}
                 />
-                <span>{t("openItemWhitelist.dialog.umlautHinweis", { ascii })}</span>
+                <span>{t("openItemWhitelist.dialog.umlautHint", { ascii })}</span>
               </label>
             )}
           </div>
@@ -837,7 +827,7 @@ function DeleteRuleDialog({ rule, match }: { rule: OposWhitelistRule; match: num
     try {
       await del.mutateAsync({ id: rule.id, reason: reason });
     } catch (e) {
-      toast.error(t("openItemWhitelist.delete.toast.fehlgeschlagen", { error: errorText(e) }));
+      toast.error(t("openItemWhitelist.delete.toast.failed", { error: errorText(e) }));
       return;
     }
 
@@ -848,7 +838,7 @@ function DeleteRuleDialog({ rule, match }: { rule: OposWhitelistRule; match: num
       } catch (e) {
         // The rule is already gone at this point, so this is not a failed deletion. Say exactly
         // that, and point at the header action that retries the same step for everything.
-        toast.warning(t("openItemWhitelist.delete.toast.freigebenFehlgeschlagen"), {
+        toast.warning(t("openItemWhitelist.delete.toast.releaseFailed"), {
           description: errorText(e),
         });
         setOpen(false);
@@ -857,10 +847,10 @@ function DeleteRuleDialog({ rule, match }: { rule: OposWhitelistRule; match: num
       }
     }
 
-    toast.success(t("openItemWhitelist.delete.toast.geloescht"), {
+    toast.success(t("openItemWhitelist.delete.toast.deleted"), {
       description:
         approved > 0
-          ? t("openItemWhitelist.delete.toast.freigegeben", { count: approved })
+          ? t("openItemWhitelist.delete.toast.released", { count: approved })
           : undefined,
     });
     setOpen(false);
@@ -874,7 +864,7 @@ function DeleteRuleDialog({ rule, match }: { rule: OposWhitelistRule; match: num
           variant="ghost"
           size="icon"
           className="text-destructive hover:bg-destructive/10 hover:text-destructive"
-          aria-label={t("openItemWhitelist.list.action.loeschen")}
+          aria-label={t("openItemWhitelist.list.action.delete")}
         >
           <Trash2 className="size-4" />
         </Button>
@@ -898,17 +888,17 @@ function DeleteRuleDialog({ rule, match }: { rule: OposWhitelistRule; match: num
               checked={approve}
               onChange={(e) => setApprove(e.target.checked)}
             />
-            <span>{t("openItemWhitelist.delete.freigeben", { count: match })}</span>
+            <span>{t("openItemWhitelist.delete.release", { count: match })}</span>
           </label>
         )}
 
         <div className="space-y-1.5">
-          <Label htmlFor="opos-delete-reason">{t("openItemWhitelist.delete.grund")}</Label>
+          <Label htmlFor="opos-delete-reason">{t("openItemWhitelist.delete.reason")}</Label>
           <Input
             id="opos-delete-reason"
             value={reason}
             onChange={(e) => setReason(e.target.value)}
-            placeholder={t("openItemWhitelist.delete.grundPlatzhalter")}
+            placeholder={t("openItemWhitelist.delete.reasonPlaceholder")}
           />
         </div>
 
@@ -925,7 +915,9 @@ function DeleteRuleDialog({ rule, match }: { rule: OposWhitelistRule; match: num
             disabled={running || !reason.trim()}
             className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
           >
-            {running ? t("openItemWhitelist.delete.laeuft") : t("openItemWhitelist.delete.confirm")}
+            {running
+              ? t("openItemWhitelist.delete.running")
+              : t("openItemWhitelist.delete.confirm")}
           </AlertDialogAction>
         </AlertDialogFooter>
       </AlertDialogContent>

@@ -80,7 +80,7 @@ export const Route = createFileRoute("/exclusion-rules/")({
 const SCOPES_PRE: ExclusionScope[] = ["sender", "subject", "filename", "envelope"];
 const SCOPES_POST: ExclusionScope[] = ["party", "supplier", "body", "company", "property"];
 
-const ALL = "__alle";
+const ALL = "__all";
 const ALL_SCOPES: ExclusionScope[] = [...SCOPES_PRE, ...SCOPES_POST];
 
 function ExclusionRulesPage() {
@@ -102,7 +102,7 @@ function ExclusionRulesPage() {
       defaultValue: ALL,
       onChange: setFArea,
       options: [
-        { value: ALL, label: t("exclusionRules.list.filter.alleBereiche") },
+        { value: ALL, label: t("exclusionRules.list.filter.allScopes") },
         ...ALL_SCOPES.map((scope) => ({
           value: scope,
           label: t(`exclusionRules.scope.${scope}`),
@@ -117,9 +117,9 @@ function ExclusionRulesPage() {
       defaultValue: ALL,
       onChange: setFStatus,
       options: [
-        { value: ALL, label: t("exclusionRules.list.filter.alle") },
-        { value: "aktiv", label: t("exclusionRules.list.filter.aktiv") },
-        { value: "inaktiv", label: t("exclusionRules.list.filter.inaktiv") },
+        { value: ALL, label: t("exclusionRules.list.filter.all") },
+        { value: "active", label: t("exclusionRules.list.filter.active") },
+        { value: "inactive", label: t("exclusionRules.list.filter.inactive") },
       ],
     },
   ];
@@ -128,8 +128,8 @@ function ExclusionRulesPage() {
     const term = suchTerm.trim().toLowerCase();
     return rules.filter((r) => {
       if (fArea !== ALL && r.scope !== fArea) return false;
-      if (fStatus === "aktiv" && !r.is_active) return false;
-      if (fStatus === "inaktiv" && r.is_active) return false;
+      if (fStatus === "active" && !r.is_active) return false;
+      if (fStatus === "inactive" && r.is_active) return false;
       if (!term) return true;
       return `${r.term} ${r.note ?? ""}`.toLowerCase().includes(term);
     });
@@ -187,7 +187,7 @@ function ExclusionRulesPage() {
           labels={{
             button: t("exclusionRules.list.filter.button"),
             title: t("exclusionRules.list.filter.title"),
-            reset: t("exclusionRules.list.filter.zuruecksetzen"),
+            reset: t("exclusionRules.list.filter.resetAll"),
           }}
         />
       </div>
@@ -221,13 +221,11 @@ function ExclusionRulesPage() {
         ) : view.total === 0 ? (
           <div className="mt-6 overflow-hidden rounded-xl border border-border bg-card py-12 text-center">
             <p className="text-muted-foreground">
-              {filterActive
-                ? t("exclusionRules.list.keineTreffer")
-                : t("exclusionRules.list.empty")}
+              {filterActive ? t("exclusionRules.list.noResults") : t("exclusionRules.list.empty")}
             </p>
             {filterActive && (
               <Button variant="outline" className="mt-4" onClick={filterReset}>
-                {t("exclusionRules.list.filterZuruecksetzen")}
+                {t("exclusionRules.list.resetFilters")}
               </Button>
             )}
           </div>
@@ -359,11 +357,11 @@ function ActiveToggle({ rule }: { rule: Exclusion }) {
           {
             onSuccess: () =>
               toast.success(
-                t(v ? "exclusionRules.toggle.aktiviert" : "exclusionRules.toggle.deaktiviert"),
+                t(v ? "exclusionRules.toggle.activated" : "exclusionRules.toggle.deactivated"),
               ),
             onError: (e) =>
               toast.error(
-                t("exclusionRules.toggle.fehlgeschlagen", {
+                t("exclusionRules.toggle.failed", {
                   error: errorText(e),
                 }),
               ),
@@ -402,16 +400,14 @@ function ImpactPreview({
   const { t } = useTranslation();
   if (term.trim().length < 2) return null;
   if (impact.isLoading) {
-    return <p className="text-xs text-muted-foreground">{t("exclusionRules.vorschau.laeuft")}</p>;
+    return <p className="text-xs text-muted-foreground">{t("exclusionRules.preview.running")}</p>;
   }
   if (impact.isError) {
-    return <p className="text-xs text-muted-foreground">{t("exclusionRules.vorschau.fehler")}</p>;
+    return <p className="text-xs text-muted-foreground">{t("exclusionRules.preview.error")}</p>;
   }
   if (!impact.data || !impact.data.supported) {
     return (
-      <p className="text-xs text-muted-foreground">
-        {t("exclusionRules.vorschau.nichtVerfuegbar")}
-      </p>
+      <p className="text-xs text-muted-foreground">{t("exclusionRules.preview.notAvailable")}</p>
     );
   }
   const { match, population } = impact.data;
@@ -428,8 +424,8 @@ function ImpactPreview({
     >
       {wide && <AlertTriangle className="mt-0.5 size-3 shrink-0" />}
       {match === 0
-        ? t("exclusionRules.vorschau.keine", { total: population })
-        : t("exclusionRules.vorschau.treffer", {
+        ? t("exclusionRules.preview.none", { total: population })
+        : t("exclusionRules.preview.matches", {
             count: match,
             total: population,
             percent: share.toFixed(share < 10 ? 1 : 0),
@@ -451,21 +447,21 @@ function NewRuleDialog() {
 
   function submit() {
     if (!term.trim()) {
-      toast.error(t("exclusionRules.dialog.toast.termPflicht"));
+      toast.error(t("exclusionRules.dialog.toast.termRequired"));
       return;
     }
     create.mutate(
       { scope, term, note },
       {
         onSuccess: () => {
-          toast.success(t("exclusionRules.dialog.toast.angelegt"));
+          toast.success(t("exclusionRules.dialog.toast.created"));
           setTerm("");
           setNote("");
           setOpen(false);
         },
         onError: (e) =>
           toast.error(
-            t("exclusionRules.dialog.toast.anlegenFehlgeschlagen", {
+            t("exclusionRules.dialog.toast.createFailed", {
               error: errorText(e),
             }),
           ),
@@ -477,13 +473,13 @@ function NewRuleDialog() {
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>
         <Button className="gap-2">
-          <Plus className="size-4" /> {t("exclusionRules.list.neu.button")}
+          <Plus className="size-4" /> {t("exclusionRules.list.new.button")}
         </Button>
       </DialogTrigger>
       <DialogContent>
         <DialogHeader>
-          <DialogTitle>{t("exclusionRules.dialog.neu.title")}</DialogTitle>
-          <DialogDescription>{t("exclusionRules.dialog.neu.desc")}</DialogDescription>
+          <DialogTitle>{t("exclusionRules.dialog.new.title")}</DialogTitle>
+          <DialogDescription>{t("exclusionRules.dialog.new.desc")}</DialogDescription>
         </DialogHeader>
         <div className="grid gap-3">
           <div className="space-y-1">
@@ -560,10 +556,10 @@ function DeleteRuleDialog({ rule }: { rule: Exclusion }) {
 
   function confirmDelete() {
     del.mutate(rule.id, {
-      onSuccess: () => toast.success(t("exclusionRules.delete.toast.geloescht")),
+      onSuccess: () => toast.success(t("exclusionRules.delete.toast.deleted")),
       onError: (e) =>
         toast.error(
-          t("exclusionRules.delete.toast.fehlgeschlagen", {
+          t("exclusionRules.delete.toast.failed", {
             error: errorText(e),
           }),
         ),
@@ -577,7 +573,7 @@ function DeleteRuleDialog({ rule }: { rule: Exclusion }) {
           variant="ghost"
           size="icon"
           className="text-destructive hover:bg-destructive/10 hover:text-destructive"
-          aria-label={t("exclusionRules.list.action.loeschen")}
+          aria-label={t("exclusionRules.list.action.delete")}
         >
           <Trash2 className="size-4" />
         </Button>

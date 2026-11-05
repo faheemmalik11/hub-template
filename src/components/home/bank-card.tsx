@@ -28,7 +28,7 @@ export function BankCard() {
           to="/bank-transactions"
           icon={Landmark}
           iconCls={CHIP.brand}
-          label={t("home.bank.gesamt")}
+          label={t("home.bank.total")}
           value={val(c?.total)}
         />
         <StatRow
@@ -36,7 +36,7 @@ export function BankCard() {
           search={{ matching: "open" }}
           icon={Link2Off}
           iconCls={c && c.open > 0 ? CHIP.warning : CHIP.neutral}
-          label={t("home.bank.offen")}
+          label={t("home.bank.unlinked")}
           value={val(c?.open)}
         />
         <StatRow
@@ -44,7 +44,7 @@ export function BankCard() {
           search={{ matching: "suggestion" }}
           icon={Search}
           iconCls={c && c.suggestion > 0 ? CHIP.brand : CHIP.neutral}
-          label={t("home.bank.vorschlag")}
+          label={t("home.bank.suggested")}
           value={val(c?.suggestion)}
         />
         <StatRow
@@ -52,7 +52,7 @@ export function BankCard() {
           search={{ matching: "matched" }}
           icon={CheckCircle2}
           iconCls={CHIP.success}
-          label={t("home.bank.zugeordnet")}
+          label={t("home.bank.linked")}
           value={val(c?.matched)}
         />
         <StatRow
@@ -60,7 +60,7 @@ export function BankCard() {
           search={{ matching: "ignored" }}
           icon={EyeOff}
           iconCls={CHIP.neutral}
-          label={t("home.bank.ignoriert")}
+          label={t("home.bank.ignored")}
           value={val(c?.ignored)}
         />
       </div>

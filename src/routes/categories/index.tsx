@@ -132,7 +132,7 @@ function CategoriesTab() {
   return (
     <div>
       <div className="flex flex-wrap items-center justify-between gap-4">
-        <p className="max-w-2xl text-sm text-muted-foreground">{t("categories.hinweis")}</p>
+        <p className="max-w-2xl text-sm text-muted-foreground">{t("categories.hint")}</p>
         <NewCategoryDialog categories={categories} />
       </div>
 
@@ -143,7 +143,7 @@ function CategoriesTab() {
         <Input
           value={search}
           onChange={(e) => setSearch(e.target.value)}
-          placeholder={t("categories.suche")}
+          placeholder={t("categories.search")}
           className="pl-9"
         />
       </div>
@@ -158,7 +158,7 @@ function CategoriesTab() {
         </div>
       ) : coarse.length === 0 ? (
         <p className="mt-6 rounded-xl border border-border p-8 text-center text-sm text-muted-foreground">
-          {t("categories.leer")}
+          {t("categories.empty")}
         </p>
       ) : (
         <>
@@ -167,8 +167,8 @@ function CategoriesTab() {
               <TableHeader>
                 <TableRow>
                   <TableHead>{t("categories.col.name")}</TableHead>
-                  <TableHead>{t("categories.col.hinweis")}</TableHead>
-                  <TableHead className="text-right">{t("categories.col.aktionen")}</TableHead>
+                  <TableHead>{t("categories.col.hint")}</TableHead>
+                  <TableHead className="text-right">{t("categories.col.actions")}</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
@@ -283,10 +283,7 @@ function CategoriesTab() {
           </div>
           {match.length === 0 ? (
             <div className="mt-6">
-              <EmptyState
-                title={t("categories.keineTreffer")}
-                hint={t("categories.keineTrefferHint")}
-              />
+              <EmptyState title={t("categories.noMatches")} hint={t("categories.noMatchesHint")} />
             </div>
           ) : null}
         </>
@@ -312,7 +309,7 @@ function CategoryActions({ category }: { category: CostAnalysisCategory }) {
       <Dialog open={editOpen} onOpenChange={setEditOpen}>
         <DialogTrigger asChild>
           <Button variant="ghost" size="sm">
-            {t("categories.action.bearbeiten")}
+            {t("categories.action.edit")}
           </Button>
         </DialogTrigger>
         <DialogContent className="sm:max-w-md">
@@ -321,17 +318,17 @@ function CategoryActions({ category }: { category: CostAnalysisCategory }) {
           </DialogHeader>
           <div className="space-y-4">
             <div className="space-y-1.5">
-              <Label>{t("categories.feld.name")}</Label>
+              <Label>{t("categories.field.name")}</Label>
               <Input value={name} onChange={(e) => setName(e.target.value)} />
             </div>
             <div className="space-y-1.5">
-              <Label>{t("categories.feld.notiz")}</Label>
+              <Label>{t("categories.field.note")}</Label>
               <Textarea value={note} onChange={(e) => setNote(e.target.value)} rows={3} />
             </div>
           </div>
           <DialogFooter>
             <Button variant="outline" onClick={() => setEditOpen(false)}>
-              {t("assignmentRules.action.abbrechen")}
+              {t("assignmentRules.action.cancel")}
             </Button>
             <Button
               disabled={update.isPending || name.trim() === ""}
@@ -349,12 +346,12 @@ function CategoryActions({ category }: { category: CostAnalysisCategory }) {
                   },
                   {
                     onSuccess: () => {
-                      toast.success(t("categories.toast.gespeichert"));
+                      toast.success(t("categories.toast.saved"));
                       setEditOpen(false);
                     },
                     onError: (e) =>
                       toast.error(
-                        t("assignmentRules.toast.fehlgeschlagen", {
+                        t("assignmentRules.toast.failed", {
                           error: errorText(e),
                         }),
                       ),
@@ -362,7 +359,7 @@ function CategoryActions({ category }: { category: CostAnalysisCategory }) {
                 )
               }
             >
-              {t("categories.edit.speichern")}
+              {t("categories.edit.save")}
             </Button>
           </DialogFooter>
         </DialogContent>
@@ -380,18 +377,18 @@ function CategoryActions({ category }: { category: CostAnalysisCategory }) {
         </AlertDialogTrigger>
         <AlertDialogContent>
           <AlertDialogHeader>
-            <AlertDialogTitle>{t("categories.loeschen.title")}</AlertDialogTitle>
+            <AlertDialogTitle>{t("categories.delete.title")}</AlertDialogTitle>
             <AlertDialogDescription>
-              {t("categories.loeschen.desc", { name: category.name })}
+              {t("categories.delete.desc", { name: category.name })}
             </AlertDialogDescription>
           </AlertDialogHeader>
           <Input
             value={reason}
             onChange={(e) => setReason(e.target.value)}
-            placeholder={t("assignmentRules.action.grundPlaceholder")}
+            placeholder={t("assignmentRules.action.reasonPlaceholder")}
           />
           <AlertDialogFooter>
-            <AlertDialogCancel>{t("assignmentRules.action.abbrechen")}</AlertDialogCancel>
+            <AlertDialogCancel>{t("assignmentRules.action.cancel")}</AlertDialogCancel>
             <AlertDialogAction
               disabled={!reason.trim()}
               className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
@@ -399,10 +396,10 @@ function CategoryActions({ category }: { category: CostAnalysisCategory }) {
                 remove.mutate(
                   { id: category.id, reason: reason.trim() },
                   {
-                    onSuccess: () => toast.success(t("categories.toast.geloescht")),
+                    onSuccess: () => toast.success(t("categories.toast.deleted")),
                     onError: (e) =>
                       toast.error(
-                        t("assignmentRules.toast.fehlgeschlagen", {
+                        t("assignmentRules.toast.failed", {
                           error: errorText(e),
                         }),
                       ),
@@ -410,7 +407,7 @@ function CategoryActions({ category }: { category: CostAnalysisCategory }) {
                 )
               }
             >
-              {t("assignmentRules.action.loeschenConfirm")}
+              {t("assignmentRules.action.deleteConfirm")}
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
@@ -502,12 +499,12 @@ function NewCategoryDialog({
       note: note.trim() === "" ? null : note.trim(),
     };
     if (!input.name) {
-      toast.error(t("categories.neu.wertFehlt"));
+      toast.error(t("categories.new.valueMissing"));
       return;
     }
     create.mutate(input, {
       onSuccess: () => {
-        toast.success(t("categories.toast.angelegt"));
+        toast.success(t("categories.toast.created"));
         reset();
         setOpen(false);
       },
@@ -515,8 +512,8 @@ function NewCategoryDialog({
         const msg = errorText(e);
         toast.error(
           /duplicate key|bwa_categories_code_uniq/i.test(msg)
-            ? t("categories.neu.codeSchonVorhanden")
-            : t("assignmentRules.toast.fehlgeschlagen", { error: msg }),
+            ? t("categories.new.codeAlreadyExists")
+            : t("assignmentRules.toast.failed", { error: msg }),
         );
       },
     });
@@ -530,37 +527,37 @@ function NewCategoryDialog({
             variant="ghost"
             size="icon"
             className="size-8"
-            title={t("categories.neu.unterkategorie")}
-            aria-label={t("categories.neu.unterkategorie")}
+            title={t("categories.new.subcategory")}
+            aria-label={t("categories.new.subcategory")}
           >
             <Plus className="size-4" />
           </Button>
         ) : (
           <Button className="gap-2">
-            <Plus className="size-4" /> {t("categories.neu.button")}
+            <Plus className="size-4" /> {t("categories.new.button")}
           </Button>
         )}
       </DialogTrigger>
       <DialogContent className="sm:max-w-lg">
         <DialogHeader>
           <DialogTitle>
-            {presetParentId ? t("categories.neu.unterkategorie") : t("categories.neu.title")}
+            {presetParentId ? t("categories.new.subcategory") : t("categories.new.title")}
           </DialogTitle>
-          <DialogDescription>{t("categories.neu.desc")}</DialogDescription>
+          <DialogDescription>{t("categories.new.desc")}</DialogDescription>
         </DialogHeader>
         <div className="space-y-4">
           {presetParentId ? (
             <p className="text-xs text-muted-foreground">
-              {t("categories.feld.unterVon", { name: parent?.name ?? "" })}
+              {t("categories.field.childOf", { name: parent?.name ?? "" })}
             </p>
           ) : (
             <div className="space-y-1.5">
-              <Label>{t("categories.feld.parent")}</Label>
+              <Label>{t("categories.field.parent")}</Label>
               <Combobox
                 value={parentId === LEER ? null : parentId}
                 onValueChange={setParentId}
                 options={[
-                  { value: LEER, label: t("categories.feld.parentKeiner") },
+                  { value: LEER, label: t("categories.field.parentNone") },
                   ...coarseOptions,
                 ]}
               />
@@ -568,7 +565,7 @@ function NewCategoryDialog({
           )}
           {!presetParentId && parentId === LEER && (
             <div className="space-y-1.5">
-              <Label>{t("categories.feld.art")}</Label>
+              <Label>{t("categories.field.type")}</Label>
               <Combobox
                 value={direction}
                 onValueChange={(v) => setDirection(v as CostAnalysisCategory["direction"])}
@@ -580,20 +577,20 @@ function NewCategoryDialog({
             </div>
           )}
           <div className="space-y-1.5">
-            <Label>{t("categories.feld.name")}</Label>
+            <Label>{t("categories.field.name")}</Label>
             <Input value={name} onChange={(e) => setName(e.target.value)} />
           </div>
           <div className="space-y-1.5">
-            <Label>{t("categories.feld.notiz")}</Label>
+            <Label>{t("categories.field.note")}</Label>
             <Textarea value={note} onChange={(e) => setNote(e.target.value)} rows={2} />
           </div>
         </div>
         <DialogFooter>
           <Button variant="outline" onClick={() => setOpen(false)}>
-            {t("assignmentRules.action.abbrechen")}
+            {t("assignmentRules.action.cancel")}
           </Button>
           <Button onClick={save} disabled={create.isPending}>
-            {t("categories.neu.speichern")}
+            {t("categories.new.save")}
           </Button>
         </DialogFooter>
       </DialogContent>

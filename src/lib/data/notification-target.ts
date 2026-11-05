@@ -19,7 +19,7 @@ export interface NotificationTarget {
 
 /** The i18n key naming the screen a notification is about, e.g. "Transaktion". */
 export function targetLabelKey(kind: NotificationTargetKind | null | undefined): string {
-  return kind ? `notifications.ziel.${kind}` : "notifications.ziel.unbekannt";
+  return kind ? `notifications.target.${kind}` : "notifications.target.unknown";
 }
 
 /**

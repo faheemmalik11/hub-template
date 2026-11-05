@@ -78,9 +78,6 @@ import {
   type DueFilter,
 } from "@/lib/data/format";
 import { withoutChecks, checkReasons } from "@/features/invoice-detail/checks";
-// The rows arrive already re-checked against their current data: useBelegeListe verifies at the
-// read (see `nachgeprueft` in queries.ts), so a row whose company has since been assigned is not
-// still counted as missing one.
 import { ReviewBadge } from "@/features/invoice-detail/ReviewChip";
 import { OutgoingBadge } from "@/features/invoice-detail/OutgoingFlag";
 import {
@@ -684,9 +681,7 @@ function IncomingInvoicesPage() {
       onChange: (v) => setSearch({ status: v }),
     },
     {
-      // Approval-chain stage — a separate axis from `status` (AI review) and `zahlung` (paid or
-      // not). A receipt sitting at 'approved_final', waiting on payment, is otherwise
-      // indistinguishable in this list from one still at 'received'.
+      // Separate axis from `status` (AI review) and `payment` (paid or not).
       key: "workflow",
       label: t("documents.list.filter.workflow"),
       value: search.workflow,
@@ -754,10 +749,7 @@ function IncomingInvoicesPage() {
       onChange: (v) => setSearch({ datev: v }),
     },
     {
-      // Bank-match presence -- a separate axis from `zahlung`: whether a reconciliation match
-      // exists at all, and whether it is still waiting on a human. "Vorschlag" is the worklist
-      // this filter exists for: before it, a suggestion was only visible by opening the invoice
-      // or the bank transaction one at a time.
+      // Separate axis from `payment`: whether a reconciliation match exists and is still waiting on a human.
       key: "bankMatch",
       label: t("documents.list.filter.bankMatch"),
       value: search.bankMatch,
@@ -824,7 +816,7 @@ function IncomingInvoicesPage() {
         }
         locale={dateLocale()}
         formatDay={(iso) => formatDate(iso)}
-        backLabel={t("home.zeitraumAktion.zurueck")}
+        backLabel={t("home.periodAction.back")}
         placeholder={t("documents.list.filter.zeitraum")}
         ariaLabel={t("documents.list.filter.zeitraum")}
         className="w-full"

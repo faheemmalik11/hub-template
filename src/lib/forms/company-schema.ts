@@ -23,10 +23,10 @@ export function companySchema(t: (key: string) => string) {
     code: z
       .string()
       .trim()
-      .min(1, t("companies.validierung.code"))
-      .max(16, t("companies.validierung.codeLaenge"))
-      .regex(/^[A-Za-z0-9]+$/, t("companies.validierung.codeFormat")),
-    name: z.string().trim().min(1, t("companies.validierung.name")),
+      .min(1, t("companies.validation.code"))
+      .max(16, t("companies.validation.codeLength"))
+      .regex(/^[A-Za-z0-9]+$/, t("companies.validation.codeFormat")),
+    name: z.string().trim().min(1, t("companies.validation.name")),
   });
 }
 

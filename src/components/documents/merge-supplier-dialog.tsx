@@ -81,7 +81,7 @@ export function MergeSupplierDialog({
       {
         onSuccess: () => {
           toast.success(
-            t("suppliers.merge.toast.erfolgreich", { name: supplier.name, target: target.name }),
+            t("suppliers.merge.toast.succeeded", { name: supplier.name, target: target.name }),
           );
           setOpen(false);
           setTargetId("");
@@ -89,7 +89,7 @@ export function MergeSupplierDialog({
         },
         onError: (e) =>
           toast.error(
-            t("suppliers.merge.toast.fehlgeschlagen", {
+            t("suppliers.merge.toast.failed", {
               error: errorText(e),
             }),
           ),

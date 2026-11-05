@@ -45,7 +45,7 @@ function ReserveAmount({ value, className }: { value: number; className?: string
       </span>
       {reimbursement ? (
         <span className="mt-0.5 block text-xs font-normal text-emerald-700">
-          {t("vatRules.ruecklage.erstattung")}
+          {t("vatRules.reserve.refund")}
         </span>
       ) : null}
     </span>
@@ -101,19 +101,17 @@ function TaxReservePage() {
   return (
     <div>
       <h1 className="mt-2 text-2xl font-semibold tracking-tight text-foreground">
-        {t("vatRules.ruecklage.titel")}
+        {t("vatRules.reserve.title")}
       </h1>
-      <p className="mt-1 max-w-2xl text-sm text-muted-foreground">
-        {t("vatRules.ruecklage.hinweis")}
-      </p>
+      <p className="mt-1 max-w-2xl text-sm text-muted-foreground">{t("vatRules.reserve.hint")}</p>
 
       <div data-tour="vat-company" className="mt-6 w-full max-w-xs space-y-1.5">
-        <Label>{t("vatRules.gesellschaft")}</Label>
+        <Label>{t("vatRules.company")}</Label>
         <Combobox
           value={companyId}
           onValueChange={setCompanyId}
           options={[
-            { value: LEER, label: t("vatRules.alleGesellschaften") },
+            { value: LEER, label: t("vatRules.allCompanies") },
             ...companies.map((g) => ({
               value: g.id,
               label: `${g.code} · ${g.name}`,
@@ -133,14 +131,14 @@ function TaxReservePage() {
             <div className="rounded-xl border border-border bg-card p-4">
               <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-5">
                 <div>
-                  <p className="text-xs text-muted-foreground">{t("vatRules.ruecklage.gesamt")}</p>
+                  <p className="text-xs text-muted-foreground">{t("vatRules.reserve.total")}</p>
                   <p className="text-lg font-semibold tabular-nums text-foreground">
                     {formatEUR(reserveQ.data.input_vat_total)}
                   </p>
                 </div>
                 <div>
                   <p className="text-xs text-muted-foreground">
-                    {t("vatRules.ruecklage.abzugsfaehig")}
+                    {t("vatRules.reserve.deductible")}
                   </p>
                   <p className="text-lg font-semibold tabular-nums text-foreground">
                     {formatEUR(reserveQ.data.input_vat_deductible)}
@@ -148,30 +146,26 @@ function TaxReservePage() {
                 </div>
                 <div>
                   <p className="text-xs text-muted-foreground">
-                    {t("vatRules.ruecklage.nichtAbzugsfaehig")}
+                    {t("vatRules.reserve.notDeductible")}
                   </p>
                   <p className="text-lg font-semibold tabular-nums text-foreground">
                     {formatEUR(reserveQ.data.input_vat_nondeductible)}
                   </p>
                 </div>
                 <div>
-                  <p className="text-xs text-muted-foreground">
-                    {t("vatRules.ruecklage.umsatzsteuer")}
-                  </p>
+                  <p className="text-xs text-muted-foreground">{t("vatRules.reserve.outputVat")}</p>
                   <p className="text-lg font-semibold tabular-nums text-foreground">
                     {formatEUR(reserveQ.data.output_vat)}
                   </p>
                 </div>
                 <div>
-                  <p className="text-xs text-muted-foreground">
-                    {t("vatRules.ruecklage.ruecklage")}
-                  </p>
+                  <p className="text-xs text-muted-foreground">{t("vatRules.reserve.reserve")}</p>
                   <ReserveAmount value={reserveQ.data.reserve} className="text-lg" />
                 </div>
               </div>
               {reserveQ.data.input_vat_unresolved_count > 0 ? (
                 <p className="mt-3 text-xs text-amber-700">
-                  {t("vatRules.ruecklage.unresolved", {
+                  {t("vatRules.reserve.unresolved", {
                     count: reserveQ.data.input_vat_unresolved_count,
                     amount: formatEUR(reserveQ.data.input_vat_unresolved_amount),
                   })}
@@ -184,29 +178,25 @@ function TaxReservePage() {
         ) : reserveAllQ.isError ? (
           <ErrorState error={reserveAllQ.error} onRetry={() => reserveAllQ.refetch()} />
         ) : (reserveAllQ.data ?? []).length === 0 ? (
-          <p className="text-sm text-muted-foreground">{t("vatRules.ruecklage.leer")}</p>
+          <p className="text-sm text-muted-foreground">{t("vatRules.reserve.empty")}</p>
         ) : (
           <>
             <div className="grid gap-3 sm:grid-cols-3">
               <div className="rounded-lg border border-border bg-card p-3">
-                <p className="text-xs text-muted-foreground">
-                  {t("vatRules.ruecklage.kpiFaellig")}
-                </p>
+                <p className="text-xs text-muted-foreground">{t("vatRules.reserve.kpiDue")}</p>
                 <p className="mt-0.5 text-lg font-semibold tabular-nums text-foreground">
                   {kpi.due}
                 </p>
               </div>
               <div className="rounded-lg border border-border bg-card p-3">
-                <p className="text-xs text-muted-foreground">
-                  {t("vatRules.ruecklage.kpiErstattung")}
-                </p>
+                <p className="text-xs text-muted-foreground">{t("vatRules.reserve.kpiRefund")}</p>
                 <p className="mt-0.5 text-lg font-semibold tabular-nums text-emerald-700">
                   {kpi.reimbursement}
                 </p>
               </div>
               <div className="rounded-lg border border-border bg-card p-3">
                 <p className="text-xs text-muted-foreground">
-                  {t("vatRules.ruecklage.kpiUngeklaert")}
+                  {t("vatRules.reserve.kpiUnresolved")}
                 </p>
                 <p
                   className={cn(
@@ -227,20 +217,14 @@ function TaxReservePage() {
               <Table>
                 <TableHeader>
                   <TableRow>
-                    <TableHead>{t("vatRules.gesellschaft")}</TableHead>
-                    <TableHead className="text-right">{t("vatRules.ruecklage.gesamt")}</TableHead>
+                    <TableHead>{t("vatRules.company")}</TableHead>
+                    <TableHead className="text-right">{t("vatRules.reserve.total")}</TableHead>
+                    <TableHead className="text-right">{t("vatRules.reserve.deductible")}</TableHead>
                     <TableHead className="text-right">
-                      {t("vatRules.ruecklage.abzugsfaehig")}
+                      {t("vatRules.reserve.notDeductible")}
                     </TableHead>
-                    <TableHead className="text-right">
-                      {t("vatRules.ruecklage.nichtAbzugsfaehig")}
-                    </TableHead>
-                    <TableHead className="text-right">
-                      {t("vatRules.ruecklage.umsatzsteuer")}
-                    </TableHead>
-                    <TableHead className="text-right">
-                      {t("vatRules.ruecklage.ruecklage")}
-                    </TableHead>
+                    <TableHead className="text-right">{t("vatRules.reserve.outputVat")}</TableHead>
+                    <TableHead className="text-right">{t("vatRules.reserve.reserve")}</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
@@ -252,16 +236,12 @@ function TaxReservePage() {
                           return g ? `${g.code} · ${g.name}` : r.company_id;
                         })()}
                       </TableCell>
-                      {/* The gap is HERE, not down at the reserve: "davon abzugsfähig" plus
-                          "davon nicht abzugsfähig" do not add up to this figure whenever some
-                          invoices have no resolved deductibility yet. The note sits under the
-                          number it is about, always visible, in the same words the
-                          single-company view already uses. */}
+                      {/* Deductible/non-deductible splits won't sum to this figure while some invoices have unresolved deductibility. */}
                       <TableCell className="text-right tabular-nums">
                         {formatEUR(r.input_vat_total)}
                         {r.input_vat_unresolved_count > 0 ? (
                           <span className="mt-0.5 block text-xs font-normal text-amber-700">
-                            {t("vatRules.ruecklage.unresolvedKurz", {
+                            {t("vatRules.reserve.unresolvedShort", {
                               count: r.input_vat_unresolved_count,
                               amount: formatEUR(r.input_vat_unresolved_amount),
                             })}
@@ -305,15 +285,13 @@ function TaxReservePage() {
                       <span className="font-medium text-foreground">{name}</span>
                       <ReserveAmount value={r.reserve} className="text-sm" />
                     </div>
-                    <p className="text-xs text-muted-foreground">
-                      {t("vatRules.ruecklage.ruecklage")}
-                    </p>
+                    <p className="text-xs text-muted-foreground">{t("vatRules.reserve.reserve")}</p>
                     {/* The whole reason this is text and not a ⚠ with a `title`: a phone has
                         no hover, so the tooltip that used to carry this could not be opened
                         at all. It was an icon that did nothing. */}
                     {r.input_vat_unresolved_count > 0 ? (
                       <p className="mt-2 text-xs text-amber-700">
-                        {t("vatRules.ruecklage.unresolved", {
+                        {t("vatRules.reserve.unresolved", {
                           count: r.input_vat_unresolved_count,
                           amount: formatEUR(r.input_vat_unresolved_amount),
                         })}
@@ -321,14 +299,14 @@ function TaxReservePage() {
                     ) : null}
                     <dl className="mt-3 grid grid-cols-3 gap-2 border-t border-border pt-3 text-xs">
                       <div>
-                        <dt className="text-muted-foreground">{t("vatRules.ruecklage.gesamt")}</dt>
+                        <dt className="text-muted-foreground">{t("vatRules.reserve.total")}</dt>
                         <dd className="tabular-nums text-foreground">
                           {formatEUR(r.input_vat_total)}
                         </dd>
                       </div>
                       <div>
                         <dt className="text-muted-foreground">
-                          {t("vatRules.ruecklage.abzugsfaehig")}
+                          {t("vatRules.reserve.deductible")}
                         </dt>
                         <dd className="tabular-nums text-foreground">
                           {formatEUR(r.input_vat_deductible)}
@@ -336,16 +314,14 @@ function TaxReservePage() {
                       </div>
                       <div>
                         <dt className="text-muted-foreground">
-                          {t("vatRules.ruecklage.nichtAbzugsfaehig")}
+                          {t("vatRules.reserve.notDeductible")}
                         </dt>
                         <dd className="tabular-nums text-foreground">
                           {formatEUR(r.input_vat_nondeductible)}
                         </dd>
                       </div>
                       <div>
-                        <dt className="text-muted-foreground">
-                          {t("vatRules.ruecklage.umsatzsteuer")}
-                        </dt>
+                        <dt className="text-muted-foreground">{t("vatRules.reserve.outputVat")}</dt>
                         <dd className="tabular-nums text-foreground">{formatEUR(r.output_vat)}</dd>
                       </div>
                     </dl>

@@ -1,40 +1,21 @@
-// Domänen-Typen für die echten Supabase-Tabellen (Stufe 1 — Lesen).
-// Quelle: pipeline/db_schema.sql + Form von `extracted` aus
-// pipeline/prompts/eingangsrechnung.txt. Bewusst schlank, nur für die Anzeige.
-
 import type { AppRole } from "@/lib/auth";
 import type { DatevBlockReason } from "@/lib/datev/attachment-rules";
 
-// Extraction status. The DB column has NO CHECK constraint (only DEFAULT 'recognised'),
-// but in practice only 'recognised' | 'needs_review' are written. The UI filters on these two.
 export type DocumentStatus = "recognised" | "needs_review";
 
-// Workflow status (approval chain) — separate `workflow_status` column, independent of the
-// extraction `status`. Values per the DB CHECK (migrations 0002/0025/0035/0036). `paid_at` (+
-// confirmed bank match) is still the source of truth for "is this actually paid" — 'bezahlt' is
-// DERIVED from it by a DB trigger (migration 0036), not written directly by the front-end.
+// 'paid' is derived from paid_at by a DB trigger, never written directly by the front-end.
 export type WorkflowStatus =
   | "received"
   | "in_review"
   | "query"
   | "approved_first"
   | "approved_final"
-  // Payment lifecycle (migration 0036). 'approved_final' IS the "awaiting payment"
-  // state — no separate "released for payment" stage. 'bezahlt' is set by a DB trigger the
-  // moment paid_at is confirmed (bank match, auto-suggested or manually created — same
-  // mechanism — or the manual "paid" checkbox), never written directly by the front-end.
   | "paid"
   | "handed_over"
   | "closed"
-  // Two side paths off the main chain (Appendix A6), added by migration 0025. `abgelehnt` is
-  // final and archived; `nicht_relevant` means "this is not a receipt" and hands the mail back.
   | "rejected"
   | "not_relevant";
 
-// Verlauf-/Notiz-Eintrag (Tabelle beleg_verlauf) — kombiniert Notiz + Audit.
-// "booking" = company/property (Gesellschaft/Objekt) assignment change; also used for bank matches.
-// "rule" = a rule applied a value (written by apply_assignment_rules, migration 0025).
-// "not_relevant" / "archived" = review decisions that take the receipt out of processing.
 export type HistoryType =
   | "note"
   | "status_change"
@@ -45,24 +26,15 @@ export type HistoryType =
   | "rule"
   | "not_relevant"
   | "archived"
-  // Approval workflow (Briefing Screen 6, migration 0035). One of these per approve/return/
-  // reject/skip action.
   | "approval_first"
   | "query"
   | "approval_final"
   | "rejection"
   | "already_approved"
   | "skipped"
-  // Manual override outside the gated actions — fixes an accidental click by setting
-  // workflow_status directly to any status, bypassing the normal chain.
   | "correction"
-  // Payment lifecycle (migration 0036). 'bezahlt' is written by the DB trigger itself, stating
-  // how the invoice was paid (reads invoices.paid_source); 'payment_failed' is the
-  // human "payment failed, back to open" action.
   | "paid"
   | "payment_failed"
-  // DATEV handover (Briefing Screen 9, migration 0038). Written by the DB trigger itself the
-  // moment handed_over_at is set, the same shape as 'bezahlt' above.
   | "handed_over";
 
 export interface DocumentHistory {
@@ -75,7 +47,7 @@ export interface DocumentHistory {
   created_at: string;
 }
 
-// Konfidenz je Feld aus der KI-Extraktion (0..1). Nicht jedes Feld ist immer da.
+// Confidence per field from the AI extraction (0..1). Not every field is always present.
 export interface Confidence {
   invoiceIssuer?: number;
   invoiceNumber?: number;
@@ -111,7 +83,7 @@ export interface DocumentTax {
   vat?: number | null;
 }
 
-// Vollständiges KI-Extraktions-JSON (lose typisiert — wir lesen nur Einzelfelder).
+// Full AI extraction JSON (loosely typed — we only read individual fields).
 export interface Extracted {
   confidence?: Confidence;
   // The pipeline's per-check validation map, and the older flat gate object it replaces. Both are
@@ -521,7 +493,7 @@ export interface Document {
   paid_source: "bank_match" | "manual" | null;
   // "Handed over to DATEV" — its own checkbox (Briefing Appendix A6), not just a status.
   // workflow_status='handed_over' is DERIVED from this by a DB trigger (migration 0038),
-  // never written directly by the front-end, mirroring how paid_at drives 'bezahlt'.
+  // never written directly by the front-end, mirroring how paid_at drives 'paid'.
   handed_over_at: string | null;
   handover_batch_id: string | null;
   updated_at: string | null;
@@ -596,14 +568,14 @@ export interface Document {
 /**
  * Why a receipt cannot become an open item even though nothing has settled it.
  *
- * Coverage is measured against the gross amount, so three kinds of row used to sit on Offene Posten
+ * Coverage is measured against the gross amount, so three kinds of row used to sit on Open Items
  * for ever with no action on the screen able to close them. They are named rather than dropped: the
  * screen reports the count and can list them, so somebody can go and fix the amount.
  *
- *   kein_betrag     no gross amount was ever extracted, so there is nothing to measure against
- *   gutschrift      a negative gross, a supplier credit note: money coming back rather than owed
- *   privat_bezahlt  already_paid: settled from a private account, so no company bank movement
- *                   can ever match it
+ *   no_amount        no gross amount was ever extracted, so there is nothing to measure against
+ *   credit_note      a negative gross, a supplier credit note: money coming back rather than owed
+ *   paid_privately    already_paid: settled from a private account, so no company bank movement
+ *                     can ever match it
  */
 export type OpenItemBlocker = "no_amount" | "credit_note" | "paid_privately";
 
@@ -1090,7 +1062,7 @@ export interface ManualBookingExpanded {
   is_recurring: boolean;
 }
 
-// One row of the Vorschläge (bulk rule suggestion) tab — RPC suggest_assignment_rules. A supplier
+// One row of the Suggestions (bulk rule suggestion) tab — RPC suggest_assignment_rules. A supplier
 // not yet covered by an active cost_category rule, grouped by its most common existing category.
 export interface RuleSuggestion {
   supplier_id: string;
@@ -1333,7 +1305,7 @@ export interface ProcessingLog {
 
 // ---- Pipeline-Lauf-Heartbeat (Health-Panel) ----
 // Mirrors supabase/migrations/0013_pipeline_runs.sql in the pipeline repo. Written by the Python
-// ingest runs (email/drive/upload); the front-end only reads it for the Übersicht health card.
+// ingest runs (email/drive/upload); the front-end only reads it for the Overview health card.
 export interface PipelineRun {
   id: string;
   source: string; // 'email' | 'drive' | 'upload'
@@ -1525,7 +1497,7 @@ export interface BankTransaction {
   // Who made the payment. Pleo only; null on banksapi/manual (migration 20260901190000).
   spender_name: string | null;
   spender_email: string | null;
-  direction: string | null; // generated: 'ausgehend' | 'eingehend'
+  direction: string | null; // 'incoming' | 'outgoing'
   // Normalized movement type (migration 0023). Derived by the classifier in
   // supabase/functions/_shared/transaction-type.ts, NOT by the bank. booking_text is the bank's
   // own free text and is empty on most movements. null = not yet classified, and the next

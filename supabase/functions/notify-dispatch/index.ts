@@ -241,10 +241,10 @@ async function deliverSlack(
 }
 
 function slackText(payload: OutPayload, hubUrl = ""): string {
-  const hubLink = (pfad: string, id: unknown): string => {
+  const hubLink = (path: string, id: unknown): string => {
     const base = hubUrl.replace(/\/+$/, "");
     if (!base || !id) return " Details im Hub.";
-    return ` <${base}/${pfad}/${id}|Im Hub öffnen>`;
+    return ` <${base}/${path}/${id}|Im Hub öffnen>`;
   };
   const invoiceLink = (id: unknown): string => hubLink("eingangsrechnungen", id);
 
@@ -285,7 +285,7 @@ function slackText(payload: OutPayload, hubUrl = ""): string {
 
   // Sending "Details im Hub" with no address is how the recipient ends up searching for the thing
   // somebody just asked them to look at.
-  const zielLink = (p: Record<string, unknown>): string => {
+  const targetLink = (p: Record<string, unknown>): string => {
     const path = targetOf(p).path;
     const base = hubUrl.replace(/\/+$/, "");
     if (!base || !path) return " Details im Hub.";
@@ -300,10 +300,10 @@ function slackText(payload: OutPayload, hubUrl = ""): string {
       lines.push(`• Zahlungsvorschläge zu bestätigen: *${f.vorschlaege}*`);
     }
     if (f.fehler !== undefined) lines.push(`• Fehler im letzten Lauf: *${f.fehler}*`);
-    const personen = (payload.personen ?? []) as { name: string; offen: number }[];
-    if (personen.length > 0) {
+    const people = (payload.people ?? []) as { name: string; open: number }[];
+    if (people.length > 0) {
       lines.push("Offene Punkte je Person:");
-      for (const person of personen) lines.push(`• ${person.name}: *${person.offen}*`);
+      for (const person of people) lines.push(`• ${person.name}: *${person.open}*`);
     }
     return lines.join("\n");
   }
@@ -314,20 +314,20 @@ function slackText(payload: OutPayload, hubUrl = ""): string {
       // Names WHAT, not just "something": a notification about a payment and one about a supplier
       // are different errands, and the recipient should know which before clicking.
       const kind = targetOf(p).kind;
-      const was = (kind && TARGET_NAMES[kind]) || "etwas";
+      const what = (kind && TARGET_NAMES[kind]) || "etwas";
       const note = typeof p.note === "string" && p.note.trim() ? `\n> ${p.note.trim()}` : "";
-      return `*${p.from_name ?? "Jemand"}* bittet ${to.name ?? "dich"}, sich ${was} anzusehen.${zielLink(p)}${note}`;
+      return `*${p.from_name ?? "Jemand"}* bittet ${to.name ?? "dich"}, sich ${what} anzusehen.${targetLink(p)}${note}`;
     }
     if (payload.type === "zuweisung") {
-      const wer = to.name ?? p.assigned_to ?? "jemand";
+      const who = to.name ?? p.assigned_to ?? "jemand";
       const nr = p.invoice_number ? ` (${p.invoice_number})` : "";
-      return `Rechnung${nr} wurde *${wer}* zugewiesen.${invoiceLink(p.document_id)}`;
+      return `Rechnung${nr} wurde *${who}* zugewiesen.${invoiceLink(p.document_id)}`;
     }
-    if (payload.type === "rueckfrage" || payload.type === "abgelehnt") {
-      const wer = to.name ?? p.returned_to ?? "das Team";
+    if (payload.type === "query" || payload.type === "rejected") {
+      const who = to.name ?? p.returned_to ?? "das Team";
       const nr = p.invoice_number ? ` (${p.invoice_number})` : "";
-      const was = payload.type === "rueckfrage" ? "eine Rückfrage" : "eine Ablehnung";
-      return `Rechnung${nr}: ${was} zurück an *${wer}*.${invoiceLink(p.document_id)}`;
+      const what = payload.type === "query" ? "eine Rückfrage" : "eine Ablehnung";
+      return `Rechnung${nr}: ${what} zurück an *${who}*.${invoiceLink(p.document_id)}`;
     }
     return `Neue Benachrichtigung (${payload.type}) für ${to.name ?? "das Team"}.`;
   }
@@ -470,8 +470,8 @@ function parseDigestTime(raw: unknown): number {
 // Every figure independent: a view another Hub does not have (bank matching, pipeline) drops
 // that figure instead of killing the whole digest. That is what makes this file portable.
 // PER-HUB: the only part of this function that knows THIS Hub's schema. digestFigures queries
-// this project's tables to compile briefing figures. Stäy has no bank matching, pipeline, or
-// workflow history tracking, so this returns only what exists locally. Each figure fails
+// this project's tables to compile briefing figures. Another Hub might have no bank matching,
+// pipeline, or workflow history tracking, so this returns only what exists locally. Each figure fails
 // independently (allSettled / try-catch), so a Hub without a source simply omits that line
 // from the briefing.
 async function digestFigures(db: Db, today: string): Promise<Record<string, number>> {
@@ -517,7 +517,7 @@ async function digestFigures(db: Db, today: string): Promise<Record<string, numb
 const PERSON_SCAN_LIMIT = 2000;
 const PERSON_LINES = 10;
 
-async function personFigures(db: Db): Promise<{ name: string; offen: number }[]> {
+async function personFigures(db: Db): Promise<{ name: string; open: number }[]> {
   const { data, error } = await db
     .from(TABLE.vOpenItems)
     .select("assigned_to")
@@ -531,8 +531,8 @@ async function personFigures(db: Db): Promise<{ name: string; offen: number }[]>
     if (name) tally.set(name, (tally.get(name) ?? 0) + 1);
   }
   return [...tally.entries()]
-    .map(([name, offen]) => ({ name, offen }))
-    .sort((a, b) => b.offen - a.offen)
+    .map(([name, open]) => ({ name, open }))
+    .sort((a, b) => b.open - a.open)
     .slice(0, PERSON_LINES);
 }
 
@@ -575,12 +575,12 @@ async function deliverDigests(db: Db, channels: ChannelRow[], errors: string[]):
       for (const [key, value] of Object.entries(figures)) {
         if (toggles[key] !== false) selected[key] = value;
       }
-      const personen = toggles.personen !== false ? await personFigures(db) : [];
+      const people = toggles.personen !== false ? await personFigures(db) : [];
 
       // Everything toggled off produces an empty briefing: stamp it as handled rather than
       // retrying an empty message every 15 minutes for ever.
       const destination = row.digest_channel ?? "team";
-      let delivered = Object.keys(selected).length === 0 && personen.length === 0;
+      let delivered = Object.keys(selected).length === 0 && people.length === 0;
       if (!delivered && destination === "team" && teamSentForDate.has(today)) delivered = true;
       if (!delivered) {
         for (const channel of channels) {
@@ -599,7 +599,7 @@ async function deliverDigests(db: Db, channels: ChannelRow[], errors: string[]):
                   slack_user_id: row.user.slack_user_id,
                 },
                 figures: selected,
-                personen,
+                people,
               },
               errors,
             );
@@ -660,7 +660,7 @@ const SETTINGS_PERMISSION = "notifications.settings";
  * is applied explicitly. A role check here would silently override the Notifications switch on
  * Team & Rollen, so switching it on for someone would not actually let them use it.
  */
-async function darfEinstellungen(db: Db, email: string): Promise<boolean> {
+async function canManageNotificationSettings(db: Db, email: string): Promise<boolean> {
   const { data, error } = await db
     .from(TABLE.appUsers)
     .select("id, is_active, role_id")
@@ -708,7 +708,7 @@ Deno.serve(async (req) => {
 
     if (body.mode === "directory") {
       const email = jwtEmail(req);
-      if (!email || !(await darfEinstellungen(db, email))) {
+      if (!email || !(await canManageNotificationSettings(db, email))) {
         return jsonResponse({ error: "admin only" }, 403);
       }
       return jsonResponse(await slackDirectory(db));
@@ -716,7 +716,7 @@ Deno.serve(async (req) => {
 
     if (body.mode === "test") {
       const email = jwtEmail(req);
-      if (!email || !(await darfEinstellungen(db, email))) {
+      if (!email || !(await canManageNotificationSettings(db, email))) {
         return jsonResponse({ error: "admin only" }, 403);
       }
       const target = channels.find((c) => c.key === body.channel);

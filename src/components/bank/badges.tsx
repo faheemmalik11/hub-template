@@ -108,7 +108,7 @@ export function SourceBadge({
 }) {
   const { t } = useTranslation();
   const meta = source ? TXN_SOURCE_META[source] : undefined;
-  const label = source ? t(`bank.quelle.${source}`, { defaultValue: source }) : "—";
+  const label = source ? t(`bank.source.${source}`, { defaultValue: source }) : "—";
   return (
     <Badge
       variant="outline"

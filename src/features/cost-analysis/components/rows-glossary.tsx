@@ -31,22 +31,22 @@ export function RowsGlossary() {
           type="button"
           className="cursor-pointer text-sm text-muted-foreground underline underline-offset-2 hover:text-foreground"
         >
-          {t("reports.glossar.oeffnen")}
+          {t("reports.glossary.open")}
         </button>
       </PopoverTrigger>
       <PopoverContent
         align="start"
         className="max-h-[70vh] w-[min(32rem,90vw)] overflow-y-auto p-4"
       >
-        <h3 className="text-base font-semibold text-foreground">{t("reports.glossar.titel")}</h3>
-        <p className="mt-1 text-sm text-muted-foreground">{t("reports.glossar.untertitel")}</p>
+        <h3 className="text-base font-semibold text-foreground">{t("reports.glossary.title")}</h3>
+        <p className="mt-1 text-sm text-muted-foreground">{t("reports.glossary.subtitle")}</p>
         <dl className="mt-3 space-y-2.5">
           {keys.map((k) => {
-            const explanation = t(`reports.zeileHinweis.${k}`, { defaultValue: "" });
+            const explanation = t(`reports.rowHint.${k}`, { defaultValue: "" });
             if (!explanation) return null;
             return (
               <div key={k}>
-                <dt className="text-sm font-medium text-foreground">{t(`reports.zeile.${k}`)}</dt>
+                <dt className="text-sm font-medium text-foreground">{t(`reports.row.${k}`)}</dt>
                 <dd className="text-sm leading-relaxed text-muted-foreground">{explanation}</dd>
               </div>
             );

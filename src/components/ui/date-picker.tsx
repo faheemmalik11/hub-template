@@ -149,8 +149,8 @@ export function DatePicker({
       {clearable && !!value && !disabled && (
         <button
           type="button"
-          aria-label={t("common.datum.leeren")}
-          title={t("common.datum.leeren")}
+          aria-label={t("common.date.clear")}
+          title={t("common.date.clear")}
           onClick={() => {
             onChange("");
             setText("");
@@ -166,8 +166,8 @@ export function DatePicker({
           <button
             type="button"
             disabled={disabled}
-            aria-label={t("common.datum.kalender")}
-            title={t("common.datum.kalender")}
+            aria-label={t("common.date.openCalendar")}
+            title={t("common.date.openCalendar")}
             className="shrink-0 rounded p-1 text-muted-foreground transition-colors hover:bg-muted hover:text-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:cursor-not-allowed"
           >
             <CalendarIcon className="size-4" />

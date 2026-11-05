@@ -84,7 +84,7 @@ export function useNoReceiptCount() {
         .from(TABLE.bankTransactions)
         .select("id", { count: "exact", head: true })
         .eq("matching_status", "ignored")
-        .eq("direction", "ausgehend");
+        .eq("direction", "outgoing");
       if (error) throw error;
       return count ?? 0;
     },
@@ -738,7 +738,7 @@ export function useOpenBankTransactionsInfinite(
       // "bigger" than a €50 one, not smaller) — see manual-link-tab.tsx's compare() for the client
       // equivalent this replaces. Every row here shares one sign (this picker always sets richtung),
       // so flipping the raw order for a negative (ausgehend) set reproduces magnitude order exactly.
-      if (sort === "amount" && direction === "ausgehend") ascending = !ascending;
+      if (sort === "amount" && direction === "outgoing") ascending = !ascending;
       query = query
         .order(column, { ascending, nullsFirst: false })
         .order("id", { ascending: true });

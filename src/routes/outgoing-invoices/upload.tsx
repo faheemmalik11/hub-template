@@ -154,11 +154,11 @@ function UploadPage() {
   async function onFilePicked(picked: File) {
     const mime = mimeFor(picked);
     if (!mime) {
-      toast.error(t("outgoingInvoices.hochladen.toast.typUngueltig"));
+      toast.error(t("outgoingInvoices.upload.toast.typeInvalid"));
       return;
     }
     if (picked.size > MAX_BYTES) {
-      toast.error(t("outgoingInvoices.hochladen.toast.zuGross"));
+      toast.error(t("outgoingInvoices.upload.toast.tooLarge"));
       return;
     }
 
@@ -167,7 +167,7 @@ function UploadPage() {
       setForm((prev) => ({ ...prev, voucherDate: prev.voucherDate }));
       setError({});
       setPhase("preview");
-      toast.info(t("outgoingInvoices.hochladen.toast.zuGrossFuerAnalyse"));
+      toast.info(t("outgoingInvoices.upload.toast.tooLargeForAnalysis"));
       return;
     }
 
@@ -203,7 +203,7 @@ function UploadPage() {
         },
         onError: (err) => {
           toast.error(
-            t("outgoingInvoices.hochladen.toast.analyseFehlgeschlagen", {
+            t("outgoingInvoices.upload.toast.analysisFailed", {
               error: errorText(err),
             }),
           );
@@ -242,32 +242,32 @@ function UploadPage() {
   function check(): FieldError {
     const f: FieldError = {};
     if (!form.companyId) {
-      f.companyId = t("outgoingInvoices.hochladen.validierung.gesellschaft");
+      f.companyId = t("outgoingInvoices.upload.validation.company");
     }
     if (form.customerMode === "existing" ? !form.customerId : form.newCustomerName.trim() === "") {
-      f.customer = t("outgoingInvoices.hochladen.validierung.kunde");
+      f.customer = t("outgoingInvoices.upload.validation.customer");
     }
     if (form.voucherNumber.trim() === "") {
-      f.voucherNumber = t("outgoingInvoices.hochladen.validierung.rechnungsnummer");
+      f.voucherNumber = t("outgoingInvoices.upload.validation.invoiceNumber");
     }
     if (form.voucherDate.trim() === "") {
-      f.voucherDate = t("outgoingInvoices.hochladen.validierung.datum");
+      f.voucherDate = t("outgoingInvoices.upload.validation.date");
     }
     // Three separate messages, because "Bruttobetrag ungültig" on an empty field and on "12,3,4"
     // sends the reader looking for two very different things.
     if (amountGrossParsed == null) {
-      f.amountGross = t("outgoingInvoices.hochladen.validierung.bruttoFehlt");
+      f.amountGross = t("outgoingInvoices.upload.validation.grossMissing");
     } else if (Number.isNaN(amountGrossParsed)) {
-      f.amountGross = t("outgoingInvoices.hochladen.validierung.zahl");
+      f.amountGross = t("outgoingInvoices.upload.validation.number");
     } else if (amountGrossParsed <= 0) {
-      f.amountGross = t("outgoingInvoices.hochladen.validierung.bruttoPositiv");
+      f.amountGross = t("outgoingInvoices.upload.validation.grossMustBePositive");
     }
     // Both optional, so empty (null) is fine and only unreadable text is not.
     if (Number.isNaN(amountNetParsed ?? 0)) {
-      f.amountNet = t("outgoingInvoices.hochladen.validierung.zahl");
+      f.amountNet = t("outgoingInvoices.upload.validation.number");
     }
     if (Number.isNaN(vatRateParsed ?? 0)) {
-      f.vatRate = t("outgoingInvoices.hochladen.validierung.zahl");
+      f.vatRate = t("outgoingInvoices.upload.validation.number");
     }
     return f;
   }
@@ -279,11 +279,11 @@ function UploadPage() {
     const found = check();
     setError(found);
     if (Object.keys(found).length > 0) {
-      toast.error(t("outgoingInvoices.hochladen.toast.unvollstaendig"));
+      toast.error(t("outgoingInvoices.upload.toast.incomplete"));
       return;
     }
     if (!file) {
-      toast.error(t("outgoingInvoices.hochladen.toast.dateiFehlt"));
+      toast.error(t("outgoingInvoices.upload.toast.fileMissing"));
       return;
     }
 
@@ -327,13 +327,13 @@ function UploadPage() {
       },
       {
         onSuccess: (row) => {
-          toast.success(t("outgoingInvoices.hochladen.toast.erstellt"));
+          toast.success(t("outgoingInvoices.upload.toast.created"));
           setCreatedNumber(row.invoice_number ?? form.voucherNumber);
           setPhase("success");
         },
         onError: (e) =>
           toast.error(
-            t("outgoingInvoices.hochladen.toast.fehlgeschlagen", {
+            t("outgoingInvoices.upload.toast.failed", {
               error: errorText(e),
             }),
           ),
@@ -346,15 +346,15 @@ function UploadPage() {
       <div className="mx-auto max-w-md py-20 text-center">
         <CheckCircle2 className="mx-auto size-10 text-brand" />
         <h1 className="mt-4 text-xl font-semibold tracking-tight text-foreground">
-          {t("outgoingInvoices.hochladen.erfolg.title")}
+          {t("outgoingInvoices.upload.success.title")}
         </h1>
         <p className="mt-2 text-sm text-muted-foreground">
-          {t("outgoingInvoices.hochladen.erfolg.desc", { number: createdNumber ?? "" })}
+          {t("outgoingInvoices.upload.success.desc", { number: createdNumber ?? "" })}
         </p>
         <div className="mt-6 flex flex-wrap items-center justify-center gap-3">
-          <Button onClick={reset}>{t("outgoingInvoices.hochladen.erfolg.weitere")}</Button>
+          <Button onClick={reset}>{t("outgoingInvoices.upload.success.uploadAnother")}</Button>
           <Button variant="ghost" asChild>
-            <Link to="/outgoing-invoices">{t("outgoingInvoices.hochladen.erfolg.zurListe")}</Link>
+            <Link to="/outgoing-invoices">{t("outgoingInvoices.upload.success.backToList")}</Link>
           </Button>
         </div>
       </div>
@@ -367,15 +367,15 @@ function UploadPage() {
         to="/outgoing-invoices"
         className="inline-flex items-center gap-1.5 text-sm text-muted-foreground transition-colors hover:text-foreground"
       >
-        <ArrowLeft className="size-4" /> {t("outgoingInvoices.hochladen.zurueck")}
+        <ArrowLeft className="size-4" /> {t("outgoingInvoices.upload.back")}
       </Link>
 
       <div data-tour="outgoing-upload-intro" className="mt-2">
         <h1 className="mt-2 text-2xl font-semibold tracking-tight text-foreground">
-          {t("outgoingInvoices.hochladen.title")}
+          {t("outgoingInvoices.upload.title")}
         </h1>
         <p className="mt-1 text-sm text-muted-foreground">
-          {t("outgoingInvoices.hochladen.subtitle")}
+          {t("outgoingInvoices.upload.subtitle")}
         </p>
       </div>
 
@@ -406,15 +406,15 @@ function UploadPage() {
           <div>
             <p className="text-sm font-medium text-foreground">
               {dragOver
-                ? t("outgoingInvoices.hochladen.dropRelease")
-                : t("outgoingInvoices.hochladen.dropHint")}
+                ? t("outgoingInvoices.upload.dropRelease")
+                : t("outgoingInvoices.upload.dropHint")}
             </p>
             <p className="mt-1 text-xs text-muted-foreground">
-              {t("outgoingInvoices.hochladen.fileTypes")}
+              {t("outgoingInvoices.upload.fileTypes")}
             </p>
           </div>
           <Button variant="outline" className="mt-1" onClick={() => inputRef.current?.click()}>
-            {t("outgoingInvoices.hochladen.chooseFile")}
+            {t("outgoingInvoices.upload.chooseFile")}
           </Button>
           <input
             ref={inputRef}
@@ -434,7 +434,7 @@ function UploadPage() {
         <div className="mt-6 flex flex-col items-center justify-center gap-3 rounded-2xl border border-border bg-card px-6 py-14 text-center">
           <Loader2 className="size-8 animate-spin text-brand" />
           <p className="text-sm font-medium text-foreground">
-            {t("outgoingInvoices.hochladen.analysiere")}
+            {t("outgoingInvoices.upload.analyzing")}
           </p>
           <p className="text-xs text-muted-foreground">{file?.name}</p>
         </div>
@@ -444,11 +444,11 @@ function UploadPage() {
         <div className="mt-6 rounded-2xl border border-destructive/30 bg-destructive/5 px-6 py-10 text-center">
           <AlertTriangle className="mx-auto size-8 text-destructive" />
           <p className="mt-3 text-sm font-medium text-foreground">
-            {t("outgoingInvoices.hochladen.abgelehnt.title")}
+            {t("outgoingInvoices.upload.rejected.title")}
           </p>
           {rejectReason && <p className="mt-1 text-sm text-muted-foreground">{rejectReason}</p>}
           <Button variant="outline" className="mt-5" onClick={reset}>
-            {t("outgoingInvoices.hochladen.abgelehnt.andereDatei")}
+            {t("outgoingInvoices.upload.rejected.differentFile")}
           </Button>
         </div>
       )}
@@ -463,7 +463,7 @@ function UploadPage() {
           <div className="grid gap-4 sm:grid-cols-2">
             <div className="space-y-1.5">
               <Label>
-                {t("outgoingInvoices.hochladen.feld.gesellschaft")} <RequiredStern />
+                {t("outgoingInvoices.upload.field.company")} <RequiredStern />
               </Label>
               <Combobox
                 value={form.companyId}
@@ -478,14 +478,14 @@ function UploadPage() {
                   value: g.id,
                   label: `${g.code} · ${g.name}`,
                 }))}
-                placeholder={t("outgoingInvoices.hochladen.feld.gesellschaftPlaceholder")}
+                placeholder={t("outgoingInvoices.upload.field.companyPlaceholder")}
                 className={cn(error.companyId && "border-destructive")}
               />
               <FieldErrorText text={error.companyId} />
             </div>
             <div className="space-y-1.5">
               <Label>
-                {t("outgoingInvoices.hochladen.feld.rechnungsnummer")} <RequiredStern />
+                {t("outgoingInvoices.upload.field.invoiceNumber")} <RequiredStern />
               </Label>
               <Input
                 value={form.voucherNumber}
@@ -502,7 +502,7 @@ function UploadPage() {
             <div className="space-y-1.5 sm:col-span-2">
               <div className="flex items-center justify-between">
                 <Label>
-                  {t("outgoingInvoices.hochladen.feld.kunde")} <RequiredStern />
+                  {t("outgoingInvoices.upload.field.customer")} <RequiredStern />
                 </Label>
                 <button
                   type="button"
@@ -518,8 +518,8 @@ function UploadPage() {
                   }}
                 >
                   {form.customerMode === "existing"
-                    ? t("outgoingInvoices.hochladen.feld.neuerKundeLink")
-                    : t("outgoingInvoices.hochladen.feld.bestehenderKundeLink")}
+                    ? t("outgoingInvoices.upload.field.newCustomerLink")
+                    : t("outgoingInvoices.upload.field.existingCustomerLink")}
                 </button>
               </div>
               {form.customerMode === "existing" ? (
@@ -533,10 +533,10 @@ function UploadPage() {
                   options={customers.map((k) => ({ value: k.id, label: k.name }))}
                   placeholder={
                     form.companyId
-                      ? t("outgoingInvoices.hochladen.feld.kundePlaceholder")
-                      : t("outgoingInvoices.hochladen.feld.kundeErstGesellschaft")
+                      ? t("outgoingInvoices.upload.field.customerPlaceholder")
+                      : t("outgoingInvoices.upload.field.customerPickCompanyFirst")
                   }
-                  emptyText={t("outgoingInvoices.hochladen.feld.keinKunde")}
+                  emptyText={t("outgoingInvoices.upload.field.noCustomerFound")}
                   className={cn(error.customer && "border-destructive")}
                 />
               ) : (
@@ -547,14 +547,14 @@ function UploadPage() {
                       patchForm({ newCustomerName: e.target.value });
                       deleteError("customer");
                     }}
-                    placeholder={t("outgoingInvoices.hochladen.feld.kundeName")}
+                    placeholder={t("outgoingInvoices.upload.field.customerName")}
                     aria-invalid={!!error.customer}
                     className={cn(error.customer && "border-destructive")}
                   />
                   <Input
                     value={form.newCustomerAddress}
                     onChange={(e) => patchForm({ newCustomerAddress: e.target.value })}
-                    placeholder={t("outgoingInvoices.hochladen.feld.kundeAdresse")}
+                    placeholder={t("outgoingInvoices.upload.field.customerAddress")}
                   />
                 </div>
               )}
@@ -563,7 +563,7 @@ function UploadPage() {
 
             <div className="space-y-1.5">
               <Label>
-                {t("outgoingInvoices.hochladen.feld.datum")} <RequiredStern />
+                {t("outgoingInvoices.upload.field.date")} <RequiredStern />
               </Label>
               <DatePicker
                 value={form.voucherDate}
@@ -577,12 +577,12 @@ function UploadPage() {
               <FieldErrorText text={error.voucherDate} />
             </div>
             <div className="space-y-1.5">
-              <Label>{t("outgoingInvoices.hochladen.feld.faelligkeit")}</Label>
+              <Label>{t("outgoingInvoices.upload.field.dueDate")}</Label>
               <DatePicker value={form.dueDate} onChange={(v) => patchForm({ dueDate: v })} />
             </div>
 
             <div className="space-y-1.5">
-              <Label>{t("outgoingInvoices.hochladen.feld.nettobetrag")}</Label>
+              <Label>{t("outgoingInvoices.upload.field.netAmount")}</Label>
               <Input
                 value={form.amountNet}
                 onChange={(e) => {
@@ -597,7 +597,7 @@ function UploadPage() {
             </div>
             <div className="space-y-1.5">
               <Label>
-                {t("outgoingInvoices.hochladen.feld.bruttobetrag")} <RequiredStern />
+                {t("outgoingInvoices.upload.field.grossAmount")} <RequiredStern />
               </Label>
               <Input
                 value={form.amountGross}
@@ -612,7 +612,7 @@ function UploadPage() {
               <FieldErrorText text={error.amountGross} />
             </div>
             <div className="space-y-1.5">
-              <Label>{t("outgoingInvoices.hochladen.feld.ust")}</Label>
+              <Label>{t("outgoingInvoices.upload.field.vat")}</Label>
               <Input
                 value={form.vatRate}
                 onChange={(e) => {
@@ -632,7 +632,7 @@ function UploadPage() {
           {amountGrossParsed != null && !Number.isNaN(amountGrossParsed) && (
             <div className="flex items-center justify-end border-t border-border pt-4 text-sm">
               <span className="text-muted-foreground">
-                {t("outgoingInvoices.hochladen.feld.bruttobetrag")}:{" "}
+                {t("outgoingInvoices.upload.field.grossAmount")}:{" "}
               </span>
               <span className="ml-1 font-semibold tabular-nums text-foreground">
                 {formatEUR(amountGrossParsed)}
@@ -642,14 +642,14 @@ function UploadPage() {
 
           <div className="flex items-center justify-between gap-3">
             <Button variant="ghost" onClick={reset}>
-              {t("outgoingInvoices.hochladen.abbrechen")}
+              {t("outgoingInvoices.upload.cancel")}
             </Button>
             {/* Only disabled while the save is in flight, never because the form is incomplete.
                 See submit() for why. */}
             <Button onClick={submit} disabled={createInvoice.isPending}>
               {createInvoice.isPending
-                ? t("outgoingInvoices.hochladen.speichere")
-                : t("outgoingInvoices.hochladen.speichern")}
+                ? t("outgoingInvoices.upload.saving")
+                : t("outgoingInvoices.upload.save")}
             </Button>
           </div>
         </div>

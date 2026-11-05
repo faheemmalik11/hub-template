@@ -96,31 +96,31 @@ type NavEntry = NavLink | NavGroup;
 // Grouped so the sidebar stays scannable — related pages collapse under one parent instead of
 // each being a top-level row. This array is also what the breadcrumb trail reads.
 const nav: NavEntry[] = [
-  { labelKey: "nav.uebersicht", to: "/", icon: LayoutDashboard },
+  { labelKey: "nav.overview", to: "/", icon: LayoutDashboard },
   {
-    labelKey: "nav.rechnungen",
+    labelKey: "nav.invoices",
     tourId: "shell-nav-rechnungen",
     icon: Files,
     items: [
-      { labelKey: "nav.eingangsrechnungen", to: "/incoming-invoices", icon: FileInput },
-      { labelKey: "nav.ausgangsrechnungen", to: "/outgoing-invoices", icon: FileOutput },
-      { labelKey: "nav.manuelleBuchungen", to: "/manual-bookings", icon: Banknote },
+      { labelKey: "nav.incomingInvoices", to: "/incoming-invoices", icon: FileInput },
+      { labelKey: "nav.outgoingInvoices", to: "/outgoing-invoices", icon: FileOutput },
+      { labelKey: "nav.manualBookings", to: "/manual-bookings", icon: Banknote },
       {
-        labelKey: "nav.dateibenennung",
+        labelKey: "nav.fileNaming",
         to: "/file-naming",
         icon: Receipt,
         permission: PERMISSIONS.pageFileNaming,
       },
-      { labelKey: "nav.postfach", to: "/inbox", icon: Settings },
+      { labelKey: "nav.mailbox", to: "/inbox", icon: Settings },
     ],
   },
   {
-    labelKey: "nav.zahlungen",
+    labelKey: "nav.banking",
     tourId: "shell-nav-zahlungen",
     icon: Wallet,
     items: [
-      { labelKey: "nav.offenePosten", to: "/open-items", icon: Coins },
-      { labelKey: "nav.banktransaktionen", to: "/bank-transactions", icon: ArrowLeftRight },
+      { labelKey: "nav.openItems", to: "/open-items", icon: Coins },
+      { labelKey: "nav.bankTransactions", to: "/bank-transactions", icon: ArrowLeftRight },
       // Bank connections used to be a second entry here. They are now the group headers of the
       // accounts table on /bankkonten, together with the sync controls and the sync log, so the
       // menu no longer offers two routes to the same subject. The connection layer is still gated
@@ -128,55 +128,55 @@ const nav: NavEntry[] = [
       // was: bank_connections and bank_sync_logs carry the BANKSapi access handles and the banking
       // relationship, neither has a company_id to scope by, and migration 20260819160000 denies
       // both to the assistant role at the database.
-      { labelKey: "nav.bankkonten", to: "/bank-accounts", icon: Landmark },
+      { labelKey: "nav.bankAccounts", to: "/bank-accounts", icon: Landmark },
       { labelKey: "nav.oposWhitelist", to: "/opos-whitelist", icon: ListChecks },
       // Readable by everyone, writable by an admin. The one setting on it explains behaviour the
       // whole team meets daily -- how far a payment may miss an invoice and still be suggested --
       // so hiding the page from non-admins would make that behaviour look arbitrary.
-      { labelKey: "nav.bankEinstellungen", to: "/bank-settings", icon: Settings2 },
+      { labelKey: "nav.bankSettings", to: "/bank-settings", icon: Settings2 },
     ],
   },
   {
-    labelKey: "nav.stammdaten",
+    labelKey: "nav.masterData",
     tourId: "shell-nav-stammdaten",
     icon: Database,
     items: [
-      { labelKey: "nav.lieferanten", to: "/suppliers", icon: Users },
-      { labelKey: "nav.kunden", to: "/customers", icon: Users },
-      { labelKey: "nav.gesellschaften", to: "/companies", icon: Building2 },
-      { labelKey: "nav.objekte", to: "/properties", icon: Folder },
-      { labelKey: "nav.kategorien", to: "/categories", icon: FolderTree },
+      { labelKey: "nav.suppliers", to: "/suppliers", icon: Users },
+      { labelKey: "nav.customers", to: "/customers", icon: Users },
+      { labelKey: "nav.companies", to: "/companies", icon: Building2 },
+      { labelKey: "nav.properties", to: "/properties", icon: Folder },
+      { labelKey: "nav.categories", to: "/categories", icon: FolderTree },
     ],
   },
   {
-    labelKey: "nav.regeln",
+    labelKey: "nav.rules",
     tourId: "shell-nav-regeln",
     icon: ClipboardList,
     items: [
-      { labelKey: "nav.zuordnungsregeln", to: "/assignment-rules", icon: Tags },
+      { labelKey: "nav.assignmentRules", to: "/assignment-rules", icon: Tags },
       // Admin-only: approvers/approval_rules writes are RLS-gated to is_admin() -- hiding the
       // link keeps the menu honest.
       {
-        labelKey: "nav.freigabeRegeln",
+        labelKey: "nav.approvalRules",
         to: "/approval-rules",
         icon: ShieldCheck,
         permission: PERMISSIONS.pageApprovalRules,
       },
-      { labelKey: "nav.ausschlussregeln", to: "/exclusion-rules", icon: Trash2 },
+      { labelKey: "nav.exclusionRules", to: "/exclusion-rules", icon: Trash2 },
     ],
   },
   {
-    labelKey: "nav.steuern",
+    labelKey: "nav.tax",
     tourId: "shell-nav-steuern",
     icon: HandCoins,
     items: [
-      { labelKey: "nav.ustRegeln", to: "/vat-rules", icon: Percent },
-      { labelKey: "nav.steuerruecklage", to: "/vat-reserve", icon: PiggyBank },
-      { labelKey: "nav.datevUebergabe", to: "/datev-handover", icon: FileText },
+      { labelKey: "nav.vatRules", to: "/vat-rules", icon: Percent },
+      { labelKey: "nav.vatReserve", to: "/vat-reserve", icon: PiggyBank },
+      { labelKey: "nav.datevHandover", to: "/datev-handover", icon: FileText },
     ],
   },
   {
-    labelKey: "nav.auswertungen",
+    labelKey: "nav.costAnalysis",
     to: "/reports",
     tourId: "shell-nav-auswertungen",
     icon: PieChart,
@@ -185,25 +185,25 @@ const nav: NavEntry[] = [
 ];
 
 const adminNav: NavGroup = {
-  labelKey: "nav.verwaltung",
+  labelKey: "nav.administration",
   icon: Settings,
   items: [
     { labelKey: "nav.team", to: "/team", icon: Users, permission: PERMISSIONS.pageTeam },
     { labelKey: "nav.onboarding", to: "/onboarding", icon: ListChecks },
     {
-      labelKey: "nav.benachrichtigungen",
+      labelKey: "nav.notifications",
       to: "/notifications",
       icon: BellRing,
       permission: PERMISSIONS.settingsManage,
     },
     {
-      labelKey: "nav.protokoll",
+      labelKey: "nav.log",
       to: "/activity-log",
       icon: ScrollText,
       permission: PERMISSIONS.pageActivityLog,
     },
     {
-      labelKey: "nav.papierkorb",
+      labelKey: "nav.trash",
       to: "/trash",
       icon: Trash2,
       permission: PERMISSIONS.pageTrash,
@@ -274,9 +274,9 @@ export function AppShell({ children }: { children: ReactNode }) {
 
   const badges = useMemo<Record<string, ShellBadge>>(
     () => ({
-      "nav.rechnungen": {
+      "nav.invoices": {
         count: returnedToMeCount,
-        title: t("nav.rueckfrageAnMich", { count: returnedToMeCount }),
+        title: t("nav.queryForMe", { count: returnedToMeCount }),
       },
     }),
     [returnedToMeCount, t],
@@ -295,8 +295,8 @@ export function AppShell({ children }: { children: ReactNode }) {
   const staticLeafLabels = useMemo(
     () => ({
       upload: t("breadcrumb.upload"),
-      new: t("breadcrumb.ausgangsrechnungNeu"),
-      "/outgoing-invoices/upload": t("breadcrumb.ausgangsrechnungHochladen"),
+      new: t("breadcrumb.outgoingInvoiceNew"),
+      "/outgoing-invoices/upload": t("breadcrumb.outgoingInvoiceUpload"),
       // The Administration rail lives in the footer, outside the nav the crumb builder walks, so
       // its pages' names have to come from this map.
       ...Object.fromEntries(adminNav.items.map((item) => [item.to.slice(1), t(item.labelKey)])),
@@ -311,7 +311,7 @@ export function AppShell({ children }: { children: ReactNode }) {
         nav={shellNav}
         badges={badges}
         toaster={<Toaster position="bottom-right" />}
-        homeLabel={t("nav.uebersicht")}
+        homeLabel={t("nav.overview")}
         staticLeafLabels={staticLeafLabels}
         breadcrumbAriaLabel={t("breadcrumb.ariaLabel")}
         closeLabel={t("nav.menu")}
@@ -367,7 +367,7 @@ export function AppShell({ children }: { children: ReactNode }) {
                   <DropdownMenuItem asChild className="cursor-pointer">
                     <Link to="/profile">
                       <UserRound className="size-4" />
-                      {t("nav.meinProfil")}
+                      {t("nav.myProfile")}
                     </Link>
                   </DropdownMenuItem>
                   <DropdownMenuItem onClick={logout} className="cursor-pointer">

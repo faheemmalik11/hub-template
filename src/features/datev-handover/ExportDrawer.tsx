@@ -81,7 +81,7 @@ export function ExportDrawer({
       a.click();
       URL.revokeObjectURL(url);
       setSummary(s);
-      toast.success(t("handover.export.fertig", { count: s?.included ?? 0 }));
+      toast.success(t("handover.export.done", { count: s?.included ?? 0 }));
     } catch (e) {
       toast.error(errorText(e));
     }
@@ -98,10 +98,10 @@ export function ExportDrawer({
 
         <div className="mt-6 flex-1 space-y-4">
           <div>
-            <Label htmlFor="export-company">{t("handover.export.gesellschaft")}</Label>
+            <Label htmlFor="export-company">{t("handover.export.company")}</Label>
             <Select value={companyId} onValueChange={setCompanyId}>
               <SelectTrigger id="export-company" className="mt-1.5 w-full">
-                <SelectValue placeholder={t("handover.export.gesellschaftWaehlen")} />
+                <SelectValue placeholder={t("handover.export.chooseCompany")} />
               </SelectTrigger>
               <SelectContent>
                 {companies.map((c) => (
@@ -115,7 +115,7 @@ export function ExportDrawer({
 
           <div className="flex gap-3">
             <div className="flex-1">
-              <Label htmlFor="export-month">{t("handover.export.monat")}</Label>
+              <Label htmlFor="export-month">{t("handover.export.month")}</Label>
               <Select value={String(month)} onValueChange={(v) => setMonth(Number(v))}>
                 <SelectTrigger id="export-month" className="mt-1.5 w-full">
                   <SelectValue />
@@ -123,14 +123,14 @@ export function ExportDrawer({
                 <SelectContent>
                   {Array.from({ length: 12 }, (_, i) => (
                     <SelectItem key={i + 1} value={String(i + 1)}>
-                      {t(`handover.export.monatName.${i + 1}`)}
+                      {t(`handover.export.monthName.${i + 1}`)}
                     </SelectItem>
                   ))}
                 </SelectContent>
               </Select>
             </div>
             <div className="w-32">
-              <Label htmlFor="export-year">{t("handover.export.jahr")}</Label>
+              <Label htmlFor="export-year">{t("handover.export.year")}</Label>
               <Select value={String(year)} onValueChange={(v) => setYear(Number(v))}>
                 <SelectTrigger id="export-year" className="mt-1.5 w-full">
                   <SelectValue />
@@ -146,14 +146,14 @@ export function ExportDrawer({
             </div>
           </div>
 
-          <p className="text-xs text-muted-foreground">{t("handover.export.hinweis")}</p>
+          <p className="text-xs text-muted-foreground">{t("handover.export.hint")}</p>
 
           {/* What actually came out. `included` and `total` are two numbers on purpose: an archive
               that is short has to say so here rather than look complete on disk. */}
           {summary && (
             <div className="rounded-xl border border-border bg-card p-3">
               <p className="text-sm text-foreground">
-                {t("handover.export.ergebnis", {
+                {t("handover.export.result", {
                   included: summary.included,
                   total: summary.total,
                 })}
@@ -165,7 +165,7 @@ export function ExportDrawer({
                   ))}
                   {summary.omitted.length > 8 && (
                     <li className="text-muted-foreground">
-                      {t("handover.export.weitere", { count: summary.omitted.length - 8 })}
+                      {t("handover.export.more", { count: summary.omitted.length - 8 })}
                     </li>
                   )}
                 </ul>
@@ -176,11 +176,11 @@ export function ExportDrawer({
 
         <SheetFooter className="mt-6">
           <Button variant="outline" onClick={() => onOpenChange(false)} disabled={busy}>
-            {t("handover.aktion.abbrechen")}
+            {t("handover.action.cancel")}
           </Button>
           <Button className="gap-2" onClick={() => void run()} disabled={busy || !companyId}>
             {busy ? <Loader2 className="size-4 animate-spin" /> : <Download className="size-4" />}
-            {busy ? t("handover.export.laeuft") : t("handover.export.starten")}
+            {busy ? t("handover.export.running") : t("handover.export.start")}
           </Button>
         </SheetFooter>
       </SheetContent>

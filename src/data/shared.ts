@@ -43,22 +43,7 @@ export async function fetchAllRows<T>(
   return all;
 }
 
-/**
- * A soft delete has to say why.
- *
- * `delete_reason` used to be free text with no requirement at any call site, and the Papierkorb
- * audit measured the result: 6 of 14 trashed records with no usable reason at all, several stored
- * as empty strings, and one where somebody had typed a phone number into the box. A record whose
- * label is thin (a rule, an invoice) and whose reason is blank is one nobody can decide about
- * later — which is the whole job of that screen
- * (docs/audit/papierkorb/trash/ISSUES.md #2).
- *
- * The guarantee itself lives in the database — a BEFORE UPDATE trigger on every trash-eligible
- * table, so it holds for plain SQL too (migration 20260819120000). This is the same rule one step
- * earlier, purely so the person sees a sentence they can act on instead of a raw Postgres error.
- * Same wording as the trigger's, deliberately: two different messages for one rule reads like two
- * different problems.
- */
+// Also enforced by a BEFORE UPDATE trigger in the database (migration 20260819120000); wording matches it deliberately.
 export function requiredReason(reason: string | null | undefined): string {
   const text = (reason ?? "").trim();
   if (!text) {
@@ -135,7 +120,6 @@ export function invalidateRuleState(qc: ReturnType<typeof useQueryClient>) {
   qc.invalidateQueries({ queryKey: ["beleg_verlauf"] });
 }
 
-// Verlaufseintrag schreiben (Notiz, Statuswechsel, Änderung, Zuweisung, Löschung).
 export async function insertHistory(
   documentId: string,
   type: string,

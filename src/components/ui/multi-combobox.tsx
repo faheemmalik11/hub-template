@@ -74,13 +74,7 @@ export function MultiCombobox({
     : "";
   const [highlighted, setHighlighted] = React.useState(firstSelectedValue);
 
-  // WHAT is selected, not how many. "3 ausgewählt" is a count of things the reader cannot see,
-  // on a control whose whole job is to say which ones are picked -- so checking an assignment
-  // meant opening the dropdown and scrolling it. Pills name them on the closed trigger.
-  //
-  // Capped, because the trigger sits in a dialog next to other fields and a person with access to
-  // twelve companies would otherwise push the buttons below the fold. Past the cap the remainder
-  // becomes one "+n" pill, which is the only place a bare number is still the honest answer.
+  // Capped so the trigger can't push the dialog's other fields below the fold.
   const PILL_LIMIT = 4;
   const visible = selected.slice(0, PILL_LIMIT);
   const rest = selected.length - visible.length;
@@ -131,7 +125,7 @@ export function MultiCombobox({
               ))}
               {rest > 0 && (
                 <span className="inline-flex shrink-0 items-center rounded-md bg-muted px-1.5 py-0.5 text-xs font-medium text-muted-foreground">
-                  {t("common.multiCombobox.weitere", { count: rest })}
+                  {t("common.multiCombobox.more", { count: rest })}
                 </span>
               )}
             </span>

@@ -104,13 +104,13 @@ function TeamGuard() {
 }
 
 /** Sentinel for the "all companies" row. Not a company id, so it can never collide. */
-const ALL_COMPANIES = "__alle";
-// The two sentinels the approval-settings selects need. LEER is "not set"; a Select cannot carry
-// an empty-string value, so absence needs a value of its own. ALLE_BEREICHE is the one option that
+const ALL_COMPANIES = "__all";
+// The two sentinels the approval-settings selects need. NONE is "not set"; a Select cannot carry
+// an empty-string value, so absence needs a value of its own. ALL_AREAS is the one option that
 // is not an `area` at all -- it writes covers_all_areas instead, which is why the two move as a
 // pair (app_users_area_shape rejects having both).
-const LEER = "__none";
-const ALL_AREAS = "__alle_bereiche";
+const NONE = "__none";
+const ALL_AREAS = "__all_areas";
 
 const ROLE_OPTIONS: AssignableRole[] = ["admin", "supervisor", "assistant"];
 
@@ -119,7 +119,7 @@ const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/;
 
 function TeamPage() {
   const { t } = useTranslation();
-  const [tab, setTab] = useTabParam(["personen", "rollen"] as const, "personen");
+  const [tab, setTab] = useTabParam(["people", "roles"] as const, "people");
   const q = useEmployees();
   // Super admin pinned to the top and highlighted below: it is the owner/technical account, the
   // only one whose access cannot be edited, so burying it mid-list under an alphabetical email
@@ -171,17 +171,17 @@ function TeamPage() {
             className="flex h-auto w-auto flex-wrap justify-start gap-1"
             data-tour="team-tabs"
           >
-            <TabsTrigger value="personen">{t("team.tab.personen")}</TabsTrigger>
-            <TabsTrigger value="rollen">{t("team.tab.rollen")}</TabsTrigger>
+            <TabsTrigger value="people">{t("team.tab.people")}</TabsTrigger>
+            <TabsTrigger value="roles">{t("team.tab.roles")}</TabsTrigger>
           </TabsList>
-          {tab === "personen" && (
+          {tab === "people" && (
             <div className="flex w-full items-center gap-2 sm:ml-auto sm:w-auto">
               <div className="relative min-w-0 flex-1 sm:w-[260px] sm:flex-none">
                 <Search className="absolute left-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
                 <Input
                   value={search}
                   onChange={(e) => setSearch(e.target.value)}
-                  placeholder={t("team.list.suche")}
+                  placeholder={t("team.list.search")}
                   className="h-9 pl-9"
                 />
               </div>
@@ -191,13 +191,13 @@ function TeamPage() {
                 className="shrink-0"
                 onClick={() => setOnlyInactive((v) => !v)}
               >
-                {t("team.list.nurInaktive")}
+                {t("team.list.inactiveOnly")}
               </Button>
             </div>
           )}
         </div>
 
-        <TabsContent value="personen" className="mt-3" data-tour="team-people">
+        <TabsContent value="people" className="mt-3" data-tour="team-people">
           {q.isError ? (
             <div className="mt-3">
               <ErrorState error={q.error} onRetry={() => q.refetch()} />
@@ -222,7 +222,7 @@ function TeamPage() {
                       and the list is already nine columns wide. Editing happens in the pencil
                       dialog, where every permission is reachable. */}
                       <TableHead className="w-[130px] text-center">
-                        {t("team.list.col.rechte")}
+                        {t("team.list.col.rights")}
                       </TableHead>
                       <TableHead className="w-[92px] text-center">
                         {t("team.list.col.active")}
@@ -244,7 +244,7 @@ function TeamPage() {
                           <span className="block">{employee.name ?? "—"}</span>
                           {employee.must_change_password && (
                             <span className="block text-xs font-normal whitespace-nowrap text-muted-foreground">
-                              {t("team.status.nieAngemeldet")}
+                              {t("team.status.neverSignedIn")}
                             </span>
                           )}
                         </TableCell>
@@ -260,7 +260,7 @@ function TeamPage() {
                         <TableCell>
                           <div className="flex flex-wrap gap-1">
                             {employee.allowed_company_ids.length === 0 ? (
-                              <Badge variant="default">{t("team.access.alle")}</Badge>
+                              <Badge variant="default">{t("team.access.all")}</Badge>
                             ) : (
                               /* #10: one badge per allowed company, unbounded — eight of twelve
                              wrapped inside the cell with no truncation. Capped, with the full
@@ -280,7 +280,7 @@ function TeamPage() {
                                     ))}
                                     {rest > 0 && (
                                       <Badge variant="outline" title={codes.join(", ")}>
-                                        {t("team.access.weitere", { count: rest })}
+                                        {t("team.access.more", { count: rest })}
                                       </Badge>
                                     )}
                                   </>
@@ -295,11 +295,11 @@ function TeamPage() {
                         <TableCell className="text-center">
                           {employee.is_active ? (
                             <Badge className="border-transparent bg-success-soft text-success">
-                              {t("team.status.aktiv")}
+                              {t("team.status.active")}
                             </Badge>
                           ) : (
                             <Badge variant="outline" className="text-muted-foreground">
-                              {t("team.status.inaktiv")}
+                              {t("team.status.inactive")}
                             </Badge>
                           )}
                         </TableCell>
@@ -347,13 +347,13 @@ function TeamPage() {
                       </div>
                       <div className="shrink-0 text-right">
                         {employee.is_active ? (
-                          <Badge variant="secondary">{t("team.status.aktiv")}</Badge>
+                          <Badge variant="secondary">{t("team.status.active")}</Badge>
                         ) : (
-                          <Badge variant="outline">{t("team.status.inaktiv")}</Badge>
+                          <Badge variant="outline">{t("team.status.inactive")}</Badge>
                         )}
                         {employee.must_change_password && (
                           <div className="mt-1 text-[10px] text-muted-foreground">
-                            {t("team.status.nieAngemeldet")}
+                            {t("team.status.neverSignedIn")}
                           </div>
                         )}
                       </div>
@@ -362,7 +362,7 @@ function TeamPage() {
                     <div className="mt-2 flex flex-wrap items-center gap-1.5">
                       <Badge variant="outline">{t(`team.role.${employee.role_name}`)}</Badge>
                       {employee.allowed_company_ids.length === 0 ? (
-                        <Badge variant="default">{t("team.access.alle")}</Badge>
+                        <Badge variant="default">{t("team.access.all")}</Badge>
                       ) : (
                         /* #10: same cap as the desktop table above. */
                         (() => {
@@ -380,7 +380,7 @@ function TeamPage() {
                               ))}
                               {rest > 0 && (
                                 <Badge variant="outline" title={codes.join(", ")}>
-                                  {t("team.access.weitere", { count: rest })}
+                                  {t("team.access.more", { count: rest })}
                                 </Badge>
                               )}
                             </>
@@ -392,7 +392,7 @@ function TeamPage() {
                     <div className="mt-3 space-y-1.5 border-t border-border pt-3">
                       <div className="flex items-center justify-between gap-3">
                         <span className="text-xs text-muted-foreground">
-                          {t("team.list.col.rechte")}
+                          {t("team.list.col.rights")}
                         </span>
                         <span className="text-xs text-muted-foreground">
                           <PermissionCount employee={employee} />
@@ -420,7 +420,7 @@ function TeamPage() {
           )}
         </TabsContent>
 
-        <TabsContent value="rollen" className="mt-3">
+        <TabsContent value="roles" className="mt-3">
           <RolePermissionMatrix />
         </TabsContent>
       </Tabs>
@@ -518,15 +518,15 @@ function RolePermissionMatrix() {
 
   return (
     <div data-tour="team-roles">
-      <p className="max-w-3xl text-sm text-muted-foreground">{t("team.rollenrechte.hinweis")}</p>
+      <p className="max-w-3xl text-sm text-muted-foreground">{t("team.rolePermissions.hint")}</p>
       <PermissionMatrix
         className="mt-4"
         permissions={permissions}
         roles={roles}
         grantedByRole={rolePermsQ.data ?? {}}
         disabled={setRolePermission.isPending}
-        permissionColumnLabel={t("team.rollenrechte.spalte")}
-        categoryLabel={(c) => t(`team.permissions.kategorie.${c}`, { defaultValue: c })}
+        permissionColumnLabel={t("team.rolePermissions.col")}
+        categoryLabel={(c) => t(`team.permissions.category.${c}`, { defaultValue: c })}
         onToggle={(roleId, key, next) =>
           setRolePermission.mutate(
             { roleId, roleName: roleNames.get(roleId) ?? "", key, value: next },
@@ -559,8 +559,8 @@ function PermissionCount({ employee }: { employee: Employee }) {
   const total = catalogueQ.data?.length ?? 0;
   if (!total) return <>—</>;
   if (employee.role_name === "super_admin")
-    return <>{t("team.list.rechteAnzahl", { n: total, total })}</>;
-  return <>{t("team.list.rechteAnzahl", { n: employee.permissions.length, total })}</>;
+    return <>{t("team.list.rightsCount", { n: total, total })}</>;
+  return <>{t("team.list.rightsCount", { n: employee.permissions.length, total })}</>;
 }
 
 /**
@@ -598,7 +598,7 @@ function PermissionsSection({
 
   return (
     <div className="space-y-2">
-      <Label>{t("team.permissions.titel")}</Label>
+      <Label>{t("team.permissions.title")}</Label>
       <div className="rounded-lg border border-border p-3">
         <PermissionChecklist
           permissions={permissions}
@@ -619,7 +619,7 @@ function PermissionsSection({
                 ? t("team.rights.nurAdmin")
                 : undefined
           }
-          categoryLabel={(c) => t(`team.permissions.kategorie.${c}`, { defaultValue: c })}
+          categoryLabel={(c) => t(`team.permissions.category.${c}`, { defaultValue: c })}
           onToggle={(key, next) => onChange(next ? [...held, key] : held.filter((k) => k !== key))}
         />
       </div>
@@ -679,17 +679,17 @@ function ApprovalSettingsSection({ employee }: { employee: Employee }) {
   // entry, which is where the constraint was doing its work: an area owner who cannot give the
   // final approval is a receipt routed to somebody who then sees no button.
   const canFinalApprove = employee.permissions.includes(PERMISSIONS.invoicesApproveFinal);
-  const areaValue = employee.covers_all_areas ? ALL_AREAS : (employee.area ?? LEER);
+  const areaValue = employee.covers_all_areas ? ALL_AREAS : (employee.area ?? NONE);
 
   function save(changes: Parameters<typeof update.mutate>[0]["changes"]) {
     update.mutate(
       { userId: employee.id, changes },
       {
-        onSuccess: () => toast.success(t("team.chain.gespeichert")),
+        onSuccess: () => toast.success(t("team.chain.saved")),
         onError: (e) =>
           toast.error(
             e instanceof AreaConflictError
-              ? t("team.chain.bereichKonflikt", { area: t(`approvalRules.bereich.${e.area}`) })
+              ? t("team.chain.areaConflict", { area: t(`approvalRules.area.${e.area}`) })
               : errorText(e),
           ),
       },
@@ -698,16 +698,16 @@ function ApprovalSettingsSection({ employee }: { employee: Employee }) {
 
   return (
     <div className="space-y-2">
-      <Label>{t("team.chain.titel")}</Label>
+      <Label>{t("team.chain.title")}</Label>
       <div className="space-y-3 rounded-lg border border-border p-3">
         <div className="space-y-1.5">
-          <Label className="text-xs text-muted-foreground">{t("team.chain.bereich")}</Label>
+          <Label className="text-xs text-muted-foreground">{t("team.chain.area")}</Label>
           <Select
             value={areaValue}
             disabled={!canFinalApprove || update.isPending}
             onValueChange={(v) =>
               save({
-                area: v === LEER || v === ALL_AREAS ? null : (v as ApprovalArea),
+                area: v === NONE || v === ALL_AREAS ? null : (v as ApprovalArea),
                 covers_all_areas: v === ALL_AREAS,
               })
             }
@@ -716,29 +716,29 @@ function ApprovalSettingsSection({ employee }: { employee: Employee }) {
               <SelectValue />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value={LEER}>{t("approvalRules.bereich.keiner")}</SelectItem>
-              <SelectItem value="hospitality">{t("approvalRules.bereich.hospitality")}</SelectItem>
-              <SelectItem value="stay_re">{t("approvalRules.bereich.stay_re")}</SelectItem>
-              <SelectItem value={ALL_AREAS}>{t("approvalRules.bereich.alle")}</SelectItem>
+              <SelectItem value={NONE}>{t("approvalRules.area.noneOption")}</SelectItem>
+              <SelectItem value="hospitality">{t("approvalRules.area.hospitality")}</SelectItem>
+              <SelectItem value="stay_re">{t("approvalRules.area.stay_re")}</SelectItem>
+              <SelectItem value={ALL_AREAS}>{t("approvalRules.area.all")}</SelectItem>
             </SelectContent>
           </Select>
           <p className="text-xs text-muted-foreground">
-            {canFinalApprove ? t("team.chain.bereichHint") : t("team.chain.bereichBrauchtRecht")}
+            {canFinalApprove ? t("team.chain.areaHint") : t("team.chain.areaNeedsRight")}
           </p>
         </div>
 
         <div className="space-y-1.5">
-          <Label className="text-xs text-muted-foreground">{t("team.chain.vertretung")}</Label>
+          <Label className="text-xs text-muted-foreground">{t("team.chain.deputy")}</Label>
           <Select
-            value={employee.deputy_user_id ?? LEER}
+            value={employee.deputy_user_id ?? NONE}
             disabled={update.isPending}
-            onValueChange={(v) => save({ deputy_user_id: v === LEER ? null : v })}
+            onValueChange={(v) => save({ deputy_user_id: v === NONE ? null : v })}
           >
             <SelectTrigger>
               <SelectValue />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value={LEER}>{t("approvalRules.keineVertretung")}</SelectItem>
+              <SelectItem value={NONE}>{t("approvalRules.noDeputy")}</SelectItem>
               {deputies.map((o) => (
                 <SelectItem key={o.value} value={o.value}>
                   {o.label}
@@ -746,15 +746,15 @@ function ApprovalSettingsSection({ employee }: { employee: Employee }) {
               ))}
             </SelectContent>
           </Select>
-          <p className="text-xs text-muted-foreground">{t("team.chain.vertretungHint")}</p>
+          <p className="text-xs text-muted-foreground">{t("team.chain.deputyHint")}</p>
         </div>
 
         <div className="space-y-1.5">
-          <Label className="text-xs text-muted-foreground">{t("team.chain.eskalation")}</Label>
+          <Label className="text-xs text-muted-foreground">{t("team.chain.escalation")}</Label>
           <Input
             value={days}
             inputMode="numeric"
-            placeholder={t("approvalRules.feld.eskalationPlaceholder")}
+            placeholder={t("approvalRules.feld.escalationPlaceholder")}
             disabled={update.isPending}
             onChange={(e) => setDays(e.target.value)}
             // Committed on blur, not per keystroke: typing "12" would otherwise write 1 on the way
@@ -766,11 +766,9 @@ function ApprovalSettingsSection({ employee }: { employee: Employee }) {
             }}
           />
           {daysInvalid ? (
-            <p className="text-xs text-destructive">
-              {t("approvalRules.feld.eskalationUngueltig")}
-            </p>
+            <p className="text-xs text-destructive">{t("approvalRules.feld.escalationInvalid")}</p>
           ) : (
-            <p className="text-xs text-muted-foreground">{t("team.chain.eskalationHint")}</p>
+            <p className="text-xs text-muted-foreground">{t("team.chain.escalationHint")}</p>
           )}
         </div>
       </div>
@@ -830,7 +828,7 @@ function EditEmployeeDialog({
   }, [employee.permissions, rights]);
   const rightsChanged = changedRights.length > 0;
   // #3: an EMPTY selection means unrestricted, so removing the last company WIDENS access.
-  const widensAccessAus =
+  const wideningAccess =
     accessChanged && selected.length === 0 && employee.allowed_company_ids.length > 0;
   const invalid = !name.trim() || !email.trim();
   const dirty = isSuperAdmin
@@ -850,7 +848,7 @@ function EditEmployeeDialog({
             name: name.trim(),
             email: employee.email,
           });
-          toast.success(t("team.access.toast.gespeichert"));
+          toast.success(t("team.access.toast.saved"));
         }
         setOpen(false);
         return;
@@ -862,7 +860,7 @@ function EditEmployeeDialog({
       let step = "";
       try {
         if (profileChanged) {
-          step = t("team.access.schritt.profil");
+          step = t("team.access.step.profile");
           await updateProfile.mutateAsync({
             employeeId: employee.id,
             name: name.trim(),
@@ -870,15 +868,15 @@ function EditEmployeeDialog({
           });
         }
         if (roleChanged) {
-          step = t("team.access.schritt.rolle");
+          step = t("team.access.step.role");
           await updateRole.mutateAsync({ employeeId: employee.id, roleName });
         }
         if (accessChanged) {
-          step = t("team.access.schritt.zugriff");
+          step = t("team.access.step.access");
           await setAccess.mutateAsync({ employeeId: employee.id, companyIds: selected });
         }
         if (rightsChanged) {
-          step = t("team.access.schritt.rechte");
+          step = t("team.access.step.rights");
           for (const key of changedRights) {
             await setRight.mutateAsync({
               employeeId: employee.id,
@@ -889,14 +887,14 @@ function EditEmployeeDialog({
           await refreshProfile();
         }
       } catch (e) {
-        toast.error(t("team.access.toast.teilweise", { step, error: errorText(e) }));
+        toast.error(t("team.access.toast.partial", { step, error: errorText(e) }));
         throw e;
       }
-      toast.success(t("team.access.toast.gespeichert"));
+      toast.success(t("team.access.toast.saved"));
       setOpen(false);
     } catch (e) {
       toast.error(
-        t("team.access.toast.fehlgeschlagen", {
+        t("team.access.toast.failed", {
           error: errorText(e),
         }),
       );
@@ -918,7 +916,7 @@ function EditEmployeeDialog({
       }}
     >
       <SheetTrigger asChild>
-        <IconAction label={t("team.list.action.bearbeiten")}>
+        <IconAction label={t("team.list.action.edit")}>
           <Pencil className="size-4" />
         </IconAction>
       </SheetTrigger>
@@ -954,7 +952,7 @@ function EditEmployeeDialog({
           </div>
           {isSelf && !isSuperAdmin && (
             <p className="rounded-md border border-amber-300 bg-amber-50 px-3 py-2 text-xs text-amber-900">
-              {t("team.edit.selbstHinweis")}
+              {t("team.edit.selfHint")}
             </p>
           )}
           {isSuperAdmin ? (
@@ -1003,7 +1001,7 @@ function EditEmployeeDialog({
                   options={[
                     {
                       value: ALL_COMPANIES,
-                      label: t("team.new.field.companiesAlle"),
+                      label: t("team.new.field.companiesAll"),
                     },
                     ...companies.map((c) => ({
                       value: c.id,
@@ -1011,7 +1009,7 @@ function EditEmployeeDialog({
                       keywords: c.name,
                     })),
                   ]}
-                  placeholder={t("team.new.field.companiesWaehlen")}
+                  placeholder={t("team.new.field.companiesChoose")}
                 />
               </div>
 
@@ -1032,15 +1030,15 @@ function EditEmployeeDialog({
             while DEACTIVATING an account (fully reversible) got a confirm dialog. */}
         {roleChanged && (
           <p className="rounded-md border border-amber-300 bg-amber-50 px-3 py-2 text-xs text-amber-900">
-            {t("team.edit.rollenwechsel", {
+            {t("team.edit.roleChange", {
               fromDate: t(`team.role.${employee.role_name}`),
               nach: t(`team.role.${roleName}`),
             })}
           </p>
         )}
-        {widensAccessAus && (
+        {wideningAccess && (
           <p className="rounded-md border border-amber-300 bg-amber-50 px-3 py-2 text-xs text-amber-900">
-            {t("team.edit.zugriffAusweitung")}
+            {t("team.edit.accessWidened")}
           </p>
         )}
         <SheetFooter className="mt-auto gap-2 border-t border-border px-6 py-4">
@@ -1072,7 +1070,7 @@ function ToggleActiveDialog({ employee }: { employee: Employee }) {
           ),
         onError: (e) =>
           toast.error(
-            t("team.deactivate.toast.fehlgeschlagen", {
+            t("team.deactivate.toast.failed", {
               error: errorText(e),
             }),
           ),
@@ -1090,7 +1088,7 @@ function ToggleActiveDialog({ employee }: { employee: Employee }) {
               : "text-muted-foreground hover:bg-brand/10 hover:text-brand"
           }
           label={t(
-            employee.is_active ? "team.list.action.deaktivieren" : "team.list.action.reaktivieren",
+            employee.is_active ? "team.list.action.deactivate" : "team.list.action.reactivate",
           )}
           // The super admin is the owner/technical account and must always be able to get back in;
           // deactivating it could lock the last unrestricted account out of the app. Enforced in
@@ -1159,7 +1157,7 @@ function ResetPasswordDialog({ employee }: { employee: Employee }) {
           setCredentials({ email: result.email, tempPassword: result.tempPassword }),
         onError: (e) =>
           toast.error(
-            t("team.resetPassword.toast.fehlgeschlagen", {
+            t("team.resetPassword.toast.failed", {
               error: errorText(e),
             }),
           ),
@@ -1174,7 +1172,7 @@ function ResetPasswordDialog({ employee }: { employee: Employee }) {
           {/* An unlabelled key icon says nothing to a sighted user; the aria-label only ever
               reached screen readers. Same for the shield beside it and the pencil. */}
           <IconAction
-            label={t("team.list.action.passwortZuruecksetzen")}
+            label={t("team.list.action.resetPassword")}
             disabled={!employee.is_active || employee.role_name === "super_admin"}
           >
             <KeyRound className="size-4" />
@@ -1255,9 +1253,9 @@ function NewEmployeeDialog({
   const [deviations, setDeviations] = useState<Record<string, boolean>>({});
   // The three chain settings, held locally for the same reason as the permission deviations: the
   // account has no id until createEmployee returns one. Written straight afterwards.
-  const [deputyUserId, setDeputyUserId] = useState(LEER);
+  const [deputyUserId, setDeputyUserId] = useState(NONE);
   const [escalationDays, setEscalationDays] = useState("");
-  const [area, setArea] = useState(LEER);
+  const [area, setArea] = useState(NONE);
   const updateChain = useUpdateChainPerson();
   const employeesQ = useEmployees();
   const [createdCredentials, setCreatedCredentials] = useState<{
@@ -1307,28 +1305,28 @@ function NewEmployeeDialog({
     setRoleName("assistant");
     setCompanyIds([]);
     setDeviations({});
-    setDeputyUserId(LEER);
+    setDeputyUserId(NONE);
     setEscalationDays("");
-    setArea(LEER);
+    setArea(NONE);
   }
 
   function submit() {
     if (!email.trim()) {
-      toast.error(t("team.new.toast.emailPflicht"));
+      toast.error(t("team.new.toast.emailRequired"));
       return;
     }
     // #7: type="email" does nothing outside a form submit, so "abc" reached the server and came
     // back as a raw error. The email IS the login identity, so it is worth getting right here.
     if (!EMAIL_RE.test(email.trim())) {
-      toast.error(t("team.new.toast.emailUngueltig"));
+      toast.error(t("team.new.toast.emailInvalid"));
       return;
     }
     if (alreadyAssign) {
-      toast.error(t("team.new.toast.emailVergeben"));
+      toast.error(t("team.new.toast.emailTaken"));
       return;
     }
     if (!name.trim()) {
-      toast.error(t("team.new.toast.namePflicht"));
+      toast.error(t("team.new.toast.nameRequired"));
       return;
     }
     create.mutate(
@@ -1348,16 +1346,16 @@ function NewEmployeeDialog({
                 ),
               );
             } catch (e) {
-              toast.error(t("team.new.toast.rechteFehlgeschlagen", { error: errorText(e) }));
+              toast.error(t("team.new.toast.rightsFailed", { error: errorText(e) }));
             }
           }
           // Same reasoning as the deviations above: these need the id, and a failure here leaves a
           // working account that simply has no deputy yet, which is its own situation.
           const days = escalationDays.trim() === "" ? null : Number(escalationDays);
           const chainChanges = {
-            ...(deputyUserId !== LEER ? { deputy_user_id: deputyUserId } : {}),
+            ...(deputyUserId !== NONE ? { deputy_user_id: deputyUserId } : {}),
             ...(days != null && Number.isFinite(days) && days > 0 ? { escalation_days: days } : {}),
-            ...(area !== LEER && canFinalApprove
+            ...(area !== NONE && canFinalApprove
               ? {
                   area: area === ALL_AREAS ? null : (area as ApprovalArea),
                   covers_all_areas: area === ALL_AREAS,
@@ -1368,7 +1366,7 @@ function NewEmployeeDialog({
             try {
               await updateChain.mutateAsync({ userId: result.employeeId, changes: chainChanges });
             } catch (e) {
-              toast.error(t("team.new.toast.rechteFehlgeschlagen", { error: errorText(e) }));
+              toast.error(t("team.new.toast.rightsFailed", { error: errorText(e) }));
             }
           }
           setCreatedCredentials({ email: result.email, tempPassword: result.tempPassword });
@@ -1377,7 +1375,7 @@ function NewEmployeeDialog({
         },
         onError: (e) =>
           toast.error(
-            t("team.new.toast.fehlgeschlagen", {
+            t("team.new.toast.failed", {
               error: errorText(e),
             }),
           ),
@@ -1390,7 +1388,7 @@ function NewEmployeeDialog({
       <Sheet open={open} onOpenChange={setOpen}>
         <SheetTrigger asChild>
           <Button className="gap-2">
-            <Plus className="size-4" /> {t("team.list.neu.button")}
+            <Plus className="size-4" /> {t("team.list.create.button")}
           </Button>
         </SheetTrigger>
         <SheetContent
@@ -1430,10 +1428,10 @@ function NewEmployeeDialog({
                 aria-invalid={emailInvalid || alreadyAssign}
               />
               {emailInvalid && (
-                <p className="text-xs text-amber-700">{t("team.new.toast.emailUngueltig")}</p>
+                <p className="text-xs text-amber-700">{t("team.new.toast.emailInvalid")}</p>
               )}
               {alreadyAssign && (
-                <p className="text-xs text-amber-700">{t("team.new.toast.emailVergeben")}</p>
+                <p className="text-xs text-amber-700">{t("team.new.toast.emailTaken")}</p>
               )}
             </div>
             <div className="space-y-1">
@@ -1472,7 +1470,7 @@ function NewEmployeeDialog({
                 options={[
                   {
                     value: ALL_COMPANIES,
-                    label: t("team.new.field.companiesAlle"),
+                    label: t("team.new.field.companiesAll"),
                   },
                   ...companies.map((c) => ({
                     value: c.id,
@@ -1480,15 +1478,15 @@ function NewEmployeeDialog({
                     keywords: c.name,
                   })),
                 ]}
-                placeholder={t("team.new.field.companiesWaehlen")}
+                placeholder={t("team.new.field.companiesChoose")}
               />
             </div>
 
             <div className="space-y-2">
-              <Label>{t("team.chain.titel")}</Label>
+              <Label>{t("team.chain.title")}</Label>
               <div className="space-y-3 rounded-lg border border-border p-3">
                 <div className="space-y-1.5">
-                  <Label className="text-xs text-muted-foreground">{t("team.chain.bereich")}</Label>
+                  <Label className="text-xs text-muted-foreground">{t("team.chain.area")}</Label>
                   <Select
                     value={area}
                     disabled={!canFinalApprove || create.isPending}
@@ -1498,24 +1496,20 @@ function NewEmployeeDialog({
                       <SelectValue />
                     </SelectTrigger>
                     <SelectContent>
-                      <SelectItem value={LEER}>{t("approvalRules.bereich.keiner")}</SelectItem>
+                      <SelectItem value={NONE}>{t("approvalRules.area.noneOption")}</SelectItem>
                       <SelectItem value="hospitality">
-                        {t("approvalRules.bereich.hospitality")}
+                        {t("approvalRules.area.hospitality")}
                       </SelectItem>
-                      <SelectItem value="stay_re">{t("approvalRules.bereich.stay_re")}</SelectItem>
-                      <SelectItem value={ALL_AREAS}>{t("approvalRules.bereich.alle")}</SelectItem>
+                      <SelectItem value="stay_re">{t("approvalRules.area.stay_re")}</SelectItem>
+                      <SelectItem value={ALL_AREAS}>{t("approvalRules.area.all")}</SelectItem>
                     </SelectContent>
                   </Select>
                   <p className="text-xs text-muted-foreground">
-                    {canFinalApprove
-                      ? t("team.chain.bereichHint")
-                      : t("team.chain.bereichBrauchtRecht")}
+                    {canFinalApprove ? t("team.chain.areaHint") : t("team.chain.areaNeedsRight")}
                   </p>
                 </div>
                 <div className="space-y-1.5">
-                  <Label className="text-xs text-muted-foreground">
-                    {t("team.chain.vertretung")}
-                  </Label>
+                  <Label className="text-xs text-muted-foreground">{t("team.chain.deputy")}</Label>
                   <Select
                     value={deputyUserId}
                     disabled={create.isPending}
@@ -1525,7 +1519,7 @@ function NewEmployeeDialog({
                       <SelectValue />
                     </SelectTrigger>
                     <SelectContent>
-                      <SelectItem value={LEER}>{t("approvalRules.keineVertretung")}</SelectItem>
+                      <SelectItem value={NONE}>{t("approvalRules.noDeputy")}</SelectItem>
                       {(employeesQ.data ?? [])
                         .filter((e) => e.is_active && e.role_name !== "super_admin")
                         .map((e) => (
@@ -1538,22 +1532,22 @@ function NewEmployeeDialog({
                 </div>
                 <div className="space-y-1.5">
                   <Label className="text-xs text-muted-foreground">
-                    {t("team.chain.eskalation")}
+                    {t("team.chain.escalation")}
                   </Label>
                   <Input
                     value={escalationDays}
                     inputMode="numeric"
-                    placeholder={t("approvalRules.feld.eskalationPlaceholder")}
+                    placeholder={t("approvalRules.feld.escalationPlaceholder")}
                     disabled={create.isPending}
                     onChange={(e) => setEscalationDays(e.target.value)}
                   />
                   {escalationInvalid ? (
                     <p className="text-xs text-destructive">
-                      {t("approvalRules.feld.eskalationUngueltig")}
+                      {t("approvalRules.feld.escalationInvalid")}
                     </p>
                   ) : (
                     <p className="text-xs text-muted-foreground">
-                      {t("team.chain.eskalationHint")}
+                      {t("team.chain.escalationHint")}
                     </p>
                   )}
                 </div>
@@ -1561,7 +1555,7 @@ function NewEmployeeDialog({
             </div>
 
             <div className="space-y-2">
-              <Label>{t("team.permissions.titel")}</Label>
+              <Label>{t("team.permissions.title")}</Label>
               <div className="rounded-lg border border-border p-3">
                 {/* Seeded from the chosen role, so this shows what the person will ACTUALLY get,
                     and re-seeds when the role changes. Ticking here records a deviation, written
@@ -1570,7 +1564,7 @@ function NewEmployeeDialog({
                   permissions={newPermissions}
                   held={newHeld}
                   disabled={create.isPending || setRight.isPending}
-                  categoryLabel={(c) => t(`team.permissions.kategorie.${c}`, { defaultValue: c })}
+                  categoryLabel={(c) => t(`team.permissions.category.${c}`, { defaultValue: c })}
                   onToggle={(key, next) =>
                     setDeviations((v) => {
                       const fromDateRole = rolesDefault.includes(key);

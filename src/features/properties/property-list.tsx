@@ -181,9 +181,9 @@ export function PropertiesList({
   // The sortable columns, named once. The table headers below and the mobile sort control inside
   // the filter sheet both read this list, so the two can't offer different columns.
   const sortColumns = [
-    { value: "code", label: t("properties.list.col.objekt") },
-    { value: "gesellschaft", label: t("properties.list.col.gesellschaft") },
-    { value: "summe", label: t("properties.list.col.verbucht") },
+    { value: "code", label: t("properties.list.col.property") },
+    { value: "gesellschaft", label: t("properties.list.col.company") },
+    { value: "summe", label: t("properties.list.col.booked") },
     { value: "createdAt", label: t("properties.list.col.createdAt") },
     { value: "updatedAt", label: t("properties.list.col.updatedAt") },
   ];
@@ -204,9 +204,9 @@ export function PropertiesList({
             value: status,
             defaultValue: STATUS_DEFAULT,
             options: [
-              { value: "alle", label: t("properties.list.filter.statusAlle") },
-              { value: "aktiv", label: t("properties.list.filter.statusAktiv") },
-              { value: "archived", label: t("properties.list.filter.statusArchiviert") },
+              { value: "alle", label: t("properties.list.filter.statusAll") },
+              { value: "aktiv", label: t("properties.list.filter.statusActive") },
+              { value: "archived", label: t("properties.list.filter.statusArchived") },
             ],
             onChange: (v: string) => setStatus(v as StatusFilter),
           },
@@ -215,11 +215,11 @@ export function PropertiesList({
     {
       kind: "select",
       key: "gesellschaft",
-      label: t("properties.list.col.gesellschaft"),
+      label: t("properties.list.col.company"),
       value: company,
       defaultValue: ALL,
       options: [
-        { value: ALL, label: t("properties.list.filter.gesellschaftAlle") },
+        { value: ALL, label: t("properties.list.filter.allCompanies") },
         ...companyOptions.map((g) => ({ value: g.code, label: `${g.code} · ${g.name}` })),
       ],
       onChange: setCompany,
@@ -229,14 +229,14 @@ export function PropertiesList({
           {
             kind: "select" as const,
             key: "eigentum",
-            label: t("properties.detail.field.eigentum"),
+            label: t("properties.detail.field.ownership"),
             value: ownership,
             defaultValue: ALL,
             options: [
-              { value: ALL, label: t("properties.list.filter.eigentumAlle") },
+              { value: ALL, label: t("properties.list.filter.allOwnership") },
               ...OWNERSHIP_OPTIONS.map((o) => ({
                 value: o,
-                label: t(`properties.eigentum.${o}`),
+                label: t(`properties.ownership.${o}`),
               })),
             ],
             onChange: setOwnership,
@@ -246,7 +246,7 @@ export function PropertiesList({
     {
       kind: "toggle",
       key: "ohneAdresse",
-      fieldLabel: t("properties.list.filter.adresse"),
+      fieldLabel: t("properties.list.filter.address"),
       // Kept offered even at zero: inside the popover it costs no surface area, and a filter that
       // appears and disappears is harder to trust than one that comes back empty.
       label: t("properties.list.filter.ohneAdresse", { count: withoutAddressTotal }),
@@ -260,8 +260,8 @@ export function PropertiesList({
           {
             kind: "toggle" as const,
             key: "pruefen",
-            fieldLabel: t("properties.list.filter.pruefung"),
-            label: t("properties.list.nurPruefen", { count: zuCheckTotal }),
+            fieldLabel: t("properties.list.filter.review"),
+            label: t("properties.list.dueForReview", { count: zuCheckTotal }),
             value: onlyCheck,
             onChange: setOnlyCheck,
           },
@@ -367,7 +367,7 @@ export function PropertiesList({
                     dir={view.dir}
                     onSort={view.toggleSort}
                   >
-                    {t("properties.list.col.objekt")}
+                    {t("properties.list.col.property")}
                   </SortableColumnHeader>
                   <SortableColumnHeader
                     column="gesellschaft"
@@ -375,7 +375,7 @@ export function PropertiesList({
                     dir={view.dir}
                     onSort={view.toggleSort}
                   >
-                    {t("properties.list.col.gesellschaft")}
+                    {t("properties.list.col.company")}
                   </SortableColumnHeader>
                   <SortableColumnHeader
                     column="summe"
@@ -384,7 +384,7 @@ export function PropertiesList({
                     onSort={view.toggleSort}
                     align="right"
                   >
-                    {t("properties.list.col.verbucht")}
+                    {t("properties.list.col.booked")}
                   </SortableColumnHeader>
                   <SortableColumnHeader
                     column="createdAt"
@@ -431,7 +431,7 @@ export function PropertiesList({
                         count={count}
                         amount={total}
                         formatAmount={formatEUR}
-                        formatCount={(count) => t("properties.list.belegeCount", { count })}
+                        formatCount={(count) => t("properties.list.documentsCount", { count })}
                         loading={!totalsReady}
                       />
                     </TableCell>
@@ -487,7 +487,7 @@ export function PropertiesList({
                     count={count}
                     amount={total}
                     formatAmount={formatEUR}
-                    formatCount={(count) => t("properties.list.belegeCount", { count })}
+                    formatCount={(count) => t("properties.list.documentsCount", { count })}
                     loading={!totalsReady}
                   />
                 </div>
@@ -550,19 +550,19 @@ function PropertyFeatures({
         needsMasterDataReview(property.reviewed_at) && (
           <span
             className="inline-flex items-center rounded-md bg-amber-100 px-1.5 py-0.5 font-sans text-xs font-medium text-amber-800 dark:bg-amber-950/60 dark:text-amber-300"
-            title={t("properties.list.pruefenTitle")}
+            title={t("properties.list.reviewTitle")}
           >
-            {t("properties.list.pruefenBadge")}
+            {t("properties.list.reviewBadge")}
           </span>
         )}
       {config.ownership && property.ownership_type === "client" && (
         <span className="inline-flex items-center rounded-md bg-muted px-1.5 py-0.5 font-sans text-xs font-medium text-muted-foreground">
-          {t("properties.eigentum.client")}
+          {t("properties.ownership.client")}
         </span>
       )}
       {config.archiving && property.deleted_at && (
         <span className="inline-flex items-center rounded-md bg-muted px-1.5 py-0.5 font-sans text-[0.65rem] font-medium uppercase tracking-wide text-muted-foreground">
-          {t("properties.list.archiviert")}
+          {t("properties.list.archived")}
         </span>
       )}
     </>
@@ -655,15 +655,15 @@ function NewPropertyDialog({
           try {
             await config.createField?.save(created.id);
           } catch (e) {
-            toast.error(t("properties.list.toast.anlegenFehlgeschlagen", { error: errorText(e) }));
+            toast.error(t("properties.list.toast.createFailed", { error: errorText(e) }));
             return;
           }
-          toast.success(t("properties.list.toast.angelegt"));
+          toast.success(t("properties.list.toast.created"));
           reset();
           setOpen(false);
         },
         onError: (e) =>
-          toast.error(t("properties.list.toast.anlegenFehlgeschlagen", { error: errorText(e) })),
+          toast.error(t("properties.list.toast.createFailed", { error: errorText(e) })),
       },
     );
   }
@@ -682,18 +682,18 @@ function NewPropertyDialog({
     >
       <DialogTrigger asChild>
         <Button className="w-full gap-2 sm:w-auto">
-          <Plus className="size-4" /> {t("properties.list.neu.button")}
+          <Plus className="size-4" /> {t("properties.list.new.button")}
         </Button>
       </DialogTrigger>
       <DialogContent>
         <DialogHeader>
-          <DialogTitle>{t("properties.list.neu.title")}</DialogTitle>
-          <DialogDescription>{t("properties.list.neu.desc")}</DialogDescription>
+          <DialogTitle>{t("properties.list.new.title")}</DialogTitle>
+          <DialogDescription>{t("properties.list.new.desc")}</DialogDescription>
         </DialogHeader>
         <div className="grid gap-3 sm:grid-cols-2">
           <div className="space-y-1">
             <Label className="text-xs text-muted-foreground">
-              {t("properties.list.neu.codeLabel")} <RequiredStern />
+              {t("properties.list.new.codeLabel")} <RequiredStern />
             </Label>
             <Input
               value={code}
@@ -703,44 +703,44 @@ function NewPropertyDialog({
                 // addressed rather than lingering until the next submit.
                 setError((prev) => (prev.code ? { ...prev, code: "" } : prev));
               }}
-              placeholder={t("properties.list.neu.codePlaceholder")}
+              placeholder={t("properties.list.new.codePlaceholder")}
               aria-invalid={!!error.code}
             />
             <FieldErrorText text={error.code} />
           </div>
           <div className="space-y-1">
             <Label className="text-xs text-muted-foreground">
-              {t("properties.list.neu.nameLabel")}
+              {t("properties.list.new.nameLabel")}
             </Label>
             <Input
               value={name}
               onChange={(e) => setName(e.target.value)}
-              placeholder={t("properties.list.neu.namePlaceholder")}
+              placeholder={t("properties.list.new.namePlaceholder")}
             />
           </div>
           <div className="space-y-1 sm:col-span-2">
             <Label className="text-xs text-muted-foreground">
-              {t("properties.list.neu.adresseLabel")}
+              {t("properties.list.new.addressLabel")}
             </Label>
             <Input
               value={address}
               onChange={(e) => setAddress(e.target.value)}
-              placeholder={t("properties.list.neu.adressePlaceholder")}
+              placeholder={t("properties.list.new.addressPlaceholder")}
             />
           </div>
           <div className="space-y-1">
             <Label className="text-xs text-muted-foreground">
-              {t("properties.list.neu.ustStatusLabel")}
+              {t("properties.list.new.vatStatusLabel")}
             </Label>
             <Combobox
               value={vatStatus}
               onValueChange={setVatStatus}
               placeholder="—"
               options={[
-                { value: "__none", label: t("properties.ohne") },
+                { value: "__none", label: t("properties.none") },
                 ...VAT_STATUS_OPTIONS.map((s) => ({
                   value: s,
-                  label: t(`properties.ustStatus.${s}`),
+                  label: t(`properties.vatStatus.${s}`),
                 })),
               ]}
             />
@@ -751,7 +751,7 @@ function NewPropertyDialog({
           {config.ownership && (
             <div className="space-y-1">
               <Label className="text-xs text-muted-foreground">
-                {t("properties.detail.field.eigentum")}
+                {t("properties.detail.field.ownership")}
               </Label>
               <Combobox
                 value={ownership}
@@ -760,7 +760,7 @@ function NewPropertyDialog({
                 }
                 options={OWNERSHIP_OPTIONS.map((o) => ({
                   value: o,
-                  label: t(`properties.eigentum.${o}`),
+                  label: t(`properties.ownership.${o}`),
                 }))}
               />
             </div>
@@ -769,10 +769,10 @@ function NewPropertyDialog({
         </div>
         <DialogFooter>
           <Button variant="outline" onClick={() => setOpen(false)}>
-            {t("properties.list.neu.cancel")}
+            {t("properties.list.new.cancel")}
           </Button>
           <Button onClick={submit} disabled={create.isPending || !!config.createField?.incomplete}>
-            {create.isPending ? t("properties.list.neu.anlege") : t("properties.list.neu.anlegen")}
+            {create.isPending ? t("properties.list.new.creating") : t("properties.list.new.create")}
           </Button>
         </DialogFooter>
       </DialogContent>

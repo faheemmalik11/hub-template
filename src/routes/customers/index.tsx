@@ -120,10 +120,10 @@ function CustomersPage() {
 
   const sortColumns = [
     { value: "name", label: t("customers.list.col.name") },
-    { value: "gesellschaft", label: t("customers.list.col.gesellschaft") },
-    { value: "anzahl", label: t("customers.list.col.rechnungen") },
-    { value: "summe", label: t("customers.list.col.betrag") },
-    { value: "ueberfaellig", label: t("customers.list.col.ueberfaellig") },
+    { value: "gesellschaft", label: t("customers.list.col.company") },
+    { value: "anzahl", label: t("customers.list.col.invoices") },
+    { value: "summe", label: t("customers.list.col.amount") },
+    { value: "ueberfaellig", label: t("customers.list.col.overdue") },
   ];
 
   // Every company that actually has a customer, so the filter offers the ones that can return a
@@ -154,11 +154,11 @@ function CustomersPage() {
     {
       kind: "select",
       key: "gesellschaft",
-      label: t("customers.list.col.gesellschaft"),
+      label: t("customers.list.col.company"),
       value: company,
       defaultValue: ALL,
       options: [
-        { value: ALL, label: t("customers.list.filter.gesellschaftAlle") },
+        { value: ALL, label: t("customers.list.filter.allCompanies") },
         ...companyOptions.map((code) => ({ value: code, label: code })),
       ],
       onChange: setCompany,
@@ -166,10 +166,10 @@ function CustomersPage() {
     {
       kind: "toggle",
       key: "ueberfaellig",
-      fieldLabel: t("customers.list.col.ueberfaellig"),
+      fieldLabel: t("customers.list.col.overdue"),
       // Kept offered even at zero: inside the popover it costs no surface area, and a filter that
       // appears and disappears is harder to trust than one that comes back empty.
-      label: t("customers.list.filter.nurUeberfaellig", { count: overdueTotal }),
+      label: t("customers.list.filter.overdueOnly", { count: overdueTotal }),
       value: onlyOverdue,
       onChange: setOnlyOverdue,
     },
@@ -179,7 +179,7 @@ function CustomersPage() {
       fieldLabel: t("customers.list.col.email"),
       // A customer with no address on file cannot be sent an invoice, which is the whole point of
       // the record, so this is a worklist rather than a curiosity.
-      label: t("customers.list.filter.ohneEmail", { count: withoutEmailTotal }),
+      label: t("customers.list.filter.withoutEmail", { count: withoutEmailTotal }),
       value: onlyWithoutEmail,
       onChange: setOnlyWithoutEmail,
     },
@@ -282,7 +282,7 @@ function CustomersPage() {
                     dir={view.dir}
                     onSort={view.toggleSort}
                   >
-                    {t("customers.list.col.gesellschaft")}
+                    {t("customers.list.col.company")}
                   </SortableColumnHeader>
                   <TableHead>{t("customers.list.col.email")}</TableHead>
                   <SortableColumnHeader
@@ -292,7 +292,7 @@ function CustomersPage() {
                     onSort={view.toggleSort}
                     align="right"
                   >
-                    {t("customers.list.col.rechnungen")}
+                    {t("customers.list.col.invoices")}
                   </SortableColumnHeader>
                   <SortableColumnHeader
                     column="summe"
@@ -301,7 +301,7 @@ function CustomersPage() {
                     onSort={view.toggleSort}
                     align="right"
                   >
-                    {t("customers.list.col.betrag")}
+                    {t("customers.list.col.amount")}
                   </SortableColumnHeader>
                   <SortableColumnHeader
                     column="ueberfaellig"
@@ -310,7 +310,7 @@ function CustomersPage() {
                     onSort={view.toggleSort}
                     align="right"
                   >
-                    {t("customers.list.col.ueberfaellig")}
+                    {t("customers.list.col.overdue")}
                   </SortableColumnHeader>
                 </TableRow>
               </TableHeader>
@@ -395,7 +395,7 @@ function CustomersPage() {
                           )}
                         </div>
                         <div className="flex items-center justify-end gap-1.5 text-xs text-muted-foreground">
-                          {t("customers.list.col.rechnungen")}:{" "}
+                          {t("customers.list.col.invoices")}:{" "}
                           {totalsReady ? s.count : <Skeleton className="h-3 w-6" />}
                         </div>
                       </div>
@@ -405,7 +405,7 @@ function CustomersPage() {
                     )}
                     {totalsReady && s.overdue > 0 && (
                       <p className="mt-2 text-xs text-destructive">
-                        {t("customers.list.col.ueberfaellig")}: {s.overdue}
+                        {t("customers.list.col.overdue")}: {s.overdue}
                       </p>
                     )}
                   </div>
@@ -479,7 +479,7 @@ function NewerCustomerDialog() {
       // Every message at once, each under its own field. The toast stays as a second signal
       // for anyone whose eyes are on the button rather than the form.
       setError(fieldError(checked.error));
-      toast.error(t("customers.list.toast.formularUnvollstaendig"));
+      toast.error(t("customers.list.toast.formIncomplete"));
       return;
     }
     const name = form.name.trim();
@@ -499,13 +499,13 @@ function NewerCustomerDialog() {
       },
       {
         onSuccess: () => {
-          toast.success(t("customers.list.toast.angelegt"));
+          toast.success(t("customers.list.toast.created"));
           setForm(LEER);
           setOpen(false);
         },
         onError: (e) =>
           toast.error(
-            t("customers.list.toast.anlegenFehlgeschlagen", {
+            t("customers.list.toast.createFailed", {
               error: errorText(e),
             }),
           ),
@@ -517,18 +517,18 @@ function NewerCustomerDialog() {
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>
         <Button className="gap-2">
-          <Plus className="size-4" /> {t("customers.list.neu.button")}
+          <Plus className="size-4" /> {t("customers.list.new.button")}
         </Button>
       </DialogTrigger>
       <DialogContent>
         <DialogHeader>
-          <DialogTitle>{t("customers.list.neu.title")}</DialogTitle>
-          <DialogDescription>{t("customers.list.neu.desc")}</DialogDescription>
+          <DialogTitle>{t("customers.list.new.title")}</DialogTitle>
+          <DialogDescription>{t("customers.list.new.desc")}</DialogDescription>
         </DialogHeader>
         <div className="grid gap-3 sm:grid-cols-2">
           <div className="space-y-1 sm:col-span-2">
             <Label className="text-xs text-muted-foreground">
-              {t("customers.list.neu.gesellschaft")} <RequiredStern />
+              {t("customers.list.new.company")} <RequiredStern />
             </Label>
             {/* Marked like every other required field on this form. It is the first control and has
                 no default, so it is the one most likely to be missing, and without the star and the
@@ -537,7 +537,7 @@ function NewerCustomerDialog() {
               value={form.companyId}
               onValueChange={(v) => setF("companyId", v)}
               options={companies.map((g) => ({ value: g.id, label: `${g.code} · ${g.name}` }))}
-              placeholder={t("customers.list.neu.gesellschaftPlaceholder")}
+              placeholder={t("customers.list.new.companyPlaceholder")}
               invalid={!!error.companyId}
             />
             <FieldErrorText text={error.companyId} />
@@ -549,7 +549,7 @@ function NewerCustomerDialog() {
               id="is-company"
             />
             <Label htmlFor="is-company" className="text-sm font-normal text-muted-foreground">
-              {t("customers.list.neu.istFirma")}
+              {t("customers.list.new.isCompany")}
             </Label>
           </div>
           <NewField
@@ -558,46 +558,46 @@ function NewerCustomerDialog() {
             onChange={(v) => setF("name", v)}
             required
             error={error.name}
-            placeholder={t("customers.detail.beispiel.name")}
+            placeholder={t("customers.detail.example.name")}
             full
           />
           {form.isCompany && (
             <NewField
-              label={t("customers.detail.field.ansprechpartner")}
+              label={t("customers.detail.field.contact")}
               value={form.contactPerson}
               onChange={(v) => setF("contactPerson", v)}
               full
             />
           )}
           <NewField
-            label={t("customers.detail.field.strasse")}
+            label={t("customers.detail.field.street")}
             value={form.addressStreet}
             onChange={(v) => setF("addressStreet", v)}
             error={error.addressStreet}
-            placeholder={t("customers.detail.beispiel.strasse")}
+            placeholder={t("customers.detail.example.street")}
             full
           />
           <NewField
-            label={t("customers.detail.field.plz")}
+            label={t("customers.detail.field.zip")}
             value={form.addressZip}
             onChange={(v) => setF("addressZip", v)}
             error={error.addressZip}
-            placeholder={t("customers.detail.beispiel.plz")}
+            placeholder={t("customers.detail.example.zip")}
           />
           <NewField
-            label={t("customers.detail.field.ort")}
+            label={t("customers.detail.field.city")}
             value={form.addressCity}
             onChange={(v) => setF("addressCity", v)}
             error={error.addressCity}
-            placeholder={t("customers.detail.beispiel.ort")}
+            placeholder={t("customers.detail.example.city")}
           />
           <NewField
-            label={t("customers.detail.field.ustId")}
+            label={t("customers.detail.field.vatId")}
             value={form.vatId}
             onChange={(v) => setF("vatId", v)}
           />
           <NewField
-            label={t("customers.detail.field.telefon")}
+            label={t("customers.detail.field.phone")}
             value={form.phone}
             onChange={(v) => setF("phone", v)}
           />
@@ -606,16 +606,16 @@ function NewerCustomerDialog() {
             value={form.email}
             onChange={(v) => setF("email", v)}
             error={error.email}
-            placeholder={t("customers.detail.beispiel.email")}
+            placeholder={t("customers.detail.example.email")}
             full
           />
         </div>
         <DialogFooter>
           <Button variant="outline" onClick={() => setOpen(false)}>
-            {t("customers.list.neu.cancel")}
+            {t("customers.list.new.cancel")}
           </Button>
           <Button onClick={submit} disabled={create.isPending}>
-            {create.isPending ? t("customers.list.neu.anlege") : t("customers.list.neu.anlegen")}
+            {create.isPending ? t("customers.list.new.creating") : t("customers.list.new.create")}
           </Button>
         </DialogFooter>
       </DialogContent>

@@ -38,19 +38,19 @@ export function AccountActiveSwitch({ account }: { account: BankAccount }) {
     <Switch
       checked={active}
       disabled={setActive.isPending}
-      aria-label={t("bankAccounts.aktiv.label")}
-      title={active ? t("bankAccounts.aktiv.ausschalten") : t("bankAccounts.aktiv.einschalten")}
+      aria-label={t("bankAccounts.active.label")}
+      title={active ? t("bankAccounts.active.deactivate") : t("bankAccounts.active.reactivate")}
       onCheckedChange={(v) =>
         setActive.mutate(
           { accountId: account.id, isActive: v },
           {
             onSuccess: () =>
               toast.success(
-                v ? t("bankAccounts.aktiv.toastAn") : t("bankAccounts.aktiv.toastAus"),
-                v ? undefined : { description: t("bankAccounts.aktiv.toastAusHinweis") },
+                v ? t("bankAccounts.active.toastOn") : t("bankAccounts.active.toastOff"),
+                v ? undefined : { description: t("bankAccounts.active.toastOffHint") },
               ),
             onError: (e) =>
-              toast.error(t("bankAccounts.aktiv.toastFehler", { error: errorText(e) })),
+              toast.error(t("bankAccounts.active.toastError", { error: errorText(e) })),
           },
         )
       }

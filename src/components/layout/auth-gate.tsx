@@ -12,24 +12,11 @@ import { brandVars } from "@/config/brand";
 import { useTranslation } from "@/lib/i18n";
 import { cn } from "@/lib/utils";
 
-/**
- * Hält die App hinter dem Login. Vor Anmeldung erscheint nur der Login-Screen,
- * danach die Oberfläche (AppShell + Inhalt).
- */
 export function AuthGate({ children }: { children: ReactNode }) {
   const { ready, user, mustChangePassword } = useAuth();
 
-  // Resolving the session, which needs a round trip for the profile and the company grants. This
-  // used to be an empty full-screen div: on a slow connection the app was a blank page for a
-  // second or two with nothing to say it was working, and any screen-level skeleton below never
-  // got the chance to render because this branch returns before it
-  // (docs/audit/papierkorb/trash/ISSUES.md #8).
+  // Was an empty full-screen div; on a slow connection that read as a dead page (docs/audit/papierkorb/trash/ISSUES.md #8).
   if (!ready) {
-    // The chrome needs no session to draw, so it is drawn for real: the brand mark, a sidebar of
-    // the same width, a header of the same height and the same main padding as AppShell. Only the
-    // regions that genuinely wait on data stay blank, and they sit still rather than pulsing --
-    // a whole screen of shimmering blocks reads as "something is wrong" and then replaces itself,
-    // where a quiet frame reads as "this is the app, loading" and never moves again.
     return (
       <div className="flex min-h-screen bg-background" aria-busy="true" aria-live="polite">
         <div className="hidden w-64 shrink-0 flex-col gap-4 border-r border-border/80 p-3 md:flex">
@@ -72,10 +59,7 @@ export function AuthGate({ children }: { children: ReactNode }) {
     return <LoginScreen />;
   }
 
-  // A new employee's one-time temp password (Team screen, createEmployee) must not remain
-  // usable indefinitely -- this blocks the whole app, not just a dismissible banner, until they
-  // set their own. Checked ahead of AppShell so there's no window where the real app is briefly
-  // reachable with the temp password still active.
+  // Checked ahead of AppShell: no window where the real app is briefly reachable with a temp password still active.
   if (mustChangePassword) {
     return <SetNewPasswordScreen />;
   }
@@ -83,8 +67,6 @@ export function AuthGate({ children }: { children: ReactNode }) {
   return <AppShell>{children}</AppShell>;
 }
 
-// Translates an AuthResult into the active UI language. `raw` is only reached for provider wording
-// we have no key for, which is still more useful than a generic failure line.
 function useAuthErrorText() {
   const { t } = useTranslation();
   return (result: AuthResult, fallbackKey: string) => {
@@ -93,8 +75,6 @@ function useAuthErrorText() {
   };
 }
 
-// Password field with a reveal toggle, so a mistyped password can be checked before submitting.
-// The toggle is a plain button (never a submit) and stays out of the tab-to-submit path.
 function PasswordInput({ className, ...props }: ComponentProps<typeof Input>) {
   const { t } = useTranslation();
   const [visible, setVisible] = useState(false);
@@ -135,7 +115,6 @@ function LoginScreen() {
 
   return (
     <div className="grid min-h-screen lg:grid-cols-[1.05fr_1fr]">
-      {/* Marken-Panel */}
       <div className="relative hidden flex-col justify-between overflow-hidden bg-brand-dark p-12 text-white lg:flex">
         <div
           className="pointer-events-none absolute inset-0 opacity-[0.07]"
@@ -159,7 +138,6 @@ function LoginScreen() {
         </div>
       </div>
 
-      {/* Login-Form */}
       <div className="relative flex items-center justify-center bg-background px-6 py-12">
         <div className="absolute right-6 top-6">
           <LanguageSwitch />

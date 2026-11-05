@@ -467,15 +467,8 @@ export function checkCard(
       .map((c) => ({ field: c.field ?? "", id: reasonForReviewCheck(c) }));
     return { reasons, passed };
   }
-  // The flat booleans, and this tier is not optional. pruefGruendeDetail() reads all THREE
-  // sources; this read only the first two and handed back an empty pass list for the third, which
-  // is worse than it sounds: the card hides itself when nothing failed AND nothing passed, so a
-  // receipt whose validation lives only in the flat gates -- everything ingested before the
-  // pipeline emitted a per-check map -- disappeared from the card entirely the moment it was
-  // clean. Nothing wrong with it read as no validation at all.
-  //
-  // `=== true` rather than `!== false`: an absent gate never ran, and a gate relaxed for a
-  // Kleinbetrag is false-but-forgiven, not passed. Neither belongs in a list of checks that held.
+  // Not optional: a receipt whose validation lives only in these flat gates must still produce a pass list, or the card hides itself as "no validation at all".
+  // `=== true`, not `!== false`: an absent gate never ran, and a gate relaxed for a small amount is false-but-forgiven, not passed.
   const flat = validationFlat(doc);
   const passed = VALIDATION_GATES.filter((gate) => flat[gate] === true).map((gate) => ({
     field: gate as string,

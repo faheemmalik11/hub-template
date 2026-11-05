@@ -108,7 +108,7 @@ function BankSettingsPage() {
               {t("bank.matchingSettings.amountToleranceHint")}
             </p>
             {!canChange && (
-              <p className="pt-1 text-xs text-muted-foreground">{t("bankSettings.nurAdmin")}</p>
+              <p className="pt-1 text-xs text-muted-foreground">{t("bankSettings.adminOnly")}</p>
             )}
           </div>
         )}
@@ -124,9 +124,7 @@ function BankSettingsPage() {
               {t("bank.matchingSettings.save")}
             </Button>
             {changed && (
-              <span className="text-xs text-muted-foreground">
-                {t("bankSettings.ungespeichert")}
-              </span>
+              <span className="text-xs text-muted-foreground">{t("bankSettings.unsaved")}</span>
             )}
           </div>
         )}

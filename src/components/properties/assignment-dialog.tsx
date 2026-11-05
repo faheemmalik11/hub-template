@@ -81,11 +81,11 @@ export function AssignmentDialog({
     const next: typeof error = {};
     if (!selection) {
       next.selection = choosesCompany
-        ? t("properties.detail.zuordnungFirmaFehlt")
-        : t("properties.detail.zuordnungObjektFehlt");
+        ? t("properties.detail.assignmentCompanyMissing")
+        : t("properties.detail.assignmentPropertyMissing");
     }
     if (input !== "" && !/^[1-9]\d{0,8}$/.test(input)) {
-      next.number = t("properties.detail.kostenstelleUngueltig");
+      next.number = t("properties.detail.costCentreInvalid");
     }
     setError(next);
     if (next.selection || next.number) return;
@@ -105,13 +105,11 @@ export function AssignmentDialog({
       },
       {
         onSuccess: () => {
-          toast.success(t("properties.detail.toast.zuordnungGeaendert"));
+          toast.success(t("properties.detail.toast.assignmentChanged"));
           onClose();
         },
         onError: (e) =>
-          toast.error(
-            t("properties.detail.toast.speichernFehlgeschlagen", { error: errorText(e) }),
-          ),
+          toast.error(t("properties.detail.toast.saveFailed", { error: errorText(e) })),
       },
     );
   };
@@ -122,23 +120,23 @@ export function AssignmentDialog({
         <DialogHeader>
           <DialogTitle>
             {link
-              ? t("properties.detail.zuordnungDialogBearbeiten")
+              ? t("properties.detail.assignmentDialogEdit")
               : choosesCompany
-                ? t("properties.detail.zuordnungDialogNeu")
-                : t("properties.detail.zuordnungDialogNeuObjekt")}
+                ? t("properties.detail.assignmentDialogNew")
+                : t("properties.detail.assignmentDialogNewProperty")}
           </DialogTitle>
           <DialogDescription>
             {choosesCompany
-              ? t("properties.detail.zuordnungDialogBeschreibung")
-              : t("properties.detail.zuordnungDialogBeschreibungObjekt")}
+              ? t("properties.detail.assignmentDialogDesc")
+              : t("properties.detail.assignmentDialogDescProperty")}
           </DialogDescription>
         </DialogHeader>
         <div className="grid gap-4">
           <div className="space-y-1">
             <Label className="text-xs text-muted-foreground">
               {choosesCompany
-                ? t("properties.zuordnung.gesellschaft")
-                : t("properties.detail.zuordnungObjekt")}{" "}
+                ? t("properties.assignment.company")
+                : t("properties.detail.assignmentProperty")}{" "}
               <RequiredStern />
             </Label>
             <Combobox
@@ -150,8 +148,8 @@ export function AssignmentDialog({
               options={options}
               placeholder={
                 choosesCompany
-                  ? t("properties.zuordnung.gesellschaftWaehlen")
-                  : t("properties.detail.zuordnungObjektWaehlen")
+                  ? t("properties.assignment.selectCompany")
+                  : t("properties.detail.assignmentSelectProperty")
               }
               invalid={!!error.selection}
             />
@@ -159,7 +157,7 @@ export function AssignmentDialog({
           </div>
           <div className="space-y-1">
             <Label className="text-xs text-muted-foreground">
-              {t("properties.detail.kostenstelleLabel")}
+              {t("properties.detail.costCentreLabel")}
             </Label>
             <Input
               inputMode="numeric"
@@ -173,24 +171,24 @@ export function AssignmentDialog({
               }}
               disabled={!isAdmin}
               aria-invalid={!!error.number}
-              placeholder={t("properties.detail.kostenstellePlatzhalter")}
+              placeholder={t("properties.detail.costCentrePlaceholder")}
             />
             {error.number && <p className="text-xs text-destructive">{error.number}</p>}
             <p className="text-xs text-muted-foreground">
               {isAdmin
-                ? t("properties.detail.kostenstelleHinweis")
-                : t("properties.detail.kostenstelleNurAdmin")}
+                ? t("properties.detail.costCentreHint")
+                : t("properties.detail.costCentreAdminOnly")}
             </p>
           </div>
         </div>
         <DialogFooter>
           <Button variant="outline" onClick={onClose}>
-            {t("properties.detail.action.abbrechen")}
+            {t("properties.detail.action.cancel")}
           </Button>
           <Button onClick={submit} disabled={save.isPending}>
             {save.isPending
-              ? t("properties.detail.action.speichere")
-              : t("properties.detail.action.speichern")}
+              ? t("properties.detail.action.saving")
+              : t("properties.detail.action.save")}
           </Button>
         </DialogFooter>
       </DialogContent>

@@ -11,7 +11,7 @@ import { useTranslation } from "@/lib/i18n";
 export function RequiredStern() {
   const { t } = useTranslation();
   return (
-    <span className="text-destructive" title={t("common.form.pflichtfeld")} aria-hidden>
+    <span className="text-destructive" title={t("common.form.required")} aria-hidden>
       *
     </span>
   );

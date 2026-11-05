@@ -29,10 +29,10 @@ export function PeriodPicker({
       onChange={onChange}
       className={className}
       contentClassName={contentClassName}
-      labelFor={(p: OverviewPeriod) => t(`home.zeitraumKurz.${p}`)}
+      labelFor={(p: OverviewPeriod) => t(`home.periodShort.${p}`)}
       formatDay={formatDayShort}
-      backLabel={t("home.zeitraumAktion.zurueck")}
-      resetLabel={t("home.zeitraumAktion.reset")}
+      backLabel={t("home.periodAction.back")}
+      resetLabel={t("home.periodAction.reset")}
       calendarLocale={dateLocale()}
       rangeLabels={{
         placeholder: t("documents.list.filter.zeitraumWaehlen"),

@@ -79,18 +79,9 @@ export const Route = createFileRoute("/suppliers/")({
   component: SuppliersPage,
 });
 
-/**
- * The status axis of the filter popover.
- *
- * "aktiv" and "geloescht" are the two states the old pair of switches could express, unchanged:
- * deleted suppliers are either out of the way or they ARE the list, because mixed in, a deleted row
- * is a dimmed row among all the others and the list stops being a usable answer to either
- * question.
- * "alle" is the one addition. With both other options behind the same control, the case for
- * refusing to show both at once got weaker than the case for being able to.
- */
-type StatusFilter = "aktiv" | "geloescht" | "alle";
-const STATUS_DEFAULT: StatusFilter = "aktiv";
+/** The status axis of the filter popover: active, deleted, or both. */
+type StatusFilter = "active" | "deleted" | "all";
+const STATUS_DEFAULT: StatusFilter = "active";
 
 function SuppliersPage() {
   const navigate = useNavigate();
@@ -98,7 +89,7 @@ function SuppliersPage() {
   const [search, setSearch] = useState("");
   const [status, setStatus] = useState<StatusFilter>(STATUS_DEFAULT);
   const [onlyWithoutAddress, setOnlyWithoutAddress] = useState(false);
-  const suppliersQ = useSuppliers({ includeDeleted: status !== "aktiv" });
+  const suppliersQ = useSuppliers({ includeDeleted: status !== "active" });
   const totalsQ = useSupplierDocumentTotals();
   const duplicatesQ = useSupplierDuplicates();
   // Unscoped, same reason as the history query above: one request feeds every row's default account
@@ -140,11 +131,8 @@ function SuppliersPage() {
     return map;
   }, [bankAccountsQ.data]);
 
-  // Suppliers carrying an account nobody has vouched for yet. This replaces the old "IBAN
-  // geändert" warning, which was derived from the history table: it fired on a swap that may have
-  // been made deliberately in the Hub months ago, and stayed silent when the pipeline brought in
-  // an account off an invoice, which is the case actually worth looking at.
-  const mitNewAccount = useMemo(() => {
+  // Suppliers carrying an account nobody has vouched for yet.
+  const suppliersWithNewAccount = useMemo(() => {
     const set = new Set<string>();
     for (const account of bankAccountsQ.data ?? []) {
       if (account.is_active && !account.confirmed_at) set.add(account.supplier_id);
@@ -162,7 +150,7 @@ function SuppliersPage() {
   const filtered = useMemo(() => {
     const q = search.trim().toLowerCase();
     return suppliers.filter((l) => {
-      if (status === "geloescht" && !l.deleted_at) return false;
+      if (status === "deleted" && !l.deleted_at) return false;
       if (onlyWithoutAddress && l.address?.trim()) return false;
       return !q || `${l.name} ${l.address ?? ""}`.toLowerCase().includes(q);
     });
@@ -179,7 +167,7 @@ function SuppliersPage() {
     sortValue: (l, key) => {
       const s = totals.get(l.id) ?? { total: 0, count: 0 };
       switch (key) {
-        case "summe":
+        case "total":
           return s.total;
         case "createdAt":
           return l.created_at ?? "";
@@ -195,7 +183,7 @@ function SuppliersPage() {
   // the filter sheet both read this list, so the two can't offer different columns.
   const sortColumns = [
     { value: "name", label: t("suppliers.list.col.name") },
-    { value: "summe", label: t("suppliers.list.col.verbucht") },
+    { value: "total", label: t("suppliers.list.col.invoices") },
     { value: "createdAt", label: t("suppliers.list.col.createdAt") },
     { value: "updatedAt", label: t("suppliers.list.col.updatedAt") },
   ];
@@ -212,20 +200,20 @@ function SuppliersPage() {
       value: status,
       defaultValue: STATUS_DEFAULT,
       options: [
-        { value: "alle", label: t("suppliers.list.filter.statusAlle") },
-        { value: "aktiv", label: t("suppliers.list.filter.statusAktiv") },
-        { value: "geloescht", label: t("suppliers.list.filter.statusGeloescht") },
+        { value: "all", label: t("suppliers.list.filter.statusAll") },
+        { value: "active", label: t("suppliers.list.filter.statusActive") },
+        { value: "deleted", label: t("suppliers.list.filter.statusDeleted") },
       ],
       onChange: (v) => setStatus(v as StatusFilter),
     },
     {
       kind: "toggle",
       key: "ohneAdresse",
-      fieldLabel: t("suppliers.list.filter.adresse"),
+      fieldLabel: t("suppliers.list.filter.address"),
       // Kept offered even at zero, unlike the old switch: inside the popover it costs no surface
       // area, and a filter that appears and disappears is harder to trust than one that comes back
       // empty.
-      label: t("suppliers.list.filter.ohneAdresse", { count: withoutAddressTotal }),
+      label: t("suppliers.list.filter.withoutAddress", { count: withoutAddressTotal }),
       value: onlyWithoutAddress,
       onChange: setOnlyWithoutAddress,
     },
@@ -264,8 +252,8 @@ function SuppliersPage() {
         const iban = defaultAccounts.get(l.id)?.iban ?? l.iban;
         // Amber when an account is waiting to be vouched for, wherever on this supplier it sits:
         // the row is a prompt to open the supplier, not a statement about this one number.
-        const ibanWarning = mitNewAccount.has(l.id)
-          ? t("suppliers.detail.bankkonten.neu.hinweis")
+        const ibanWarning = suppliersWithNewAccount.has(l.id)
+          ? t("suppliers.detail.bankAccounts.new.hint")
           : undefined;
         return {
           supplier: l,
@@ -276,7 +264,7 @@ function SuppliersPage() {
           deleted: !!l.deleted_at,
         };
       }),
-    [view.pageRows, totals, mitNewAccount, defaultAccounts, t],
+    [view.pageRows, totals, suppliersWithNewAccount, defaultAccounts, t],
   );
 
   return (
@@ -345,17 +333,17 @@ function SuppliersPage() {
                   >
                     {t("suppliers.list.col.name")}
                   </SortableColumnHeader>
-                  <TableHead>{t("suppliers.list.col.adresse")}</TableHead>
+                  <TableHead>{t("suppliers.list.col.address")}</TableHead>
                   <TableHead className="w-[220px]">{t("suppliers.list.col.iban")}</TableHead>
-                  <TableHead>{t("suppliers.list.col.ustId")}</TableHead>
+                  <TableHead>{t("suppliers.list.col.vatId")}</TableHead>
                   <SortableColumnHeader
-                    column="summe"
+                    column="total"
                     sort={view.sort}
                     dir={view.dir}
                     onSort={view.toggleSort}
                     align="right"
                   >
-                    {t("suppliers.list.col.verbucht")}
+                    {t("suppliers.list.col.invoices")}
                   </SortableColumnHeader>
                   <SortableColumnHeader
                     column="createdAt"
@@ -389,7 +377,7 @@ function SuppliersPage() {
                         {l.name}
                         {deleted && (
                           <span className="ml-2 inline-flex items-center rounded-md bg-muted px-2 py-0.5 text-xs text-muted-foreground">
-                            {t("suppliers.list.geloescht")}
+                            {t("suppliers.list.deleted")}
                           </span>
                         )}
                       </TableCell>
@@ -410,7 +398,7 @@ function SuppliersPage() {
                           count={count}
                           amount={total}
                           formatAmount={formatEUR}
-                          formatCount={(count) => t("suppliers.list.belegeCount", { count })}
+                          formatCount={(count) => t("suppliers.list.documentCount", { count })}
                           loading={!totalsReady}
                         />
                       </TableCell>
@@ -451,7 +439,7 @@ function SuppliersPage() {
                         {l.name}
                         {deleted && (
                           <span className="ml-2 inline-flex items-center rounded-md bg-muted px-2 py-0.5 text-xs text-muted-foreground">
-                            {t("suppliers.list.geloescht")}
+                            {t("suppliers.list.deleted")}
                           </span>
                         )}
                       </div>
@@ -462,7 +450,7 @@ function SuppliersPage() {
                       count={count}
                       amount={total}
                       formatAmount={formatEUR}
-                      formatCount={(count) => t("suppliers.list.belegeCount", { count })}
+                      formatCount={(count) => t("suppliers.list.documentCount", { count })}
                       loading={!totalsReady}
                     />
                   </div>
@@ -551,11 +539,11 @@ function NewerSupplierDialog() {
   function submit() {
     const name = form.name.trim();
     if (!name) {
-      toast.error(t("suppliers.list.toast.namePflicht"));
+      toast.error(t("suppliers.list.toast.nameRequired"));
       return;
     }
     if (invalidIban) {
-      toast.error(t("suppliers.list.neu.ibanUngueltig"));
+      toast.error(t("suppliers.list.new.ibanInvalid"));
       return;
     }
     // Only the name is required; empty optional fields become null.
@@ -581,13 +569,13 @@ function NewerSupplierDialog() {
       },
       {
         onSuccess: () => {
-          toast.success(t("suppliers.list.toast.angelegt"));
+          toast.success(t("suppliers.list.toast.created"));
           reset();
           setOpen(false);
         },
         onError: (e) =>
           toast.error(
-            t("suppliers.list.toast.anlegenFehlgeschlagen", {
+            t("suppliers.list.toast.createFailed", {
               error: errorText(e),
             }),
           ),
@@ -605,7 +593,7 @@ function NewerSupplierDialog() {
     >
       <DialogTrigger asChild>
         <Button className="w-full gap-2 sm:w-auto">
-          <Plus className="size-4" /> {t("suppliers.list.neu.button")}
+          <Plus className="size-4" /> {t("suppliers.list.new.button")}
         </Button>
       </DialogTrigger>
       {/* Radix focuses the first field when a dialog opens, which drops a caret into the
@@ -618,13 +606,13 @@ function NewerSupplierDialog() {
         }}
       >
         <DialogHeader>
-          <DialogTitle>{t("suppliers.list.neu.title")}</DialogTitle>
-          <DialogDescription>{t("suppliers.list.neu.desc")}</DialogDescription>
+          <DialogTitle>{t("suppliers.list.new.title")}</DialogTitle>
+          <DialogDescription>{t("suppliers.list.new.desc")}</DialogDescription>
         </DialogHeader>
         <div className="space-y-5">
           <div>
             <span className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
-              {t("suppliers.list.neu.stammdaten")}
+              {t("suppliers.list.new.masterData")}
             </span>
             <div className="mt-2 grid gap-3 sm:grid-cols-2">
               <NewField
@@ -634,18 +622,18 @@ function NewerSupplierDialog() {
                 full
               />
               <NewField
-                label={t("suppliers.detail.field.adresse")}
+                label={t("suppliers.detail.field.address")}
                 value={form.address}
                 onChange={(v) => setF("address", v)}
                 full
               />
               <NewField
-                label={t("suppliers.detail.field.ustId")}
+                label={t("suppliers.detail.field.vatId")}
                 value={form.vat_id}
                 onChange={(v) => setF("vat_id", v)}
               />
               <NewField
-                label={t("suppliers.detail.field.telefon")}
+                label={t("suppliers.detail.field.phone")}
                 value={form.phone}
                 onChange={(v) => setF("phone", v)}
               />
@@ -655,7 +643,7 @@ function NewerSupplierDialog() {
                 onChange={(v) => setF("email", v)}
               />
               <NewField
-                label={t("suppliers.detail.field.ansprechpartner")}
+                label={t("suppliers.detail.field.contact")}
                 value={form.contact_person}
                 onChange={(v) => setF("contact_person", v)}
                 full
@@ -667,26 +655,26 @@ function NewerSupplierDialog() {
             onChange={setAccounts}
             isPayable={isPayableIBAN}
             labels={{
-              section: t("suppliers.detail.section.bankkonten"),
-              hint: t("suppliers.list.neu.bankHinweis"),
-              add: t("suppliers.list.neu.bankHinzufuegen"),
+              section: t("suppliers.detail.section.bankAccounts"),
+              hint: t("suppliers.list.new.bankHint"),
+              add: t("suppliers.list.new.bankAdd"),
               iban: t("suppliers.detail.field.iban"),
               bic: t("suppliers.detail.field.bic"),
               bank: t("suppliers.detail.field.bank"),
-              makeDefault: t("suppliers.list.neu.alsStandard"),
-              isDefault: t("suppliers.detail.bankkonten.standard"),
-              remove: t("suppliers.list.neu.bankEntfernen"),
-              invalidIban: t("suppliers.list.neu.ibanUngueltig"),
-              accountNumber: (n) => t("suppliers.list.neu.bankNummer", { number: n }),
+              makeDefault: t("suppliers.list.new.makeDefault"),
+              isDefault: t("suppliers.detail.bankAccounts.default"),
+              remove: t("suppliers.list.new.bankRemove"),
+              invalidIban: t("suppliers.list.new.ibanInvalid"),
+              accountNumber: (n) => t("suppliers.list.new.bankNumber", { number: n }),
             }}
           />
         </div>
         <DialogFooter>
           <Button variant="outline" onClick={() => setOpen(false)}>
-            {t("suppliers.list.neu.cancel")}
+            {t("suppliers.list.new.cancel")}
           </Button>
           <Button onClick={submit} disabled={create.isPending || invalidIban}>
-            {create.isPending ? t("suppliers.list.neu.anlege") : t("suppliers.list.neu.anlegen")}
+            {create.isPending ? t("suppliers.list.new.creating") : t("suppliers.list.new.create")}
           </Button>
         </DialogFooter>
       </DialogContent>
@@ -737,7 +725,7 @@ function TaxIdChip({ id }: { id: TaxId }) {
             <TriangleAlert className="size-3 shrink-0" />
             {id.value}
           </span>,
-          t("suppliers.list.steuerId.unbekanntTitle"),
+          t("suppliers.list.taxId.unknownTitle"),
         ]
       : id.art === "unbekannt"
         ? [
@@ -745,20 +733,20 @@ function TaxIdChip({ id }: { id: TaxId }) {
             <span className="inline-flex w-fit items-center whitespace-nowrap rounded-md bg-muted px-2 py-0.5 font-mono text-xs text-muted-foreground">
               {id.value}
             </span>,
-            t("suppliers.list.steuerId.andereTitle"),
+            t("suppliers.list.taxId.otherTitle"),
           ]
         : [
             <span className="inline-flex w-fit items-center whitespace-nowrap rounded-md bg-brand-wash px-2 py-0.5 font-mono text-xs font-medium text-brand-dark">
               {id.art === "steuernummer" && (
                 <span className="me-1 font-sans font-normal text-muted-foreground">
-                  {t("suppliers.list.steuerId.steuernummerKurz")}
+                  {t("suppliers.list.taxId.taxNumberShort")}
                 </span>
               )}
               {id.value}
             </span>,
             id.art === "ust"
-              ? t("suppliers.list.steuerId.ustTitle")
-              : t("suppliers.list.steuerId.steuernummerTitle"),
+              ? t("suppliers.list.taxId.vatTitle")
+              : t("suppliers.list.taxId.taxNumberTitle"),
           ];
   return (
     <Tooltip>
@@ -812,7 +800,7 @@ function FurtherTaxIds({ ids }: { ids: TaxId[] }) {
           // The row navigates on click; this must not.
           onClick={(e) => e.stopPropagation()}
           className="shrink-0 cursor-pointer rounded bg-muted px-1 py-0.5 text-[10px] font-medium text-muted-foreground transition-colors hover:bg-accent hover:text-foreground"
-          aria-label={t("suppliers.list.steuerId.weitere", { count: ids.length - 1 })}
+          aria-label={t("suppliers.list.taxId.more", { count: ids.length - 1 })}
         >
           +{ids.length - 1}
         </button>
@@ -820,7 +808,7 @@ function FurtherTaxIds({ ids }: { ids: TaxId[] }) {
       {/* Portalled, so a click inside never reaches the row underneath. */}
       <PopoverContent align="start" className="w-auto min-w-[12rem] p-2">
         <p className="mb-1.5 text-xs font-medium text-muted-foreground">
-          {t("suppliers.list.steuerId.alleTitle")}
+          {t("suppliers.list.taxId.allTitle")}
         </p>
         <div className="flex flex-col items-start gap-1.5">
           {ids.map((id, i) => (
@@ -860,7 +848,7 @@ function SuppliersMergeSuggestions({
     const keyLabel = new Map<SupplierDuplicateGroup["key_type"], string>([
       ["name", t("suppliers.list.duplicates.keyName")],
       ["vat_id", t("suppliers.list.duplicates.keyVatId")],
-      ["steuernummer", t("suppliers.list.duplicates.keySteuernummer")],
+      ["steuernummer", t("suppliers.list.duplicates.keyTaxNumber")],
     ]);
     const out: { suggestion: MergeSuggestion; members: Supplier[] }[] = [];
     for (const group of duplicates) {
@@ -943,13 +931,13 @@ function MergeConfirmation({ keep, merge }: { keep: Supplier; merge: Supplier })
                 {
                   onSuccess: () =>
                     toast.success(
-                      t("suppliers.merge.toast.erfolgreich", {
+                      t("suppliers.merge.toast.succeeded", {
                         name: merge.name,
                         target: keep.name,
                       }),
                     ),
                   onError: (e) =>
-                    toast.error(t("suppliers.merge.toast.fehlgeschlagen", { error: errorText(e) })),
+                    toast.error(t("suppliers.merge.toast.failed", { error: errorText(e) })),
                 },
               )
             }

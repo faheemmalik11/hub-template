@@ -22,9 +22,7 @@ function invalidateCategoryState(qc: ReturnType<typeof useQueryClient>) {
   invalidateRuleState(qc);
 }
 
-// The full taxonomy, both levels together (soft-deleted rows excluded). Small (~87 rows) and
-// changed rarely, so one query backs every consumer: the Kategorien tab's tree, the Regeln tab's
-// category Combobox, and the Vorschläge tab's per-row dropdown.
+// Small (~87 rows) and changed rarely, so one query backs every consumer.
 export function useCostAnalysisCategories() {
   return useQuery({
     queryKey: ["bwa_categories"],
@@ -212,8 +210,6 @@ export function useExtractChartOfAccounts() {
   });
 }
 
-// Bulk rule suggestions from existing receipts (Vorschläge tab): suppliers not yet covered by an
-// active cost_category rule, grouped by their most common existing category.
 export function useSuggestAssignmentRules() {
   return useQuery({
     queryKey: ["rule_suggestions"],
@@ -261,11 +257,7 @@ export function useBulkCreateAssignmentRules() {
   });
 }
 
-// Human sets or clears a bank transaction's category (offene-posten). bank_transactions has no
-// direct UPDATE policy for authenticated (SELECT only, migration 0046), so this goes through the
-// SECURITY DEFINER RPC opos_set_category, same shape as useSetNoReceipt/opos_set_no_receipt above.
-// The category itself (rule-suggested or human-set) is read straight off BankTransaction.category_id
-// — already resolved and persisted by the categorize trigger (migration 0057), no separate query.
+// bank_transactions has no direct UPDATE policy for authenticated, so this goes through the SECURITY DEFINER RPC opos_set_category.
 export function useSetTransactionCategory() {
   const qc = useQueryClient();
   return useMutation({

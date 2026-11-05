@@ -35,18 +35,18 @@ export function CompanyAssignmentField({
       {/* Marked required because it is: both the create dialog and the edit dialog refuse to save
           with no company selected. Nothing on the field said so before the refusal. */}
       <Label className="text-xs text-muted-foreground">
-        {t("properties.zuordnung.gesellschaft")} <RequiredStern />
+        {t("properties.assignment.company")} <RequiredStern />
       </Label>
       <MultiCombobox
         values={values}
         onValuesChange={onValuesChange}
         options={options}
-        placeholder={t("properties.zuordnung.gesellschaftWaehlen")}
+        placeholder={t("properties.assignment.selectCompany")}
         disabled={disabled}
         className={error ? "border-destructive" : undefined}
       />
       {error ? (
-        <p className="text-xs text-destructive">{t("properties.zuordnung.keineZuordnung")}</p>
+        <p className="text-xs text-destructive">{t("properties.assignment.required")}</p>
       ) : null}
     </div>
   );

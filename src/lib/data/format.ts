@@ -470,7 +470,7 @@ export function recogniseTaxIds(vatId: string | null | undefined): TaxId[] {
 // One shape for every date this product shows: a short month name, so "23. Aug. 2026" in German
 // and "Aug 23, 2026" in English. The long form ("23. August 2026") is a third wider for no more
 // information, and it set the width of every column and card that carries a date.
-const DATUM_SHORT: Intl.DateTimeFormatOptions = {
+const DATE_SHORT: Intl.DateTimeFormatOptions = {
   year: "numeric",
   month: "short",
   day: "numeric",
@@ -484,7 +484,7 @@ export function formatDate(iso: string | null | undefined): string {
   if (!iso) return "—";
   const d = new Date(iso.length <= 10 ? iso + "T00:00:00" : iso);
   if (Number.isNaN(d.getTime())) return "—";
-  return d.toLocaleDateString(dateLocale(), DATUM_SHORT);
+  return d.toLocaleDateString(dateLocale(), DATE_SHORT);
 }
 
 // Date + time, e.g. "July 16, 2026 at 8:49 PM" — used on detail pages for timestamp fields.
@@ -492,7 +492,7 @@ export function formatDateTime(iso: string | null | undefined): string {
   if (!iso) return "—";
   const d = new Date(iso);
   if (Number.isNaN(d.getTime())) return "—";
-  return d.toLocaleString(dateLocale(), { ...DATUM_SHORT, ...TIME_SHORT });
+  return d.toLocaleString(dateLocale(), { ...DATE_SHORT, ...TIME_SHORT });
 }
 
 export function formatDateTimeShort(iso: string | null | undefined): string {
@@ -544,7 +544,7 @@ export function formatDateTimeParts(iso: string | null | undefined): {
   const d = new Date(iso);
   if (Number.isNaN(d.getTime())) return { datum: "\u2014", time: null };
   return {
-    datum: d.toLocaleDateString(dateLocale(), DATUM_SHORT),
+    datum: d.toLocaleDateString(dateLocale(), DATE_SHORT),
     time: d.toLocaleTimeString(dateLocale(), TIME_SHORT),
   };
 }
@@ -1161,8 +1161,8 @@ export const FIELD_LABEL_DE: Record<string, string> = {
   income_tax_treatment: "Herstellungs-/Erhaltungsaufwand",
 };
 
-const GELD_FIELDS = new Set(["amount_net", "vat_amount", "amount_gross"]);
-const DATUM_FIELDS = new Set([
+const MONEY_FIELDS = new Set(["amount_net", "vat_amount", "amount_gross"]);
+const DATE_FIELDS = new Set([
   "document_date",
   "due_date",
   "service_date",
@@ -1173,7 +1173,7 @@ const DATUM_FIELDS = new Set([
 // Deliberately NOT formatDate: that one renders en-US ("January 5, 2026") for the UI, and a
 // persisted German record must not carry an English date, nor change shape with the UI language.
 // 05.01.2026 with an explicit de-DE locale, independent of the runtime's default.
-const datumDe = new Intl.DateTimeFormat("de-DE", {
+const dateDe = new Intl.DateTimeFormat("de-DE", {
   day: "2-digit",
   month: "2-digit",
   year: "numeric",
@@ -1186,17 +1186,17 @@ const datumDe = new Intl.DateTimeFormat("de-DE", {
 export function fieldValueDe(field: string, value: unknown): string | null {
   if (value == null || value === "") return null;
   if (typeof value === "number") {
-    if (GELD_FIELDS.has(field)) return formatEUR(value);
+    if (MONEY_FIELDS.has(field)) return formatEUR(value);
     if (field === "vat_rate" || field === "vat_deductible_pct") return `${formatNumber(value)} %`;
     return formatNumber(value);
   }
   const s = String(value).trim();
   if (s === "") return null;
-  if (DATUM_FIELDS.has(field)) {
+  if (DATE_FIELDS.has(field)) {
     // An unparseable date is kept verbatim rather than swallowed: the history has to record what
     // was actually stored, even when what was stored is junk.
     const d = new Date(s.length <= 10 ? `${s}T00:00:00` : s);
-    return Number.isNaN(d.getTime()) ? s : datumDe.format(d);
+    return Number.isNaN(d.getTime()) ? s : dateDe.format(d);
   }
   return s;
 }
@@ -1477,7 +1477,7 @@ export function toDueFilter(value: unknown): DueFilter | undefined {
 }
 
 // Resolved here, not in SQL: the list query and the invoices_kpis RPC must apply one definition,
-// and `today` has to be the local day (heuteLokal), not the database server's.
+// and `today` has to be the local day (todayLocal()), not the database server's.
 export function dueFilterRange(
   value: DueFilter,
   today: string = todayLocal(),
@@ -1570,21 +1570,14 @@ export function daysSince(datum: string | null | undefined, today = todayLocal()
 
 export type MatchingStatus = "open" | "suggested" | "partial" | "reconciled";
 
-/**
- * Where this invoice stands against the bank.
- *
- * `matchedSum` counts CONFIRMED links only, so an unconfirmed suggestion contributes nothing to it
- * and would otherwise read as "not reconciled". `hatVorschlag` is the missing third state: someone
- * has to look at it, which is the opposite of the "nothing to do yet" the grey badge implied.
- * Optional, so callers that genuinely only know the confirmed sum keep their old behaviour.
- */
+// `matchedSum` counts CONFIRMED links only; `hasSuggestion` is the missing third state, optional for callers that only know the confirmed sum.
 export function matchingStatus(
   gross: number | null | undefined,
   matchedSum: number,
-  hatSuggestion = false,
+  hasSuggestion = false,
   restWrittenOff = false,
 ): MatchingStatus {
-  if (matchedSum <= 0) return hatSuggestion ? "suggested" : "open";
+  if (matchedSum <= 0) return hasSuggestion ? "suggested" : "open";
   if (isFullyCovered(gross, matchedSum)) return "reconciled";
   // A remainder somebody wrote off is not a gap that is still being worked on. Without this the
   // invoice reads "Teilweise ... 92,86 EUR offen" for good, next to a workflow that says paid and
@@ -1627,7 +1620,7 @@ export function syncEventLabel(event: string | null | undefined): string {
  *
  * The documents themselves are still listed; only the totals are filtered.
  */
-export function countsAlsRevenue(status: string | null | undefined): boolean {
+export function countsAsRevenue(status: string | null | undefined): boolean {
   return status !== "voided" && status !== "draft";
 }
 

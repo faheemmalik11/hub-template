@@ -92,8 +92,8 @@ export function RevenueCostHistory({ points }: { points: HistoryPoint[] }) {
   const config = useMemo(
     () =>
       ({
-        revenue: { label: t("reports.summe.umsatz"), color: SERIE[0] },
-        cost: { label: t("reports.summe.gesamtkosten"), color: SERIE[1] },
+        revenue: { label: t("reports.total.revenue"), color: SERIE[0] },
+        cost: { label: t("reports.total.totalCosts"), color: SERIE[1] },
       }) satisfies ChartConfig,
     [t],
   );
@@ -192,8 +192,8 @@ export function RevenueCostHistory({ points }: { points: HistoryPoint[] }) {
         ))}
         {(
           [
-            [AREA_PROFIT, "reports.chart.gewinnFlaeche"],
-            [AREA_LOSS, "reports.chart.verlustFlaeche"],
+            [AREA_PROFIT, "reports.chart.profitArea"],
+            [AREA_LOSS, "reports.chart.lossArea"],
           ] as const
         ).map(([colour, key]) => (
           <span key={key} className="inline-flex items-center gap-2 text-muted-foreground">
@@ -238,8 +238,8 @@ function HistoryTooltip({
       <p className="font-medium text-foreground">{label}</p>
       <dl className="mt-1.5 space-y-1">
         {[
-          [t("reports.summe.umsatz"), revenue, SERIE[0]],
-          [t("reports.summe.gesamtkosten"), cost, SERIE[1]],
+          [t("reports.total.revenue"), revenue, SERIE[0]],
+          [t("reports.total.totalCosts"), cost, SERIE[1]],
         ].map(([name, value, colour]) => (
           <div key={String(name)} className="flex items-center justify-between gap-4">
             <dt className="inline-flex items-center gap-1.5 text-muted-foreground">
@@ -255,7 +255,7 @@ function HistoryTooltip({
         ))}
         <div className="flex items-center justify-between gap-4 border-t border-border pt-1">
           <dt className="text-muted-foreground">
-            {difference >= 0 ? t("reports.chart.gewinn") : t("reports.chart.verlust")}
+            {difference >= 0 ? t("reports.chart.profit") : t("reports.chart.loss")}
           </dt>
           <dd
             className="font-medium tabular-nums"

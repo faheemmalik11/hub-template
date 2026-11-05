@@ -72,7 +72,7 @@ export function EditCustomerDialog({
 
   function save() {
     if (!name.trim()) {
-      setNameError(t("customers.validierung.name"));
+      setNameError(t("customers.validation.name"));
       return;
     }
     setNameError("");
@@ -90,12 +90,12 @@ export function EditCustomerDialog({
       },
       {
         onSuccess: () => {
-          toast.success(t("customers.detail.edit.toast.gespeichert"));
+          toast.success(t("customers.detail.edit.toast.saved"));
           onOpenChange(false);
         },
         onError: (e) =>
           toast.error(
-            t("customers.detail.edit.toast.fehlgeschlagen", {
+            t("customers.detail.edit.toast.failed", {
               error: errorText(e),
             }),
           ),
@@ -129,33 +129,33 @@ export function EditCustomerDialog({
           <div className="grid gap-3 sm:grid-cols-2">
             <div className="space-y-1">
               <Label className="text-xs text-muted-foreground">
-                {t("customers.detail.field.ansprechpartner")}
+                {t("customers.detail.field.contact")}
               </Label>
               <Input value={contactPerson} onChange={(e) => setContactPerson(e.target.value)} />
             </div>
             <div className="space-y-1">
               <Label className="text-xs text-muted-foreground">
-                {t("customers.detail.field.kundennummer")}
+                {t("customers.detail.field.customerNumber")}
               </Label>
               <Input value={customerNumber} onChange={(e) => setCustomerNumber(e.target.value)} />
             </div>
           </div>
           <div className="space-y-1">
             <Label className="text-xs text-muted-foreground">
-              {t("customers.detail.field.strasse")}
+              {t("customers.detail.field.street")}
             </Label>
             <Input value={street} onChange={(e) => setStreet(e.target.value)} />
           </div>
           <div className="grid grid-cols-2 gap-3">
             <div className="space-y-1">
               <Label className="text-xs text-muted-foreground">
-                {t("customers.detail.field.plz")}
+                {t("customers.detail.field.zip")}
               </Label>
               <Input value={zip} onChange={(e) => setZip(e.target.value)} />
             </div>
             <div className="space-y-1">
               <Label className="text-xs text-muted-foreground">
-                {t("customers.detail.field.ort")}
+                {t("customers.detail.field.city")}
               </Label>
               <Input value={city} onChange={(e) => setCity(e.target.value)} />
             </div>
@@ -163,7 +163,7 @@ export function EditCustomerDialog({
           <div className="grid gap-3 sm:grid-cols-2">
             <div className="space-y-1">
               <Label className="text-xs text-muted-foreground">
-                {t("customers.detail.field.telefon")}
+                {t("customers.detail.field.phone")}
               </Label>
               <Input value={phone} onChange={(e) => setPhone(e.target.value)} />
             </div>
@@ -176,7 +176,7 @@ export function EditCustomerDialog({
           </div>
           <div className="space-y-1">
             <Label className="text-xs text-muted-foreground">
-              {t("customers.detail.field.ustId")}
+              {t("customers.detail.field.vatId")}
             </Label>
             <Input value={vatId} onChange={(e) => setVatId(e.target.value)} />
           </div>
@@ -187,9 +187,7 @@ export function EditCustomerDialog({
             {t("customers.detail.edit.cancel")}
           </Button>
           <Button onClick={save} disabled={update.isPending}>
-            {update.isPending
-              ? t("customers.detail.edit.speichere")
-              : t("customers.detail.edit.speichern")}
+            {update.isPending ? t("customers.detail.edit.saving") : t("customers.detail.edit.save")}
           </Button>
         </DialogFooter>
       </DialogContent>

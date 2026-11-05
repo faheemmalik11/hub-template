@@ -25,7 +25,7 @@ import {
 } from "@/components/ui/table";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useCustomer, useCompanies, useOutgoingInvoices, useSoftDeleteCustomer } from "@/data";
-import { errorText, formatDate, formatEUR, countsAlsRevenue } from "@/lib/data/format";
+import { errorText, formatDate, formatEUR, countsAsRevenue } from "@/lib/data/format";
 import { CopyButton } from "@/components/documents/copy-button";
 import {
   DropdownMenu,
@@ -64,10 +64,8 @@ function CustomerDetailPage() {
     [companiesQ.data, customer],
   );
   const invoices = invoicesQ.data ?? [];
-  // Every document stays in the table below -- a cancellation is still something you want to see.
-  // The headline figure, though, is money, so it only counts what zaehltAlsUmsatz() allows. When
-  // something is left out we say so, rather than letting the count silently disagree with the rows.
-  const countedInvoices = invoices.filter((r) => countsAlsRevenue(r.status));
+  // The table shows every document; the headline total only counts what countsAsRevenue() allows.
+  const countedInvoices = invoices.filter((r) => countsAsRevenue(r.status));
   const total = countedInvoices.reduce((s, r) => s + (r.amount_gross ?? 0), 0);
   const notCounted = invoices.length - countedInvoices.length;
 
@@ -98,12 +96,12 @@ function CustomerDetailPage() {
   function confirmDelete() {
     deleteK.mutate(deleteReason.trim(), {
       onSuccess: () => {
-        toast.success(t("customers.detail.toast.geloescht"));
+        toast.success(t("customers.detail.toast.deleted"));
         navigate({ to: "/customers" });
       },
       onError: (e) =>
         toast.error(
-          t("customers.detail.toast.loeschenFehlgeschlagen", {
+          t("customers.detail.toast.deleteFailed", {
             error: errorText(e),
           }),
         ),
@@ -114,10 +112,10 @@ function CustomerDetailPage() {
   // detail pages read their master data from.
   const masterData: Fact[] = [
     { label: t("customers.detail.field.name"), value: customer.name },
-    { label: t("customers.detail.field.gesellschaft"), value: company?.code ?? null },
-    { label: t("customers.detail.field.ansprechpartner"), value: customer.contact_person },
+    { label: t("customers.detail.field.company"), value: company?.code ?? null },
+    { label: t("customers.detail.field.contact"), value: customer.contact_person },
     {
-      label: t("customers.detail.field.adresse"),
+      label: t("customers.detail.field.address"),
       wide: true,
       value:
         [
@@ -128,22 +126,22 @@ function CustomerDetailPage() {
           .join(", ") || null,
     },
     {
-      label: t("customers.detail.field.ustId"),
+      label: t("customers.detail.field.vatId"),
       value: customer.vat_id,
       node: customer.vat_id ? (
         <span className="inline-flex items-center gap-1">
           {customer.vat_id}
-          <CopyButton value={customer.vat_id} label={t("customers.detail.field.ustId")} />
+          <CopyButton value={customer.vat_id} label={t("customers.detail.field.vatId")} />
         </span>
       ) : undefined,
     },
     {
-      label: t("customers.detail.field.telefon"),
+      label: t("customers.detail.field.phone"),
       value: customer.phone,
       node: customer.phone ? (
         <span className="inline-flex items-center gap-1">
           {customer.phone}
-          <CopyButton value={customer.phone} label={t("customers.detail.field.telefon")} />
+          <CopyButton value={customer.phone} label={t("customers.detail.field.phone")} />
         </span>
       ) : undefined,
     },
@@ -181,7 +179,7 @@ function CustomerDetailPage() {
               sat beside Edit with the same weight as the thing people actually come here to do. */}
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
-              <Button variant="outline" size="icon" aria-label={t("customers.detail.action.mehr")}>
+              <Button variant="outline" size="icon" aria-label={t("customers.detail.action.more")}>
                 <MoreVertical className="size-4" />
               </Button>
             </DropdownMenuTrigger>
@@ -214,7 +212,7 @@ function CustomerDetailPage() {
           <Input
             value={deleteReason}
             onChange={(e) => setDeleteReason(e.target.value)}
-            placeholder={t("customers.detail.delete.grundPlaceholder")}
+            placeholder={t("customers.detail.delete.reasonPlaceholder")}
           />
           <AlertDialogFooter>
             <AlertDialogCancel>{t("customers.detail.delete.cancel")}</AlertDialogCancel>
@@ -234,14 +232,14 @@ function CustomerDetailPage() {
       <div data-tour="customer-detail-content" className="mt-6 grid gap-6 lg:grid-cols-[1fr_1.1fr]">
         <section className="rounded-xl border border-border bg-card p-5">
           <h2 className="mb-4 text-sm font-semibold uppercase tracking-wide text-muted-foreground">
-            {t("customers.detail.section.stammdaten")}
+            {t("customers.detail.section.masterData")}
           </h2>
-          <p className="mb-4 text-xs text-muted-foreground">{t("customers.detail.editHinweis")}</p>
+          <p className="mb-4 text-xs text-muted-foreground">{t("customers.detail.editHint")}</p>
           <FactList facts={masterData} columns={2} />
           <div className="mt-3.5 grid grid-cols-2 gap-4 border-t border-border/60 pt-3.5">
             <div>
               <dt className="text-xs uppercase tracking-wide text-muted-foreground">
-                {t("customers.detail.field.erstellt")}
+                {t("customers.detail.field.created")}
               </dt>
               <dd className="mt-0.5 text-base text-foreground">
                 {formatDate(customer.created_at)}
@@ -249,7 +247,7 @@ function CustomerDetailPage() {
             </div>
             <div>
               <dt className="text-xs uppercase tracking-wide text-muted-foreground">
-                {t("customers.detail.field.aktualisiert")}
+                {t("customers.detail.field.updated")}
               </dt>
               <dd className="mt-0.5 text-base text-foreground">
                 {formatDate(customer.updated_at ?? customer.created_at)}
@@ -262,13 +260,13 @@ function CustomerDetailPage() {
           {/* Count and total sit ON the heading line, the same way the company, property and
               supplier pages carry theirs. */}
           <h2 className="mb-4 flex flex-wrap items-baseline gap-x-2 gap-y-0.5 text-sm font-semibold uppercase tracking-wide text-muted-foreground">
-            {t("customers.detail.section.rechnungen")}
+            {t("customers.detail.section.invoices")}
             {invoicesQ.data === undefined ? (
               <Skeleton className="h-4 w-20" />
             ) : (
               <>
                 <span className="text-sm font-normal normal-case tracking-normal text-muted-foreground">
-                  {t("customers.detail.gesamt", { count: countedInvoices.length })}
+                  {t("customers.detail.total", { count: countedInvoices.length })}
                 </span>
                 <span className="text-sm font-semibold normal-case tracking-normal tabular-nums text-foreground">
                   {formatEUR(total)}
@@ -280,7 +278,7 @@ function CustomerDetailPage() {
               with the table for the eye, for two numbers that are a subtitle. */}
           {notCounted > 0 && (
             <p className="mb-3 text-xs text-muted-foreground">
-              {t("customers.detail.nichtGezaehlt", { count: notCounted })}
+              {t("customers.detail.notCounted", { count: notCounted })}
             </p>
           )}
           <div className="overflow-hidden rounded-lg border border-border">
@@ -289,9 +287,9 @@ function CustomerDetailPage() {
             <Table containerClassName="max-h-[26rem]">
               <TableHeader>
                 <TableRow className="bg-muted/40">
-                  <TableHead>{t("customers.detail.col.nr")}</TableHead>
-                  <TableHead>{t("customers.detail.col.datum")}</TableHead>
-                  <TableHead className="text-right">{t("customers.detail.col.betrag")}</TableHead>
+                  <TableHead>{t("customers.detail.col.number")}</TableHead>
+                  <TableHead>{t("customers.detail.col.date")}</TableHead>
+                  <TableHead className="text-right">{t("customers.detail.col.amount")}</TableHead>
                   <TableHead>{t("customers.detail.col.status")}</TableHead>
                 </TableRow>
               </TableHeader>
@@ -299,7 +297,7 @@ function CustomerDetailPage() {
                 {invoices.map((r) => (
                   <TableRow key={r.id}>
                     <TableCell className="font-medium text-foreground">
-                      {r.invoice_number ?? t("customers.detail.entwurf")}
+                      {r.invoice_number ?? t("customers.detail.draft")}
                     </TableCell>
                     <TableCell className="text-sm text-muted-foreground tabular-nums">
                       {formatDate(r.invoice_date)}
@@ -315,7 +313,7 @@ function CustomerDetailPage() {
                 {invoices.length === 0 && (
                   <TableRow>
                     <TableCell colSpan={4} className="py-8 text-center text-muted-foreground">
-                      {t("customers.detail.rechnungenEmpty")}
+                      {t("customers.detail.invoicesEmpty")}
                     </TableCell>
                   </TableRow>
                 )}

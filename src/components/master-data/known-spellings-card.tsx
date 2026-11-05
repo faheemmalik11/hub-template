@@ -75,11 +75,11 @@ export function KnownSpellingsCard({
         </h2>
         {active.length > 0 && (
           <span className="text-xs tabular-nums text-muted-foreground">
-            {t("aliases.anzahl", { count: active.length })}
+            {t("aliases.count", { count: active.length })}
           </span>
         )}
       </div>
-      <p className="mb-4 text-xs text-muted-foreground">{t(`aliases.hinweis.${entityType}`)}</p>
+      <p className="mb-4 text-xs text-muted-foreground">{t(`aliases.note.${entityType}`)}</p>
 
       <div className="mb-3 flex items-center gap-2">
         <Input
@@ -102,28 +102,28 @@ export function KnownSpellingsCard({
             // than a round-trip and a constraint name. A spelling another entity holds cannot be
             // checked from here -- that needs the whole table -- so it comes back as ALIAS_CLAIMED.
             if (active.some((a) => folded(a.alias) === folded(value))) {
-              toast.error(t("aliases.toast.bereitsVorhanden"));
+              toast.error(t("aliases.toast.alreadyExists"));
               return;
             }
             addAlias.mutate(value, {
               onSuccess: () => {
                 setNewerAlias("");
-                toast.success(t("aliases.toast.hinzugefuegt", { alias: value }));
+                toast.success(t("aliases.toast.added", { alias: value }));
               },
               onError: (e) => {
                 const reason = errorText(e);
                 if (reason === "ALIAS_CLAIMED") {
-                  toast.error(t("aliases.toast.beanspruchtVonAnderer", { alias: value }));
+                  toast.error(t("aliases.toast.claimedByOther", { alias: value }));
                 } else if (reason === "ALIAS_EXISTS") {
-                  toast.error(t("aliases.toast.bereitsVorhanden"));
+                  toast.error(t("aliases.toast.alreadyExists"));
                 } else {
-                  toast.error(t("aliases.toast.fehlgeschlagen", { error: reason }));
+                  toast.error(t("aliases.toast.failed", { error: reason }));
                 }
               },
             });
           }}
         >
-          <Plus className="size-3.5" /> {t("aliases.hinzufuegen")}
+          <Plus className="size-3.5" /> {t("aliases.add")}
         </Button>
       </div>
 
@@ -138,7 +138,7 @@ export function KnownSpellingsCard({
               <AlertDialogTrigger asChild>
                 <button
                   className="flex size-7 shrink-0 items-center justify-center rounded text-muted-foreground hover:bg-background hover:text-destructive"
-                  aria-label={t("aliases.entfernen")}
+                  aria-label={t("aliases.remove")}
                 >
                   <X className="size-3.5" />
                 </button>
@@ -156,9 +156,9 @@ export function KnownSpellingsCard({
                     onClick={() =>
                       deactivateAlias.mutate(a.id, {
                         onSuccess: () =>
-                          toast.success(t("aliases.toast.entfernt", { alias: a.alias })),
+                          toast.success(t("aliases.toast.removed", { alias: a.alias })),
                         onError: (e) =>
-                          toast.error(t("aliases.toast.fehlgeschlagen", { error: errorText(e) })),
+                          toast.error(t("aliases.toast.failed", { error: errorText(e) })),
                       })
                     }
                     className="bg-destructive text-destructive-foreground hover:bg-destructive/90"

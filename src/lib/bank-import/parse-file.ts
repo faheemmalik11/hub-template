@@ -28,12 +28,12 @@ export async function parseBankFile(
   const format = detectFormat(file);
   if (format !== "csv" && format !== "xlsx") {
     throw new Error(
-      "Dateiformat wird nicht unterstützt. Bitte CSV, Excel (.xlsx) oder PDF hochladen — XML-Import (CAMT.053) folgt in einer späteren Version.",
+      "File format is not supported. Please upload CSV, Excel (.xlsx), or PDF — XML import (CAMT.053) is coming in a later version.",
     );
   }
   const table = format === "csv" ? await parseCsvFile(file) : await parseXlsxFile(file);
   if (table.headers.length === 0 || table.rows.length === 0) {
-    throw new Error("Die Datei enthält keine erkennbaren Spalten oder Zeilen.");
+    throw new Error("The file has no recognizable columns or rows.");
   }
   return { format, table };
 }

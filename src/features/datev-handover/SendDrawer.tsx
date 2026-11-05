@@ -179,19 +179,19 @@ export function SendDrawer({
       <SheetContent className="flex w-full flex-col gap-0 overflow-y-auto sm:max-w-lg">
         <SheetHeader>
           <SheetTitle>
-            {phase === "result" ? t("handover.senden.resultTitle") : t("handover.senden.title")}
+            {phase === "result" ? t("handover.send.resultTitle") : t("handover.send.title")}
           </SheetTitle>
           <SheetDescription>
             {phase === "result"
-              ? t("handover.senden.resultDesc")
+              ? t("handover.send.resultDesc")
               : single
-                ? t("handover.senden.descEine", {
+                ? t("handover.send.descOne", {
                     // Both directions. It read the incoming count while the total below counted
                     // both, so a company with 5 of each announced 5 and then offered 10.
                     count: totalReady,
                     company: targets[0]?.name ?? targets[0]?.code ?? "",
                   })
-                : t("handover.senden.desc")}
+                : t("handover.send.desc")}
           </SheetDescription>
         </SheetHeader>
 
@@ -209,7 +209,7 @@ export function SendDrawer({
                   (x) => x.ready.length + x.blocked.length + x.outgoing.length === 0,
                 ) && (
                   <p className="rounded-xl border border-dashed border-border p-4 text-center text-sm text-muted-foreground">
-                    {t("handover.senden.leer")}
+                    {t("handover.send.empty")}
                   </p>
                 )}
                 {targets.map((target) => (
@@ -226,8 +226,8 @@ export function SendDrawer({
 
               <p className="mt-4 text-sm font-medium text-foreground">
                 {sendCount === totalReady
-                  ? t("handover.senden.summe", { count: sendCount })
-                  : t("handover.senden.auswahl", {
+                  ? t("handover.send.total", { count: sendCount })
+                  : t("handover.send.selection", {
                       count: sendCount,
                       total: totalReady,
                     })}
@@ -238,7 +238,7 @@ export function SendDrawer({
                   sending, and this is the moment. */}
               {skipCount > 0 && (
                 <p className="mt-1 text-sm text-warning">
-                  {t("handover.senden.uebersprungen", { count: skipCount })}
+                  {t("handover.send.skipped", { count: skipCount })}
                 </p>
               )}
             </>
@@ -247,7 +247,7 @@ export function SendDrawer({
 
         <SheetFooter className="mt-6">
           {phase === "result" ? (
-            <Button onClick={() => onOpenChange(false)}>{t("handover.aktion.schliessen")}</Button>
+            <Button onClick={() => onOpenChange(false)}>{t("handover.action.close")}</Button>
           ) : (
             <>
               <Button
@@ -255,7 +255,7 @@ export function SendDrawer({
                 onClick={() => onOpenChange(false)}
                 disabled={phase === "sending"}
               >
-                {t("handover.aktion.abbrechen")}
+                {t("handover.action.cancel")}
               </Button>
               <Button
                 className="gap-2"
@@ -265,9 +265,9 @@ export function SendDrawer({
                 {phase === "sending" && <Loader2 className="size-4 animate-spin" />}
                 {phase === "sending"
                   ? running
-                    ? t("handover.senden.laeuftCompany", { company: running })
-                    : t("handover.senden.laeuft")
-                  : t("handover.aktion.anDatevSenden")}
+                    ? t("handover.send.runningCompany", { company: running })
+                    : t("handover.send.running")
+                  : t("handover.action.sendToDatev")}
               </Button>
             </>
           )}
@@ -364,12 +364,12 @@ function DirectionBlock({
           <Checkbox
             checked={allAn}
             onCheckedChange={(v: boolean | "indeterminate") => onToggleAll(sendable, v === true)}
-            aria-label={t("handover.senden.alleWaehlen")}
+            aria-label={t("handover.send.selectAll")}
           />
         )}
-        <h3 className="text-sm font-medium text-foreground">{t(`handover.richtung.${title}`)}</h3>
+        <h3 className="text-sm font-medium text-foreground">{t(`handover.direction.${title}`)}</h3>
         <span className="ml-auto text-xs text-muted-foreground">
-          {t("handover.dateien", { count: sendable.length })}
+          {t("handover.files", { count: sendable.length })}
         </span>
       </div>
       <ul className="divide-y divide-border">
@@ -427,7 +427,7 @@ function DocumentRow({
         <span className="shrink-0 tabular-nums">
           {inv.blockReason ? (
             <span className="text-xs text-warning">
-              {t(`handover.blockGrund.${inv.blockReason}`)}
+              {t(`handover.blockReason.${inv.blockReason}`)}
             </span>
           ) : (
             <span className="text-muted-foreground">{formatEUR(inv.amount_gross)}</span>
@@ -466,12 +466,12 @@ function Result({ outcomes }: { outcomes: CompanyOutcome[] }) {
               {/* Named, because a company can appear twice: the two directions go to two different
                   DATEV inboxes and either can fail on its own. */}
               <span className="text-xs text-muted-foreground">
-                {t(`handover.richtung.${o.direction}`)}
+                {t(`handover.direction.${o.direction}`)}
               </span>
               <span className="text-sm text-muted-foreground">
                 {o.error
-                  ? t("handover.senden.result.fehlgeschlagen")
-                  : t("handover.senden.result.gesendet", { count: sent })}
+                  ? t("handover.send.result.failed")
+                  : t("handover.send.result.sent", { count: sent })}
               </span>
             </div>
 
@@ -483,13 +483,13 @@ function Result({ outcomes }: { outcomes: CompanyOutcome[] }) {
                 and any paraphrase loses it. */}
             {failed.map((b, i) => (
               <p key={i} className="mt-2 text-sm break-words text-danger">
-                {b.error ?? t("handover.senden.result.fehlgeschlagen")}
+                {b.error ?? t("handover.send.result.failed")}
               </p>
             ))}
 
             {ok.length > 1 && (
               <p className="mt-1 text-xs text-muted-foreground">
-                {t("handover.senden.result.mails", {
+                {t("handover.send.result.emails", {
                   count: ok.length,
                   size: formatBytes(ok.reduce((n, b) => n + b.totalBytes, 0)),
                 })}
@@ -498,7 +498,7 @@ function Result({ outcomes }: { outcomes: CompanyOutcome[] }) {
 
             {o.blocked.length > 0 && (
               <p className="mt-2 border-t border-border pt-2 text-xs text-muted-foreground">
-                {t("handover.senden.result.uebersprungen", { count: o.blocked.length })}
+                {t("handover.send.result.skipped", { count: o.blocked.length })}
               </p>
             )}
           </div>

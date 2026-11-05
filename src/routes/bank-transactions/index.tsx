@@ -311,7 +311,7 @@ function BankTransactionsPage() {
       value: fDirection,
       defaultValue: ALL,
       options: [
-        { value: ALL, label: t("bank.list.filter.alleRichtungen") },
+        { value: ALL, label: t("bank.list.filter.allDirections") },
         { value: "ausgehend", label: t("bank.richtung.ausgehend") },
         { value: "eingehend", label: t("bank.richtung.eingehend") },
       ],
@@ -320,11 +320,11 @@ function BankTransactionsPage() {
     {
       kind: "select",
       key: "typ",
-      label: t("bank.list.filter.typ"),
+      label: t("bank.list.filter.type"),
       value: fType,
       defaultValue: ALL,
       options: [
-        { value: ALL, label: t("bank.list.filter.alleTypen") },
+        { value: ALL, label: t("bank.list.filter.allTypes") },
         ...TRANSACTION_TYPES.map((type) => ({
           value: type,
           label: t(`bank.transactionType.${type}`),
@@ -335,27 +335,27 @@ function BankTransactionsPage() {
     {
       kind: "select",
       key: "quelle",
-      label: t("bank.list.filter.quelle"),
+      label: t("bank.list.filter.source"),
       value: fSource,
       defaultValue: ALL,
       options: [
-        { value: ALL, label: t("bank.list.filter.alleQuellen") },
-        { value: "banksapi", label: t("bank.quelle.banksapi") },
-        { value: "pleo", label: t("bank.quelle.pleo") },
-        { value: "manual", label: t("bank.quelle.manual") },
+        { value: ALL, label: t("bank.list.filter.allSources") },
+        { value: "banksapi", label: t("bank.source.banksapi") },
+        { value: "pleo", label: t("bank.source.pleo") },
+        { value: "manual", label: t("bank.source.manual") },
       ],
       onChange: setFSource,
     },
     {
       kind: "select",
       key: "beleg",
-      label: t("bank.list.filter.beleg"),
+      label: t("bank.list.filter.document"),
       value: fDocument,
       defaultValue: ALL,
       options: [
-        { value: ALL, label: t("bank.list.filter.alleBelege") },
-        { value: "mit", label: t("bank.list.filter.mitBeleg") },
-        { value: "ohne", label: t("bank.list.filter.ohneBeleg") },
+        { value: ALL, label: t("bank.list.filter.allDocuments") },
+        { value: "mit", label: t("bank.list.filter.withDocument") },
+        { value: "ohne", label: t("bank.list.filter.withoutDocument") },
       ],
       onChange: setFDocument,
     },
@@ -366,11 +366,11 @@ function BankTransactionsPage() {
       value: fStatus,
       defaultValue: ALL,
       options: [
-        { value: ALL, label: t("bank.list.filter.alle") },
-        { value: "open", label: t("bank.txnMatching.offen") },
-        { value: "suggestion", label: t("bank.txnMatching.vorschlag") },
-        { value: "matched", label: t("bank.txnMatching.zugeordnet") },
-        { value: "ignored", label: t("bank.txnMatching.ignoriert") },
+        { value: ALL, label: t("bank.list.filter.all") },
+        { value: "open", label: t("bank.txnMatching.open") },
+        { value: "suggestion", label: t("bank.txnMatching.suggestion") },
+        { value: "matched", label: t("bank.txnMatching.matched") },
+        { value: "ignored", label: t("bank.txnMatching.ignored") },
       ],
       onChange: setFStatus,
     },
@@ -401,7 +401,7 @@ function BankTransactionsPage() {
       },
       locale: dateLocale(),
       formatDay: (iso) => formatDate(iso),
-      backLabel: t("home.zeitraumAktion.zurueck"),
+      backLabel: t("home.periodAction.back"),
       placeholder: t("documents.list.filter.zeitraum"),
       searchPlaceholder: t("common.combobox.search"),
       emptyLabel: t("common.combobox.empty"),
@@ -434,7 +434,7 @@ function BankTransactionsPage() {
         >
           <Button variant="outline" asChild className="gap-2">
             <Link to="/bank-accounts">
-              <Settings2 className="size-4" /> {t("bank.list.bankkonten")}
+              <Settings2 className="size-4" /> {t("bank.list.bankAccounts")}
             </Link>
           </Button>
           {/* The same confirmed button as on Bankkonten. It used to be a bare click here and a
@@ -455,7 +455,7 @@ function BankTransactionsPage() {
         value={fAccount}
         onChange={setFAccount}
         allValue={ALL}
-        allLabel={t("bank.list.filter.alleKonten")}
+        allLabel={t("bank.list.filter.allAccounts")}
         labelFor={(id) => accountName.get(id) ?? id}
         titleFor={(id) => accountTitle.get(id) ?? ""}
         className="mt-6"
@@ -510,11 +510,11 @@ function BankTransactionsPage() {
         <div className="mt-4">
           {filterActive ? (
             <EmptyState
-              title={t("bank.list.keineTreffer")}
-              hint={t("bank.list.keineTrefferHint")}
+              title={t("bank.list.noMatches")}
+              hint={t("bank.list.noMatchesHint")}
               action={
                 <Button variant="outline" onClick={filterReset}>
-                  {t("bank.list.filterZuruecksetzen")}
+                  {t("bank.list.resetFilters")}
                 </Button>
               }
             />
@@ -540,20 +540,20 @@ function BankTransactionsPage() {
                     direction={sortDir}
                     onSort={(column) => sort(column as BankTransactionSort)}
                   >
-                    {t("bank.list.col.datum")}
+                    {t("bank.list.col.date")}
                   </SortableColumnHeader>
-                  <TableHead>{t("bank.list.col.konto")}</TableHead>
+                  <TableHead>{t("bank.list.col.account")}</TableHead>
                   <SortableColumnHeader
                     column="counterparty_holder"
                     sort={sortColumn}
                     direction={sortDir}
                     onSort={(column) => sort(column as BankTransactionSort)}
                   >
-                    {t("bank.list.col.gegenkonto")}
+                    {t("bank.list.col.counterparty")}
                   </SortableColumnHeader>
-                  <TableHead>{t("bank.list.col.verwendungszweck")}</TableHead>
+                  <TableHead>{t("bank.list.col.paymentReference")}</TableHead>
                   <TableHead>{t("bank.list.col.abgleich")}</TableHead>
-                  <TableHead>{t("bank.list.col.typ")}</TableHead>
+                  <TableHead>{t("bank.list.col.type")}</TableHead>
                   <SortableColumnHeader
                     column="amount"
                     sort={sortColumn}
@@ -561,7 +561,7 @@ function BankTransactionsPage() {
                     onSort={(column) => sort(column as BankTransactionSort)}
                     align="right"
                   >
-                    {t("bank.list.col.betrag")}
+                    {t("bank.list.col.amount")}
                   </SortableColumnHeader>
                 </TableRow>
               </TableHeader>
@@ -575,7 +575,7 @@ function BankTransactionsPage() {
                     // Protokoll rows.
                     role="button"
                     tabIndex={0}
-                    aria-label={t("bank.list.zeileOeffnen", {
+                    aria-label={t("bank.list.openRow", {
                       contraAccount: txn.counterparty_holder ?? "—",
                       amount: formatSignedEUR(txn.amount),
                     })}
@@ -609,12 +609,12 @@ function BankTransactionsPage() {
                         <SourceBadge
                           source={txn.source}
                           hasDocument={txn.has_document}
-                          documentTitle={t("bank.list.beleg.titel", {
+                          documentTitle={t("bank.list.document.title", {
                             source: txn.document_source
-                              ? t(`bank.quelle.${txn.document_source}`, {
+                              ? t(`bank.source.${txn.document_source}`, {
                                   defaultValue: txn.document_source,
                                 })
-                              : t("bank.list.beleg.vorhanden"),
+                              : t("bank.list.document.available"),
                           })}
                           className="shrink-0"
                         />
@@ -677,7 +677,7 @@ function BankTransactionsPage() {
                 className="cursor-pointer rounded-xl border border-border bg-card p-4"
                 role="button"
                 tabIndex={0}
-                aria-label={t("bank.list.zeileOeffnen", {
+                aria-label={t("bank.list.openRow", {
                   contraAccount: txn.counterparty_holder ?? "—",
                   amount: formatSignedEUR(txn.amount),
                 })}
@@ -697,7 +697,7 @@ function BankTransactionsPage() {
                     <div className="truncate text-xs text-muted-foreground">
                       {txn.counterparty_iban ||
                         (txn.spender_name || txn.spender_email
-                          ? t("bank.list.bezahltVonKurz", {
+                          ? t("bank.list.paidByShort", {
                               who: txn.spender_name ?? txn.spender_email,
                             })
                           : "")}

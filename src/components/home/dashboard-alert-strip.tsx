@@ -23,7 +23,7 @@ export function DashboardAlertStrip() {
       items={items}
       max={3}
       seeAllTo="/notifications"
-      seeAllLabel={t("notifications.alleAnsehen")}
+      seeAllLabel={t("notifications.viewAll")}
       className="mb-4"
     />
   );

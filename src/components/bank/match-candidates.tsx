@@ -110,7 +110,7 @@ export function TransactionMatches({
         confirm: {
           side: isCredit ? "outgoing" : "incoming",
           invoiceId: entity.id,
-          invoiceLabel: t("bank.matches.beleg"),
+          invoiceLabel: t("bank.matches.document"),
           invoiceNr: null,
           // The dialog measures the invoice against this. Passing null made it read
           // "not paid in full, 0,00 EUR stays unpaid" on a match that covered the invoice exactly,
@@ -144,7 +144,7 @@ export function TransactionMatches({
           score: m.score,
           match_reasons: m.match_reasons,
           amount_matched: m.amount_matched,
-          label: oi?.customers?.name ?? t("bank.matches.beleg"),
+          label: oi?.customers?.name ?? t("bank.matches.document"),
           nr: oi?.invoice_number ?? null,
           amountGross: oi?.amount_gross ?? null,
           // No in-app detail page for an outgoing invoice; its file is reachable from the
@@ -161,7 +161,7 @@ export function TransactionMatches({
           score: m.score,
           match_reasons: m.match_reasons,
           amount_matched: m.amount_matched,
-          label: b?.issuer ?? t("bank.matches.beleg"),
+          label: b?.issuer ?? t("bank.matches.document"),
           nr: b?.invoice_number ?? null,
           amountGross: b?.amount_gross ?? null,
           link: b != null ? { kind: "internal", nr: b.id } : null,
@@ -193,11 +193,11 @@ export function TransactionMatches({
       <PaymentRightNotice className="mb-3" />
       {total > 0 && allocated > 0 && (
         <p className="mb-3 text-xs text-muted-foreground">
-          {t("bank.matches.zugeordnetVon", {
+          {t("bank.matches.matchedOf", {
             matched: formatEUR(allocated),
             total: formatEUR(total),
           })}
-          {rest > 0.01 && ` · ${t("bank.matches.restOffen", { rest: formatEUR(rest) })}`}
+          {rest > 0.01 && ` · ${t("bank.matches.restOpen", { rest: formatEUR(rest) })}`}
         </p>
       )}
       <ul className="space-y-3">
@@ -230,7 +230,7 @@ export function TransactionMatches({
                       </span>
                     ) : (
                       <span className="text-sm text-muted-foreground">
-                        {t("bank.matches.belegEntfernt")}
+                        {t("bank.matches.documentRemoved")}
                       </span>
                     )
                   }
@@ -240,14 +240,14 @@ export function TransactionMatches({
                   meta={
                     <>
                       <span>
-                        {m.nr ? t("bank.matches.nr", { nr: m.nr }) : t("bank.matches.ohneNr")}
+                        {m.nr ? t("bank.matches.nr", { nr: m.nr }) : t("bank.matches.noNumber")}
                       </span>
                       <span className="tabular-nums">{formatEUR(m.amountGross)}</span>
                       {m.amountGross != null &&
                         Math.abs(Math.abs(m.amountGross ?? 0) - Math.abs(m.amount_matched ?? 0)) >
                           0.01 && (
                           <span className="tabular-nums font-medium text-foreground">
-                            {t("bank.matches.davon", { amount: formatEUR(m.amount_matched) })}
+                            {t("bank.matches.ofWhich", { amount: formatEUR(m.amount_matched) })}
                           </span>
                         )}
                     </>
@@ -258,7 +258,7 @@ export function TransactionMatches({
                     open && m.entityId ? (
                       <>
                         <MatchCardAction
-                          label={t("bank.matches.bestaetigenBeleg")}
+                          label={t("bank.matches.confirmInvoice")}
                           disabled={
                             (isCredit ? confirmOutgoingMatch.isPending : confirmMatch.isPending) ||
                             !mayPay
@@ -268,16 +268,16 @@ export function TransactionMatches({
                         />
                         <MatchCardAction
                           tone="quiet"
-                          label={t("bank.matches.keinTreffer")}
+                          label={t("bank.matches.noMatch")}
                           disabled={
                             isCredit ? rejectOutgoingMatch.isPending : rejectMatch.isPending
                           }
                           onClick={() => {
                             const onSettled = {
-                              onSuccess: () => toast.success(t("bank.matches.toast.abgelehnt")),
+                              onSuccess: () => toast.success(t("bank.matches.toast.rejected")),
                               onError: (e: unknown) =>
                                 toast.error(
-                                  t("bank.matches.toast.fehlgeschlagen", {
+                                  t("bank.matches.toast.failed", {
                                     error: errorText(e),
                                   }),
                                 ),
@@ -320,11 +320,11 @@ export function TransactionMatches({
           if (!pair) return;
           const onSettled = {
             onSuccess: () => {
-              toast.success(t("bank.matches.toast.bestaetigt"));
+              toast.success(t("bank.matches.toast.confirmed"));
               setConfirmParam(undefined);
             },
             onError: (e: unknown) =>
-              toast.error(t("bank.matches.toast.fehlgeschlagen", { error: errorText(e) })),
+              toast.error(t("bank.matches.toast.failed", { error: errorText(e) })),
           };
           if (isCredit) {
             confirmOutgoingMatch.mutate(
@@ -380,10 +380,10 @@ function UnlinkMatchButton({
 
   function unlink() {
     const onSettled = {
-      onSuccess: () => toast.success(t("bank.matches.toast.getrennt")),
+      onSuccess: () => toast.success(t("bank.matches.toast.unlinked")),
       onError: (e: unknown) =>
         toast.error(
-          t("bank.matches.toast.fehlgeschlagen", {
+          t("bank.matches.toast.failed", {
             error: errorText(e),
           }),
         ),
@@ -409,15 +409,15 @@ function UnlinkMatchButton({
       <AlertDialogTrigger asChild>
         <MatchCardAction
           tone="quiet"
-          label={t("bank.matches.trennen")}
+          label={t("bank.matches.unlink")}
           disabled={pending || !mayPay}
           title={noPaymentRight}
         />
       </AlertDialogTrigger>
       <AlertDialogContent>
         <AlertDialogHeader>
-          <AlertDialogTitle>{t("bank.matches.trennenDialog.title")}</AlertDialogTitle>
-          <AlertDialogDescription>{t("bank.matches.trennenDialog.desc")}</AlertDialogDescription>
+          <AlertDialogTitle>{t("bank.matches.unlinkDialog.title")}</AlertDialogTitle>
+          <AlertDialogDescription>{t("bank.matches.unlinkDialog.desc")}</AlertDialogDescription>
         </AlertDialogHeader>
         {/* REQUIRED, the same rule as moving an invoice back out of Bezahlt. Unlinking undoes a
             payment: the invoice returns to the chain and the transaction reopens, and the history
@@ -425,8 +425,8 @@ function UnlinkMatchButton({
             size is left blank most of the time. */}
         <div className="space-y-1.5">
           <Label htmlFor="unlink-grund">
-            {t("bank.matches.trennenDialog.grund")}{" "}
-            <span className="text-destructive" title={t("common.form.pflichtfeld")}>
+            {t("bank.matches.unlinkDialog.reason")}{" "}
+            <span className="text-destructive" title={t("common.form.required")}>
               *
             </span>
           </Label>
@@ -434,17 +434,17 @@ function UnlinkMatchButton({
             id="unlink-grund"
             value={reason}
             onChange={(e) => setReason(e.target.value)}
-            placeholder={t("bank.matches.trennenDialog.grundPlaceholder")}
+            placeholder={t("bank.matches.unlinkDialog.reasonPlaceholder")}
           />
         </div>
         <AlertDialogFooter>
-          <AlertDialogCancel>{t("bank.matches.trennenDialog.abbrechen")}</AlertDialogCancel>
+          <AlertDialogCancel>{t("bank.matches.unlinkDialog.cancel")}</AlertDialogCancel>
           <AlertDialogAction
             className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
             disabled={reason.trim() === ""}
             onClick={unlink}
           >
-            {t("bank.matches.trennenDialog.bestaetigen")}
+            {t("bank.matches.unlinkDialog.confirm")}
           </AlertDialogAction>
         </AlertDialogFooter>
       </AlertDialogContent>

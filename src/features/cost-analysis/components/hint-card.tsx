@@ -95,9 +95,7 @@ export function HintCard({
               onOpenManualBooking={onOpenManualBooking}
             />
           ) : (
-            <p className="text-sm text-muted-foreground">
-              {t("reports.aufschluesselung.keineEintraege")}
-            </p>
+            <p className="text-sm text-muted-foreground">{t("reports.breakdown.noEntries")}</p>
           )}
         </DialogContent>
       </Dialog>

@@ -77,7 +77,7 @@ const ALL_COMPANIES = "__alle";
 const YEAR_MIN = 1900;
 const YEAR_MAX = 2999;
 
-const SORT_KEYS = ["zeitraumAsc", "zeitraumDesc", "betragDesc", "betragAsc", "kategorie"] as const;
+const SORT_KEYS = ["periodAsc", "periodDesc", "amountDesc", "amountAsc", "category"] as const;
 type SortKey = (typeof SORT_KEYS)[number];
 
 function isValidYear(raw: string): boolean {
@@ -130,12 +130,12 @@ function propertyOptions(properties: Property[], noLabel: string): ComboboxOptio
 
 function ManualBookingsPage() {
   const { t } = useTranslation();
-  const MONTHS = t("reports.monate", { returnObjects: true }) as string[];
+  const MONTHS = t("reports.months", { returnObjects: true }) as string[];
   const companiesQ = useCompanies();
   const categoriesQ = useCostAnalysisCategories();
   const propertiesQ = useProperties();
   const [search, setSearch] = useState("");
-  const [sorting, setSorting] = useState<SortKey>("zeitraumAsc");
+  const [sorting, setSorting] = useState<SortKey>("periodAsc");
   const [companyId, setCompanyId] = useState<string>(ALL_COMPANIES);
   const [year, setYear] = useState<number>(new Date().getFullYear());
   // The text the user is typing, kept separate from the committed `year`. Every keystroke used to
@@ -195,14 +195,14 @@ function ManualBookingsPage() {
     });
     const sorted = [...filtered];
     sorted.sort((a, b) => {
-      if (sorting === "betragDesc") return Math.abs(b.amount) - Math.abs(a.amount);
-      if (sorting === "betragAsc") return Math.abs(a.amount) - Math.abs(b.amount);
-      if (sorting === "kategorie") {
+      if (sorting === "amountDesc") return Math.abs(b.amount) - Math.abs(a.amount);
+      if (sorting === "amountAsc") return Math.abs(a.amount) - Math.abs(b.amount);
+      if (sorting === "category") {
         return (categoriesById.get(a.category_id)?.name ?? "").localeCompare(
           categoriesById.get(b.category_id)?.name ?? "",
         );
       }
-      if (sorting === "zeitraumDesc") return b.period.localeCompare(a.period);
+      if (sorting === "periodDesc") return b.period.localeCompare(a.period);
       return a.period.localeCompare(b.period);
     });
     return sorted;
@@ -220,12 +220,12 @@ function ManualBookingsPage() {
         </div>
         <div className="flex w-full flex-wrap items-end gap-3 sm:w-auto">
           <div data-tour="manual-bookings-scope" className="w-full space-y-1.5 sm:w-[220px]">
-            <Label>{t("manualBookings.feld.gesellschaft")}</Label>
+            <Label>{t("manualBookings.field.company")}</Label>
             <Combobox
               value={companyId}
               onValueChange={setCompanyId}
               options={[
-                { value: ALL_COMPANIES, label: t("manualBookings.alleGesellschaften") },
+                { value: ALL_COMPANIES, label: t("manualBookings.allCompanies") },
                 ...companies.map((g) => ({
                   value: g.id,
                   label: `${g.code} · ${g.name}`,
@@ -235,7 +235,7 @@ function ManualBookingsPage() {
             />
           </div>
           <div className="w-[100px] space-y-1.5">
-            <Label>{t("manualBookings.feld.jahr")}</Label>
+            <Label>{t("manualBookings.field.year")}</Label>
             <Input
               type="number"
               inputMode="numeric"
@@ -255,7 +255,7 @@ function ManualBookingsPage() {
             />
             {!isValidYear(yearInput) && (
               <p className="text-xs text-amber-700">
-                {t("manualBookings.jahrUngueltig", {
+                {t("manualBookings.yearInvalid", {
                   fromDate: YEAR_MIN,
                   toDate: YEAR_MAX,
                   year: year,
@@ -274,7 +274,7 @@ function ManualBookingsPage() {
       </div>
 
       <p className="mt-4 max-w-3xl rounded-lg border border-border bg-muted/40 p-3 text-xs text-muted-foreground">
-        {t("manualBookings.hinweis")}
+        {t("manualBookings.hint")}
       </p>
 
       {/* #10: search over the note/category/object/company, and a sort that is not just
@@ -288,7 +288,7 @@ function ManualBookingsPage() {
           <Input
             value={search}
             onChange={(e) => setSearch(e.target.value)}
-            placeholder={t("manualBookings.suche")}
+            placeholder={t("manualBookings.search")}
             className="pl-9"
           />
         </div>
@@ -318,14 +318,14 @@ function ManualBookingsPage() {
                 <TableHeader>
                   <TableRow className="bg-muted/40">
                     {companyId === ALL_COMPANIES && (
-                      <TableHead>{t("manualBookings.col.gesellschaft")}</TableHead>
+                      <TableHead>{t("manualBookings.col.company")}</TableHead>
                     )}
-                    <TableHead>{t("manualBookings.col.zeitraum")}</TableHead>
-                    <TableHead>{t("manualBookings.col.kategorie")}</TableHead>
-                    <TableHead>{t("manualBookings.col.objekt")}</TableHead>
-                    <TableHead>{t("manualBookings.col.notiz")}</TableHead>
-                    <TableHead className="text-right">{t("manualBookings.col.betrag")}</TableHead>
-                    <TableHead className="text-right">{t("manualBookings.col.aktionen")}</TableHead>
+                    <TableHead>{t("manualBookings.col.period")}</TableHead>
+                    <TableHead>{t("manualBookings.col.category")}</TableHead>
+                    <TableHead>{t("manualBookings.col.property")}</TableHead>
+                    <TableHead>{t("manualBookings.col.note")}</TableHead>
+                    <TableHead className="text-right">{t("manualBookings.col.amount")}</TableHead>
+                    <TableHead className="text-right">{t("manualBookings.col.actions")}</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
@@ -350,7 +350,7 @@ function ManualBookingsPage() {
                             {r.is_recurring && (
                               <Badge variant="outline" className="gap-1 text-[10px]">
                                 <Repeat className="size-3" />
-                                {t("manualBookings.wiederkehrend")}
+                                {t("manualBookings.recurring")}
                               </Badge>
                             )}
                           </div>
@@ -410,7 +410,7 @@ function ManualBookingsPage() {
                           {r.is_recurring && (
                             <Badge variant="outline" className="gap-1 text-[10px]">
                               <Repeat className="size-3" />
-                              {t("manualBookings.wiederkehrend")}
+                              {t("manualBookings.recurring")}
                             </Badge>
                           )}
                         </div>
@@ -431,7 +431,7 @@ function ManualBookingsPage() {
                       <div className="mt-2 space-y-0.5 text-xs text-muted-foreground">
                         {property && (
                           <div>
-                            {t("manualBookings.col.objekt")}: {property.code}
+                            {t("manualBookings.col.property")}: {property.code}
                           </div>
                         )}
                         {r.note && <div className="truncate">{r.note}</div>}
@@ -472,7 +472,7 @@ function BookingDialog({
   properties: Property[];
 }) {
   const { t } = useTranslation();
-  const MONTHS = t("reports.monate", { returnObjects: true }) as string[];
+  const MONTHS = t("reports.months", { returnObjects: true }) as string[];
   const companiesQ = useCompanies();
   const create = useCreateManualBooking();
   const categoryOptions = useManualCategoryOptions(categories);
@@ -544,13 +544,13 @@ function BookingDialog({
     };
     create.mutate(input, {
       onSuccess: () => {
-        toast.success(t("manualBookings.toast.gespeichert"));
+        toast.success(t("manualBookings.toast.saved"));
         setOpen(false);
         reset();
       },
       onError: (e) =>
         toast.error(
-          t("manualBookings.toast.fehlgeschlagen", {
+          t("manualBookings.toast.failed", {
             error: errorText(e),
           }),
         ),
@@ -572,17 +572,17 @@ function BookingDialog({
       <DialogTrigger asChild>
         <Button size="sm" className="gap-1.5">
           <Plus className="size-4" />
-          {t("manualBookings.neu.button")}
+          {t("manualBookings.create.button")}
         </Button>
       </DialogTrigger>
       <DialogContent className="sm:max-w-lg">
         <DialogHeader>
-          <DialogTitle>{t("manualBookings.neu.title")}</DialogTitle>
-          <DialogDescription>{t("manualBookings.neu.desc")}</DialogDescription>
+          <DialogTitle>{t("manualBookings.create.title")}</DialogTitle>
+          <DialogDescription>{t("manualBookings.create.desc")}</DialogDescription>
         </DialogHeader>
         <div className="space-y-4">
           <div className="space-y-1.5">
-            <Label>{t("manualBookings.feld.gesellschaft")}</Label>
+            <Label>{t("manualBookings.field.company")}</Label>
             <Combobox
               value={companyId}
               onValueChange={setCompanyId}
@@ -594,12 +594,12 @@ function BookingDialog({
             />
           </div>
           <div className="space-y-1.5">
-            <Label>{t("manualBookings.feld.kategorie")}</Label>
+            <Label>{t("manualBookings.field.category")}</Label>
             <Combobox value={categoryId} onValueChange={setCategoryId} options={categoryOptions} />
           </div>
           <div className="grid grid-cols-2 gap-3">
             <div className="space-y-1.5">
-              <Label>{t("manualBookings.feld.monat")}</Label>
+              <Label>{t("manualBookings.field.month")}</Label>
               <Select value={String(month)} onValueChange={(v) => setMonth(Number(v))}>
                 <SelectTrigger>
                   <SelectValue />
@@ -614,7 +614,7 @@ function BookingDialog({
               </Select>
             </div>
             <div className="space-y-1.5">
-              <Label>{t("manualBookings.feld.jahr")}</Label>
+              <Label>{t("manualBookings.field.year")}</Label>
               <Input
                 type="number"
                 value={year}
@@ -623,15 +623,15 @@ function BookingDialog({
             </div>
           </div>
           <div className="space-y-1.5">
-            <Label>{t("manualBookings.feld.objekt")}</Label>
+            <Label>{t("manualBookings.field.property")}</Label>
             <Combobox
               value={propertyId}
               onValueChange={setPropertyId}
-              options={propertyOptions(properties, t("manualBookings.keinObjekt"))}
+              options={propertyOptions(properties, t("manualBookings.noProperty"))}
             />
           </div>
           <div className="space-y-1.5">
-            <Label>{t("manualBookings.feld.betrag")}</Label>
+            <Label>{t("manualBookings.field.amount")}</Label>
             <Input
               value={amount}
               onChange={(e) => setAmount(e.target.value)}
@@ -640,19 +640,19 @@ function BookingDialog({
             />
             {/* The sign rule was enforced but never stated: 0 is rejected, a negative is accepted
                 and silently flips the line in the P&L. */}
-            <p className="text-xs text-muted-foreground">{t("manualBookings.betragHinweis")}</p>
+            <p className="text-xs text-muted-foreground">{t("manualBookings.amountHint")}</p>
           </div>
           <div className="space-y-1.5">
-            <Label>{t("manualBookings.feld.notiz")}</Label>
+            <Label>{t("manualBookings.field.note")}</Label>
             <Textarea value={note} onChange={(e) => setNote(e.target.value)} rows={2} />
           </div>
           <div className="flex items-center justify-between rounded-lg border border-border p-3">
             <div>
               <p className="text-sm font-medium text-foreground">
-                {t("manualBookings.feld.wiederkehrend")}
+                {t("manualBookings.field.recurring")}
               </p>
               <p className="text-xs text-muted-foreground">
-                {t("manualBookings.feld.wiederkehrendHint")}
+                {t("manualBookings.field.recurringHint")}
               </p>
             </div>
             <Switch checked={recurring} onCheckedChange={setRecurring} />
@@ -660,7 +660,7 @@ function BookingDialog({
           {recurring && (
             <div className="grid grid-cols-2 gap-3">
               <div className="space-y-1.5">
-                <Label>{t("manualBookings.feld.bisMonat")}</Label>
+                <Label>{t("manualBookings.field.untilMonth")}</Label>
                 <Select
                   value={endMonth ? String(endMonth) : LEER}
                   onValueChange={(v) => setEndMonth(v === LEER ? null : Number(v))}
@@ -669,7 +669,7 @@ function BookingDialog({
                     <SelectValue />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value={LEER}>{t("manualBookings.offenesEnde")}</SelectItem>
+                    <SelectItem value={LEER}>{t("manualBookings.openEnded")}</SelectItem>
                     {MONTHS.map((m, i) => (
                       <SelectItem key={m} value={String(i + 1)}>
                         {m}
@@ -679,7 +679,7 @@ function BookingDialog({
                 </Select>
               </div>
               <div className="space-y-1.5">
-                <Label>{t("manualBookings.feld.bisJahr")}</Label>
+                <Label>{t("manualBookings.field.untilYear")}</Label>
                 <Input
                   type="number"
                   disabled={!endMonth}
@@ -691,17 +691,17 @@ function BookingDialog({
           )}
         </div>
         {endBeforeStart && (
-          <p className="text-xs text-amber-700">{t("manualBookings.endeVorStart")}</p>
+          <p className="text-xs text-amber-700">{t("manualBookings.endBeforeStart")}</p>
         )}
         {endMonthWithoutYear && (
-          <p className="text-xs text-amber-700">{t("manualBookings.bisJahrFehlt")}</p>
+          <p className="text-xs text-amber-700">{t("manualBookings.endYearMissing")}</p>
         )}
         <DialogFooter>
           <Button variant="outline" onClick={() => setOpen(false)}>
-            {t("assignmentRules.action.abbrechen")}
+            {t("assignmentRules.action.cancel")}
           </Button>
           <Button disabled={invalid || create.isPending} onClick={submit}>
-            {t("manualBookings.neu.speichern")}
+            {t("manualBookings.create.save")}
           </Button>
         </DialogFooter>
       </DialogContent>
@@ -723,7 +723,7 @@ function BookingActions({
   const remove = useSoftDeleteManualBooking();
   const categoryOptions = useManualCategoryOptions(categories);
 
-  const MONTHS = t("reports.monate", { returnObjects: true }) as string[];
+  const MONTHS = t("reports.months", { returnObjects: true }) as string[];
 
   const [editOpen, setEditOpen] = useState(false);
   const [categoryId, setCategoryId] = useState(booking.category_id);
@@ -791,19 +791,19 @@ function BookingActions({
       >
         <DialogTrigger asChild>
           <Button variant="ghost" size="sm">
-            {t("manualBookings.action.bearbeiten")}
+            {t("manualBookings.action.edit")}
           </Button>
         </DialogTrigger>
         <DialogContent className="sm:max-w-md">
           <DialogHeader>
             <DialogTitle>{t("manualBookings.edit.title")}</DialogTitle>
             {booking.is_recurring && (
-              <DialogDescription>{t("manualBookings.edit.wiederkehrendHint")}</DialogDescription>
+              <DialogDescription>{t("manualBookings.edit.recurringHint")}</DialogDescription>
             )}
           </DialogHeader>
           <div className="space-y-4">
             <div className="space-y-1.5">
-              <Label>{t("manualBookings.feld.kategorie")}</Label>
+              <Label>{t("manualBookings.field.category")}</Label>
               <Combobox
                 value={categoryId}
                 onValueChange={setCategoryId}
@@ -814,7 +814,7 @@ function BookingActions({
                 and re-create, which also threw away created_by/created_at. */}
             <div className="grid grid-cols-2 gap-3">
               <div className="space-y-1.5">
-                <Label>{t("manualBookings.feld.monat")}</Label>
+                <Label>{t("manualBookings.field.month")}</Label>
                 <Select value={String(month)} onValueChange={(v) => setMonth(Number(v))}>
                   <SelectTrigger>
                     <SelectValue />
@@ -829,7 +829,7 @@ function BookingActions({
                 </Select>
               </div>
               <div className="space-y-1.5">
-                <Label>{t("manualBookings.feld.jahr")}</Label>
+                <Label>{t("manualBookings.field.year")}</Label>
                 <Input
                   type="number"
                   inputMode="numeric"
@@ -841,15 +841,15 @@ function BookingActions({
               </div>
             </div>
             <div className="space-y-1.5">
-              <Label>{t("manualBookings.feld.objekt")}</Label>
+              <Label>{t("manualBookings.field.property")}</Label>
               <Combobox
                 value={propertyId}
                 onValueChange={setPropertyId}
-                options={propertyOptions(properties, t("manualBookings.keinObjekt"))}
+                options={propertyOptions(properties, t("manualBookings.noProperty"))}
               />
             </div>
             <div className="space-y-1.5">
-              <Label>{t("manualBookings.feld.betrag")}</Label>
+              <Label>{t("manualBookings.field.amount")}</Label>
               <Input
                 value={amount}
                 onChange={(e) => setAmount(e.target.value)}
@@ -857,16 +857,16 @@ function BookingActions({
               />
             </div>
             <div className="space-y-1.5">
-              <Label>{t("manualBookings.feld.notiz")}</Label>
+              <Label>{t("manualBookings.field.note")}</Label>
               <Textarea value={note} onChange={(e) => setNote(e.target.value)} rows={2} />
             </div>
             <div className="flex items-center justify-between rounded-lg border border-border p-3">
               <div>
                 <p className="text-sm font-medium text-foreground">
-                  {t("manualBookings.feld.wiederkehrend")}
+                  {t("manualBookings.field.recurring")}
                 </p>
                 <p className="text-xs text-muted-foreground">
-                  {t("manualBookings.feld.wiederkehrendHint")}
+                  {t("manualBookings.field.recurringHint")}
                 </p>
               </div>
               <Switch checked={recurring} onCheckedChange={setRecurring} />
@@ -874,7 +874,7 @@ function BookingActions({
             {recurring && (
               <div className="grid grid-cols-2 gap-3">
                 <div className="space-y-1.5">
-                  <Label>{t("manualBookings.feld.bisMonat")}</Label>
+                  <Label>{t("manualBookings.field.untilMonth")}</Label>
                   <Select
                     value={endMonth ? String(endMonth) : LEER}
                     onValueChange={(v) => setEndMonth(v === LEER ? null : Number(v))}
@@ -883,7 +883,7 @@ function BookingActions({
                       <SelectValue />
                     </SelectTrigger>
                     <SelectContent>
-                      <SelectItem value={LEER}>{t("manualBookings.offenesEnde")}</SelectItem>
+                      <SelectItem value={LEER}>{t("manualBookings.openEnded")}</SelectItem>
                       {MONTHS.map((m, i) => (
                         <SelectItem key={m} value={String(i + 1)}>
                           {m}
@@ -893,7 +893,7 @@ function BookingActions({
                   </Select>
                 </div>
                 <div className="space-y-1.5">
-                  <Label>{t("manualBookings.feld.bisJahr")}</Label>
+                  <Label>{t("manualBookings.field.untilYear")}</Label>
                   <Input
                     type="number"
                     inputMode="numeric"
@@ -909,15 +909,15 @@ function BookingActions({
             {/* Say WHY save is disabled. A greyed-out button with no reason is the same dead end
                 as the silent revert this dialog used to produce. */}
             {endBeforeStart && (
-              <p className="text-xs text-amber-700">{t("manualBookings.endeVorStart")}</p>
+              <p className="text-xs text-amber-700">{t("manualBookings.endBeforeStart")}</p>
             )}
             {endMonthWithoutYear && (
-              <p className="text-xs text-amber-700">{t("manualBookings.bisJahrFehlt")}</p>
+              <p className="text-xs text-amber-700">{t("manualBookings.endYearMissing")}</p>
             )}
           </div>
           <DialogFooter>
             <Button variant="outline" onClick={() => setEditOpen(false)}>
-              {t("assignmentRules.action.abbrechen")}
+              {t("assignmentRules.action.cancel")}
             </Button>
             <Button
               disabled={invalid || update.isPending}
@@ -940,12 +940,12 @@ function BookingActions({
                   },
                   {
                     onSuccess: () => {
-                      toast.success(t("manualBookings.toast.gespeichert"));
+                      toast.success(t("manualBookings.toast.saved"));
                       setEditOpen(false);
                     },
                     onError: (e) =>
                       toast.error(
-                        t("manualBookings.toast.fehlgeschlagen", {
+                        t("manualBookings.toast.failed", {
                           error: errorText(e),
                         }),
                       ),
@@ -953,7 +953,7 @@ function BookingActions({
                 )
               }
             >
-              {t("manualBookings.edit.speichern")}
+              {t("manualBookings.edit.save")}
             </Button>
           </DialogFooter>
         </DialogContent>
@@ -971,27 +971,27 @@ function BookingActions({
         </AlertDialogTrigger>
         <AlertDialogContent>
           <AlertDialogHeader>
-            <AlertDialogTitle>{t("manualBookings.loeschen.title")}</AlertDialogTitle>
+            <AlertDialogTitle>{t("manualBookings.delete.title")}</AlertDialogTitle>
             <AlertDialogDescription>
               {booking.is_recurring
-                ? t("manualBookings.loeschen.descWiederkehrend")
-                : t("manualBookings.loeschen.desc")}
+                ? t("manualBookings.delete.descRecurring")
+                : t("manualBookings.delete.desc")}
             </AlertDialogDescription>
           </AlertDialogHeader>
           {/* Labelled, like every other field here. A placeholder disappears the moment you type
               and is not a label for a screen reader — and this field fills the "Grund" column on
               /papierkorb, which is empty for half the records in it. */}
           <div className="space-y-1.5">
-            <Label htmlFor={reasonId}>{t("manualBookings.feld.grund")}</Label>
+            <Label htmlFor={reasonId}>{t("manualBookings.field.reason")}</Label>
             <Input
               id={reasonId}
               value={reason}
               onChange={(e) => setReason(e.target.value)}
-              placeholder={t("assignmentRules.action.grundPlaceholder")}
+              placeholder={t("assignmentRules.action.reasonPlaceholder")}
             />
           </div>
           <AlertDialogFooter>
-            <AlertDialogCancel>{t("assignmentRules.action.abbrechen")}</AlertDialogCancel>
+            <AlertDialogCancel>{t("assignmentRules.action.cancel")}</AlertDialogCancel>
             <AlertDialogAction
               disabled={!reason.trim()}
               className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
@@ -999,10 +999,10 @@ function BookingActions({
                 remove.mutate(
                   { id: booking.id, reason: reason.trim() },
                   {
-                    onSuccess: () => toast.success(t("manualBookings.toast.geloescht")),
+                    onSuccess: () => toast.success(t("manualBookings.toast.deleted")),
                     onError: (e) =>
                       toast.error(
-                        t("manualBookings.toast.fehlgeschlagen", {
+                        t("manualBookings.toast.failed", {
                           error: errorText(e),
                         }),
                       ),
@@ -1010,7 +1010,7 @@ function BookingActions({
                 )
               }
             >
-              {t("manualBookings.loeschen.confirm")}
+              {t("manualBookings.delete.confirm")}
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>

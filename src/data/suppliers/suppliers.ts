@@ -1,6 +1,7 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 
 import { TABLE } from "@/config/tables";
+import { queryKeys } from "@/data/keys";
 import { STALE, actorEmail, sb } from "@/data/client";
 import { fetchAllRows, requiredReason } from "@/data/shared";
 import { compactIBAN, isPayableIBAN } from "@/lib/data/format";
@@ -22,7 +23,7 @@ import type { Supplier } from "@/lib/data/types";
 export function useSuppliers(opts?: { includeDeleted?: boolean }) {
   const includeDeleted = opts?.includeDeleted ?? false;
   return useQuery({
-    queryKey: ["lieferanten", { includeDeleted }],
+    queryKey: ["suppliers", { includeDeleted }],
     staleTime: STALE,
     queryFn: async (): Promise<Supplier[]> => {
       return fetchAllRows<Supplier>((from, to, withCount) => {
@@ -42,7 +43,7 @@ export function useSuppliers(opts?: { includeDeleted?: boolean }) {
 
 export function useSupplier(id: string) {
   return useQuery({
-    queryKey: ["lieferant", id],
+    queryKey: queryKeys.suppliers.one(id),
     enabled: !!id,
     staleTime: STALE,
     queryFn: async (): Promise<Supplier | null> => {
@@ -111,8 +112,7 @@ async function mirrorIbanToBankAccount(
   if (error) console.error("supplier_bank_accounts mirror failed", error);
 }
 
-// Lieferant (Kreditor) manuell anlegen. `normalized_name` stays pipeline-owned (single-source in
-// Python), so it is not written here. Returns the new row.
+// `normalized_name` stays pipeline-owned (single-source in Python) and is never written here.
 export function useCreateSupplier() {
   const qc = useQueryClient();
   return useMutation({
@@ -183,7 +183,7 @@ export function useCreateSupplier() {
       return supplier;
     },
     onSuccess: () => {
-      qc.invalidateQueries({ queryKey: ["lieferanten"] });
+      qc.invalidateQueries({ queryKey: queryKeys.suppliers.all });
       qc.invalidateQueries({ queryKey: ["supplier-bank-accounts"] });
       qc.invalidateQueries({ queryKey: ["invoice-bank-accounts"] });
       qc.invalidateQueries({ queryKey: ["supplier-iban-history"] });
@@ -191,7 +191,6 @@ export function useCreateSupplier() {
   });
 }
 
-// Lieferant-Stammdaten aktualisieren.
 export function useUpdateSupplier(supplierId: string) {
   const qc = useQueryClient();
   return useMutation({
@@ -209,15 +208,14 @@ export function useUpdateSupplier(supplierId: string) {
       }
     },
     onSuccess: () => {
-      qc.invalidateQueries({ queryKey: ["lieferant", supplierId] });
-      qc.invalidateQueries({ queryKey: ["lieferanten"] });
+      qc.invalidateQueries({ queryKey: queryKeys.suppliers.one(supplierId) });
+      qc.invalidateQueries({ queryKey: queryKeys.suppliers.all });
       qc.invalidateQueries({ queryKey: ["supplier-bank-accounts"] });
       qc.invalidateQueries({ queryKey: ["invoice-bank-accounts"] });
     },
   });
 }
 
-// Lieferant löschen (Soft-Delete).
 /**
  * Hide a supplier's bank accounts along with the supplier, or bring them back with it.
  *
@@ -243,7 +241,6 @@ async function softDeleteBankAccounts(
   if (error) console.error("supplier_bank_accounts soft delete failed", error);
 }
 
-// Lieferant löschen (Soft-Delete).
 export function useSoftDeleteSupplier(supplierId: string) {
   const qc = useQueryClient();
   return useMutation({
@@ -262,7 +259,7 @@ export function useSoftDeleteSupplier(supplierId: string) {
       await softDeleteBankAccounts([supplierId], actor, requiredReason(reason), now);
     },
     onSuccess: () => {
-      qc.invalidateQueries({ queryKey: ["lieferanten"] });
+      qc.invalidateQueries({ queryKey: queryKeys.suppliers.all });
       qc.invalidateQueries({ queryKey: ["supplier-bank-accounts"] });
       qc.invalidateQueries({ queryKey: ["invoice-bank-accounts"] });
     },
@@ -296,7 +293,7 @@ export function useBulkSetSuppliersDeleted() {
       await softDeleteBankAccounts(args.ids, args.delete ? actor : null, reason, moment);
     },
     onSuccess: () => {
-      qc.invalidateQueries({ queryKey: ["lieferanten"] });
+      qc.invalidateQueries({ queryKey: queryKeys.suppliers.all });
       qc.invalidateQueries({ queryKey: ["supplier-duplicates"] });
     },
   });
@@ -324,8 +321,8 @@ export function useRestoreSupplier(supplierId: string) {
       await softDeleteBankAccounts([supplierId], null, null, null);
     },
     onSuccess: () => {
-      qc.invalidateQueries({ queryKey: ["lieferanten"] });
-      qc.invalidateQueries({ queryKey: ["lieferant", supplierId] });
+      qc.invalidateQueries({ queryKey: queryKeys.suppliers.all });
+      qc.invalidateQueries({ queryKey: queryKeys.suppliers.one(supplierId) });
       qc.invalidateQueries({ queryKey: ["supplier-bank-accounts"] });
       qc.invalidateQueries({ queryKey: ["invoice-bank-accounts"] });
       qc.invalidateQueries({ queryKey: ["supplier-duplicates"] });

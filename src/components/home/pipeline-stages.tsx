@@ -7,38 +7,21 @@ import { overviewPeriodRange } from "@/lib/data/format";
 import { useDocumentsKanbanCounts } from "@/data";
 import { useTranslation } from "@/lib/i18n";
 
-/**
- * WHERE THE PILE IS. The document lifecycle as one row of tiles, so the overview answers "what is
- * the state of the whole system" rather than only "how much is there".
- *
- * SIX STEPS, NOT NINE. WORKFLOW_REIHENFOLGE has nine statuses, three of which are approval levels
- * (assistenz, stufe2, vorgesetzter) that differ by who signed rather than by where the document
- * is. They are summed into one "approved" step, because a row with three near-identical labels
- * stops being readable at a glance. The mapping is explicit below so the sum is auditable: every
- * one of the nine lands in exactly one step, so the tiles total the invoice count and cannot
- * silently drop a status.
- */
-/**
- * PLAIN TILES, NOT A PAINT CHART. The labels name the steps and the order carries the progression,
- * so colour has no work to do here. Six filled blocks inside a white panel just rebuild the quilt
- * one level down, so these are hairline cells and the beige is left to the hover state.
- */
+// Nine workflow_status values summed into six tiles; the mapping below is explicit so the sum stays auditable.
 const TILE = "border border-border";
 const TILE_LABEL = "text-muted-foreground";
 
 const STAGES: { key: string; statuses: string[]; tileCls: string; labelCls: string }[] = [
   { key: "received", statuses: ["received"], tileCls: TILE, labelCls: TILE_LABEL },
   {
-    key: "inPruefung",
-    // Rückfrage is a held document, not a separate place in the chain: it is in review with a
-    // question outstanding, so it counts where a person would look for it.
+    key: "inReview",
     statuses: ["in_review", "query"],
     tileCls: TILE,
     labelCls: TILE_LABEL,
   },
   {
-    key: "freigegeben",
-    statuses: ["approved_first", "freigegeben_stufe2", "approved_final"],
+    key: "approved",
+    statuses: ["approved_first", "approved_final"],
     tileCls: TILE,
     labelCls: TILE_LABEL,
   },

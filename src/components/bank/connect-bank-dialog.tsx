@@ -86,8 +86,8 @@ export function ConnectBankDialog() {
 
       <DialogContent className="max-w-lg">
         <DialogHeader>
-          <DialogTitle>{t("bankConnections.connectDialog.titel")}</DialogTitle>
-          <DialogDescription>{t("bankConnections.connectDialog.beschreibung")}</DialogDescription>
+          <DialogTitle>{t("bankConnections.connectDialog.title")}</DialogTitle>
+          <DialogDescription>{t("bankConnections.connectDialog.description")}</DialogDescription>
         </DialogHeader>
 
         {!result ? (
@@ -96,14 +96,14 @@ export function ConnectBankDialog() {
             <div className="rounded-md border border-amber-300/60 bg-amber-50 p-3 dark:border-amber-500/30 dark:bg-amber-950/30">
               <p className="flex items-center gap-2 text-sm font-medium text-amber-900 dark:text-amber-200">
                 <AlertTriangle className="size-4 shrink-0" />
-                {t("bankConnections.connectDialog.warnungTitel")}
+                {t("bankConnections.connectDialog.warningTitle")}
               </p>
               <ol className="mt-2 list-decimal space-y-1 pl-5 text-sm text-amber-900/90 dark:text-amber-200/90">
                 <li>{t("bankConnections.connectDialog.checkbox1")}</li>
                 <li>{t("bankConnections.connectDialog.checkbox2")}</li>
               </ol>
               <p className="mt-2 text-xs text-amber-900/80 dark:text-amber-200/80">
-                {t("bankConnections.connectDialog.warnungHinweis")}
+                {t("bankConnections.connectDialog.warningHint")}
               </p>
             </div>
 
@@ -113,10 +113,10 @@ export function ConnectBankDialog() {
                 id="customer-ip"
                 value={customerIp}
                 onChange={(e) => setCustomerIp(e.target.value)}
-                placeholder={t("bankConnections.connectDialog.ipPlatzhalter")}
+                placeholder={t("bankConnections.connectDialog.ipPlaceholder")}
               />
               <p className="text-xs text-muted-foreground">
-                {t("bankConnections.connectDialog.ipHinweis")}
+                {t("bankConnections.connectDialog.ipHint")}
               </p>
             </div>
 
@@ -127,15 +127,13 @@ export function ConnectBankDialog() {
                 className="mt-0.5"
               />
               <span className="text-muted-foreground">
-                {t("bankConnections.connectDialog.bestaetigung")}
+                {t("bankConnections.connectDialog.confirmation")}
               </span>
             </label>
           </div>
         ) : (
           <div className="space-y-3">
-            <p className="text-sm text-foreground">
-              {t("bankConnections.connectDialog.geoeffnet")}
-            </p>
+            <p className="text-sm text-foreground">{t("bankConnections.connectDialog.opened")}</p>
             {result.webformUrl && (
               // Re-opening invalidates the link, so this is a copy target, not a second "open".
               <div className="space-y-1">
@@ -146,7 +144,7 @@ export function ConnectBankDialog() {
                   onFocus={(e) => e.currentTarget.select()}
                 />
                 <p className="text-xs text-amber-700 dark:text-amber-400">
-                  {t("bankConnections.connectDialog.einmalig")}
+                  {t("bankConnections.connectDialog.oneTime")}
                 </p>
               </div>
             )}
@@ -158,12 +156,12 @@ export function ConnectBankDialog() {
             <Button onClick={() => void begin()} disabled={!acknowledged || start.isPending}>
               <ExternalLink className="size-4" />
               {start.isPending
-                ? t("bankConnections.connectDialog.starte")
-                : t("bankConnections.connectDialog.starten")}
+                ? t("bankConnections.connectDialog.starting")
+                : t("bankConnections.connectDialog.start")}
             </Button>
           ) : (
             <Button variant="secondary" onClick={() => setOpen(false)}>
-              {t("bankConnections.connectDialog.schliessen")}
+              {t("bankConnections.connectDialog.close")}
             </Button>
           )}
         </DialogFooter>

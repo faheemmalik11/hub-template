@@ -51,7 +51,7 @@ export async function buildIntentClassifierConfig(): Promise<IntentClassifierCon
       apiKey: await requireOpenAiKey(),
       model: process.env.OPENAI_NL_SEARCH_INTENT_MODEL || DEFAULT_MODEL,
     }),
-    promptExamples: { companyCode: "STAY", supplierName: "E.ON" },
+    promptExamples: { companyCode: "ACME", supplierName: "E.ON" },
     unassignedCompanyCode: "NZO",
     workflowSteps,
   };

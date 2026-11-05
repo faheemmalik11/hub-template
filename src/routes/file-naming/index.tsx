@@ -56,7 +56,7 @@ function FileNamingGuard() {
 // fields buildSuggestedFilename reads are set; the rest are irrelevant here.
 const PREVIEW_DOCUMENT = {
   document_date: "2026-03-15",
-  company_code: "STAY",
+  company_code: "ACME",
   issuer: "Müller Sanitärinstallation",
   service_description: "Sanitär",
   cost_category: "Instandhaltung",
@@ -263,14 +263,14 @@ function SettingsForm({ settings, canEdit }: { settings: FilenameSettings; canEd
 
         {/* #5 + #7: forward-only, and one convention for the whole Hub rather than per company. */}
         <p className="rounded-md border border-border bg-muted/40 px-3 py-2 text-xs text-muted-foreground">
-          {t("fileNaming.wirkungHinweis")}
+          {t("fileNaming.effectHint")}
         </p>
 
         {/* #3: updated_by/updated_at were collected on every save and shown nowhere. */}
         {settings.updated_at && (
           <p className="text-xs text-muted-foreground">
-            {t("fileNaming.zuletztGeaendert", {
-              who: settings.updated_by ?? t("fileNaming.unbekannt"),
+            {t("fileNaming.lastChangedBy", {
+              who: settings.updated_by ?? t("fileNaming.unknown"),
               when: formatDateTime(settings.updated_at),
             })}
           </p>
@@ -279,10 +279,10 @@ function SettingsForm({ settings, canEdit }: { settings: FilenameSettings; canEd
         {/* #2: the stored convention had drifted from the specified one, silently and irreversibly. */}
         {differsFromStandard && (
           <div className="flex flex-wrap items-center justify-between gap-3 rounded-md border border-amber-300 bg-amber-50 px-3 py-2 text-xs text-amber-900">
-            <span>{t("fileNaming.abweichung")}</span>
+            <span>{t("fileNaming.deviation")}</span>
             {canEdit && (
               <Button variant="outline" size="sm" onClick={resetToDefault}>
-                {t("fileNaming.standardWiederherstellen")}
+                {t("fileNaming.restoreDefaults")}
               </Button>
             )}
           </div>
@@ -306,7 +306,7 @@ function SettingsForm({ settings, canEdit }: { settings: FilenameSettings; canEd
                 aria-invalid={separatorInvalid}
               />
               {separatorInvalid && (
-                <p className="text-xs text-amber-700">{t("fileNaming.trennzeichenUngueltig")}</p>
+                <p className="text-xs text-amber-700">{t("fileNaming.separatorInvalid")}</p>
               )}
             </div>
             {SHOW_VAT_MARKER && (
@@ -322,14 +322,10 @@ function SettingsForm({ settings, canEdit }: { settings: FilenameSettings; canEd
                   aria-invalid={vatSuffixInvalid}
                 />
                 {vatSuffixInvalid && (
-                  <p className="text-xs text-amber-700">
-                    {t("fileNaming.ustKennzeichenUngueltig")}
-                  </p>
+                  <p className="text-xs text-amber-700">{t("fileNaming.vatSuffixInvalid")}</p>
                 )}
                 {/* #8: the joiner is a hardcoded "_", not the separator above. */}
-                <p className="text-xs text-muted-foreground">
-                  {t("fileNaming.ustKennzeichenHinweis")}
-                </p>
+                <p className="text-xs text-muted-foreground">{t("fileNaming.vatSuffixHint")}</p>
               </div>
             )}
 
