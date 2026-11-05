@@ -15,7 +15,7 @@
 //
 // PUBLIC endpoint: verify_jwt = false in config.toml (see the [functions.payment-callback] entry
 // added alongside bank-callback's).
-import { getBanksapiForPayments } from "../_shared/adapters/banksapi/client.ts";
+import { resolveBankingAdapter } from "../_shared/tenant-config.ts";
 import { applyPaymentStatus } from "../_shared/payment-status.ts";
 import { serviceClient } from "../_shared/supabase.ts";
 import { corsHeaders } from "../_shared/cors.ts";
@@ -118,8 +118,8 @@ Deno.serve(async (req) => {
       });
     }
 
-    // Authoritative check — never trust the query string for the outcome itself.
-    const result = await getBanksapiForPayments().getPaymentStatus(
+    const adapter = await resolveBankingAdapter();
+    const result = await adapter.getPaymentStatus(
       order.provider_access_ref,
       order.provider_payment_ref,
     );

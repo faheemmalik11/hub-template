@@ -141,29 +141,31 @@ passed at each call site, not read from `tenant_locale_settings()`. See Phase G.
 
 ## Phase G — close the loop: make the adapters and resolver actually get called
 
-Not started. Everything above built the pieces; nothing wires them in yet. Right now:
-- `bank-connect`, `bank-sync`, `bank-disconnect`, `payment-initiate`, `payment-callback` all still
-  call `getBanksapi()`/`getBanksapiForPayments()` directly — hardcoded to BANKSapi, same as before
-  Phase B existed. `resolveBankingAdapter()` and `banksapiAdapter()` are never imported by any of
-  them.
-- `resolveCardAdapter()`/`pleoCardAdapter()` are in the same state — nothing calls them.
+**Small half done.** `bank-connect`, `bank-disconnect`, `payment-initiate` and `payment-callback`
+now call `resolveBankingAdapter()` instead of `getBanksapi()`/`getBanksapiForPayments()` directly.
+This needed more than swapping an import: `IBankingAdapter` only covered `listAccounts`/
+`listTransactions` (bank-sync's needs), so it gained `mode`, `paymentMode`, `createAccessSession`,
+`deleteAccess`, `initiatePayment` and `getPaymentStatus`, each implemented on `banksapiAdapter()`
+against the existing `BanksapiWrapper`/`BanksapiPaymentWrapper`. The two payment methods still read
+their own independent `BANKSAPI_PAYMENT_MODE` switch through `paymentMode`, deliberately kept apart
+from `mode` (the read-side switch), matching the separation `client.ts` already documents.
+
+Still open:
+- `bank-sync` still calls `getBanksapi()` directly — see the large/risky item below, deliberately
+  not bundled into the above.
+- `resolveCardAdapter()`/`pleoCardAdapter()` — nothing calls them yet.
 - The locale parser in `normalize.ts`/`format.ts` is wired to `createLocaleParser`, but always with
   the hardcoded `DEFAULT_LOCALE_SETTINGS`, never with `tenantLocaleSettings()`.
 
-Two very different sizes of work hide inside this one phase:
-
-- **Small, mechanical:** swapping `getBanksapi()` for `await resolveBankingAdapter()` and
-  `DEFAULT_LOCALE_SETTINGS` for `await tenantLocaleSettings()` in `normalize.ts`'s/`format.ts`'s
-  call sites. A few lines each.
-- **Large, high-risk, a separate future phase on its own — do not treat as part of the same pass:**
-  `bank-sync.ts`'s actual account and transaction logic (the matching, the dedup maps, the whole
-  function body) operates throughout on BANKSapi-specific fields — `produktId`, `bankprodukte`,
-  `kontoumsaetze` shapes — not on `GenericBankAccount`/`GenericBankTransaction`. Migrating that
-  function to genuinely run through `IBankingAdapter` instead of calling the BANKSapi client
-  directly means rewriting most of the function's body against the generic shape, not adding one
-  import. Given Phase C2 only just finished reworking this exact function's dedup logic, doing a
-  second large rewrite of it immediately after is itself a risk worth weighing separately, not
-  bundling in.
+**Large, high-risk, a separate future phase on its own — do not treat as part of the same pass:**
+`bank-sync.ts`'s actual account and transaction logic (the matching, the dedup maps, the whole
+function body) operates throughout on BANKSapi-specific fields — `produktId`, `bankprodukte`,
+`kontoumsaetze` shapes — not on `GenericBankAccount`/`GenericBankTransaction`. Migrating that
+function to genuinely run through `IBankingAdapter` instead of calling the BANKSapi client
+directly means rewriting most of the function's body against the generic shape, not adding one
+import. Given Phase C2 only just finished reworking this exact function's dedup logic, doing a
+second large rewrite of it immediately after is itself a risk worth weighing separately, not
+bundling in.
 
 **Done when** `grep -rn "getBanksapi\b" supabase/functions` only turns up the one function that
 *implements* `banksapiAdapter()` itself, every other Edge Function calls through the resolver, and

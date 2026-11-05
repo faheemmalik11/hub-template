@@ -26,14 +26,52 @@ export interface GenericBankTransaction {
   raw: Record<string, unknown>;
 }
 
+export interface GenericAccessSession {
+  webformUrl: string;
+  accessRef: string;
+}
+
+export interface GenericPaymentRequest {
+  recipientIban: string;
+  recipientBic?: string;
+  recipientName: string;
+  amount: number;
+  currency: string;
+  reference: string;
+  endToEndId: string;
+}
+
+export interface GenericPaymentSession {
+  paymentRef: string;
+  status: string;
+  webformUrl?: string;
+}
+
+export interface GenericPaymentStatus {
+  status: string;
+  reason?: string;
+}
+
 export interface IBankingAdapter {
   readonly providerKey: string;
+  readonly mode: "mock" | "live";
+  readonly paymentMode: "mock" | "live";
   listAccounts(accessRef: string): Promise<GenericBankAccount[]>;
   listTransactions(
     accessRef: string,
     accountRef: string,
     since: string | null,
   ): Promise<GenericBankTransaction[]>;
+  createAccessSession(callbackUrl: string, customerIp: string): Promise<GenericAccessSession>;
+  deleteAccess(accessRef: string): Promise<void>;
+  initiatePayment(
+    accessRef: string,
+    accountRef: string,
+    request: GenericPaymentRequest,
+    callbackUrl: string,
+    customerIp: string,
+  ): Promise<GenericPaymentSession>;
+  getPaymentStatus(accessRef: string, paymentRef: string): Promise<GenericPaymentStatus>;
 }
 
 export interface CardSpender {

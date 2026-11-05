@@ -20,11 +20,9 @@
 // bankAccountId is which of the company's own connected accounts pays -- deliberately not
 // defaulted/guessed: there is no "default payment account per company" concept yet (see
 // docs/BANKSAPI_PAYMENT_INITIATION.md open questions), so the caller must say which one.
-import {
-  getBanksapiForPayments,
-  isPublicIpv4,
-  type BanksapiPaymentRequest,
-} from "../_shared/adapters/banksapi/client.ts";
+import { isPublicIpv4 } from "../_shared/adapters/banksapi/client.ts";
+import type { GenericPaymentRequest } from "../_shared/banking-adapter.ts";
+import { resolveBankingAdapter } from "../_shared/tenant-config.ts";
 import { applyPaymentStatus } from "../_shared/payment-status.ts";
 import {
   callerEmailFromAuthHeader,
@@ -57,6 +55,7 @@ Deno.serve(async (req) => {
   const db: Db = serviceClient();
 
   try {
+    const adapter = await resolveBankingAdapter();
     const caller = await requirePaymentRight(db, callerEmailFromAuthHeader(req));
 
     const body = await req.json().catch(() => ({}));
@@ -249,7 +248,7 @@ Deno.serve(async (req) => {
         // True if EITHER the paying account is itself a sandbox account OR the payment mode
         // (BANKSAPI_PAYMENT_MODE, independent of the read-side BANKSAPI_MODE) is mock — a mock
         // payment must never read as "real" just because it was made from a live-looking account.
-        is_sandbox: bankAccount.is_sandbox || getBanksapiForPayments().mode === "mock",
+        is_sandbox: bankAccount.is_sandbox || adapter.paymentMode === "mock",
         idempotency_key: idempotencyKey,
         recipient_iban_changed_recently: ibanChangedRecently,
         fraud_flags: ibanChangedRecently
@@ -262,7 +261,7 @@ Deno.serve(async (req) => {
       .single();
     if (draftError) throw new Error(`payment_orders insert failed: ${draftError.message}`);
 
-    const paymentRequest: BanksapiPaymentRequest = {
+    const paymentRequest: GenericPaymentRequest = {
       recipientIban,
       recipientBic: recipientBic ?? undefined,
       recipientName: supplier.name,
@@ -285,7 +284,7 @@ Deno.serve(async (req) => {
 
     let session;
     try {
-      session = await getBanksapiForPayments().initiatePayment(
+      session = await adapter.initiatePayment(
         accessId,
         bankAccount.iban,
         paymentRequest,
@@ -310,7 +309,7 @@ Deno.serve(async (req) => {
       .from(TABLE.paymentOrders)
       .update({
         status: session.status,
-        provider_payment_ref: session.paymentId,
+        provider_payment_ref: session.paymentRef,
         authorized_at:
           session.status === "authorized" || session.status === "executed" ? now : null,
         updated_at: new Date().toISOString(),
@@ -322,22 +321,18 @@ Deno.serve(async (req) => {
 
     const { error: historyError } = await db.from(TABLE.documentHistory).insert({
       document_id: invoice.id,
-      type: "zahlung_ausgeloest",
+      type: "payment_initiated",
       text: `Zahlung über BANKSapi ausgelöst (${supplier.name ?? "Lieferant"}, ${draft.payment_reference})`,
       actor,
     });
     if (historyError)
       console.warn("payment-initiate: invoice_history insert failed:", historyError.message);
 
-    // Mock mode has no real webform for a customer to complete (see docs/BANKSAPI_PAYMENT_INITIATION.md
-    // §5) -- there is nothing for the SCA handoff to wait on, so auto-complete immediately via the
-    // SAME finalization path payment-callback uses, rather than leaving every mock payment stuck at
-    // pending_sca until someone manually curls the callback. Deliberately gated on
-    // getBanksapiForPayments().mode, not BANKSAPI_MODE -- see the mode-decoupling note in banksapi.ts.
+    // Mock payment mode has no webform to wait on, so it auto-completes via payment-callback's own path (docs/BANKSAPI_PAYMENT_INITIATION.md §5).
     let finalOrder = updated;
     let responseWebformUrl: string | undefined = session.webformUrl;
-    if (getBanksapiForPayments().mode === "mock") {
-      const result = await getBanksapiForPayments().getPaymentStatus(accessId, session.paymentId);
+    if (adapter.paymentMode === "mock") {
+      const result = await adapter.getPaymentStatus(accessId, session.paymentRef);
       await applyPaymentStatus(db, updated, result);
       const { data: refreshed } = await db
         .from(TABLE.paymentOrders)
@@ -345,7 +340,7 @@ Deno.serve(async (req) => {
         .eq("id", draft.id)
         .maybeSingle();
       finalOrder = refreshed ?? updated;
-      responseWebformUrl = undefined; // nothing to open — already resolved
+      responseWebformUrl = undefined;
     }
 
     return jsonResponse({ paymentOrder: finalOrder, webformUrl: responseWebformUrl });

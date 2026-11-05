@@ -1,5 +1,12 @@
-import { getBanksapi } from "./client.ts";
-import type { GenericBankAccount, GenericBankTransaction, IBankingAdapter } from "../../banking-adapter.ts";
+import { getBanksapi, getBanksapiForPayments } from "./client.ts";
+import type {
+  GenericAccessSession,
+  GenericBankAccount,
+  GenericBankTransaction,
+  GenericPaymentSession,
+  GenericPaymentStatus,
+  IBankingAdapter,
+} from "../../banking-adapter.ts";
 
 function toGenericAccount(a: {
   produktId: string;
@@ -57,8 +64,11 @@ function toGenericTransaction(t: {
 
 export function banksapiAdapter(): IBankingAdapter {
   const api = getBanksapi();
+  const payments = getBanksapiForPayments();
   return {
     providerKey: "banksapi",
+    mode: api.mode,
+    paymentMode: payments.mode,
     async listAccounts(accessRef) {
       const accesses = await api.getBankAccesses();
       const access = accesses.find((a) => a.accessId === accessRef);
@@ -69,6 +79,36 @@ export function banksapiAdapter(): IBankingAdapter {
         from: since,
       });
       return transactions.map(toGenericTransaction);
+    },
+    async createAccessSession(callbackUrl, customerIp): Promise<GenericAccessSession> {
+      const session = await api.createBankAccessSession(callbackUrl, customerIp);
+      return { webformUrl: session.webformUrl, accessRef: session.accessId };
+    },
+    async deleteAccess(accessRef) {
+      await api.deleteBankAccess(accessRef);
+    },
+    async initiatePayment(
+      accessRef,
+      accountRef,
+      request,
+      callbackUrl,
+      customerIp,
+    ): Promise<GenericPaymentSession> {
+      const session = await payments.initiatePayment(
+        accessRef,
+        accountRef,
+        request,
+        callbackUrl,
+        customerIp,
+      );
+      return {
+        paymentRef: session.paymentId,
+        status: session.status,
+        webformUrl: session.webformUrl,
+      };
+    },
+    async getPaymentStatus(accessRef, paymentRef): Promise<GenericPaymentStatus> {
+      return await payments.getPaymentStatus(accessRef, paymentRef);
     },
   };
 }

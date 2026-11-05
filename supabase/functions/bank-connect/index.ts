@@ -2,11 +2,8 @@
 // webform URL the user opens to authorize their bank. Creates a 'pending' connection
 // row. No secrets reach the frontend; the browser only receives the webform URL.
 // Body: { callbackUrl?: string, customerIp?: string }.
-import {
-  getBanksapi,
-  isPublicIpv4,
-  isSandboxConnection,
-} from "../_shared/adapters/banksapi/client.ts";
+import { isPublicIpv4, isSandboxConnection } from "../_shared/adapters/banksapi/client.ts";
+import { resolveBankingAdapter } from "../_shared/tenant-config.ts";
 import { serviceClient } from "../_shared/supabase.ts";
 import { corsHeaders, jsonResponse } from "../_shared/cors.ts";
 import { callerEmailFromAuthHeader } from "../_shared/payment-auth.ts";
@@ -43,13 +40,13 @@ Deno.serve(async (req) => {
     const forwarded = (req.headers.get("x-forwarded-for") ?? "").split(",").map((s) => s.trim());
     const customerIp = body.customerIp ?? forwarded.find(isPublicIpv4) ?? "";
 
-    const api = getBanksapi();
-    const session = await api.createBankAccessSession(callbackUrl, customerIp);
+    const adapter = await resolveBankingAdapter();
+    const session = await adapter.createAccessSession(callbackUrl, customerIp);
 
     const row = {
-      provider_access_ref: session.accessId,
+      provider_access_ref: session.accessRef,
       status: "pending",
-      is_sandbox: isSandboxConnection(api.mode),
+      is_sandbox: isSandboxConnection(adapter.mode),
       // WHOSE CONSENT THIS IS. The person who opens the webform authorises at their own bank, so
       // they are the one to renew it when it expires. The email rides along so the answer survives
       // their account being removed (migration 20260915100000).
@@ -61,7 +58,7 @@ Deno.serve(async (req) => {
     const { data: existing, error: selectError } = await db
       .from(TABLE.bankConnections)
       .select("id")
-      .eq("provider_access_ref", session.accessId)
+      .eq("provider_access_ref", session.accessRef)
       .maybeSingle();
     if (selectError) throw new Error(`bank_connections lookup failed: ${selectError.message}`);
 
@@ -72,8 +69,8 @@ Deno.serve(async (req) => {
 
     return jsonResponse({
       webformUrl: session.webformUrl,
-      accessId: session.accessId,
-      mode: api.mode,
+      accessId: session.accessRef,
+      mode: adapter.mode,
     });
   } catch (e) {
     const message = e instanceof Error ? e.message : "unknown error";

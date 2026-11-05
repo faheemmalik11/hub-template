@@ -23,7 +23,7 @@
 // resetting it here would silently undo that choice on the next reconnect.
 //
 // Body: { connectionId: string }
-import { getBanksapi } from "../_shared/adapters/banksapi/client.ts";
+import { resolveBankingAdapter } from "../_shared/tenant-config.ts";
 import { serviceClient } from "../_shared/supabase.ts";
 import { corsHeaders, jsonResponse } from "../_shared/cors.ts";
 import { callerEmailFromAuthHeader } from "../_shared/payment-auth.ts";
@@ -63,11 +63,10 @@ Deno.serve(async (req) => {
     if (readErr) throw readErr;
     if (!conn) return jsonResponse({ error: "connection not found" }, 404);
 
-    // ---- 1. BANKSapi. Stop here on failure. -------------------------------------------------
-    const api = getBanksapi();
+    const adapter = await resolveBankingAdapter();
     const accessId: string | null = conn.provider_access_ref ?? null;
     if (accessId && !accessId.startsWith("mock-")) {
-      await api.deleteBankAccess(accessId);
+      await adapter.deleteAccess(accessId);
     }
 
     // ---- 2. Hide the mirror. Four updates, no deletes. ---------------------------------------
@@ -116,7 +115,7 @@ Deno.serve(async (req) => {
 
     return jsonResponse({
       ok: true,
-      mode: api.mode,
+      mode: adapter.mode,
       bank: conn.bank_name ?? conn.provider_name ?? null,
       accountsHidden: kontenVorher,
       transactionsHidden: umsaetzeVorher,
