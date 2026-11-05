@@ -124,6 +124,9 @@ create table if not exists public.bank_transactions (
     fully_used_note text,
     is_sandbox boolean not null default false,
     raw_data jsonb,
+    -- A row a person is trying out in practice mode, never a real movement. See 0010_access.sql.
+    is_demo boolean not null default false,
+    demo_owner_user_id uuid references public.app_users(id),
     imported_at timestamptz not null default now(),
     created_at timestamptz not null default now(),
     deleted_at timestamptz,
@@ -134,6 +137,7 @@ create table if not exists public.bank_transactions (
 );
 
 create index if not exists bank_transactions_account on public.bank_transactions (account_id);
+create index if not exists bank_transactions_is_demo_idx on public.bank_transactions (demo_owner_user_id) where is_demo;
 create index if not exists bank_transactions_company on public.bank_transactions (company_id);
 create index if not exists bank_transactions_booking_date on public.bank_transactions (booking_date desc);
 create index if not exists bank_transactions_matching_status on public.bank_transactions (matching_status)

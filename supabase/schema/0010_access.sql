@@ -186,4 +186,73 @@ drop policy if exists credential_reads_read on public.credential_reads;
 create policy credential_reads_read on public.credential_reads for select to authenticated
     using (public.may_read('settings.manage'));
 
+-- Practice mode: a person trying the app out sees only their own is_demo rows while it is active,
+-- and only real rows otherwise. Restrictive, so it narrows what the area policies above already
+-- allow rather than granting anything on its own -- a person with no documents.read grant still
+-- sees nothing here either way.
+drop policy if exists documents_demo_owner_read on public.documents;
+create policy documents_demo_owner_read on public.documents as restrictive for select to authenticated
+    using (case when public.practice_mode_active()
+                then is_demo and demo_owner_user_id = public.current_app_user_id()
+                else not is_demo end);
+drop policy if exists documents_demo_owner_write on public.documents;
+create policy documents_demo_owner_write on public.documents as restrictive for insert to authenticated
+    with check (not is_demo or demo_owner_user_id = public.current_app_user_id());
+drop policy if exists documents_demo_owner_write_update on public.documents;
+create policy documents_demo_owner_write_update on public.documents as restrictive for update to authenticated
+    using (not is_demo or demo_owner_user_id = public.current_app_user_id())
+    with check (not is_demo or demo_owner_user_id = public.current_app_user_id());
+
+drop policy if exists suppliers_demo_owner_read on public.suppliers;
+create policy suppliers_demo_owner_read on public.suppliers as restrictive for select to authenticated
+    using (case when public.practice_mode_active()
+                then is_demo and demo_owner_user_id = public.current_app_user_id()
+                else not is_demo end);
+drop policy if exists suppliers_demo_owner_write on public.suppliers;
+create policy suppliers_demo_owner_write on public.suppliers as restrictive for insert to authenticated
+    with check (not is_demo or demo_owner_user_id = public.current_app_user_id());
+drop policy if exists suppliers_demo_owner_write_update on public.suppliers;
+create policy suppliers_demo_owner_write_update on public.suppliers as restrictive for update to authenticated
+    using (not is_demo or demo_owner_user_id = public.current_app_user_id())
+    with check (not is_demo or demo_owner_user_id = public.current_app_user_id());
+
+drop policy if exists companies_demo_owner_read on public.companies;
+create policy companies_demo_owner_read on public.companies as restrictive for select to authenticated
+    using (case when public.practice_mode_active()
+                then is_demo and demo_owner_user_id = public.current_app_user_id()
+                else not is_demo end);
+drop policy if exists companies_demo_owner_write on public.companies;
+create policy companies_demo_owner_write on public.companies as restrictive for insert to authenticated
+    with check (not is_demo or demo_owner_user_id = public.current_app_user_id());
+drop policy if exists companies_demo_owner_write_update on public.companies;
+create policy companies_demo_owner_write_update on public.companies as restrictive for update to authenticated
+    using (not is_demo or demo_owner_user_id = public.current_app_user_id())
+    with check (not is_demo or demo_owner_user_id = public.current_app_user_id());
+
+drop policy if exists properties_demo_owner_read on public.properties;
+create policy properties_demo_owner_read on public.properties as restrictive for select to authenticated
+    using (case when public.practice_mode_active()
+                then is_demo and demo_owner_user_id = public.current_app_user_id()
+                else not is_demo end);
+drop policy if exists properties_demo_owner_write on public.properties;
+create policy properties_demo_owner_write on public.properties as restrictive for insert to authenticated
+    with check (not is_demo or demo_owner_user_id = public.current_app_user_id());
+drop policy if exists properties_demo_owner_write_update on public.properties;
+create policy properties_demo_owner_write_update on public.properties as restrictive for update to authenticated
+    using (not is_demo or demo_owner_user_id = public.current_app_user_id())
+    with check (not is_demo or demo_owner_user_id = public.current_app_user_id());
+
+drop policy if exists bank_transactions_demo_owner_read on public.bank_transactions;
+create policy bank_transactions_demo_owner_read on public.bank_transactions as restrictive for select to authenticated
+    using (case when public.practice_mode_active()
+                then is_demo and demo_owner_user_id = public.current_app_user_id()
+                else not is_demo end);
+drop policy if exists bank_transactions_demo_owner_write on public.bank_transactions;
+create policy bank_transactions_demo_owner_write on public.bank_transactions as restrictive for insert to authenticated
+    with check (not is_demo or demo_owner_user_id = public.current_app_user_id());
+drop policy if exists bank_transactions_demo_owner_write_update on public.bank_transactions;
+create policy bank_transactions_demo_owner_write_update on public.bank_transactions as restrictive for update to authenticated
+    using (not is_demo or demo_owner_user_id = public.current_app_user_id())
+    with check (not is_demo or demo_owner_user_id = public.current_app_user_id());
+
 commit;

@@ -41,6 +41,9 @@ create table if not exists public.app_users (
     covers_all_areas boolean not null default false,
     slack_user_id text,
     notifications_seen_at timestamptz,
+    -- Set by set_practice_mode(), cleared by passing false. While in the future, this person sees
+    -- only their own practice rows on the demo-flagged tables, never real ones. See 0010_access.sql.
+    practice_mode_until timestamptz,
     created_by uuid,
     created_at timestamptz not null default now(),
     updated_at timestamptz not null default now(),
@@ -86,6 +89,17 @@ as $$
    where lower(email) = lower(coalesce(auth.jwt() ->> 'email', ''))
      and is_active
    limit 1;
+$$;
+
+-- Whether the signed-in person is currently trying the app out in practice mode. Read by the
+-- restrictive RLS policies in 0010_access.sql, so it must exist before that file runs.
+create or replace function public.practice_mode_active() returns boolean
+language sql stable security definer set search_path to 'public'
+as $$
+  select coalesce(
+    (select u.practice_mode_until > now() from public.app_users u where u.id = public.current_app_user_id()),
+    false
+  );
 $$;
 
 create or replace function public.current_role_name() returns text

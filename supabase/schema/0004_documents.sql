@@ -136,6 +136,10 @@ create table if not exists public.documents (
     archive_note text,
     mailbox_reset_at timestamptz,
 
+    -- A row a person is trying out in practice mode, never a real document. See 0010_access.sql.
+    is_demo boolean not null default false,
+    demo_owner_user_id uuid references public.app_users(id),
+
     created_at timestamptz not null default now(),
     updated_at timestamptz not null default now(),
     deleted_at timestamptz,
@@ -170,6 +174,7 @@ create index if not exists documents_property on public.documents (property_id) 
 create index if not exists documents_supplier on public.documents (supplier_id) where deleted_at is null;
 create index if not exists documents_document_date on public.documents (document_date desc) where deleted_at is null;
 create index if not exists documents_content_hash on public.documents (content_hash) where deleted_at is null;
+create index if not exists documents_is_demo_idx on public.documents (demo_owner_user_id) where is_demo;
 
 -- One file per role, so a second scan replaces the first instead of piling up beside it.
 create table if not exists public.document_files (

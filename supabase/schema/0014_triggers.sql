@@ -256,4 +256,11 @@ create trigger trg_sync_uploaded_outgoing_invoice_status
   after insert or update or delete on public.outgoing_invoice_transaction_matches
   for each row execute function public.sync_uploaded_outgoing_invoice_status_from_matches();
 
+-- A match must stay inside one world, both practice or both real. Covers every writer: the
+-- manual link function, bank-sync, and the pipeline.
+drop trigger if exists trg_check_match_same_world on public.document_transaction_matches;
+create trigger trg_check_match_same_world
+  before insert or update of document_id, transaction_id on public.document_transaction_matches
+  for each row execute function public.check_match_same_world();
+
 commit;

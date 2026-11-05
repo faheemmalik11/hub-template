@@ -1539,6 +1539,9 @@ begin
   if not found or v_inv.supplier_id is null then
     return null;
   end if;
+  if v_inv.is_demo then
+    return null;
+  end if;
 
   if coalesce(v_inv.cost_category_source, 'ai') not in ('rule', 'human') then
     return null;
@@ -2105,6 +2108,9 @@ begin
   if v_merge.deleted_at is not null then
     raise exception 'merge_suppliers: merge-away supplier % is already deleted', p_merge_id;
   end if;
+  if v_keep.is_demo is distinct from v_merge.is_demo then
+    raise exception 'merge_suppliers: a practice supplier cannot be merged with a real supplier';
+  end if;
 
   -- Reassign every FK column pointing at suppliers(id), across every table in `public`. Discovered
   -- dynamically rather than hardcoded: suppliers/documents predate this repo's tracked migration
@@ -2268,6 +2274,9 @@ declare
   v_invoice_number text;
 begin
   if new.type not in ('query', 'ablehnung', 'zuweisung') then
+    return null;
+  end if;
+  if exists (select 1 from public.documents d where d.id = new.document_id and d.is_demo) then
     return null;
   end if;
 
@@ -2918,6 +2927,45 @@ CREATE OR REPLACE FUNCTION public.tenant_card_provider() RETURNS text
     )
 $$;
 
+CREATE OR REPLACE FUNCTION public.set_practice_mode(p_active boolean) RETURNS void
+    LANGUAGE plpgsql SECURITY DEFINER
+    SET search_path TO 'public'
+    AS $$
+declare
+  v_user_id uuid := public.current_app_user_id();
+begin
+  if v_user_id is null then
+    raise exception 'set_practice_mode: no signed-in app user';
+  end if;
+
+  update public.app_users
+     set practice_mode_until = case when p_active then now() + interval '30 minutes' else null end
+   where id = v_user_id;
+end $$;
+
+CREATE OR REPLACE FUNCTION public.reset_onboarding_demo_data() RETURNS void
+    LANGUAGE plpgsql SECURITY DEFINER
+    SET search_path TO 'public'
+    AS $$
+declare
+  v_user_id uuid := public.current_app_user_id();
+begin
+  if v_user_id is null then
+    raise exception 'reset_onboarding_demo_data: no signed-in app user';
+  end if;
+
+  update public.documents set deleted_at = now()
+   where is_demo and demo_owner_user_id = v_user_id and deleted_at is null;
+  update public.bank_transactions set deleted_at = now()
+   where is_demo and demo_owner_user_id = v_user_id and deleted_at is null;
+  update public.suppliers set deleted_at = now()
+   where is_demo and demo_owner_user_id = v_user_id and deleted_at is null;
+  update public.companies set deleted_at = now()
+   where is_demo and demo_owner_user_id = v_user_id and deleted_at is null;
+  update public.properties set deleted_at = now()
+   where is_demo and demo_owner_user_id = v_user_id and deleted_at is null;
+end $$;
+
 CREATE OR REPLACE FUNCTION public.send_notification(p_recipient uuid, p_note text DEFAULT NULL::text, p_target_kind text DEFAULT NULL::text, p_target_id text DEFAULT NULL::text, p_target_path text DEFAULT NULL::text) RETURNS bigint
     LANGUAGE plpgsql SECURITY DEFINER
     SET search_path TO 'public'
@@ -3484,6 +3532,24 @@ begin
   end if;
 
   return null;
+end $$;
+
+CREATE OR REPLACE FUNCTION public.check_match_same_world() RETURNS trigger
+    LANGUAGE plpgsql SECURITY DEFINER
+    SET search_path TO 'public'
+    AS $$
+declare
+  v_document_demo boolean;
+  v_transaction_demo boolean;
+begin
+  select d.is_demo into v_document_demo from public.documents d where d.id = new.document_id;
+  select t.is_demo into v_transaction_demo from public.bank_transactions t where t.id = new.transaction_id;
+  if v_document_demo is not null
+     and v_transaction_demo is not null
+     and v_document_demo <> v_transaction_demo then
+    raise exception 'a practice row cannot be matched with a real row' using errcode = 'check_violation';
+  end if;
+  return new;
 end $$;
 
 CREATE OR REPLACE FUNCTION public.sync_transaction_matching_status() RETURNS trigger

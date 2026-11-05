@@ -25,6 +25,9 @@ create table if not exists public.companies (
     -- What a client calls its parts of the business, if it has any. The names are that client's data.
     area text,
     overhead_cost_centre integer,
+    -- A row a person is trying out in practice mode, never a real company. See 0010_access.sql.
+    is_demo boolean not null default false,
+    demo_owner_user_id uuid references public.app_users(id),
     created_at timestamptz not null default now(),
     updated_at timestamptz not null default now(),
     deleted_at timestamptz,
@@ -36,6 +39,8 @@ create table if not exists public.companies (
     constraint companies_filing_folder_shape check (public.is_folder_path(filing_folder))
 );
 
+create index if not exists companies_is_demo_idx on public.companies (demo_owner_user_id) where is_demo;
+
 create table if not exists public.properties (
     id uuid primary key default gen_random_uuid(),
     code text not null unique,
@@ -46,6 +51,9 @@ create table if not exists public.properties (
     -- Where a filed copy lands: the path, the provider's own id for that folder, and the binding.
     filing_folder text,
     filing_binding text,
+    -- A row a person is trying out in practice mode, never a real property. See 0010_access.sql.
+    is_demo boolean not null default false,
+    demo_owner_user_id uuid references public.app_users(id),
     created_at timestamptz not null default now(),
     updated_at timestamptz not null default now(),
     deleted_at timestamptz,
@@ -53,6 +61,8 @@ create table if not exists public.properties (
     delete_reason text,
     constraint properties_filing_folder_shape check (public.is_folder_path(filing_folder))
 );
+
+create index if not exists properties_is_demo_idx on public.properties (demo_owner_user_id) where is_demo;
 
 -- A property can belong to more than one company, and carries its own cost centre in each.
 create table if not exists public.property_companies (
@@ -88,6 +98,9 @@ create table if not exists public.suppliers (
     bank_name text,
     fax text,
     website text,
+    -- A row a person is trying out in practice mode, never a real supplier. See 0010_access.sql.
+    is_demo boolean not null default false,
+    demo_owner_user_id uuid references public.app_users(id),
     created_at timestamptz not null default now(),
     updated_at timestamptz not null default now(),
     deleted_at timestamptz,
@@ -96,6 +109,7 @@ create table if not exists public.suppliers (
 );
 
 create index if not exists suppliers_normalized_name_idx on public.suppliers (normalized_name);
+create index if not exists suppliers_is_demo_idx on public.suppliers (demo_owner_user_id) where is_demo;
 
 -- Every account this supplier has ever been seen with, and who vouched for it. A payment may only
 -- use one a person confirmed, which is what stops an invoice with a swapped IBAN being paid.
