@@ -2878,6 +2878,46 @@ CREATE OR REPLACE FUNCTION public.run_now_enabled() RETURNS boolean
                        from public.tenant_settings where single_row), false)
 $$;
 
+CREATE OR REPLACE FUNCTION public.tenant_locale_settings() RETURNS jsonb
+    LANGUAGE sql STABLE SECURITY DEFINER
+    SET search_path TO 'public'
+    AS $$
+    select coalesce(
+        (select config -> 'locale' from public.tenant_settings where single_row),
+        '{"dateFormat": "dd.MM.yyyy", "decimalSeparator": ",", "currency": "EUR"}'::jsonb
+    )
+$$;
+
+CREATE OR REPLACE FUNCTION public.tenant_tax_regime() RETURNS jsonb
+    LANGUAGE sql STABLE SECURITY DEFINER
+    SET search_path TO 'public'
+    AS $$
+    select coalesce(
+        (select config -> 'tax' from public.tenant_settings where single_row),
+        '{"country": "DE", "defaultVatRate": 19, "taxModel": "flat"}'::jsonb
+    )
+$$;
+
+CREATE OR REPLACE FUNCTION public.tenant_banking_provider() RETURNS text
+    LANGUAGE sql STABLE SECURITY DEFINER
+    SET search_path TO 'public'
+    AS $$
+    select coalesce(
+        (select config -> 'banking' ->> 'provider' from public.tenant_settings where single_row),
+        'banksapi'
+    )
+$$;
+
+CREATE OR REPLACE FUNCTION public.tenant_card_provider() RETURNS text
+    LANGUAGE sql STABLE SECURITY DEFINER
+    SET search_path TO 'public'
+    AS $$
+    select coalesce(
+        (select config -> 'cards' ->> 'provider' from public.tenant_settings where single_row),
+        'pleo'
+    )
+$$;
+
 CREATE OR REPLACE FUNCTION public.send_notification(p_recipient uuid, p_note text DEFAULT NULL::text, p_target_kind text DEFAULT NULL::text, p_target_id text DEFAULT NULL::text, p_target_path text DEFAULT NULL::text) RETURNS bigint
     LANGUAGE plpgsql SECURITY DEFINER
     SET search_path TO 'public'

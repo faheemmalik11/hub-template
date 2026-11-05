@@ -232,6 +232,9 @@ create table if not exists public.document_taxes (
     rate numeric(5, 2),
     net numeric(14, 2),
     vat_amount numeric(14, 2),
+    -- Which tax this row is, for regimes where two rows can share a rate (GST + PST, a
+    -- federal/provincial split). Null for a plain VAT line, where the rate alone is unique.
+    component text,
     created_at timestamptz not null default now()
 );
 
