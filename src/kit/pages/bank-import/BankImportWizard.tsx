@@ -19,6 +19,7 @@ import { readableErrorMessage } from "../../components/feedback/query-states";
 import { cn } from "../../lib/class-names";
 import { englishFormatters, type Formatters } from "../../lib/formatters";
 import {
+  defaultLocaleParser,
   detectFormat,
   findSuspectedDuplicates,
   guessColumnMapping,
@@ -27,6 +28,7 @@ import {
   parseBankFile,
   saveMapping,
   type ColumnMapping,
+  type LocaleParser,
   type NormalizedRow,
   type NormalizeResult,
   type ParsedTable,
@@ -51,12 +53,14 @@ export interface BankImportWizardProps {
   adapter: Pick<BankReconciliationAdapter, "import" | "formatMoney" | "formatDate">;
   labels?: BankImportLabels;
   formatters?: Formatters;
+  parser?: LocaleParser;
 }
 
 export function BankImportWizard({
   adapter,
   labels = englishBankImportLabels,
   formatters = englishFormatters,
+  parser = defaultLocaleParser,
 }: BankImportWizardProps) {
   if (!adapter.import) return null;
   return (
@@ -64,6 +68,7 @@ export function BankImportWizard({
       importCapability={adapter.import}
       labels={labels}
       formatters={formatters}
+      parser={parser}
     />
   );
 }
@@ -72,10 +77,12 @@ function BankImportWizardForCapability({
   importCapability,
   labels,
   formatters,
+  parser,
 }: {
   importCapability: NonNullable<BankImportWizardProps["adapter"]["import"]>;
   labels: NonNullable<BankImportWizardProps["labels"]>;
   formatters: NonNullable<BankImportWizardProps["formatters"]>;
+  parser: NonNullable<BankImportWizardProps["parser"]>;
 }) {
   const accountOptionsQuery = importCapability.useAccountOptions();
 
@@ -191,7 +198,7 @@ function BankImportWizardForCapability({
             labels={labels}
             onBack={() => setStep("upload")}
             onConfirm={(mapping) => {
-              const result = normalizeTable(table, mapping);
+              const result = normalizeTable(table, mapping, parser);
               setNormalized(result);
               setRows(result.rows);
               setStep("preview");

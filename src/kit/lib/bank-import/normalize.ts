@@ -1,4 +1,10 @@
-import type { ColumnMapping, NormalizedRow, NormalizeResult, ParsedTable } from "./types";
+import type {
+  ColumnMapping,
+  LocaleParser,
+  NormalizedRow,
+  NormalizeResult,
+  ParsedTable,
+} from "./types";
 
 export function parseFlexibleDate(value: string): string | null {
   const v = value.trim();
@@ -48,13 +54,22 @@ function cell(row: Record<string, string>, header: string | undefined): string {
   return (row[header] ?? "").trim();
 }
 
-export function normalizeTable(table: ParsedTable, mapping: ColumnMapping): NormalizeResult {
+export const defaultLocaleParser: LocaleParser = {
+  parseDate: parseFlexibleDate,
+  parseAmount: parseFlexibleAmount,
+};
+
+export function normalizeTable(
+  table: ParsedTable,
+  mapping: ColumnMapping,
+  parser: LocaleParser = defaultLocaleParser,
+): NormalizeResult {
   const rows: NormalizedRow[] = [];
   const issues: NormalizeResult["issues"] = [];
 
   table.rows.forEach((row, rowIndex) => {
     const bookingDateRaw = cell(row, mapping.booking_date);
-    const bookingDate = parseFlexibleDate(bookingDateRaw);
+    const bookingDate = parser.parseDate(bookingDateRaw);
     if (!bookingDate) {
       issues.push({ rowIndex, code: "missing_booking_date", rawValue: bookingDateRaw });
       return;
@@ -62,12 +77,12 @@ export function normalizeTable(table: ParsedTable, mapping: ColumnMapping): Norm
 
     let amount: number | null;
     if (mapping.amountDebit || mapping.amountCredit) {
-      const debit = parseFlexibleAmount(cell(row, mapping.amountDebit)) ?? 0;
-      const credit = parseFlexibleAmount(cell(row, mapping.amountCredit)) ?? 0;
+      const debit = parser.parseAmount(cell(row, mapping.amountDebit)) ?? 0;
+      const credit = parser.parseAmount(cell(row, mapping.amountCredit)) ?? 0;
       amount = credit - Math.abs(debit);
       if (debit === 0 && credit === 0) amount = null;
     } else {
-      amount = parseFlexibleAmount(cell(row, mapping.amount));
+      amount = parser.parseAmount(cell(row, mapping.amount));
     }
     if (amount === null) {
       issues.push({ rowIndex, code: "missing_amount", rawValue: cell(row, mapping.amount) });
@@ -76,7 +91,7 @@ export function normalizeTable(table: ParsedTable, mapping: ColumnMapping): Norm
 
     rows.push({
       booking_date: bookingDate,
-      value_date: parseFlexibleDate(cell(row, mapping.value_date)),
+      value_date: parser.parseDate(cell(row, mapping.value_date)),
       amount,
       currency: cell(row, mapping.currency) || null,
       counterparty_holder: cell(row, mapping.counterparty_holder) || null,

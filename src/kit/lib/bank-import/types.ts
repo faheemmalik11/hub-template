@@ -12,6 +12,11 @@ export interface NormalizedRow {
 
 export type ParseIssueCode = "missing_booking_date" | "missing_amount";
 
+export interface LocaleParser {
+  parseDate(value: string): string | null;
+  parseAmount(value: string): number | null;
+}
+
 export interface ParseIssue {
   rowIndex: number;
   code: ParseIssueCode;
