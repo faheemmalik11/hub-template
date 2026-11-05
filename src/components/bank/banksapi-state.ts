@@ -12,9 +12,9 @@ import type { BankAccount } from "@/lib/data/types";
  * Its own module rather than living beside the table that renders it: the accounts filter needs the
  * same rule, and a file that exports both a component and a helper loses Fast Refresh.
  */
-export type BanksapiState = "connected" | "linkable" | "none";
+export type ConnectionFeedState = "connected" | "linkable" | "none";
 
-export function banksapiState(a: BankAccount): BanksapiState {
+export function connectionFeedState(a: BankAccount): ConnectionFeedState {
   if (a.connection_id && a.provider_account_ref) return "connected";
   if (a.provider_ref || a.provider_id) return "linkable";
   return "none";

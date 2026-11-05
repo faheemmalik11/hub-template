@@ -14,7 +14,7 @@ import type { BankAccount } from "@/lib/data/types";
 import { BankAccountDialog } from "@/components/bank/bank-account-dialog";
 import { AccountActiveSwitch } from "@/components/bank/account-active-switch";
 import { ConnectionGroupRow, type AccountGroup } from "@/components/bank/connection-group-row";
-import { banksapiState, type BanksapiState } from "@/components/bank/banksapi-state";
+import { connectionFeedState, type ConnectionFeedState } from "@/components/bank/banksapi-state";
 import { SortableColumnHeader } from "@/components/data-table/sortable-column-header";
 import { CompanyChip } from "@/components/documents/badges";
 import { formatIBAN } from "@/lib/data/format";
@@ -90,13 +90,13 @@ function SandboxBadge({ t }: { t: T }) {
 // A dot and a word, not a filled chip. Connection state is one column among six and it is
 // "connected" on nearly every row, so a coloured pill per row was colour spent on the answer
 // everybody already expects; the exceptions are what needs to stand out.
-const CONNECTION: Record<BanksapiState, { dot: string; text: string; key: string }> = {
+const CONNECTION: Record<ConnectionFeedState, { dot: string; text: string; key: string }> = {
   connected: { dot: "bg-success", text: "text-muted-foreground", key: "banksapiVerbunden" },
   linkable: { dot: "bg-brand-dark", text: "text-muted-foreground", key: "banksapiJa" },
   none: { dot: "bg-muted-foreground/40", text: "text-muted-foreground", key: "banksapiNein" },
 };
 
-function ConnectionStatus({ state, t }: { state: BanksapiState; t: T }) {
+function ConnectionStatus({ state, t }: { state: ConnectionFeedState; t: T }) {
   const style = CONNECTION[state];
   return (
     <span
@@ -205,7 +205,7 @@ function AccountRow({ a, indented, ctx }: { a: BankAccount; indented: boolean; c
       <TableCell className="text-sm text-muted-foreground">{a.product_type ?? "—"}</TableCell>
       {ctx.showConnection && (
         <TableCell>
-          <ConnectionStatus state={banksapiState(a)} t={t} />
+          <ConnectionStatus state={connectionFeedState(a)} t={t} />
         </TableCell>
       )}
       <TableCell>
@@ -272,7 +272,7 @@ function AccountCard({ a, ctx }: { a: BankAccount; ctx: RowsContext }) {
       </dl>
       {ctx.showConnection && (
         <div className="mt-3 border-t border-border pt-2">
-          <ConnectionStatus state={banksapiState(a)} t={t} />
+          <ConnectionStatus state={connectionFeedState(a)} t={t} />
         </div>
       )}
     </div>

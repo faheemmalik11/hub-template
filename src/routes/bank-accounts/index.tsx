@@ -11,7 +11,7 @@ import { SyncLogDialog } from "@/components/bank/sync-log-dialog";
 import { TriggerSyncButton } from "@/components/bank/trigger-sync-button";
 import { type AccountGroup } from "@/components/bank/connection-group-row";
 import { BankAccountsTable, type RowsContext } from "@/components/bank/bank-accounts-table";
-import { banksapiState } from "@/components/bank/banksapi-state";
+import { connectionFeedState } from "@/components/bank/banksapi-state";
 import { PleoPanel } from "@/components/bank/pleo-panel";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
@@ -480,7 +480,7 @@ function AccountsTab({
       ) {
         return false;
       }
-      if (banksapiFilter !== ALL && banksapiState(a) !== banksapiFilter) return false;
+      if (banksapiFilter !== ALL && connectionFeedState(a) !== banksapiFilter) return false;
       // `=== false` and not `!a.is_active`: on a database where migration 20260902160000 has not
       // been applied the column is absent, and treating undefined as "off" would empty the table.
       const inactive = a.is_active === false;
