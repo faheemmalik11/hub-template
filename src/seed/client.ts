@@ -3,19 +3,49 @@ import {
   approvalRules,
   assignmentRules,
   bankAccounts,
+  bankConnections,
+  bankSyncLogs,
   bankTransactions,
   categories,
+  categoryAccountMapping,
+  changeHistory,
+  channelFolders,
+  channels,
   companies,
   customers,
+  handoverRoutes,
+  documentBankAccounts,
+  documentFiles,
+  documentHistory,
+  documentTransactionMatches,
+  filenameSettings,
   handoverBatches,
   incomingInvoices,
+  ingestExclusions,
   manualBookings,
+  matchingSettings,
+  notificationChannels,
+  notificationDispatchLog,
+  notificationEvents,
+  notificationSettings,
+  openItemWhitelistRules,
+  paymentOrders,
   outgoingInvoices,
+  outgoingInvoiceFiles,
+  outgoingInvoiceTransactionMatches,
+  permissionCatalogue,
+  pipelineRunRequests,
+  pipelineRuns,
   processingLog,
   properties,
   propertyCompanies,
+  rolePermissions,
+  roles,
+  supplierBankAccounts,
+  supplierIbanHistory,
   suppliers,
   team,
+  vatReserve,
 } from "./index";
 import { permissions } from "./admin/permissions";
 
@@ -38,17 +68,47 @@ const ROWS: Record<string, unknown[]> = {
   [TABLE.properties]: properties,
   [TABLE.propertyCompanies]: propertyCompanies,
   [TABLE.suppliers]: suppliers,
+  [TABLE.supplierBankAccounts]: supplierBankAccounts,
+  [TABLE.documentBankAccounts]: documentBankAccounts,
+  [TABLE.supplierIbanHistory]: supplierIbanHistory,
   [TABLE.customers]: customers,
   [TABLE.bankAccounts]: bankAccounts,
+  [TABLE.bankConnections]: bankConnections,
+  [TABLE.bankSyncLogs]: bankSyncLogs,
+  [TABLE.paymentOrders]: paymentOrders,
   [TABLE.bankTransactions]: bankTransactions,
+  [TABLE.handoverRoutes]: handoverRoutes,
+  [TABLE.categoryAccountMapping]: categoryAccountMapping,
+  [TABLE.matchingSettings]: matchingSettings,
   [TABLE.outgoingInvoices]: outgoingInvoices,
+  [TABLE.outgoingInvoiceFiles]: outgoingInvoiceFiles,
+  [TABLE.documentTransactionMatches]: documentTransactionMatches,
+  [TABLE.documentFiles]: documentFiles,
+  [TABLE.documentHistory]: documentHistory,
+  [TABLE.outgoingInvoiceTransactionMatches]: outgoingInvoiceTransactionMatches,
   [TABLE.manualBookings]: manualBookings,
+  [TABLE.filenameSettings]: filenameSettings,
+  [TABLE.channels]: channels,
+  [TABLE.channelFolders]: channelFolders,
+  [TABLE.pipelineRuns]: pipelineRuns,
+  [TABLE.pipelineRunRequests]: pipelineRunRequests,
   [TABLE.assignmentRules]: assignmentRules,
   [TABLE.approvalRules]: approvalRules,
+  [TABLE.ingestExclusions]: ingestExclusions,
+  [TABLE.openItemWhitelistRules]: openItemWhitelistRules,
   [TABLE.processingLog]: processingLog,
+  [TABLE.changeHistory]: changeHistory,
+  [TABLE.notificationChannels]: notificationChannels,
+  [TABLE.notificationSettings]: notificationSettings,
+  [TABLE.notificationEvents]: notificationEvents,
+  [TABLE.notificationDispatchLog]: notificationDispatchLog,
   [TABLE.categories]: categories,
   [TABLE.handoverBatches]: handoverBatches,
   [TABLE.appUsers]: team,
+  [TABLE.roles]: roles,
+  [TABLE.rolePermissions]: rolePermissions,
+  [TABLE.permissions]: permissionCatalogue,
+  [TABLE.userPermissions]: [],
 
   // Every list reads a view, never the table underneath it, so a fixture reachable only by table
   // name shows an empty screen with data sitting right there.
@@ -104,6 +164,45 @@ const distinct = (name: string) => [
 const ANSWERS: Record<string, unknown> = {
   current_permissions: permissions,
   run_now_enabled: false,
+  vat_reserve: vatReserve,
+  channel_secret_present: false,
+  bank_sync_log_facets: {
+    events: [...new Set(bankSyncLogs.map((l) => l.event))].sort(),
+    levels: [...new Set(bankSyncLogs.map((l) => l.level))].sort(),
+  },
+  chain_people: team.map((member) => ({
+    id: member.id,
+    name: member.name,
+    role_name: member.role,
+    is_active: member.is_active,
+    escalation_days: member.escalation_days,
+    deputy_user_id: member.deputy_user_id,
+    area: member.area,
+  })),
+  manual_bookings_expanded: manualBookings
+    .filter((b) => !b.deleted_at)
+    .map((b) => ({
+      source_id: b.id,
+      company_id: b.company_id,
+      property_id: b.property_id,
+      category_id: b.category_id,
+      period: b.period,
+      amount: b.amount,
+      note: b.note,
+      is_recurring: b.is_recurring,
+    })),
+  trash_eligible_tables: [
+    "documents",
+    "suppliers",
+    "customers",
+    "companies",
+    "properties",
+    "assignment_rules",
+  ],
+  trash_purge_eligible_tables: ["assignment_rules"],
+  my_profile: [
+    { id: team[0].id, name: team[0].name, email: team[0].email, picture_url: team[0].picture_url },
+  ],
   invoice_queue_kpis: queueKpis,
   invoices_kpis: {
     total: incomingInvoices.length,
@@ -172,14 +271,60 @@ function builder(rows: unknown[]) {
   return chain;
 }
 
+type SeedSession = { user: { email: string; user_metadata: { name?: string } } };
+
+let session: SeedSession | null = null;
+let authListener: ((event: string, session: SeedSession | null) => void) | null = null;
+
+/**
+ * Any email on the seed team, any password: the same "a fixed answer regardless of the filter"
+ * rule this whole client follows, applied to credentials instead of a query. An unknown email
+ * fails the same way a wrong password would on the real screen, so the error path is also real.
+ */
+export const seedAuth = {
+  getUser: async () => ({ data: { user: session?.user ?? null }, error: null }),
+  getSession: async () => ({ data: { session }, error: null }),
+  onAuthStateChange: (callback: (event: string, session: SeedSession | null) => void) => {
+    authListener = callback;
+    return { data: { subscription: { unsubscribe: () => (authListener = null) } } };
+  },
+  signInWithPassword: async ({ email }: { email: string; password: string }) => {
+    const match = team.find((p) => p.email.toLowerCase() === email.trim().toLowerCase());
+    if (!match) return { error: { message: "Invalid login credentials" } };
+    session = { user: { email: match.email, user_metadata: { name: match.name } } };
+    authListener?.("SIGNED_IN", session);
+    return { error: null };
+  },
+  signOut: async () => {
+    session = null;
+    authListener?.("SIGNED_OUT", null);
+    return { error: null };
+  },
+  updateUser: async () => ({ error: null }),
+};
+
 export const seedClient = {
   from: (table: string) => builder(ROWS[table] ?? []),
-  rpc: async (name: string) => ({ data: ANSWERS[name] ?? null, error: null }),
-  auth: {
-    getUser: async () => ({ data: { user: { email: "owner@example.com" } }, error: null }),
-    getSession: async () => ({ data: { session: null }, error: null }),
-    onAuthStateChange: () => ({ data: { subscription: { unsubscribe: () => {} } } }),
+  rpc: (name: string) => {
+    const value = ANSWERS[name] ?? null;
+    const first = Array.isArray(value) ? (value[0] ?? null) : value;
+    return {
+      then: (resolve: (v: Answer) => unknown) =>
+        Promise.resolve({ data: value, error: null, count: 0 }).then(resolve),
+      single: async () => ({ data: first, error: null }),
+      maybeSingle: async () => ({ data: first, error: null }),
+    };
   },
-  storage: { from: () => ({ createSignedUrl: async () => ({ data: null, error: null }) }) },
+  auth: seedAuth,
+  storage: {
+    from: (bucket: string) => ({
+      createSignedUrl: async () => ({ data: null, error: null }),
+      upload: async () => ({ data: null, error: null }),
+      remove: async () => ({ data: null, error: null }),
+      getPublicUrl: (path: string) => ({
+        data: { publicUrl: `https://example.invalid/storage/${bucket}/${path}` },
+      }),
+    }),
+  },
   functions: { invoke: async () => ({ data: null, error: null }) },
 };

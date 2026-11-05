@@ -5,11 +5,8 @@ import type { TourSeenStore } from "@/kit/components/tour";
 import { localTourSeenStore } from "@/kit/components/tour";
 import { SEED_MODE } from "@/config/seed";
 
-import { supabase } from "@/integrations/supabase/client";
+import { sb } from "@/data/client";
 import { TABLE } from "@/config/tables";
-
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-const sb = supabase as any;
 
 type TourProgressRow = {
   tour_id: string;
@@ -30,7 +27,7 @@ export function useTourSeenStore(): TourSeenStore {
     queryKey: ["tour_progress", "session_user"],
     staleTime: Infinity,
     queryFn: async (): Promise<string | null> => {
-      const { data } = await supabase.auth.getUser();
+      const { data } = await sb.auth.getUser();
       return data.user?.id ?? null;
     },
   });

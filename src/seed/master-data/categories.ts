@@ -1,5 +1,5 @@
 import type { CostAnalysisCategory } from "@/lib/data/types";
-import { sampleId } from "../shared";
+import { COMPANIES, sampleId } from "../shared";
 
 const base = {
   parent_id: null,
@@ -66,5 +66,33 @@ export const categories: CostAnalysisCategory[] = [
     direction: "outgoing",
     sort_order: 999,
     is_catchall: true,
+  },
+];
+
+/** Two categories wired to a DATEV account number, both specificity levels assignment-rules draws apart. */
+export const categoryAccountMapping = [
+  {
+    id: sampleId(69, 1),
+    category_id: categories[1].id,
+    company_id: null,
+    account_number: "4240",
+    account_name: "Strom",
+    direction: "incoming",
+    is_active: true,
+    note: null,
+    created_at: "2026-01-05T08:00:00Z",
+    updated_at: "2026-01-05T08:00:00Z",
+  },
+  {
+    id: sampleId(69, 2),
+    category_id: categories[2].id,
+    company_id: COMPANIES[0].id,
+    account_number: "4805",
+    account_name: "Instandhaltung",
+    direction: "incoming",
+    is_active: true,
+    note: "Nur für diese Gesellschaft, abweichend vom Kontenrahmen.",
+    created_at: "2026-01-05T08:00:00Z",
+    updated_at: "2026-01-05T08:00:00Z",
   },
 ];

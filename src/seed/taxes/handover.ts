@@ -51,3 +51,40 @@ export const handoverBatches: DatevHandoverBatch[] = [
     bounce_reason: "Mailbox full",
   },
 ];
+
+/** One company set up for both directions, one for incoming only -- the address list draws these differently. */
+export const handoverRoutes = [
+  {
+    id: sampleId(131, 1),
+    company_id: COMPANIES[0].id,
+    direction: "incoming",
+    address: "kanzlei@example.com",
+    is_enabled: true,
+    note: null,
+    updated_by: "owner@example.com",
+    created_at: "2026-01-05T09:00:00Z",
+    updated_at: "2026-01-05T09:00:00Z",
+  },
+  {
+    id: sampleId(131, 2),
+    company_id: COMPANIES[0].id,
+    direction: "outgoing",
+    address: "kanzlei@example.com",
+    is_enabled: true,
+    note: null,
+    updated_by: "owner@example.com",
+    created_at: "2026-01-05T09:00:00Z",
+    updated_at: "2026-01-05T09:00:00Z",
+  },
+  {
+    id: sampleId(131, 3),
+    company_id: COMPANIES[1].id,
+    direction: "incoming",
+    address: "steuerberater@example.com",
+    is_enabled: true,
+    note: null,
+    updated_by: "owner@example.com",
+    created_at: "2026-01-05T09:00:00Z",
+    updated_at: "2026-01-05T09:00:00Z",
+  },
+];

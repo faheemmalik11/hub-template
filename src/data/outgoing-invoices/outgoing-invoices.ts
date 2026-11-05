@@ -17,7 +17,6 @@ import { extractOutgoingInvoiceFields } from "@/lib/api/outgoing-invoice-extract
 import { createUploadedOutgoingInvoice } from "@/lib/api/outgoing-invoice-upload.functions";
 import type { Customer, OutgoingInvoice, OutgoingVoucherStatus } from "@/lib/data/types";
 import type { OutgoingInvoiceUploadMime } from "@/lib/api/outgoing-invoice-shared";
-import { supabase } from "@/integrations/supabase/client";
 import { keepPreviousData, useInfiniteQuery } from "@tanstack/react-query";
 
 // ---- Outgoing invoices & customers (Briefing Screen 15; migration 0052) ----

@@ -1,7 +1,7 @@
 import { useQuery } from "@tanstack/react-query";
 
 import { EDGE_FUNCTION } from "@/config/edge-functions";
-import { supabase } from "@/integrations/supabase/client";
+import { sb } from "@/data/client";
 
 /**
  * One person spending on a Pleo card, with what they have actually spent.
@@ -60,7 +60,7 @@ export function usePleoEmployees(enabled = true) {
     enabled,
     staleTime: 5 * 60_000,
     queryFn: async (): Promise<PleoEmployee[]> => {
-      const { data, error } = await supabase.functions.invoke(EDGE_FUNCTION.expenseToolEmployees, {
+      const { data, error } = await sb.functions.invoke(EDGE_FUNCTION.expenseToolEmployees, {
         body: {},
       });
       if (error) {

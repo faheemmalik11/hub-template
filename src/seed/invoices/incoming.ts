@@ -109,3 +109,44 @@ const rows: Partial<DocumentListRow>[] = [
 ];
 
 export const incomingInvoices = rows as DocumentListRow[];
+
+/** One original file per invoice -- enough for the detail page's preview to have something to show. */
+export const documentFiles = rows.map((row, i) => ({
+  id: sampleId(31, i + 1),
+  document_id: row.id,
+  role: "original",
+  filename: `${row.invoice_number}.pdf`,
+  mime: "application/pdf",
+  size_bytes: 128_000,
+  storage_bucket: "documents",
+  storage_path: `seed/${row.id}/original.pdf`,
+  checksum_sha256: null,
+  external_id: null,
+  source: "upload",
+  web_url: null,
+  content: null,
+  transaction_id: null,
+  created_at: row.created_at,
+}));
+
+/** One free-text note and one workflow-step entry -- the detail page's two history sections. */
+export const documentHistory = [
+  {
+    id: sampleId(32, 1),
+    document_id: incomingInvoices[1].id,
+    type: "note",
+    text: "Rückfrage beim Lieferanten zur fehlenden Kostenstelle gestellt.",
+    data: null,
+    actor: "owner@example.com",
+    created_at: "2026-09-03T10:00:00Z",
+  },
+  {
+    id: sampleId(32, 2),
+    document_id: incomingInvoices[2].id,
+    type: "approval_final",
+    text: null,
+    data: null,
+    actor: "supervisor@example.com",
+    created_at: "2026-09-04T09:00:00Z",
+  },
+];

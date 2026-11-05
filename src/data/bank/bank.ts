@@ -16,7 +16,6 @@ import {
   searchTokens,
   type InfinitePage,
 } from "@/data/shared";
-import { supabase } from "@/integrations/supabase/client";
 import {
   createBankAccount as createBankAccountFn,
   excludeBankAccount as excludeBankAccountFn,
@@ -881,7 +880,7 @@ export function useTriggerSync() {
   const qc = useQueryClient();
   return useMutation({
     mutationFn: async (): Promise<Record<string, unknown>> => {
-      const { data, error } = await supabase.functions.invoke(EDGE_FUNCTION.bankSync, { body: {} });
+      const { data, error } = await sb.functions.invoke(EDGE_FUNCTION.bankSync, { body: {} });
       if (error) throw error;
       return (data ?? {}) as Record<string, unknown>;
     },
@@ -991,7 +990,7 @@ export function useDisconnectBank() {
   const qc = useQueryClient();
   return useMutation({
     mutationFn: async (vars: { connectionId: string }): Promise<DisconnectResult> => {
-      const { data, error } = await supabase.functions.invoke(EDGE_FUNCTION.bankDisconnect, {
+      const { data, error } = await sb.functions.invoke(EDGE_FUNCTION.bankDisconnect, {
         body: { connectionId: vars.connectionId },
       });
       // The function answers 403/500 with a JSON body naming the reason. supabase-js turns any
@@ -1038,7 +1037,7 @@ export function useStartBankConnect() {
       // maxTransactions=all is hardcoded in the wrapper, so it is not a parameter here.
       body: { callbackUrl?: string; customerIp?: string } = {},
     ): Promise<BankConnectResult> => {
-      const { data, error } = await supabase.functions.invoke(EDGE_FUNCTION.bankConnect, { body });
+      const { data, error } = await sb.functions.invoke(EDGE_FUNCTION.bankConnect, { body });
       if (error) throw error;
       const result = (data ?? {}) as BankConnectResult & { error?: string };
       // The function returns 200 with an { error } body for configuration problems, so a failure
@@ -1094,7 +1093,7 @@ export function useInitiatePayment() {
       amount?: number;
       callbackUrl?: string;
     }): Promise<{ paymentOrder: PaymentOrder; webformUrl?: string; reused?: boolean }> => {
-      const { data, error } = await supabase.functions.invoke(EDGE_FUNCTION.paymentInitiate, {
+      const { data, error } = await sb.functions.invoke(EDGE_FUNCTION.paymentInitiate, {
         body,
       });
       if (error) throw error;
@@ -1125,7 +1124,7 @@ export function useCancelPaymentOrder() {
       paymentOrderId: string;
       invoiceId: string;
     }): Promise<{ paymentOrder: PaymentOrder }> => {
-      const { data, error } = await supabase.functions.invoke(EDGE_FUNCTION.paymentCancel, {
+      const { data, error } = await sb.functions.invoke(EDGE_FUNCTION.paymentCancel, {
         body: { paymentOrderId: body.paymentOrderId },
       });
       if (error) throw error;

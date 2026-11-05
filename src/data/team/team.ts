@@ -3,7 +3,6 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { TABLE } from "@/config/tables";
 import { SINGLETON_ROW_ID, STALE, actorEmail, insertChangeHistory, sb } from "@/data/client";
 import { fetchAllRows, invalidateMatchState, requiredReason } from "@/data/shared";
-import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/lib/auth";
 import { useFeatureGate } from "@/data/use-feature";
 import { PERMISSIONS } from "@/config/permissions";
@@ -804,7 +803,7 @@ export function useSlackDirectory(enabled: boolean) {
     staleTime: 60_000,
     retry: false,
     queryFn: async (): Promise<SlackDirectory> => {
-      const { data, error } = await supabase.functions.invoke(EDGE_FUNCTION.notifyDispatch, {
+      const { data, error } = await sb.functions.invoke(EDGE_FUNCTION.notifyDispatch, {
         body: { mode: "directory" },
       });
       if (error) throw error;
@@ -1069,7 +1068,7 @@ export function useAcknowledgeNotification() {
 export function useSendTestNotification() {
   return useMutation({
     mutationFn: async (channel: string) => {
-      const { data, error } = await supabase.functions.invoke(EDGE_FUNCTION.notifyDispatch, {
+      const { data, error } = await sb.functions.invoke(EDGE_FUNCTION.notifyDispatch, {
         body: { mode: "test", channel },
       });
       if (error) throw error;

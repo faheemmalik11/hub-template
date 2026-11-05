@@ -61,3 +61,17 @@ export const outgoingInvoices: OutgoingInvoice[] = [
     updated_at: "2026-09-10T08:00:00Z",
   } as OutgoingInvoice,
 ];
+
+/** One original per invoice, so the detail drawer's preview has something to show. */
+export const outgoingInvoiceFiles = outgoingInvoices.map((invoice, i) => ({
+  id: sampleId(91, i + 1),
+  outgoing_invoice_id: invoice.id,
+  filename: `${invoice.invoice_number}.pdf`,
+  mime: "application/pdf",
+  size_bytes: 96_000,
+  storage_bucket: "outgoing-invoice-files",
+  storage_path: `seed/${invoice.id}/original.pdf`,
+  checksum_sha256: null,
+  created_by: null,
+  created_at: invoice.created_at,
+}));

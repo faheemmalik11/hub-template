@@ -5,13 +5,10 @@ import { useQuery, useQueryClient } from "@tanstack/react-query";
 import type { AccessPermission } from "@/kit/components/access";
 import type { ProfileAdapter, ProfileUser } from "@/kit/adapters";
 
-import { supabase } from "@/integrations/supabase/client";
+import { sb } from "@/data/client";
 import { useAuth } from "@/lib/auth";
 import { usePermissionCatalogue, type PermissionRow } from "@/data";
 import { useTranslation } from "@/lib/i18n";
-
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-const sb = supabase as any;
 
 const PICTURE_BUCKET = BUCKET.profilePictures;
 const MAX_PICTURE_BYTES = 2 * 1024 * 1024;
@@ -103,7 +100,7 @@ export function useProfileAdapter(): ProfileAdapter {
   const removeStoredPicture = useCallback(async (url: string | null) => {
     const path = picturePathFromUrl(url);
     if (!path) return;
-    await supabase.storage.from(PICTURE_BUCKET).remove([path]);
+    await sb.storage.from(PICTURE_BUCKET).remove([path]);
   }, []);
 
   return {
@@ -136,7 +133,7 @@ export function useProfileAdapter(): ProfileAdapter {
       // Supabase sets a new password without asking for the old one. Signing in with the current
       // password first is what makes "current password" mean something: a stolen open session
       // cannot change the password without knowing it.
-      const { error: signInError } = await supabase.auth.signInWithPassword({
+      const { error: signInError } = await sb.auth.signInWithPassword({
         email,
         password: currentPassword,
       });
@@ -147,19 +144,19 @@ export function useProfileAdapter(): ProfileAdapter {
     },
 
     uploadPicture: async ({ file }) => {
-      const { data: authUser } = await supabase.auth.getUser();
+      const { data: authUser } = await sb.auth.getUser();
       const authUserId = authUser.user?.id;
       if (!authUserId) throw new Error(t("profile.error.noAccount"));
 
       // The folder is the caller's own auth id, which is what the storage policy checks.
       const extension = file.name.split(".").pop()?.toLowerCase() || "png";
-      const path = `${authUserId}/profil-${Date.now()}.${extension}`;
-      const { error: uploadError } = await supabase.storage
+      const path = `${authUserId}/profile-${Date.now()}.${extension}`;
+      const { error: uploadError } = await sb.storage
         .from(PICTURE_BUCKET)
         .upload(path, file, { contentType: file.type, upsert: true });
       if (uploadError) throw uploadError;
 
-      const url = supabase.storage.from(PICTURE_BUCKET).getPublicUrl(path).data.publicUrl;
+      const url = sb.storage.from(PICTURE_BUCKET).getPublicUrl(path).data.publicUrl;
       const { error } = await sb.rpc("set_my_picture_url", { p_url: url });
       if (error) throw error;
 

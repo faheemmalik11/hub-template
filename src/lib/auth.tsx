@@ -1,7 +1,5 @@
 /**
- * Auth gegen Supabase (TP-2). Echte E-Mail/Passwort-Anmeldung; kein Self-Signup
- * (die Login-Seite bietet keine Registrierung — Konten werden in Supabase
- * angelegt). Session wird von Supabase verwaltet (localStorage, Auto-Refresh).
+ * Real email/password sign-in, no self-signup -- accounts are created in Supabase, not here.
  *
  * Role + company access (Briefing Screen 17, Appendix A7) is loaded from `app_users` /
  * `user_company_access` alongside the session. This mirrors, on the client, exactly what the
@@ -22,7 +20,7 @@ import {
 } from "react";
 import type { Session } from "@supabase/supabase-js";
 
-import { supabase } from "@/integrations/supabase/client";
+import { sb } from "@/data/client";
 import { TABLE } from "@/config/tables";
 
 export type AppRole = "super_admin" | "admin" | "supervisor" | "assistant";
@@ -92,9 +90,6 @@ type AuthContextValue = {
 };
 
 const AuthContext = createContext<AuthContextValue | null>(null);
-
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-const sb = supabase as any;
 
 // Deactivated (A7: "deactivated, not deleted" on offboarding) still resolves a role/id, so the
 // caller can tell "no app_users row at all" (null) apart from "row exists but is inactive" --
@@ -239,7 +234,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         // session just because the Supabase Auth login itself still succeeds -- RLS would deny
         // almost everything anyway, but a signed-out state with a clear reason is honest,
         // a half-working app full of empty screens is not.
-        await supabase.auth.signOut();
+        await sb.auth.signOut();
         setUser(null);
         setProfile(null);
         return;
@@ -265,11 +260,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       );
     }
 
-    supabase.auth.getSession().then(async ({ data }) => {
+    sb.auth.getSession().then(async ({ data }: { data: { session: Session | null } }) => {
       await applySession(data.session);
       if (mounted) setReady(true);
     });
-    const { data: sub } = supabase.auth.onAuthStateChange((_event, session) => {
+    const { data: sub } = sb.auth.onAuthStateChange((_event: string, session: Session | null) => {
       void applySession(session);
     });
     return () => {
@@ -282,7 +277,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     if (!email.trim() || !password) {
       return { ok: false, code: "missing_credentials" };
     }
-    const { error } = await supabase.auth.signInWithPassword({
+    const { error } = await sb.auth.signInWithPassword({
       email: email.trim(),
       password,
     });
@@ -295,14 +290,14 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     // Checking here is what lets us say WHY, in the same error slot as a wrong password.
     const found = await fetchProfile(email.trim());
     if (found && !found.isActive) {
-      await supabase.auth.signOut();
+      await sb.auth.signOut();
       return { ok: false, code: "account_deactivated" };
     }
     return { ok: true };
   };
 
   const logout = async () => {
-    await supabase.auth.signOut();
+    await sb.auth.signOut();
   };
 
   /**
@@ -343,7 +338,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     if (newPassword.length < 8) {
       return { ok: false, code: "password_too_short" };
     }
-    const { error: pwError } = await supabase.auth.updateUser({ password: newPassword });
+    const { error: pwError } = await sb.auth.updateUser({ password: newPassword });
     if (pwError) return { ok: false, code: errorCode(pwError.message), raw: pwError.message };
 
     const { error: rpcError } = await sb.rpc("clear_must_change_password");
@@ -396,6 +391,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
 export function useAuth() {
   const ctx = useContext(AuthContext);
-  if (!ctx) throw new Error("useAuth muss innerhalb von AuthProvider genutzt werden");
+  if (!ctx) throw new Error("useAuth must be used inside AuthProvider");
   return ctx;
 }
