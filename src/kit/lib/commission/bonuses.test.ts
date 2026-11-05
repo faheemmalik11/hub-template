@@ -17,8 +17,8 @@ const facts: BonusDealFacts = {
   notarisedOn: "2026-09-08",
   ownLead: false,
   fromViewing: false,
-  handledBy: "robin",
-  acquiredBy: "robin",
+  handledBy: "broker-1",
+  acquiredBy: "broker-1",
   netCommissionCents: 15_000_00,
   costsCents: 500_00,
   costsClosed: true,
@@ -35,7 +35,7 @@ describe("bonus suggestions", () => {
     assert.equal(bonus.state, "ready");
     assert.equal(bonus.amountCents, 500_00);
     assert.equal(bonus.earnedOn, "2026-09-08");
-    assert.equal(bonus.brokerUserId, "robin");
+    assert.equal(bonus.brokerUserId, "broker-1");
   });
 
   test("the notary bonus waits for the notary date", () => {

@@ -16,10 +16,6 @@ on conflict (name) do update
        administers = excluded.administers, protected = excluded.protected,
        sort_order = excluded.sort_order;
 
-update public.app_users
-   set role_id = (select id from public.roles where name = 'bookkeeper')
- where email = 'buchhaltung@immobilien-vanoepen.de';
-
 delete from public.role_permissions
  where role_id in (select id from public.roles where name in ('assistant', 'bookkeeper', 'tax_advisor'));
 
