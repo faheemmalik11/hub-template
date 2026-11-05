@@ -1444,26 +1444,26 @@ const de = {
 
     // ---- workflow (approval chain) — also used for persisted German audit text ----
     workflow: {
-      eingegangen: "Eingegangen",
-      in_pruefung: "In Prüfung",
-      rueckfrage: "Rückfrage",
-      freigegeben_assistenz: "Freigegeben (Assistenz)",
-      freigegeben_vorgesetzter: "Freigegeben (Vorgesetzter)",
+      received: "Eingegangen",
+      in_review: "In Prüfung",
+      query: "Rückfrage",
+      approved_first: "Freigegeben (Assistenz)",
+      approved_final: "Freigegeben (Vorgesetzter)",
       // "Bezahlt", the same word the payment column uses, and deliberately so: this step IS the
       // paid state. A DB trigger (migration 0036) sets it the moment paid_at is confirmed, from
       // wherever the payment was marked (bank match, auto-suggested or manual, or the manual paid
       // checkbox), so the two can never disagree. It was briefly called "Zahlung veranlasst" to
       // avoid the repetition; that made it read as a separate "instructed but not yet paid" stage,
       // which is not a state this chain has.
-      bezahlt: "Bezahlt",
+      paid: "Bezahlt",
       // NOT "Übergeben (DATEV)". The DATEV column on the same row already says "Übergeben", and a
       // trigger (migration 0038) sets this step the moment datev_handed_over_at is written, so the
       // two badges are one event printed twice in the same words. The column reports the action, this
       // one says where the document now sits in the chain: gone to DATEV, waiting to be closed off.
-      uebergeben_datev: "Bei DATEV",
-      abgeschlossen: "Abgeschlossen",
-      abgelehnt: "Abgelehnt",
-      nicht_relevant: "Nicht relevant",
+      handed_over: "Bei DATEV",
+      closed: "Abgeschlossen",
+      rejected: "Abgelehnt",
+      not_relevant: "Nicht relevant",
       actions: {
         send_for_review: "Zur Prüfung geben",
         complete: "Beleg abschließen",

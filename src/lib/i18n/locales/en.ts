@@ -1421,19 +1421,19 @@ const en = {
     },
 
     workflow: {
-      eingegangen: "Received",
-      in_pruefung: "In review",
-      rueckfrage: "Query",
-      freigegeben_assistenz: "Approved (assistant)",
-      freigegeben_vorgesetzter: "Approved (supervisor)",
+      received: "Received",
+      in_review: "In review",
+      query: "Query",
+      approved_first: "Approved (assistant)",
+      approved_final: "Approved (supervisor)",
       // NOT "Paid" -- see the German file for why. This is the approval chain's payment step, the
       // payment column next to it is whether the money has actually left.
-      bezahlt: "Paid",
+      paid: "Paid",
       // Not "Handed over (DATEV)", see the German file.
-      uebergeben_datev: "With DATEV",
-      abgeschlossen: "Completed",
-      abgelehnt: "Rejected",
-      nicht_relevant: "Not relevant",
+      handed_over: "With DATEV",
+      closed: "Completed",
+      rejected: "Rejected",
+      not_relevant: "Not relevant",
       actions: {
         send_for_review: "Send for review",
         complete: "Complete invoice",

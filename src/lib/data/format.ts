@@ -888,7 +888,7 @@ export const WORKFLOW_ORDER = [
 // regardless of the active UI language, so the audit trail stays consistent. Do NOT use this
 // for display — the UI translates `documents.workflow.<value>` via useTranslation.
 export function workflowLabelDe(status: string | null | undefined): string {
-  if (!status) return tDe("documents.workflow.eingegangen");
+  if (!status) return tDe("documents.workflow.received");
   return tDe(`documents.workflow.${status}`, { defaultValue: status });
 }
 
