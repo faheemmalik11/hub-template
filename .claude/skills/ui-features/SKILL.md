@@ -43,7 +43,7 @@ Switching a node off takes its children with it.
   Only a part with no action behind it gets its own section key. Never invent `show_pay_button`
   beside `invoices.pay`.
 - **A key is declared once.** Pages and modules on their nav entry; everything else in
-  `src/lib/permissions.ts`. No permission string anywhere else in `src/`.
+  `src/config/permissions.ts`. No permission string anywhere else in `src/`.
 - **English identifiers, whatever the URL says.** `page.incoming_invoices` for `/eingangsrechnungen`.
 - **Defaults ship in the catalogue, choices live in `feature_settings`.** The seed may update labels
   and sort order on conflict; it must never write `default_enabled`, or a re-run resets what a client
@@ -55,7 +55,7 @@ Switching a node off takes its children with it.
 
 ## When you add a page
 
-1. A key in `src/lib/permissions.ts`.
+1. A key in `src/config/permissions.ts`.
 2. A row in `supabase/permissions.seed.sql`, with its `parent_key`, its `kind` and grants for every
    role.
 3. The key on the nav entry. Nothing else: the sidebar filter and the route guard already read it.
