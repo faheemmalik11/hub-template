@@ -24,7 +24,7 @@ import {
   getBanksapiForPayments,
   isPublicIpv4,
   type BanksapiPaymentRequest,
-} from "../_shared/banksapi.ts";
+} from "../_shared/adapters/banksapi/client.ts";
 import { applyPaymentStatus } from "../_shared/payment-status.ts";
 import {
   callerEmailFromAuthHeader,
@@ -203,24 +203,18 @@ Deno.serve(async (req) => {
     const { data: bankAccount, error: bankAccountError } = await db
       .from(TABLE.bankAccounts)
       .select(
-        `id, iban, banksapi_product_id, is_sandbox, connection_id, ${TABLE.bankConnections}(banksapi_access_id)`,
+        `id, iban, provider_account_ref, is_sandbox, connection_id, ${TABLE.bankConnections}(provider_access_ref)`,
       )
       .eq("id", bankAccountId)
       .maybeSingle();
     if (bankAccountError)
       throw new Error(`bank account lookup failed: ${bankAccountError.message}`);
     const accessId = (
-      bankAccount as unknown as { bank_connections: { banksapi_access_id: string } | null }
-    )?.bank_connections?.banksapi_access_id;
-    if (!bankAccount || !accessId || !bankAccount.banksapi_product_id) {
+      bankAccount as unknown as { bank_connections: { provider_access_ref: string } | null }
+    )?.bank_connections?.provider_access_ref;
+    if (!bankAccount || !accessId || !bankAccount.provider_account_ref) {
       return jsonResponse({ error: "bank account is not a connected BANKSapi account" }, 400);
     }
-    // BANKSapi's bulk-transfer `product` field is the debit account's IBAN, NOT
-    // banksapi_product_id -- they're usually the same string for a plain checking account,
-    // which is why this only surfaced when tested against a Bausparvertrag-style product
-    // (product id "123456_BP_..." != its IBAN). Confirmed live, both via the raw API and
-    // BANKSapi's own webform screenshot: "Die IBAN 123456_BP_Zwischenfinanzierung wurde
-    // nicht gefunden" when the product id is sent instead of the real IBAN.
     if (!bankAccount.iban) {
       return jsonResponse(
         { error: "bank account has no IBAN on file, cannot be used to pay from" },
@@ -255,8 +249,8 @@ Deno.serve(async (req) => {
         currency: invoice.currency ?? "EUR",
         payment_reference: `Rechnung ${invoice.invoice_number ?? invoice.id}`,
         status: "draft",
-        banksapi_access_id: accessId,
-        banksapi_product_id: bankAccount.banksapi_product_id,
+        provider_access_ref: accessId,
+        provider_account_ref: bankAccount.provider_account_ref,
         // True if EITHER the paying account is itself a sandbox account OR the payment mode
         // (BANKSAPI_PAYMENT_MODE, independent of the read-side BANKSAPI_MODE) is mock — a mock
         // payment must never read as "real" just because it was made from a live-looking account.
@@ -321,7 +315,7 @@ Deno.serve(async (req) => {
       .from(TABLE.paymentOrders)
       .update({
         status: session.status,
-        banksapi_payment_id: session.paymentId,
+        provider_payment_ref: session.paymentId,
         authorized_at:
           session.status === "authorized" || session.status === "executed" ? now : null,
         updated_at: new Date().toISOString(),

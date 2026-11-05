@@ -23,7 +23,7 @@
 // resetting it here would silently undo that choice on the next reconnect.
 //
 // Body: { connectionId: string }
-import { getBanksapi } from "../_shared/banksapi.ts";
+import { getBanksapi } from "../_shared/adapters/banksapi/client.ts";
 import { serviceClient } from "../_shared/supabase.ts";
 import { corsHeaders, jsonResponse } from "../_shared/cors.ts";
 import { callerEmailFromAuthHeader } from "../_shared/payment-auth.ts";
@@ -57,7 +57,7 @@ Deno.serve(async (req) => {
 
     const { data: conn, error: readErr } = await db
       .from(TABLE.bankConnections)
-      .select("id, banksapi_access_id, bank_name, provider_name, is_sandbox, deleted_at")
+      .select("id, provider_access_ref, bank_name, provider_name, is_sandbox, deleted_at")
       .eq("id", connectionId)
       .maybeSingle();
     if (readErr) throw readErr;
@@ -65,7 +65,7 @@ Deno.serve(async (req) => {
 
     // ---- 1. BANKSapi. Stop here on failure. -------------------------------------------------
     const api = getBanksapi();
-    const accessId: string | null = conn.banksapi_access_id ?? null;
+    const accessId: string | null = conn.provider_access_ref ?? null;
     if (accessId && !accessId.startsWith("mock-")) {
       await api.deleteBankAccess(accessId);
     }
@@ -108,7 +108,7 @@ Deno.serve(async (req) => {
         // The consent really is gone, so the status column agrees with reality rather than still
         // advertising 'active' for an access that no longer exists.
         status: "expired",
-        banksapi_access_id: null,
+        provider_access_ref: null,
         updated_at: jetzt,
       })
       .eq("id", connectionId);

@@ -2,7 +2,11 @@
 // webform URL the user opens to authorize their bank. Creates a 'pending' connection
 // row. No secrets reach the frontend; the browser only receives the webform URL.
 // Body: { callbackUrl?: string, customerIp?: string }.
-import { getBanksapi, isPublicIpv4, isSandboxConnection } from "../_shared/banksapi.ts";
+import {
+  getBanksapi,
+  isPublicIpv4,
+  isSandboxConnection,
+} from "../_shared/adapters/banksapi/client.ts";
 import { serviceClient } from "../_shared/supabase.ts";
 import { corsHeaders, jsonResponse } from "../_shared/cors.ts";
 import { callerEmailFromAuthHeader } from "../_shared/payment-auth.ts";
@@ -43,7 +47,7 @@ Deno.serve(async (req) => {
     const session = await api.createBankAccessSession(callbackUrl, customerIp);
 
     const row = {
-      banksapi_access_id: session.accessId,
+      provider_access_ref: session.accessId,
       status: "pending",
       is_sandbox: isSandboxConnection(api.mode),
       // WHOSE CONSENT THIS IS. The person who opens the webform authorises at their own bank, so
@@ -54,13 +58,10 @@ Deno.serve(async (req) => {
       metadata: { started_at: new Date().toISOString() },
       updated_at: new Date().toISOString(),
     };
-    // Find by access id, else insert (no unique constraint on banksapi_access_id).
-    // These writes MUST be error-checked: bank-callback later looks the connection up by
-    // access id, and a silently dropped row makes every callback fail as "unknown access".
     const { data: existing, error: selectError } = await db
       .from(TABLE.bankConnections)
       .select("id")
-      .eq("banksapi_access_id", session.accessId)
+      .eq("provider_access_ref", session.accessId)
       .maybeSingle();
     if (selectError) throw new Error(`bank_connections lookup failed: ${selectError.message}`);
 

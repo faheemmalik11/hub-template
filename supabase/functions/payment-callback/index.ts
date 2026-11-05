@@ -15,7 +15,7 @@
 //
 // PUBLIC endpoint: verify_jwt = false in config.toml (see the [functions.payment-callback] entry
 // added alongside bank-callback's).
-import { getBanksapiForPayments } from "../_shared/banksapi.ts";
+import { getBanksapiForPayments } from "../_shared/adapters/banksapi/client.ts";
 import { applyPaymentStatus } from "../_shared/payment-status.ts";
 import { serviceClient } from "../_shared/supabase.ts";
 import { corsHeaders } from "../_shared/cors.ts";
@@ -96,8 +96,8 @@ Deno.serve(async (req) => {
         headers: { ...corsHeaders, Location: hubRedirect(null, "error", hubBase) },
       });
     }
-    if (!order.banksapi_payment_id) {
-      console.warn("payment-callback: order has no banksapi_payment_id yet", orderId);
+    if (!order.provider_payment_ref) {
+      console.warn("payment-callback: order has no provider_payment_ref yet", orderId);
       return new Response(null, {
         status: 302,
         headers: { ...corsHeaders, Location: hubRedirect(null, "error", hubBase) },
@@ -120,8 +120,8 @@ Deno.serve(async (req) => {
 
     // Authoritative check — never trust the query string for the outcome itself.
     const result = await getBanksapiForPayments().getPaymentStatus(
-      order.banksapi_access_id,
-      order.banksapi_payment_id,
+      order.provider_access_ref,
+      order.provider_payment_ref,
     );
     await applyPaymentStatus(db, order, result);
     outcome =

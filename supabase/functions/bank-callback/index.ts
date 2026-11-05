@@ -105,7 +105,7 @@ Deno.serve(async (req) => {
       const { data: existing } = await db
         .from(TABLE.bankConnections)
         .select("id")
-        .eq("banksapi_access_id", accessId)
+        .eq("provider_access_ref", accessId)
         .maybeSingle();
 
       if (existing?.id) {
