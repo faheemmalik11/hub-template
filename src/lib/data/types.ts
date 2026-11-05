@@ -428,6 +428,15 @@ export interface SupplierDuplicateGroup {
   ids: string[];
 }
 
+export interface TaxBreakdownLine {
+  rate: number;
+  net: number;
+  vat_amount: number;
+  component: string | null;
+}
+
+export type TaxBreakdown = TaxBreakdownLine[];
+
 export interface Document {
   id: string;
   company_id: string | null;
@@ -446,6 +455,7 @@ export interface Document {
   vat_amount: number | null;
   amount_gross: number | null;
   currency: string | null;
+  tax_breakdown?: TaxBreakdown;
   is_small_amount: boolean | null;
   intake_channel: string | null;
   source: string | null;
