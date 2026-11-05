@@ -26,7 +26,7 @@ create table if not exists public.outgoing_invoices (
     reminder_due_date date,
     handed_over_at timestamptz,
     handover_batch_id uuid references public.handover_batches(id),
-    last_synced_at timestamptz,
+    last_sync_at timestamptz,
     created_by text,
     created_at timestamptz not null default now(),
     updated_at timestamptz not null default now(),

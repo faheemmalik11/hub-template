@@ -10,7 +10,7 @@ const base = {
   reminder_level: null,
   reminder_due_date: null,
   created_by: null,
-  last_synced_at: null,
+  last_sync_at: null,
   customers: null,
 };
 

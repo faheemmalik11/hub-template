@@ -1738,7 +1738,7 @@ export interface OutgoingInvoice {
   created_by: string | null;
   created_at: string;
   updated_at: string;
-  last_synced_at: string | null;
+  last_sync_at: string | null;
   // Optional PostgREST-embedded relation (select "*, customers(*)").
   customers?: Customer | null;
 }
