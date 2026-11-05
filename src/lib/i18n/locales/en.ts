@@ -4468,6 +4468,11 @@ const en = {
         summaryShort: "{{count}} movements · total {{sum}}",
         issuesTitle_one: "{{count}} row skipped",
         issuesTitle_other: "{{count}} rows skipped",
+        issueCode: {
+          missing_booking_date:
+            'Row {{rowIndex}}: the date is missing or not readable ("{{rawValue}}").',
+          missing_amount: "Row {{rowIndex}}: the amount is missing or not readable.",
+        },
         aiWarning:
           "These movements were read from a PDF by AI. Please review carefully before importing.",
         missingRequiredWarning_one:

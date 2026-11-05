@@ -15,10 +15,13 @@ export interface NormalizedRow {
   provider_ref: string | null;
 }
 
+export type ParseIssueCode = "missing_booking_date" | "missing_amount";
+
 /** Row-level problem found while normalizing — the row is skipped, not silently dropped. */
 export interface ParseIssue {
   rowIndex: number;
-  reason: string;
+  code: ParseIssueCode;
+  rawValue: string;
 }
 
 export interface NormalizeResult {

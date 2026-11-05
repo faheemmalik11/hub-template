@@ -7,8 +7,9 @@
 
 import type { ChainPerson, ApprovalRule, Document, FieldSource, WorkflowStatus } from "./types";
 import i18n, { tDe } from "@/lib/i18n";
+import { createLocaleParser, DEFAULT_LOCALE_SETTINGS } from "@/lib/locale/locale-parser";
 
-const eur = new Intl.NumberFormat("de-DE", { style: "currency", currency: "EUR" });
+const localeParser = createLocaleParser(DEFAULT_LOCALE_SETTINGS);
 
 // Dates follow the language the user picked. formatDate was pinned to "en-US" and formatMonthYear
 // to "de-DE", so with English selected the period filter still listed German month names while the
@@ -22,7 +23,7 @@ export function dateLocale(): string {
 }
 
 export function formatEUR(value: number | null | undefined): string {
-  return eur.format(value ?? 0);
+  return localeParser.formatCurrency(value ?? 0);
 }
 
 export function formatNumber(value: number | null | undefined, digits = 2): string {

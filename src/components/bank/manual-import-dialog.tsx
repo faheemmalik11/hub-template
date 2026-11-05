@@ -17,6 +17,7 @@ import type {
 } from "@/lib/api/bank-manual-import.functions";
 import type { AiExtractedRow } from "@/lib/api/bank-statement-ai.functions";
 import { normalizeTable } from "@/lib/bank-import/normalize";
+import { createLocaleParser, DEFAULT_LOCALE_SETTINGS } from "@/lib/locale/locale-parser";
 import type {
   ColumnMapping,
   NormalizedRow,
@@ -156,7 +157,9 @@ export function ManualImportDialog() {
           <ManualImportMappingStep
             table={table}
             onConfirm={(mapping: ColumnMapping) => {
-              setNormalized(normalizeTable(table, mapping));
+              setNormalized(
+                normalizeTable(table, mapping, createLocaleParser(DEFAULT_LOCALE_SETTINGS)),
+              );
               setStep("preview");
             }}
           />

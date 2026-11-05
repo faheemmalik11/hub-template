@@ -4629,6 +4629,11 @@ const de = {
         summaryShort: "{{count}} Umsätze · Summe {{sum}}",
         issuesTitle_one: "{{count}} Zeile übersprungen",
         issuesTitle_other: "{{count}} Zeilen übersprungen",
+        issueCode: {
+          missing_booking_date:
+            'Zeile {{rowIndex}}: Buchungstag fehlt oder unlesbar ("{{rawValue}}").',
+          missing_amount: "Zeile {{rowIndex}}: Betrag fehlt oder unlesbar.",
+        },
         aiWarning:
           "Diese Umsätze wurden per KI aus einem PDF gelesen. Bitte vor dem Import sorgfältig prüfen.",
         missingRequiredWarning_one:

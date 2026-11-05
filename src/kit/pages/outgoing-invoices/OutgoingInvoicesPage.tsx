@@ -64,7 +64,7 @@ export function OutgoingInvoicesPage({
 
   const matchesSearch = (invoice: OutgoingInvoiceRecord, term: string) => {
     if (!term) return true;
-    return [invoice.customer_name ?? "", invoice.voucher_number ?? ""].some((f) =>
+    return [invoice.customer_name ?? "", invoice.invoice_number ?? ""].some((f) =>
       f.toLowerCase().includes(term),
     );
   };
@@ -72,7 +72,7 @@ export function OutgoingInvoicesPage({
   const filtered = useMemo(() => {
     const term = search.trim().toLowerCase();
     return invoicesQuery.data.filter((invoice) => {
-      if (status !== ALL && effectiveStatus(invoice.voucher_status, invoice.due_date) !== status)
+      if (status !== ALL && effectiveStatus(invoice.status, invoice.due_date) !== status)
         return false;
       return matchesSearch(invoice, term);
     });
@@ -89,7 +89,7 @@ export function OutgoingInvoicesPage({
     let paidAmount = 0;
     let volume = 0;
     for (const invoice of base) {
-      const state = effectiveStatus(invoice.voucher_status, invoice.due_date);
+      const state = effectiveStatus(invoice.status, invoice.due_date);
       const amount = invoice.amount_gross ?? 0;
       if (state !== "voided") volume += amount;
       if (state === "open") {
@@ -164,7 +164,7 @@ export function OutgoingInvoicesPage({
         case "due":
           return invoice.due_date ?? "";
         default:
-          return invoice.voucher_date ?? "";
+          return invoice.invoice_date ?? "";
       }
     },
   });
@@ -342,12 +342,12 @@ function InvoiceRow({
   return (
     <TableRow>
       <TableCell className="font-medium text-foreground">
-        {invoice.voucher_number ?? labels.draftPlaceholder}
+        {invoice.invoice_number ?? labels.draftPlaceholder}
       </TableCell>
       <TableCell className="text-sm text-foreground">{invoice.customer_name ?? "—"}</TableCell>
       <TableCell className="text-sm text-muted-foreground">{company?.code ?? "—"}</TableCell>
       <TableCell className="text-sm text-muted-foreground tabular-nums">
-        {adapter.formatDate(invoice.voucher_date)}
+        {adapter.formatDate(invoice.invoice_date)}
       </TableCell>
       <TableCell className="text-sm text-muted-foreground tabular-nums">
         {adapter.formatDate(invoice.due_date)}
@@ -357,7 +357,7 @@ function InvoiceRow({
       </TableCell>
       <TableCell>
         <Select
-          value={invoice.voucher_status}
+          value={invoice.status}
           onValueChange={(v) => changeStatus(v as OutgoingInvoiceStatus)}
         >
           <SelectTrigger className="h-8 w-[130px]">

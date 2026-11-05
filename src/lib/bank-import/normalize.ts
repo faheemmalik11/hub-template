@@ -1,4 +1,5 @@
 import type { ColumnMapping, NormalizedRow, NormalizeResult, ParsedTable } from "./types";
+import type { ILocaleParser } from "@/lib/locale/locale-parser";
 
 /**
  * Parse a date cell in whatever shape a bank export throws at us: German "DD.MM.YYYY"/"DD.MM.YY",
@@ -61,35 +62,39 @@ function cell(row: Record<string, string>, header: string | undefined): string {
  * bank-manual-import Edge Function. Rows that fail required-field validation are skipped and
  * reported as issues rather than silently dropped.
  */
-export function normalizeTable(table: ParsedTable, mapping: ColumnMapping): NormalizeResult {
+export function normalizeTable(
+  table: ParsedTable,
+  mapping: ColumnMapping,
+  parser: ILocaleParser,
+): NormalizeResult {
   const rows: NormalizedRow[] = [];
   const issues: NormalizeResult["issues"] = [];
 
   table.rows.forEach((row, rowIndex) => {
     const bookingDateRaw = cell(row, mapping.booking_date);
-    const bookingDate = parseFlexibleDate(bookingDateRaw);
+    const bookingDate = parser.parseDate(bookingDateRaw);
     if (!bookingDate) {
-      issues.push({ rowIndex, reason: `Buchungstag fehlt oder unlesbar ("${bookingDateRaw}")` });
+      issues.push({ rowIndex, code: "missing_booking_date", rawValue: bookingDateRaw });
       return;
     }
 
     let amount: number | null;
     if (mapping.amountDebit || mapping.amountCredit) {
-      const debit = parseFlexibleAmount(cell(row, mapping.amountDebit)) ?? 0;
-      const credit = parseFlexibleAmount(cell(row, mapping.amountCredit)) ?? 0;
+      const debit = parser.parseAmount(cell(row, mapping.amountDebit)) ?? 0;
+      const credit = parser.parseAmount(cell(row, mapping.amountCredit)) ?? 0;
       amount = credit - Math.abs(debit);
       if (debit === 0 && credit === 0) amount = null;
     } else {
-      amount = parseFlexibleAmount(cell(row, mapping.amount));
+      amount = parser.parseAmount(cell(row, mapping.amount));
     }
     if (amount === null) {
-      issues.push({ rowIndex, reason: "Betrag fehlt oder unlesbar" });
+      issues.push({ rowIndex, code: "missing_amount", rawValue: cell(row, mapping.amount) });
       return;
     }
 
     rows.push({
       booking_date: bookingDate,
-      value_date: parseFlexibleDate(cell(row, mapping.value_date)),
+      value_date: parser.parseDate(cell(row, mapping.value_date)),
       amount,
       currency: cell(row, mapping.currency) || null,
       counterparty_holder: cell(row, mapping.counterparty_holder) || null,

@@ -4,11 +4,11 @@ export interface OutgoingInvoiceRecord {
   id: string;
   company_id: string | null;
   customer_name: string | null;
-  voucher_number: string | null;
-  voucher_date: string | null;
+  invoice_number: string | null;
+  invoice_date: string | null;
   due_date: string | null;
   amount_gross: number | null;
-  voucher_status: OutgoingInvoiceStatus;
+  status: OutgoingInvoiceStatus;
 }
 
 export interface OutgoingInvoiceAdapter {
