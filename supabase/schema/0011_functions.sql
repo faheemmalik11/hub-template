@@ -3019,12 +3019,12 @@ CREATE OR REPLACE FUNCTION public.set_bank_account_connect_route() RETURNS trigg
     LANGUAGE plpgsql
     AS $$
 begin
-  if new.provider_id is null then
+  if new.provider_ref is null then
     new.connect_route := coalesce(new.connect_route, 'ebics_or_manual');
   else
     select case when p.is_supported then 'banksapi' else 'ebics_or_manual' end
       into new.connect_route
-      from bank_providers p where p.id = new.provider_id;
+      from bank_providers p where p.provider_ref = new.provider_ref;
   end if;
   return new;
 end $$;

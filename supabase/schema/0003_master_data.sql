@@ -21,7 +21,6 @@ create table if not exists public.companies (
     -- Where a filed copy of this company's documents lands: the path, the provider's own id for
     -- that folder, and how the two were bound together.
     filing_folder text,
-    drive_folder_id text,
     filing_binding text,
     -- What a client calls its parts of the business, if it has any. The names are that client's data.
     area text,
@@ -46,7 +45,6 @@ create table if not exists public.properties (
     vat_status text,
     -- Where a filed copy lands: the path, the provider's own id for that folder, and the binding.
     filing_folder text,
-    drive_folder_id text,
     filing_binding text,
     created_at timestamptz not null default now(),
     updated_at timestamptz not null default now(),

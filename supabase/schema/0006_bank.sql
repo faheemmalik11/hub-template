@@ -138,8 +138,7 @@ create index if not exists bank_transactions_company on public.bank_transactions
 create index if not exists bank_transactions_booking_date on public.bank_transactions (booking_date desc);
 create index if not exists bank_transactions_matching_status on public.bank_transactions (matching_status)
     where deleted_at is null;
-create unique index if not exists bank_transactions_provider_hash on public.bank_transactions (provider_hash)
-    where provider_hash is not null;
+create unique index if not exists bank_transactions_provider_hash on public.bank_transactions (provider_hash);
 
 -- What a run of the sync did, for a person asking why a line is missing.
 create table if not exists public.bank_sync_logs (
