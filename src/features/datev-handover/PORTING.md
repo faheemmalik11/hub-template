@@ -1,7 +1,7 @@
 # DATEV handover — portable feature folder
 
-The DATEV-Übergabe screen lives here so it can be carried between the Hub repos (Immonetz, Stäy,
-Mayestate, Eiffler's accounting module) as a unit. The rule that makes that work:
+The DATEV-Übergabe screen lives here so it can be carried between the Hub repos (Immonetz, this
+client, Mayestate, Eiffler's accounting module) as a unit. The rule that makes that work:
 
 > **Every file in this folder except `adapter.ts` and `config.ts` is meant to be byte-identical
 > across repos.** All intentional differences live in those two. If you are editing any other file
@@ -26,7 +26,7 @@ carried over yet, or a mistake.
 ## Why this folder exists
 
 The screen shipped as four independent copies and they had already drifted: Mayestate grew a bounce
-banner, Stäy a branded `pageTitle()`, Immonetz a bespoke status pill while still importing the
+banner, this client a branded `pageTitle()`, Immonetz a bespoke status pill while still importing the
 shared `RouteStatus` and never using it. Each divergence was a reasonable local decision; together
 they meant every fix had to be made and reviewed four times, and the shared component the comments
 kept pointing at was the one nobody was using.
@@ -66,7 +66,7 @@ Both come from migration 0038 and will bite anyone redesigning this screen again
 ## What `config.ts` carries
 
 - `aktiveRichtungen` — which directions this Hub can actually SEND, as opposed to merely store an
-  address for. Immonetz and Stäy send `incoming` only; Eiffler has wired `outgoing` as well. Every
+  address for. Immonetz and this client send `incoming` only; Eiffler has wired `outgoing` as well. Every
   direction not listed still gets its field, its switch and its stored value, marked
   "noch nicht aktiv" — hiding it would quietly drop configuration somebody entered deliberately.
 - `onOpenBeleg` — open one incoming invoice, using the Hub's own typed navigate call. Omit in a Hub

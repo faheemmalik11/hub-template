@@ -4,7 +4,7 @@ Both screens (list + detail) live in this folder and are **byte-identical across
 from `adapter.ts`. Nothing here imports from `@/…` or touches the router's typed route tree, which
 is what makes the copy work.
 
-Immonetz is the base. Stäy is ported. Mayestate and Eiffler still run their own older versions of
+Immonetz is the base. This client is ported. Mayestate and Eiffler still run their own older versions of
 the two screens (Eiffler's live under `src/accounting/routes/objekte/`).
 
 ## Steps
@@ -30,7 +30,7 @@ it differently, and the hook's job is to flatten either shape into one index.
 | Hub             | Model                                                                                                             | `bereich`         |
 | --------------- | ----------------------------------------------------------------------------------------------------------------- | ----------------- |
 | Immonetz        | `property_assignment`: one row per property × **business line** → company. Owned by the Geschäftsbereiche screen. | the business line |
-| Stäy, Mayestate | `usePropertyCompanies`: a property is assigned straight to companies.                                             | `null`            |
+| This client, Mayestate | `usePropertyCompanies`: a property is assigned straight to companies.                                             | `null`            |
 
 It must return `{ bereit, byProperty, zuordnungenByProperty }`:
 
@@ -47,7 +47,7 @@ It must return `{ bereit, byProperty, zuordnungenByProperty }`:
 ## Capabilities: the optional parts of a property
 
 The Hubs do not model a property the same way. Immonetz carries an archive, an ownership type, a
-review date and a Drive folder link on the row. Stäy carries the archive only: no `reviewed_at`, no
+review date and a Drive folder link on the row. This client carries the archive only: no `reviewed_at`, no
 `ownership_type`, and its folder column is `drive_folder_id`, a Dropbox path the pipeline files
 into rather than a link anybody opens.
 
@@ -78,7 +78,7 @@ keeps it from ever being called.
 
 Everything else per-Hub is a slot on `PropertiesConfig`:
 
-- `zuordnungEditor` — supply it where the Hub lets this screen **edit** the assignments (Stäy and
+- `zuordnungEditor` — supply it where the Hub lets this screen **edit** the assignments (this client and
   Mayestate pass their `CompanyAssignmentField`). Leave it out and the section renders read-only,
   which is Immonetz's arrangement: the Geschäftsbereiche screen owns the edit, and two screens
   half-managing one relation is the failure being avoided.

@@ -23,7 +23,7 @@ the selected period and the comparison period — from that one list.
 - **Zero confirmed bank matches** (`invoice_transaction_matches` where `status='bestaetigt'` → 0),
   against 433 invoices and 2.756 bank transactions. No receipt reaches the P&L at all.
 - **Zero outgoing invoices**, so the Revenue line is structurally 0,00 € and cannot be exercised.
-- The entire P&L is therefore **two manual bookings**, both dated 2026-08-01 (STAY):
+- The entire P&L is therefore **two manual bookings**, both dated 2026-08-01 (ACME):
   112,00 € Bauleistung § 13b and 422,00 € Kfz-Steuer. Baseline: Rohertrag −112,00 €,
   Betriebliche Steuern 422,00 €, Vorläufiges Ergebnis −534,00 € — unchanged by this work, verified
   before and after.
@@ -51,7 +51,7 @@ what was a refetch-per-filter-change into a single React Query key.
 
 #1 loading gate · #2 error gate (forced 500 on `manual_bookings_expanded` → ErrorState, no P&L) ·
 #3 custom range 20.–31.08. excludes the 01.08. bookings while 01.–31.08. includes them ·
-#7 drilldown item reads "STAY · Manuelle Buchung" and navigates to `/manuelle-buchungen` ·
+#7 drilldown item reads "ACME · Manuelle Buchung" and navigates to `/manuelle-buchungen` ·
 #9 "Unabhängig vom Zeitraum-Filter" appears only with a period selected · #11 all three allocation
 queries now carry `offset`/`limit` · #12 CSV export · #13 comparison columns with correct deltas
 (112,00 € vs 0,00 € = +112,00 €).

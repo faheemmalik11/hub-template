@@ -11,7 +11,7 @@ Found via code review (`src/routes/bankkonten/index.tsx`, `src/components/bank/b
 `0059_hub_roles_access_trash.sql`, `20260813150000_super_admin_company_access.sql`) plus a live
 pass against the real dev database through the running app. **Read-only**: no account was created,
 edited, removed or restored, and no sync was triggered. Live state: 12 active accounts across 4
-companies (IMPV, INFI, STAY, STGR), all on two connections to the same bank, plus one removed
+companies (IMPV, INFI, ACME, STGR), all on two connections to the same bank, plus one removed
 account ("Sonstige Darlehen", removed 15.08.2026, reason "Privates Darlehenskonto, gehört nicht in
 die Buchhaltung").
 

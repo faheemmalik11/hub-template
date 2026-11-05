@@ -209,7 +209,7 @@ NW-WBS at this client (the workbook numbers them only for My Baufi, so the this 
 - **Only 21 pairings have numbers**, the ones the workbook lists. Since 17.09.2026 an admin can add the rest in the Hub (see above).
 - **The seed originally landed 17, not 21** (found 14.09.2026). 20260911250000 joins `properties`
   with `p.deleted_at is null`, so it skipped the four pairings whose property is archived: IMPV
-  BR-BRE 102, MYBA FT-KAR 1005, STAY FT-RAI 3, STAY FT-WES 7. Three of them carry invoices.
+  BR-BRE 102, MYBA FT-KAR 1005, ACME FT-RAI 3, ACME FT-WES 7. Three of them carry invoices.
   Migration `20260914130000_cost_centre_archived_pairings` fills them, and states why an archived
   property still needs its number: archiving governs what can be chosen next, not what was already
   booked. **A pairing added to the workbook list in future must not inherit that `deleted_at`

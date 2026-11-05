@@ -99,8 +99,8 @@ const PAIRS: Pair[] = [
   },
   {
     name: "paid total, company",
-    en: "How much have we paid for STAY?",
-    de: "Wie viel haben wir für STAY bezahlt?",
+    en: "How much have we paid for ACME?",
+    de: "Wie viel haben wir für ACME bezahlt?",
     expect: { paymentState: "paid", aggregate: "sum-or-count" },
   },
   {
@@ -112,20 +112,20 @@ const PAIRS: Pair[] = [
   // --- amounts: gross / net / VAT ------------------------------------------------------------------
   {
     name: "VAT total, company",
-    en: "How much VAT is on the STAY invoices?",
-    de: "Wie viel Umsatzsteuer entfällt auf die STAY-Rechnungen?",
+    en: "How much VAT is on the ACME invoices?",
+    de: "Wie viel Umsatzsteuer entfällt auf die ACME-Rechnungen?",
     expect: { aggregate: "sum-or-count", sumField: "vat" },
   },
   {
     name: "net total, company",
-    en: "What is the net total for STAY?",
-    de: "Wie hoch ist der Nettobetrag für STAY?",
+    en: "What is the net total for ACME?",
+    de: "Wie hoch ist der Nettobetrag für ACME?",
     expect: { aggregate: "sum-or-count", sumField: "net" },
   },
   {
     name: "gross total, company",
-    en: "What is the gross total for STAY?",
-    de: "Wie hoch ist der Bruttobetrag für STAY?",
+    en: "What is the gross total for ACME?",
+    de: "Wie hoch ist der Bruttobetrag für ACME?",
     expect: { aggregate: "sum-or-count", sumField: "gross" },
   },
   {
@@ -195,8 +195,8 @@ const PAIRS: Pair[] = [
   // --- scope: company / property / category / supplier ----------------------------------------------
   {
     name: "company total",
-    en: "How much did STAY spend in total?",
-    de: "Wie viel hat STAY insgesamt ausgegeben?",
+    en: "How much did ACME spend in total?",
+    de: "Wie viel hat ACME insgesamt ausgegeben?",
     expect: { aggregate: "sum-or-count", paymentState: null },
   },
   {
@@ -249,8 +249,8 @@ const PAIRS: Pair[] = [
   // --- combinations ------------------------------------------------------------------------------------
   {
     name: "company + year + VAT",
-    en: "How much VAT did STAY have in 2025?",
-    de: "Wie viel Umsatzsteuer hatte STAY 2025?",
+    en: "How much VAT did ACME have in 2025?",
+    de: "Wie viel Umsatzsteuer hatte ACME 2025?",
     expect: { aggregate: "sum-or-count", sumField: "vat" },
   },
   {
@@ -273,8 +273,8 @@ const PAIRS: Pair[] = [
   },
   {
     name: "mixed paid/open scope: must report both sides, not just one",
-    en: "How much of the STAY invoices is already paid and how much is still open?",
-    de: "Wie viel von den STAY-Rechnungen ist bereits bezahlt und wie viel ist noch offen?",
+    en: "How much of the ACME invoices is already paid and how much is still open?",
+    de: "Wie viel von den ACME-Rechnungen ist bereits bezahlt und wie viel ist noch offen?",
   },
   {
     name: "unbounded list: must not present the capped page as the total",

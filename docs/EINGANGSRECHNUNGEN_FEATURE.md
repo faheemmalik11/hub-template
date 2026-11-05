@@ -425,7 +425,7 @@ counted them. Three parts now do:
   `dokumenttyp` fallback (`pipeline_new/adapters/repo/receipts.py`) writes it too. `belegartKey`
   stays as the display-side safety net.
 - **"ohne" / "none" became "Ohne Gesellschaft" / "No company".** In a mono font next to codes like
-  STAY it read as one more code rather than as the absence of one. Same wording as the filter option
+  ACME it read as one more code rather than as the absence of one. Same wording as the filter option
   and the counter above the list.
 
 #### Paging, sorting and the phone layout

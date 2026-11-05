@@ -8,7 +8,7 @@
 // WHY A COPY. Supabase has no rename for a bucket, and an object is addressed by its bucket id,
 // so the only way across is object by object, server side.
 //
-// StäyHub keeps its originals in TWO buckets, which MAYESTATE did not have to deal with:
+// This client's Hub keeps its originals in TWO buckets, which MAYESTATE did not have to deal with:
 //   receipts      what the pipeline writes
 //   belege-files  what the Hub's own upload screen wrote
 // Both go to `documents`. `outgoing-invoice-files` and `profile-pictures` stay where they are.

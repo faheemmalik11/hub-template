@@ -309,7 +309,7 @@ Re-tested after the fix: all 10 recordings transcribe successfully, zero 400s.
 
 **A second real bug found via live usage right after this, in the answer-language fix (2026-08-11)
 — fixed, then a fix-of-the-fix.** Real query: _"Give me all the invoices related to Electricity of
-my STAY company."_ — English question, German answer, 3/3 reproducible. Root cause: the
+my ACME company."_ — English question, German answer, 3/3 reproducible. Root cause: the
 LANGUAGE-matching instruction (this section, ported from a sister Hub) had only been stress-tested
 against MOCKED/short list-shaped data in a sister Hub's own testing, never a realistic
 `JSON.stringify(matches)` dump of German invoice rows (issuer names, `cost_category`, descriptions)

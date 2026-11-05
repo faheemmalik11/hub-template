@@ -15,8 +15,8 @@
 // Renaming a permission scope makes every RLS policy behind it deny everyone. Leaving a table
 // name as data behind makes restore-from-trash look for a table that is not there.
 //
-// StäyHub is harder than MAYESTATE here. MAYESTATE's permission module was the exact string
-// 'invoices', so an equality test separated it. StäyHub uses dotted scopes: 'invoices.pay',
+// This client's Hub is harder than MAYESTATE here. MAYESTATE's permission module was the exact
+// string 'invoices', so an equality test separated it. This client's Hub uses dotted scopes: 'invoices.pay',
 // 'invoices.approve', 'invoices.approve_final', 'invoices.assign', 'invoices.book',
 // 'invoices.override_workflow'. A whole-word regex matches INSIDE every one of them, because a
 // full stop is a word boundary. A blind rewrite silently breaks 54 has_permission call sites.
@@ -207,7 +207,7 @@ function classify(literal: string, context: string): { suggestion: Verdict; why:
   if (/has_permission\s*\(|has_module_access\s*\(/.test(lower)) {
     return { suggestion: "PERMISSION", why: "argument to a permission check" };
   }
-  // StäyHub's scopes are dotted: invoices.pay, invoices.approve_final, invoices.override_workflow.
+  // This client's Hub scopes are dotted: invoices.pay, invoices.approve_final, invoices.override_workflow.
   // A second segment that is itself a renamed word means this is a table.column, not a scope.
   if (
     segments.length === 2 &&
@@ -249,7 +249,7 @@ function classify(literal: string, context: string): { suggestion: Verdict; why:
     }
     return {
       suggestion: "TABLE_AS_DATA",
-      why: "exactly a table name, and StäyHub's permission scopes are dotted so it is not one",
+      why: "exactly a table name, and this client's Hub permission scopes are dotted so it is not one",
     };
   }
 

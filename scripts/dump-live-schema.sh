@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# Take the authoritative snapshot of the live Stäy Hub schema, for the table rename.
+# Take the authoritative snapshot of this client's live Hub schema, for the table rename.
 #
 # WHY THIS EXISTS. Nothing in the repo can tell you what the database looks like:
 #   - supabase/schema.sql is a German-era snapshot (belege, lieferanten) and predates 0019.

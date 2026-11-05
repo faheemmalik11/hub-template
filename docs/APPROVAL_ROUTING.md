@@ -81,7 +81,7 @@ distinct from the other companies' real-estate-ownership role — reinforced by 
 
 | `companies.area` | Companies                                                                     |
 | ---------------- | ----------------------------------------------------------------------------- |
-| `hospitality`    | this client GmbH (`STAY`), this client Gronau GmbH (`STGR`)                                 |
+| `hospitality`    | this client GmbH (`ACME`), this client Gronau GmbH (`STGR`)                                 |
 | `stay_re`        | My Baufi AG (`MYBA`), Impuls VV GmbH (`IMPV`), Infio Immobilien GmbH (`INFI`) |
 
 **This is inferred, not stated by the client.** It's stored as a plain, editable column (see

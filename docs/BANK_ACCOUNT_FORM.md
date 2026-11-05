@@ -150,7 +150,7 @@ Done on our side:
 - **Cards are distinguishable in every dropdown.** `kontoLabel` used the last four IBAN digits to
   tell same-named accounts apart, which is empty exactly for a card. It now falls back to the
   holder, and `eindeutigeKontoLabels` does the same before resorting to a uuid slice. The one live
-  card reads `BusinessCard · STAY · DR. SASKIA CHRIST` instead of `BusinessCard`.
+  card reads `BusinessCard · ACME · DR. SASKIA CHRIST` instead of `BusinessCard`.
 - **A duplicate name is flagged** in the table (`DubletteBadge`), which is what makes the ten
   identically-named feed accounts visible as a problem rather than a coincidence.
 
