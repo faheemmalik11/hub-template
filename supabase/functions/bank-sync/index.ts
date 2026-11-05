@@ -2,10 +2,10 @@
 // deterministic matching against open belege. Idempotent. Writes bank_sync_logs
 // (counts + ids only — no sensitive content). Read-only toward the bank: it never
 // initiates a payment. Trigger: pg_cron (scheduled) or manual invoke from the cockpit.
-import { getBanksapi, isSandboxConnection } from "../_shared/banksapi.ts";
+import { getBanksapi, isSandboxConnection } from "../_shared/adapters/banksapi/client.ts";
 import { serviceClient } from "../_shared/supabase.ts";
 import { corsHeaders, jsonResponse } from "../_shared/cors.ts";
-import { accountRow, connectionRow, transactionRow } from "../_shared/mappers.ts";
+import { accountRow, connectionRow, transactionRow } from "../_shared/adapters/banksapi/mappers.ts";
 import { runMatching, type MatchDocument, type MatchTransaction } from "../_shared/matching.ts";
 import { classifyTransactionType, type TransactionType } from "../_shared/transaction-type.ts";
 import { TABLE } from "../_shared/tables.ts";
@@ -106,22 +106,12 @@ Deno.serve(async (req) => {
     let txnTotal = 0;
     let accountsLinked = 0;
 
-    // Seeded "real" accounts (is_sandbox=false) carry the company/provider assignment. When the
-    // bank feed delivers a product with the SAME IBAN, we attach the feed to that seeded row
-    // (fill connection_id + banksapi_product_id + balance) instead of creating a duplicate — so
-    // company/provider/name stay intact. Keyed by normalized IBAN (spaces/case stripped).
     const normIban = (v: string | null | undefined) =>
       (v ?? "").replace(/[^a-z0-9]/gi, "").toUpperCase();
-    // NOTE: deliberately NOT filtered by deleted_at. bank_accounts_iban_uniq counts
-    // soft-deleted rows too, so excluding them here hid the row that owns the IBAN and the
-    // insert below kept failing. Seeded-account linking still ignores deleted rows.
-    // Also deliberately NOT filtered to `iban is not null` any more: a product without an IBAN
-    // (a credit card) needs the same duplicate protection as one with, keyed on
-    // banksapi_product_id instead — see rowByProductId below.
     const { data: allRows, error: allRowsError } = await db
       .from(TABLE.bankAccounts)
       .select(
-        "id, connection_id, iban, banksapi_product_id, account_name, name_is_custom, " +
+        "id, connection_id, iban, provider_account_ref, account_name, name_is_custom, " +
           "bank_name, is_sandbox, deleted_at, excluded_at, is_active, created_at",
       );
     if (allRowsError) throw allRowsError;
@@ -130,7 +120,7 @@ Deno.serve(async (req) => {
       id: string;
       connection_id: string | null;
       iban: string | null;
-      banksapi_product_id: string | null;
+      provider_account_ref: string | null;
       account_name: string | null;
       name_is_custom: boolean | null;
       bank_name: string | null;
@@ -142,18 +132,13 @@ Deno.serve(async (req) => {
     }
     const accountRows = (allRows ?? []) as AccountState[];
 
-    // Excluded accounts (migration 20260815120000) are off the feed permanently: an admin removed
-    // them in the Hub because they do not belong in the books at all — a private loan account
-    // sitting in the same online banking as the company accounts, say. Unlike deleted_at, which
-    // the reuse branch below is allowed to undo, this is never revived and never fetched. Both
-    // keys are collected because a product is recognised by whichever it has.
     const excludedIbans = new Set<string>();
     const excludedProducts = new Set<string>();
     for (const r of accountRows) {
       if (!r.excluded_at) continue;
       const k = normIban(r.iban);
       if (k) excludedIbans.add(k);
-      if (r.banksapi_product_id) excludedProducts.add(r.banksapi_product_id);
+      if (r.provider_account_ref) excludedProducts.add(r.provider_account_ref);
     }
     const isExcluded = (produktId: string, iban: string | null | undefined) => {
       const k = normIban(iban);
@@ -189,61 +174,50 @@ Deno.serve(async (req) => {
       (r) => r.is_sandbox === false && r.deleted_at === null && r.excluded_at === null,
     );
 
-    // The live DB has a unique index on the NORMALIZED iban (bank_accounts_iban_uniq), so
-    // there can only ever be one row per IBAN, whatever its sandbox flag. Any product whose
-    // IBAN is already taken by a different product must reuse that row instead of inserting.
+    // There is no database constraint behind IBAN or product-id uniqueness on bank_accounts —
+    // these maps are the only duplicate protection, built from a full read of the table above.
     // Rank candidates per IBAN: a live real row beats a live sandbox row, which beats a
-    // soft-deleted one. Picking the wrong duplicate is what caused the unique violations.
+    // soft-deleted one.
     type IbanRow = { id: string; productId: string | null; deleted: boolean; rank: number };
     const rowByIban = new Map<string, IbanRow>();
     for (const r of accountRows) {
       const k = normIban(r.iban);
-      // An excluded row is never a reuse candidate — its product is skipped outright below, and
-      // handing it back here would only reopen the door for a revival.
       if (!k || r.excluded_at) continue;
       const deleted = r.deleted_at !== null;
       const rank = deleted ? 2 : r.is_sandbox === false ? 0 : 1;
       const current = rowByIban.get(k);
       if (!current || rank < current.rank) {
-        rowByIban.set(k, { id: r.id, productId: r.banksapi_product_id ?? null, deleted, rank });
+        rowByIban.set(k, { id: r.id, productId: r.provider_account_ref ?? null, deleted, rank });
       }
     }
 
-    // Products WITHOUT an IBAN — credit cards — get no protection from rowByIban, and the
-    // (connection_id, banksapi_product_id) unique key does not span connections. So when the same
-    // card was delivered by TWO bank accesses it was inserted twice, with two copies of every
-    // movement behind it. That is exactly what an interrupted webform did to the client's
-    // BusinessCard: a second, half-finished access left the card duplicated. A BANKSapi produktId
-    // identifies the same product across accesses (for a card it is the PAN), so key the reuse on
-    // it. Oldest row wins, so repeated syncs keep collapsing onto the same one rather than
-    // ping-ponging between the two.
+    // Products without an IBAN (credit cards) get no protection from rowByIban. A BANKSapi
+    // produktId identifies the same product across accesses (for a card it is the PAN), so key
+    // the reuse on it. Oldest row wins, so repeated syncs keep collapsing onto the same one.
     const rowByProductId = new Map<string, { id: string; connectionId: string | null }>();
     for (const r of [...accountRows].sort((a, b) => a.created_at.localeCompare(b.created_at))) {
-      if (r.excluded_at || r.deleted_at || !r.banksapi_product_id || normIban(r.iban)) continue;
-      if (!rowByProductId.has(r.banksapi_product_id)) {
-        rowByProductId.set(r.banksapi_product_id, { id: r.id, connectionId: r.connection_id });
+      if (r.excluded_at || r.deleted_at || !r.provider_account_ref || normIban(r.iban)) continue;
+      if (!rowByProductId.has(r.provider_account_ref)) {
+        rowByProductId.set(r.provider_account_ref, { id: r.id, connectionId: r.connection_id });
       }
     }
 
-    // The row the (connection_id, banksapi_product_id) upsert below will actually hit — looked up
-    // in advance so the custom-name check knows which row it is about to overwrite.
+    // The row a new product for this (connection_id, provider_account_ref) pair would match —
+    // looked up in advance so the write below knows whether to update or insert.
     const rowByConnProduct = new Map<string, string>();
     for (const r of accountRows) {
-      if (!r.connection_id || !r.banksapi_product_id) continue;
-      rowByConnProduct.set(`${r.connection_id}|${r.banksapi_product_id}`, r.id);
+      if (!r.connection_id || !r.provider_account_ref) continue;
+      rowByConnProduct.set(`${r.connection_id}|${r.provider_account_ref}`, r.id);
     }
 
     // One IBAN can carry SEVERAL products (a Bausparvertrag is often reported under the
-    // Girokonto's IBAN), so this is iban -> candidates, not iban -> single row. Collapsing
-    // it to one row made two products fight over it: the second UPDATE reassigned
-    // banksapi_product_id to a pair another row already held, violating
-    // bank_accounts_connection_id_banksapi_product_id_key.
+    // Girokonto's IBAN), so this is iban -> candidates, not iban -> single row.
     const realByIban = new Map<string, { id: string; productId: string | null }[]>();
     for (const r of realRows) {
       const k = normIban(r.iban);
       if (!k) continue;
       const list = realByIban.get(k) ?? [];
-      list.push({ id: r.id, productId: r.banksapi_product_id ?? null });
+      list.push({ id: r.id, productId: r.provider_account_ref ?? null });
       realByIban.set(k, list);
     }
 
@@ -260,11 +234,10 @@ Deno.serve(async (req) => {
     };
 
     for (const access of accesses) {
-      // Upsert connection (find by banksapi_access_id, else insert).
       const { data: existing } = await db
         .from(TABLE.bankConnections)
         .select("id, is_sandbox")
-        .eq("banksapi_access_id", access.accessId)
+        .eq("provider_access_ref", access.accessId)
         .maybeSingle();
 
       let connectionId: string;
@@ -311,7 +284,7 @@ Deno.serve(async (req) => {
             .from(TABLE.bankAccounts)
             .update({
               connection_id: connectionId,
-              banksapi_product_id: a.produktId,
+              provider_account_ref: a.produktId,
               bic: a.bic || null,
               balance: a.saldo ?? null,
               balance_date: a.saldoDatum || null,
@@ -325,13 +298,10 @@ Deno.serve(async (req) => {
           accountIdByProduct.set(a.produktId, realId);
           accountsLinked++;
         } else if (a.iban && rowByIban.has(normIban(a.iban))) {
-          // bank_accounts_iban_uniq allows exactly ONE row per IBAN. Insert is therefore
-          // never safe here: the row may belong to an older connection (so the upsert's
-          // (connection_id, banksapi_product_id) target would miss and it would INSERT), or
-          // to a second product on the same IBAN such as a Bausparvertrag or credit card.
-          // Reuse the row either way. banksapi_product_id is left alone so we cannot trip the
-          // (connection_id, banksapi_product_id) constraint; movements from both products
-          // land on this account and still dedupe on banksapi_hash.
+          // Only one row is kept per IBAN in this map. The row may belong to an older
+          // connection, or to a second product on the same IBAN such as a Bausparvertrag or
+          // credit card. Reuse the row either way, and leave provider_account_ref alone —
+          // movements from both products land on this account and still dedupe on provider_hash.
           const shared = rowByIban.get(normIban(a.iban))!;
           accountIdByProduct.set(a.produktId, shared.id);
           const { error } = await db
@@ -342,20 +312,6 @@ Deno.serve(async (req) => {
               balance_date: a.saldoDatum || null,
               currency: a.waehrung || "EUR",
               is_own_account: a.eigenesKonto ?? true,
-              // is_sandbox is deliberately NOT written here. bank_accounts_iban_uniq is a
-              // PARTIAL index, so flipping a duplicate row's flag drags it into the index
-              // next to the row already holding this IBAN and raises 23505. Whatever this
-              // row's flag already is, it is the correct one.
-              // Reviving is safe: the ranking above only hands back a deleted row when no
-              // live row holds this IBAN.
-              //
-              // connection_id moves WITH the revival, and only then. A row soft-deleted by
-              // bank-disconnect still points at the connection that was detached, and that row is
-              // hidden, so a revived account left pointing at it would come back attached to a bank
-              // nobody can see -- present in the table but under no group. The bank delivering this
-              // IBAN again is what it belongs to now. banksapi_product_id is still left alone, per
-              // the note above: this branch must not touch the (connection_id, banksapi_product_id)
-              // pair from the other side.
               ...(shared.deleted ? { deleted_at: null, connection_id: connectionId } : {}),
               ...bankNamePatch(shared.id, a),
               updated_at: new Date().toISOString(),
@@ -382,10 +338,10 @@ Deno.serve(async (req) => {
           rowByProductId.get(a.produktId)!.connectionId !== connectionId
         ) {
           // Same IBAN-less product (a card), already imported under a DIFFERENT access. Reuse
-          // that row instead of inserting a second one. connection_id and banksapi_product_id are
-          // deliberately left alone — moving the row to this connection would just re-open the
-          // duplicate from the other side on the next run. Movements from both accesses land on
-          // this one account and still dedupe on (account_id, banksapi_hash).
+          // that row instead of inserting a second one. connection_id and provider_account_ref
+          // are deliberately left alone — moving the row to this connection would just re-open
+          // the duplicate from the other side on the next run. Movements from both accesses land
+          // on this one account and still dedupe on provider_hash.
           const shared = rowByProductId.get(a.produktId)!;
           accountIdByProduct.set(a.produktId, shared.id);
           const { error } = await db
@@ -407,47 +363,55 @@ Deno.serve(async (req) => {
             );
           }
         } else {
-          // No seeded match → upsert a feed-owned account row (mock/sandbox, or a real account
-          // not present in the seed sheet).
+          // No seeded match. No database constraint backs (connection_id, provider_account_ref)
+          // uniqueness, so this writes by explicit lookup against rowByConnProduct instead of a
+          // DB-level upsert: update the row if one already exists for this pair, insert if not.
           const row = accountRow(connectionId, a, connectionIsSandbox);
-          // A name a human typed in the Hub outranks the bank's own label, which is generic to
-          // the point of useless ("Sichteinlagen" on every current account). The upsert would
-          // otherwise write the feed's label back over it every hour.
           const existingId = rowByConnProduct.get(`${connectionId}|${a.produktId}`);
           if (existingId && nameIsCustomById.get(existingId)) {
             delete (row as { account_name?: string | null }).account_name;
           }
-          const { data: acc, error } = await db
-            .from(TABLE.bankAccounts)
-            .upsert(row, {
-              onConflict: "connection_id,banksapi_product_id",
-            })
-            .select("id, banksapi_product_id")
-            .single();
-          if (error) {
-            // Context without dumping IBANs: sync log messages are not a place for them.
-            throw new Error(
-              `${errorMessage(error)} || insert-branch: produkt=${a.produktId} ` +
-                `hasIban=${!!a.iban} inMap=${rowByIban.has(normIban(a.iban))} ` +
-                `mapSize=${rowByIban.size} rowsFetched=${(allRows ?? []).length}`,
-            );
+
+          let accId: string;
+          if (existingId) {
+            const { error } = await db.from(TABLE.bankAccounts).update(row).eq("id", existingId);
+            if (error) {
+              throw new Error(
+                `${errorMessage(error)} || update-branch: produkt=${a.produktId} rowId=${existingId}`,
+              );
+            }
+            accId = existingId;
+          } else {
+            const { data: acc, error } = await db
+              .from(TABLE.bankAccounts)
+              .insert(row)
+              .select("id")
+              .single();
+            if (error) {
+              throw new Error(
+                `${errorMessage(error)} || insert-branch: produkt=${a.produktId} ` +
+                  `hasIban=${!!a.iban} inMap=${rowByIban.has(normIban(a.iban))} ` +
+                  `mapSize=${rowByIban.size} rowsFetched=${(allRows ?? []).length}`,
+              );
+            }
+            accId = acc.id;
           }
-          accountIdByProduct.set(a.produktId, acc.id);
-          // Register it so a later product on the same IBAN reuses this row instead of
-          // inserting a second one and tripping bank_accounts_iban_uniq.
+          accountIdByProduct.set(a.produktId, accId);
+
           const k = normIban(a.iban);
           if (k && !rowByIban.has(k)) {
             rowByIban.set(k, {
-              id: acc.id,
+              id: accId,
               productId: a.produktId,
               deleted: false,
               rank: connectionIsSandbox ? 1 : 0,
             });
           }
-          // Same idea for an IBAN-less product: a later access delivering this same card in this
-          // very run must reuse the row we just created, not insert its own copy.
           if (!k && !rowByProductId.has(a.produktId)) {
-            rowByProductId.set(a.produktId, { id: acc.id, connectionId });
+            rowByProductId.set(a.produktId, { id: accId, connectionId });
+          }
+          if (!existingId) {
+            rowByConnProduct.set(`${connectionId}|${a.produktId}`, accId);
           }
         }
         accountsTotal++;
@@ -469,10 +433,7 @@ Deno.serve(async (req) => {
         connectionId,
       );
 
-      // Fetch + insert new transactions per account (dedup on banksapi_hash).
       for (const a of access.bankprodukte) {
-        // Missing = the product was skipped above (excluded). Never fall through to a fetch with
-        // an undefined account id — that is how an excluded account's movements would sneak in.
         const accountId = accountIdByProduct.get(a.produktId);
         if (!accountId) continue;
         if (inactiveAccountIds.has(accountId)) {
@@ -480,9 +441,6 @@ Deno.serve(async (req) => {
           continue;
         }
         if (!a.hasTransactions) continue;
-        // Incremental cursor: only pull movements on/after the newest we already have for
-        // this account, minus a 7-day overlap for late/backdated postings. Dedup on
-        // (account_id, banksapi_hash) absorbs the overlap; null on first sync = full history.
         const { data: lastTxn } = await db
           .from(TABLE.bankTransactions)
           .select("booking_date")
@@ -505,11 +463,9 @@ Deno.serve(async (req) => {
           rows.push(transactionRow(accountId, connectionId, t, connectionIsSandbox, a.produktTyp));
         }
         if (rows.length > 0) {
-          // DB-level dedup: ON CONFLICT (account_id, banksapi_hash) DO NOTHING.
-          // Idempotent — .select() returns only the rows actually inserted.
           const { data: inserted, error } = await db
             .from(TABLE.bankTransactions)
-            .upsert(rows, { onConflict: "account_id,banksapi_hash", ignoreDuplicates: true })
+            .upsert(rows, { onConflict: "provider_hash", ignoreDuplicates: true })
             .select("id");
           if (error) throw error;
           txnNew += (inserted ?? []).length;
@@ -668,7 +624,7 @@ Deno.serve(async (req) => {
     let matchesCandidate = 0;
     for (const c of candidates) {
       // ignoreDuplicates: never overwrite an existing (possibly human) decision.
-      const { error } = await db.from(TABLE.invoiceTransactionMatches).upsert(
+      const { error } = await db.from(TABLE.documentTransactionMatches).upsert(
         {
           document_id: c.document_id,
           transaction_id: c.transaction_id,
@@ -697,9 +653,9 @@ Deno.serve(async (req) => {
       db
         .from(TABLE.outgoingInvoices)
         .select(
-          `id, amount_gross, voucher_date, due_date, voucher_number, ${TABLE.customers}(name, customer_number)`,
+          `id, amount_gross, invoice_date, due_date, invoice_number, ${TABLE.customers}(name, customer_number)`,
         )
-        .eq("voucher_status", "open")
+        .eq("status", "open")
         .order("id")
         .range(from, to),
     );
@@ -719,9 +675,9 @@ Deno.serve(async (req) => {
     const outgoingBelege: MatchDocument[] = (outgoingRows ?? []).map((o: Record<string, unknown>) => ({
       id: o.id as string,
       amount_gross: (o.amount_gross as number | null) ?? null,
-      document_date: (o.voucher_date as string | null) ?? null,
+      document_date: (o.invoice_date as string | null) ?? null,
       due_date: (o.due_date as string | null) ?? null,
-      invoice_number: (o.voucher_number as string | null) ?? null,
+      invoice_number: (o.invoice_number as string | null) ?? null,
       customer_number:
         ((o.customers as { customer_number?: string | null } | null)?.customer_number as
           string | null) ?? null,
