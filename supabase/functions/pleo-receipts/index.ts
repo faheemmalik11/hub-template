@@ -16,7 +16,12 @@
 
 import { serviceClient } from "../_shared/supabase.ts";
 import { corsHeaders, jsonResponse } from "../_shared/cors.ts";
-import { fetchReceipts, mapLimit, pleoConfig, type PleoReceipt } from "../_shared/pleo.ts";
+import {
+  fetchReceipts,
+  mapLimit,
+  pleoConfig,
+  type PleoReceipt,
+} from "../_shared/adapters/pleo/client.ts";
 import { TABLE } from "../_shared/tables.ts";
 
 // Where a downloaded Pleo receipt is stored, and what goes into document_files.storage_bucket

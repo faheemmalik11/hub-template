@@ -1,6 +1,6 @@
 // Map BANKSapi-shaped objects into our DB row shapes. Same mapping in mock and live.
-import type { BanksapiAccess, BanksapiAccount, BanksapiTransaction } from "./banksapi.ts";
-import { classifyTransactionType } from "./transaction-type.ts";
+import type { BanksapiAccess, BanksapiAccount, BanksapiTransaction } from "./client.ts";
+import { classifyTransactionType } from "../../transaction-type.ts";
 
 // BANKSapi sends dates as "YYYY-MM-DD HH:MM:SS"; our columns are `date`.
 function dateOnly(value: string | null | undefined): string | null {
@@ -13,8 +13,8 @@ function dateOnly(value: string | null | undefined): string | null {
 // connectionIsSandbox for why re-deriving it on every sync was the bug.
 export function connectionRow(access: BanksapiAccess) {
   return {
-    banksapi_access_id: access.accessId,
-    provider_id: access.providerId,
+    provider_access_ref: access.accessId,
+    provider_ref: access.providerId,
     provider_name: access.providerName,
     bank_name: access.bankName,
     status: "active",
@@ -25,7 +25,7 @@ export function connectionRow(access: BanksapiAccess) {
 export function accountRow(connectionId: string, a: BanksapiAccount, isSandbox: boolean) {
   return {
     connection_id: connectionId,
-    banksapi_product_id: a.produktId,
+    provider_account_ref: a.produktId,
     account_name: a.kontoName,
     iban: a.iban || null,
     bic: a.bic || null,
@@ -53,7 +53,7 @@ export function transactionRow(
   return {
     account_id: accountId,
     connection_id: connectionId,
-    banksapi_hash: t.hash,
+    provider_hash: t.hash,
     amount: t.betrag,
     currency: t.waehrung || "EUR",
     booking_date: dateOnly(t.buchungsdatum),

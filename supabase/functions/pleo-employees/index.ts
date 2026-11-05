@@ -13,7 +13,7 @@
 //
 // Read-only, no body. Any signed-in user may call it: it exposes names, work emails and job titles
 // of colleagues, which is the same directory Team & Rollen already shows.
-import { fetchEmployees, pleoConfig, PleoError } from "../_shared/pleo.ts";
+import { fetchEmployees, pleoConfig, PleoError } from "../_shared/adapters/pleo/client.ts";
 import { corsHeaders, jsonResponse } from "../_shared/cors.ts";
 
 Deno.serve(async (req) => {

@@ -32,7 +32,7 @@ import {
   signedAmount,
   type PleoEntry,
   type PleoReceipt,
-} from "../_shared/pleo.ts";
+} from "../_shared/adapters/pleo/client.ts";
 import { TABLE } from "../_shared/tables.ts";
 
 /** Days of history re-read on a normal run. Covers late settlement and post-hoc edits. */

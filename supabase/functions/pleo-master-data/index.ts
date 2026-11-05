@@ -22,7 +22,7 @@ import {
   mapLimit,
   pleoConfig,
   PleoError,
-} from "../_shared/pleo.ts";
+} from "../_shared/adapters/pleo/client.ts";
 import { serviceClient } from "../_shared/supabase.ts";
 import { corsHeaders, jsonResponse } from "../_shared/cors.ts";
 import { TABLE } from "../_shared/tables.ts";
@@ -74,7 +74,7 @@ Deno.serve(async (req) => {
     await log("pleo_master_start", "info", "Pleo master data: tags and chart of accounts");
 
     // ---- tags -------------------------------------------------------------
-    // Every group, not only the one in use today: Stäy has already retired one whole group, and
+    // Every group, not only the one in use today: Demo GmbH has already retired one whole group, and
     // entries from before the switch still point into it.
     const tagsPart = await half("tags", async () => {
       const groups = await fetchTagGroups(cfg);

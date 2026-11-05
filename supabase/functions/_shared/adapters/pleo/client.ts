@@ -407,7 +407,7 @@ export async function fetchReceipts(cfg: PleoConfig, entryId: string): Promise<P
  * A tag group: one DIMENSION somebody classifies spend along.
  *
  * Pleo's own words for what a tag is: "cost centres that are helpful in associating each expense
- * with a cost object". For Stäy that dimension is the property, which is why H2 and H4 are the
+ * with a cost object". For Demo GmbH that dimension is the property, which is why H2 and H4 are the
  * same data seen from two ends (docs/COST_CENTRES.md).
  */
 export interface PleoTagGroup {
@@ -418,7 +418,7 @@ export interface PleoTagGroup {
   [k: string]: unknown;
 }
 
-/** One value within a group: for Stäy, one property. */
+/** One value within a group: for Demo GmbH, one property. */
 export interface PleoTag {
   id: string;
   groupId?: string;
@@ -493,7 +493,7 @@ export async function fetchTagGroups(cfg: PleoConfig): Promise<PleoTagGroup[]> {
  * GET /v0/tag-groups/{groupId}/tags?include_archived=true
  *
  * ARCHIVED ONES INCLUDED ON PURPOSE. An entry from 2022 still carries the tag it was given, and
- * Stäy has already retired one whole group (entries moved from 9b750613 to d1a07cb2). Fetching
+ * Demo GmbH has already retired one whole group (entries moved from 9b750613 to d1a07cb2). Fetching
  * only the live values would leave every historical entry pointing at a name we cannot print.
  */
 export async function fetchTags(cfg: PleoConfig, groupId: string): Promise<PleoTag[]> {
