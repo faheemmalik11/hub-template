@@ -1511,9 +1511,7 @@ function NewEmployeeDialog({
                 <Label>{t("team.chain.title")}</Label>
                 <div className="space-y-3 rounded-lg border border-border p-3">
                   <div className="space-y-1.5">
-                    <Label className="text-xs text-muted-foreground">
-                      {t("team.chain.area")}
-                    </Label>
+                    <Label className="text-xs text-muted-foreground">{t("team.chain.area")}</Label>
                     <Select
                       value={area}
                       disabled={!canFinalApprove || create.isPending}
@@ -1527,9 +1525,7 @@ function NewEmployeeDialog({
                         <SelectItem value="hospitality">
                           {t("approvalRules.area.hospitality")}
                         </SelectItem>
-                        <SelectItem value="stay_re">
-                          {t("approvalRules.area.stay_re")}
-                        </SelectItem>
+                        <SelectItem value="stay_re">{t("approvalRules.area.stay_re")}</SelectItem>
                         <SelectItem value={ALL_AREAS}>{t("approvalRules.area.all")}</SelectItem>
                       </SelectContent>
                     </Select>

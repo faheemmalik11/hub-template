@@ -265,8 +265,7 @@ export function PropertyDetail({ code, config }: { code: string; config: Propert
         setForm(null);
         setEdit(false);
       },
-      onError: (e) =>
-        toast.error(t("properties.detail.toast.saveFailed", { error: errorText(e) })),
+      onError: (e) => toast.error(t("properties.detail.toast.saveFailed", { error: errorText(e) })),
     });
   }
 
@@ -426,8 +425,7 @@ export function PropertyDetail({ code, config }: { code: string; config: Propert
                       disabled={unarchiveO.isPending}
                       onSelect={() =>
                         unarchiveO.mutate(undefined, {
-                          onSuccess: () =>
-                            toast.success(t("properties.detail.toast.restored")),
+                          onSuccess: () => toast.success(t("properties.detail.toast.restored")),
                           onError: (e) =>
                             toast.error(
                               t("properties.detail.toast.saveFailed", {
@@ -437,8 +435,7 @@ export function PropertyDetail({ code, config }: { code: string; config: Propert
                         })
                       }
                     >
-                      <RotateCcw className="size-4" />{" "}
-                      {t("properties.detail.action.restore")}
+                      <RotateCcw className="size-4" /> {t("properties.detail.action.restore")}
                     </DropdownMenuItem>
                   ) : (
                     <DropdownMenuItem
@@ -472,7 +469,9 @@ export function PropertyDetail({ code, config }: { code: string; config: Propert
                 {t("properties.detail.archiveDialog.desc")}
                 {totalsReady && allDocuments.length > 0
                   ? " " +
-                    t("properties.detail.archiveDialog.withDocuments", { count: allDocuments.length })
+                    t("properties.detail.archiveDialog.withDocuments", {
+                      count: allDocuments.length,
+                    })
                   : ""}
               </AlertDialogDescription>
             </AlertDialogHeader>
@@ -512,8 +511,7 @@ export function PropertyDetail({ code, config }: { code: string; config: Propert
         <div className="mt-4 flex items-center gap-2 rounded-lg border border-border bg-muted/40 px-3 py-2.5 text-sm text-muted-foreground">
           <Archive className="size-4 shrink-0" />
           {t("properties.detail.archivedNotice", {
-            reason:
-              property.delete_reason?.trim() || t("properties.detail.archivedNoticeNoReason"),
+            reason: property.delete_reason?.trim() || t("properties.detail.archivedNoticeNoReason"),
           })}
         </div>
       )}
