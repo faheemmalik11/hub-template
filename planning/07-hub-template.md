@@ -44,3 +44,9 @@ This template is copied whole, `src/kit/` included. The direction is that more o
 the template moves into the kit and the clone gets thinner, which is the last section of
 `06-phases.md`. Until the navigation itself is driven by the catalogue, a clone still carries its own
 menu file, and that is the fork this plan works to remove.
+
+## A clone is not the only way in anymore
+
+Since 2026-11-06, a client can be a long-lived branch of this repository instead of a separate
+cloned repo — see the `client-branches` skill. The brand/`.env`/catalogue list above still applies
+either way; what changes is whether "own" means a separate repository or a branch of this one.

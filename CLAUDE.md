@@ -21,6 +21,29 @@ below still describes how the code works, because the code is that Hub's code.
 - `planning/07-hub-template.md` records what was stripped out of the clone and what a new client
   still needs: its own Supabase project and `.env`, its own brand and locale, its own catalogue seed.
 
+### A client can be a branch of this repository, not only a clone of it (READ THIS TOO)
+
+Decided 2026-11-06, first done for van Oepen. The clone model above still describes several existing
+clients' own repositories, and nothing here retires those. But a new client, and any existing one
+being brought in, can instead be **a long-lived branch of this repository**, off `main` or `dev`:
+
+- The branch carries what a clone used to carry on its own: `src/config/brand.ts`, the `--brand*`
+  ramp in `src/styles.css`, `public/brand/*`, `public/favicon.ico`. The rule against writing a
+  client's name applies to `main`/`dev` and every other shared branch, never to a client's own branch.
+- `.env` is never committed on any branch, client or shared — it is local config, pointing whichever
+  checkout at that client's own Supabase project.
+- A client's own catalogue choices (`feature_settings`) live in their database, as data, the same way
+  they would for a cloned client. The branch is for brand and code, not for which features are on.
+- New shared work lands on `main`/`dev` as before. A client branch picks it up with `git merge
+  main`/`git merge dev` into the client branch, whenever that client wants the update — not
+  automatically, and not by rebuilding their branch from scratch.
+- A feature built for one client, worth having generally, is ported the other direction: cherry-pick
+  or merge the client branch's commits into `main`/`dev`, stripped of that client's name and data,
+  same as any clone's own fix would be. Van Oepen's commission/bonus/CRM-sync feature set was ported
+  into this template exactly this way.
+- Load the `client-branches` skill before creating one, merging shared work into one, or porting a
+  client branch's feature back into `main`/`dev`.
+
 ### English only, everywhere a developer types (HARD RULE)
 
 No German in identifiers, function or component names, variables, types, filenames, directory
