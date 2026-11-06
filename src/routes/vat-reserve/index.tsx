@@ -54,6 +54,7 @@ function ReserveAmount({ value, className }: { value: number; className?: string
 
 export const Route = createFileRoute("/vat-reserve/")({
   head: () => ({ meta: [{ title: pageTitle("Steuerrücklage") }] }),
+  staticData: { titleKey: "vatReserve" },
   component: TaxReservePage,
 });
 

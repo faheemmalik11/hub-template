@@ -2,6 +2,7 @@ import { useQuery } from "@tanstack/react-query";
 
 import { EDGE_FUNCTION } from "@/config/edge-functions";
 import { sb } from "@/data/client";
+import { edgeFunctionErrorText } from "@/lib/data/format";
 
 /**
  * One person spending on a Pleo card, with what they have actually spent.
@@ -63,17 +64,7 @@ export function usePleoEmployees(enabled = true) {
       const { data, error } = await sb.functions.invoke(EDGE_FUNCTION.expenseToolEmployees, {
         body: {},
       });
-      if (error) {
-        // The function answers with a JSON body naming the reason, and a 403 specifically means the
-        // API key does not carry the `users:read` scope. supabase-js flattens every non-2xx into
-        // "Edge Function returned a non-2xx status code", which would tell the reader nothing.
-        const ctx = (error as { context?: Response }).context;
-        if (ctx && typeof ctx.json === "function") {
-          const body = await ctx.json().catch(() => null);
-          if (body?.error) throw new Error(String(body.error));
-        }
-        throw error;
-      }
+      if (error) throw new Error(await edgeFunctionErrorText(error));
       return ((data ?? {}) as { employees?: PleoEmployee[] }).employees ?? [];
     },
   });

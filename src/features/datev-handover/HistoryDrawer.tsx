@@ -17,6 +17,7 @@ import {
   type DatevHandoverBatch,
 } from "./adapter";
 import { formatBytes, type CompanyRow } from "./model";
+import { SendErrorText } from "./SendErrorText";
 
 /**
  * One company's previous handovers.
@@ -181,9 +182,10 @@ function BatchRow({ batch }: { batch: DatevHandoverBatch }) {
       )}
       {/* Never truncated: see the send function's post-send bookkeeping failure. */}
       {(batch.error_message || batch.bounce_reason) && (
-        <p className="mt-1.5 text-xs break-words text-danger">
-          {batch.error_message ?? batch.bounce_reason}
-        </p>
+        <SendErrorText
+          raw={(batch.error_message ?? batch.bounce_reason) as string}
+          className="mt-1.5 text-xs text-danger"
+        />
       )}
     </li>
   );

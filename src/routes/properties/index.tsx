@@ -2,6 +2,8 @@ import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useMemo, useState } from "react";
 
 import { CompanyAssignmentField } from "@/components/properties/company-assignment-field";
+import { CrmPropertyList } from "@/components/properties/crm-property-list";
+import { PERMISSIONS } from "@/config/permissions";
 import { PropertiesList, validatePropertiesSearch } from "@/features/properties";
 import type { PropertiesConfig, PropertiesSearch } from "@/features/properties";
 import { useSetPropertyCompanies } from "@/data";
@@ -14,8 +16,14 @@ export const Route = createFileRoute("/properties/")({
   validateSearch: (search: Record<string, unknown>): PropertiesSearch =>
     validatePropertiesSearch(search),
   head: () => ({ meta: [{ title: pageTitle("Objekte") }] }),
+  staticData: { titleKey: "properties" },
   component: PropertiesPage,
 });
+
+function PropertiesPage() {
+  const { can } = useAuth();
+  return can(PERMISSIONS.propertiesCrmSync) ? <CrmPropertyList /> : <ManualPropertiesPage />;
+}
 
 /**
  * The this client wiring for the shared Objekte list.
@@ -24,7 +32,7 @@ export const Route = createFileRoute("/properties/")({
  * the Hubs. This file is only the route: the search param, the document title, the navigation
  * targets, and the one field this Hub collects that the shared form does not.
  */
-function PropertiesPage() {
+function ManualPropertiesPage() {
   const navigate = useNavigate();
   const search = Route.useSearch();
   const { user } = useAuth();

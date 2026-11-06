@@ -37,7 +37,7 @@ export default defineConfig({
         "lucide-react",
       ],
     },
-    server: { port: 7070 },
+    server: { port: 3030 },
     // pdfjs-dist is only ever loaded lazily (PdfPane), so without this the dev server discovers
     // it mid-session, re-optimizes, and the in-flight import rejects -- the preview then shows
     // its error state until a reload. Pre-bundling it makes the first open work.

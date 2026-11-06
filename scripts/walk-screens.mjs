@@ -2,7 +2,7 @@
 // Run with the dev server up and the local Supabase stack seeded: node walk-check.mjs
 import { chromium } from "playwright";
 
-const BASE = process.env.HUB_URL ?? "http://localhost:7070";
+const BASE = process.env.HUB_URL ?? "http://localhost:3030";
 const EMAIL = process.env.HUB_EMAIL ?? "owner@example.com";
 const PASSWORD = process.env.HUB_PASSWORD ?? "local-dev-password";
 

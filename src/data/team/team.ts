@@ -9,7 +9,7 @@ import { PERMISSIONS } from "@/config/permissions";
 import { useInvoicesReturnedByType } from "@/data/approval";
 import { keepPreviousData } from "@tanstack/react-query";
 import { EDGE_FUNCTION } from "@/config/edge-functions";
-import { todayLocal } from "@/lib/data/format";
+import { edgeFunctionErrorText, todayLocal } from "@/lib/data/format";
 import { notifyTargetPath } from "@/lib/data/notification-target";
 import {
   createEmployee as createEmployeeFn,
@@ -26,6 +26,23 @@ import type { NotificationTargetKind } from "@/lib/data/notification-target";
 
 // 'super_admin' is deliberately excluded from assignment; the DB also refuses to grant it (guard_super_admin_row).
 export type AssignableRole = Exclude<AppRole, "super_admin">;
+
+/** The roles a person can be given, as the database holds them, so a role a client adds shows up. */
+export function useAssignableRoles() {
+  return useQuery({
+    queryKey: ["roles", "assignable"],
+    staleTime: STALE,
+    queryFn: async (): Promise<{ name: AssignableRole; label: string }[]> => {
+      const { data, error } = await sb
+        .from(TABLE.roles)
+        .select("name, label")
+        .eq("assignable", true)
+        .order("sort_order");
+      if (error) throw error;
+      return (data ?? []) as { name: AssignableRole; label: string }[];
+    },
+  });
+}
 
 export function useRoles() {
   return useQuery({
@@ -105,6 +122,7 @@ interface EmployeeRow {
   escalation_days: number | null;
   area: ApprovalArea | null;
   covers_all_areas: boolean;
+  crm_external_id: string | null;
   roles: { name: AppRole } | null;
   user_company_access: { company_id: string; can_view: boolean; deleted_at: string | null }[];
   user_permissions: { permission_key: string; granted: boolean }[];
@@ -170,7 +188,7 @@ export function useEmployees() {
         .from(TABLE.appUsers)
         .select(
           "id, email, name, role_id, is_active, must_change_password, created_at, " +
-            "deputy_user_id, escalation_days, area, covers_all_areas, " +
+            "deputy_user_id, escalation_days, area, covers_all_areas, crm_external_id, " +
             "roles(name), user_company_access(company_id, can_view, deleted_at), " +
             "user_permissions(permission_key, granted)",
         )
@@ -193,6 +211,7 @@ export function useEmployees() {
         escalation_days: row.escalation_days,
         area: row.area,
         covers_all_areas: row.covers_all_areas,
+        crm_external_id: row.crm_external_id,
         permissions: effectivePermissions(
           row.user_permissions ?? [],
           rolePermissions.get(row.role_id) ?? new Set<string>(),
@@ -806,7 +825,7 @@ export function useSlackDirectory(enabled: boolean) {
       const { data, error } = await sb.functions.invoke(EDGE_FUNCTION.notifyDispatch, {
         body: { mode: "directory" },
       });
-      if (error) throw error;
+      if (error) throw new Error(await edgeFunctionErrorText(error));
       if (data?.error) throw new Error(String(data.error));
       return {
         ...data,
@@ -1071,7 +1090,7 @@ export function useSendTestNotification() {
       const { data, error } = await sb.functions.invoke(EDGE_FUNCTION.notifyDispatch, {
         body: { mode: "test", channel },
       });
-      if (error) throw error;
+      if (error) throw new Error(await edgeFunctionErrorText(error));
       if (data?.error) throw new Error(String(data.error));
     },
   });

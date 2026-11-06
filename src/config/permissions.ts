@@ -19,6 +19,7 @@ export const PERMISSIONS = {
   // for by name, listed at the top of supabase/schema/0010_access.sql.
   usersRead: "users.read",
   documentsRead: "documents.read",
+  documentsPropertyAssignment: "documents.property_assignment",
   documentsWrite: "documents.write",
   masterDataRead: "master_data.read",
   masterDataWrite: "master_data.write",
@@ -39,6 +40,8 @@ export const PERMISSIONS = {
   pageProfile: "page.profile",
   pageIncomingInvoices: "page.incoming_invoices",
   pageOutgoingInvoices: "page.outgoing_invoices",
+  pageCommissionDeals: "page.commission_deals",
+  pageBrokerBonuses: "page.broker_bonuses",
   pageManualBookings: "page.manual_bookings",
   pageFileNaming: "page.file_naming",
   pageDocumentSources: "page.document_sources",
@@ -64,6 +67,12 @@ export const PERMISSIONS = {
   pageNotifications: "page.notifications",
   pageActivityLog: "page.activity_log",
   pageTrash: "page.trash",
+  propertiesCrmSync: "properties.crm_sync",
+  dealsSubmit: "deals.submit",
+  bonusesSubmit: "bonuses.submit",
+  bonusesReview: "bonuses.review",
+  bonusesRead: "bonuses.read",
+  bonusesSuggest: "bonuses.suggest",
   pageBankConnections: "page.bank_connections",
 
   // Menu groups. Switching one off takes its pages with it.

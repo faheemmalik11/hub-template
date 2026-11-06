@@ -26,7 +26,8 @@ export function Logo({
         // The intrinsic ratio is declared so the header reserves the right width
         // before the SVG loads, instead of reflowing the nav next to it.
         style={{ aspectRatio: logo.aspectRatio }}
-        className={cn("inline-block h-8 w-auto select-none", className)}
+        // self-start: in a column flex layout an image would otherwise be stretched to the full width.
+        className={cn("inline-block h-8 w-auto select-none self-start object-contain", className)}
       />
     );
   }

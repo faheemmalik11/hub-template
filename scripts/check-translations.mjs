@@ -5,30 +5,28 @@
 // tsc cannot see a translation key, so a renamed namespace fails silently: the screen renders the
 // key itself. This is the only thing that catches it before a person does.
 import { readdirSync, readFileSync, statSync } from "node:fs";
-import { join } from "node:path";
+import { join, resolve } from "node:path";
 
-function keysOf(path) {
-  const source = readFileSync(path, "utf8");
+// The dictionaries are loaded as modules rather than read line by line: a group written on one line
+// (`col: { scope: "…" }`) is invisible to a line parser, and was reported as missing 40 times.
+async function keysOf(path) {
+  const dictionary = (await import(resolve(path))).default;
   const keys = new Set();
-  const stack = [];
-  for (const line of source.split("\n")) {
-    const open = line.match(/^(\s+)([a-zA-Z_][\w]*):\s*\{\s*$/);
-    const leaf = line.match(/^(\s+)([a-zA-Z_][\w]*):\s*(?!\{)(?:.|$)/);
-    const close = line.match(/^(\s+)\},?\s*$/);
-    if (open) {
-      stack.push({ indent: open[1].length, key: open[2] });
-      continue;
+  const collect = (node, prefix) => {
+    for (const [name, value] of Object.entries(node)) {
+      const key = prefix ? `${prefix}.${name}` : name;
+      if (value && typeof value === "object" && !Array.isArray(value)) collect(value, key);
+      else keys.add(key);
     }
-    if (leaf) {
-      const depth = stack.filter((entry) => entry.indent < leaf[1].length).map((entry) => entry.key);
-      keys.add([...depth, leaf[2]].join("."));
-      continue;
-    }
-    if (close) {
-      while (stack.length && stack[stack.length - 1].indent >= close[1].length) stack.pop();
-    }
-  }
+  };
+  collect(dictionary, "");
   return keys;
+}
+
+const PLURAL_SUFFIXES = ["_zero", "_one", "_two", "_few", "_many", "_other"];
+
+function resolvesIn(keys, key) {
+  return keys.has(key) || PLURAL_SUFFIXES.some((suffix) => keys.has(key + suffix));
 }
 
 function walk(dir) {
@@ -39,8 +37,8 @@ function walk(dir) {
   });
 }
 
-const de = keysOf("src/lib/i18n/locales/de.ts");
-const en = keysOf("src/lib/i18n/locales/en.ts");
+const de = await keysOf("src/lib/i18n/locales/de.ts");
+const en = await keysOf("src/lib/i18n/locales/en.ts");
 
 const used = new Map();
 const prefixes = new Map();
@@ -55,7 +53,7 @@ for (const path of walk("src")) {
   }
 }
 
-const missing = [...used].filter(([key]) => !de.has(key) || !en.has(key));
+const missing = [...used].filter(([key]) => !resolvesIn(de, key) || !resolvesIn(en, key));
 const danglingPrefix = [...prefixes].filter(([prefix]) => {
   const under = (keys) => [...keys].some((key) => key.startsWith(`${prefix}.`));
   return !under(de) || !under(en);

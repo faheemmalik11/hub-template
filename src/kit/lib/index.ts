@@ -5,6 +5,7 @@ export { englishFormatters } from "./formatters";
 export { downloadTextFile, toCsv } from "./download";
 export * from "./bank-import";
 export * from "./bank-matching";
+export * from "./commission";
 export * from "./opos-whitelist";
 export {
   createPlaceholderOverviewAdapter,

@@ -80,6 +80,10 @@ export function VolumeChart({
       const b = bucket(r.invoice_date);
       if (b) b.outgoing += r.amount_gross ?? 0;
     }
+    if (buckets.size === 0 && fromDate && toDate) {
+      buckets.set(key(fromDate), { incoming: 0, outgoing: 0 });
+      buckets.set(key(toDate), { incoming: 0, outgoing: 0 });
+    }
     return [...buckets.entries()]
       .sort((a, b) => a[0].localeCompare(b[0]))
       .map(([k, v]) => ({ k, label: proTag ? formatDayShort(k) : formatMonthShort(k), ...v }));
@@ -88,7 +92,6 @@ export function VolumeChart({
   if (invoicesQ.isLoading || outgoingQ.isLoading) {
     return <Skeleton className="h-[190px] w-full rounded-xl" />;
   }
-  // Nothing at all in the period. An axis with no bars says less than not rendering.
   if (data.length === 0) return null;
 
   return (
@@ -108,6 +111,7 @@ export function VolumeChart({
           tickLine={false}
           axisLine={false}
           width={46}
+          domain={[0, (dataMax: number) => (dataMax > 0 ? dataMax : 1000)]}
           tick={{ fontSize: 11, fill: "var(--color-muted-foreground)" }}
           tickFormatter={(v: number) => formatEURCompact(v)}
         />

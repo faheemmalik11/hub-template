@@ -231,7 +231,7 @@ const de = {
       },
       fields: {
         title: "Die ausgelesenen Angaben",
-        text: "Rechts stehen alle Felder, die aus dem Dokument gelesen wurden, und darunter die Prüfungen, die nicht aufgegangen sind. Hier ordnen Sie die Rechnung auch einer Gesellschaft und einem Objekt zu.",
+        text: "Rechts stehen alle Felder, die aus dem Dokument gelesen wurden, und darunter die Prüfungen, die nicht aufgegangen sind. Hier ordnen Sie die Rechnung auch einer Gesellschaft zu.",
         hint: "Ein Feld, bei dem sich das System nicht sicher war, ist gekennzeichnet und gehört zuerst angesehen.",
       },
       tabs: {
@@ -396,7 +396,7 @@ const de = {
     companies: {
       header: {
         title: "Ihre Gesellschaften",
-        text: "Das Unternehmen besteht aus mehreren Gesellschaften. Jede Rechnung und jedes Objekt gehört genau zu einer davon, und danach richtet sich die gesamte Auswertung.",
+        text: "Das Unternehmen besteht aus mehreren Gesellschaften. Jede Rechnung gehört genau zu einer davon, und danach richtet sich die gesamte Auswertung.",
         hint: "Eine neue Gesellschaft brauchen Sie selten. Wenn doch, legen Sie sie hier oben an.",
       },
       toolbar: {
@@ -768,10 +768,10 @@ const de = {
     },
     login: {
       heading: "Anmelden",
-      subheading: "Bitte melden Sie sich mit Ihrem {{brand}}-Zugang an.",
+      subheading: "Bitte melden Sie sich bei {{brand}} an.",
       panelTitleLine1: "Buchhaltung, sauber",
       panelTitleLine2: "an einem Ort.",
-      panelSubtitle: "Internes Buchhaltungs-Cockpit. Zugang nur für das {{brand}}-Team.",
+      panelSubtitle: "Internes Buchhaltungs-Cockpit. Zugang nur für das Team von {{brand}}.",
       email: "E-Mail",
       emailPlaceholder: "name@{{domain}}",
       password: "Passwort",
@@ -813,6 +813,8 @@ const de = {
   },
 
   nav: {
+    commissionDeals: "Provisionen",
+    brokerBonuses: "Boni",
     onboarding: "Onboarding-Checkliste",
     overview: "Übersicht",
     invoices: "Rechnungen",
@@ -876,7 +878,7 @@ const de = {
   },
 
   settings: {
-    title: "Benachrichtigungen",
+    title: "Meldungen & Benachrichtigungen",
     sub: "Legen Sie fest, welche Meldungen im Hub erscheinen und welche über externe Kanäle gehen.",
     saved: "Gespeichert.",
     save: "Speichern",
@@ -1243,6 +1245,15 @@ const de = {
       count: "{{n}} Rechnungen",
       grossProfit: "Gewinn (Rohertrag)",
     },
+    // The blockers strip (components/home/system-blockers.tsx).
+    blockers: {
+      title: "Steht gerade fest",
+      clear: "Nichts blockiert. Alle Belege und Zahlungen sind in Bearbeitung.",
+      zuPruefen: "Belege zu prüfen",
+      ueberfaellig: "Ausgangsrechnungen überfällig",
+      ohneBeleg: "Zahlungen ohne Beleg",
+      blockiert: "Belege nicht abgleichbar",
+    },
     stages: {
       title: "Bearbeitungsstand der Rechnungen",
       received: "Eingegangen",
@@ -1254,6 +1265,7 @@ const de = {
     },
     rank: {
       total: "Gesamt: {{sum}}",
+      empty: "Noch keine Daten",
     },
     top: {
       title: "Top {{count}} Lieferanten",
@@ -1292,9 +1304,97 @@ const de = {
       none: "Alles bezahlt.",
       all: "Alle unbezahlten Rechnungen ansehen",
     },
+    unknownSteller: "Unbekannter Steller",
+    ohneNr: "ohne Nr.",
+    // The personal header block (components/home/attention-panel.tsx).
+    attention: {
+      greetMorning: "Guten Morgen, {{name}}",
+      greetDay: "Guten Tag, {{name}}",
+      greetEvening: "Guten Abend, {{name}}",
+      greetMorningAnon: "Guten Morgen",
+      greetDayAnon: "Guten Tag",
+      greetEveningAnon: "Guten Abend",
+      lead_one: "{{count}} Rechnung wartet auf Sie.",
+      lead_other: "{{count}} Rechnungen warten auf Sie.",
+      loading: "Wird geprüft, was auf Sie wartet …",
+      clear: "Nichts liegt gerade bei Ihnen.",
+      error: "Ihre offenen Punkte konnten nicht geladen werden.",
+      more_one: "{{count}} weitere Rechnung ansehen",
+      more_other: "{{count}} weitere Rechnungen ansehen",
+      bucket: {
+        rejected_one: "{{count}} abgelehnt",
+        rejected_other: "{{count}} abgelehnt",
+        returned_one: "{{count}} Rückfrage",
+        returned_other: "{{count}} Rückfragen",
+        assigned_one: "{{count}} zugewiesen",
+        assigned_other: "{{count}} zugewiesen",
+      },
+      reason: {
+        eskaliert: "überfällig, Sie sind Vertretung",
+        rejected: "abgelehnt, zurück an Sie",
+        returned: "Rückfrage an Sie",
+        assigned: "Ihnen zugewiesen",
+      },
+    },
   },
 
+  // Browser tab titles, one per page. The page name comes first, then the product name.
+  pageTitles: {
+    brokerBonuses: "Boni",
+    activityLog: "Protokoll",
+    approvalRules: "Freigabe-Regeln",
+    bankAccounts: "Bankkonten",
+    bankSettings: "Bank-Einstellungen",
+    bankTransactions: "Banktransaktionen",
+    categories: "Kategorien",
+    commission: "Provision",
+    commissions: "Provisionen",
+    companies: "Gesellschaften",
+    company: "Gesellschaft",
+    costAnalysis: "Kostenanalyse",
+    customer: "Kunde",
+    customers: "Kunden",
+    datevHandover: "DATEV-Übergabe",
+    excludedPayments: "Ausgeschlossene Zahlungen",
+    exclusionRules: "Ausschlussregeln",
+    fileNaming: "Dateibenennung",
+    inbox: "Postfach & Ablage",
+    incomingInvoices: "Eingangsrechnungen",
+    manualBookings: "Manuelle Buchungen",
+    overview: "Übersicht",
+    notifications: "Benachrichtigungen",
+    onboarding: "Onboarding",
+    openItems: "Offene Posten",
+    outgoingInvoices: "Ausgangsrechnungen",
+    profile: "Mein Profil",
+    properties: "Objekte",
+    property: "Objekt",
+    supplier: "Lieferant",
+    suppliers: "Lieferanten",
+    team: "Team & Rollen",
+    trash: "Papierkorb",
+    uploadDocument: "Beleg hochladen",
+    uploadOutgoingInvoice: "Ausgangsrechnung hochladen",
+    vatReserve: "Steuerrücklage",
+    vatRules: "USt-Regeln & Steuerrücklage",
+  },
   documents: {
+    links: {
+      unnamed: "ein Beleg",
+      reminder_of: {
+        outgoing:
+          "Das ist eine Mahnung, keine Rechnung. Bitte stattdessen die ursprüngliche Rechnung bezahlen:",
+        incoming: "Zu dieser Rechnung ist eine Mahnung eingegangen:",
+      },
+      credit_for: {
+        outgoing: "Das ist eine Gutschrift zu:",
+        incoming: "Eine Gutschrift zu dieser Rechnung:",
+      },
+      replaces: {
+        outgoing: "Ersetzt:",
+        incoming: "Ersetzt durch:",
+      },
+    },
     // ---- badges / shared ----
     badge: {
       ustAbbr: "USt",
@@ -1565,11 +1665,11 @@ const de = {
 
     // ---- invoice list ----
     list: {
-      title: "Eingangsrechnungen",
+      title: "Eingangsrechnungen (Ausgaben)",
       // The screen, not the plumbing. It used to name the ingestion pipeline, which is not
       // a word anyone doing accounting has to know.
       subtitle:
-        "Eingegangene Rechnungen prüfen, einer Gesellschaft und einem Objekt zuordnen und zur Zahlung freigeben.",
+        "Eingegangene Rechnungen prüfen, einer Gesellschaft zuordnen und zur Zahlung freigeben.",
       upload: "Beleg hochladen",
       bulk: {
         spalte: "Auswahl",
@@ -2950,6 +3050,7 @@ const de = {
         invoices: "Rechnungen",
         amount: "Betrag",
         overdue: "Überfällig",
+        aktionen: "Aktionen",
       },
       empty: "Keine Kunden gefunden.",
       new: {
@@ -4163,6 +4264,351 @@ const de = {
 
   // Bank transactions (Banktransaktionen) — list + detail, badges, match candidates.
   // Badge label keys are keyed by the DB enum value and mirror the META maps in format.ts.
+  propertyListings: {
+    subtitle:
+      "Alle Objekte kommen aus Propstack. Ein Abgleich holt den aktuellen Stand, an Propstack selbst ändert er nichts.",
+    syncNow: "Jetzt abgleichen",
+    syncing: "Wird abgeglichen …",
+    synced_one: "{{count}} Objekt abgeglichen, davon {{created}} neu.",
+    synced_other: "{{count}} Objekte abgeglichen, davon {{created}} neu.",
+    syncFailed: "Der Abgleich mit dem CRM ist fehlgeschlagen.",
+    lastSynced: "Zuletzt abgeglichen: {{when}}",
+    neverSynced: "Noch nie abgeglichen",
+    searchPlaceholder: "Objekt, Adresse oder Makler suchen",
+    allStatuses: "Alle Status",
+    count: "{{count}} von {{total}}",
+    archived: "Archiviert",
+    soldOn: "verkauft {{date}}",
+    emptyTitle: "Noch keine Objekte aus dem CRM",
+    emptyHint: "Mit „Jetzt abgleichen“ werden die Objekte aus Propstack geholt.",
+    allFields: {
+      title: "Alle weiteren Felder",
+      subtitle:
+        "Alles andere, was das CRM liefert, genau wie es das CRM liefert. {{filled}} von {{total}} Feldern sind gefüllt.",
+      search: "Feld suchen",
+      showEmpty: "Leere Felder anzeigen",
+      yes: "Ja",
+      no: "Nein",
+      entries: "{{count}} Einträge",
+    },
+    cardTitle: "Aus dem CRM",
+    columns: {
+      property: "Objekt",
+      status: "Status",
+      type: "Art",
+      price: "Preis",
+      commission: "Provision",
+      broker: "Makler",
+      updated: "Geändert im CRM",
+    },
+    fields: {
+      propertyType: "Objektart",
+      marketingType: "Vermarktung",
+      askingPrice: "Angebotspreis",
+      soldPrice: "Verkaufspreis",
+      soldOn: "Verkauft am",
+      livingSpace: "Wohnfläche",
+      plotArea: "Grundstück",
+      rooms: "Zimmer",
+      owners: "Eigentümer",
+      partners: "Partner",
+      externalId: "ID im CRM",
+    },
+    propertyTypes: {
+      HOUSE: "Haus",
+      APARTMENT: "Wohnung",
+      TRADE_SITE: "Grundstück",
+      OFFICE: "Büro",
+      INDUSTRY: "Halle/Produktion",
+      STORE: "Einzelhandel",
+      GASTRONOMY: "Gastronomie",
+      GARAGE: "Garage/Stellplatz",
+      INVESTMENT: "Anlageobjekt",
+      SHORT_TERM_ACCOMODATION: "Ferienimmobilie",
+    },
+    marketingTypes: {
+      BUY: "Kauf",
+      RENT: "Miete",
+    },
+  },
+  matching: {
+    differenceReason: {
+      discount: "Gewährter Skonto",
+      roundingDifference: "Rundungsdifferenz / Cent-Betrag",
+      bankFees: "Bankgebühren / Abzüge",
+      partialPayment: "Teilzahlung (Rest bleibt offen)",
+      other: "Sonstiges",
+    },
+  },
+  brokerBonuses: {
+    title: "Boni",
+    subtitle:
+      "Tragen Sie Ihre Boni mit Datum, Art und Betrag ein. Die Geschäftsführung prüft und gibt sie frei.",
+    subtitleReview:
+      "Die Boni aller Makler. Prüfen, korrigieren, freigeben und als ausgezahlt markieren.",
+    subtitlePayroll:
+      "Die freigegebenen und ausgezahlten Boni aller Makler, für die Gehaltsabrechnung.",
+    export: {
+      button: "Als CSV exportieren",
+      fileName: "Boni",
+      payrollMonth: "Gehaltsmonat",
+      broker: "Makler",
+      date: "Datum",
+      type: "Art",
+      amount: "Betrag",
+      status: "Status",
+    },
+    fromDeal: "Zum Verkauf",
+    confirm: "Bestätigen",
+    decline: "Ablehnen",
+    settings: {
+      button: "Regeln",
+      title: "Bonusregeln",
+      desc: "Diese Werte nutzt der Bonusvorschlag auf der Verkaufsseite.",
+      notary_amount: "Notarbonus (€)",
+      follow_up_amount: "Folgeauftrag aus Besichtigung (€)",
+      own_lead_share_percent: "Anteil eigener Auftrag (%)",
+      company_lead_share_percent: "Anteil Firmenlead (%)",
+      personnel_flat_amount: "Personalpauschale (€)",
+      company_lead_deducts_costs: "Beim Firmenlead-Anteil zuerst die Kosten abziehen",
+      save: "Speichern",
+      saved: "Gespeichert",
+      invalid: "Bitte nur Zahlen eintragen.",
+    },
+    expandNote: "Notiz ausklappen",
+    collapseNote: "Notiz einklappen",
+    newBonus: "Bonus erfassen",
+    cutoffHint:
+      "Boni, die bis zum {{day}}. eines Monats erfasst werden, gehen in das Gehalt dieses Monats, spätere in das des nächsten.",
+    emptyTitle: "Noch keine Boni",
+    emptyHint: "Erfasste Boni erscheinen hier.",
+    failed: "Das hat nicht geklappt",
+    review: "Prüfen",
+    markPaid: "Als ausgezahlt markieren",
+    withdraw: "Zurückziehen",
+    reviewNote: "Anmerkung: {{note}}",
+    totals: { submitted: "Zur Prüfung", approved: "Freigegeben, offen", paid: "Ausgezahlt" },
+    columns: {
+      date: "Datum",
+      broker: "Makler",
+      type: "Art",
+      amount: "Betrag",
+      payrollMonth: "Gehaltsmonat",
+      status: "Status",
+    },
+    status: {
+      suggested: "Zur Bestätigung",
+      submitted: "Zur Prüfung",
+      approved: "Freigegeben",
+      rejected: "Abgelehnt",
+      paid: "Ausgezahlt",
+    },
+    types: {
+      notary: "Notarbonus",
+      google_review: "Google-Bewertung",
+      viewing_new_job: "Neuer Auftrag aus Besichtigung",
+      company_lead_share: "10 % Anteil (Firmenlead)",
+      own_job_share: "50 % Anteil (eigener Auftrag)",
+      financing_referral: "Empfehlung Finanzierung",
+      other: "Sonstiges",
+    },
+    newDialog: {
+      title: "Bonus erfassen",
+      desc: "Wann haben Sie ihn verdient, wofür und in welcher Höhe?",
+      date: "Datum",
+      type: "Art des Bonus",
+      typePlaceholder: "Art wählen",
+      amount: "Betrag in Euro",
+      note: "Anmerkung (optional)",
+      notePlaceholder: "Zum Beispiel Objekt oder Name",
+      cancel: "Abbrechen",
+      save: "Erfassen",
+      saved: "Bonus erfasst",
+      failed: "Der Bonus konnte nicht erfasst werden",
+    },
+    reviewDialog: {
+      title: "Bonus prüfen",
+      desc: "{{broker}}: {{type}} vom {{date}}",
+      amount: "Betrag in Euro (korrigierbar)",
+      note: "Anmerkung an den Makler (optional)",
+      approve: "Freigeben",
+      reject: "Ablehnen",
+    },
+  },
+  commissionDeals: {
+    numbers: {
+      title: "Ihre Zahlen",
+      notarised: "Beurkundet {{year}}",
+      lastYear: "{{count}} in {{year}}",
+      inProgress: "Verkäufe in Arbeit",
+      toConfirm: "Boni zu bestätigen",
+      approved: "Freigegeben, noch nicht gezahlt",
+      awaitingReview: "{{count}} noch in Prüfung",
+      paid: "Gezahlt {{year}}",
+    },
+    title: "Provisionen",
+    subtitle:
+      "Beurkundete Verkäufe und die Provisionsrechnungen, die daraus entstehen. Versendet wird nichts, bevor es freigegeben ist.",
+    newDeal: "Neuer Verkauf",
+    newDialog: {
+      title: "Neuer Verkauf",
+      desc: "Für welches Objekt wurde ein Kaufvertrag beurkundet?",
+      property: "Objekt",
+      propertyPlaceholder: "Objekt wählen",
+      propertySearch: "Objekt suchen",
+      noProperties: "Kein Objekt gefunden.",
+      create: "Anlegen",
+      cancel: "Abbrechen",
+      failed: "Der Verkauf konnte nicht angelegt werden.",
+    },
+    emptyTitle: "Noch keine Verkäufe",
+    emptyHint: "Mit „Neuer Verkauf“ legen Sie einen beurkundeten Verkauf an.",
+    count: "{{count}} Verkäufe",
+    columns: {
+      property: "Objekt",
+      notarisedOn: "Notartermin",
+      price: "Kaufpreis",
+      commission: "Provision brutto",
+      status: "Status",
+    },
+    status: {
+      incomplete: "Unvollständig",
+      ready: "Bereit zur Freigabe",
+      approved: "Freigegeben",
+      invoiced: "Abgerechnet",
+      cancelled: "Storniert",
+    },
+    back: "Provisionen",
+    notFound: "Diesen Verkauf gibt es nicht mehr.",
+    sale: {
+      title: "Verkauf",
+      property: "Objekt",
+      company: "Gesellschaft",
+      notarisedOn: "Notartermin",
+      price: "Kaufpreis (€)",
+      vat: "USt (%)",
+      note: "Notiz",
+    },
+    bonuses: {
+      title: "Boni für diesen Verkauf",
+      hint: "Wird aus den Angaben zum Verkauf berechnet. Mit „Vorschlag anlegen“ bekommt der Makler den Bonus zur Bestätigung, danach folgt die übliche Prüfung.",
+      none: "Für diesen Verkauf entsteht kein Bonus.",
+      create: "Vorschlag anlegen",
+      created: "Angelegt",
+      failed: "Der Vorschlag konnte nicht angelegt werden.",
+      nobody: "Kein Makler gewählt",
+      waiting: "Wartet auf: {{reasons}}",
+      noRemainder: "Nach Abzug bleibt nichts übrig",
+      waitingFor: {
+        notarisation: "Notartermin",
+        broker: "Makler",
+        commission: "berechenbare Provision",
+        costs_closed: "abgeschlossene Kosten",
+        invoices_paid: "bezahlte Provisionsrechnungen",
+      },
+      line: {
+        commission_net: "Provision netto {{amount}}",
+        costs: "Kosten {{amount}}",
+        personnel_flat: "Personalpauschale {{amount}}",
+        share: "{{percent}} % = {{amount}}",
+        fixed: "Festbetrag {{amount}}",
+      },
+    },
+    facts: {
+      title: "Angaben zum Verkauf",
+      ownLead: "Eigener Lead",
+      ownLeadHint: "Der Kontakt kam über den Makler selbst, nicht über ein Portal.",
+      fromViewing: "Aus Besichtigung",
+      fromViewingHint: "Der Käufer hat das Objekt bei einer Besichtigung kennengelernt.",
+      costsClosed: "Kosten abgeschlossen",
+      costsClosedHint: "Alle Kosten dieses Verkaufs sind erfasst.",
+      readyForBookkeeping: "Bereit für die Buchhaltung",
+      readyForBookkeepingHint: "Die Buchhaltung kann den Verkauf abschließen.",
+      handledBy: "Betreut von",
+      acquiredBy: "Lead gewonnen von",
+      referrer: "Empfohlen von",
+      referrerPlaceholder: "Kein Empfehler",
+    },
+    costs: {
+      title: "Kosten",
+      hint: "Was die Agentur für diesen Verkauf selbst bezahlt hat. Die Bonusberechnung zieht es von der Provision ab.",
+      total: "Summe {{total}}",
+      add: "Kosten hinzufügen",
+      description: "Beschreibung",
+      amount: "Betrag (€)",
+      date: "Datum",
+      kind: {
+        city_fee: "Gebühr der Stadt",
+        photos: "Fotos",
+        energy_certificate: "Energieausweis",
+        voucher: "Gutschein",
+        other: "Sonstiges",
+      },
+    },
+    side: {
+      buyer: "Käufer",
+      seller: "Verkäufer",
+      pays: "Zahlt Provision",
+      feeKind: "Provision",
+      percent: "Prozent vom Kaufpreis",
+      fixed: "Festbetrag",
+      rate: "Satz (% netto)",
+      amount: "Betrag (€ netto)",
+      discount: "Rabatt (€ brutto)",
+      discountReason: "Grund für den Rabatt",
+      payers: "Wer zahlt",
+      payerPlaceholder: "Kunde wählen",
+      payerSearch: "Kunde suchen",
+      noCustomers: "Kein Kunde gefunden.",
+      share: "Anteil %",
+      shareHint: "Anteile leer lassen, dann zahlen alle gleich viel.",
+      addPayer: "Person hinzufügen",
+      remove: "Entfernen",
+      newCustomerPlaceholder: "Neuer Kunde: Name",
+      createCustomer: "Kunde anlegen",
+      customerFailed: "Der Kunde konnte nicht angelegt werden.",
+    },
+    drafts: {
+      title: "Rechnungsentwürfe",
+      hint: "So würden die Rechnungen aussehen. Erstellt oder versendet wird noch nichts.",
+      line: "Maklerprovision",
+      rate: "{{rate}} % Maklerprovision (inkl. MwSt.)",
+      fixed: "Festbetrag",
+      share: "{{share}} % Anteil an {{total}} (netto)",
+      subtotal: "Zwischensumme",
+      discount: "abzgl. Rabatt",
+      total: "Gesamtbetrag",
+      vatLine: "Netto {{net}}, USt {{vat}}",
+      sum: "Summe aller Rechnungen",
+      unknownCustomer: "Unbekannter Kunde",
+    },
+    problems: {
+      title: "Was noch fehlt",
+      purchase_price_missing: "Der Kaufpreis fehlt.",
+      fee_missing: "{{side}}: Die Provision fehlt.",
+      fee_not_positive: "{{side}}: Die Provision muss größer als null sein.",
+      no_payers: "{{side}}: Es ist noch niemand eingetragen, der zahlt.",
+      duplicate_payer: "{{side}}: Eine Person steht doppelt in der Liste.",
+      shares_incomplete: "{{side}}: Entweder haben alle einen Anteil oder keiner.",
+      shares_do_not_add_up: "{{side}}: Die Anteile ergeben nicht 100 %.",
+      discount_negative: "{{side}}: Der Rabatt darf nicht negativ sein.",
+      discount_exceeds_fee: "{{side}}: Der Rabatt ist größer als die Provision.",
+      no_side_pays: "Mindestens eine Seite muss Provision zahlen.",
+    },
+    actions: {
+      save: "Speichern",
+      saving: "Wird gespeichert …",
+      saved: "Gespeichert.",
+      saveFailed: "Speichern ist fehlgeschlagen.",
+      approve: "Freigeben",
+      approving: "Wird freigegeben …",
+      approved: "Freigegeben.",
+      approveFailed: "Die Freigabe ist fehlgeschlagen.",
+      unsaved: "Nicht gespeichert",
+      saveFirst: "Erst speichern, dann freigeben.",
+      approvedNote: "Freigegeben am {{when}}. Jede Änderung hebt die Freigabe auf.",
+    },
+  },
   bankSettings: {
     title: "Bank-Einstellungen",
     adminOnly: "Ändern darf diesen Wert nur ein Administrator.",
@@ -4625,6 +5071,7 @@ const de = {
         no_amount: "Kein Betrag",
         credit_note: "Gutschrift",
         paid_privately: "Privat bezahlt",
+        reminder_letter: "Mahnung",
       },
       hint: {
         no_amount:
@@ -4633,6 +5080,8 @@ const de = {
           "Negativer Betrag: Geld kommt zurück. Eine Gutschrift wird nicht durch einen Bankabgang gedeckt.",
         paid_privately:
           "Privat bezahlt. Dazu wird es nie einen Umsatz auf einem Firmenkonto geben.",
+        reminder_letter:
+          "Mahnung zu einer Rechnung, die schon vorliegt. Sie wird mit dieser Rechnung bezahlt, nie einzeln.",
       },
     },
     invoices: {
@@ -5188,7 +5637,7 @@ const de = {
 
   // Outgoing invoices (Ausgangsrechnungen) — placeholder page.
   outgoingInvoices: {
-    title: "Ausgangsrechnungen",
+    title: "Ausgangsrechnungen (Einnahmen)",
     subtitle: "Ausgangsrechnungen werden manuell hochgeladen und automatisch ausgelesen.",
     status: {
       draft: "Entwurf",
@@ -5198,6 +5647,7 @@ const de = {
       voided: "Storniert",
     },
     list: {
+      expected: "(erwartet)",
       queue: {
         open: { label: "Offen", desc: "Gestellt, noch nicht bezahlt" },
         overdue: { label: "Überfällig", desc: "Das Zahlungsziel ist abgelaufen" },
@@ -5402,6 +5852,10 @@ const de = {
 
   // Approval workflow admin (Briefing Screen 6): approvers + dynamic assignment-chain rules.
   approvalRules: {
+    defaultChain: {
+      firstStep: "Assistenz",
+      secondStep: "Vorgesetzte Person",
+    },
     lead: {
       title: "Freigabe-Regeln",
       any: "beliebig",
@@ -5653,6 +6107,26 @@ const de = {
       ready: "{{count}} Datei(en) bereit",
       sent: "{{count}} bereits gesendet",
       pending: "{{count}} ohne Einrichtung",
+    },
+    fehler: {
+      NO_MAILBOX: "Für diese App ist kein Absender-Postfach eingerichtet.",
+      NO_ROUTE:
+        "Für diese Gesellschaft ist keine aktive DATEV-Upload-Adresse für diese Richtung hinterlegt.",
+      CREDENTIALS:
+        "Die Zugangsdaten für Microsoft 365 fehlen oder lassen sich nicht entschlüsseln. Bitte im Admin-Bereich prüfen.",
+      MAIL_AUTH:
+        "Die Anmeldung bei Microsoft 365 ist fehlgeschlagen. Bitte Mandant, Client-ID und Secret im Admin-Bereich prüfen; das Secret ist eventuell abgelaufen.",
+      NO_SEND_PERMISSION:
+        "Microsoft 365 verweigert das Senden. Der App fehlt die Berechtigung Mail.Send (mit Admin-Zustimmung), oder eine Zugriffsrichtlinie sperrt dieses Postfach. Bitte einen Microsoft-365-Administrator einbinden.",
+      MAILBOX_NOT_FOUND:
+        "Das Postfach wurde in Microsoft 365 nicht gefunden. Bitte die Absenderadresse prüfen.",
+      TOO_LARGE: "Die E-Mail ist für Microsoft 365 zu groß (höchstens 4 MB).",
+      THROTTLED: "Microsoft 365 ist gerade überlastet. Bitte in ein paar Minuten erneut versuchen.",
+      NETWORK: "Keine Verbindung zu Microsoft 365. Bitte später erneut versuchen.",
+      RECORD_FAILED:
+        "Die E-Mail wurde gesendet, aber das Speichern ist fehlgeschlagen. Diese Belege von Hand abgleichen und NICHT erneut senden.",
+      SEND_FAILED: "Die E-Mail konnte nicht gesendet werden.",
+      details: "Technische Details",
     },
     bounce: {
       title: "{{count}} DATEV-Übergabe wurde nicht zugestellt",
@@ -6696,9 +7170,12 @@ const de = {
     },
     role: {
       super_admin: "Super-Admin",
-      admin: "Admin",
+      admin: "Geschäftsführung",
       supervisor: "Vorgesetzter",
       assistant: "Assistenz",
+      broker: "Makler",
+      bookkeeper: "Buchhaltung",
+      tax_advisor: "Steuerberatung",
       toast: { fehlgeschlagen: "Rolle konnte nicht geändert werden: {{error}}" },
     },
     tab: {
@@ -6709,6 +7186,11 @@ const de = {
       title: "Rollen & Rechte",
       hint: "Legt fest, was eine Rolle standardmäßig erlaubt. Eine Änderung gilt sofort für alle Personen mit dieser Rolle, außer für die, bei denen unter „Personen“ eine Ausnahme gesetzt ist.",
       col: "Was erlaubt ist",
+    },
+    crm: {
+      label: "Makler-ID im CRM",
+      placeholder: "zum Beispiel 1203",
+      hint: "Die Nummer des Makler-Datensatzes dieser Person im CRM. Sie sieht dann nur Objekte, Verkäufe und Kunden, die ihr gehören. Wird automatisch gesetzt, wenn die E-Mail übereinstimmt.",
     },
     chain: {
       title: "Freigabe-Einstellungen",
@@ -6940,6 +7422,12 @@ const de = {
     errorTitle: "Daten konnten nicht geladen werden",
     errorUnknown: "Unbekannter Fehler beim Laden der Daten.",
     retry: "Erneut versuchen",
+  },
+
+  errors: {
+    serviceNotConfigured:
+      "Diese Funktion ist gerade nicht verfügbar. Bitte versuchen Sie es später erneut.",
+    noPermission: "Dafür fehlt Ihnen die Berechtigung.",
   },
 } as const;
 

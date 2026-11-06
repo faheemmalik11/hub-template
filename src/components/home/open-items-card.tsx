@@ -60,9 +60,7 @@ export function OpenItemsCard() {
 
   return (
     <DashboardPanel title={t("home.open.title")}>
-      {!loading && stats.count === 0 ? (
-        <p className="mt-3 text-sm text-muted-foreground">{t("home.open.none")}</p>
-      ) : (
+      {
         <div className="mt-3 flex flex-1 flex-col gap-1.5">
           <StatRow
             to="/open-items"
@@ -104,7 +102,7 @@ export function OpenItemsCard() {
             />
           ))}
         </div>
-      )}
+      }
       <Link
         to="/open-items"
         className="mt-auto pt-2 text-sm font-medium text-brand-dark hover:underline"

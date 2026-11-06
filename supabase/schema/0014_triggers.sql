@@ -52,7 +52,7 @@ begin
         'documents', 'suppliers', 'customers', 'outgoing_invoices', 'manual_bookings',
         'approval_rules', 'assignment_rules', 'ingest_exclusions', 'open_item_whitelist_rules',
         'categories', 'properties', 'companies', 'approvers', 'supplier_bank_accounts',
-        'entity_aliases', 'vat_rates', 'property_companies'] loop
+        'entity_aliases', 'vat_rates', 'property_companies', 'deals'] loop
         execute format('drop trigger if exists trash_require_delete_reason on public.%I', t);
         execute format(
             'create trigger trash_require_delete_reason before update on public.%I '

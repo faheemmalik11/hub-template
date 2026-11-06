@@ -132,3 +132,7 @@ seeds nothing — the real addresses are confidential and are entered by a human
 - **The old `sameForBothDirections` shortcut is gone.** It copied one address into both the incoming
   and outgoing rows, on the assumption that a "combined" address is the same value twice. All three
   addresses genuinely differ per company, so that shortcut could only ever misroute documents.
+
+## Failed sends carry a code
+
+Ported from the sibling Hubs. `src/lib/datev/send-errors.ts` turns a failure into `[CODE] detail` (`NO_MAILBOX`, `NO_ROUTE`, `CREDENTIALS`, `MAIL_AUTH`, `NO_SEND_PERMISSION`, `MAILBOX_NOT_FOUND`, `TOO_LARGE`, `THROTTLED`, `NETWORK`, `RECORD_FAILED`, `SEND_FAILED`), classified from `GraphAuthError` (`src/lib/graph/auth.server.ts`) and `GraphSendError` (`src/lib/graph/send-mail.server.ts`). `triggerDatevHandover` writes a history row for a refusal before anything was assembled (no sender mailbox, no enabled route) and stores the coded text for a failed send. `SendErrorText` shows the translated sentence from `handover.fehler.<CODE>` with the technical detail folded underneath; text without a code, such as older rows, is shown as it is. The sender is still the `DATEV_SENDER_EMAIL` environment variable here.

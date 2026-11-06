@@ -1657,7 +1657,12 @@ export function isOverdue(
  * one without being an Error. `details` is appended when it says something the message does not,
  * because for constraint violations that is usually the part naming the actual column.
  */
-export function errorText(e: unknown): string {
+const TECHNICAL_ERROR_PATTERN =
+  /\bBANKSapi\b|\bPleo\b|\bPropstack\b|\b[A-Z][A-Z0-9]*(?:_[A-Z0-9]+)+\b|is not stored in the admin panel|is not set as a secret|no team channel configured|Edge Function returned a non-2xx status code/;
+const PERMISSION_DENIED_PATTERN =
+  /does not have the '.*?' permission|no caller identity on the request|account is not active/i;
+
+function rawErrorText(e: unknown): string {
   if (e == null) return "Unbekannter Fehler";
   if (typeof e === "string") return e;
   if (e instanceof Error && e.message) return e.message;
@@ -1682,4 +1687,26 @@ export function errorText(e: unknown): string {
     }
   }
   return String(e);
+}
+
+export function errorText(e: unknown): string {
+  const raw = rawErrorText(e);
+  if (PERMISSION_DENIED_PATTERN.test(raw)) {
+    console.error("errorText: hid a permission key from the user —", raw);
+    return i18n.t("errors.noPermission");
+  }
+  if (TECHNICAL_ERROR_PATTERN.test(raw)) {
+    console.error("errorText: hid technical detail from the user —", raw);
+    return i18n.t("errors.serviceNotConfigured");
+  }
+  return raw;
+}
+
+export async function edgeFunctionErrorText(error: unknown): Promise<string> {
+  const context = (error as { context?: unknown } | null)?.context;
+  if (context && typeof (context as Response).json === "function") {
+    const body = await (context as Response).json().catch(() => null);
+    if (body && typeof body.error === "string" && body.error.trim()) return body.error;
+  }
+  return rawErrorText(error);
 }

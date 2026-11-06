@@ -39,6 +39,7 @@ import { errorText, formatDate, formatDateTime, formatEUR } from "@/lib/data/for
 export const Route = createFileRoute("/approval-rules/")({
   validateSearch: tabSearch,
   head: () => ({ meta: [{ title: pageTitle("Freigabe-Regeln") }] }),
+  staticData: { titleKey: "approvalRules" },
   component: ApprovalRulesGuard,
 });
 

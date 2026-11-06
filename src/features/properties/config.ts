@@ -82,6 +82,8 @@ export interface PropertiesConfig {
   masterDataCheck: boolean;
   /** Archiving (`properties.deleted_at` / `delete_reason`); off hides the archive/restore controls entirely. */
   archiving: boolean;
+  /** False hides the Edit button: the properties are kept in step with another system. Default true. */
+  editing?: boolean;
   /** Owned vs. third-party-managed property (`properties.ownership_type`). */
   ownership: boolean;
   /** The Drive folder link (`properties.drive_folder_url`). */
@@ -93,6 +95,12 @@ export interface PropertiesConfig {
   assignmentHint?: ReactNode;
   /** A control in the assignment card's header; absent in a Hub whose assignments are not edited on this screen. */
   assignmentAction?: (property: PropertyData) => ReactNode;
+  /** The companies card. On unless a Hub says otherwise: a CRM-led client assigns no companies here. */
+  companies?: boolean;
+  /** The section of documents booked to this property. On unless a Hub says otherwise. */
+  bookedDocuments?: boolean;
+  /** Created and updated on the master data card. They are this Hub's row dates and read as the CRM's. */
+  recordDates?: boolean;
 
   /** A field the Hub must collect when a property is CREATED, beyond the shared form. */
   createField?: {
@@ -104,6 +112,8 @@ export interface PropertiesConfig {
     /** Clear the control, when the dialog opens and after a successful create. */
     reset: () => void;
   };
+  /** An extra card under the master data, in the left column. */
+  details?: (propertyCode: string) => ReactNode;
   /** Extra card below the master data, e.g. the known-spellings list. */
   spellings?: (propertyCode: string) => ReactNode;
 

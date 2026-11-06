@@ -5,6 +5,7 @@
 export interface MatchDocument {
   id: string;
   amount_gross: number | null;
+  tip_amount?: number | null;
   document_date: string | null;
   due_date: string | null;
   invoice_number: string | null;
@@ -49,10 +50,15 @@ export interface MatchCandidate {
 
 // A collective payment is larger than any single invoice on it, so the pair is worth at most the
 // invoice. The floor keeps the amount_matched > 0 check satisfied on a zero-amount transaction.
-function pairAmount(beleg: MatchDocument, txn: MatchTransaction): number {
+export function amountPaidOut(doc: MatchDocument): number {
+  const gross = doc.amount_gross ?? 0;
+  return gross > 0 ? gross + (doc.tip_amount ?? 0) : gross;
+}
+
+function pairAmount(doc: MatchDocument, txn: MatchTransaction): number {
   const txnAmount = Math.abs(txn.amount);
-  const brutto = Math.abs(beleg.amount_gross ?? 0);
-  const capped = brutto > 0 ? Math.min(txnAmount, brutto) : txnAmount;
+  const owed = Math.abs(amountPaidOut(doc));
+  const capped = owed > 0 ? Math.min(txnAmount, owed) : txnAmount;
   return Math.max(Number(capped.toFixed(2)), 0.01);
 }
 
@@ -108,7 +114,7 @@ export function scoreMatch(
   txn: MatchTransaction,
   amountTolerance: number = 0.01,
 ): { score: number; reasons: MatchReasons } {
-  const brutto = beleg.amount_gross ?? 0;
+  const brutto = amountPaidOut(beleg);
   const txnAmount = Math.abs(txn.amount);
   const zweck = normalize(txn.payment_reference);
 

@@ -42,6 +42,7 @@ import { pageTitle } from "@/config/brand";
 
 export const Route = createFileRoute("/bank-transactions/")({
   head: () => ({ meta: [{ title: pageTitle("Banktransaktionen") }] }),
+  staticData: { titleKey: "bankTransactions" },
   // The whole list state lives in the URL: a filtered view can be shared and bookmarked, it
   // survives the trip to a transaction and back, and ?matching=ignoriert still deep-links from
   // Offene Posten's "N ausgeblendet" link. Unknown values are dropped rather than passed into a

@@ -63,6 +63,7 @@ import { PermissionChecklist } from "@/components/access/permission-checklist";
 import { PermissionMatrix } from "@/components/access/permission-matrix";
 import type { AccessPermission, AccessRole } from "@/components/access/types";
 import { PERMISSIONS } from "@/config/permissions";
+import { TEAM } from "@/config/team";
 import {
   useCreateEmployee,
   useEmployees,
@@ -71,6 +72,7 @@ import {
   type PermissionRow,
   usePermissionCatalogue,
   useRolePermissions,
+  useAssignableRoles,
   useRoles,
   useSetAccountingRight,
   useSetRolePermission,
@@ -90,6 +92,7 @@ import { errorText } from "@/lib/data/format";
 export const Route = createFileRoute("/team/")({
   validateSearch: tabSearch,
   head: () => ({ meta: [{ title: pageTitle("Team & Rollen") }] }),
+  staticData: { titleKey: "team" },
   component: TeamGuard,
 });
 
@@ -111,8 +114,6 @@ const ALL_COMPANIES = "__all";
 // pair (app_users_area_shape rejects having both).
 const NONE = "__none";
 const ALL_AREAS = "__all_areas";
-
-const ROLE_OPTIONS: AssignableRole[] = ["admin", "supervisor", "assistant"];
 
 // Deliberately permissive — the point is to catch "abc" and a missing @, not to police the RFC.
 const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/;
@@ -680,6 +681,8 @@ function ApprovalSettingsSection({ employee }: { employee: Employee }) {
   // final approval is a receipt routed to somebody who then sees no button.
   const canFinalApprove = employee.permissions.includes(PERMISSIONS.invoicesApproveFinal);
   const areaValue = employee.covers_all_areas ? ALL_AREAS : (employee.area ?? NONE);
+  const isCrmBroker = employee.permissions.includes(PERMISSIONS.propertiesCrmSync);
+  const [crmExternalId, setCrmExternalId] = useState(employee.crm_external_id ?? "");
 
   function save(changes: Parameters<typeof update.mutate>[0]["changes"]) {
     update.mutate(
@@ -771,6 +774,25 @@ function ApprovalSettingsSection({ employee }: { employee: Employee }) {
             <p className="text-xs text-muted-foreground">{t("team.chain.escalationHint")}</p>
           )}
         </div>
+
+        {isCrmBroker && (
+          <div className="space-y-1.5">
+            <Label className="text-xs text-muted-foreground">{t("team.crm.label")}</Label>
+            <Input
+              value={crmExternalId}
+              inputMode="numeric"
+              placeholder={t("team.crm.placeholder")}
+              disabled={update.isPending}
+              onChange={(e) => setCrmExternalId(e.target.value)}
+              onBlur={() => {
+                const next = crmExternalId.trim() || null;
+                if (next === (employee.crm_external_id ?? null)) return;
+                save({ crm_external_id: next });
+              }}
+            />
+            <p className="text-xs text-muted-foreground">{t("team.crm.hint")}</p>
+          </div>
+        )}
       </div>
     </div>
   );
@@ -795,6 +817,7 @@ function EditEmployeeDialog({
   const [open, setOpen] = useState(false);
   const [name, setName] = useState(employee.name ?? "");
   const [email, setEmail] = useState(employee.email);
+  const assignableRolesQ = useAssignableRoles();
   const [roleName, setRoleName] = useState<AssignableRole>(
     employee.role_name === "super_admin" ? "admin" : employee.role_name,
   );
@@ -976,9 +999,9 @@ function EditEmployeeDialog({
                     <SelectValue />
                   </SelectTrigger>
                   <SelectContent>
-                    {ROLE_OPTIONS.map((role) => (
-                      <SelectItem key={role} value={role}>
-                        {t(`team.role.${role}`)}
+                    {(assignableRolesQ.data ?? []).map((role) => (
+                      <SelectItem key={role.name} value={role.name}>
+                        {t(`team.role.${role.name}`, { defaultValue: role.label })}
                       </SelectItem>
                     ))}
                   </SelectContent>
@@ -1013,7 +1036,7 @@ function EditEmployeeDialog({
                 />
               </div>
 
-              <ApprovalSettingsSection employee={employee} />
+              {TEAM.approvalSettings && <ApprovalSettingsSection employee={employee} />}
 
               <PermissionsSection
                 employee={employee}
@@ -1246,6 +1269,7 @@ function NewEmployeeDialog({
   const [open, setOpen] = useState(false);
   const [email, setEmail] = useState("");
   const [name, setName] = useState("");
+  const assignableRolesQ = useAssignableRoles();
   const [roleName, setRoleName] = useState<AssignableRole>("assistant");
   const [companyIds, setCompanyIds] = useState<string[]>([]);
   // Deviations from what the chosen role grants, as {key: granted}. Held locally because the
@@ -1443,9 +1467,9 @@ function NewEmployeeDialog({
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
-                  {ROLE_OPTIONS.map((role) => (
-                    <SelectItem key={role} value={role}>
-                      {t(`team.role.${role}`)}
+                  {(assignableRolesQ.data ?? []).map((role) => (
+                    <SelectItem key={role.name} value={role.name}>
+                      {t(`team.role.${role.name}`, { defaultValue: role.label })}
                     </SelectItem>
                   ))}
                 </SelectContent>
@@ -1482,77 +1506,85 @@ function NewEmployeeDialog({
               />
             </div>
 
-            <div className="space-y-2">
-              <Label>{t("team.chain.title")}</Label>
-              <div className="space-y-3 rounded-lg border border-border p-3">
-                <div className="space-y-1.5">
-                  <Label className="text-xs text-muted-foreground">{t("team.chain.area")}</Label>
-                  <Select
-                    value={area}
-                    disabled={!canFinalApprove || create.isPending}
-                    onValueChange={setArea}
-                  >
-                    <SelectTrigger>
-                      <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value={NONE}>{t("approvalRules.area.noneOption")}</SelectItem>
-                      <SelectItem value="hospitality">
-                        {t("approvalRules.area.hospitality")}
-                      </SelectItem>
-                      <SelectItem value="stay_re">{t("approvalRules.area.stay_re")}</SelectItem>
-                      <SelectItem value={ALL_AREAS}>{t("approvalRules.area.all")}</SelectItem>
-                    </SelectContent>
-                  </Select>
-                  <p className="text-xs text-muted-foreground">
-                    {canFinalApprove ? t("team.chain.areaHint") : t("team.chain.areaNeedsRight")}
-                  </p>
-                </div>
-                <div className="space-y-1.5">
-                  <Label className="text-xs text-muted-foreground">{t("team.chain.deputy")}</Label>
-                  <Select
-                    value={deputyUserId}
-                    disabled={create.isPending}
-                    onValueChange={setDeputyUserId}
-                  >
-                    <SelectTrigger>
-                      <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value={NONE}>{t("approvalRules.noDeputy")}</SelectItem>
-                      {(employeesQ.data ?? [])
-                        .filter((e) => e.is_active && e.role_name !== "super_admin")
-                        .map((e) => (
-                          <SelectItem key={e.id} value={e.id}>
-                            {`${e.name ?? e.email} (${t(`team.role.${e.role_name}`)})`}
-                          </SelectItem>
-                        ))}
-                    </SelectContent>
-                  </Select>
-                </div>
-                <div className="space-y-1.5">
-                  <Label className="text-xs text-muted-foreground">
-                    {t("team.chain.escalation")}
-                  </Label>
-                  <Input
-                    value={escalationDays}
-                    inputMode="numeric"
-                    placeholder={t("approvalRules.feld.escalationPlaceholder")}
-                    disabled={create.isPending}
-                    onChange={(e) => setEscalationDays(e.target.value)}
-                  />
-                  {escalationInvalid ? (
-                    <p className="text-xs text-destructive">
-                      {t("approvalRules.feld.escalationInvalid")}
-                    </p>
-                  ) : (
+            {TEAM.approvalSettings && (
+              <div className="space-y-2">
+                <Label>{t("team.chain.title")}</Label>
+                <div className="space-y-3 rounded-lg border border-border p-3">
+                  <div className="space-y-1.5">
+                    <Label className="text-xs text-muted-foreground">
+                      {t("team.chain.area")}
+                    </Label>
+                    <Select
+                      value={area}
+                      disabled={!canFinalApprove || create.isPending}
+                      onValueChange={setArea}
+                    >
+                      <SelectTrigger>
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value={NONE}>{t("approvalRules.area.noneOption")}</SelectItem>
+                        <SelectItem value="hospitality">
+                          {t("approvalRules.area.hospitality")}
+                        </SelectItem>
+                        <SelectItem value="stay_re">
+                          {t("approvalRules.area.stay_re")}
+                        </SelectItem>
+                        <SelectItem value={ALL_AREAS}>{t("approvalRules.area.all")}</SelectItem>
+                      </SelectContent>
+                    </Select>
                     <p className="text-xs text-muted-foreground">
-                      {t("team.chain.escalationHint")}
+                      {canFinalApprove ? t("team.chain.areaHint") : t("team.chain.areaNeedsRight")}
                     </p>
-                  )}
+                  </div>
+                  <div className="space-y-1.5">
+                    <Label className="text-xs text-muted-foreground">
+                      {t("team.chain.deputy")}
+                    </Label>
+                    <Select
+                      value={deputyUserId}
+                      disabled={create.isPending}
+                      onValueChange={setDeputyUserId}
+                    >
+                      <SelectTrigger>
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value={NONE}>{t("approvalRules.noDeputy")}</SelectItem>
+                        {(employeesQ.data ?? [])
+                          .filter((e) => e.is_active && e.role_name !== "super_admin")
+                          .map((e) => (
+                            <SelectItem key={e.id} value={e.id}>
+                              {`${e.name ?? e.email} (${t(`team.role.${e.role_name}`)})`}
+                            </SelectItem>
+                          ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+                  <div className="space-y-1.5">
+                    <Label className="text-xs text-muted-foreground">
+                      {t("team.chain.escalation")}
+                    </Label>
+                    <Input
+                      value={escalationDays}
+                      inputMode="numeric"
+                      placeholder={t("approvalRules.feld.escalationPlaceholder")}
+                      disabled={create.isPending}
+                      onChange={(e) => setEscalationDays(e.target.value)}
+                    />
+                    {escalationInvalid ? (
+                      <p className="text-xs text-destructive">
+                        {t("approvalRules.feld.escalationInvalid")}
+                      </p>
+                    ) : (
+                      <p className="text-xs text-muted-foreground">
+                        {t("team.chain.escalationHint")}
+                      </p>
+                    )}
+                  </div>
                 </div>
               </div>
-            </div>
+            )}
 
             <div className="space-y-2">
               <Label>{t("team.permissions.title")}</Label>
