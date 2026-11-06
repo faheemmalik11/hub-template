@@ -1,4 +1,5 @@
 import {
+  Fragment,
   type ReactNode,
   createContext,
   useContext,
@@ -317,20 +318,22 @@ export function ShellHeader({
           {crumbs.map((crumb, i) => {
             const last = i === crumbs.length - 1;
             return (
-              <BreadcrumbItem key={`${crumb.label}-${i}`} className="min-w-0">
-                {last ? (
-                  <BreadcrumbPage className="truncate">{crumb.label}</BreadcrumbPage>
-                ) : crumb.to ? (
-                  <BreadcrumbLink asChild>
-                    <Link to={crumb.to} className="truncate">
-                      {crumb.label}
-                    </Link>
-                  </BreadcrumbLink>
-                ) : (
-                  <span className="truncate text-muted-foreground">{crumb.label}</span>
-                )}
+              <Fragment key={`${crumb.label}-${i}`}>
+                <BreadcrumbItem className="min-w-0">
+                  {last ? (
+                    <BreadcrumbPage className="truncate">{crumb.label}</BreadcrumbPage>
+                  ) : crumb.to ? (
+                    <BreadcrumbLink asChild>
+                      <Link to={crumb.to} className="truncate">
+                        {crumb.label}
+                      </Link>
+                    </BreadcrumbLink>
+                  ) : (
+                    <span className="truncate text-muted-foreground">{crumb.label}</span>
+                  )}
+                </BreadcrumbItem>
                 {!last && <BreadcrumbSeparator className="shrink-0" />}
-              </BreadcrumbItem>
+              </Fragment>
             );
           })}
         </BreadcrumbList>
