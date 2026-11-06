@@ -951,7 +951,7 @@ function CompanyDetailPage() {
           {/* Under the invoice table rather than in the left column. The spellings are what makes
               the pipeline file a document against this company, so they belong next to the
               documents that were filed, not among the master-data fields. */}
-          <KnownSpellingsCard entityType="gesellschaft" entityCode={g.code ?? ""} />
+          <KnownSpellingsCard entityType="company" entityCode={g.code ?? ""} />
         </div>
       </div>
 

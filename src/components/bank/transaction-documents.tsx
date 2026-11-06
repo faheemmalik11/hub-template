@@ -176,9 +176,7 @@ export function TransactionDocuments({
               ? t("bank.detail.belege.source", { source: active.source })
               : t("bank.detail.belege.available")}
             {active.sizeBytes ? ` · ${formatBytes(active.sizeBytes)}` : ""}
-            {files.length > 1
-              ? ` · ${t("bank.detail.belege.anzahl", { count: files.length })}`
-              : ""}
+            {files.length > 1 ? ` · ${t("bank.detail.belege.count", { count: files.length })}` : ""}
           </span>
         </span>
         <div className="flex shrink-0 items-center gap-1">

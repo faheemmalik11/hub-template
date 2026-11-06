@@ -18,7 +18,7 @@ import {
 } from "../../ui/dialog";
 import { readableErrorMessage } from "../../components/feedback/query-states";
 import type { CustomersAdapter } from "../../adapters/customers";
-import { FieldErrorText, RequiredMark } from "./form-hints";
+import { FieldErrorText, RequiredStern } from "@/components/ui/form-field";
 import type { CustomersLabels } from "./labels";
 
 const EMAIL_PATTERN = /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/;
@@ -133,7 +133,7 @@ export function NewCustomerDialog({
         <div className="grid gap-3 sm:grid-cols-2">
           <div className="space-y-1 sm:col-span-2">
             <Label className="text-xs text-muted-foreground">
-              {labels.fields.company} <RequiredMark title={labels.requiredField} />
+              {labels.fields.company} <RequiredStern title={labels.requiredField} />
             </Label>
             <Combobox
               value={form.companyId}
@@ -261,7 +261,7 @@ function NewCustomerField({
   return (
     <div className={fullWidth ? "space-y-1 sm:col-span-2" : "space-y-1"}>
       <Label className="text-xs text-muted-foreground">
-        {label} {required && <RequiredMark title={requiredTitle} />}
+        {label} {required && <RequiredStern title={requiredTitle} />}
       </Label>
       <Input
         value={value}

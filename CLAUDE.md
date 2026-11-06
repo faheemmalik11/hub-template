@@ -103,7 +103,7 @@ locale, never a rendered string typed into a component.
   (`github.com/fabiantscheu-ship-it/book-keeping`; the sibling folder `../book-keeping` locally),
   in which every client is one tenant: shared code, and behaviour picked by that client's row,
   edited in that project's admin panel. Change the pipeline there, never here.
-- Package manager: **bun**. Lint: `bun run lint`. Build: `bun run build`.
+- Package manager: **npm**. Lint: `npm run lint`. Build: `npm run build`.
 
 ## Key references
 

@@ -1,0 +1,252 @@
+import type { OnboardingTask } from "@/kit/onboarding";
+import type { PracticeTranslate } from "./practice-invoice-task";
+
+export const STOP_CASES_PRACTICE_TASK_ID = "when-does-it-stop";
+
+export const STOP_CASES_CORRECT_NET_AMOUNT = 1240;
+
+const INVOICE_LIST_PATH = "/incoming-invoices";
+const IBAN_INVOICE_PATH = "/incoming-invoices/{ibanDocId}";
+const AI_INVOICE_PATH = "/incoming-invoices/{aiDocId}";
+const FLYER_INVOICE_PATH = "/incoming-invoices/{flyerDocId}";
+const SUPPLIER_PATH = "/suppliers/{practiceSupplierId}";
+
+export function buildStopCasesPracticeTask(t: PracticeTranslate): OnboardingTask {
+  const text = (key: string) => t(`onboarding.stopCases.${key}`);
+  const pageInvoices = text("pageInvoices");
+  const pageInvoice = text("pageInvoice");
+  const pageSupplier = text("pageSupplier");
+  const task: OnboardingTask = {
+    id: STOP_CASES_PRACTICE_TASK_ID,
+    title: text("taskTitle"),
+    goal: text("taskGoal"),
+    roles: ["preparer"],
+    steps: [
+      {
+        id: "stop-intro",
+        type: "info",
+        role: "preparer",
+        instruction: text("introInstruction"),
+        expectedOutcome: text("introOutcome"),
+        target: "",
+        path: INVOICE_LIST_PATH,
+        pageLabel: pageInvoices,
+        completionCondition: null,
+      },
+      {
+        id: "iban-open",
+        group: text("groupIban"),
+        type: "check",
+        role: "preparer",
+        instruction: text("ibanOpenInstruction"),
+        expectedOutcome: text("ibanOpenOutcome"),
+        target: "invoice-row-{ibanDocId}",
+        path: INVOICE_LIST_PATH,
+        pageLabel: pageInvoices,
+        completionCondition: { eventType: "document_opened", recordId: "{ibanDocId}" },
+      },
+      {
+        id: "iban-read-warning",
+        group: text("groupIban"),
+        type: "check",
+        role: "preparer",
+        instruction: text("ibanWarningInstruction"),
+        expectedOutcome: text("ibanWarningOutcome"),
+        target: "invoice-detail-tabs",
+        path: IBAN_INVOICE_PATH,
+        pageLabel: pageInvoice,
+        completionCondition: {
+          eventType: "document_tab_opened",
+          recordId: "{ibanDocId}",
+          data: { tab: "zahlung" },
+        },
+      },
+      {
+        id: "iban-check-with-supplier",
+        group: text("groupIban"),
+        type: "info",
+        role: "preparer",
+        instruction: text("ibanCheckInstruction"),
+        expectedOutcome: text("ibanCheckOutcome"),
+        helpText: text("ibanWarningHelp"),
+        target: "invoice-detail-tabs",
+        path: IBAN_INVOICE_PATH,
+        pageLabel: pageInvoice,
+        completionCondition: null,
+        deviationQuestion: { prompt: text("ibanDeviation"), allowFreeText: true },
+      },
+      {
+        id: "iban-confirm",
+        group: text("groupIban"),
+        type: "confirm",
+        role: "preparer",
+        instruction: text("ibanConfirmInstruction"),
+        expectedOutcome: text("ibanConfirmOutcome"),
+        helpText: text("ibanConfirmHelp"),
+        target: "supplier-bank-account-confirm-{ibanAccountId}",
+        path: SUPPLIER_PATH,
+        pageLabel: pageSupplier,
+        completionCondition: {
+          eventType: "supplier_bank_account_confirmed",
+          recordId: "{ibanAccountId}",
+        },
+      },
+      {
+        id: "ai-open",
+        group: text("groupAi"),
+        type: "check",
+        role: "preparer",
+        instruction: text("aiOpenInstruction"),
+        expectedOutcome: text("aiOpenOutcome"),
+        target: "invoice-row-{aiDocId}",
+        path: INVOICE_LIST_PATH,
+        pageLabel: pageInvoices,
+        completionCondition: { eventType: "document_opened", recordId: "{aiDocId}" },
+      },
+      {
+        id: "ai-read-light",
+        group: text("groupAi"),
+        type: "info",
+        role: "preparer",
+        instruction: text("aiLightInstruction"),
+        expectedOutcome: text("aiLightOutcome"),
+        target: "invoice-detail-document",
+        placement: "left",
+        path: AI_INVOICE_PATH,
+        pageLabel: pageInvoice,
+        completionCondition: null,
+      },
+      {
+        id: "ai-find-wrong-value",
+        group: text("groupAi"),
+        type: "info",
+        role: "preparer",
+        instruction: text("aiFindInstruction"),
+        expectedOutcome: text("aiFindOutcome"),
+        helpText: text("aiFindHelp"),
+        target: "invoice-detail-fields|invoice-detail-document",
+        path: AI_INVOICE_PATH,
+        pageLabel: pageInvoice,
+        completionCondition: null,
+      },
+      {
+        id: "ai-correct-net",
+        group: text("groupAi"),
+        type: "check",
+        role: "preparer",
+        instruction: text("aiCorrectInstruction"),
+        expectedOutcome: text("aiCorrectOutcome"),
+        helpText: text("aiCorrectHelp"),
+        target: "invoice-detail-fields",
+        path: AI_INVOICE_PATH,
+        pageLabel: pageInvoice,
+        completionCondition: {
+          eventType: "document_updated",
+          recordId: "{aiDocId}",
+          data: { amount_net: STOP_CASES_CORRECT_NET_AMOUNT, amounts_add_up: true },
+        },
+        deviationQuestion: { prompt: text("aiDeviation"), allowFreeText: true },
+      },
+      {
+        id: "ai-see-check-green",
+        group: text("groupAi"),
+        type: "info",
+        role: "preparer",
+        instruction: text("aiGreenInstruction"),
+        expectedOutcome: text("aiGreenOutcome"),
+        target: "invoice-detail-fields",
+        path: AI_INVOICE_PATH,
+        pageLabel: pageInvoice,
+        completionCondition: null,
+      },
+      {
+        id: "flyer-open",
+        group: text("groupFlyer"),
+        type: "check",
+        role: "preparer",
+        instruction: text("flyerOpenInstruction"),
+        expectedOutcome: text("flyerOpenOutcome"),
+        target: "invoice-row-{flyerDocId}",
+        path: INVOICE_LIST_PATH,
+        pageLabel: pageInvoices,
+        completionCondition: { eventType: "document_opened", recordId: "{flyerDocId}" },
+      },
+      {
+        id: "flyer-read-why",
+        group: text("groupFlyer"),
+        type: "info",
+        role: "preparer",
+        instruction: text("flyerWhyInstruction"),
+        expectedOutcome: text("flyerWhyOutcome"),
+        target: "invoice-detail-document",
+        path: FLYER_INVOICE_PATH,
+        pageLabel: pageInvoice,
+        completionCondition: null,
+      },
+      {
+        id: "flyer-set-aside",
+        group: text("groupFlyer"),
+        type: "confirm",
+        role: "preparer",
+        instruction: text("flyerSetAsideInstruction"),
+        expectedOutcome: text("flyerSetAsideOutcome"),
+        helpText: text("flyerSetAsideHelp"),
+        target: "invoice-detail-header",
+        placement: "left",
+        path: FLYER_INVOICE_PATH,
+        pageLabel: pageInvoice,
+        completionCondition: { eventType: "document_not_relevant_set", recordId: "{flyerDocId}" },
+      },
+      {
+        id: "flyer-open-history",
+        group: text("groupFlyer"),
+        type: "check",
+        role: "preparer",
+        instruction: text("flyerOpenHistoryInstruction"),
+        expectedOutcome: text("flyerOpenHistoryOutcome"),
+        target: "invoice-detail-tabs",
+        path: FLYER_INVOICE_PATH,
+        pageLabel: pageInvoice,
+        completionCondition: {
+          eventType: "document_tab_opened",
+          recordId: "{flyerDocId}",
+          data: { tab: "verlauf" },
+        },
+      },
+      {
+        id: "flyer-see-history",
+        group: text("groupFlyer"),
+        type: "info",
+        role: "preparer",
+        instruction: text("flyerHistoryInstruction"),
+        expectedOutcome: text("flyerHistoryOutcome"),
+        target: "invoice-detail-tabs",
+        path: FLYER_INVOICE_PATH,
+        pageLabel: pageInvoice,
+        completionCondition: null,
+      },
+      {
+        id: "stop-outro",
+        type: "info",
+        role: "preparer",
+        instruction: text("outroInstruction"),
+        expectedOutcome: text("outroOutcome"),
+        target: "",
+        path: FLYER_INVOICE_PATH,
+        pageLabel: pageInvoice,
+        completionCondition: null,
+      },
+    ],
+  };
+  const restartHint = t("onboarding.stopCases.restartHint", {
+    button: t("onboarding.practice.panelReset"),
+  });
+  return {
+    ...task,
+    steps: task.steps.map((step) =>
+      step.completionCondition
+        ? { ...step, helpText: [step.helpText, restartHint].filter(Boolean).join(" ") }
+        : step,
+    ),
+  };
+}

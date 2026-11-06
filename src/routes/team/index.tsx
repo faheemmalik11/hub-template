@@ -28,6 +28,7 @@ import {
   DialogFooter,
   DialogHeader,
   DialogTitle,
+  DialogTrigger,
 } from "@/components/ui/dialog";
 import {
   AlertDialog,
@@ -58,6 +59,7 @@ import {
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { tabSearch, useTabParam } from "@/lib/use-tab-param";
 import { ErrorState, TableSkeleton } from "@/components/documents/query-states";
+import { Avatar } from "@/kit/ui";
 import { useAuth } from "@/lib/auth";
 import { PermissionChecklist } from "@/components/access/permission-checklist";
 import { PermissionMatrix } from "@/components/access/permission-matrix";
@@ -65,9 +67,11 @@ import type { AccessPermission, AccessRole } from "@/components/access/types";
 import { PERMISSIONS } from "@/config/permissions";
 import {
   useCreateEmployee,
+  useCreateRole,
   useEmployees,
   useCompanies,
   useResetEmployeePassword,
+  useTeamLoginStatus,
   type PermissionRow,
   usePermissionCatalogue,
   useRolePermissions,
@@ -83,6 +87,8 @@ import {
   type AssignableRole,
 } from "@/data";
 import type { ApprovalArea, Employee } from "@/lib/data/types";
+import { loginStatusOf, type LoginFacts, type LoginStatus } from "@/lib/login-status";
+import { formatDate } from "@/lib/data/format";
 import { useTranslation } from "@/lib/i18n";
 import { BRAND, pageTitle } from "@/config/brand";
 import { errorText } from "@/lib/data/format";
@@ -112,10 +118,29 @@ const ALL_COMPANIES = "__all";
 const NONE = "__none";
 const ALL_AREAS = "__all_areas";
 
-const ROLE_OPTIONS: AssignableRole[] = ["admin", "supervisor", "assistant"];
-
 // Deliberately permissive — the point is to catch "abc" and a missing @, not to police the RFC.
 const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/;
+
+function LoginStatusLine({
+  mustChangePassword,
+  facts,
+  className,
+}: {
+  mustChangePassword: boolean;
+  facts: LoginFacts | null | undefined;
+  className?: string;
+}) {
+  const { t } = useTranslation();
+  const status: LoginStatus = loginStatusOf(mustChangePassword, facts);
+  if (status.kind === "unknown") return null;
+  if (status.kind === "never") {
+    return <span className={className}>{t("team.login.never")}</span>;
+  }
+  if (status.kind === "startPassword") {
+    return <span className={className}>{t("team.login.startPassword")}</span>;
+  }
+  return <span className={className}>{t("team.login.last", { date: formatDate(status.at) })}</span>;
+}
 
 function TeamPage() {
   const { t } = useTranslation();
@@ -127,6 +152,13 @@ function TeamPage() {
   // useEmployees' own email ordering.
   const [search, setSearch] = useState("");
   const [onlyInactive, setOnlyInactive] = useState(false);
+  const roleLabel = useRoleLabel();
+  const rolesQ = useRoles();
+  const loginStatusQ = useTeamLoginStatus();
+  const assignableRoles = useMemo(
+    () => (rolesQ.data ?? []).filter((r) => r.assignable && r.name !== "super_admin"),
+    [rolesQ.data],
+  );
 
   const employees = useMemo(() => {
     const term = search.trim().toLowerCase();
@@ -134,17 +166,14 @@ function TeamPage() {
       // #9: no search and no filter at all — which is why a leftover test account sits unnoticed.
       if (onlyInactive && e.is_active) return false;
       if (!term) return true;
-      return [e.name ?? "", e.email, t(`team.role.${e.role_name}`)]
-        .join(" ")
-        .toLowerCase()
-        .includes(term);
+      return [e.name ?? "", e.email, roleLabel(e.role_name)].join(" ").toLowerCase().includes(term);
     });
     return [...rows].sort((a, b) => {
       const aSuper = a.role_name === "super_admin" ? 0 : 1;
       const bSuper = b.role_name === "super_admin" ? 0 : 1;
       return aSuper - bSuper;
     });
-  }, [q.data, search, onlyInactive, t]);
+  }, [q.data, search, onlyInactive, roleLabel]);
   const companiesQ = useCompanies();
   const companies = companiesQ.data ?? [];
 
@@ -157,15 +186,12 @@ function TeamPage() {
           </h1>
           <p className="mt-1 max-w-2xl text-sm text-muted-foreground">{t("team.list.subtitle")}</p>
         </div>
-        <NewEmployeeDialog
-          companies={companies}
-          existingEmails={(q.data ?? []).map((e) => e.email.toLowerCase())}
-        />
       </div>
 
       <Tabs value={tab} onValueChange={setTab} className="mt-6">
-        {/* Tabs left, the list's own controls right, one row: the search only applies to the
-            people tab, so it travels with the tabs rather than sitting on its own line. */}
+        {/* Tabs left, the active tab's own controls right, one row: the search and the primary
+            action both only apply to one tab each, so they travel with the tabs rather than
+            sitting on their own line. */}
         <div className="flex flex-wrap items-center gap-3">
           <TabsList
             className="flex h-auto w-auto flex-wrap justify-start gap-1"
@@ -193,6 +219,16 @@ function TeamPage() {
               >
                 {t("team.list.inactiveOnly")}
               </Button>
+              <NewEmployeeDialog
+                companies={companies}
+                roles={assignableRoles}
+                existingEmails={(q.data ?? []).map((e) => e.email.toLowerCase())}
+              />
+            </div>
+          )}
+          {tab === "roles" && (
+            <div className="sm:ml-auto">
+              <CreateRoleDialog />
             </div>
           )}
         </div>
@@ -241,12 +277,17 @@ function TeamPage() {
                         )}
                       >
                         <TableCell className="font-medium text-foreground">
-                          <span className="block">{employee.name ?? "—"}</span>
-                          {employee.must_change_password && (
-                            <span className="block text-xs font-normal whitespace-nowrap text-muted-foreground">
-                              {t("team.status.neverSignedIn")}
-                            </span>
-                          )}
+                          <div className="flex items-center gap-2">
+                            <Avatar name={employee.name} email={employee.email} size="sm" />
+                            <div>
+                              <span className="block">{employee.name ?? "—"}</span>
+                              <LoginStatusLine
+                                mustChangePassword={employee.must_change_password}
+                                facts={loginStatusQ.data?.get(employee.id)}
+                                className="block text-xs font-normal whitespace-nowrap text-muted-foreground"
+                              />
+                            </div>
+                          </div>
                         </TableCell>
                         <TableCell className="text-muted-foreground">{employee.email}</TableCell>
                         <TableCell>
@@ -254,7 +295,7 @@ function TeamPage() {
                             variant="outline"
                             className={ROLE_BADGE[employee.role_name] ?? ROLE_BADGE.assistant}
                           >
-                            {t(`team.role.${employee.role_name}`)}
+                            {roleLabel(employee.role_name)}
                           </Badge>
                         </TableCell>
                         <TableCell>
@@ -308,7 +349,11 @@ function TeamPage() {
                             className="flex justify-end gap-1"
                             data-tour={index === 0 ? "team-actions" : undefined}
                           >
-                            <EditEmployeeDialog employee={employee} companies={companies} />
+                            <EditEmployeeDialog
+                              employee={employee}
+                              companies={companies}
+                              roles={assignableRoles}
+                            />
                             <ResetPasswordDialog employee={employee} />
                             <ToggleActiveDialog employee={employee} />
                           </div>
@@ -337,12 +382,15 @@ function TeamPage() {
                     )}
                   >
                     <div className="flex items-start justify-between gap-3">
-                      <div className="min-w-0">
-                        <div className="truncate text-sm font-medium text-foreground">
-                          {employee.name ?? "—"}
-                        </div>
-                        <div className="truncate text-xs text-muted-foreground">
-                          {employee.email}
+                      <div className="flex min-w-0 items-center gap-2">
+                        <Avatar name={employee.name} email={employee.email} size="sm" />
+                        <div className="min-w-0">
+                          <div className="truncate text-sm font-medium text-foreground">
+                            {employee.name ?? "—"}
+                          </div>
+                          <div className="truncate text-xs text-muted-foreground">
+                            {employee.email}
+                          </div>
                         </div>
                       </div>
                       <div className="shrink-0 text-right">
@@ -351,16 +399,16 @@ function TeamPage() {
                         ) : (
                           <Badge variant="outline">{t("team.status.inactive")}</Badge>
                         )}
-                        {employee.must_change_password && (
-                          <div className="mt-1 text-[10px] text-muted-foreground">
-                            {t("team.status.neverSignedIn")}
-                          </div>
-                        )}
+                        <LoginStatusLine
+                          mustChangePassword={employee.must_change_password}
+                          facts={loginStatusQ.data?.get(employee.id)}
+                          className="mt-1 block text-[10px] text-muted-foreground"
+                        />
                       </div>
                     </div>
 
                     <div className="mt-2 flex flex-wrap items-center gap-1.5">
-                      <Badge variant="outline">{t(`team.role.${employee.role_name}`)}</Badge>
+                      <Badge variant="outline">{roleLabel(employee.role_name)}</Badge>
                       {employee.allowed_company_ids.length === 0 ? (
                         <Badge variant="default">{t("team.access.all")}</Badge>
                       ) : (
@@ -404,7 +452,11 @@ function TeamPage() {
                       className="mt-3 flex justify-end gap-1 border-t border-border pt-2"
                       data-tour={index === 0 ? "team-actions" : undefined}
                     >
-                      <EditEmployeeDialog employee={employee} companies={companies} />
+                      <EditEmployeeDialog
+                        employee={employee}
+                        companies={companies}
+                        roles={assignableRoles}
+                      />
                       <ResetPasswordDialog employee={employee} />
                       <ToggleActiveDialog employee={employee} />
                     </div>
@@ -471,6 +523,34 @@ function usePermissionText() {
   );
 }
 
+/**
+ * Role name -> display label, with a safe fallback.
+ *
+ * Favours an i18n translation keyed by the role name, then the role's own `label` column, then
+ * the raw name — so a custom role created from this screen (no matching i18n key yet) never shows
+ * a raw, untranslated key string.
+ */
+function useRoleLabel() {
+  const { t } = useTranslation();
+  const rolesQ = useRoles();
+  const roleLabelByName = useMemo(
+    () => new Map((rolesQ.data ?? []).map((r) => [r.name, r.label])),
+    [rolesQ.data],
+  );
+  return useCallback(
+    (roleName: string) =>
+      t(`team.role.${roleName}`, { defaultValue: roleLabelByName.get(roleName) ?? roleName }),
+    [t, roleLabelByName],
+  );
+}
+
+function slugifyRoleName(label: string): string {
+  return label
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, "_")
+    .replace(/^_+|_+$/g, "");
+}
+
 function RolePermissionMatrix() {
   const { t } = useTranslation();
   const { refreshProfile } = useAuth();
@@ -478,6 +558,7 @@ function RolePermissionMatrix() {
   const rolesQ = useRoles();
   const rolePermsQ = useRolePermissions();
   const setRolePermission = useSetRolePermission();
+  const roleLabel = useRoleLabel();
 
   const permissionText = usePermissionText();
   const permissions = useMemo<AccessPermission[]>(
@@ -491,13 +572,32 @@ function RolePermissionMatrix() {
       // trigger forces it regardless, so the column could only be noise.
       (rolesQ.data ?? [])
         .filter((r) => r.name !== "super_admin")
-        .map((r) => ({ id: r.id, label: t(`team.role.${r.name}`) })),
-    [rolesQ.data, t],
+        .map((r) => ({ id: r.id, label: roleLabel(r.name) })),
+    [rolesQ.data, roleLabel],
   );
 
   const roleNames = useMemo(
     () => new Map((rolesQ.data ?? []).map((r) => [r.id, r.name])),
     [rolesQ.data],
+  );
+
+  // The order permissions already arrive in from the catalogue query (sort_order), not
+  // alphabetical -- the first category found is what gets selected by default below.
+  const categories = useMemo(() => {
+    const ordered: string[] = [];
+    for (const p of permissions) {
+      if (!ordered.includes(p.category)) ordered.push(p.category);
+    }
+    return ordered;
+  }, [permissions]);
+
+  const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
+  const activeCategory =
+    selectedCategory && categories.includes(selectedCategory) ? selectedCategory : categories[0];
+
+  const categoryLabel = useCallback(
+    (c: string) => t(`team.permissions.category.${c}`, { defaultValue: c }),
+    [t],
   );
 
   if (catalogueQ.isLoading || rolesQ.isLoading || rolePermsQ.isLoading) {
@@ -519,26 +619,117 @@ function RolePermissionMatrix() {
   return (
     <div data-tour="team-roles">
       <p className="max-w-3xl text-sm text-muted-foreground">{t("team.rolePermissions.hint")}</p>
-      <PermissionMatrix
-        className="mt-4"
-        permissions={permissions}
-        roles={roles}
-        grantedByRole={rolePermsQ.data ?? {}}
-        disabled={setRolePermission.isPending}
-        permissionColumnLabel={t("team.rolePermissions.col")}
-        categoryLabel={(c) => t(`team.permissions.category.${c}`, { defaultValue: c })}
-        onToggle={(roleId, key, next) =>
-          setRolePermission.mutate(
-            { roleId, roleName: roleNames.get(roleId) ?? "", key, value: next },
-            {
-              // A role change can move the signed-in admin without naming them.
-              onSuccess: () => void refreshProfile(),
-              onError: (e) => toast.error(errorText(e)),
-            },
-          )
-        }
-      />
+      {activeCategory && (
+        <div className="mt-4 flex flex-col gap-4 sm:flex-row">
+          <nav className="flex gap-1 overflow-x-auto rounded-xl border border-border bg-muted/40 p-1 sm:w-56 sm:flex-none sm:flex-col sm:overflow-x-visible">
+            {categories.map((c) => (
+              <button
+                key={c}
+                type="button"
+                onClick={() => setSelectedCategory(c)}
+                className={cn(
+                  "shrink-0 rounded-md px-3 py-2 text-left text-sm transition-colors",
+                  c === activeCategory
+                    ? "bg-card font-medium text-foreground shadow-sm"
+                    : "text-muted-foreground hover:bg-card/60 hover:text-foreground",
+                )}
+              >
+                {categoryLabel(c)}
+              </button>
+            ))}
+          </nav>
+          <div className="min-w-0 flex-1">
+            <PermissionMatrix
+              permissions={permissions.filter((p) => p.category === activeCategory)}
+              roles={roles}
+              grantedByRole={rolePermsQ.data ?? {}}
+              disabled={setRolePermission.isPending}
+              permissionColumnLabel={t("team.rolePermissions.col")}
+              categoryLabel={categoryLabel}
+              onToggle={(roleId, key, next) =>
+                setRolePermission.mutate(
+                  { roleId, roleName: roleNames.get(roleId) ?? "", key, value: next },
+                  {
+                    // A role change can move the signed-in admin without naming them.
+                    onSuccess: () => void refreshProfile(),
+                    onError: (e) => toast.error(errorText(e)),
+                  },
+                )
+              }
+            />
+          </div>
+        </div>
+      )}
     </div>
+  );
+}
+
+/** Lets an admin add an intermediate role (a row, not a migration -- see 0001_identity.sql). It
+ *  starts with no permissions granted, i.e. no role_permissions rows at all. */
+function CreateRoleDialog() {
+  const { t } = useTranslation();
+  const createRole = useCreateRole();
+  const [open, setOpen] = useState(false);
+  const [label, setLabel] = useState("");
+  const trimmedLabel = label.trim();
+  const slug = slugifyRoleName(trimmedLabel);
+
+  function submit() {
+    if (!trimmedLabel || !slug) return;
+    createRole.mutate(
+      { name: slug, label: trimmedLabel },
+      {
+        onSuccess: () => {
+          toast.success(t("team.rolePermissions.create.toast.ok"));
+          setLabel("");
+          setOpen(false);
+        },
+        onError: (e) => toast.error(errorText(e)),
+      },
+    );
+  }
+
+  return (
+    <Dialog
+      open={open}
+      onOpenChange={(next) => {
+        setOpen(next);
+        if (!next) setLabel("");
+      }}
+    >
+      <DialogTrigger asChild>
+        <Button variant="outline" className="gap-2">
+          <Plus className="size-4" /> {t("team.rolePermissions.create.button")}
+        </Button>
+      </DialogTrigger>
+      <DialogContent>
+        <DialogHeader>
+          <DialogTitle>{t("team.rolePermissions.create.title")}</DialogTitle>
+          <DialogDescription>{t("team.rolePermissions.create.desc")}</DialogDescription>
+        </DialogHeader>
+        <div className="space-y-1.5">
+          <Label className="text-xs text-muted-foreground">
+            {t("team.rolePermissions.create.field.label")}
+          </Label>
+          <Input
+            value={label}
+            onChange={(e) => setLabel(e.target.value)}
+            placeholder={t("team.rolePermissions.create.field.placeholder")}
+            autoFocus
+          />
+        </div>
+        <DialogFooter>
+          <Button variant="outline" onClick={() => setOpen(false)}>
+            {t("team.rolePermissions.create.cancel")}
+          </Button>
+          <Button onClick={submit} disabled={createRole.isPending || !trimmedLabel || !slug}>
+            {createRole.isPending
+              ? t("team.rolePermissions.create.saving")
+              : t("team.rolePermissions.create.save")}
+          </Button>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
   );
 }
 
@@ -646,6 +837,7 @@ function PermissionsSection({
 function ApprovalSettingsSection({ employee }: { employee: Employee }) {
   const { t } = useTranslation();
   const employeesQ = useEmployees();
+  const roleLabel = useRoleLabel();
   const update = useUpdateChainPerson();
 
   // The escalation input is the one field that can be typed into a wrong state, so it holds local
@@ -668,9 +860,9 @@ function ApprovalSettingsSection({ employee }: { employee: Employee }) {
         // an Assistenz standing in for a Vorgesetzter is a name in a warning, not a replacement.
         .map((e) => ({
           value: e.id,
-          label: `${e.name ?? e.email} (${t(`team.role.${e.role_name}`)})`,
+          label: `${e.name ?? e.email} (${roleLabel(e.role_name)})`,
         })),
-    [employeesQ.data, employee.id, t],
+    [employeesQ.data, employee.id, roleLabel],
   );
 
   // This replaces a CHECK constraint. `approvers_area_requires_manager` said only a manager may own
@@ -781,12 +973,15 @@ function ApprovalSettingsSection({ employee }: { employee: Employee }) {
 function EditEmployeeDialog({
   employee,
   companies,
+  roles,
 }: {
   employee: Employee;
   companies: { id: string; code: string; name: string }[];
+  roles: { id: string; name: string; label: string }[];
 }) {
   const { t } = useTranslation();
   const { user, isAdmin, can, refreshProfile } = useAuth();
+  const roleLabel = useRoleLabel();
   // #1: the super admin was protected three ways; a plain admin had none of that protection against
   // ITSELF — nothing compared the row being edited to the person editing it, so an admin could
   // demote or deactivate their own account and lose the screen that undoes it.
@@ -809,10 +1004,10 @@ function EditEmployeeDialog({
     updateProfile.isPending || updateRole.isPending || setAccess.isPending || setRight.isPending;
   // The super admin is the owner/technical account: it already has access to everything, that
   // access is not something an admin gets to narrow, and its role is not assignable at all
-  // (AssignableRole excludes it, and the server function rejects it). Only the display name is
-  // editable. This is a hard guard, not just a disabled input: `roleName` is seeded to "admin" for
-  // a super admin (there is no super_admin entry in ROLE_OPTIONS to seed from), so without it
-  // roleChanged would be TRUE on open and saving would silently DEMOTE the super admin.
+  // (not in the `roles` prop's assignable list, and the server function rejects it). Only the
+  // display name is editable. This is a hard guard, not just a disabled input: `roleName` is
+  // seeded to "admin" for a super admin, so without it roleChanged would be TRUE on open and
+  // saving would silently DEMOTE the super admin.
   const isSuperAdmin = employee.role_name === "super_admin";
   const roleLocked = isSuperAdmin || isSelf;
   const roleChanged = !roleLocked && roleName !== employee.role_name;
@@ -976,9 +1171,9 @@ function EditEmployeeDialog({
                     <SelectValue />
                   </SelectTrigger>
                   <SelectContent>
-                    {ROLE_OPTIONS.map((role) => (
-                      <SelectItem key={role} value={role}>
-                        {t(`team.role.${role}`)}
+                    {roles.map((role) => (
+                      <SelectItem key={role.name} value={role.name}>
+                        {roleLabel(role.name)}
                       </SelectItem>
                     ))}
                   </SelectContent>
@@ -1031,8 +1226,8 @@ function EditEmployeeDialog({
         {roleChanged && (
           <p className="rounded-md border border-amber-300 bg-amber-50 px-3 py-2 text-xs text-amber-900">
             {t("team.edit.roleChange", {
-              fromDate: t(`team.role.${employee.role_name}`),
-              nach: t(`team.role.${roleName}`),
+              fromDate: roleLabel(employee.role_name),
+              nach: roleLabel(roleName),
             })}
           </p>
         )}
@@ -1231,13 +1426,16 @@ const IconAction = forwardRef<
 
 function NewEmployeeDialog({
   companies,
+  roles,
   existingEmails,
 }: {
   companies: { id: string; code: string; name: string }[];
+  roles: { id: string; name: string; label: string }[];
   existingEmails: string[];
 }) {
   const { t, i18n } = useTranslation();
   const german = i18n.language.startsWith("de");
+  const roleLabel = useRoleLabel();
   const create = useCreateEmployee();
   const setRight = useSetAccountingRight();
   const catalogueQ = usePermissionCatalogue();
@@ -1443,9 +1641,9 @@ function NewEmployeeDialog({
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
-                  {ROLE_OPTIONS.map((role) => (
-                    <SelectItem key={role} value={role}>
-                      {t(`team.role.${role}`)}
+                  {roles.map((role) => (
+                    <SelectItem key={role.name} value={role.name}>
+                      {roleLabel(role.name)}
                     </SelectItem>
                   ))}
                 </SelectContent>
@@ -1524,7 +1722,7 @@ function NewEmployeeDialog({
                         .filter((e) => e.is_active && e.role_name !== "super_admin")
                         .map((e) => (
                           <SelectItem key={e.id} value={e.id}>
-                            {`${e.name ?? e.email} (${t(`team.role.${e.role_name}`)})`}
+                            {`${e.name ?? e.email} (${roleLabel(e.role_name)})`}
                           </SelectItem>
                         ))}
                     </SelectContent>

@@ -43,7 +43,7 @@ async function requireActiveAdmin(db: Db, callerEmail: string): Promise<{ id: st
 const CreateEmployeeSchema = z.object({
   email: z.string().email(),
   name: z.string().trim().min(1), // display name -- used everywhere an approver/actor is shown by name, not email
-  roleName: z.enum(["admin", "supervisor", "assistant"]), // super_admin is never assignable here (A7: invisible to client)
+  roleName: z.string().min(1), // super_admin is never assignable here (A7: invisible to client); the DB's guard_protected_role_insert trigger refuses a protected role_id on insert, not this schema
   companyIds: z.array(z.string().uuid()), // empty = unrestricted (mirrors has_company_access's "no grants" default)
 });
 

@@ -146,20 +146,18 @@ export function LinkConfirmDialog({
             <dl className="rounded-lg border border-border bg-muted/30 p-3">
               <Row
                 label={t(
-                  isOutgoing
-                    ? "manualLink.confirm.ausgangsrechnung"
-                    : "manualLink.confirm.rechnung",
+                  isOutgoing ? "manualLink.confirm.outgoingInvoice" : "manualLink.confirm.invoice",
                 )}
-                value={`${pair.invoiceLabel} · ${pair.invoiceNr ?? t("manualLink.confirm.ohneNr")} · ${formatEUR(pair.invoiceGross)}`}
+                value={`${pair.invoiceLabel} · ${pair.invoiceNr ?? t("manualLink.confirm.noNumber")} · ${formatEUR(pair.invoiceGross)}`}
               />
               <Row
-                label={t("manualLink.confirm.transaktion")}
+                label={t("manualLink.confirm.transaction")}
                 value={`${pair.transactionLabel} · ${formatSignedEUR(pair.transactionAmount)}${
                   pair.transactionDate ? ` · ${formatDate(pair.transactionDate)}` : ""
                 }`}
               />
               <Row
-                label={t("manualLink.confirm.betrag")}
+                label={t("manualLink.confirm.amount")}
                 value={loading ? "…" : formatEUR(amount)}
                 stark
               />
@@ -167,13 +165,13 @@ export function LinkConfirmDialog({
                 <div className="mt-1 border-t border-border/60 pt-1">
                   {invoiceRest > 0.01 && (
                     <Row
-                      label={t("manualLink.confirm.restRechnung")}
+                      label={t("manualLink.confirm.remainingInvoice")}
                       value={formatEUR(invoiceRest)}
                     />
                   )}
                   {transactionRest > 0.01 && (
                     <Row
-                      label={t("manualLink.confirm.restZahlung")}
+                      label={t("manualLink.confirm.remainingPayment")}
                       value={formatEUR(transactionRest)}
                     />
                   )}
@@ -192,9 +190,9 @@ export function LinkConfirmDialog({
                       className="mt-0.5 size-4 rounded border-border text-primary focus:ring-primary"
                     />
                     <span>
-                      <span className="font-medium">{t("manualLink.confirm.close.rechnung")}</span>
+                      <span className="font-medium">{t("manualLink.confirm.close.invoice")}</span>
                       <span className="block text-xs text-muted-foreground">
-                        {t("manualLink.confirm.close.rechnungHint", {
+                        {t("manualLink.confirm.close.invoiceHint", {
                           rest: formatEUR(invoiceRest),
                         })}
                       </span>
@@ -211,10 +209,10 @@ export function LinkConfirmDialog({
                     />
                     <span>
                       <span className="font-medium">
-                        {t("manualLink.confirm.close.transaktion")}
+                        {t("manualLink.confirm.close.transaction")}
                       </span>
                       <span className="block text-xs text-muted-foreground">
-                        {t("manualLink.confirm.close.transaktionHint", {
+                        {t("manualLink.confirm.close.transactionHint", {
                           rest: formatEUR(transactionRest),
                         })}
                       </span>
@@ -226,7 +224,7 @@ export function LinkConfirmDialog({
                 {(closeInvoice || closeTransaction) && (
                   <div className="space-y-1 pt-1">
                     <label htmlFor="difference-reason" className="text-xs text-muted-foreground">
-                      {t("manualLink.confirm.close.grund")}{" "}
+                      {t("manualLink.confirm.close.reason")}{" "}
                       <span className="text-destructive" aria-hidden="true">
                         *
                       </span>
@@ -237,7 +235,7 @@ export function LinkConfirmDialog({
                       aria-required="true"
                       value={differenceReason}
                       onChange={(e) => setDifferenceReason(e.target.value)}
-                      placeholder={t("manualLink.confirm.close.grundPlatzhalter")}
+                      placeholder={t("manualLink.confirm.close.reasonPlaceholder")}
                     />
                   </div>
                 )}
@@ -248,7 +246,7 @@ export function LinkConfirmDialog({
               <Skeleton className="h-20 w-full" />
             ) : invalid ? (
               <p className="rounded-lg border border-dashed border-border bg-muted/20 p-3 text-sm text-muted-foreground">
-                {t("manualLink.betrag.ungueltig")}
+                {t("manualLink.amount.invalid")}
               </p>
             ) : (
               <ul className="space-y-1.5">
@@ -256,17 +254,17 @@ export function LinkConfirmDialog({
                   text={
                     willFullPaid || invoiceGilt || closeInvoice
                       ? isOutgoing
-                        ? t("manualLink.confirm.folge.bezahltOutgoing")
+                        ? t("manualLink.confirm.consequence.paidOutgoing")
                         : isCashDiscount || invoiceGilt || closeInvoice
-                          ? t("manualLink.confirm.folge.bezahltSkonto", {
+                          ? t("manualLink.confirm.consequence.paidDiscount", {
                               difference: formatEUR(invoiceOpen - amount),
                             })
-                          : t("manualLink.confirm.folge.bezahlt")
+                          : t("manualLink.confirm.consequence.paid")
                       : isOutgoing
-                        ? t("manualLink.confirm.folge.teilweiseOutgoing", {
+                        ? t("manualLink.confirm.consequence.partialOutgoing", {
                             rest: formatEUR(invoiceRest),
                           })
-                        : t("manualLink.confirm.folge.teilweise", {
+                        : t("manualLink.confirm.consequence.partial", {
                             rest: formatEUR(invoiceRest),
                           })
                   }
@@ -275,15 +273,15 @@ export function LinkConfirmDialog({
                 <Sequence
                   text={
                     transactionRest <= 0.01
-                      ? t("manualLink.confirm.folge.transaktionVoll")
+                      ? t("manualLink.confirm.consequence.transactionFull")
                       : closeTransaction
                         ? // The box is ticked: the remainder is being written off, so saying it
                           // "stays free for another invoice" would describe the opposite of what
                           // the Reconcile button is about to do.
-                          t("manualLink.confirm.folge.transaktionAbgeschlossen", {
+                          t("manualLink.confirm.consequence.transactionClosed", {
                             rest: formatEUR(transactionRest),
                           })
-                        : t("manualLink.confirm.folge.transaktionRest", {
+                        : t("manualLink.confirm.consequence.transactionRemaining", {
                             rest: formatEUR(transactionRest),
                           })
                   }
@@ -295,9 +293,7 @@ export function LinkConfirmDialog({
         )}
 
         <AlertDialogFooter>
-          <AlertDialogCancel disabled={pending}>
-            {t("manualLink.confirm.abbrechen")}
-          </AlertDialogCancel>
+          <AlertDialogCancel disabled={pending}>{t("manualLink.confirm.cancel")}</AlertDialogCancel>
           <AlertDialogAction
             className="gap-2"
             disabled={pending || loading || invalid || reasonMissing}
@@ -317,7 +313,7 @@ export function LinkConfirmDialog({
             }}
           >
             {pending && <Loader2 className="size-4 animate-spin" />}
-            {t("manualLink.confirm.bestaetigen")}
+            {t("manualLink.confirm.confirm")}
           </AlertDialogAction>
         </AlertDialogFooter>
       </AlertDialogContent>

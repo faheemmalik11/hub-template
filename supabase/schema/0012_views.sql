@@ -55,7 +55,8 @@ select d.*,
   left join public.suppliers s on s.id = d.supplier_id
  where d.deleted_at is null
    -- A document that was split into its parts is represented by those parts, not by itself.
-   and coalesce(d.status, '') <> 'split';
+   and coalesce(d.status, '') <> 'split'
+   and d.private_hold = false;
 
 -- The same list with one lower-cased haystack column, so a plain text box can match what a person
 -- typed without the caller assembling the same expression again.
@@ -129,7 +130,8 @@ select d.*,
  where d.deleted_at is null
    and d.archived_at is null
    and d.not_relevant_at is null
-   and coalesce(d.status, '') <> 'split';
+   and coalesce(d.status, '') <> 'split'
+   and public.document_is_countable(d.status, d.private_hold);
 
 -- Bank lines with the account and company they belong to, and whether a document claims them.
 create or replace view public.v_bank_transactions_list with (security_invoker = true) as

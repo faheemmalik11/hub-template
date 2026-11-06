@@ -604,8 +604,8 @@ function ChartOfAccountsTab() {
         // accounts yet" and "your search matched none of its accounts" need different actions.
         <div className="mt-6">
           <EmptyState
-            title={t("chartOfAccounts.noResults")}
-            hint={t("chartOfAccounts.noResultsHint")}
+            title={t("chartOfAccounts.noMatches")}
+            hint={t("chartOfAccounts.noMatchesHint")}
           />
         </div>
       ) : (

@@ -104,7 +104,7 @@ begin
             ('payments.write', 'payments.write', array['payment_orders']),
             ('documents.read', 'rules.write', array[
                 'assignment_rules', 'approval_rules', 'approvers',
-                'handover_routes', 'handover_batches', 'category_account_mapping']),
+                'handover_batches', 'category_account_mapping']),
             ('documents.read', 'settings.manage', array[
                 'channels', 'channel_folders', 'channel_state', 'read_cursors',
                 'imported_items', 'pipeline_runs', 'processing_log', 'ai_usage',
@@ -145,6 +145,25 @@ begin
     end loop;
 end
 $$;
+
+-- handover_routes (the DATEV handover addresses) never gets the generic rules.write "for all"
+-- policy above: with that policy plus Postgres's default table grants, anyone holding rules.write
+-- could PATCH the row directly over the REST API, bypassing set_datev_route() and
+-- update_datev_route_status() entirely, along with the auth.uid() and has_company_access() checks
+-- written into those two functions and the address column this table exists to keep unreadable.
+-- Read stays capability-gated; every write goes through the two SECURITY DEFINER functions, never
+-- through a table grant, so there is no direct path left for RLS alone to have to stop.
+alter table public.handover_routes enable row level security;
+
+drop policy if exists handover_routes_read on public.handover_routes;
+create policy handover_routes_read on public.handover_routes for select to authenticated
+    using (public.may_read('documents.read'));
+
+revoke insert, update, delete on public.handover_routes from authenticated;
+
+revoke select on public.handover_routes from authenticated;
+grant select (id, company_id, direction, is_enabled, note, updated_by, created_at, updated_at)
+    on public.handover_routes to authenticated;
 
 -- A person's own rows, regardless of capability: their notification settings, their tour progress,
 -- and what was sent to them.
@@ -254,5 +273,63 @@ drop policy if exists bank_transactions_demo_owner_write_update on public.bank_t
 create policy bank_transactions_demo_owner_write_update on public.bank_transactions as restrictive for update to authenticated
     using (not is_demo or demo_owner_user_id = public.current_app_user_id())
     with check (not is_demo or demo_owner_user_id = public.current_app_user_id());
+
+-- Private post: mail the pipeline never files into a company folder because it belongs to a person,
+-- not the business (briefing: this must not be readable by whoever happens to hold documents.read).
+-- Restrictive, so it narrows what the area policies above already allow rather than granting
+-- anything on its own -- a person with no documents.read grant still sees nothing here either way.
+-- An administering role always sees it; the person it was assigned to (private_owner_user_id) sees
+-- that one row once an admin has made the assignment. Nobody else, regardless of capability.
+drop policy if exists documents_private_hold_read on public.documents;
+create policy documents_private_hold_read on public.documents as restrictive for select to authenticated
+    using (not private_hold or public.is_admin() or private_owner_user_id = public.current_app_user_id());
+drop policy if exists documents_private_hold_write on public.documents;
+create policy documents_private_hold_write on public.documents as restrictive for insert to authenticated
+    with check (not private_hold or public.is_admin() or private_owner_user_id = public.current_app_user_id());
+drop policy if exists documents_private_hold_write_update on public.documents;
+create policy documents_private_hold_write_update on public.documents as restrictive for update to authenticated
+    using (not private_hold or public.is_admin() or private_owner_user_id = public.current_app_user_id())
+    with check (not private_hold or public.is_admin() or private_owner_user_id = public.current_app_user_id());
+
+-- Everything that hangs off a document follows the document's own visibility. Without this, a
+-- private row stayed hidden itself but its files, history, line items, taxes, bank accounts, bank
+-- matches, import log and processing log were still readable sideways by document_id, through
+-- their own capability-scoped policy alone.
+do $$
+declare
+    t text;
+begin
+    foreach t in array array['document_files', 'document_history', 'document_line_items',
+                              'document_taxes', 'document_bank_accounts',
+                              'document_transaction_matches', 'imported_items', 'processing_log',
+                              'ai_usage', 'payment_orders'] loop
+        execute format('drop policy if exists %I on public.%I', t || '_private_hold_read', t);
+        execute format(
+            'create policy %I on public.%I as restrictive for select to authenticated using ('
+            || '%I.document_id is null or not exists ('
+            || 'select 1 from public.documents d where d.id = %I.document_id and d.private_hold '
+            || 'and not (public.is_admin() or d.private_owner_user_id = public.current_app_user_id())))',
+            t || '_private_hold_read', t, t, t);
+    end loop;
+end
+$$;
+
+-- document_history additionally has to refuse WRITING a row against a private document the caller
+-- may not read, the same way documents_private_hold_write guards the document itself.
+drop policy if exists document_history_private_hold_write on public.document_history;
+create policy document_history_private_hold_write on public.document_history as restrictive for insert to authenticated
+    with check (
+        not exists (
+            select 1 from public.documents d
+             where d.id = document_history.document_id and d.private_hold
+               and not (public.is_admin() or d.private_owner_user_id = public.current_app_user_id())
+        )
+    );
+
+-- The trail is written once and never changed, so a client role cannot rewrite its own history
+-- after the fact even through a capability it otherwise holds. See 0011_functions.sql and
+-- 0014_triggers.sql for the trigger that blocks UPDATE/DELETE/TRUNCATE for every role, including
+-- this one's own service role; the revoke below is the belt to that trigger's suspenders.
+revoke update, delete, truncate on public.document_history from authenticated, anon;
 
 commit;

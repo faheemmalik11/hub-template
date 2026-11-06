@@ -68,4 +68,4 @@ dashboard, suppliers, bank screens, reports, app-shell nav, and the two route `h
 
 ## Package manager
 
-Repo uses **bun** (`bun.lock`). Never install with npm / never create `package-lock.json`.
+Repo uses **npm** (`package-lock.json`).

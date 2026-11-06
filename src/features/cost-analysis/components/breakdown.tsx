@@ -597,7 +597,7 @@ export function Breakdown({
               </span>
               <span className="inline-flex items-center gap-1.5 rounded-md bg-muted px-2.5 py-1 text-sm font-normal text-muted-foreground">
                 <FileText className="size-3.5" />
-                {t("reports.breakdown.anzahl", { count: open?.items.length ?? 0 })}
+                {t("reports.breakdown.count", { count: open?.items.length ?? 0 })}
               </span>
             </DialogTitle>
           </DialogHeader>

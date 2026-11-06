@@ -80,7 +80,7 @@ function PropertyDetailPage() {
         </Button>
       ),
       spellings: (propertyCode) => (
-        <KnownSpellingsCard entityType="objekt" entityCode={propertyCode} />
+        <KnownSpellingsCard entityType="property" entityCode={propertyCode} />
       ),
       backLink: ({ className, children }) => (
         <Link to="/properties" className={className}>

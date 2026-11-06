@@ -61,6 +61,7 @@ export type DocumentsSearch = {
   period?: string;
   fromDate?: string;
   toDate?: string;
+  privateOwner?: string;
 };
 
 export type NormalizedSearch = Required<
@@ -82,6 +83,7 @@ export type NormalizedSearch = Required<
     | "archive"
     | "fromDate"
     | "toDate"
+    | "privateOwner"
   >;
 
 export function normalize(s: DocumentsSearch): NormalizedSearch {
@@ -107,6 +109,7 @@ export function normalize(s: DocumentsSearch): NormalizedSearch {
     archive: s.archive,
     fromDate: s.fromDate,
     toDate: s.toDate,
+    privateOwner: s.privateOwner,
   };
 }
 
@@ -166,6 +169,7 @@ export function validateSearch(input: Record<string, unknown>): DocumentsSearch 
     period: str(input.period) ?? ALL,
     fromDate: str(input.fromDate),
     toDate: str(input.toDate),
+    privateOwner: str(input.privateOwner),
   };
 }
 

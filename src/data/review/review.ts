@@ -4,6 +4,7 @@ import { TABLE } from "@/config/tables";
 import { actorEmail, sb } from "@/data/client";
 import { insertHistory, requiredReason } from "@/data/shared";
 import { useCompanies } from "@/data/companies";
+import { useEmployees } from "@/data/team";
 
 // ---- Review decisions: not relevant, archive ----
 
@@ -184,6 +185,7 @@ export function useUnarchiveDocument(documentId: string) {
 export function useBulkInvoiceActions() {
   const qc = useQueryClient();
   const { data: companies } = useCompanies();
+  const { data: employees } = useEmployees();
 
   async function archive(documentId: string, hint: string | null) {
     const actor = await actorEmail();
@@ -252,6 +254,22 @@ export function useBulkInvoiceActions() {
     await insertHistory(documentId, "booking", `Gesellschaft gesetzt: ${company.code}`);
   }
 
+  // Who private_hold mail belongs to. The database restricts this to an administering role or the
+  // current owner (0010_access.sql); this just lets the screen ask for it.
+  async function assignPrivateOwner(documentId: string, userId: string | null) {
+    const owner = (employees ?? []).find((e) => e.id === userId);
+    const { error } = await sb
+      .from(TABLE.documents)
+      .update({ private_owner_user_id: userId, updated_at: new Date().toISOString() })
+      .eq("id", documentId);
+    if (error) throw error;
+    await insertHistory(
+      documentId,
+      "private_owner_assigned",
+      owner ? `Privatpost zugewiesen an: ${owner.name ?? owner.email}` : "Zuweisung aufgehoben",
+    );
+  }
+
   async function softDelete(documentId: string, reason: string | null) {
     const actor = await actorEmail();
     const { error } = await sb
@@ -281,5 +299,5 @@ export function useBulkInvoiceActions() {
     qc.invalidateQueries({ queryKey: ["beleg_verlauf"] });
   }
 
-  return { archive, markNotRelevant, assignCompany, softDelete, refresh };
+  return { archive, markNotRelevant, assignCompany, assignPrivateOwner, softDelete, refresh };
 }

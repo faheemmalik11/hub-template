@@ -922,7 +922,7 @@ export function CostAnalysis({
                   <div className="flex flex-wrap items-start gap-3 lg:justify-end">
                     <HintCard
                       icon={TriangleAlert}
-                      cardText={t("reports.vatUnresolved.karte", {
+                      cardText={t("reports.vatUnresolved.card", {
                         count: costAnalysis.vatUnresolvedCount,
                         amount: formatEUR(costAnalysis.vatUnresolvedAmount),
                       })}
@@ -936,7 +936,7 @@ export function CostAnalysis({
                     />
                     <HintCard
                       icon={TriangleAlert}
-                      cardText={t("reports.noCategory.warnung", {
+                      cardText={t("reports.noCategory.warning", {
                         count: withoutCategoryItems.length,
                         amount: formatEUR(computed.unassignedAmount),
                       })}

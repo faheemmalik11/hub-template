@@ -168,7 +168,7 @@ export function InvoiceMatches({
             <Fragment key={m.id}>
               {newGroup && (
                 <li className="pt-1 text-xs font-semibold uppercase tracking-wide text-muted-foreground">
-                  {t(`bank.matches.gruppe${g.charAt(0).toUpperCase()}${g.slice(1)}`)}
+                  {t(`bank.matches.group${g.charAt(0).toUpperCase()}${g.slice(1)}`)}
                 </li>
               )}
               <li>

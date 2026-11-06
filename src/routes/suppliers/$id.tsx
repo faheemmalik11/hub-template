@@ -29,6 +29,7 @@ import {
   X,
 } from "lucide-react";
 import { toast } from "sonner";
+import { useEmitOnboardingEvent } from "@/kit/components/onboarding";
 
 import { KnownSpellingsCard } from "@/components/master-data/known-spellings-card";
 
@@ -224,6 +225,7 @@ function SupplierDetailPage() {
   const bankAccountsQ = useSupplierBankAccounts(id);
   const addBankAccount = useAddSupplierBankAccount(id);
   const confirmBankAccount = useConfirmSupplierBankAccount();
+  const emitOnboardingEvent = useEmitOnboardingEvent();
   const deleteBankAccount = useDeleteSupplierBankAccount(id);
   const updateBankAccount = useUpdateSupplierBankAccount(id);
   const setDefaultIban = useSetDefaultSupplierIban(id);
@@ -741,7 +743,7 @@ function SupplierDetailPage() {
           </section>
           {/* Beside the master data, not under the invoice table: an alias is a property of the
               supplier record, and this is the column that record lives in. */}
-          <KnownSpellingsCard entityType="lieferant" entityCode={id} frame={false} />
+          <KnownSpellingsCard entityType="supplier" entityCode={id} frame={false} />
         </div>
         <div className="space-y-6">
           <section className="rounded-xl bg-card p-5">
@@ -815,6 +817,7 @@ function SupplierDetailPage() {
                         return (
                           <TableRow
                             key={k.id}
+                            data-tour={`supplier-bank-account-confirm-${k.id}`}
                             className={
                               isStandard
                                 ? "group bg-primary/5 [&>td:first-child]:border-l-2 [&>td:first-child]:border-l-primary"
@@ -956,12 +959,17 @@ function SupplierDetailPage() {
                                         disabled={confirmBankAccount.isPending}
                                         onClick={() =>
                                           confirmBankAccount.mutate(k.id, {
-                                            onSuccess: () =>
+                                            onSuccess: () => {
                                               toast.success(
                                                 t("suppliers.detail.bankAccounts.new.confirmed", {
                                                   iban: formatIBAN(k.iban),
                                                 }),
-                                              ),
+                                              );
+                                              emitOnboardingEvent({
+                                                type: "supplier_bank_account_confirmed",
+                                                recordId: k.id,
+                                              });
+                                            },
                                             onError: (e) =>
                                               toast.error(
                                                 t("suppliers.detail.bankAccounts.toast.failed", {

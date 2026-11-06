@@ -41,6 +41,8 @@ import { toast } from "sonner";
 import { useAuth } from "@/lib/auth";
 import { PERMISSIONS } from "@/config/permissions";
 import { usePaymentRight } from "@/lib/payment-right";
+import { useEmitOnboardingEvent } from "@/kit/components/onboarding";
+import { documentUpdatedEventData } from "@/features/onboarding-practice/document-updated-event";
 import { PaymentRightNotice } from "@/components/bank/payment-right-notice";
 import { CloseRemainderButton } from "@/components/bank/close-remainder";
 import { Button } from "@/components/ui/button";
@@ -104,6 +106,7 @@ import {
   useBankAccounts,
   useDocumentMatches,
   useDocumentHistory,
+  useDocumentsFacets,
   useCostAnalysisCategories,
   useCancelPaymentOrder,
   useClearNotRelevant,
@@ -163,7 +166,23 @@ import {
   paymentReasons,
   FIELD_LABEL_DE,
 } from "@/lib/data/format";
-import { checkReasonsDetail, checkCard } from "./checks";
+import { checkReasonsDetail, checkCard, validationFlat, VALIDATION_GATES } from "./checks";
+import {
+  ConfirmationCard,
+  FrontChecklist,
+  type ConfirmationCardConfirmInput,
+  type ConfirmationCardLabels,
+  type FrontChecklistGate,
+  type FrontChecklistHistoryEntry,
+  type FrontChecklistLabels,
+} from "@/kit/components/invoice-detail";
+import {
+  ALL_CHECKED_HISTORY_TYPE,
+  type CheckStatus,
+  type CheckSureness,
+  type ReceiptCheckKey,
+} from "@/kit/lib";
+
 import { useTranslation, tDe, Trans } from "@/lib/i18n";
 import { useTabParam } from "@/lib/use-tab-param";
 import {
@@ -410,9 +429,9 @@ const NUM_KEYS = [
 // The detail screen's six tabs, shared by the always-visible desktop row and the collapsed mobile
 // disclosure so the two can never list a different set of tabs from each other.
 const TAB_ITEMS = [
-  { value: "uebersicht", labelKey: "documents.detail.tab.uebersicht" },
-  { value: "freigabe", labelKey: "documents.detail.tab.freigabe" },
-  { value: "zahlung", labelKey: "documents.detail.tab.zahlung" },
+  { value: "uebersicht", labelKey: "documents.detail.tab.overview" },
+  { value: "freigabe", labelKey: "documents.detail.tab.approval" },
+  { value: "zahlung", labelKey: "documents.detail.tab.payment" },
   { value: "lieferant", labelKey: "documents.detail.tab.lieferant" },
   { value: "details", labelKey: "documents.detail.tab.details" },
   { value: "verlauf", labelKey: "documents.detail.tab.verlauf" },
@@ -485,11 +504,17 @@ function DocumentDetail({ doc }: { doc: Document }) {
   const propertyCompaniesQ = usePropertyCompanies();
   const logQ = useProcessingLogForDocument(doc.id);
   const historyQ = useDocumentHistory(doc.id);
+  const documentTypeFacetsQ = useDocumentsFacets();
   // Which rule currently wins for this receipt, per field. Shown even when the field is human-set
   // and therefore protected: knowing which rule you are overriding is the useful part.
   const rulesQ = useResolvedRules(doc.id);
 
   const updateDocument = useUpdateDocument(doc.id);
+  const emitOnboardingEvent = useEmitOnboardingEvent();
+  const emitDocumentOpenedOnMount = useRef(() => {
+    emitOnboardingEvent({ type: "document_opened", recordId: doc.id });
+  });
+  useEffect(() => emitDocumentOpenedOnMount.current(), []);
   const addNote = useAddNote(doc.id);
   const softDelete = useSoftDeleteDocument(doc.id);
   const applyRules = useApplyAssignmentRules();
@@ -742,6 +767,7 @@ function DocumentDetail({ doc }: { doc: Document }) {
     }
     setActiveTab(v);
     setEditSection(null);
+    emitOnboardingEvent({ type: "document_tab_opened", recordId: doc.id, data: { tab: v } });
   };
 
   // Any section currently in edit disables the other sections' edit buttons (one at a time).
@@ -953,6 +979,158 @@ function DocumentDetail({ doc }: { doc: Document }) {
   // A property code that came from AI extraction but isn't in the master data — must be corrected.
   const propertyUnknown = !!doc.property_code && !property;
 
+  const propertyCompanyLinks = useMemo(
+    () =>
+      (propertyCompaniesQ.data ?? []).map((link) => ({
+        propertyId: link.property_id,
+        companyId: link.company_id,
+      })),
+    [propertyCompaniesQ.data],
+  );
+
+  const companyCodesOfProperty = useMemo(() => {
+    if (!property) return [];
+    const companyIds = (propertyCompaniesQ.data ?? [])
+      .filter((link) => link.property_id === property.id)
+      .map((link) => link.company_id);
+    return companies
+      .filter((candidate) => companyIds.includes(candidate.id))
+      .map((candidate) => candidate.code);
+  }, [property, propertyCompaniesQ.data, companies]);
+
+  const confirmationCardDocument = {
+    companyCode: doc.company_code,
+    propertyCode: doc.property_code,
+    documentType: doc.document_type,
+    isInvoice: doc.is_invoice ?? isIncomingInvoice(doc.document_type),
+    companyConfirmedByHuman: doc.company_assignment_source === "human",
+    propertyConfirmedByHuman: doc.property_assignment_source === "human",
+    documentTypeConfirmedByHuman: doc.document_type_source === "human",
+    isInvoiceConfirmedByHuman: doc.is_invoice_source === "human",
+    extractedAddressCandidates: [
+      typeof doc.extracted?.objekt_code === "string" ? (doc.extracted.objekt_code as string) : null,
+      doc.service_description,
+    ],
+  };
+
+  const confirmationCardLabels: ConfirmationCardLabels = {
+    title: t("documents.detail.confirmationCard.title"),
+    titleConfirmed: t("documents.detail.confirmationCard.titleConfirmed"),
+    titleChanged: t("documents.detail.confirmationCard.titleChanged"),
+    companyLabel: t("documents.detail.field.gesellschaft"),
+    companyPlaceholder: t("documents.detail.eingabe.gesellschaftWaehlen"),
+    noCompanyOption: t("documents.detail.eingabe.keineWahl"),
+    companySuggestion: (code) => t("documents.detail.field.gesellschaftVorschlag", { code }),
+    companySuggestionAccept: t("documents.detail.field.gesellschaftUebernehmen"),
+    propertyLabel: t("documents.detail.field.objekt"),
+    propertyPlaceholder: t("documents.detail.eingabe.objektWaehlen"),
+    noPropertyOption: t("documents.detail.eingabe.keineWahl"),
+    addressRead: (text) => t("documents.detail.confirmationCard.addressRead", { text }),
+    propertySuggestion: (code, name) => `${code} · ${name}`,
+    propertyUnknown: t("documents.detail.confirmationCard.propertyUnknown"),
+    documentTypeLabel: t("documents.detail.confirmationCard.documentTypeLabel"),
+    documentTypePlaceholder: t("documents.detail.confirmationCard.documentTypePlaceholder"),
+    noDocumentTypeOption: t("documents.detail.confirmationCard.noDocumentTypeOption"),
+    isInvoiceLabel: t("documents.detail.confirmationCard.isInvoiceLabel"),
+    isInvoiceYes: t("documents.detail.confirmationCard.isInvoiceYes"),
+    isInvoiceNo: t("documents.detail.confirmationCard.isInvoiceNo"),
+    discard: t("documents.detail.confirmationCard.discard"),
+    confirm: t("documents.detail.confirmationCard.confirm"),
+    saved: t("documents.detail.toast.gespeichert"),
+    saveFailed: (reason) => t("documents.detail.toast.speichernFehlgeschlagen", { error: reason }),
+  };
+
+  async function handleConfirmationCardConfirm(input: ConfirmationCardConfirmInput) {
+    const changes: Partial<Document> = {
+      company_code: input.companyCode,
+      company_id: companies.find((candidate) => candidate.code === input.companyCode)?.id ?? null,
+      company_assignment_source: "human",
+      property_code: input.propertyCode,
+      property_id:
+        properties.find((candidate) => candidate.code === input.propertyCode)?.id ?? null,
+      property_assignment_source: "human",
+      is_overhead: false,
+      document_type: input.documentType,
+      document_type_source: "human",
+      is_invoice: input.isInvoice,
+      is_invoice_source: "human",
+    };
+    await updateDocument.mutateAsync({
+      changes,
+      activityLog: {
+        type: "booking",
+        text: tDe("documents.detail.confirmationCard.historyNote"),
+        data: {
+          company_code: input.companyCode,
+          property_code: input.propertyCode,
+          document_type: input.documentType,
+          is_invoice: input.isInvoice,
+        },
+      },
+    });
+  }
+
+  const validationFlatValue = useMemo(() => validationFlat(doc), [doc]);
+  const frontChecklistGates: FrontChecklistGate[] = VALIDATION_GATES.map((key) => ({
+    key,
+    label: t(`documents.validierung.gate.${key}.label`),
+    hint: t(`documents.validierung.gate.${key}.hint`),
+    value: validationFlatValue[key] as boolean | null | undefined,
+  }));
+
+  const frontChecklistAccounts = (invoiceAccountsQ.data?.accounts ?? []).map((account) => ({
+    iban: account.iban,
+    origin: invoiceAccountsQ.data?.origin ?? ("invoice" as const),
+  }));
+
+  const frontChecklistDocument = {
+    recipientName: doc.recipient_name,
+    recipientAddress: doc.recipient_address,
+    company: company ? { code: company.code, name: company.name, address: null } : null,
+    propertyCode: doc.property_code,
+    companyCodesOfProperty,
+    accounts: frontChecklistAccounts,
+    supplierKnownFlag: doc.validation?.iban_known_for_supplier ?? null,
+    hasSupplier: !!doc.supplier_id,
+  };
+
+  const frontChecklistLabels: FrontChecklistLabels = {
+    title: t("documents.validierung.result"),
+    smallAmountBadge: t("documents.validierung.kleinbetrag"),
+    smallAmountHint: t("documents.validierung.kleinbetragTitle"),
+    automaticSectionTitle: t("documents.detail.checklist.automatic"),
+    manualSectionTitle: t("documents.detail.checklist.manual"),
+    progress: (done, total) => t("documents.detail.checklist.progress", { done, total }),
+    allCheckedBy: (actor, occurredAtFormatted) =>
+      t("documents.detail.checklist.checkedBy", { actor, when: occurredAtFormatted }),
+    markAllChecked: t("documents.detail.checklist.markAllChecked"),
+    gateStatusText: (status: CheckStatus) =>
+      t(
+        `documents.validierung.state.${
+          status === "ok" ? "erfuellt" : status === "fail" ? "nicht_erfuellt" : "nicht_anwendbar"
+        }`,
+      ),
+    checkLabel: (key: ReceiptCheckKey) => t(`documents.detail.checklist.${key}.label`),
+    checkReasonText: (key: ReceiptCheckKey, reason: string, params: Record<string, string>) =>
+      t(`documents.detail.checklist.${key}.${reason}`, params),
+    suretyText: (sureness: CheckSureness) => t(`documents.detail.checklist.surety.${sureness}`),
+    tickFailed: (reason) => t("documents.detail.checklist.tickFailed", { error: reason }),
+  };
+
+  const lastAllCheckedEntry = (historyQ.data ?? []).find(
+    (entry) => entry.type === ALL_CHECKED_HISTORY_TYPE,
+  );
+  const lastAllChecked = lastAllCheckedEntry
+    ? {
+        actor: lastAllCheckedEntry.actor,
+        occurredAtFormatted: formatDateTime(lastAllCheckedEntry.created_at),
+      }
+    : null;
+
+  async function writeFrontChecklistHistoryEntry(entry: FrontChecklistHistoryEntry) {
+    await updateDocument.mutateAsync({ changes: {}, activityLog: entry });
+  }
+
   // assignment_decided_by is ONE shared provenance column for both company and property (there is
   // no per-field source at the DB level — see the ZUORDNUNG_FELDER stamp below), so the SOURCE
   // ("Manual"/AI) is shown next to EACH of the two fields it actually covers, not only company:
@@ -1031,23 +1209,6 @@ function DocumentDetail({ doc }: { doc: Document }) {
       ),
     [companies, properties, propertyCompaniesQ.data, form.company_code, form.property_code],
   );
-
-  const companySuggestion = useMemo(() => {
-    const propId = properties.find((o) => o.code === form.property_code)?.id;
-    if (!propId) return null;
-    const match = (propertyCompaniesQ.data ?? []).filter((a) => a.property_id === propId);
-    // More than one company linked to this property means the reviewer has to pick, not something
-    // to guess a winner from.
-    if (match.length !== 1) {
-      return { code: null, ambiguous: match.length > 1, missing: match.length === 0 };
-    }
-    const g = companies.find((x) => x.id === match[0].company_id);
-    return g ? { code: g.code, ambiguous: false, missing: false } : null;
-  }, [properties, companies, propertyCompaniesQ.data, form.property_code]);
-
-  // True when the suggestion exists and disagrees with what is currently in the form.
-  const companySuggestionOpen =
-    !!companySuggestion?.code && companySuggestion.code !== (form.company_code || null);
 
   const issuerName = supplier?.name ?? doc.issuer ?? t("documents.detail.unknownSteller");
   // Every invoice used to sit in the browser tab as the same static "Beleg". Comparing two
@@ -1742,8 +1903,6 @@ function DocumentDetail({ doc }: { doc: Document }) {
   // "decided, none", so a non-null company_code IS the evidence. The stamp is left to the property,
   // which has no such code and where empty would otherwise be indistinguishable from undecided.
   const propertyDecided = doc.property_assignment_source === "human";
-  const companyOpen = !doc.company_code;
-  const propertyOpen = !doc.property_code && !propertyDecided;
   const categoryOpen = !doc.category_id && doc.cost_category_source !== "human";
 
   /**
@@ -1777,27 +1936,6 @@ function DocumentDetail({ doc }: { doc: Document }) {
         }),
       ],
       field !== "category_id",
-    );
-  }
-
-  function assignmentLink(field: "company_code" | "property_code", code: string) {
-    commitSave(
-      // Both dimensions get the stamp, each on its own column. A value picked here is a
-      // person's decision exactly like one typed in the Zuordnung editor, so the source badge has
-      // to read "manual" either way, and the rule engine has to leave it alone.
-      {
-        ...(field === "property_code" && code === OVERHEAD
-          ? // Same translation as the Zuordnung editor: overhead is its own column, and it clears
-            // the property rather than being stored as one.
-            { property_code: null, property_id: null, is_overhead: true }
-          : { [field]: code, ...(field === "property_code" ? { is_overhead: false } : {}) }),
-        [field === "company_code" ? "company_assignment_source" : "property_assignment_source"]:
-          "human",
-      } as Partial<Document>,
-      { [field]: (doc[field] as string | null) ?? null },
-      [field],
-      [fieldChangeDe(field, doc[field], code, (v) => String(v ?? ""))],
-      true,
     );
   }
 
@@ -1879,6 +2017,11 @@ function DocumentDetail({ doc }: { doc: Document }) {
           toast.success(t("documents.detail.toast.gespeichert"));
           setReassign(null);
           setEditSection(null);
+          emitOnboardingEvent({
+            type: "document_updated",
+            recordId: doc.id,
+            data: documentUpdatedEventData(doc, changes),
+          });
         },
         onError: (e) =>
           toast.error(
@@ -1987,6 +2130,11 @@ function DocumentDetail({ doc }: { doc: Document }) {
           );
           setPendingAction(null);
           setActionComment("");
+          emitOnboardingEvent({
+            type: "document_status_changed",
+            recordId: doc.id,
+            data: { actionId: action.id },
+          });
         },
         onError: (e) =>
           toast.error(
@@ -2309,6 +2457,7 @@ function DocumentDetail({ doc }: { doc: Document }) {
       onSuccess: () => {
         toast.success(t("documents.detail.action.nichtRelevantOk"));
         setNotRelevantReason("");
+        emitOnboardingEvent({ type: "document_not_relevant_set", recordId: doc.id });
       },
       onError: (e) =>
         toast.error(
@@ -3214,13 +3363,27 @@ function DocumentDetail({ doc }: { doc: Document }) {
 
             {/* Tab: Übersicht — Kerndaten (Rechnungsinformationen) + Zuordnung */}
             <TabsContent value="uebersicht" className="mt-4 space-y-6">
-              {/* Braucht deine Eingabe.
-                  The tab used to be ordered by database schema: every extracted column got an
-                  equal-sized labelled slot whether or not it held a value and whether or not
-                  anyone acts on it. The two fields that actually need a decision sat ~900px down,
-                  styled exactly like "Currency: EUR". This card renders ONLY when something is
-                  unresolved, so on a clean invoice it does not exist. */}
-              {(companyOpen || propertyOpen || categoryOpen) && (
+              <ConfirmationCard
+                document={confirmationCardDocument}
+                companies={companies}
+                properties={properties}
+                propertyCompanyLinks={propertyCompanyLinks}
+                documentTypeOptions={documentTypeFacetsQ.data?.documentTypes ?? []}
+                noCompanyCode={COMPANY_WITHOUT}
+                onConfirm={handleConfirmationCardConfirm}
+                labels={confirmationCardLabels}
+              />
+              <FrontChecklist
+                gates={frontChecklistGates}
+                document={frontChecklistDocument}
+                history={historyQ.data ?? []}
+                lastAllChecked={lastAllChecked}
+                smallAmount={!!doc.is_small_amount}
+                onTick={writeFrontChecklistHistoryEntry}
+                onAllChecked={writeFrontChecklistHistoryEntry}
+                labels={frontChecklistLabels}
+              />
+              {categoryOpen && (
                 <section className="rounded-xl border border-amber-300 bg-amber-50/60 p-5">
                   <div className="mb-4 flex flex-wrap items-center justify-between gap-2">
                     <h2 className="flex items-center gap-1.5 text-base font-semibold uppercase tracking-wide text-amber-900">
@@ -3228,97 +3391,35 @@ function DocumentDetail({ doc }: { doc: Document }) {
                       {t("documents.detail.eingabe.titel")}
                     </h2>
                     <span className="text-sm text-amber-900/80">
-                      {t("documents.detail.eingabe.offen", {
-                        count:
-                          (companyOpen ? 1 : 0) + (propertyOpen ? 1 : 0) + (categoryOpen ? 1 : 0),
-                      })}
+                      {t("documents.detail.eingabe.offen", { count: 1 })}
                     </span>
                   </div>
                   <div className="grid gap-4 sm:grid-cols-2">
-                    {companyOpen && (
-                      <div className="space-y-1">
-                        <span className="text-sm text-amber-900/80">
-                          {t("documents.detail.field.gesellschaft")}
-                        </span>
-                        <Combobox
-                          ariaLabel={t("documents.detail.field.gesellschaft")}
-                          value=""
-                          onValueChange={(v) =>
-                            assignmentLink("company_code", v === NO_CHOICE ? COMPANY_WITHOUT : v)
+                    <div className="space-y-1">
+                      <span className="text-sm text-amber-900/80">
+                        {t("documents.detail.field.kategorie")}
+                      </span>
+                      <Combobox
+                        ariaLabel={t("documents.detail.field.kategorie")}
+                        value=""
+                        onValueChange={(v) => {
+                          if (v === NO_CHOICE) {
+                            assignmentAlsDone("category_id");
+                            return;
                           }
-                          placeholder={t("documents.detail.eingabe.gesellschaftWaehlen")}
-                          options={[
-                            { value: NO_CHOICE, label: t("documents.detail.eingabe.keineWahl") },
-                            ...companies.map((g) => ({
-                              value: g.code,
-                              label: `${g.code} · ${g.name}`,
-                            })),
-                          ]}
-                        />
-                        <p className="text-sm text-amber-900/80">
-                          {t("documents.detail.eingabe.gesellschaftFolge")}
-                        </p>
-                      </div>
-                    )}
-                    {propertyOpen && (
-                      <div className="space-y-1">
-                        <span className="text-sm text-amber-900/80">
-                          {t("documents.detail.field.objekt")}
-                        </span>
-                        <Combobox
-                          ariaLabel={t("documents.detail.field.objekt")}
-                          value=""
-                          onValueChange={(v) =>
-                            v === NO_CHOICE
-                              ? assignmentAlsDone("property_code")
-                              : assignmentLink("property_code", v)
-                          }
-                          placeholder={t("documents.detail.eingabe.objektWaehlen")}
-                          options={[
-                            { value: NO_CHOICE, label: t("documents.detail.eingabe.keineWahl") },
-                            {
-                              value: OVERHEAD,
-                              label: t("documents.detail.field.gemeinkosten"),
-                            },
-                            ...properties.map((o) => ({
-                              value: o.code,
-                              label: `${o.code} · ${o.name}`,
-                            })),
-                          ]}
-                        />
-                        {/* What happens if it stays empty, not what the field is. */}
-                        <p className="text-sm text-amber-900/80">
-                          {t("documents.detail.eingabe.objektFolge")}
-                        </p>
-                      </div>
-                    )}
-                    {categoryOpen && (
-                      <div className="space-y-1">
-                        <span className="text-sm text-amber-900/80">
-                          {t("documents.detail.field.kategorie")}
-                        </span>
-                        <Combobox
-                          ariaLabel={t("documents.detail.field.kategorie")}
-                          value=""
-                          onValueChange={(v) => {
-                            if (v === NO_CHOICE) {
-                              assignmentAlsDone("category_id");
-                              return;
-                            }
-                            const target = categories.find((k) => k.id === v);
-                            if (target) categoryLink(target);
-                          }}
-                          placeholder={t("documents.detail.eingabe.kategorieWaehlen")}
-                          options={[
-                            { value: NO_CHOICE, label: t("documents.detail.eingabe.keineWahl") },
-                            ...categoryOptions,
-                          ]}
-                        />
-                        <p className="text-sm text-amber-900/80">
-                          {t("documents.detail.eingabe.kategorieFolge")}
-                        </p>
-                      </div>
-                    )}
+                          const target = categories.find((k) => k.id === v);
+                          if (target) categoryLink(target);
+                        }}
+                        placeholder={t("documents.detail.eingabe.kategorieWaehlen")}
+                        options={[
+                          { value: NO_CHOICE, label: t("documents.detail.eingabe.keineWahl") },
+                          ...categoryOptions,
+                        ]}
+                      />
+                      <p className="text-sm text-amber-900/80">
+                        {t("documents.detail.eingabe.kategorieFolge")}
+                      </p>
+                    </div>
                   </div>
                 </section>
               )}
@@ -3706,34 +3807,6 @@ function DocumentDetail({ doc }: { doc: Document }) {
                           </Link>
                         </Button>
                       </div>
-                    ) : null}
-                    {/* The company follows from the property (migration 0083), so offer it instead
-                        of making the reviewer look it up on the property page. */}
-                    {isEdit("booking") && companySuggestionOpen ? (
-                      <div className="flex flex-wrap items-center gap-2 rounded-md border border-sky-300 bg-sky-50 px-2 py-1.5 text-sm text-sky-800">
-                        <span>
-                          {t("documents.detail.field.gesellschaftVorschlag", {
-                            code: companySuggestion?.code ?? "",
-                          })}
-                        </span>
-                        <Button
-                          size="sm"
-                          variant="outline"
-                          className="h-6 gap-1 border-sky-300 px-2 text-sm text-sky-900 hover:bg-sky-100"
-                          onClick={() => set("company_code", companySuggestion?.code ?? "")}
-                        >
-                          <Check className="size-3" />
-                          {t("documents.detail.field.gesellschaftUebernehmen")}
-                        </Button>
-                      </div>
-                    ) : isEdit("booking") && companySuggestion?.ambiguous ? (
-                      <p className="rounded-md border border-amber-300 bg-amber-50 px-2 py-1.5 text-sm text-amber-800">
-                        {t("documents.detail.field.gesellschaftMehrdeutig")}
-                      </p>
-                    ) : isEdit("booking") && companySuggestion?.missing ? (
-                      <p className="rounded-md border border-amber-300 bg-amber-50 px-2 py-1.5 text-sm text-amber-800">
-                        {t("documents.detail.field.gesellschaftKeineZuordnung")}
-                      </p>
                     ) : null}
                   </div>
                   {/* ONE category, picked from the real BWA taxonomy (bwa_categories, migration
@@ -4591,7 +4664,7 @@ function DocumentDetail({ doc }: { doc: Document }) {
                   <p className="mt-4 text-base text-muted-foreground">
                     <Trans
                       i18nKey="documents.detail.lieferant.konten.zahlungHinweis"
-                      values={{ tab: t("documents.detail.tab.zahlung") }}
+                      values={{ tab: t("documents.detail.tab.payment") }}
                       components={{
                         tabLink: (
                           <button
@@ -5479,6 +5552,7 @@ function NowPaySection({
 function PaymentMatchingSection({ doc }: { doc: Document }) {
   const { t } = useTranslation();
   const { mayPay, reason: noPaymentRight } = usePaymentRight();
+  const emitOnboardingEvent = useEmitOnboardingEvent();
   const matchesQ = useDocumentMatches(doc.id);
   const confirmMatch = useConfirmMatch();
   const rejectMatch = useRejectMatch();
@@ -5684,8 +5758,13 @@ function PaymentMatchingSection({ doc }: { doc: Document }) {
                         confirmMatch.mutate(
                           { matchId: m.id, documentId: doc.id },
                           {
-                            onSuccess: () =>
-                              toast.success(t("documents.detail.toast.zuordnungBestaetigt")),
+                            onSuccess: () => {
+                              toast.success(t("documents.detail.toast.zuordnungBestaetigt"));
+                              emitOnboardingEvent({
+                                type: "bank_match_confirmed",
+                                recordId: doc.id,
+                              });
+                            },
                             onError: (e) =>
                               toast.error(
                                 t("documents.detail.toast.fehlgeschlagen", {

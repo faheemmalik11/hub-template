@@ -20,6 +20,7 @@ export * from "./aliases";
 export * from "./approval";
 export * from "./review";
 export * from "./bank";
+export * from "./payments";
 export * from "./pipeline";
 export * from "./documents";
 export * from "./companies";

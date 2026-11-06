@@ -21,6 +21,7 @@ settings.
 | `page.bank_accounts` | Bank accounts — `/bankkonten` | no |
 | `page.open_item_whitelist` | Open item exceptions — `/opos-whitelist` | no |
 | `page.bank_settings` | Bank settings — `/bank-einstellungen` | no |
+| `page.payment_file` | Payment file — `/payment-file` | no, `default_enabled = false` |
 
 Switching the module off takes every page with it. Switching a page off takes its
 actions with it. Neither needs a deploy: it is a row in `feature_settings`.
@@ -44,6 +45,15 @@ browser whose route still answers is not switched off, it is only invisible.
 - `/bankkonten` → `page.bank_accounts` · `src/routes/bankkonten/index.tsx`
 - `/opos-whitelist` → `page.open_item_whitelist` · `src/routes/opos-whitelist/index.tsx`
 - `/bank-einstellungen` → `page.bank_settings` · `src/routes/bank-einstellungen/index.tsx`
+- `/payment-file` → `page.payment_file` · `src/routes/payment-file/index.tsx`. Manual SEPA export:
+  pick approved documents, pick which of a company's payment accounts to pay from, build a
+  pain.001 file with `src/kit/lib/sepa/build-run.ts`, download it, then confirm by hand which
+  invoices the bank actually paid. Separate from `payment_orders` (the vendor/open-banking flow
+  above) end to end: own tables (`payment_settings`, `payment_files`, `payment_file_items`,
+  `payment_file_documents`, `supabase/schema/0017_payment_files.sql`), own data domain
+  (`src/data/payments/`), own kit adapter and widgets (`src/kit/adapters/payment-file.ts`,
+  `src/kit/widgets/payment-file/`, `src/kit/pages/payment-file/`). No Edge Function: it never talks
+  to a bank directly, so there is nothing to gate on a provider.
 
 ## The files it owns
 
@@ -79,7 +89,8 @@ TABLE.documentFiles, TABLE.documentHistory, TABLE.documentTransactionMatches,
 TABLE.documents, TABLE.filenameSettings, TABLE.ingestExclusions, TABLE.matchingSettings,
 TABLE.notificationChannels, TABLE.notificationDispatchLog, TABLE.notificationEvents,
 TABLE.notificationSettings, TABLE.openItemWhitelistRules,
-TABLE.outgoingInvoiceTransactionMatches, TABLE.outgoingInvoices, TABLE.paymentOrders,
+TABLE.outgoingInvoiceTransactionMatches, TABLE.outgoingInvoices, TABLE.paymentFileDocuments,
+TABLE.paymentFileItems, TABLE.paymentFiles, TABLE.paymentOrders, TABLE.paymentSettings,
 TABLE.permissions, TABLE.rolePermissions, TABLE.roles, TABLE.supplierBankAccounts,
 TABLE.suppliers, TABLE.userCompanyAccess, TABLE.userPermissions, TABLE.vBankTransactionsList,
 TABLE.vCompanyDocumentTotals, TABLE.vCustomerInvoiceTotals, TABLE.vDocumentsList,

@@ -175,6 +175,18 @@ create trigger trg_notify_event_from_history
   after insert on public.document_history
   for each row execute function public.notify_event_from_history();
 
+-- document_history is tamper-proof once written: see guard_document_history_immutable in
+-- 0011_functions.sql for what each operation does.
+drop trigger if exists trg_guard_document_history_row on public.document_history;
+create trigger trg_guard_document_history_row
+  before insert or update or delete on public.document_history
+  for each row execute function public.guard_document_history_immutable();
+
+drop trigger if exists trg_guard_document_history_truncate on public.document_history;
+create trigger trg_guard_document_history_truncate
+  before truncate on public.document_history
+  for each statement execute function public.guard_document_history_immutable();
+
 -- from 20260829140000_first_bank_account_is_default.sql
 drop trigger if exists trg_promote_first_bank_account_to_default on public.supplier_bank_accounts;
 create trigger trg_promote_first_bank_account_to_default

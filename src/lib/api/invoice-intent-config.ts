@@ -329,19 +329,19 @@ export async function loadIntentVocabulary(db: Db): Promise<AiSearchVocabulary> 
     companies: ((companies.data ?? []) as { code: string; name: string | null }[]).map((row) => ({
       code: row.code,
       name: row.name ?? null,
-      aliases: aliasesFor("gesellschaft", row.code),
+      aliases: aliasesFor("company", row.code),
     })),
     properties: ((properties.data ?? []) as { code: string; name: string | null }[]).map((row) => ({
       code: row.code,
       name: row.name ?? null,
-      aliases: aliasesFor("objekt", row.code),
+      aliases: aliasesFor("property", row.code),
     })),
     categories: [...new Set(categoryRows.map((row) => row.name))],
     categoryAliases: categoryAliasMap,
     suppliers: [
       ...new Set([
         ...((suppliers.data ?? []) as { name: string }[]).map((row) => row.name),
-        ...aliasRows.filter((row) => row.entity_type === "lieferant").map((row) => row.alias),
+        ...aliasRows.filter((row) => row.entity_type === "supplier").map((row) => row.alias),
       ]),
     ],
   };

@@ -1,5 +1,6 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 
+import { SEED_MODE } from "@/config/seed";
 import { TABLE } from "@/config/tables";
 import { SINGLETON_ROW_ID, STALE, actorEmail, insertChangeHistory, sb } from "@/data/client";
 import { fetchAllRows, invalidateMatchState, requiredReason } from "@/data/shared";
@@ -18,6 +19,7 @@ import {
 } from "@/lib/api/employees.functions";
 import type { AppRole } from "@/lib/auth";
 import type { ApprovalArea, Employee, TrashRecord } from "@/lib/data/types";
+import type { LoginFacts } from "@/lib/login-status";
 import type { NotificationTargetKind } from "@/lib/data/notification-target";
 
 // ===========================================================================
@@ -25,17 +27,36 @@ import type { NotificationTargetKind } from "@/lib/data/notification-target";
 // ===========================================================================
 
 // 'super_admin' is deliberately excluded from assignment; the DB also refuses to grant it (guard_super_admin_row).
-export type AssignableRole = Exclude<AppRole, "super_admin">;
+export type AssignableRole = string;
 
 export function useRoles() {
   return useQuery({
     queryKey: ["roles"],
     staleTime: STALE,
-    queryFn: async (): Promise<{ id: string; name: AppRole }[]> => {
-      const { data, error } = await sb.from(TABLE.roles).select("id, name").order("name");
+    queryFn: async (): Promise<
+      { id: string; name: AppRole; label: string; assignable: boolean }[]
+    > => {
+      const { data, error } = await sb
+        .from(TABLE.roles)
+        .select("id, name, label, assignable")
+        .order("name");
       if (error) throw error;
-      return (data ?? []) as { id: string; name: AppRole }[];
+      return (data ?? []) as { id: string; name: AppRole; label: string; assignable: boolean }[];
     },
+  });
+}
+
+// A new role starts with zero rows in role_permissions, which is already "no permissions granted".
+export function useCreateRole() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async (args: { name: string; label: string }) => {
+      const { error } = await sb
+        .from(TABLE.roles)
+        .insert({ name: args.name, label: args.label, assignable: true, administers: false });
+      if (error) throw error;
+    },
+    onSuccess: () => void qc.invalidateQueries({ queryKey: ["roles"] }),
   });
 }
 
@@ -198,6 +219,29 @@ export function useEmployees() {
           rolePermissions.get(row.role_id) ?? new Set<string>(),
         ),
       }));
+    },
+  });
+}
+
+export function useTeamLoginStatus() {
+  return useQuery({
+    queryKey: ["team_login_status"],
+    staleTime: STALE,
+    queryFn: async (): Promise<Map<string, LoginFacts>> => {
+      const { data, error } = await sb.rpc("team_login_status");
+      if (error) throw error;
+      const facts = new Map<string, LoginFacts>();
+      for (const row of (data ?? []) as {
+        user_id: string;
+        last_sign_in_at: string | null;
+        never_signed_in: boolean;
+      }[]) {
+        facts.set(row.user_id, {
+          lastSignInAt: row.last_sign_in_at,
+          neverSignedIn: row.never_signed_in,
+        });
+      }
+      return facts;
     },
   });
 }
@@ -925,7 +969,7 @@ export function useSendPing() {
 
 /** One notification addressed to the signed-in user about a record they are looking at. */
 export interface RecordNotification {
-  id: number;
+  id: string;
   note: string | null;
   fromName: string | null;
   createdAt: string;
@@ -942,6 +986,31 @@ export interface RecordNotification {
  * on the bell's single seen-timestamp: opening the bell would silence a note on a record they
  * never opened, and dismissing one note would silence every other notification they have.
  */
+const SEED_DISMISSED_KEY = "hub.seed.dismissedNotifications";
+
+function readSeedDismissed(): string[] {
+  try {
+    const raw = localStorage.getItem(SEED_DISMISSED_KEY);
+    return raw ? (JSON.parse(raw) as string[]) : [];
+  } catch {
+    return [];
+  }
+}
+
+function isDismissedInSeedMode(eventId: unknown): boolean {
+  return readSeedDismissed().includes(String(eventId));
+}
+
+function dismissInSeedMode(eventId: string): void {
+  try {
+    localStorage.setItem(
+      SEED_DISMISSED_KEY,
+      JSON.stringify([...new Set([...readSeedDismissed(), eventId])]),
+    );
+  } catch {
+    return;
+  }
+}
 export function useRecordNotifications(target: {
   kind?: NotificationTargetKind;
   id?: string | null;
@@ -979,11 +1048,13 @@ export function useRecordNotifications(target: {
         .or(`and(payload->target->>kind.eq.${kind},payload->target->>id.eq.${key})${legacy}`)
         .order("created_at", { ascending: false });
       if (error) throw error;
-      return ((data ?? []) as Record<string, unknown>[]).map((row) => {
+      const rows = (data ?? []) as Record<string, unknown>[];
+      const visible = SEED_MODE ? rows.filter((row) => !isDismissedInSeedMode(row.id)) : rows;
+      return visible.map((row) => {
         const payload = (row.payload ?? {}) as Record<string, unknown>;
         const sender = row.sender as { name?: string | null } | null;
         return {
-          id: Number(row.id),
+          id: String(row.id),
           note: (payload.note as string | null) ?? null,
           // The join is the live name; payload.from_name is what it was when sent. Prefer the
           // live one so a rename does not leave an old name on screen, fall back for a deleted
@@ -1052,7 +1123,11 @@ export function useTransactionUploads(transactionId: string | null | undefined) 
 export function useAcknowledgeNotification() {
   const qc = useQueryClient();
   return useMutation({
-    mutationFn: async (eventId: number) => {
+    mutationFn: async (eventId: string) => {
+      if (SEED_MODE) {
+        dismissInSeedMode(eventId);
+        return;
+      }
       const { error } = await sb.rpc("acknowledge_notification", { p_event_id: eventId });
       if (error) throw error;
     },

@@ -1,7 +1,7 @@
 import { Label } from "../../ui/label";
 import { MultiCombobox } from "../../ui/multi-combobox";
 import type { PropertyCompany } from "../../adapters/properties";
-import { RequiredMark } from "./form-field";
+import { RequiredStern } from "@/components/ui/form-field";
 import type { PropertiesLabels } from "./labels";
 
 // Direct property-to-company assignment; several companies are normal, at least one is required.
@@ -31,7 +31,7 @@ export function CompanyAssignmentField({
   return (
     <div className="space-y-1">
       <Label className="text-xs text-muted-foreground">
-        {labels.label} <RequiredMark title={requiredFieldTitle} />
+        {labels.label} <RequiredStern title={requiredFieldTitle} />
       </Label>
       <MultiCombobox
         values={values}

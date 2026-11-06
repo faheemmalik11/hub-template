@@ -89,7 +89,7 @@ export function useNotificationItems(): {
       },
       {
         key: "query",
-        label: t("settings.event.rueckfrage"),
+        label: t("settings.event.query"),
         message: t("notifications.msg.query", { count: returned }),
         count: returned,
         tone: "warn",
@@ -97,7 +97,7 @@ export function useNotificationItems(): {
       },
       {
         key: "rejected",
-        label: t("settings.event.abgelehnt"),
+        label: t("settings.event.rejected"),
         message: t("notifications.msg.rejected", { count: rejected }),
         count: rejected,
         tone: "danger",
@@ -121,7 +121,7 @@ export function useNotificationItems(): {
       },
       {
         key: "suggestions",
-        label: t("settings.event.vorschlaege"),
+        label: t("settings.event.suggestions"),
         message: t("notifications.msg.suggestions", { count: bankQ.data?.suggestion ?? 0 }),
         count: bankQ.data?.suggestion ?? 0,
         tone: "warn",
@@ -140,7 +140,7 @@ export function useNotificationItems(): {
       const number = doc.invoice_number?.trim();
       all.push({
         key: `${ASSIGNED_KEY_PREFIX}${doc.id}`,
-        label: t("settings.event.zuweisung"),
+        label: t("settings.event.assigned"),
         message: t("notifications.msg.assignedOne", {
           doc: number || t("notifications.noNumber"),
         }),
