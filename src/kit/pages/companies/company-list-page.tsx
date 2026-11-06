@@ -25,7 +25,8 @@ import { TablePagination } from "../../components/feedback/table-pagination";
 import { cn } from "../../lib/class-names";
 import { englishFormatters, type Formatters } from "../../lib/formatters";
 import type { CompaniesAdapter } from "../../adapters/companies";
-import { FieldErrorText, RequiredMark, validateCompanyForm } from "./company-form";
+import { FieldErrorText, RequiredStern } from "@/components/ui/form-field";
+import { validateCompanyForm } from "./company-form";
 import { SortControl } from "./sort-control";
 import { useTableView } from "./use-table-view";
 import { englishCompaniesLabels, type CompaniesLabels } from "./labels";
@@ -338,7 +339,7 @@ function NewCompanyDialog({
         <div className="grid gap-3">
           <div className="space-y-1">
             <Label className="text-xs text-muted-foreground">
-              {labels.list.codeFieldLabel} <RequiredMark title={labels.requiredFieldTitle} />
+              {labels.list.codeFieldLabel} <RequiredStern title={labels.requiredFieldTitle} />
             </Label>
             <Input
               value={code}
@@ -353,7 +354,7 @@ function NewCompanyDialog({
           </div>
           <div className="space-y-1">
             <Label className="text-xs text-muted-foreground">
-              {labels.list.nameFieldLabel} <RequiredMark title={labels.requiredFieldTitle} />
+              {labels.list.nameFieldLabel} <RequiredStern title={labels.requiredFieldTitle} />
             </Label>
             <Input
               value={name}

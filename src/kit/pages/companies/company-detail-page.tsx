@@ -33,7 +33,8 @@ import { cn } from "../../lib/class-names";
 import { englishFormatters, type Formatters } from "../../lib/formatters";
 import type { CompaniesAdapter, Company, CompanyChanges } from "../../adapters/companies";
 import type { StatusTone } from "../../adapters/processing-log";
-import { FieldErrorText, RequiredMark, validateCompanyForm } from "./company-form";
+import { FieldErrorText, RequiredStern } from "@/components/ui/form-field";
+import { validateCompanyForm } from "./company-form";
 import { KnownSpellingsCard } from "./known-spellings-card";
 import { useInfiniteRows } from "./use-infinite-rows";
 import { englishCompaniesLabels, type CompaniesLabels } from "./labels";
@@ -511,7 +512,7 @@ export function CompanyDetailPage({
           <div className="grid gap-3">
             <div className="space-y-1">
               <Label className="text-xs text-muted-foreground">
-                {labels.detail.codeField} <RequiredMark title={labels.requiredFieldTitle} />
+                {labels.detail.codeField} <RequiredStern title={labels.requiredFieldTitle} />
               </Label>
               <Input
                 value={editForm.code}
@@ -522,7 +523,7 @@ export function CompanyDetailPage({
             </div>
             <div className="space-y-1">
               <Label className="text-xs text-muted-foreground">
-                {labels.detail.nameField} <RequiredMark title={labels.requiredFieldTitle} />
+                {labels.detail.nameField} <RequiredStern title={labels.requiredFieldTitle} />
               </Label>
               <Input
                 value={editForm.name}

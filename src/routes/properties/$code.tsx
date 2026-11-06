@@ -95,7 +95,7 @@ function PropertyDetailPage() {
         crmLed ? (
           <CrmAllFieldsCard propertyCode={propertyCode} />
         ) : (
-          <KnownSpellingsCard entityType="objekt" entityCode={propertyCode} />
+          <KnownSpellingsCard entityType="property" entityCode={propertyCode} />
         ),
       backLink: ({ className, children }) => (
         <Link to="/properties" className={className}>

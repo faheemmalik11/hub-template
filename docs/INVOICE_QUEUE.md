@@ -35,7 +35,7 @@ the card applies exactly the filter the count was measured with.
 
 | Key                  | Counts                                    | Filters to                                                                                 | Tone    |
 | -------------------- | ----------------------------------------- | ------------------------------------------------------------------------------------------ | ------- |
-| `needs_action`       | `status = 'zu_pruefen'`                   | same                                                                                       | warning |
+| `needs_action`       | `status = 'needs_review' and is_invoice`  | same                                                                                       | warning |
 | `missing_assignment` | `company_id is null`                      | `gesellschaft = GESELLSCHAFT_OHNE`                                                         | warning |
 | `ready_for_payment`  | approved and `paid_at is null`            | `workflow` + `zahlung=offen`                                                               | success |
 | `pay_now`            | due, unpaid, not a direct debit           | `faellig=due_now` + `zahlung=offen` + `paymentType=transfer`, sorted by due date ascending | danger  |
@@ -51,6 +51,8 @@ transferred as well. Measured on the day: 24 rows, of which 2 paid and 12 direct
 `pay_now` is also the only card that sets a sort order. `QueueCardSpec` gained optional
 `sort`/`dir` for it, applied and cleared alongside `CARD_FILTER_KEYS`. A payment list worked
 "one by one" has to start at the oldest debt; the received-date default put it anywhere.
+
+**`needs_action` excludes anything not confirmed to be an invoice, and the whole function excludes a private hold.** A letter the pipeline scanned but could not confirm as an invoice (`is_invoice` false or unset) used to count toward the review queue the same as a real invoice, so the number on the card never matched what a person actually had to look at. `document_is_countable()` (`supabase/schema/0011_functions.sql`) gives `v_open_items` the same rule for a different problem: a document marked `duplicate`, or one under `private_hold`, is never an open item either, so the home screen and the queue cards cannot disagree with each other over a row that should not be counted at all.
 
 **`missing_assignment` counts company only, on purpose.** The design's card reads "Missing company
 or property", but `applyBelegeFilter` ANDs its axes and cannot express "company OR property

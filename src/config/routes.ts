@@ -110,6 +110,12 @@ export const ROUTES: RouteEntry[] = [
     key: PERMISSIONS.pageBankSettings,
     module: PERMISSIONS.modulePayments,
   },
+  {
+    path: "/payment-file",
+    labelKey: "nav.paymentFile",
+    key: PERMISSIONS.pagePaymentFile,
+    module: PERMISSIONS.modulePayments,
+  },
 
   {
     path: "/suppliers",
@@ -197,6 +203,12 @@ export const ROUTES: RouteEntry[] = [
     path: "/onboarding",
     labelKey: "nav.onboarding",
     key: PERMISSIONS.pageOnboarding,
+    module: PERMISSIONS.moduleAdmin,
+  },
+  {
+    path: "/onboarding-tour",
+    labelKey: "nav.onboardingTour",
+    key: PERMISSIONS.pageOnboardingTour,
     module: PERMISSIONS.moduleAdmin,
   },
   {

@@ -84,6 +84,7 @@ insert into public.permissions (key, kind, parent_key, category, label_de, label
 
   ('page.team',                'page', 'module.admin',       'menu', 'Team und Rollen',            'Team and roles',              true,  810),
   ('page.onboarding',          'page', 'module.admin',       'menu', 'Einrichtung',                'Setup',                       false, 820),
+  ('page.onboarding_tour',     'page', 'module.admin',       'menu', 'Erste Schritte',             'First steps',                 false, 825),
   ('page.notifications',       'page', 'module.admin',       'menu', 'Benachrichtigungen',         'Notifications',               false, 830),
   ('page.activity_log',        'page', 'module.admin',       'menu', 'Protokoll',                  'Activity log',                false, 840),
   ('page.trash',               'page', 'module.admin',       'menu', 'Papierkorb',                 'Trash',                       false, 850)
@@ -98,6 +99,16 @@ insert into public.permissions (key, kind, parent_key, category, label_de, label
 on conflict (key) do update
    set kind = excluded.kind, parent_key = excluded.parent_key, category = excluded.category,
        label_de = excluded.label_de, label_en = excluded.label_en, locked = excluded.locked,
+       default_enabled = excluded.default_enabled, sort_order = excluded.sort_order;
+
+-- New behaviour ships off by default: a client already on this template does not gain a payments
+-- screen it never asked for just because the template moved forward. Its own insert, since
+-- default_enabled is not a column the block above sets for anything else.
+insert into public.permissions (key, kind, parent_key, category, label_de, label_en, default_enabled, sort_order) values
+  ('page.payment_file', 'page', 'module.payments', 'menu', 'Zahlungsdatei', 'Payment file', false, 360)
+on conflict (key) do update
+   set kind = excluded.kind, parent_key = excluded.parent_key, category = excluded.category,
+       label_de = excluded.label_de, label_en = excluded.label_en,
        default_enabled = excluded.default_enabled, sort_order = excluded.sort_order;
 
 -- ------------------------------------------------------------- the sections

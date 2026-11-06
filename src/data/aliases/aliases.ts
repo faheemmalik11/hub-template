@@ -6,8 +6,8 @@ import type { Supplier, SupplierAlias, SupplierDuplicateGroup } from "@/lib/data
 
 // ---- Known spellings (entity_aliases, migrations 0003 / 0040 / 20260824110000) ----
 //
-// One table serves every kind of entity: 'gesellschaft' and 'objekt' are keyed by their CODE
-// ('IMKO', 'DO-SUM'), 'lieferant' by the supplier's uuid. The pipeline reads the first two to map a
+// One table serves every kind of entity: 'company' and 'property' are keyed by their CODE
+// ('IMKO', 'DO-SUM'), 'supplier' by the supplier's uuid. The pipeline reads the first two to map a
 // name printed on a document to a canonical code; supplier aliases are the Hub's own record and are
 // what merge_suppliers writes the merged-away name into.
 //
@@ -16,7 +16,7 @@ import type { Supplier, SupplierAlias, SupplierDuplicateGroup } from "@/lib/data
 // 23505 to a typed error instead of letting a raw Postgres message reach a German-only UI: the two
 // unique indexes on this table mean two different things to the person typing.
 
-export type EntityAliasType = "gesellschaft" | "objekt" | "lieferant";
+export type EntityAliasType = "company" | "property" | "supplier";
 
 export function useEntityAliases(entityType: EntityAliasType, entityCode: string) {
   return useQuery({
@@ -89,15 +89,15 @@ export function useDeactivateEntityAlias(entityType: EntityAliasType, entityCode
 // Supplier-scoped wrappers, kept because the merge flow and the supplier detail page already read
 // through these names. They are the generic hooks with entity_type pinned.
 export function useSupplierAliases(supplierId: string) {
-  return useEntityAliases("lieferant", supplierId);
+  return useEntityAliases("supplier", supplierId);
 }
 
 export function useAddSupplierAlias(supplierId: string) {
-  return useAddEntityAlias("lieferant", supplierId);
+  return useAddEntityAlias("supplier", supplierId);
 }
 
 export function useDeactivateSupplierAlias(supplierId: string) {
-  return useDeactivateEntityAlias("lieferant", supplierId);
+  return useDeactivateEntityAlias("supplier", supplierId);
 }
 
 export function useSupplierDuplicates() {

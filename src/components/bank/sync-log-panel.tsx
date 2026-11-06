@@ -169,7 +169,7 @@ export function SyncLogPanel() {
     {
       kind: "select",
       key: "event",
-      label: t("syncLog.filter.ereignis"),
+      label: t("syncLog.filter.event"),
       value: fEvent,
       defaultValue: ALL,
       onChange: setFEvent,
@@ -184,7 +184,7 @@ export function SyncLogPanel() {
     {
       kind: "select",
       key: "level",
-      label: t("syncLog.filter.stufe"),
+      label: t("syncLog.filter.level"),
       value: fLevel,
       defaultValue: ALL,
       onChange: setFLevel,
@@ -196,7 +196,7 @@ export function SyncLogPanel() {
     {
       kind: "select",
       key: "connection",
-      label: t("syncLog.filter.verbindung"),
+      label: t("syncLog.filter.connection"),
       value: fConnection,
       defaultValue: ALL,
       onChange: setFConnection,
@@ -214,7 +214,7 @@ export function SyncLogPanel() {
     {
       kind: "zeitraum",
       key: "zeitraum",
-      label: t("syncLog.filter.zeitraum"),
+      label: t("syncLog.filter.dateRange"),
       value: fPeriod,
       defaultValue: PERIOD_ALL,
       onChange: setFPeriod,

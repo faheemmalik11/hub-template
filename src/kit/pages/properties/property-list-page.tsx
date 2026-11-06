@@ -31,7 +31,7 @@ import type {
 } from "../../adapters/properties";
 import { CompanyChip } from "./badges";
 import { CompanyAssignmentField } from "./company-assignment-field";
-import { FieldErrorText, RequiredMark } from "./form-field";
+import { FieldErrorText, RequiredStern } from "@/components/ui/form-field";
 import { SortControl } from "./sort-control";
 import { useTableView } from "./use-table-view";
 import { englishPropertiesLabels, type PropertiesLabels } from "./labels";
@@ -460,7 +460,7 @@ function NewPropertyDialog({
         <div className="grid gap-3">
           <div className="space-y-1">
             <Label className="text-xs text-muted-foreground">
-              {createLabels.codeLabel} <RequiredMark title={labels.requiredFieldTitle} />
+              {createLabels.codeLabel} <RequiredStern title={labels.requiredFieldTitle} />
             </Label>
             <Input
               value={code}

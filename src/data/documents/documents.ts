@@ -6,6 +6,7 @@ import {
   useQueryClient,
 } from "@tanstack/react-query";
 
+import { SEED_MODE } from "@/config/seed";
 import { TABLE } from "@/config/tables";
 import { amountQueryFilter } from "@/data/bank";
 import { STALE, actorEmail, sb } from "@/data/client";
@@ -29,7 +30,12 @@ import { createUploadedInvoices } from "@/lib/api/invoice-upload.functions";
 import { getTransactionFileUrls } from "@/lib/api/transaction-files.functions";
 import type { VoiceRecordingMime } from "@/lib/api/voice-transcription-shared";
 import { transcribeVoiceQuery } from "@/lib/api/voice-transcription.functions";
-import { COMPANY_WITHOUT, PROPERTY_WITHOUT, todayLocal } from "@/lib/data/format";
+import {
+  COMPANY_WITHOUT,
+  PRIVATE_OWNER_UNASSIGNED,
+  PROPERTY_WITHOUT,
+  todayLocal,
+} from "@/lib/data/format";
 import { OPEN_ITEM_COLUMNS } from "@/lib/data/types";
 import type {
   Document,
@@ -740,6 +746,8 @@ const DOCUMENTS_LIST_COLUMNS = [
   "recipient_name",
   "extracted",
   "validation",
+  "private_hold",
+  "private_owner_user_id",
 ].join(",");
 
 // Which view a list read should come from.
@@ -846,6 +854,13 @@ function applyDocumentsFilter(query: any, f: DocumentsFilter) {
   else {
     if (f.dueFromDate) query = query.gte("due_date", f.dueFromDate);
     if (f.dueToDate) query = query.lte("due_date", f.dueToDate);
+  }
+  // Only ever meaningful alongside private_hold rows: RLS already keeps every other row's
+  // private_owner_user_id out of reach, so this cannot be used to probe who owns what.
+  if (f.privateOwner === PRIVATE_OWNER_UNASSIGNED) {
+    query = query.eq("private_hold", true).is("private_owner_user_id", null);
+  } else if (f.privateOwner) {
+    query = query.eq("private_hold", true).eq("private_owner_user_id", f.privateOwner);
   }
   return query;
 }
@@ -1307,10 +1322,23 @@ export function useInvoiceFileUrl(
     enabled: (opts.enabled ?? true) && !!documentId,
     staleTime: FILE_URL_STALE,
     placeholderData: keepPreviousData,
-    queryFn: () =>
-      getInvoiceFileUrl({
-        data: { invoiceId: documentId, downloadFilename: opts.downloadFilename ?? undefined },
-      }),
+    // Seed mode has no real Supabase project to mint a signed URL against.
+    queryFn: async (): Promise<{
+      previewUrl: string | null;
+      downloadUrl: string | null;
+      filename: string | null;
+      mime: string | null;
+    }> =>
+      SEED_MODE
+        ? {
+            previewUrl: "/seed/sample-invoice.pdf",
+            downloadUrl: "/seed/sample-invoice.pdf",
+            filename: "sample-invoice.pdf",
+            mime: "application/pdf",
+          }
+        : getInvoiceFileUrl({
+            data: { invoiceId: documentId, downloadFilename: opts.downloadFilename ?? undefined },
+          }),
   });
 }
 

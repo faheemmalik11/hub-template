@@ -816,6 +816,7 @@ const de = {
     commissionDeals: "Provisionen",
     brokerBonuses: "Boni",
     onboarding: "Onboarding-Checkliste",
+    onboardingTour: "Erste Schritte",
     overview: "Übersicht",
     invoices: "Rechnungen",
     incomingInvoices: "Eingangsrechnungen",
@@ -840,7 +841,7 @@ const de = {
     exclusionRules: "Ausschlussregeln",
     manualBookings: "Manuelle Buchungen",
     costAnalysis: "Kostenanalyse",
-    log: "Protokoll",
+    log: "Aktivitätsprotokoll",
     administration: "Verwaltung",
     team: "Team",
     notifications: "Meldungen & Benachrichtigungen",
@@ -901,9 +902,9 @@ const de = {
       slackDesc: "Wichtige Hinweise und eine Tageszusammenfassung in Slack.",
       notificationsSection: "Meldungen",
       event: {
-        zuweisung: "Beleg mir zugewiesen",
-        rueckfrage: "Rückfrage zu einem Beleg",
-        abgelehnt: "Beleg abgelehnt und zurückgegeben",
+        assigned: "Beleg mir zugewiesen",
+        query: "Rückfrage zu einem Beleg",
+        rejected: "Beleg abgelehnt und zurückgegeben",
         ping: "Freigabe- oder Feedback-Anfrage",
       },
       slackChannelScope:
@@ -946,13 +947,13 @@ const de = {
     },
     event: {
       neu: "Neue Belege",
-      zuweisung: "Mir zugewiesen",
-      rueckfrage: "Rückfragen an mich",
-      abgelehnt: "Ablehnungen an mich",
+      assigned: "Mir zugewiesen",
+      query: "Rückfragen an mich",
+      rejected: "Ablehnungen an mich",
       eskaliert: "Freigaben, die ich vertrete und die überfällig sind",
       zuPruefen: "Belege, die auf Prüfung warten",
       faellig: "Überfällige Rechnungen",
-      vorschlaege: "Zahlungsvorschläge zu bestätigen",
+      suggestions: "Zahlungsvorschläge zu bestätigen",
       fehler: "Fehler in der Verarbeitung",
       ping: "Direkte Erinnerungen an mich",
       personen: "Offene Punkte je Person",
@@ -1154,11 +1155,216 @@ const de = {
   onboarding: {
     title: "Onboarding-Checkliste",
     progress: "Ihr Fortschritt",
+    practice: {
+      panelNext: "Nächster Schritt",
+      panelFinishStep: "Fertig",
+      panelReset: "Von vorn beginnen",
+      panelFinished: "Geschafft! Sie haben alle Schritte abgeschlossen.",
+      standInReview:
+        "Normalerweise schicken Sie die Rechnung jetzt zur Prüfung. Ihr Konto kann das nicht, deshalb erledigen wir das für Sie.",
+      standInApprove:
+        "Jetzt würde Ihr Freigeber die Rechnung freigeben. Wir erledigen das für Sie, damit Sie weitermachen können.",
+      standInFinalApprove:
+        "Jetzt würde Ihr Endfreigeber die Rechnung freigeben. Wir erledigen das für Sie, damit Sie weitermachen können.",
+      standInPay:
+        "Jetzt würde jemand mit Zahlungsrecht diese Zahlung bestätigen. Wir erledigen das für Sie, damit Sie weitermachen können.",
+      rolePay: "Zahlungs-Schritt",
+      roleApprove: "Freigabe-Schritt",
+      roleFinalApprove: "Endfreigabe-Schritt",
+      yourRole: "Ihre Rolle: {{role}}",
+      panelPause: "Übung pausieren",
+      panelClose: "Übung beenden",
+      completionTitle: "Geschafft!",
+      completionMessage:
+        "Sie haben alle Schritte abgeschlossen. Beenden Sie die Übung oder starten Sie sie noch einmal.",
+      completionExit: "Übung beenden",
+      completionRestart: "Noch einmal starten",
+      startChecking: "Der Stand Ihrer Übung wird geprüft …",
+      startTitle: "Übung: Eine Rechnung bearbeiten",
+      startIntro:
+        "Sie bearbeiten eine Beispielrechnung Schritt für Schritt, vom Hochladen bis zur endgültigen Freigabe.",
+      startHidesData:
+        "Solange die Übung läuft, sehen Sie nur Übungsdaten. Ihre echten Daten sind ausgeblendet. Nichts davon landet in Ihrer Buchhaltung.",
+      startHowToLeave:
+        "Sie können die Übung jederzeit verlassen. Nutzen Sie die Pausieren-Taste oben auf dem Bildschirm oder im Schrittfenster.",
+      startButton: "Übung starten",
+      resumeIntro:
+        "Sie haben diese Übung schon begonnen. Sie können dort weitermachen, wo Sie aufgehört haben.",
+      resumeButton: "Fortsetzen",
+      restartButton: "Von vorn beginnen",
+      staleNotice:
+        "Der Übungsmodus ist noch eingeschaltet, obwohl hier keine Übung läuft. Solange er an ist, sehen Sie Ihre echten Daten nicht.",
+      endModeButton: "Übungsmodus beenden",
+      progressLost: "Die Übungsrechnung gibt es nicht mehr. Die Übung startet deshalb von vorn.",
+      startFailed: "Das hat nicht geklappt. Bitte versuchen Sie es noch einmal.",
+      panelCollapse: "Schritte ausblenden",
+      panelExpand: "Schritte anzeigen",
+      pageInvoices: "Eingangsrechnungen",
+      pageInvoice: "Rechnung",
+      taskTitle: "Eine Rechnung Schritt für Schritt bearbeiten",
+      taskGoal:
+        "Lernen Sie, wie Sie eine Rechnung hochladen, prüfen, zuordnen, freigeben und bezahlen.",
+      uploadInstruction: "Laden Sie die Beispielrechnung hoch.",
+      uploadOutcome: "Der Beleg kommt hier in den Hub. Ab jetzt liest das System ihn für Sie aus.",
+      openInstruction: "Öffnen Sie die hochgeladene Rechnung.",
+      openOutcome:
+        "Beim Öffnen sehen Sie die Datei und die erkannten Daten nebeneinander. So prüfen Sie, ob das System richtig gelesen hat.",
+      amountInstruction:
+        "Vergleichen Sie den Gesamtbetrag mit der Datei. Korrigieren Sie den Betrag, wenn er falsch ist.",
+      amountOutcome:
+        "Das System kann sich bei einer Ziffer irren. Ein falscher Betrag würde sonst falsch freigegeben und falsch bezahlt.",
+      amountDeviation: "Wer prüft bei Ihnen die Rechnungsbeträge?",
+      amountHelp:
+        "Vergleichen Sie den Bruttobetrag in der App mit dem Betrag auf der Datei. Ändern Sie nur diesen Betrag. Netto plus Umsatzsteuer muss den Bruttobetrag ergeben.",
+      companyInstruction: "Wählen Sie die Übungsgesellschaft. Ihr Kürzel beginnt mit DEMO-.",
+      companyOutcome:
+        "Jede Rechnung gehört zu genau einer Gesellschaft. Nur mit der richtigen Gesellschaft landet sie in der richtigen Buchhaltung und beim richtigen Freigeber.",
+      companyHelp: "Suchen Sie die Gesellschaft, deren Kürzel mit DEMO- beginnt.",
+      propertyInstruction: "Wählen Sie das Übungsobjekt. Sein Kürzel endet auf -P1.",
+      propertyOutcome:
+        "Kosten gehören zu einem bestimmten Objekt. Mit dem richtigen Objekt sehen Sie später, was jedes Gebäude wirklich kostet.",
+      propertyDeviation: "Ordnen Sie Rechnungen auch Objekten zu, nicht nur Gesellschaften?",
+      propertyHelp: "Suchen Sie das Objekt, dessen Kürzel auf -P1 endet.",
+      reviewInstruction: "Schicken Sie die Rechnung zur Prüfung.",
+      reviewOutcome:
+        "Mit diesem Klick sagen Sie: Die Daten stimmen. Jetzt prüft eine zweite Person, bevor Geld fließt.",
+      reviewDeviation: "Ab welchem Betrag muss eine Rechnung bei Ihnen freigegeben werden?",
+      approveInstruction: "Prüfen Sie die Rechnung und geben Sie sie frei.",
+      approveOutcome:
+        "Geld ist im Spiel, also entscheidet ein Mensch. Ohne Freigabe kann die Rechnung nicht bezahlt werden.",
+      approveDeviation: "Wer gibt bei Ihnen Rechnungen frei?",
+      finalApproveInstruction: "Geben Sie die Rechnung endgültig frei.",
+      finalApproveOutcome:
+        "Die Endfreigabe ist die letzte Prüfung, bevor die Rechnung bezahlt werden kann.",
+      bankInstruction: "Bestätigen Sie die passende Zahlung für diese Rechnung.",
+      bankOutcome:
+        "Erst wenn die Buchung der Rechnung zugeordnet ist, gilt sie als bezahlt. So wird nichts doppelt bezahlt.",
+      bankHelp:
+        "Suchen Sie die Buchung mit demselben Betrag wie die Rechnung und bestätigen Sie die Zuordnung.",
+      stepCounter: "Schritt {{current}} von {{total}}",
+      waiting: "Jetzt sind Sie dran",
+      outcomeTitle: "Warum das wichtig ist",
+      goToPage: "Öffnen Sie die Seite {{page}}, um weiterzumachen.",
+      goToPageButton: "Seite öffnen",
+      scrollToTarget: "Die gesuchte Stelle ist weiter unten auf der Seite.",
+      scrollToTargetButton: "Zeigen Sie mir die Stelle",
+      bannerLabel: "Übungsmodus",
+    },
+    stopCases: {
+      cardTitle: "Wann hält das System an?",
+      cardDescription:
+        "Erleben Sie an drei Übungsrechnungen, wann der Hub anhält und eine Person entscheiden muss (ca. 10 Minuten).",
+      startTitle: "Übung: Wann hält das System an?",
+      startIntro:
+        "Sie bearbeiten drei Übungsrechnungen: eine geänderte Bankverbindung, eine Rechnung, bei der das System unsicher ist, und ein Dokument, das keine Rechnung ist.",
+      startHidesData:
+        "Solange die Übung läuft, sind Ihre echten Rechnungen und Lieferanten ausgeblendet. Sie sehen nur Übungsdaten. Es wird nichts gesendet, abgelegt oder bezahlt.",
+      progressLost: "Die Übungsrechnungen gibt es nicht mehr. Die Übung startet deshalb von vorn.",
+      taskTitle: "Wann hält das System an?",
+      taskGoal:
+        "An drei Übungsrechnungen sehen Sie, wann der Hub anhält und Sie entscheiden müssen.",
+      pageInvoices: "Eingangsrechnungen",
+      pageInvoice: "Rechnung",
+      pageSupplier: "Lieferant",
+      groupIban: "Eine neue Bankverbindung auf der Rechnung",
+      groupAi: "Ein falscher Betrag auf der Rechnung",
+      groupFlyer: "Ein Dokument, das keine Rechnung ist",
+      introInstruction:
+        "Der Hub nimmt Ihnen viel Arbeit ab, hält aber an, wenn eine Person entscheiden muss. Sie lernen jetzt drei solcher Fälle kennen.",
+      introOutcome:
+        "Wer diese Stopps kennt, erkennt sie sofort und weiß, was zu tun ist. Der Hub bezahlt oder bucht nie von allein, wenn etwas nicht stimmt.",
+      ibanOpenInstruction: "Öffnen Sie die markierte Übungsrechnung.",
+      ibanOpenOutcome:
+        "Diese Rechnung nennt eine andere Bankverbindung als bisher. Hier hält der Hub an.",
+      ibanWarningInstruction: "Öffnen Sie den Reiter für Zahlung und Bankabgleich.",
+      ibanWarningOutcome: "Hier sehen Sie das Konto, auf das die Rechnung die Zahlung verlangt.",
+      ibanCheckInstruction:
+        "Lesen Sie den Hinweis: Diese Bankverbindung ist neu für diesen Lieferanten. Fragen Sie beim Lieferanten nach, ob das Konto wirklich ihm gehört, über einen Kontakt, dem Sie schon vertrauen.",
+      ibanCheckOutcome:
+        "Eine neue Bankverbindung ist ein typisches Zeichen für Betrug. Darum wird nicht auf Verdacht bezahlt. Nur ein bereits bekannter Weg gibt wirkliche Sicherheit.",
+      ibanWarningHelp:
+        "Dieser Hinweis erscheint im echten Betrieb nur, wenn die Prüfung neuer Konten eingeschaltet ist. In der Übung sehen Sie ihn immer.",
+      ibanDeviation: "Was machen Sie, wenn der Lieferant sagt, das neue Konto sei nicht von ihm?",
+      ibanConfirmInstruction:
+        "Der Lieferant hat das neue Konto bestätigt. Bestätigen Sie das Konto auf der Lieferantenseite.",
+      ibanConfirmOutcome:
+        "Erst nach Ihrer Bestätigung gilt das neue Konto als geprüft, und erst dann darf es bezahlt werden.",
+      ibanConfirmHelp:
+        "Bestätigen Sie das Konto nur, wenn der Lieferant Ihnen gesagt hat, dass es wirklich seines ist.",
+      aiOpenInstruction: "Öffnen Sie die zweite markierte Übungsrechnung.",
+      aiOpenOutcome:
+        "Diese Rechnung muss geprüft werden. Der Hub traut seiner eigenen Erkennung nicht.",
+      aiLightInstruction:
+        "Lesen Sie, warum diese Rechnung geprüft werden muss. Der Hub nennt, welche Prüfung nicht aufgeht.",
+      aiLightOutcome:
+        "Prüfung nötig heißt nicht, dass die Rechnung falsch ist. Es heißt, dass eine Person nachsehen muss, bevor es weitergeht.",
+      aiFindInstruction:
+        "Vergleichen Sie Netto, Umsatzsteuer und Brutto mit der Datei. Netto plus Umsatzsteuer ergibt nicht den Bruttobetrag. Welcher Betrag passt nicht?",
+      aiFindOutcome:
+        "Sie müssen herausfinden, welcher Betrag falsch gelesen wurde. Nur den Bruttobetrag zu ändern würde den echten Fehler verdecken.",
+      aiFindHelp: "Brutto und Umsatzsteuer passen zueinander. Der Nettobetrag ist der Ausreißer.",
+      aiCorrectInstruction:
+        "Bearbeiten Sie die Beträge und korrigieren Sie den Nettobetrag. Speichern Sie die Änderung.",
+      aiCorrectOutcome:
+        "Mit dem richtigen Netto stimmt die Rechnung wieder. Sie haben die Ursache behoben, nicht nur das Ergebnis.",
+      aiCorrectHelp:
+        "Klicken Sie auf das Bearbeiten-Symbol bei den Beträgen. Ändern Sie nur den Nettobetrag. Netto plus Umsatzsteuer muss den Bruttobetrag ergeben.",
+      aiDeviation: "Woran erkennen Sie, welcher Betrag falsch gelesen wurde?",
+      aiGreenInstruction:
+        "Sehen Sie sich die Beträge noch einmal an. Die Prüfung der Summe ist jetzt erfüllt. Der Hub rechnet sie nach jeder Änderung neu.",
+      aiGreenOutcome:
+        "Die Prüfung hat sich von selbst aktualisiert. Eine Person muss die Rechnung trotzdem weiterbearbeiten, bevor sie fertig ist.",
+      flyerOpenInstruction: "Öffnen Sie das dritte markierte Dokument.",
+      flyerOpenOutcome:
+        "Dieses Dokument muss geprüft werden, obwohl es keine Rechnung ist. Der Hub wirft nichts weg, ohne dass eine Person entscheidet.",
+      flyerWhyInstruction:
+        "Lesen Sie, warum dieses Dokument geprüft werden muss. Es gibt keinen Betrag und keine Rechnungsnummer.",
+      flyerWhyOutcome:
+        "Ohne Betrag und Rechnungsnummer kann der Hub dieses Dokument nicht buchen. Er hält an und wartet auf Sie.",
+      flyerSetAsideInstruction:
+        "Markieren Sie dieses Dokument als nicht relevant und schreiben Sie einen kurzen Grund.",
+      flyerSetAsideOutcome:
+        "Das Dokument verlässt den normalen Ablauf, und Ihr Grund bleibt gespeichert. Sie können das später rückgängig machen.",
+      flyerSetAsideHelp:
+        "In der Übung wird nichts wirklich irgendwohin gesendet, auch wenn eine Meldung etwas anderes sagt.",
+      flyerOpenHistoryInstruction: "Öffnen Sie den Verlauf-Reiter.",
+      flyerOpenHistoryOutcome: "Hier sehen Sie jede Entscheidung zu diesem Dokument.",
+      flyerHistoryInstruction:
+        "Suchen Sie den Eintrag, der zeigt, dass es als nicht relevant markiert wurde.",
+      flyerHistoryOutcome:
+        "Der Verlauf zeigt, wer wann und warum entschieden hat. So bleibt jede Entscheidung nachvollziehbar.",
+      restartHint:
+        "Hängen Sie fest? Mit „{{button}}“ im Schrittfenster erhalten Sie frische Übungsdaten.",
+      outroInstruction:
+        "Geschafft! Sie kennen jetzt drei Stopps: eine geänderte Bankverbindung, eine unsichere Erkennung und ein Dokument, das keine Rechnung ist. In allen drei Fällen entscheidet eine Person.",
+      outroOutcome:
+        "Der Hub hält lieber einmal zu oft an, als einmal falsch zu zahlen oder zu buchen.",
+    },
   },
   home: {
     priority: {
       title: "Zuerst erledigen",
       openChecklist: "Checkliste öffnen",
+    },
+    firstSteps: {
+      title: "Erste Schritte",
+      subtitle:
+        "Üben Sie an einem Beispiel, wie der Hub funktioniert. Ihre echten Daten bleiben unberührt.",
+      invoice: {
+        title: "Eine Rechnung bearbeiten",
+        description:
+          "Laden Sie eine Beispielrechnung hoch, prüfen Sie sie, geben Sie sie frei und bestätigen Sie die Zahlung (ca. 10 Minuten).",
+      },
+      stopCases: {
+        title: "Wann hält das System an?",
+        description:
+          "Erleben Sie an drei Übungsrechnungen, wann der Hub anhält und eine Person entscheiden muss (ca. 10 Minuten).",
+      },
+      action: {
+        new: "Übung starten",
+        started: "Weiter",
+        completed: "Noch einmal üben",
+      },
     },
     setupWarning: {
       "folder-mail": {
@@ -1445,8 +1651,8 @@ const de = {
 
     // ---- status (extraction quality) ----
     status: {
-      erkannt: "Erkannt",
-      zu_pruefen: "Zu prüfen",
+      recognised: "Erkannt",
+      needs_review: "Zu prüfen",
     },
 
     // ---- workflow (approval chain) — also used for persisted German audit text ----
@@ -1522,14 +1728,14 @@ const de = {
       // about what it is measuring.
       feldTitel: "KI-Konfidenz für dieses Feld",
       skala: {
-        gruen: "Ab 95 %: sicher gelesen",
-        gelb: "80 bis 95 %: bitte bestätigen",
-        rot: "Unter 80 %: bitte prüfen",
+        green: "Ab 95 %: sicher gelesen",
+        yellow: "80 bis 95 %: bitte bestätigen",
+        red: "Unter 80 %: bitte prüfen",
       },
-      gruen: "hohe Konfidenz",
-      gelb: "mittlere Konfidenz, prüfen",
-      rot: "niedrige Konfidenz, bitte prüfen",
-      keine: "keine Konfidenz hinterlegt",
+      green: "hohe Konfidenz",
+      yellow: "mittlere Konfidenz, prüfen",
+      red: "niedrige Konfidenz, bitte prüfen",
+      none: "keine Konfidenz hinterlegt",
     },
 
     // ---- Erkennungs-Ampel (DB-Feld belege.ampel, Pipeline A2/A6) ----
@@ -1546,16 +1752,16 @@ const de = {
       },
     },
     ampel: {
-      gruen: "Automatisch akzeptiert",
-      gelb: "Bestätigen",
-      rot: "Zu prüfen",
-      keine: "–",
+      green: "Automatisch akzeptiert",
+      yellow: "Bestätigen",
+      red: "Zu prüfen",
+      none: "–",
       hint: {
-        gruen:
+        green:
           "Die Konfidenz liegt bei 95 % oder höher und alle Prüfungen sind bestanden, also wurde der Beleg automatisch akzeptiert.",
-        gelb: "Die Konfidenz liegt zwischen 80 und 95 %. Ein Mensch nickt kurz ab.",
-        rot: "Die Konfidenz liegt unter 80 %, oder eine Prüfung ist fehlgeschlagen. Der Beleg muss manuell geprüft werden.",
-        keine: "Noch nicht bewertet.",
+        yellow: "Die Konfidenz liegt zwischen 80 und 95 %. Ein Mensch nickt kurz ab.",
+        red: "Die Konfidenz liegt unter 80 %, oder eine Prüfung ist fehlgeschlagen. Der Beleg muss manuell geprüft werden.",
+        none: "Noch nicht bewertet.",
       },
     },
 
@@ -1711,6 +1917,14 @@ const de = {
           feld: "Gesellschaft",
           platzhalter: "Gesellschaft wählen",
         },
+        privatPerson: {
+          label: "Privatpost zuweisen",
+          titel_one: "Person für {{count}} privaten Beleg setzen",
+          titel_other: "Person für {{count}} private Belege setzen",
+          beschreibung: "Nur eine Person pro Beleg kann die Privatpost öffnen.",
+          feld: "Person",
+          platzhalter: "Person wählen",
+        },
         loeschen: {
           label: "In den Papierkorb",
           titel_one: "{{count}} Beleg löschen",
@@ -1854,6 +2068,7 @@ const de = {
         alleWorkflow: "Alle Workflow-Status",
         belegart: "Belegart",
         alleBelegarten: "Alle Belegarten",
+        zahlung: "Geld",
         alleZahlungen: "Alle Zahlungen",
         zahlungsart: "Zahlungsart",
         alleZahlungsarten: "Alle Zahlungsarten",
@@ -1890,6 +2105,9 @@ const de = {
         letzte30Tage: "Letzte 30 Tage",
         von: "Von",
         bis: "Bis",
+        privatPerson: "Privatpost: Person",
+        allePrivatPersonen: "Alle Privatpost",
+        privatPersonUnassigned: "Noch nicht zugewiesen",
         reset: "Alle zurücksetzen",
         remove: "Filter entfernen",
         weitere: "Filter",
@@ -1926,10 +2144,18 @@ const de = {
         // Not "Workflow": the word was identical in both dictionaries, so switching the
         // language left this header looking untranslated.
         workflow: "Workflow-Status",
+        zahlung: "Zahlung",
         // Both badges under one label on the mobile card, where they have no column header.
         zahlungAbgleich: "Zahlung & Bank-Abgleich",
         datev: "DATEV",
         bankAbgleich: "Bank-Abgleich",
+        privatPerson: "Person",
+      },
+      privatPerson: {
+        privat: "Privat",
+        nichtZugewiesen: "Nicht zugewiesen",
+        mirZugewiesen: "Mir zugewiesen",
+        zuweisen: "Zuweisen",
       },
       row: {
         nr: "Nr. {{nr}}",
@@ -1955,20 +2181,20 @@ const de = {
         laedtMehr: "Weitere Belege werden geladen …",
         empty: "leer",
         col: {
-          eingegangen: { label: "Eingegangen", subtitle: "neu" },
-          in_pruefung: { label: "In Prüfung", subtitle: "Assistenz prüft" },
-          rueckfrage: { label: "Rückfrage", subtitle: "Klärung offen" },
-          freigegeben_assistenz: {
+          received: { label: "Eingegangen", subtitle: "neu" },
+          in_review: { label: "In Prüfung", subtitle: "Assistenz prüft" },
+          query: { label: "Rückfrage", subtitle: "Klärung offen" },
+          approved_first: {
             label: "Beim Vorgesetzten",
             subtitle: "wartet auf Freigabe",
           },
-          freigegeben_vorgesetzter: { label: "Freigegeben", subtitle: "wartet auf Zahlung" },
+          approved_final: { label: "Freigegeben", subtitle: "wartet auf Zahlung" },
           // Follows belege.workflow.bezahlt, which is no longer "Bezahlt": that word belongs to the
           // payment column, this one is the approval chain's payment step.
-          bezahlt: { label: "Bezahlt", subtitle: "wartet auf DATEV" },
+          paid: { label: "Bezahlt", subtitle: "wartet auf DATEV" },
           // Same rename as belege.workflow.uebergeben_datev, so the board and the list agree.
-          uebergeben_datev: { label: "Bei DATEV", subtitle: "wartet auf Abschluss" },
-          abgeschlossen: { label: "Abgeschlossen", subtitle: "" },
+          handed_over: { label: "Bei DATEV", subtitle: "wartet auf Abschluss" },
+          closed: { label: "Abgeschlossen", subtitle: "" },
         },
       },
     },
@@ -2038,6 +2264,75 @@ const de = {
         objektFolge: "Kein Objektcode erkannt.",
         kategorieFolge: "Sonst „Nicht zugeordnet“ in der Kostenanalyse.",
       },
+      confirmationCard: {
+        title: "Braucht deine Bestätigung",
+        titleConfirmed: "Bestätigt",
+        titleChanged: "Geändert. Noch nicht bestätigt.",
+        addressRead: "Das Dokument zeigt diese Adresse: {{text}}",
+        propertyUnknown: "Kein Objekt in deiner Liste passt zu dieser Adresse.",
+        documentTypeLabel: "Belegart",
+        documentTypePlaceholder: "Belegart wählen",
+        noDocumentTypeOption: "Keine Belegart",
+        isInvoiceLabel: "Ist das eine Rechnung?",
+        isInvoiceYes: "Ja, das ist eine Rechnung.",
+        isInvoiceNo: "Nein, das ist keine Rechnung.",
+        discard: "Änderungen verwerfen",
+        confirm: "Bestätigen",
+        historyNote: "Gesellschaft, Objekt, Belegart und Rechnungsstatus bestätigt.",
+      },
+      checklist: {
+        automatic: "Automatisch geprüft",
+        manual: "Von Hand prüfen",
+        progress: "{{done}} von {{total}} erledigt",
+        checkedBy: "Geprüft von {{actor}} am {{when}}",
+        markAllChecked: "Alles als geprüft markieren",
+        tickFailed: "Konnte nicht gespeichert werden. {{error}}",
+        surety: {
+          high: "Das ist sicher.",
+          medium: "Das ist ziemlich sicher.",
+          low: "Das ist nicht sicher.",
+        },
+        recipientAddress: {
+          label: "Empfängeradresse passt zur Gesellschaft",
+          noCompany: "Für dieses Dokument ist noch keine Gesellschaft gesetzt.",
+          noCompanyAddress: "Für {{company}} ist noch keine Adresse gespeichert.",
+          noRecipientAddress: "Das Dokument hat keine Empfängeradresse zum Vergleich.",
+          match: "Die Empfängeradresse passt zur Adresse von {{company}}.",
+          partial: "Die Empfängeradresse passt nur teilweise zur Adresse von {{company}}.",
+          mismatch: "Die Empfängeradresse passt nicht zur Adresse von {{company}}.",
+        },
+        companySpelling: {
+          label: "Name der Gesellschaft ist richtig geschrieben",
+          noCompany: "Für dieses Dokument ist noch keine Gesellschaft gesetzt.",
+          noRecipientName: "Das Dokument hat keinen Empfängernamen zum Vergleich.",
+          same: "Der Name auf dem Dokument stimmt mit „{{company}}“ überein.",
+          otherSpelling:
+            "Der Name auf dem Dokument ist eine andere Schreibweise von „{{company}}“.",
+          close: "Der Name auf dem Dokument ist ähnlich zu „{{company}}“, aber nicht gleich.",
+          different: "Das Dokument nennt „{{onDocument}}“. Die Gesellschaft heißt „{{company}}“.",
+        },
+        serviceFitsCompany: {
+          label: "Die Leistung passt zur Gesellschaft",
+          noCompany: "Für dieses Dokument ist noch keine Gesellschaft gesetzt.",
+          noProperty: "Für dieses Dokument ist noch kein Objekt gesetzt.",
+          propertyNotLinked: "Für Objekt {{property}} ist noch keine Gesellschaft verknüpft.",
+          propertyBelongsToCompany:
+            "Objekt {{property}} ist mit Gesellschaft {{company}} verknüpft.",
+          propertyBelongsToOther:
+            "Objekt {{property}} ist mit {{owners}} verknüpft, nicht mit {{company}}.",
+        },
+        iban: {
+          label: "IBAN ist für diesen Lieferanten bekannt",
+          noAccount: "Für dieses Dokument ist kein Bankkonto hinterlegt.",
+          invalid: "Diese IBAN ist ungültig: {{problem}}.",
+          notOnFile: "Diese IBAN ist für diesen Lieferanten nicht hinterlegt.",
+          onFile: "Diese IBAN ist für diesen Lieferanten hinterlegt.",
+          fromSupplierDefault:
+            "Das ist das Standardkonto des Lieferanten, nicht eines vom Dokument.",
+          validNotCompared:
+            "Diese IBAN ist gültig. Sie wurde nicht mit den Konten des Lieferanten verglichen.",
+        },
+      },
       keineAktionen: {
         keinRecht:
           "Ihnen fehlt das Recht „Rechnungen freigeben“. Ein Administrator kann es unter Team & Rollen erteilen.",
@@ -2061,22 +2356,19 @@ const de = {
         // One sentence per step, saying what the click DOES. The generic
         // "move to X" above stays as the fallback for a step with no wording yet.
         klick: {
-          in_pruefung: "Klicken, um den Beleg zur Prüfung zu geben.",
-          freigegeben_assistenz:
-            "Klicken, um den Beleg als von der Assistenz freigegeben zu markieren.",
+          in_review: "Klicken, um den Beleg zur Prüfung zu geben.",
+          approved_first: "Klicken, um den Beleg als von der Assistenz freigegeben zu markieren.",
           freigegeben_stufe2: "Klicken, um den Beleg als in Stufe 2 freigegeben zu markieren.",
-          freigegeben_vorgesetzter:
-            "Klicken, um den Beleg als vom Vorgesetzten freigegeben zu markieren.",
-          abgeschlossen: "Klicken, um den Beleg abzuschließen.",
+          approved_final: "Klicken, um den Beleg als vom Vorgesetzten freigegeben zu markieren.",
+          closed: "Klicken, um den Beleg abzuschließen.",
         },
         datevLink: "Klicken, um die DATEV-Übergabe zu öffnen",
         gesperrt: {
           // The last three steps are all unclickable, for three different reasons. One shared
           // sentence for all of them explained none of them.
           stufe: {
-            bezahlt:
-              "Diesen Schritt setzt das System selbst, sobald die Zahlung für diesen Beleg bestätigt ist.",
-            uebergeben_datev:
+            paid: "Diesen Schritt setzt das System selbst, sobald die Zahlung für diesen Beleg bestätigt ist.",
+            handed_over:
               "Diesen Schritt setzt das System selbst, sobald die DATEV-Übergabe für diesen Beleg bestätigt ist.",
             // Both quoted names must match what the UI actually shows in THIS language: the
             // control is "Status korrigieren", and the tab it sits on is labelled "Workflow" in
@@ -2094,11 +2386,10 @@ const de = {
             "Diesen Schritt setzt ein Vorgesetzter, sobald der Beleg an DATEV übergeben ist.",
           nurFreigeber: "Diesen Schritt kann nur {{name}} freigeben.",
           voraussetzung: {
-            in_pruefung: "Erst möglich, wenn der Beleg zur Prüfung gegeben wurde.",
-            freigegeben_assistenz: "Erst möglich, wenn der Beleg in Prüfung ist.",
-            freigegeben_vorgesetzter:
-              "Erst möglich, wenn der Beleg von der Assistenz freigegeben wurde.",
-            abgeschlossen: "Erst möglich, wenn der Beleg an DATEV übergeben wurde.",
+            in_review: "Erst möglich, wenn der Beleg zur Prüfung gegeben wurde.",
+            approved_first: "Erst möglich, wenn der Beleg in Prüfung ist.",
+            approved_final: "Erst möglich, wenn der Beleg von der Assistenz freigegeben wurde.",
+            closed: "Erst möglich, wenn der Beleg an DATEV übergeben wurde.",
           },
           spaeter: "Erst möglich, wenn der Beleg bei „{{step}}“ angekommen ist.",
           uebersprungen: "Ihr nächster Schritt führt direkt zu „{{step}}“ und überspringt diesen.",
@@ -2106,11 +2397,10 @@ const de = {
         },
       },
       abgleichTip: {
-        offen: "Noch keine Banktransaktion zugeordnet.",
-        vorgeschlagen: "Ein Abgleich wurde vorgeschlagen und wartet auf Ihre Bestätigung.",
-        teilweise:
-          "Teilweise abgeglichen: die zugeordneten Buchungen decken den Betrag noch nicht.",
-        abgeglichen: "Vollständig mit einer Banktransaktion abgeglichen.",
+        open: "Noch keine Banktransaktion zugeordnet.",
+        suggested: "Ein Abgleich wurde vorgeschlagen und wartet auf Ihre Bestätigung.",
+        partial: "Teilweise abgeglichen: die zugeordneten Buchungen decken den Betrag noch nicht.",
+        reconciled: "Vollständig mit einer Banktransaktion abgeglichen.",
         oeffnen: "Klicken, um Zahlung & Abgleich zu öffnen",
       },
       tip: {
@@ -2254,6 +2544,7 @@ const de = {
         beteiligte: "Rechnungssteller & Zuordnung",
         zuordnung: "Zuordnung",
         weitere: "Weitere Angaben",
+        freigabe: "Freigabe",
         rueckfragen: "Rückfragen",
         freigabeVerlauf: "Workflow-Verlauf",
         stufenDauern: "Dauer je Schritt",
@@ -2278,6 +2569,8 @@ const de = {
       rechteAlle: "alle",
       tab: {
         overview: "Übersicht",
+        approval: "Workflow-Verlauf",
+        payment: "Zahlung & Abgleich",
         details: "Details",
         lieferant: "Lieferant",
         verlauf: "Verlauf",
@@ -2360,8 +2653,8 @@ const de = {
         down_payment: "Anzahlung",
       },
       einkommensteuer: {
-        herstellungsaufwand: "Herstellungsaufwand",
-        erhaltungsaufwand: "Erhaltungsaufwand",
+        capital_expense: "Herstellungsaufwand",
+        maintenance_expense: "Erhaltungsaufwand",
       },
       zuordnung: {
         reassignTitle: "Zuordnung ändern?",
@@ -2440,11 +2733,11 @@ const de = {
             "Wird automatisch per Lastschrift eingezogen, eine Überweisung ist nicht nötig",
           lastschrift_ausstehend:
             "Wird per Lastschrift eingezogen. Wartet auf die Bestätigung der Bank, eine Überweisung ist nicht nötig.",
-          bezahlt: "Als bezahlt markiert",
-          offen: "Noch offen. Noch nicht bezahlt.",
-          abgeglichen: "Mit einer Bankbuchung abgeglichen",
-          teilweise: "Teilweise mit Bankbuchungen abgeglichen",
-          nicht_abgeglichen: "Noch keine passende Bankbuchung, es bleibt ein offener Posten",
+          paid: "Als bezahlt markiert",
+          open: "Noch offen. Noch nicht bezahlt.",
+          reconciled: "Mit einer Bankbuchung abgeglichen",
+          partial: "Teilweise mit Bankbuchungen abgeglichen",
+          not_reconciled: "Noch keine passende Bankbuchung, es bleibt ein offener Posten",
           datev_bereit: "Bereit für DATEV. Abgeglichen und übergeben.",
           datev_offen: "Noch nicht an DATEV übergeben",
         },
@@ -2777,8 +3070,8 @@ const de = {
       },
       taxId: {
         allTitle: "Alle Kennungen in diesem Feld",
-        weitere_one: "Eine weitere Kennung anzeigen",
-        weitere_other: "{{count}} weitere Kennungen anzeigen",
+        more_one: "Eine weitere Kennung anzeigen",
+        more_other: "{{count}} weitere Kennungen anzeigen",
         vatTitle: "Als USt-IdNr. erkannt.",
         taxNumberTitle: "Als Steuernummer erkannt, nicht als USt-IdNr.",
         taxNumberShort: "St.-Nr.",
@@ -2959,8 +3252,8 @@ const de = {
         default: "Standard",
         makeDefault: "Als Standard",
         empty: "Keine Bankverbindung erfasst.",
-        inaktivTitle_one: "{{count}} deaktiviertes Konto",
-        inaktivTitle_other: "{{count}} deaktivierte Konten",
+        inactiveTitle_one: "{{count}} deaktiviertes Konto",
+        inactiveTitle_other: "{{count}} deaktivierte Konten",
         source: {
           pipeline: "automatisch erkannt",
           human: "manuell erfasst",
@@ -3035,10 +3328,10 @@ const de = {
         title: "Kunden filtern",
         reset: "Filter zurücksetzen",
         allCompanies: "Alle Gesellschaften",
-        nurUeberfaellig_one: "Nur überfällige ({{count}})",
-        nurUeberfaellig_other: "Nur überfällige ({{count}})",
-        ohneEmail_one: "{{count}} ohne E-Mail",
-        ohneEmail_other: "{{count}} ohne E-Mail",
+        overdueOnly_one: "Nur überfällige ({{count}})",
+        overdueOnly_other: "Nur überfällige ({{count}})",
+        withoutEmail_one: "{{count}} ohne E-Mail",
+        withoutEmail_other: "{{count}} ohne E-Mail",
       },
       title: "Kunden",
       subtitle: "Rechnungsempfänger: Basis für Ausgangsrechnungen.",
@@ -3124,10 +3417,10 @@ const de = {
       },
       // Plural forms matter here now that cancellations/drafts are filtered out of the count: a
       // customer with one real invoice is common, and the single key read "1 Rechnungen".
-      gesamt_one: "Gesamt ({{count}} Rechnung)",
-      gesamt_other: "Gesamt ({{count}} Rechnungen)",
-      nichtGezaehlt_one: "{{count}} stornierte oder Entwurfs-Rechnung nicht mitgezählt",
-      nichtGezaehlt_other: "{{count}} stornierte oder Entwurfs-Rechnungen nicht mitgezählt",
+      total_one: "Gesamt ({{count}} Rechnung)",
+      total_other: "Gesamt ({{count}} Rechnungen)",
+      notCounted_one: "{{count}} stornierte oder Entwurfs-Rechnung nicht mitgezählt",
+      notCounted_other: "{{count}} stornierte oder Entwurfs-Rechnungen nicht mitgezählt",
       col: {
         number: "Nr.",
         date: "Datum",
@@ -3182,10 +3475,10 @@ const de = {
         createdAt: "Erstellt",
         updatedAt: "Aktualisiert",
       },
-      objekteCount_one: "{{count}} Objekt",
-      objekteCount_other: "{{count}} Objekte",
-      belegeCount_one: "{{count}} Beleg",
-      belegeCount_other: "{{count}} Belege",
+      propertiesCount_one: "{{count}} Objekt",
+      propertiesCount_other: "{{count}} Objekte",
+      documentsCount_one: "{{count}} Beleg",
+      documentsCount_other: "{{count}} Belege",
       empty: "Keine Gesellschaften gefunden.",
       filter: {
         button: "Filter",
@@ -3223,8 +3516,8 @@ const de = {
       archive: {
         title: "Gesellschaft archivieren?",
         desc: "Die Gesellschaft verschwindet aus Listen und Auswahlfeldern. Bestehende Belege bleiben unverändert erhalten, und das Archivieren lässt sich jederzeit rückgängig machen.",
-        mitBelegen_one: "Achtung: {{count}} Beleg ist dieser Gesellschaft zugeordnet.",
-        mitBelegen_other: "Achtung: {{count}} Belege sind dieser Gesellschaft zugeordnet.",
+        withDocuments_one: "Achtung: {{count}} Beleg ist dieser Gesellschaft zugeordnet.",
+        withDocuments_other: "Achtung: {{count}} Belege sind dieser Gesellschaft zugeordnet.",
         reasonPlaceholder: "Grund (optional)",
         cancel: "Abbrechen",
         confirm: "Archivieren",
@@ -3278,15 +3571,15 @@ const de = {
         success: "{{property}} wurde von der Gesellschaft entfernt",
       },
       propertiesLink: "Objekte",
-      objekteCount_one: "{{count}} Objekt",
-      objekteCount_other: "{{count}} Objekte",
+      propertiesCount_one: "{{count}} Objekt",
+      propertiesCount_other: "{{count}} Objekte",
       datevLink: "Adressen",
       datevNone: "Für diese Gesellschaft ist noch keine DATEV-Adresse hinterlegt.",
-      gesamt_one: "{{count}} Beleg",
-      gesamt_other: "{{count}} Belege",
-      fremdeObjekte_one:
+      total_one: "{{count}} Beleg",
+      total_other: "{{count}} Belege",
+      foreignProperties_one:
         "{{count}} Beleg verweist auf ein Objekt einer anderen Gesellschaft ({{total}}). Bitte die Zuordnung prüfen.",
-      fremdeObjekte_other:
+      foreignProperties_other:
         "{{count}} Belege verweisen auf Objekte anderer Gesellschaften ({{total}}). Bitte die Zuordnung prüfen.",
       foreignPropertyHint:
         "Objekt {{property}} ist {{companies}} zugeordnet, nicht dieser Gesellschaft.",
@@ -3449,9 +3742,9 @@ const de = {
         "Ordner für {{bereich}} konnten nicht geladen werden. Falls diese Meldung bleibt, ist meist der Zugang zum Dienst noch nicht eingerichtet.",
       folderExpand: "Ordner ausklappen",
       folderCollapse: "Ordner einklappen",
-      ordnerFehlt_one:
+      folderMissing_one:
         "{{count}} ausgewählter Ordner wird aktuell nicht angezeigt (evtl. gelöscht) und bleibt trotzdem gespeichert.",
-      ordnerFehlt_other:
+      folderMissing_other:
         "{{count}} ausgewählte Ordner werden aktuell nicht angezeigt (evtl. gelöscht) und bleiben trotzdem gespeichert.",
     },
     mailbox: {
@@ -3662,8 +3955,8 @@ const de = {
         "So viel vom Beleg eintragen wie bekannt ist und auf Prüfen klicken. Alles, was auf beliebig steht, gilt als nicht eingeschränkt, genau so, wie eine Regel ein Merkmal behandelt, das sie nicht festlegt.",
       applies: "Diese Regel greift",
       outrankedTitle: "Passen ebenfalls, werden aber verdrängt",
-      weitere_one: "{{count}} weitere Regel passt ebenfalls, wird aber verdrängt.",
-      weitere_other: "{{count}} weitere Regeln passen ebenfalls, werden aber verdrängt.",
+      more_one: "{{count}} weitere Regel passt ebenfalls, wird aber verdrängt.",
+      more_other: "{{count}} weitere Regeln passen ebenfalls, werden aber verdrängt.",
       onlyOne: "Keine andere Regel passt.",
       none: "Keine Regel trifft zu.",
       noneHint: "Der Beleg behält die Kategorie, die er bereits hat.",
@@ -3778,14 +4071,13 @@ const de = {
     },
   },
   chartOfAccounts: {
-    gesellschaft: "Gesellschaft",
-    suche: "Suche",
-    suchePlaceholder: "Konto, Kategorie oder Notiz …",
-    keineTreffer: "Kein Konto passt zur Suche.",
-    keineTrefferHint: "Die Suche prüft Kontonummer, zugeordnete Kategorie und Notiz.",
-    jahr: "Wirtschaftsjahr",
-    hinweis:
-      "Die Zuordnung Kategorie → DATEV-Konto gilt für genau ein Wirtschaftsjahr und genau eine Gesellschaft, weil DATEV den Kontenrahmen jedes Jahr neu aufbaut und zwei Gesellschaften dieselbe Kontonummer für unterschiedliche Zwecke verwenden können. Noch keine echten Kontonummern hinterlegt? Über „Mit KI importieren“ die vom Steuerberater gelieferte Liste einspielen.",
+    company: "Gesellschaft",
+    search: "Suche",
+    searchPlaceholder: "Konto, Kategorie oder Notiz …",
+    noMatches: "Kein Konto passt zur Suche.",
+    noMatchesHint: "Die Suche prüft Kontonummer, zugeordnete Kategorie und Notiz.",
+    fiscalYear: "Wirtschaftsjahr",
+    hint: "Die Zuordnung Kategorie → DATEV-Konto gilt für genau ein Wirtschaftsjahr und genau eine Gesellschaft, weil DATEV den Kontenrahmen jedes Jahr neu aufbaut und zwei Gesellschaften dieselbe Kontonummer für unterschiedliche Zwecke verwenden können. Noch keine echten Kontonummern hinterlegt? Über „Mit KI importieren“ die vom Steuerberater gelieferte Liste einspielen.",
     empty: "Für dieses Jahr ist noch kein Kontenrahmen hinterlegt.",
     emptyHint: "Über „Mit KI importieren“ die Liste vom Steuerberater einspielen.",
     col: {
@@ -5366,10 +5658,10 @@ const de = {
     filter: {
       button: "Filter",
       title: "Protokoll filtern",
-      ereignis: "Ereignis",
-      stufe: "Stufe",
-      verbindung: "Verbindung",
-      zeitraum: "Zeitraum",
+      event: "Ereignis",
+      level: "Stufe",
+      connection: "Verbindung",
+      dateRange: "Zeitraum",
       allEvents: "Alle Ereignisse",
       allLevels: "Alle Stufen",
       allConnections: "Alle Verbindungen",
@@ -5862,6 +6154,10 @@ const de = {
       tabs: {
         rules: "Regeln",
         playground: "Playground",
+      },
+      standard: {
+        step1: "Assistenz",
+        step2: "Bereichsleitung",
       },
       dimension: {
         company: "Gesellschaft",
@@ -6431,9 +6727,9 @@ const de = {
       // Zahlen oben deshalb unvollständig sind, und nicht nur, dass es die Belege gibt.
       warning_one: "{{amount}} aus {{count}} Beleg ohne Kategorie fehlen in allen Zahlen oben.",
       warning_other: "{{amount}} aus {{count}} Belegen ohne Kategorie fehlen in allen Zahlen oben.",
-      hinweis_one:
+      hint_one:
         "Diesem Beleg fehlt eine Kategorie, deshalb zählt er in keiner Zeile oben mit. Zum Öffnen anklicken und dort eine Kategorie setzen.",
-      hinweis_other:
+      hint_other:
         "Diesen {{count}} Belegen fehlt eine Kategorie, deshalb zählen sie in keiner Zeile oben mit. Zum Öffnen anklicken und dort eine Kategorie setzen.",
     },
     receiptList: {
@@ -6957,7 +7253,7 @@ const de = {
 
   // Processing log (Protokoll). status.* keyed by DB status value.
   activityLog: {
-    title: "Protokoll",
+    title: "Aktivitätsprotokoll",
     subtitle: "Verarbeitungs-Log der eingehenden Belege: Eingang, Erkennung und Fehler.",
     search: "Betreff, Absender oder Grund suchen …",
     filterStatus: "Status",
@@ -7186,6 +7482,16 @@ const de = {
       title: "Rollen & Rechte",
       hint: "Legt fest, was eine Rolle standardmäßig erlaubt. Eine Änderung gilt sofort für alle Personen mit dieser Rolle, außer für die, bei denen unter „Personen“ eine Ausnahme gesetzt ist.",
       col: "Was erlaubt ist",
+      create: {
+        button: "Rolle hinzufügen",
+        title: "Rolle hinzufügen",
+        desc: "Legt eine Rolle ohne Rechte an. Was sie erlauben soll, legen Sie danach unten in der Tabelle fest.",
+        field: { label: "Name", placeholder: "z. B. Buchhalter" },
+        cancel: "Abbrechen",
+        save: "Rolle hinzufügen",
+        saving: "Wird hinzugefügt …",
+        toast: { ok: "Rolle hinzugefügt." },
+      },
     },
     crm: {
       label: "Makler-ID im CRM",
@@ -7212,9 +7518,18 @@ const de = {
     permissions: {
       title: "Was diese Person darf",
       hint: "Standardmäßig gilt, was die Rolle erlaubt. Hier setzen Sie Ausnahmen für diese eine Person — an- oder abwählen.",
-      // Group headings above the checkboxes. Named after what the group lets somebody DO, not
-      // after the part of the system it belongs to: "Seiten" told the reader nothing about what
-      // ticking a box in it would allow.
+      category: {
+        bank: "Bank",
+        documents: "Belege",
+        invoices: "Rechnungen",
+        master_data: "Stammdaten",
+        module: "Module",
+        page: "Seiten",
+        payments: "Zahlungen",
+        rules: "Regeln",
+        settings: "Einstellungen",
+        users: "Benutzer",
+      },
     },
     rights: {
       nichtVergebbar:
@@ -7246,7 +7561,12 @@ const de = {
         failed: "Firmenzugriff konnte nicht gespeichert werden: {{error}}",
       },
     },
-    status: { aktiv: "Aktiv", inaktiv: "Inaktiv", nieAngemeldet: "noch nie angemeldet" },
+    status: { active: "Aktiv", inactive: "Inaktiv", neverSignedIn: "noch nie angemeldet" },
+    login: {
+      never: "Noch nie angemeldet",
+      startPassword: "Nutzt noch das Startpasswort",
+      last: "Zuletzt angemeldet am {{date}}",
+    },
     deactivate: {
       title: "Mitarbeiter deaktivieren",
       desc: "{{email}} kann sich danach nicht mehr anmelden. Bisherige Freigaben und Notizen bleiben erhalten.",
@@ -7428,6 +7748,158 @@ const de = {
     serviceNotConfigured:
       "Diese Funktion ist gerade nicht verfügbar. Bitte versuchen Sie es später erneut.",
     noPermission: "Dafür fehlt Ihnen die Berechtigung.",
+  },
+
+  paymentFile: {
+    title: "Zahlungsdatei",
+    description:
+      "Erstellen Sie eine SEPA-Datei für freigegebene Rechnungen und laden Sie sie herunter, um sie bei Ihrer Bank hochzuladen.",
+    manualUploadNotice:
+      "Diese Seite erstellt nur eine Datei. Sie laden sie herunter und laden sie selbst bei Ihrer Bank hoch. Es wird keine Zahlung automatisch ausgelöst.",
+    stepsAriaLabel: "Schritte der Zahlungsdatei",
+    companyLabel: "Gesellschaft",
+    companyPlaceholder: "Gesellschaft wählen",
+    manageAccounts: "Konten verwalten",
+    steps: {
+      prepare: { title: "Vorbereiten", subtitle: "Rechnungen und Konto wählen" },
+      review: { title: "Prüfen", subtitle: "Datei vor dem Herunterladen prüfen" },
+      track: { title: "Verfolgen", subtitle: "Bankbestätigung erfassen" },
+    },
+    payFrom: {
+      label: "Zahlen von",
+      manage: "Konten verwalten",
+      missing: "Legen Sie zuerst ein Zahlungskonto an, bevor Sie eine Datei erstellen.",
+    },
+    prepare: {
+      title: "Freigegebene Rechnungen",
+      description: "Diese Rechnungen sind freigegeben und zahlungsbereit.",
+      searchPlaceholder: "Nach Aussteller oder Rechnungsnummer suchen",
+      empty: "Es warten keine Rechnungen auf Zahlung.",
+      noResults: "Keine Rechnung passt zu Ihrer Suche.",
+      selectAll: "Alle auf dieser Seite auswählen",
+      colSupplier: "Lieferant",
+      colInvoiceNumber: "Rechnungsnummer",
+      colAmount: "Betrag",
+      colDueDate: "Fälligkeitsdatum",
+      colPaymentAmount: "Zu zahlender Betrag",
+      discountBadge: "Skonto angewendet",
+      noInvoiceNumber: "Keine Rechnungsnummer",
+    },
+    draft: {
+      title: "Diese Datei bisher",
+      selected: "Ausgewählte Rechnungen",
+      invoiceTotal: "Rechnungssumme",
+      discountTotal: "Skonto",
+      paymentTotal: "Zu zahlender Betrag",
+      unselectedHint_one: "{{count}} weitere Rechnung könnte noch hinzugefügt werden.",
+      unselectedHint_other: "{{count}} weitere Rechnungen könnten noch hinzugefügt werden.",
+      selectHint: "Wählen Sie links Rechnungen aus, um eine Datei zu erstellen.",
+      build: "Datei erstellen",
+      building: "Wird erstellt…",
+      buildDisabledNoInvoices: "Wählen Sie zuerst mindestens eine Rechnung aus.",
+    },
+    accounts: {
+      title: "Zahlungskonten",
+      empty: "Noch keine Zahlungskonten.",
+      default: "Standard",
+      setDefault: "Als Standard setzen",
+      edit: "Bearbeiten",
+      delete: "Löschen",
+      add: "Konto hinzufügen",
+      close: "Schließen",
+      deleteConfirmTitle: "Dieses Konto löschen?",
+      deleteConfirmBody:
+        "Dieses Konto wird nicht mehr angeboten. Bereits erstellte Dateien aus diesem Konto bleiben unverändert.",
+      deleteConfirmCancel: "Abbrechen",
+      deleteConfirmConfirm: "Löschen",
+    },
+    accountForm: {
+      titleAdd: "Zahlungskonto hinzufügen",
+      titleEdit: "Zahlungskonto bearbeiten",
+      label: "Name",
+      payerName: "Kontoinhaber",
+      payerIban: "IBAN",
+      payerBic: "BIC",
+      painVersion: "Dateiformat",
+      executionDateRule: "Wann gezahlt wird",
+      executionDateAsSoonAsPossible: "So schnell wie möglich",
+      executionDateOnDueDate: "Am Fälligkeitsdatum",
+      save: "Speichern",
+      cancel: "Abbrechen",
+      errorLabelRequired: "Geben Sie einen Namen für dieses Konto ein.",
+      errorNameRequired: "Geben Sie den Namen des Kontoinhabers ein.",
+      errorIbanRequired: "Geben Sie die IBAN des Kontos ein.",
+      errorIbanInvalid: "Das ist keine vollständige IBAN.",
+      errorIbanNotSepa: "Diese IBAN liegt außerhalb des SEPA-Raums.",
+      errorBicInvalid: "Eine BIC hat 8 oder 11 Zeichen, zum Beispiel MALADE51DKH.",
+    },
+    review: {
+      title: "Datei prüfen",
+      none: "Es ist noch keine Datei ausgewählt.",
+      goToPrepare: "Zu Vorbereiten",
+      colRecipient: "Empfänger",
+      colIban: "IBAN",
+      colAmount: "Betrag",
+      colStatus: "Status",
+      downloadFile: "Datei herunterladen",
+      discard: "Diese Datei verwerfen",
+      discardConfirmTitle: "Diese Zahlungsdatei verwerfen?",
+      discardConfirmBody:
+        "Die enthaltenen Rechnungen können danach wieder in eine neue Datei aufgenommen werden.",
+      discardConfirmCancel: "Abbrechen",
+      discardConfirmConfirm: "Verwerfen",
+      statusDraft: "Entwurf",
+      statusGenerated: "Erstellt",
+      statusDownloaded: "Heruntergeladen",
+      statusDiscarded: "Verworfen",
+      skippedReason: {
+        no_bank_account: "Kein bestätigtes Bankkonto für diesen Lieferanten",
+        account_not_confirmed: "Das Bankkonto des Lieferanten ist noch nicht bestätigt",
+        iban_invalid: "Die hinterlegte IBAN ist nicht gültig",
+        iban_outside_sepa: "Die IBAN liegt außerhalb des SEPA-Raums",
+        bic_invalid: "Die hinterlegte BIC ist nicht gültig",
+        bic_country_mismatch: "Die BIC passt nicht zum Land der IBAN",
+        amount_missing: "Es gibt keinen zu zahlenden Betrag",
+        amount_above_maximum: "Der Betrag liegt über dem Höchstwert für eine Überweisung",
+        currency_not_euro: "Die Rechnung ist nicht in Euro",
+        direct_debit:
+          "Dies wird per Lastschrift eingezogen und darf nicht erneut überwiesen werden",
+        already_in_another_run: "Diese Rechnung steckt bereits in einer anderen Zahlungsdatei",
+        recipient_name_empty: "Für den Empfänger ist kein Name hinterlegt",
+        duplicate_reference: "Diese Rechnung steht doppelt in dieser Datei",
+      },
+    },
+    track: {
+      title: "Wartet auf Bankbestätigung",
+      empty: "Nichts wartet auf eine Bankbestätigung.",
+      colRecipient: "Empfänger",
+      colIban: "IBAN",
+      colAmount: "Betrag",
+      colFile: "Datei",
+    },
+    history: {
+      title: "Zahlungsdateien",
+      empty: "Noch keine Zahlungsdateien.",
+      colFile: "Datei",
+      colDate: "Erstellt",
+      colCount: "Rechnungen",
+      colTotal: "Summe",
+      colStatus: "Status",
+    },
+    markPaid: "Als bezahlt markieren",
+    markPaidConfirmTitle: "Als bezahlt bestätigen?",
+    markPaidConfirmBody: "Bestätigen Sie erst, wenn Ihre Bank die Überweisung tatsächlich zeigt.",
+    markPaidConfirmCancel: "Abbrechen",
+    markPaidConfirmConfirm: "Bestätigen",
+    error: {
+      saveAccount: "Das Konto konnte nicht gespeichert werden.",
+      createFile: "Die Zahlungsdatei konnte nicht erstellt werden.",
+      generateFile: "Die Datei konnte nicht erstellt werden.",
+      nothingToTransfer:
+        "Keine der ausgewählten Rechnungen konnte in eine Überweisung umgewandelt werden.",
+      discardFile: "Die Zahlungsdatei konnte nicht verworfen werden.",
+      confirmPaid: "Dies konnte nicht als bezahlt markiert werden.",
+    },
   },
 } as const;
 

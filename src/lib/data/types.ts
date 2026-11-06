@@ -119,6 +119,7 @@ export interface Validation {
   rechnungsnr_vorhanden?: boolean;
   ust_satz_ok?: boolean | null;
   iban_ok?: boolean | null;
+  iban_known_for_supplier?: boolean | null;
   datum_plausibel?: boolean | null;
   smallAmount?: boolean;
   decision_reason?: string;
@@ -430,6 +431,7 @@ export interface Document {
   issuer: string | null;
   issuer_address: string | null;
   document_type: string | null;
+  is_invoice: boolean | null;
   document_date: string | null;
   service_date: string | null;
   service_period_from: string | null;
@@ -506,7 +508,7 @@ export interface Document {
   paid_at: string | null;
   // Where paid_at came from (migration 0024). 'bank_match' = derived from confirmed bank matches
   // and withdrawn again if coverage drops; 'manual' or null = a human set it, never auto-cleared.
-  paid_source: "bank_match" | "manual" | null;
+  paid_source: "bank_match" | "manual" | "payment_file" | null;
   // "Handed over to DATEV" — its own checkbox (Briefing Appendix A6), not just a status.
   // workflow_status='handed_over' is DERIVED from this by a DB trigger (migration 0038),
   // never written directly by the front-end, mirroring how paid_at drives 'paid'.
@@ -537,6 +539,8 @@ export interface Document {
   // Provenance per assignment field, replacing assignment_decided_by above.
   company_assignment_source: FieldSource | null;
   property_assignment_source: FieldSource | null;
+  document_type_source: FieldSource | null;
+  is_invoice_source: FieldSource | null;
   vat_source: FieldSource | null;
   cost_category_source: FieldSource | null;
   // HOW the pipeline resolved the company, which is a different question from who decided it
@@ -577,6 +581,12 @@ export interface Document {
   // immediately deductible), not a VAT deductibility one. Null means not applicable/not decided;
   // most receipts never need this distinction. Human-set only, no rule-engine target.
   income_tax_treatment: IncomeTaxTreatment | null;
+  // Private post the pipeline never files into a company folder (0010_access.sql's restrictive
+  // read policy, not a screen-level hide): only an administering role and whoever it is assigned
+  // to may read the row at all.
+  private_hold: boolean;
+  // Who private_hold mail belongs to. Null until an admin assigns it; see assignPrivateOwner.
+  private_owner_user_id: string | null;
 }
 
 // ---- Open items (view v_open_items, migration 20260819210000) ----
@@ -1242,6 +1252,9 @@ export interface DocumentsListParams {
   dueFromDate?: string;
   dueToDate?: string;
   dueUnknown?: boolean;
+  // Who private_hold mail is assigned to (app_users.id), or PRIVATE_OWNER_UNASSIGNED. Only ever
+  // narrows anything for the rows RLS already lets the caller see.
+  privateOwner?: string;
   sort: DocumentSortKey;
   dir: "asc" | "desc";
   page: number;
@@ -1791,4 +1804,101 @@ export interface TrashRecord {
   deleted_at: string;
   deleted_by: string | null;
   delete_reason: string | null;
+}
+
+// ---- Manual SEPA payment file (supabase/schema/0024_payment_files.sql) ----
+// Separate from PaymentOrder below: this is a file a person downloads and uploads to their own
+// bank, never something sent to a provider directly.
+
+export type PainVersion =
+  "pain.001.001.02" | "pain.001.001.03" | "pain.001.001.08" | "pain.001.001.09";
+
+export type PaymentExecutionDateRule = "as_soon_as_possible" | "on_due_date";
+
+export interface PaymentSettings {
+  id: string;
+  company_id: string;
+  label: string;
+  payer_name: string;
+  payer_iban: string;
+  payer_bic: string | null;
+  pain_version: PainVersion;
+  execution_date_rule: PaymentExecutionDateRule;
+  batch_booking: boolean;
+  max_transfers_per_file: number | null;
+  extra_closing_days: string[];
+  is_default: boolean;
+  updated_at: string;
+  updated_by: string | null;
+  deleted_at: string | null;
+}
+
+export type PaymentFileStatus = "draft" | "generated" | "downloaded" | "discarded";
+
+export interface PaymentFile {
+  id: string;
+  company_id: string;
+  payment_settings_id: string | null;
+  created_by: string | null;
+  created_at: string;
+  downloaded_at: string | null;
+  download_count: number;
+  filename: string | null;
+  pain_version: string | null;
+  total: number;
+  item_count: number;
+  status: PaymentFileStatus;
+  note: string | null;
+}
+
+export interface PaymentFileItem {
+  id: string;
+  payment_file_id: string;
+  company_id: string;
+  document_id: string;
+  recipient_name: string;
+  iban: string;
+  bic: string | null;
+  amount: number;
+  payment_reference: string | null;
+  discount_applied: boolean;
+  skipped_reason: string | null;
+  created_at: string;
+}
+
+export interface PaymentFileDocument {
+  id: string;
+  payment_file_id: string;
+  company_id: string;
+  file_name: string;
+  message_id: string;
+  content: string;
+  transfer_count: number;
+  total: number;
+  created_at: string;
+}
+
+export interface PayableDocument {
+  id: string;
+  issuer: string | null;
+  invoice_number: string | null;
+  amount_gross: number | null;
+  due_date: string | null;
+  payment_method: string | null;
+  supplier_id: string | null;
+  payment_reference: string | null;
+  early_payment_deadline: string | null;
+  early_payment_discount_percent: number | null;
+  early_payment_discount_amount: number | null;
+  paid_at: string | null;
+}
+
+export interface PendingPayment {
+  document_id: string;
+  recipient_name: string;
+  iban: string;
+  amount: number;
+  payment_file_id: string;
+  file_name: string | null;
+  downloaded_at: string | null;
 }

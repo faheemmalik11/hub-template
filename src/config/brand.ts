@@ -27,7 +27,7 @@ export const BRAND = {
   name: "Hub",
 
   /** Wordmark shown in the logo. */
-  wordmark: "Hub",
+  wordmark: "WT",
 
   /** The organization's mail domain, e.g. the login placeholder (`{{domain}}`). */
   emailDomain: "example.com",
@@ -65,9 +65,9 @@ export const BRAND = {
    * artwork recoloured for the dark login panel.
    */
   assets: {
-    icon: "/favicon.ico",
+    icon: "/favicon.svg",
     logo: {
-      mode: "image" as "text" | "image",
+      mode: "text" as "text" | "image",
       src: "/brand/logo.png",
       white: "/brand/logo-white.png",
       /** Intrinsic aspect ratio (1000 × 444), so callers can size by height alone. */

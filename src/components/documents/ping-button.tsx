@@ -179,7 +179,7 @@ export function PingNotice({ kind, id, className }: PingTarget & { className?: s
     <NotifyBanner
       items={items}
       labels={labels}
-      onDismiss={(id: string) => acknowledge.mutate(Number(id))}
+      onDismiss={(id: string) => acknowledge.mutate(id)}
       className={className}
     />
   );

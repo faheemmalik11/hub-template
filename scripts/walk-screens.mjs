@@ -13,7 +13,7 @@ const ROUTES = [
   "/assignment-rules", "/approval-rules", "/exclusion-rules",
   "/vat-rules", "/vat-reserve", "/datev-handover",
   "/reports", "/team", "/onboarding", "/activity-log", "/trash",
-  "/inbox", "/file-naming", "/bank-settings", "/notifications", "/profile",
+  "/inbox", "/file-naming", "/bank-settings", "/payment-file", "/notifications", "/profile",
 ];
 
 const browser = await chromium.launch({ channel: "chrome" });

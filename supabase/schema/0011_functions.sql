@@ -51,7 +51,7 @@ begin
 end;
 $$;
 
-CREATE OR REPLACE FUNCTION public.acknowledge_notification(p_event_id bigint) RETURNS void
+CREATE OR REPLACE FUNCTION public.acknowledge_notification(p_event_id uuid) RETURNS void
     LANGUAGE plpgsql SECURITY DEFINER
     SET search_path TO 'public'
     AS $$
@@ -110,6 +110,7 @@ begin
     v_text := case new.paid_source
       when 'bank_match' then 'Workflow: paid, confirmed by the bank'
       when 'manual' then 'Workflow: Bezahlt (manuell markiert)'
+      when 'payment_file' then 'Workflow: paid, confirmed after a payment file'
       else 'Workflow: Bezahlt'
     end;
 
@@ -701,6 +702,20 @@ CREATE OR REPLACE FUNCTION public.chain_people() RETURNS TABLE(id uuid, name tex
    order by u.name nulls last;
 $$;
 
+CREATE OR REPLACE FUNCTION public.team_login_status() RETURNS TABLE(user_id uuid, last_sign_in_at timestamptz, never_signed_in boolean)
+    LANGUAGE sql STABLE SECURITY DEFINER
+    SET search_path TO 'public', 'auth'
+    AS $$
+  select a.id, u.last_sign_in_at, u.last_sign_in_at is null
+    from public.app_users a
+    left join auth.users u on u.id = a.auth_user_id
+   where public.is_admin();
+$$;
+
+revoke execute on function public.team_login_status() from public;
+revoke execute on function public.team_login_status() from anon;
+grant execute on function public.team_login_status() to authenticated;
+
 CREATE OR REPLACE FUNCTION public.channel_secret_name(p_channel text) RETURNS text
     LANGUAGE sql IMMUTABLE
     AS $$
@@ -1059,6 +1074,32 @@ begin
 end
 $$;
 
+-- document_history is the audit trail a person reads on the detail screen, so once a row is
+-- written it has to stay exactly as written. INSERT is still open to anyone the area policy in
+-- 0010_access.sql already lets write; UPDATE, DELETE and TRUNCATE are refused unconditionally, for
+-- every role including the pipeline's own service role, which is why this is a trigger and not
+-- only the grant revoked beside it. actor/created_at are stamped here rather than trusted from the
+-- caller only for authenticated/anon: a client role could otherwise write history under somebody
+-- else's name or backdate it; the pipeline's own service-role writes keep the timestamp it sends.
+CREATE OR REPLACE FUNCTION public.guard_document_history_immutable() RETURNS trigger
+    LANGUAGE plpgsql
+    AS $$
+begin
+  if tg_op = 'INSERT' then
+    if current_user in ('authenticated', 'anon') then
+      new.actor := auth.jwt() ->> 'email';
+      new.created_at := now();
+    end if;
+    return new;
+  elsif tg_op = 'UPDATE' then
+    raise exception 'document_history rows cannot be changed' using errcode = '42501';
+  elsif tg_op = 'DELETE' then
+    raise exception 'document_history rows cannot be deleted' using errcode = '42501';
+  end if;
+  raise exception 'document_history cannot be truncated' using errcode = '42501';
+end;
+$$;
+
 CREATE OR REPLACE FUNCTION public.invoice_iban_checksum_ok(candidate text) RETURNS boolean
     LANGUAGE sql IMMUTABLE
     SET search_path TO 'public'
@@ -1110,6 +1151,13 @@ CREATE OR REPLACE FUNCTION public.amount_paid_out(p_gross numeric, p_tip numeric
   select case when p_gross > 0 then p_gross + coalesce(p_tip, 0) else p_gross end;
 $$;
 
+CREATE OR REPLACE FUNCTION public.document_is_countable(p_status text, p_private_hold boolean) RETURNS boolean
+    LANGUAGE sql IMMUTABLE
+    SET search_path TO 'public'
+    AS $$
+  select p_status is distinct from 'duplicate' and not coalesce(p_private_hold, false);
+$$;
+
 CREATE OR REPLACE FUNCTION public.invoice_matched_sum(p_invoice uuid) RETURNS numeric
     LANGUAGE sql STABLE
     SET search_path TO 'public'
@@ -1123,10 +1171,10 @@ CREATE OR REPLACE FUNCTION public.invoice_queue_kpis(p_today date DEFAULT CURREN
     LANGUAGE sql STABLE
     SET search_path TO 'public'
     AS $$
-      with base as (select * from public.documents where true and deleted_at is null and archived_at is null and not_relevant_at is null)
+      with base as (select * from public.documents where true and private_hold = false and deleted_at is null and archived_at is null and not_relevant_at is null)
       select 'all'::text, count(*), coalesce(sum(amount_gross), 0) from base
       union all
-      select 'needs_action'::text, count(*), coalesce(sum(amount_gross), 0) from base where status = 'needs_review'
+      select 'needs_action'::text, count(*), coalesce(sum(amount_gross), 0) from base where status = 'needs_review' and is_invoice = true
       union all
       select 'missing_assignment'::text, count(*), coalesce(sum(amount_gross), 0) from base where company_id is null
       union all
@@ -3303,6 +3351,10 @@ begin
 end;
 $$;
 
+revoke execute on function public.set_datev_route(uuid, text, text, boolean, text, text) from public;
+revoke execute on function public.set_datev_route(uuid, text, text, boolean, text, text) from anon;
+grant execute on function public.set_datev_route(uuid, text, text, boolean, text, text) to authenticated;
+
 CREATE OR REPLACE FUNCTION public.set_my_name(p_name text) RETURNS void
     LANGUAGE plpgsql SECURITY DEFINER
     SET search_path TO 'public'
@@ -3898,6 +3950,10 @@ begin
    where id = p_id;
 end;
 $$;
+
+revoke execute on function public.update_datev_route_status(uuid, boolean, text, text) from public;
+revoke execute on function public.update_datev_route_status(uuid, boolean, text, text) from anon;
+grant execute on function public.update_datev_route_status(uuid, boolean, text, text) to authenticated;
 
 CREATE OR REPLACE FUNCTION public.upsert_external_transactions(p_rows jsonb, p_account_id uuid DEFAULT NULL::uuid) RETURNS TABLE(inserted_count integer, updated_count integer)
     LANGUAGE plpgsql SECURITY DEFINER

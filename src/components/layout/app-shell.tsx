@@ -29,6 +29,7 @@ import {
   PieChart,
   Receipt,
   ScrollText,
+  Send,
   Settings,
   ShieldCheck,
   Tags,
@@ -68,6 +69,9 @@ import { useActingAs, useInvoicesReturnedToMe } from "@/data";
 import { useTranslation } from "@/lib/i18n";
 import { pageTitle } from "@/config/brand";
 import { useTourLabels, useTours } from "@/lib/tour/tours";
+import { OnboardingEventsProvider } from "@/kit/components/onboarding";
+import { OnboardingPracticeProvider } from "@/kit/onboarding";
+import { OnboardingPracticeRunner } from "@/features/onboarding-practice/onboarding-practice-runner";
 import { useTourSeenStore } from "@/lib/tour/use-tour-seen-store";
 import { TourOpenFlag } from "@/lib/tour/tour-open-flag";
 import { cn } from "@/lib/utils";
@@ -144,6 +148,12 @@ const nav: NavEntry[] = [
       // both to the assistant role at the database.
       { labelKey: "nav.bankAccounts", to: "/bank-accounts", icon: Landmark },
       { labelKey: "nav.oposWhitelist", to: "/opos-whitelist", icon: ListChecks },
+      {
+        labelKey: "nav.paymentFile",
+        to: "/payment-file",
+        icon: Send,
+        permission: PERMISSIONS.pagePaymentFile,
+      },
       // Readable by everyone, writable by an admin. The one setting on it explains behaviour the
       // whole team meets daily -- how far a payment may miss an invoice and still be suggested --
       // so hiding the page from non-admins would make that behaviour look arbitrary.
@@ -355,91 +365,103 @@ export function AppShell({ children }: { children: ReactNode }) {
 
   return (
     <TourProvider tours={tours} pathname={pathname} labels={tourLabels} seenStore={tourSeenStore}>
-      <TourOpenFlag />
-      <Shell
-        nav={shellNav}
-        badges={badges}
-        toaster={<Toaster position="bottom-right" />}
-        homeLabel={t("nav.overview")}
-        staticLeafLabels={staticLeafLabels}
-        breadcrumbAriaLabel={t("breadcrumb.ariaLabel")}
-        closeLabel={t("nav.menu")}
-        logo={
-          <Link
-            to="/"
-            aria-label={t("nav.toOverview")}
-            className="flex items-center gap-2 overflow-hidden"
+      <OnboardingEventsProvider>
+        <OnboardingPracticeProvider>
+          <TourOpenFlag />
+          <Shell
+            nav={shellNav}
+            badges={badges}
+            toaster={<Toaster position="bottom-right" />}
+            homeLabel={t("nav.overview")}
+            staticLeafLabels={staticLeafLabels}
+            breadcrumbAriaLabel={t("breadcrumb.ariaLabel")}
+            closeLabel={t("nav.menu")}
+            logo={
+              <Link
+                to="/"
+                aria-label={t("nav.toOverview")}
+                className="flex items-center gap-2 overflow-hidden"
+              >
+                <Logo className="h-7 shrink-0 group-data-[collapsible=icon]:h-6" />
+              </Link>
+            }
+            headerActions={
+              <>
+                <TourButton />
+                <LanguageSwitch />
+                <AppNotificationBell />
+                {user && (
+                  <DropdownMenu>
+                    <DropdownMenuTrigger asChild>
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        className="cursor-pointer gap-2 pl-1.5 pr-2 hover:bg-transparent"
+                      >
+                        <Avatar
+                          name={user.name}
+                          email={user.email}
+                          imageUrl={pictureUrl}
+                          size="sm"
+                        />
+                        <span className="hidden max-w-[12rem] truncate text-sm text-foreground sm:inline">
+                          {user.name}
+                        </span>
+                      </Button>
+                    </DropdownMenuTrigger>
+                    <DropdownMenuContent
+                      align="end"
+                      sideOffset={10}
+                      collisionPadding={12}
+                      className={cn(
+                        "w-56 overflow-visible border-t-4 border-t-primary shadow-xl",
+                        "relative before:absolute before:h-0 before:w-0 before:right-5 before:content-['']",
+                        "data-[side=bottom]:before:-top-2 data-[side=bottom]:before:border-x-8 data-[side=bottom]:before:border-b-8 data-[side=bottom]:before:border-x-transparent data-[side=bottom]:before:border-b-primary",
+                        "data-[side=top]:before:-bottom-2 data-[side=top]:before:border-x-8 data-[side=top]:before:border-t-8 data-[side=top]:before:border-x-transparent data-[side=top]:before:border-t-primary",
+                      )}
+                    >
+                      <DropdownMenuLabel className="font-normal">
+                        <div className="text-sm font-medium text-foreground">{user.name}</div>
+                        <div className="text-xs text-muted-foreground">{user.email}</div>
+                        {role && (
+                          <span className="mt-1.5 inline-flex rounded-md bg-brand-wash px-1.5 py-0.5 text-[0.7rem] font-medium text-brand-dark">
+                            {t(`team.role.${role}`)}
+                          </span>
+                        )}
+                      </DropdownMenuLabel>
+                      <DropdownMenuSeparator />
+                      <DropdownMenuItem asChild className="cursor-pointer">
+                        <Link to="/profile">
+                          <UserRound className="size-4" />
+                          {t("nav.myProfile")}
+                        </Link>
+                      </DropdownMenuItem>
+                      <DropdownMenuItem onClick={logout} className="cursor-pointer">
+                        <LogOut className="size-4" />
+                        {t("nav.logout")}
+                      </DropdownMenuItem>
+                    </DropdownMenuContent>
+                  </DropdownMenu>
+                )}
+              </>
+            }
+            footer={
+              adminItems.length > 0 ? (
+                <AdminMenu items={adminItems} active={adminActive} />
+              ) : undefined
+            }
           >
-            <Logo className="h-9 shrink-0 group-data-[collapsible=icon]:h-7" />
-          </Link>
-        }
-        headerActions={
-          <>
-            <TourButton />
-            <LanguageSwitch />
-            <AppNotificationBell />
-            {user && (
-              <DropdownMenu>
-                <DropdownMenuTrigger asChild>
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    className="cursor-pointer gap-2 pl-1.5 pr-2 hover:bg-transparent"
-                  >
-                    <Avatar name={user.name} email={user.email} imageUrl={pictureUrl} size="sm" />
-                    <span className="hidden max-w-[12rem] truncate text-sm text-foreground sm:inline">
-                      {user.name}
-                    </span>
-                  </Button>
-                </DropdownMenuTrigger>
-                <DropdownMenuContent
-                  align="end"
-                  sideOffset={10}
-                  collisionPadding={12}
-                  className={cn(
-                    "w-56 overflow-visible border-t-4 border-t-primary shadow-xl",
-                    "relative before:absolute before:h-0 before:w-0 before:right-5 before:content-['']",
-                    "data-[side=bottom]:before:-top-2 data-[side=bottom]:before:border-x-8 data-[side=bottom]:before:border-b-8 data-[side=bottom]:before:border-x-transparent data-[side=bottom]:before:border-b-primary",
-                    "data-[side=top]:before:-bottom-2 data-[side=top]:before:border-x-8 data-[side=top]:before:border-t-8 data-[side=top]:before:border-x-transparent data-[side=top]:before:border-t-primary",
-                  )}
-                >
-                  <DropdownMenuLabel className="font-normal">
-                    <div className="text-sm font-medium text-foreground">{user.name}</div>
-                    <div className="text-xs text-muted-foreground">{user.email}</div>
-                    {role && (
-                      <span className="mt-1.5 inline-flex rounded-md bg-brand-wash px-1.5 py-0.5 text-[0.7rem] font-medium text-brand-dark">
-                        {t(`team.role.${role}`)}
-                      </span>
-                    )}
-                  </DropdownMenuLabel>
-                  <DropdownMenuSeparator />
-                  <DropdownMenuItem asChild className="cursor-pointer">
-                    <Link to="/profile">
-                      <UserRound className="size-4" />
-                      {t("nav.myProfile")}
-                    </Link>
-                  </DropdownMenuItem>
-                  <DropdownMenuItem onClick={logout} className="cursor-pointer">
-                    <LogOut className="size-4" />
-                    {t("nav.logout")}
-                  </DropdownMenuItem>
-                </DropdownMenuContent>
-              </DropdownMenu>
+            {permissionsUnavailable && (
+              <div className="mb-4 flex items-start gap-2 rounded-lg border border-amber-300 bg-amber-50 px-3 py-2 text-sm text-amber-900">
+                <TriangleAlert className="mt-0.5 size-4 shrink-0 text-amber-600" />
+                <span>{t("access.permissionsNotLoaded")}</span>
+              </div>
             )}
-          </>
-        }
-        footer={
-          adminItems.length > 0 ? <AdminMenu items={adminItems} active={adminActive} /> : undefined
-        }
-      >
-        {permissionsUnavailable && (
-          <div className="mb-4 flex items-start gap-2 rounded-lg border border-amber-300 bg-amber-50 px-3 py-2 text-sm text-amber-900">
-            <TriangleAlert className="mt-0.5 size-4 shrink-0 text-amber-600" />
-            <span>{t("access.permissionsNotLoaded")}</span>
-          </div>
-        )}
-        {showDenied ? <NoAccess variant="page" /> : children}
-      </Shell>
+            {showDenied ? <NoAccess variant="page" /> : children}
+          </Shell>
+          <OnboardingPracticeRunner />
+        </OnboardingPracticeProvider>
+      </OnboardingEventsProvider>
     </TourProvider>
   );
 }

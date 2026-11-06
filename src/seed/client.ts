@@ -273,7 +273,30 @@ function builder(rows: unknown[]) {
 
 type SeedSession = { user: { email: string; user_metadata: { name?: string } } };
 
-let session: SeedSession | null = null;
+const SESSION_KEY = "hub.seed.session";
+
+function readStoredSession(): SeedSession | null {
+  try {
+    const raw = localStorage.getItem(SESSION_KEY);
+    return raw ? (JSON.parse(raw) as SeedSession) : null;
+  } catch {
+    return null;
+  }
+}
+
+function writeStoredSession(value: SeedSession | null) {
+  try {
+    if (value) {
+      localStorage.setItem(SESSION_KEY, JSON.stringify(value));
+    } else {
+      localStorage.removeItem(SESSION_KEY);
+    }
+  } catch {
+    return;
+  }
+}
+
+let session: SeedSession | null = typeof window === "undefined" ? null : readStoredSession();
 let authListener: ((event: string, session: SeedSession | null) => void) | null = null;
 
 /**
@@ -292,11 +315,13 @@ export const seedAuth = {
     const match = team.find((p) => p.email.toLowerCase() === email.trim().toLowerCase());
     if (!match) return { error: { message: "Invalid login credentials" } };
     session = { user: { email: match.email, user_metadata: { name: match.name } } };
+    writeStoredSession(session);
     authListener?.("SIGNED_IN", session);
     return { error: null };
   },
   signOut: async () => {
     session = null;
+    writeStoredSession(null);
     authListener?.("SIGNED_OUT", null);
     return { error: null };
   },

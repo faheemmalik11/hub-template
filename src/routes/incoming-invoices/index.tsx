@@ -1,5 +1,6 @@
 import { TABLE } from "@/config/tables";
 import { createFileRoute, Link } from "@tanstack/react-router";
+import { toast } from "sonner";
 import { PeriodPicker } from "@/components/data-table/period-picker";
 import {
   usePeriodOptions,
@@ -18,6 +19,7 @@ import {
   ChevronRight,
   LayoutGrid,
   Loader2,
+  Lock,
   SlidersHorizontal,
   Table as TableIcon,
   Trash2,
@@ -58,10 +60,13 @@ import {
   useDocumentsList,
   useBulkInvoiceActions,
   useCompanies,
+  useEmployees,
 } from "@/data";
+import { useAuth } from "@/lib/auth";
 import { useTranslation } from "@/lib/i18n";
 import {
   COMPANY_WITHOUT,
+  PRIVATE_OWNER_UNASSIGNED,
   PROPERTY_WITHOUT,
   WORKFLOW_ORDER,
   documentTypeKey,
@@ -112,7 +117,7 @@ import {
   useRowSelection,
   type BulkAction,
 } from "@/kit/components/bulk-actions";
-import type { DocumentsFilter, DocumentListRow, DocumentSortKey } from "@/lib/data/types";
+import type { DocumentsFilter, DocumentListRow, DocumentSortKey, Employee } from "@/lib/data/types";
 import { pageTitle } from "@/config/brand";
 import {
   ALL,
@@ -363,6 +368,7 @@ function IncomingInvoicesPage() {
     dueFromDate: dueBand?.fromDate,
     dueToDate: dueBand?.toDate,
     dueUnknown: dueBand?.unknown,
+    privateOwner: search.privateOwner,
   };
   // EVERY filter the list applies goes to the tiles, except `status` -- that one stays out on
   // purpose, so the Erkannt / Zu pruefen tiles keep working as status toggles. `ids` (the AI
@@ -444,6 +450,12 @@ function IncomingInvoicesPage() {
 
   const facetsQ = useDocumentsFacets();
   const companiesQ = useCompanies();
+  const { isAdmin, appUserId } = useAuth();
+  // Only an administering role may assign private post (0010_access.sql lets the current owner
+  // keep updating their own row, but not hand it to somebody else), so the picker and the filter's
+  // own options stay admin-only; everybody else never sees a name they could not have assigned.
+  const employeesQ = useEmployees();
+  const employees = isAdmin ? (employeesQ.data ?? []).filter((e) => e.is_active) : [];
   // Resolved once for the whole page: all three master-data queries behind it are unscoped single
   // requests, so a list of 50 rows costs what one row costs.
   const costCentres = useCostCentreResolver();
@@ -613,6 +625,30 @@ function IncomingInvoicesPage() {
       },
       run: bulk.assignCompany,
     },
+    // Only an administering role may hand private post to somebody (0010_access.sql), so the
+    // action itself is admin-only rather than merely hidden: a non-admin's own click would just
+    // fail against the database.
+    ...(isAdmin
+      ? [
+          {
+            key: "assign-private-owner",
+            label: t("documents.list.bulk.privatPerson.label"),
+            icon: Lock,
+            confirmTitle: t("documents.list.bulk.privatPerson.titel", {
+              count: selection.selectedCount,
+            }),
+            confirmDescription: t("documents.list.bulk.privatPerson.beschreibung"),
+            input: {
+              kind: "choice" as const,
+              label: t("documents.list.bulk.privatPerson.feld"),
+              placeholder: t("documents.list.bulk.privatPerson.platzhalter"),
+              required: true,
+              options: employees.map((e) => ({ value: e.id, label: e.name ?? e.email })),
+            },
+            run: bulk.assignPrivateOwner,
+          },
+        ]
+      : []),
     {
       key: "delete",
       label: t("documents.list.bulk.loeschen.label"),
@@ -772,12 +808,33 @@ function IncomingInvoicesPage() {
       options: [
         { value: ALL, label: t("documents.list.filter.alleAmpeln") },
         { value: "auffaellig", label: t("documents.list.filter.ampelAuffaellig") },
-        { value: "green", label: t("documents.ampel.gruen") },
-        { value: "yellow", label: t("documents.ampel.gelb") },
-        { value: "red", label: t("documents.ampel.rot") },
+        { value: "green", label: t("documents.ampel.green") },
+        { value: "yellow", label: t("documents.ampel.yellow") },
+        { value: "red", label: t("documents.ampel.red") },
       ],
       onChange: (v) => setSearch({ trafficLight: v }),
     },
+    // Only an administering role can assign private post, so only they get a filter that could
+    // ever narrow anything: RLS already means nobody else's query against another person's
+    // private_owner_user_id returns a row.
+    ...(isAdmin
+      ? [
+          {
+            key: "privatPerson",
+            label: t("documents.list.filter.privatPerson"),
+            value: search.privateOwner,
+            options: [
+              { value: ALL, label: t("documents.list.filter.allePrivatPersonen") },
+              {
+                value: PRIVATE_OWNER_UNASSIGNED,
+                label: t("documents.list.filter.privatPersonUnassigned"),
+              },
+              ...employees.map((e) => ({ value: e.id, label: e.name ?? e.email })),
+            ],
+            onChange: (v: string | undefined) => setSearch({ privateOwner: v }),
+          },
+        ]
+      : []),
   ];
 
   const activeFurtherFilter = furtherFilter.filter((f) => !!f.value);
@@ -1252,6 +1309,7 @@ function IncomingInvoicesPage() {
                   {rows.map((b) => (
                     <TableRow
                       key={b.id}
+                      data-tour={`invoice-row-${b.id}`}
                       ref={
                         b.id === lastOpenedId
                           ? (node) => node?.scrollIntoView({ block: "nearest" })
@@ -1307,6 +1365,24 @@ function IncomingInvoicesPage() {
                             {isDirectDebit(b.payment_method) && <DirectDebitBadge />}
                           </div>
                         ) : null}
+                        {b.private_hold && (
+                          <PrivateOwnerRow
+                            document={b}
+                            isAdmin={isAdmin}
+                            appUserId={appUserId}
+                            employees={employees}
+                            onAssign={(userId) =>
+                              bulk
+                                .assignPrivateOwner(b.id, userId)
+                                .then(() => bulk.refresh())
+                                .catch((e: Error) =>
+                                  toast.error(
+                                    t("documents.list.privatPerson.zuweisen") + ": " + e.message,
+                                  ),
+                                )
+                            }
+                          />
+                        )}
                       </TableCell>
                       <TableCell>
                         <CompanyChip code={b.company_code} />
@@ -1595,6 +1671,45 @@ function CostCentreRow({
         ? t("documents.list.row.kostenstelle", { nr: costCentre.number })
         : t("documents.list.row.kostenstelleFehlt")}
     </span>
+  );
+}
+
+// Private post (0010_access.sql), so this only ever renders for an admin or for the row's own
+// assigned owner -- every other viewer has it filtered out by RLS before it reaches the list.
+function PrivateOwnerRow({
+  document,
+  isAdmin,
+  appUserId,
+  employees,
+  onAssign,
+}: {
+  document: DocumentListRow;
+  isAdmin: boolean;
+  appUserId: string | null;
+  employees: Employee[];
+  onAssign: (userId: string | null) => void;
+}) {
+  const { t } = useTranslation();
+  const owner = employees.find((e) => e.id === document.private_owner_user_id);
+  return (
+    <div className="mt-1 flex items-center gap-1.5">
+      <Lock className="size-3 shrink-0 text-muted-foreground" />
+      {isAdmin ? (
+        <Combobox
+          value={document.private_owner_user_id ?? ""}
+          onValueChange={(v) => onAssign(v || null)}
+          className="h-6 w-36 text-xs"
+          placeholder={t("documents.list.privatPerson.zuweisen")}
+          options={employees.map((e) => ({ value: e.id, label: e.name ?? e.email }))}
+        />
+      ) : (
+        <span className="text-xs text-muted-foreground">
+          {document.private_owner_user_id === appUserId
+            ? t("documents.list.privatPerson.mirZugewiesen")
+            : (owner?.name ?? t("documents.list.privatPerson.nichtZugewiesen"))}
+        </span>
+      )}
+    </div>
   );
 }
 
@@ -1893,6 +2008,7 @@ function KanbanColumn({
         {items.map((b) => (
           <Link
             key={b.id}
+            data-tour={`invoice-row-${b.id}`}
             to="/incoming-invoices/$nr"
             params={{ nr: b.id }}
             search={detailSearch}

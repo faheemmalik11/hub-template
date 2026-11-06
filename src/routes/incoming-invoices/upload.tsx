@@ -28,6 +28,7 @@ import { uploadToStorage } from "@/features/file-upload/upload";
 import { useTranslation } from "@/lib/i18n";
 import { pageTitle } from "@/config/brand";
 import { errorText } from "@/lib/data/format";
+import { useEmitOnboardingEvent } from "@/kit/components/onboarding";
 
 export const Route = createFileRoute("/incoming-invoices/upload")({
   head: () => ({ meta: [{ title: pageTitle("Beleg hochladen") }] }),
@@ -91,6 +92,7 @@ function UploadPage() {
   const [files, setFiles] = useState<UploadFile[]>([]);
   const controllers = useRef(new Map<string, AbortController>());
   const createUpload = useCreateUploadDocuments();
+  const emitOnboardingEvent = useEmitOnboardingEvent();
 
   function filesAdd(list: FileList | File[]) {
     const arr = Array.from(list);
@@ -177,6 +179,9 @@ function UploadPage() {
       await createUpload.mutateAsync({ files: inputs, forTransactionId: forTransaction });
       setFiles((prev) => prev.map((d) => (d.phase === "uploading" ? { ...d, phase: "done" } : d)));
       toast.success(t("upload.toast.saved", { count: open.length }));
+      for (const uploaded of inputs) {
+        emitOnboardingEvent({ type: "document_uploaded", recordId: uploaded.invoiceId });
+      }
     } catch (e) {
       toast.error(t("upload.toast.failed", { error: errorText(e) }));
     }

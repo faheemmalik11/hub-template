@@ -99,7 +99,7 @@ export function SyncStatus({ className }: { className?: string }) {
   }
   if (health.status === "error" && health.lastErrorMessage) details.push(health.lastErrorMessage);
   if (health.skippedSinceRun > 0) {
-    details.push(t("bankAccounts.health.uebersprungen", { count: health.skippedSinceRun }));
+    details.push(t("bankAccounts.health.skipped", { count: health.skippedSinceRun }));
   }
 
   return (
@@ -141,6 +141,6 @@ function relativeAgo(
   if (minutes === null) return "—";
   if (minutes < 2) return t("bankAccounts.health.ago.now");
   if (minutes < 60) return t("bankAccounts.health.ago.min", { count: minutes });
-  if (minutes < 2880) return t("bankAccounts.health.ago.std", { count: Math.round(minutes / 60) });
-  return t("bankAccounts.health.ago.tage", { count: Math.round(minutes / 1440) });
+  if (minutes < 2880) return t("bankAccounts.health.ago.hour", { count: Math.round(minutes / 60) });
+  return t("bankAccounts.health.ago.day", { count: Math.round(minutes / 1440) });
 }

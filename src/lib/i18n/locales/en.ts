@@ -771,6 +771,7 @@ const en = {
     commissionDeals: "Commissions",
     brokerBonuses: "Bonuses",
     onboarding: "Onboarding checklist",
+    onboardingTour: "First steps",
     overview: "Overview",
     invoices: "Invoices",
     incomingInvoices: "Incoming invoices",
@@ -795,7 +796,7 @@ const en = {
     exclusionRules: "Exclusion rules",
     manualBookings: "Manual bookings",
     costAnalysis: "Cost analysis",
-    log: "Log",
+    log: "Activity log",
     administration: "Administration",
     team: "Team",
     notifications: "Alerts & notifications",
@@ -853,9 +854,9 @@ const en = {
       slackDesc: "Get important updates and a daily summary in Slack.",
       notificationsSection: "Notifications",
       event: {
-        zuweisung: "An invoice assigned to me",
-        rueckfrage: "Question raised on an invoice",
-        abgelehnt: "Invoice rejected and sent back",
+        assigned: "An invoice assigned to me",
+        query: "Question raised on an invoice",
+        rejected: "Invoice rejected and sent back",
         ping: "Approval or feedback requested",
       },
       slackChannelScope:
@@ -898,13 +899,13 @@ const en = {
     },
     event: {
       neu: "New receipts",
-      zuweisung: "Assigned to me",
-      rueckfrage: "Questions for me",
-      abgelehnt: "Rejections back to me",
+      assigned: "Assigned to me",
+      query: "Questions for me",
+      rejected: "Rejections back to me",
       eskaliert: "Approvals I cover that are overdue",
       zuPruefen: "Receipts waiting for review",
       faellig: "Overdue invoices",
-      vorschlaege: "Payment matches to confirm",
+      suggestions: "Payment matches to confirm",
       fehler: "Processing errors",
       ping: "Direct reminders to me",
       personen: "Open items for each person",
@@ -1104,11 +1105,206 @@ const en = {
   onboarding: {
     title: "Onboarding checklist",
     progress: "Your progress",
+    practice: {
+      panelNext: "Next step",
+      panelFinishStep: "Finish",
+      panelReset: "Start again",
+      panelFinished: "All done! You have completed every step.",
+      standInReview:
+        "Normally you would send the invoice for review now. Your account cannot do that, so we do it for you.",
+      standInApprove:
+        "Your approver would approve the invoice now. We do it for you, so you can continue.",
+      standInFinalApprove:
+        "Your final approver would approve the invoice now. We do it for you, so you can continue.",
+      standInPay:
+        "Someone who may book payments would confirm this payment now. We do it for you, so you can continue.",
+      rolePay: "Payment step",
+      roleApprove: "Approval step",
+      roleFinalApprove: "Final approval step",
+      yourRole: "Your role: {{role}}",
+      panelPause: "Pause the practice",
+      panelClose: "Exit the practice",
+      completionTitle: "All done!",
+      completionMessage: "You have completed every step. Exit the practice, or do it again.",
+      completionExit: "Exit the practice",
+      completionRestart: "Start again",
+      startChecking: "Checking where your practice stands...",
+      startTitle: "Practice: process an invoice",
+      startIntro:
+        "You work through a sample invoice step by step, from the upload to the final approval.",
+      startHidesData:
+        "While the practice runs, your real data is hidden. You only see practice data. None of it reaches your bookkeeping.",
+      startHowToLeave:
+        "You can leave the practice at any time. Use the Pause button at the top of the screen or in the steps panel.",
+      startButton: "Start the practice",
+      resumeIntro: "You already started this practice. You can carry on where you stopped.",
+      resumeButton: "Resume",
+      restartButton: "Start again",
+      staleNotice:
+        "Practice mode is still on, but no practice is running here. While it is on, you cannot see your real data.",
+      endModeButton: "End practice mode",
+      progressLost:
+        "The practice invoice no longer exists. The practice starts from the beginning.",
+      startFailed: "That did not work. Please try again.",
+      panelCollapse: "Hide the steps",
+      panelExpand: "Show the steps",
+      pageInvoices: "Incoming invoices",
+      pageInvoice: "Invoice",
+      taskTitle: "Process an invoice from start to finish",
+      taskGoal: "Learn how to upload, check, assign, approve and pay an invoice.",
+      uploadInstruction: "Upload the sample invoice.",
+      uploadOutcome: "The invoice enters the Hub here. From now on the system reads it for you.",
+      openInstruction: "Open the invoice you just uploaded.",
+      openOutcome:
+        "Opening it shows the file and the data the system read side by side. This is how you check the reading.",
+      amountInstruction:
+        "Compare the total amount with the file. Correct the amount if it is wrong.",
+      amountOutcome:
+        "The system can misread one digit. A wrong amount would then be approved and paid wrong.",
+      amountDeviation: "Who checks the invoice amounts at your company?",
+      amountHelp:
+        "Compare the gross amount in the app with the amount on the file. Change only that amount. Net plus VAT must equal the gross amount.",
+      companyInstruction: "Pick the practice company. Its code starts with DEMO-.",
+      companyOutcome:
+        "Every invoice belongs to exactly one company. The right company sends it to the right books and the right approver.",
+      companyHelp: "Look for the company whose code starts with DEMO-.",
+      propertyInstruction: "Pick the practice property. Its code ends with -P1.",
+      propertyOutcome:
+        "Costs belong to one specific property. The right property shows you what each building really costs.",
+      propertyDeviation: "Do you assign invoices to properties as well as companies?",
+      propertyHelp: "Look for the property whose code ends with -P1.",
+      reviewInstruction: "Send the invoice for review.",
+      reviewOutcome:
+        "This click says the data is right. Now a second person checks it before any money moves.",
+      reviewDeviation: "From what amount does an invoice need approval at your company?",
+      approveInstruction: "Check the invoice and approve it.",
+      approveOutcome:
+        "Money is involved, so a person decides. Without approval, the invoice cannot be paid.",
+      approveDeviation: "Who approves invoices at your company?",
+      finalApproveInstruction: "Give the invoice its final approval.",
+      finalApproveOutcome: "The final approval is the last check before the invoice can be paid.",
+      bankInstruction: "Confirm the matching bank payment for this invoice.",
+      bankOutcome:
+        "Only once the bank line is matched to the invoice does it count as paid. This stops anything being paid twice.",
+      bankHelp:
+        "Look for the bank payment with the same amount as the invoice, and confirm the match.",
+      stepCounter: "Step {{current}} of {{total}}",
+      waiting: "Your turn",
+      outcomeTitle: "Why this matters",
+      goToPage: "Open the {{page}} page to continue.",
+      goToPageButton: "Open the page",
+      scrollToTarget: "It is further down this page.",
+      scrollToTargetButton: "Show me where",
+      bannerLabel: "Practice mode",
+    },
+    stopCases: {
+      cardTitle: "When does the system stop?",
+      cardDescription:
+        "See on three practice invoices when the Hub stops and a person has to decide (about 10 minutes).",
+      startTitle: "Practice: when does the system stop?",
+      startIntro:
+        "You work through three practice invoices: a changed bank account, an invoice the system is unsure about, and a document that is not an invoice at all.",
+      startHidesData:
+        "While the practice runs, your real invoices and suppliers are hidden. You only see practice data. Nothing is sent, filed or paid.",
+      progressLost:
+        "The practice invoices no longer exist. The practice starts from the beginning.",
+      taskTitle: "When does the system stop?",
+      taskGoal: "Three practice invoices show you when the Hub stops and you have to decide.",
+      pageInvoices: "Incoming invoices",
+      pageInvoice: "Invoice",
+      pageSupplier: "Supplier",
+      groupIban: "A new bank account on the invoice",
+      groupAi: "A wrong amount on the invoice",
+      groupFlyer: "A document that is not an invoice",
+      introInstruction:
+        "The Hub takes a lot of work off your hands, but it stops when a person has to decide. You will now meet three such cases.",
+      introOutcome:
+        "Once you know these stops, you will recognise them right away and know what to do. The Hub never pays or books anything on its own when something looks wrong.",
+      ibanOpenInstruction: "Open the marked practice invoice.",
+      ibanOpenOutcome:
+        "This invoice names a different bank account than before. This is where the Hub stops.",
+      ibanWarningInstruction: "Open the tab that shows payment and bank matching.",
+      ibanWarningOutcome: "Here you see the account the invoice asks you to pay.",
+      ibanCheckInstruction:
+        "Read the warning: this bank account is new for this supplier. Ask the supplier if the account really belongs to them, using contact details you already trust.",
+      ibanCheckOutcome:
+        "A new bank account is a common sign of fraud. That is why nothing gets paid on suspicion. Only a channel you already trust gives real certainty.",
+      ibanWarningHelp:
+        "This warning only shows up when the new-account check is switched on. In the practice it always shows.",
+      ibanDeviation: "What do you do if the supplier says the new account is not theirs?",
+      ibanConfirmInstruction:
+        "The supplier has confirmed the new account. Confirm the account on the supplier page.",
+      ibanConfirmOutcome:
+        "Only after your confirmation does the new account count as checked, and only then can it be paid.",
+      ibanConfirmHelp: "Confirm the account only if the supplier has told you it is really theirs.",
+      aiOpenInstruction: "Open the other marked practice invoice.",
+      aiOpenOutcome: "This invoice needs review. The Hub is not sure its own reading is right.",
+      aiLightInstruction:
+        "Read why this invoice needs review. The Hub names which check did not pass.",
+      aiLightOutcome:
+        "Needing review does not mean the invoice is wrong. It means a person has to look before it goes any further.",
+      aiFindInstruction:
+        "Compare the net amount, VAT and gross amount with the file. Net plus VAT does not equal the gross amount. Which amount is wrong?",
+      aiFindOutcome:
+        "You have to find which amount was read wrongly. Changing only the gross amount would hide the real error.",
+      aiFindHelp:
+        "The gross amount and the VAT amount fit together. The net amount is the odd one out.",
+      aiCorrectInstruction: "Edit the amounts and correct the net amount. Save your change.",
+      aiCorrectOutcome:
+        "With the right net amount, the invoice adds up again. You fixed the real problem, not just the result.",
+      aiCorrectHelp:
+        "Click the edit icon on the amounts card. Change only the net amount. Net plus VAT must equal the gross amount.",
+      aiDeviation: "How do you tell which amount was read wrongly?",
+      aiGreenInstruction:
+        "Look at the amounts again. The check for the total now passes. The Hub checks this again after every change.",
+      aiGreenOutcome:
+        "The check updated itself. A person still has to process the invoice further before it is done.",
+      flyerOpenInstruction: "Open the third marked document.",
+      flyerOpenOutcome:
+        "This document needs review, even though it is not an invoice. The Hub never discards anything without a person deciding.",
+      flyerWhyInstruction:
+        "Read why this document needs review. There is no amount and no invoice number.",
+      flyerWhyOutcome:
+        "Without an amount and an invoice number, the Hub cannot book this document. It stops and waits for you.",
+      flyerSetAsideInstruction: "Mark this document as not relevant, and write a short reason.",
+      flyerSetAsideOutcome:
+        "The document leaves the normal workflow, and your reason is kept on record. You can undo this later if needed.",
+      flyerSetAsideHelp:
+        "In the practice, nothing is really sent anywhere, even if a message says otherwise.",
+      flyerOpenHistoryInstruction: "Open the history tab.",
+      flyerOpenHistoryOutcome: "Here you see every decision made about this document.",
+      flyerHistoryInstruction: "Find the entry that shows it was marked not relevant.",
+      flyerHistoryOutcome:
+        "The history shows who decided what, and why. Every decision stays traceable.",
+      restartHint: 'Stuck? Use "{{button}}" in the steps panel to get fresh practice data.',
+      outroInstruction:
+        "Well done! You now know three stops: a changed bank account, an unsure reading, and a document that is not an invoice. A person decides in all three cases.",
+      outroOutcome: "The Hub would rather stop once too often than pay or book something wrong.",
+    },
   },
   home: {
     priority: {
       title: "Do this first",
       openChecklist: "Open checklist",
+    },
+    firstSteps: {
+      title: "First steps",
+      subtitle: "Practice on an example to see how the Hub works. Your real data stays untouched.",
+      invoice: {
+        title: "Process an invoice",
+        description:
+          "Upload a sample invoice, check it, approve it and confirm its payment (about 10 minutes).",
+      },
+      stopCases: {
+        title: "When does the system stop?",
+        description:
+          "See on three practice invoices when the Hub stops and a person has to decide (about 10 minutes).",
+      },
+      action: {
+        new: "Start the practice",
+        started: "Continue",
+        completed: "Practice again",
+      },
     },
     setupWarning: {
       "folder-mail": {
@@ -1426,8 +1622,8 @@ const en = {
     },
 
     status: {
-      erkannt: "Recognized",
-      zu_pruefen: "To review",
+      recognised: "Recognized",
+      needs_review: "To review",
     },
 
     workflow: {
@@ -1489,14 +1685,14 @@ const en = {
     konfidenz: {
       feldTitel: "AI confidence for this field",
       skala: {
-        gruen: "95 % and up: read with confidence",
-        gelb: "80 to 95 %: please confirm",
-        rot: "Below 80 %: please check",
+        green: "95 % and up: read with confidence",
+        yellow: "80 to 95 %: please confirm",
+        red: "Below 80 %: please check",
       },
-      gruen: "high confidence",
-      gelb: "medium confidence, review",
-      rot: "low confidence, please review",
-      keine: "no confidence recorded",
+      green: "high confidence",
+      yellow: "medium confidence, review",
+      red: "low confidence, please review",
+      none: "no confidence recorded",
     },
 
     // ---- recognition traffic light (DB field belege.ampel, pipeline A2/A6) ----
@@ -1513,16 +1709,16 @@ const en = {
       },
     },
     ampel: {
-      gruen: "Auto-accepted",
-      gelb: "Confirm",
-      rot: "To check",
-      keine: "–",
+      green: "Auto-accepted",
+      yellow: "Confirm",
+      red: "To check",
+      none: "–",
       hint: {
-        gruen:
+        green:
           "Confidence is 95% or higher and every check passed, so it was accepted automatically.",
-        gelb: "Confidence is between 80 and 95%. A person gives it a quick nod.",
-        rot: "Confidence is under 80%, or a check failed. It needs a manual review.",
-        keine: "Not scored yet.",
+        yellow: "Confidence is between 80 and 95%. A person gives it a quick nod.",
+        red: "Confidence is under 80%, or a check failed. It needs a manual review.",
+        none: "Not scored yet.",
       },
     },
 
@@ -1662,6 +1858,14 @@ const en = {
           feld: "Company",
           platzhalter: "Choose a company",
         },
+        privatPerson: {
+          label: "Assign private post",
+          titel_one: "Set the person on {{count}} private receipt",
+          titel_other: "Set the person on {{count}} private receipts",
+          beschreibung: "Only one person per receipt can open the private post.",
+          feld: "Person",
+          platzhalter: "Choose a person",
+        },
         loeschen: {
           label: "Move to trash",
           titel_one: "Delete {{count}} receipt",
@@ -1799,6 +2003,7 @@ const en = {
         alleWorkflow: "All workflow statuses",
         belegart: "Document type",
         alleBelegarten: "All document types",
+        zahlung: "Money",
         alleZahlungen: "All payments",
         zahlungsart: "Payment type",
         alleZahlungsarten: "All payment types",
@@ -1835,6 +2040,9 @@ const en = {
         letzte30Tage: "Last 30 days",
         von: "From",
         bis: "To",
+        privatPerson: "Private post: person",
+        allePrivatPersonen: "All private post",
+        privatPersonUnassigned: "Not assigned yet",
         reset: "Reset all",
         remove: "Remove filter",
         weitere: "Filters",
@@ -1868,10 +2076,18 @@ const en = {
         status: "Review",
         // See the German file: the word was identical in both dictionaries.
         workflow: "Workflow status",
+        zahlung: "Payment",
         // Both badges under one label on the mobile card, where they have no column header.
         zahlungAbgleich: "Payment & bank reconciliation",
         datev: "DATEV",
         bankAbgleich: "Bank reconciliation",
+        privatPerson: "Person",
+      },
+      privatPerson: {
+        privat: "Private",
+        nichtZugewiesen: "Not assigned",
+        mirZugewiesen: "Assigned to me",
+        zuweisen: "Assign",
       },
       row: {
         nr: "No. {{nr}}",
@@ -1896,19 +2112,19 @@ const en = {
         laedtMehr: "Loading more receipts …",
         empty: "empty",
         col: {
-          eingegangen: { label: "Received", subtitle: "new" },
-          in_pruefung: { label: "In review", subtitle: "assistant reviewing" },
-          rueckfrage: { label: "Query", subtitle: "clarification open" },
-          freigegeben_assistenz: {
+          received: { label: "Received", subtitle: "new" },
+          in_review: { label: "In review", subtitle: "assistant reviewing" },
+          query: { label: "Query", subtitle: "clarification open" },
+          approved_first: {
             label: "With supervisor",
             subtitle: "awaiting approval",
           },
-          freigegeben_vorgesetzter: { label: "Approved", subtitle: "awaiting payment" },
+          approved_final: { label: "Approved", subtitle: "awaiting payment" },
           // Follows belege.workflow.bezahlt, see the German file.
-          bezahlt: { label: "Paid", subtitle: "waiting for DATEV" },
+          paid: { label: "Paid", subtitle: "waiting for DATEV" },
           // Same rename as belege.workflow.uebergeben_datev.
-          uebergeben_datev: { label: "With DATEV", subtitle: "waiting to be closed" },
-          abgeschlossen: { label: "Completed", subtitle: "" },
+          handed_over: { label: "With DATEV", subtitle: "waiting to be closed" },
+          closed: { label: "Completed", subtitle: "" },
         },
       },
     },
@@ -1979,6 +2195,74 @@ const en = {
         objektFolge: "No property code detected.",
         kategorieFolge: "Otherwise \u201cUnassigned\u201d in the cost analysis.",
       },
+      confirmationCard: {
+        title: "Needs your confirmation",
+        titleConfirmed: "Confirmed",
+        titleChanged: "Changed. Not confirmed yet.",
+        addressRead: "The document shows this address: {{text}}",
+        propertyUnknown: "No property in your list matches this address.",
+        documentTypeLabel: "Document type",
+        documentTypePlaceholder: "Choose a document type",
+        noDocumentTypeOption: "No document type",
+        isInvoiceLabel: "Is this an invoice?",
+        isInvoiceYes: "Yes. This is an invoice.",
+        isInvoiceNo: "No. This is not an invoice.",
+        discard: "Discard changes",
+        confirm: "Confirm",
+        historyNote: "Company, property, document type and invoice status confirmed.",
+      },
+      checklist: {
+        automatic: "Checked automatically",
+        manual: "Check by hand",
+        progress: "{{done}} of {{total}} done",
+        checkedBy: "Checked by {{actor}} on {{when}}",
+        markAllChecked: "Mark everything as checked",
+        tickFailed: "Could not save. {{error}}",
+        surety: {
+          high: "This is sure.",
+          medium: "This is fairly sure.",
+          low: "This is not sure.",
+        },
+        recipientAddress: {
+          label: "Recipient address matches the company",
+          noCompany: "No company is set on this document yet.",
+          noCompanyAddress: "No address is stored for {{company}} yet.",
+          noRecipientAddress: "The document has no recipient address to compare.",
+          match: "The recipient address matches {{company}}'s address.",
+          partial: "The recipient address only partly matches {{company}}'s address.",
+          mismatch: "The recipient address does not match {{company}}'s address.",
+        },
+        companySpelling: {
+          label: "Company name is spelled correctly",
+          noCompany: "No company is set on this document yet.",
+          noRecipientName: "The document has no recipient name to compare.",
+          same: "The name on the document matches \u201c{{company}}\u201d.",
+          otherSpelling: "The name on the document is another spelling of \u201c{{company}}\u201d.",
+          close: "The name on the document is close to \u201c{{company}}\u201d but not the same.",
+          different:
+            "The document says \u201c{{onDocument}}\u201d. The company is called \u201c{{company}}\u201d.",
+        },
+        serviceFitsCompany: {
+          label: "The service fits the company",
+          noCompany: "No company is set on this document yet.",
+          noProperty: "No property is set on this document yet.",
+          propertyNotLinked: "No company is linked to property {{property}} yet.",
+          propertyBelongsToCompany: "Property {{property}} is linked to company {{company}}.",
+          propertyBelongsToOther:
+            "Property {{property}} is linked to {{owners}}, not to {{company}}.",
+        },
+        iban: {
+          label: "IBAN is known for this supplier",
+          noAccount: "No bank account is recorded for this document.",
+          invalid: "This IBAN is not valid: {{problem}}.",
+          notOnFile: "This IBAN is not on file for this supplier.",
+          onFile: "This IBAN is on file for this supplier.",
+          fromSupplierDefault:
+            "This is the supplier's standing account, not one named on this document.",
+          validNotCompared:
+            "This IBAN is valid. It was not compared against the supplier's accounts.",
+        },
+      },
       keineAktionen: {
         keinRecht:
           'You do not hold "Approve invoices". An administrator can grant it under Team & Roles.',
@@ -1999,18 +2283,17 @@ const en = {
         aria: "Approval chain",
         tooltip: 'Click to move to "{{step}}"',
         klick: {
-          in_pruefung: "Click to send this invoice for review.",
-          freigegeben_assistenz: "Click to mark this approved by the assistant.",
+          in_review: "Click to send this invoice for review.",
+          approved_first: "Click to mark this approved by the assistant.",
           freigegeben_stufe2: "Click to mark this approved at step 2.",
-          freigegeben_vorgesetzter: "Click to mark this approved as supervisor.",
-          abgeschlossen: "Click to complete this invoice.",
+          approved_final: "Click to mark this approved as supervisor.",
+          closed: "Click to complete this invoice.",
         },
         datevLink: "Click to open the DATEV handover",
         gesperrt: {
           stufe: {
-            bezahlt:
-              "The system sets this step itself as soon as the payment for this invoice is confirmed.",
-            uebergeben_datev:
+            paid: "The system sets this step itself as soon as the payment for this invoice is confirmed.",
+            handed_over:
               "The system sets this step itself as soon as the DATEV handover for this invoice is confirmed.",
           },
           automatisch:
@@ -2020,11 +2303,10 @@ const en = {
             "This step is marked by a supervisor once the invoice is handed over to DATEV.",
           nurFreigeber: "Only {{name}} can approve this step.",
           voraussetzung: {
-            in_pruefung: "Available once the invoice has been sent for review.",
-            freigegeben_assistenz: "Available once the invoice is in review.",
-            freigegeben_vorgesetzter:
-              "Available once the invoice has been approved by the assistant.",
-            abgeschlossen: "Available once the invoice has been handed over to DATEV.",
+            in_review: "Available once the invoice has been sent for review.",
+            approved_first: "Available once the invoice is in review.",
+            approved_final: "Available once the invoice has been approved by the assistant.",
+            closed: "Available once the invoice has been handed over to DATEV.",
           },
           spaeter: 'Available once the invoice has reached "{{step}}".',
           uebersprungen: 'Your next step goes straight to "{{step}}" and skips this one.',
@@ -2032,10 +2314,10 @@ const en = {
         },
       },
       abgleichTip: {
-        offen: "No bank transaction linked yet.",
-        vorgeschlagen: "A match has been suggested and is waiting for you to confirm it.",
-        teilweise: "Partly reconciled: the linked entries do not cover the amount yet.",
-        abgeglichen: "Fully reconciled with a bank transaction.",
+        open: "No bank transaction linked yet.",
+        suggested: "A match has been suggested and is waiting for you to confirm it.",
+        partial: "Partly reconciled: the linked entries do not cover the amount yet.",
+        reconciled: "Fully reconciled with a bank transaction.",
         oeffnen: "Click to open Payment & reconciliation",
       },
       tip: {
@@ -2177,6 +2459,7 @@ const en = {
         beteiligte: "Supplier & assignment",
         zuordnung: "Assignment",
         weitere: "Further details",
+        freigabe: "Approval",
         rueckfragen: "Queries",
         freigabeVerlauf: "Workflow history",
         stufenDauern: "Time per step",
@@ -2201,6 +2484,8 @@ const en = {
       rechteAlle: "all",
       tab: {
         overview: "Overview",
+        approval: "Workflow history",
+        payment: "Payment & reconciliation",
         details: "Details",
         lieferant: "Supplier",
         verlauf: "History",
@@ -2277,8 +2562,8 @@ const en = {
         down_payment: "Down payment",
       },
       einkommensteuer: {
-        herstellungsaufwand: "Production expense (capitalized)",
-        erhaltungsaufwand: "Maintenance expense (immediately deductible)",
+        capital_expense: "Production expense (capitalized)",
+        maintenance_expense: "Maintenance expense (immediately deductible)",
       },
       zuordnung: {
         reassignTitle: "Change assignment?",
@@ -2349,11 +2634,11 @@ const en = {
           lastschrift: "Collected automatically by direct debit, so no transfer is needed",
           lastschrift_ausstehend:
             "Will be collected by direct debit. Waiting for the bank to confirm it, so no transfer is needed.",
-          bezahlt: "Marked as paid",
-          offen: "Still open. Not paid yet.",
-          abgeglichen: "Matched to a bank transaction",
-          teilweise: "Partly matched to bank transactions",
-          nicht_abgeglichen: "No matching bank transaction yet, so it stays an open item",
+          paid: "Marked as paid",
+          open: "Still open. Not paid yet.",
+          reconciled: "Matched to a bank transaction",
+          partial: "Partly matched to bank transactions",
+          not_reconciled: "No matching bank transaction yet, so it stays an open item",
           datev_bereit: "Ready for DATEV. Reconciled and handed over.",
           datev_offen: "Not handed over to DATEV yet",
         },
@@ -2683,8 +2968,8 @@ const en = {
       },
       taxId: {
         allTitle: "Every identifier in this field",
-        weitere_one: "Show one more identifier",
-        weitere_other: "Show {{count}} more identifiers",
+        more_one: "Show one more identifier",
+        more_other: "Show {{count}} more identifiers",
         vatTitle: "Recognised as a VAT ID.",
         taxNumberTitle: "Recognised as a German tax number, not a VAT ID.",
         taxNumberShort: "Tax no.",
@@ -2861,8 +3146,8 @@ const en = {
         default: "Default",
         makeDefault: "Make default",
         empty: "No bank account on file.",
-        inaktivTitle_one: "{{count}} deactivated account",
-        inaktivTitle_other: "{{count}} deactivated accounts",
+        inactiveTitle_one: "{{count}} deactivated account",
+        inactiveTitle_other: "{{count}} deactivated accounts",
         source: {
           pipeline: "detected automatically",
           human: "entered manually",
@@ -2924,8 +3209,8 @@ const en = {
     validation: {
       company: "Please choose a company.",
       name: "Please enter a name, for example Muster GmbH.",
-      strasse: "Please enter street and number, for example Musterstraße 12.",
-      plz: "Please enter a valid postcode, for example 20095.",
+      street: "Please enter street and number, for example Musterstraße 12.",
+      zip: "Please enter a valid postcode, for example 20095.",
       city: "Please enter a town, for example Hamburg.",
       email: "Please enter a valid e-mail address, for example name@firma.de.",
     },
@@ -2935,10 +3220,10 @@ const en = {
         title: "Filter customers",
         reset: "Reset filters",
         allCompanies: "All companies",
-        nurUeberfaellig_one: "Overdue only ({{count}})",
-        nurUeberfaellig_other: "Overdue only ({{count}})",
-        ohneEmail_one: "{{count}} without an email address",
-        ohneEmail_other: "{{count}} without an email address",
+        overdueOnly_one: "Overdue only ({{count}})",
+        overdueOnly_other: "Overdue only ({{count}})",
+        withoutEmail_one: "{{count}} without an email address",
+        withoutEmail_other: "{{count}} without an email address",
       },
       title: "Customers",
       subtitle: "Invoice recipients: basis for outgoing invoices.",
@@ -3019,10 +3304,10 @@ const en = {
         phone: "Phone",
         email: "E-mail",
       },
-      gesamt_one: "Total ({{count}} invoice)",
-      gesamt_other: "Total ({{count}} invoices)",
-      nichtGezaehlt_one: "{{count}} cancelled or draft invoice not counted",
-      nichtGezaehlt_other: "{{count}} cancelled or draft invoices not counted",
+      total_one: "Total ({{count}} invoice)",
+      total_other: "Total ({{count}} invoices)",
+      notCounted_one: "{{count}} cancelled or draft invoice not counted",
+      notCounted_other: "{{count}} cancelled or draft invoices not counted",
       col: {
         number: "No.",
         date: "Date",
@@ -3073,8 +3358,8 @@ const en = {
       },
       propertiesCount_one: "{{count}} property",
       propertiesCount_other: "{{count}} properties",
-      belegeCount_one: "{{count}} invoice",
-      belegeCount_other: "{{count}} invoices",
+      documentsCount_one: "{{count}} invoice",
+      documentsCount_other: "{{count}} invoices",
       empty: "No companies found.",
       filter: {
         button: "Filter",
@@ -3112,8 +3397,8 @@ const en = {
       archive: {
         title: "Archive company?",
         desc: "The company disappears from lists and pickers. Existing documents stay untouched, and archiving can be undone at any time.",
-        mitBelegen_one: "Note: {{count}} document is assigned to this company.",
-        mitBelegen_other: "Note: {{count}} documents are assigned to this company.",
+        withDocuments_one: "Note: {{count}} document is assigned to this company.",
+        withDocuments_other: "Note: {{count}} documents are assigned to this company.",
         reasonPlaceholder: "Reason (optional)",
         cancel: "Cancel",
         confirm: "Archive",
@@ -3171,11 +3456,11 @@ const en = {
       propertiesCount_other: "{{count}} properties",
       datevLink: "Addresses",
       datevNone: "No DATEV address is stored for this company yet.",
-      gesamt_one: "{{count}} invoice",
-      gesamt_other: "{{count}} invoices",
-      fremdeObjekte_one:
+      total_one: "{{count}} invoice",
+      total_other: "{{count}} invoices",
+      foreignProperties_one:
         "{{count}} document refers to a property of another company ({{total}}). Please check the assignment.",
-      fremdeObjekte_other:
+      foreignProperties_other:
         "{{count}} documents refer to properties of other companies ({{total}}). Please check the assignment.",
       foreignPropertyHint:
         "Property {{property}} is assigned to {{companies}}, not to this company.",
@@ -3538,8 +3823,8 @@ const en = {
         "Fill in as much of the document as you know and choose Check. Anything left on any is treated as unrestricted, exactly as a rule treats an attribute it does not pin.",
       applies: "This rule applies",
       outrankedTitle: "Also match, but are outranked",
-      weitere_one: "{{count}} other rule also matches but is outranked.",
-      weitere_other: "{{count}} other rules also match but are outranked.",
+      more_one: "{{count}} other rule also matches but is outranked.",
+      more_other: "{{count}} other rules also match but are outranked.",
       onlyOne: "No other rule matches.",
       none: "No rule applies.",
       noneHint: "The document keeps whatever category it already has.",
@@ -3770,13 +4055,13 @@ const en = {
         termRequired: "Term is required.",
         scopeRequired: "Scope is required.",
         created: "Rule added.",
-        anlegenFehlgeschlagen: "Could not add: {{error}}",
+        createFailed: "Could not add: {{error}}",
       },
     },
     toggle: {
-      aktiviert: "Rule activated.",
-      deaktiviert: "Rule deactivated.",
-      fehlgeschlagen: "Update failed: {{error}}",
+      activated: "Rule activated.",
+      deactivated: "Rule deactivated.",
+      failed: "Update failed: {{error}}",
     },
     delete: {
       title: "Delete rule?",
@@ -3784,8 +4069,8 @@ const en = {
       cancel: "Cancel",
       confirm: "Delete",
       toast: {
-        geloescht: "Rule deleted.",
-        fehlgeschlagen: "Could not delete: {{error}}",
+        deleted: "Rule deleted.",
+        failed: "Could not delete: {{error}}",
       },
     },
   },
@@ -3922,7 +4207,7 @@ const en = {
   },
 
   properties: {
-    validierung: {
+    validation: {
       code: "Please enter a code, e.g. MA-OMS.",
       codeLength: "The code may be at most 32 characters long.",
       codeTaken: "This code is already taken.",
@@ -5364,7 +5649,7 @@ const en = {
   // Manually hiding a single transaction ("no receipt expected").
   noReceipt: {
     action: {
-      keinBeleg: "There is no invoice for this",
+      noInvoice: "There is no invoice for this",
       putBack: "Put it back in the list",
       pickReason: "Pick a reason",
     },
@@ -5640,6 +5925,10 @@ const en = {
       tabs: {
         rules: "Rules",
         playground: "Playground",
+      },
+      standard: {
+        step1: "Assistant",
+        step2: "Area lead",
       },
       dimension: {
         company: "Company",
@@ -6178,9 +6467,9 @@ const en = {
         "{{amount}} from {{count}} receipt with no category is missing from every figure above.",
       warning_other:
         "{{amount}} from {{count}} receipts with no category is missing from every figure above.",
-      hinweis_one:
+      hint_one:
         "This receipt has no category, so it counts towards no line above. Click it to open it and set one there.",
-      hinweis_other:
+      hint_other:
         "These {{count}} receipts have no category, so they count towards no line above. Click one to open it and set a category there.",
     },
     receiptList: {
@@ -6647,7 +6936,7 @@ const en = {
   },
 
   activityLog: {
-    title: "Log",
+    title: "Activity log",
     subtitle: "Processing log of incoming documents: intake, recognition and errors.",
     search: "Search subject, sender or reason …",
     filterStatus: "Status",
@@ -6868,6 +7157,16 @@ const en = {
       title: "Roles & permissions",
       hint: "Sets what a role allows by default. A change applies immediately to everyone with that role, except the people who have an exception set under “People”.",
       col: "What is allowed",
+      create: {
+        button: "Add role",
+        title: "Add a role",
+        desc: "Creates a role with no permissions yet. Grant what it should allow below, in the matrix.",
+        field: { label: "Name", placeholder: "e.g. Bookkeeper" },
+        cancel: "Cancel",
+        save: "Add role",
+        saving: "Adding …",
+        toast: { ok: "Role added." },
+      },
     },
     crm: {
       label: "CRM broker ID",
@@ -6892,6 +7191,18 @@ const en = {
     permissions: {
       title: "What this person may do",
       hint: "Their role decides by default. Here you set exceptions for this one person — tick to add, untick to take away.",
+      category: {
+        bank: "Bank",
+        documents: "Documents",
+        invoices: "Invoices",
+        master_data: "Master data",
+        module: "Modules",
+        page: "Pages",
+        payments: "Payments",
+        rules: "Rules",
+        settings: "Settings",
+        users: "Users",
+      },
     },
     rights: {
       nichtVergebbar:
@@ -6922,7 +7233,12 @@ const en = {
         failed: "Could not save company access: {{error}}",
       },
     },
-    status: { aktiv: "Active", inaktiv: "Inactive", nieAngemeldet: "never signed in" },
+    status: { active: "Active", inactive: "Inactive", neverSignedIn: "never signed in" },
+    login: {
+      never: "Never signed in",
+      startPassword: "Still using the start password",
+      last: "Last signed in {{date}}",
+    },
     deactivate: {
       title: "Deactivate employee",
       desc: "{{email}} will no longer be able to sign in. Existing approvals and notes stay in the log.",
@@ -7100,6 +7416,154 @@ const en = {
   errors: {
     serviceNotConfigured: "This feature isn't available right now. Please try again later.",
     noPermission: "You don't have permission to do that.",
+  },
+
+  paymentFile: {
+    title: "Payment file",
+    description: "Build a SEPA file for approved invoices and download it to upload to your bank.",
+    manualUploadNotice:
+      "This page only creates a file. You download it and upload it to your bank yourself. No payment is sent automatically.",
+    stepsAriaLabel: "Payment file steps",
+    companyLabel: "Company",
+    companyPlaceholder: "Choose a company",
+    manageAccounts: "Manage accounts",
+    steps: {
+      prepare: { title: "Prepare", subtitle: "Choose invoices and an account" },
+      review: { title: "Review", subtitle: "Check the file before you download it" },
+      track: { title: "Track", subtitle: "Confirm what the bank has paid" },
+    },
+    payFrom: {
+      label: "Pay from",
+      manage: "Manage accounts",
+      missing: "Add a payment account before you build a file.",
+    },
+    prepare: {
+      title: "Approved invoices",
+      description: "These invoices are approved and ready to be paid.",
+      searchPlaceholder: "Search issuer or invoice number",
+      empty: "No invoices are waiting to be paid.",
+      noResults: "No invoices match your search.",
+      selectAll: "Select all on this page",
+      colSupplier: "Supplier",
+      colInvoiceNumber: "Invoice number",
+      colAmount: "Amount",
+      colDueDate: "Due date",
+      colPaymentAmount: "Amount to pay",
+      discountBadge: "Discount applied",
+      noInvoiceNumber: "No invoice number",
+    },
+    draft: {
+      title: "This file so far",
+      selected: "Invoices selected",
+      invoiceTotal: "Invoice total",
+      discountTotal: "Discount",
+      paymentTotal: "Amount to pay",
+      unselectedHint_one: "{{count}} more invoice could still be added.",
+      unselectedHint_other: "{{count}} more invoices could still be added.",
+      selectHint: "Select invoices on the left to build a file.",
+      build: "Build file",
+      building: "Building…",
+      buildDisabledNoInvoices: "Select at least one invoice first.",
+    },
+    accounts: {
+      title: "Payment accounts",
+      empty: "No payment accounts yet.",
+      default: "Default",
+      setDefault: "Make default",
+      edit: "Edit",
+      delete: "Delete",
+      add: "Add account",
+      close: "Close",
+      deleteConfirmTitle: "Delete this account?",
+      deleteConfirmBody:
+        "This account will no longer be offered. Files already built from it stay as they are.",
+      deleteConfirmCancel: "Cancel",
+      deleteConfirmConfirm: "Delete",
+    },
+    accountForm: {
+      titleAdd: "Add a payment account",
+      titleEdit: "Edit payment account",
+      label: "Name",
+      payerName: "Account holder",
+      payerIban: "IBAN",
+      payerBic: "BIC",
+      painVersion: "File format",
+      executionDateRule: "When to pay",
+      executionDateAsSoonAsPossible: "As soon as possible",
+      executionDateOnDueDate: "On the due date",
+      save: "Save",
+      cancel: "Cancel",
+      errorLabelRequired: "Enter a name for this account.",
+      errorNameRequired: "Enter the account holder's name.",
+      errorIbanRequired: "Enter the account's IBAN.",
+      errorIbanInvalid: "This is not a complete IBAN.",
+      errorIbanNotSepa: "This IBAN is outside the SEPA area.",
+      errorBicInvalid: "A BIC has 8 or 11 characters, for example MALADE51DKH.",
+    },
+    review: {
+      title: "Review the file",
+      none: "No file is selected yet.",
+      goToPrepare: "Go to Prepare",
+      colRecipient: "Recipient",
+      colIban: "IBAN",
+      colAmount: "Amount",
+      colStatus: "Status",
+      downloadFile: "Download file",
+      discard: "Discard this file",
+      discardConfirmTitle: "Discard this payment file?",
+      discardConfirmBody: "The invoices in it become available to add to a new file.",
+      discardConfirmCancel: "Cancel",
+      discardConfirmConfirm: "Discard",
+      statusDraft: "Draft",
+      statusGenerated: "Generated",
+      statusDownloaded: "Downloaded",
+      statusDiscarded: "Discarded",
+      skippedReason: {
+        no_bank_account: "No confirmed bank account for this supplier",
+        account_not_confirmed: "The supplier's bank account is not confirmed yet",
+        iban_invalid: "The IBAN on file is not valid",
+        iban_outside_sepa: "The IBAN is outside the SEPA area",
+        bic_invalid: "The BIC on file is not valid",
+        bic_country_mismatch: "The BIC does not match the IBAN's country",
+        amount_missing: "There is no amount to pay",
+        amount_above_maximum: "The amount is above what one transfer may carry",
+        currency_not_euro: "The invoice is not in euro",
+        direct_debit: "This is paid by direct debit, so it must not be transferred again",
+        already_in_another_run: "This invoice is already queued in another payment file",
+        recipient_name_empty: "The recipient has no name on file",
+        duplicate_reference: "This invoice is listed twice in this file",
+      },
+    },
+    track: {
+      title: "Waiting for bank confirmation",
+      empty: "Nothing is waiting on a bank confirmation.",
+      colRecipient: "Recipient",
+      colIban: "IBAN",
+      colAmount: "Amount",
+      colFile: "File",
+    },
+    history: {
+      title: "Payment files",
+      empty: "No payment files yet.",
+      colFile: "File",
+      colDate: "Created",
+      colCount: "Invoices",
+      colTotal: "Total",
+      colStatus: "Status",
+    },
+    markPaid: "Mark as paid",
+    markPaidConfirmTitle: "Confirm this was paid?",
+    markPaidConfirmBody: "Only confirm once your bank shows the transfer actually went through.",
+    markPaidConfirmCancel: "Cancel",
+    markPaidConfirmConfirm: "Confirm",
+    error: {
+      saveAccount: "The account could not be saved.",
+      createFile: "The payment file could not be created.",
+      generateFile: "The file could not be built.",
+      nothingToTransfer: "None of the selected invoices could be turned into a transfer.",
+      discardFile: "The payment file could not be discarded.",
+      confirmPaid: "This could not be marked as paid.",
+    },
   },
 } as const;
 

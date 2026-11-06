@@ -151,6 +151,10 @@ export const COMPANY_WITHOUT = "NZO";
 // query and invoices_kpis (migration 20260815210000) both read it.
 export const PROPERTY_WITHOUT = "__ohne";
 
+// "Private post with nobody assigned yet" as a filter value, the same idea as PROPERTY_WITHOUT:
+// private_owner_user_id can never actually hold this string, so it is safe as a sentinel.
+export const PRIVATE_OWNER_UNASSIGNED = "__unassigned";
+
 // The same period written as the invoice list's own period filter, so a tile that counted a range
 // links to a list showing that range and the two screens report the same number.
 export function overviewPeriodListSearch(

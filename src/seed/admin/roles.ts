@@ -7,7 +7,19 @@ export const ROLE_IDS = {
   assistant: "15000000-0000-4000-8000-000000000004",
 } as const;
 
-export const roles = Object.entries(ROLE_IDS).map(([name, id]) => ({ id, name }));
+const ROLE_LABELS: Record<string, string> = {
+  super_admin: "Super admin",
+  admin: "Admin",
+  supervisor: "Supervisor",
+  assistant: "Assistant",
+};
+
+export const roles = Object.entries(ROLE_IDS).map(([name, id]) => ({
+  id,
+  name,
+  label: ROLE_LABELS[name],
+  assignable: name !== "super_admin",
+}));
 
 function categoryFor(key: string): string {
   return key.split(".")[0];

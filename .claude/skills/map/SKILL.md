@@ -22,7 +22,7 @@ talks directly to Supabase (Postgres).
 - **Supabase** (`@supabase/supabase-js`) — Postgres + auth, called from the browser with the
   public/publishable key + user bearer token. Data protection = **Supabase RLS** (not in repo).
 - **shadcn/ui** (`src/components/ui/*`, ~46 vendored primitives — read, rarely edit) + Tailwind v4.
-- Package manager **bun**. Lint `bun run lint`. Build `bun run build`. Dev `bun run dev`. **No tests exist.**
+- Package manager **npm**. Lint `npm run lint`. Build `npm run build`. Dev `npm run dev`. **No tests exist.**
 
 ## The 7 layers (walk down this to read any feature)
 

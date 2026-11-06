@@ -19,6 +19,7 @@ create table if not exists public.documents (
 
     -- What it is and where it came from
     document_type text,
+    is_invoice boolean,
     source text,
     intake_channel text,
     source_item_id text,
@@ -74,6 +75,8 @@ create table if not exists public.documents (
     assignment_source text,
     company_assignment_source text,
     property_assignment_source text,
+    document_type_source text,
+    is_invoice_source text,
     assignment_decided_by text,
     cost_category_source text,
     vat_source text,
@@ -133,6 +136,9 @@ create table if not exists public.documents (
     drive_named_at timestamptz,
     note text,
     private_hold boolean not null default false,
+    -- Who a private-held document belongs to. Null until an administering role assigns it; see
+    -- 0010_access.sql for how this widens read access past administering roles alone.
+    private_owner_user_id uuid references public.app_users(id) on delete set null,
 
     -- Set aside rather than deleted
     not_relevant_at timestamptz,
@@ -183,6 +189,7 @@ create index if not exists documents_supplier on public.documents (supplier_id) 
 create index if not exists documents_document_date on public.documents (document_date desc) where deleted_at is null;
 create index if not exists documents_content_hash on public.documents (content_hash) where deleted_at is null;
 create index if not exists documents_is_demo_idx on public.documents (demo_owner_user_id) where is_demo;
+create index if not exists documents_private_owner_idx on public.documents (private_owner_user_id) where private_hold;
 
 -- One file per role, so a second scan replaces the first instead of piling up beside it.
 create table if not exists public.document_files (

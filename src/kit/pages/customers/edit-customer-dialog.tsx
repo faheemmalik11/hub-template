@@ -14,7 +14,7 @@ import {
 } from "../../ui/dialog";
 import { readableErrorMessage } from "../../components/feedback/query-states";
 import type { Customer, CustomersAdapter } from "../../adapters/customers";
-import { FieldErrorText, RequiredMark } from "./form-hints";
+import { FieldErrorText, RequiredStern } from "@/components/ui/form-field";
 import type { CustomersLabels } from "./labels";
 
 export function EditCustomerDialog({
@@ -99,7 +99,7 @@ export function EditCustomerDialog({
         <div className="space-y-3">
           <div className="space-y-1">
             <Label className="text-xs text-muted-foreground">
-              {labels.fields.name} <RequiredMark title={labels.requiredField} />
+              {labels.fields.name} <RequiredStern title={labels.requiredField} />
             </Label>
             <Input
               value={name}

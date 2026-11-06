@@ -8,10 +8,10 @@ import { useTranslation } from "@/lib/i18n";
  * that named one problem and disappeared in two seconds. Clicking the button and seeing nothing
  * happen is what that looks like from the outside.
  */
-export function RequiredStern() {
+export function RequiredStern({ title }: { title?: string } = {}) {
   const { t } = useTranslation();
   return (
-    <span className="text-destructive" title={t("common.form.required")} aria-hidden>
+    <span className="text-destructive" title={title ?? t("common.form.required")} aria-hidden>
       *
     </span>
   );

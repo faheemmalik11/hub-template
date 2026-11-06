@@ -107,7 +107,7 @@ export function ConfidencePill({
         className={cn("inline-block size-2 shrink-0 rounded-full", TRAFFICLIGHT_STYLES[band])}
       />
       {pct == null
-        ? t("documents.konfidenz.keine")
+        ? t("documents.konfidenz.none")
         : withLabel
           ? t("documents.detail.konfidenz.prozent", { percent: pct })
           : `${pct} %`}

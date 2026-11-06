@@ -16,6 +16,7 @@ import { ProcessingCard } from "@/components/home/processing-card";
 import { CompanyVolume, TopSuppliers } from "@/components/home/volume-lists";
 import { VolumeChart } from "@/components/home/volume-chart";
 import { useTranslation } from "@/lib/i18n";
+import { FirstStepsCard } from "@/features/onboarding-practice/first-steps-card";
 
 export const Route = createFileRoute("/")({
   staticData: { titleKey: "overview" },
@@ -44,6 +45,9 @@ function Index() {
       {/* Setup checklist while it's incomplete, general alerts once it's done. Never both.
           Pipeline errors ride along as the "fehler" item, so the old red banner is retired. */}
       <DashboardAlertStrip />
+      <div className="mb-4">
+        <FirstStepsCard />
+      </div>
       <HomeAttention />
 
       <div className="grid gap-3 lg:grid-cols-3">
@@ -64,7 +68,7 @@ function Index() {
         </div>
       </div>
 
-      <div className="mt-3 grid gap-3 lg:grid-cols-3">
+      <div className="mt-3 grid gap-3 lg:grid-cols-3 [&>div>*]:h-full">
         <div className="min-w-0 lg:col-span-2" data-tour="overview-stages">
           <PipelineStages />
         </div>

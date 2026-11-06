@@ -43,14 +43,11 @@ async function requireActiveAdmin(db: Db, callerEmail: string): Promise<{ id: st
 const CreateEmployeeSchema = z.object({
   email: z.string().email(),
   name: z.string().trim().min(1), // display name -- used everywhere an approver/actor is shown by name, not email
-  // Any role the database holds and marks assignable, looked up below, except super_admin: the owner
-  // account stays out of reach. A fixed list of the built-in names would refuse every role a client
-  // adds, such as a broker.
-  roleName: z
-    .string()
-    .trim()
-    .min(1)
-    .refine((name) => name !== "super_admin", { message: "super_admin is not assignable" }),
+  // Any role the database holds and marks assignable, looked up below. super_admin and any other
+  // role a client marks protected stay out of reach: the DB's guard_protected_role_insert trigger
+  // refuses a protected role_id on insert, not this schema, so a fixed list of names (admin,
+  // supervisor, broker, ...) would only end up refusing a role a client adds.
+  roleName: z.string().trim().min(1),
   companyIds: z.array(z.string().uuid()), // empty = unrestricted (mirrors has_company_access's "no grants" default)
 });
 
