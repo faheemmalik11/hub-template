@@ -9,6 +9,7 @@ import {
   Building2,
   ClipboardList,
   Coins,
+  Compass,
   Database,
   FileInput,
   FileOutput,
@@ -208,6 +209,23 @@ const nav: NavEntry[] = [
   },
 ];
 
+const onboardingTourNav: NavGroup = {
+  labelKey: "nav.onboardingTour",
+  icon: Compass,
+  items: [
+    {
+      labelKey: "nav.onboardingTourProcessInvoice",
+      to: "/onboarding-tour/process-an-invoice",
+      icon: Compass,
+    },
+    {
+      labelKey: "nav.onboardingTourStopCases",
+      to: "/onboarding-tour/when-does-it-stop",
+      icon: Compass,
+    },
+  ],
+};
+
 const adminNav: NavGroup = {
   labelKey: "nav.administration",
   icon: Settings,
@@ -347,6 +365,13 @@ export function AppShell({ children }: { children: ReactNode }) {
   );
   const adminActive = adminItems.some((child) => pathname.startsWith(child.to));
 
+  const onboardingTourItems = useMemo(
+    () =>
+      onboardingTourNav.items.filter((child) => linkVisible(child, can, permissionsUnavailable)),
+    [can, permissionsUnavailable],
+  );
+  const onboardingTourActive = onboardingTourItems.some((child) => pathname.startsWith(child.to));
+
   const tours = useTours();
   const tourLabels = useTourLabels();
   const tourSeenStore = useTourSeenStore();
@@ -356,9 +381,13 @@ export function AppShell({ children }: { children: ReactNode }) {
       upload: t("breadcrumb.upload"),
       new: t("breadcrumb.outgoingInvoiceNew"),
       "/outgoing-invoices/upload": t("breadcrumb.outgoingInvoiceUpload"),
-      // The Administration rail lives in the footer, outside the nav the crumb builder walks, so
-      // its pages' names have to come from this map.
+      // The Administration and First steps rails live in the footer, outside the nav the crumb
+      // builder walks, so their pages' names have to come from this map.
       ...Object.fromEntries(adminNav.items.map((item) => [item.to.slice(1), t(item.labelKey)])),
+      [onboardingTourNav.items[0].to.split("/")[1]]: t(onboardingTourNav.labelKey),
+      ...Object.fromEntries(
+        onboardingTourNav.items.map((item) => [item.to.split("/").pop(), t(item.labelKey)]),
+      ),
     }),
     [t],
   );
@@ -446,8 +475,37 @@ export function AppShell({ children }: { children: ReactNode }) {
               </>
             }
             footer={
-              adminItems.length > 0 ? (
-                <AdminMenu items={adminItems} active={adminActive} />
+              onboardingTourItems.length > 0 || adminItems.length > 0 ? (
+                <SidebarMenu>
+                  {onboardingTourItems.length > 0 && (
+                    <ShellFooterGroup
+                      label={t(onboardingTourNav.labelKey)}
+                      icon={onboardingTourNav.icon}
+                      tourId="shell-nav-onboarding-tour"
+                      items={onboardingTourItems.map((child) => ({
+                        key: child.to,
+                        label: t(child.labelKey),
+                        to: child.to,
+                        icon: child.icon,
+                      }))}
+                      active={onboardingTourActive}
+                    />
+                  )}
+                  {adminItems.length > 0 && (
+                    <ShellFooterGroup
+                      label={t(adminNav.labelKey)}
+                      icon={adminNav.icon}
+                      tourId="shell-nav-verwaltung"
+                      items={adminItems.map((child) => ({
+                        key: child.to,
+                        label: t(child.labelKey),
+                        to: child.to,
+                        icon: child.icon,
+                      }))}
+                      active={adminActive}
+                    />
+                  )}
+                </SidebarMenu>
               ) : undefined
             }
           >
@@ -463,25 +521,5 @@ export function AppShell({ children }: { children: ReactNode }) {
         </OnboardingPracticeProvider>
       </OnboardingEventsProvider>
     </TourProvider>
-  );
-}
-
-function AdminMenu({ items, active }: { items: NavLink[]; active: boolean }) {
-  const { t } = useTranslation();
-  return (
-    <SidebarMenu>
-      <ShellFooterGroup
-        label={t(adminNav.labelKey)}
-        icon={adminNav.icon}
-        tourId="shell-nav-verwaltung"
-        items={items.map((child) => ({
-          key: child.to,
-          label: t(child.labelKey),
-          to: child.to,
-          icon: child.icon,
-        }))}
-        active={active}
-      />
-    </SidebarMenu>
   );
 }

@@ -1,14 +1,14 @@
-import type { DocumentListRow } from "@/lib/data/types";
+import type { DocumentListRow, OpenItemRow } from "@/lib/data/types";
 import { COMPANIES, SUPPLIERS, sampleId } from "../shared";
 
 /**
  * The incoming invoices list: one row per state the screen draws differently, rather than twenty
  * rows of the same thing. A fixture is worth having only where it shows something.
  *
- * The columns are v_documents_list's, not the documents table's: the list reads the view, and a
- * row missing its view columns draws an empty recognition, review, payment and bank column.
+ * The columns are v_documents_list's and v_open_items' both, since `client.ts` answers both views
+ * from this one array -- a row missing either view's columns draws an empty column or a NaN sum.
  */
-const rows: Partial<DocumentListRow>[] = [
+const rows: (Partial<DocumentListRow> & Partial<OpenItemRow>)[] = [
   {
     id: sampleId(30, 1),
     company_id: COMPANIES[0].id,
@@ -39,7 +39,13 @@ const rows: Partial<DocumentListRow>[] = [
     handed_over_at: null,
     paid_at: null,
     is_overhead: false,
+    early_payment_deadline: "2026-11-10",
+    early_payment_discount_percent: 2,
+    early_payment_discount_amount: 245,
     created_at: "2026-09-14T08:12:00Z",
+    matched_sum: 0,
+    is_open: true,
+    open_blocker: null,
   },
   {
     id: sampleId(30, 2),
@@ -73,6 +79,9 @@ const rows: Partial<DocumentListRow>[] = [
     paid_at: null,
     is_overhead: true,
     created_at: "2026-09-02T09:40:00Z",
+    matched_sum: 0,
+    is_open: true,
+    open_blocker: null,
   },
   {
     id: sampleId(30, 3),
@@ -105,6 +114,9 @@ const rows: Partial<DocumentListRow>[] = [
     paid_at: "2026-09-05T11:00:00Z",
     is_overhead: false,
     created_at: "2026-08-30T16:05:00Z",
+    matched_sum: 1499.4,
+    is_open: false,
+    open_blocker: null,
   },
 ];
 

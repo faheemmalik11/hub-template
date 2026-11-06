@@ -351,6 +351,10 @@ export function useGenerateAndDownloadPaymentFile() {
       if (file.error) throw file.error;
       const fileRow = file.data as PaymentFile;
 
+      if (fileRow.status === "discarded") {
+        throw new Error("file_discarded");
+      }
+
       const existingDocuments = await sb
         .from(TABLE.paymentFileDocuments)
         .select("file_name, content")

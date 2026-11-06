@@ -3336,6 +3336,9 @@ begin
   if auth.uid() is null then
     raise exception 'set_datev_route: authentication required' using errcode = 'insufficient_privilege';
   end if;
+  if not public.may_write('rules.write') then
+    raise exception 'set_datev_route: rules.write required' using errcode = 'insufficient_privilege';
+  end if;
   if not public.has_company_access(p_company_id) then
     raise exception 'set_datev_route: no access to this company' using errcode = 'insufficient_privilege';
   end if;
@@ -3935,6 +3938,9 @@ declare
 begin
   if auth.uid() is null then
     raise exception 'update_datev_route_status: authentication required' using errcode = 'insufficient_privilege';
+  end if;
+  if not public.may_write('rules.write') then
+    raise exception 'update_datev_route_status: rules.write required' using errcode = 'insufficient_privilege';
   end if;
 
   select company_id into v_company from public.handover_routes where id = p_id;

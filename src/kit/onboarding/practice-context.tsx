@@ -17,6 +17,8 @@ function readStoredTaskId(): string | null {
   return window.sessionStorage.getItem(STORAGE_KEY);
 }
 
+export const readActivePracticeTaskId = readStoredTaskId;
+
 export function OnboardingPracticeProvider({ children }: { children: ReactNode }) {
   const [activeTaskId, setActiveTaskId] = useState<string | null>(readStoredTaskId);
   const [allowedPath, setAllowedPath] = useState<string | null>(null);

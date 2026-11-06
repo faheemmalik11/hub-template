@@ -2,6 +2,9 @@ import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useMemo } from "react";
 
 import { DatevHandoverPage, type DatevHandoverConfig } from "@/features/datev-handover";
+import { NoAccess } from "@/components/layout/no-access";
+import { useAuth } from "@/lib/auth";
+import { PERMISSIONS } from "@/config/permissions";
 import { pageTitle } from "@/config/brand";
 
 /**
@@ -17,8 +20,15 @@ import { pageTitle } from "@/config/brand";
 export const Route = createFileRoute("/datev-handover/")({
   head: () => ({ meta: [{ title: pageTitle("DATEV-Übergabe") }] }),
   staticData: { titleKey: "datevHandover" },
-  component: DatevHandoverRoute,
+  component: DatevHandoverGuard,
 });
+
+function DatevHandoverGuard() {
+  const { ready, can } = useAuth();
+  if (!ready) return null;
+  if (!can(PERMISSIONS.pageHandover)) return <NoAccess />;
+  return <DatevHandoverRoute />;
+}
 
 function DatevHandoverRoute() {
   const navigate = useNavigate();

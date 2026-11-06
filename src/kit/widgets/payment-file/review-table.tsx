@@ -92,28 +92,32 @@ export function ReviewTable({
           ))}
         </TableBody>
       </Table>
-      <div className="flex gap-2">
-        <Button disabled={downloading} onClick={onDownload}>
-          {labels.review.downloadFile}
-        </Button>
-        <AlertDialog>
-          <AlertDialogTrigger asChild>
-            <Button variant="outline">{labels.review.discard}</Button>
-          </AlertDialogTrigger>
-          <AlertDialogContent>
-            <AlertDialogHeader>
-              <AlertDialogTitle>{labels.review.discardConfirmTitle}</AlertDialogTitle>
-              <AlertDialogDescription>{labels.review.discardConfirmBody}</AlertDialogDescription>
-            </AlertDialogHeader>
-            <AlertDialogFooter>
-              <AlertDialogCancel>{labels.review.discardConfirmCancel}</AlertDialogCancel>
-              <AlertDialogAction onClick={onDiscard}>
-                {labels.review.discardConfirmConfirm}
-              </AlertDialogAction>
-            </AlertDialogFooter>
-          </AlertDialogContent>
-        </AlertDialog>
-      </div>
+      {file.status === "discarded" ? (
+        <p className="text-sm text-muted-foreground">{labels.review.discardedNotice}</p>
+      ) : (
+        <div className="flex gap-2">
+          <Button disabled={downloading} onClick={onDownload}>
+            {labels.review.downloadFile}
+          </Button>
+          <AlertDialog>
+            <AlertDialogTrigger asChild>
+              <Button variant="outline">{labels.review.discard}</Button>
+            </AlertDialogTrigger>
+            <AlertDialogContent>
+              <AlertDialogHeader>
+                <AlertDialogTitle>{labels.review.discardConfirmTitle}</AlertDialogTitle>
+                <AlertDialogDescription>{labels.review.discardConfirmBody}</AlertDialogDescription>
+              </AlertDialogHeader>
+              <AlertDialogFooter>
+                <AlertDialogCancel>{labels.review.discardConfirmCancel}</AlertDialogCancel>
+                <AlertDialogAction onClick={onDiscard}>
+                  {labels.review.discardConfirmConfirm}
+                </AlertDialogAction>
+              </AlertDialogFooter>
+            </AlertDialogContent>
+          </AlertDialog>
+        </div>
+      )}
     </div>
   );
 }

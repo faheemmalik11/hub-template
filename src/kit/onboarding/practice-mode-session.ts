@@ -1,7 +1,4 @@
-import { supabase } from "@/integrations/supabase/client";
-
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-const sb = supabase as any;
+import { sb } from "@/data/client";
 
 export const PRACTICE_MODE_HEARTBEAT_MS = 5 * 60 * 1000;
 

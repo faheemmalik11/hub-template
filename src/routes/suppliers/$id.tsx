@@ -135,6 +135,7 @@ type LForm = {
   phone: string;
   email: string;
   contact_person: string;
+  trade: string;
 };
 
 function lFormFrom(l: Supplier): LForm {
@@ -146,6 +147,7 @@ function lFormFrom(l: Supplier): LForm {
     phone: s(l.phone),
     email: s(l.email),
     contact_person: s(l.contact_person),
+    trade: s(l.trade),
   };
 }
 
@@ -550,6 +552,7 @@ function SupplierDetailPage() {
       copy: l.email ?? undefined,
     },
     { label: t("suppliers.detail.field.contact"), value: l.contact_person ?? "—" },
+    { label: t("suppliers.detail.field.trade"), value: l.trade ?? "—" },
   ];
 
   return (
@@ -1615,6 +1618,12 @@ function SupplierDetailPage() {
               label={t("suppliers.detail.field.contact")}
               value={f.contact_person}
               onChange={(v) => setF("contact_person", v)}
+              full
+            />
+            <LField
+              label={t("suppliers.detail.field.trade")}
+              value={f.trade}
+              onChange={(v) => setF("trade", v)}
               full
             />
           </div>

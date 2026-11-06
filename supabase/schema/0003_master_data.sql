@@ -127,6 +127,7 @@ create table if not exists public.suppliers (
     bank_name text,
     fax text,
     website text,
+    trade text,
     -- A row a person is trying out in practice mode, never a real supplier. See 0010_access.sql.
     is_demo boolean not null default false,
     demo_owner_user_id uuid references public.app_users(id),

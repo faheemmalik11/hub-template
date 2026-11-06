@@ -1,4 +1,5 @@
 import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { Loader2 } from "lucide-react";
 import { useState } from "react";
 
 import { Button } from "@/kit/ui/button";
@@ -11,6 +12,9 @@ import {
 import { readPracticeModeActive, setPracticeMode } from "@/kit/onboarding/practice-mode-session";
 import { decidePracticeStartOptions } from "@/kit/onboarding/practice-start-state";
 import { useOnboardingPractice } from "@/kit/onboarding/practice-context";
+
+const paintBeforeAnInstantAnswerHidesTheSpinner = () =>
+  new Promise((resolve) => requestAnimationFrame(() => requestAnimationFrame(resolve)));
 
 export interface OnboardingPracticeStartProps {
   taskId: string;
@@ -59,7 +63,10 @@ export function OnboardingPracticeStart({
 }: OnboardingPracticeStartProps) {
   const { startTask } = useOnboardingPractice();
   const queryClient = useQueryClient();
-  const [busy, setBusy] = useState(false);
+  const [pendingAction, setPendingAction] = useState<"start" | "resume" | "restart" | "end" | null>(
+    null,
+  );
+  const busy = pendingAction !== null;
 
   const state = useQuery({
     queryKey: ["practice-start-state", taskId, appUserId],
@@ -76,19 +83,28 @@ export function OnboardingPracticeStart({
     gcTime: 0,
   });
 
-  const run = async (action: () => Promise<void>) => {
-    setBusy(true);
+  const run = async (
+    which: "start" | "resume" | "restart" | "end",
+    action: () => Promise<void>,
+  ) => {
+    setPendingAction(which);
+    await paintBeforeAnInstantAnswerHidesTheSpinner();
     try {
       await action();
     } catch {
       onStartFailed();
     } finally {
-      setBusy(false);
+      setPendingAction(null);
     }
   };
 
   if (state.isLoading) {
-    return <p className="text-sm text-muted-foreground">{checkingLabel}</p>;
+    return (
+      <p className="flex items-center gap-2 text-sm text-muted-foreground">
+        <Loader2 className="size-4 animate-spin" />
+        {checkingLabel}
+      </p>
+    );
   }
   const progress = state.data?.progress ?? null;
   const options = decidePracticeStartOptions({
@@ -103,7 +119,7 @@ export function OnboardingPracticeStart({
   };
 
   const startFresh = () =>
-    run(async () => {
+    run("start", async () => {
       clearPracticeProgress(taskId, appUserId);
       await setPracticeMode(true);
       await seedPracticeData();
@@ -113,7 +129,7 @@ export function OnboardingPracticeStart({
     });
 
   const resume = () =>
-    run(async () => {
+    run("resume", async () => {
       if (!progress) return;
       await setPracticeMode(true);
       await seedPracticeData();
@@ -132,7 +148,7 @@ export function OnboardingPracticeStart({
     });
 
   const restart = () =>
-    run(async () => {
+    run("restart", async () => {
       if (!progress) return;
       await setPracticeMode(true);
       await seedPracticeData();
@@ -144,7 +160,7 @@ export function OnboardingPracticeStart({
     });
 
   const endPracticeMode = () =>
-    run(async () => {
+    run("end", async () => {
       await setPracticeMode(false);
       void queryClient.invalidateQueries();
     });
@@ -163,21 +179,25 @@ export function OnboardingPracticeStart({
       <div className="flex flex-wrap gap-2">
         {options.canStart && (
           <Button disabled={busy} onClick={() => void startFresh()}>
+            {pendingAction === "start" && <Loader2 className="size-4 animate-spin" />}
             {startButtonLabel}
           </Button>
         )}
         {options.canResume && (
           <Button disabled={busy} onClick={() => void resume()}>
+            {pendingAction === "resume" && <Loader2 className="size-4 animate-spin" />}
             {resumeButtonLabel}
           </Button>
         )}
         {options.canRestart && (
           <Button variant="outline" disabled={busy} onClick={() => void restart()}>
+            {pendingAction === "restart" && <Loader2 className="size-4 animate-spin" />}
             {restartButtonLabel}
           </Button>
         )}
         {options.canEndPracticeMode && (
           <Button variant="outline" disabled={busy} onClick={() => void endPracticeMode()}>
+            {pendingAction === "end" && <Loader2 className="size-4 animate-spin" />}
             {endModeButtonLabel}
           </Button>
         )}

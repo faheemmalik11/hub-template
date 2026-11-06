@@ -163,7 +163,6 @@ export function CrmPropertyList() {
                   onPage={view.setPage}
                   onPageSize={view.setPageSize}
                   labels={paginationLabels}
-                  divider={false}
                 />
               </div>
             )}

@@ -153,7 +153,6 @@ function CommissionDealsPage() {
                 onPage={view.setPage}
                 onPageSize={view.setPageSize}
                 labels={paginationLabels}
-                divider={false}
               />
             </div>
           </>

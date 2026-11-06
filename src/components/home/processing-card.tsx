@@ -67,7 +67,7 @@ export function ProcessingCard() {
     const error = logCounts.error ?? 0;
     const rows = invoicesQ.data ?? [];
     const recognised = rows.filter((r) => r.status === "recognised").length;
-    const zuCheck = rows.filter((r) => r.status === "needs_review").length;
+    const zuCheck = rows.filter((r) => r.status === "needs_review" && r.is_invoice === true).length;
     const channelCounts = new Map<string, number>();
     for (const r of rows) {
       if (!r.intake_channel) continue;

@@ -1,4 +1,9 @@
 import { sampleId } from "../shared";
+import { bankTransactions } from "./bank-transactions";
+
+function transactionById(transactionId: string) {
+  return bankTransactions.find((t) => t.id === transactionId) ?? null;
+}
 
 /** One confirmed and one candidate match per side -- reconciled vs. still waiting on a person. */
 export const documentTransactionMatches = [
@@ -13,6 +18,7 @@ export const documentTransactionMatches = [
     matched_at: "2026-09-05T11:05:00Z",
     confirmed_by: "owner@example.com",
     confirmed_at: "2026-09-05T11:05:00Z",
+    bank_transactions: transactionById(sampleId(80, 1)),
   },
   {
     id: sampleId(81, 2),
@@ -25,6 +31,7 @@ export const documentTransactionMatches = [
     matched_at: null,
     confirmed_by: null,
     confirmed_at: null,
+    bank_transactions: transactionById(sampleId(80, 2)),
   },
 ];
 
@@ -40,5 +47,6 @@ export const outgoingInvoiceTransactionMatches = [
     matched_at: "2026-09-01T09:10:00Z",
     confirmed_by: "owner@example.com",
     confirmed_at: "2026-09-01T09:10:00Z",
+    bank_transactions: transactionById(sampleId(80, 4)),
   },
 ];

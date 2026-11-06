@@ -137,7 +137,7 @@ export function buildStopCasesPracticeTask(t: PracticeTranslate): OnboardingTask
         instruction: text("aiCorrectInstruction"),
         expectedOutcome: text("aiCorrectOutcome"),
         helpText: text("aiCorrectHelp"),
-        target: "invoice-detail-fields",
+        target: "invoice-detail-amounts",
         path: AI_INVOICE_PATH,
         pageLabel: pageInvoice,
         completionCondition: {

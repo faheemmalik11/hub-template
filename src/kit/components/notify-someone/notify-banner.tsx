@@ -113,47 +113,51 @@ export function NotifyBanner({
                   // Opaque background and a real shadow, unlike an inline notice: this sits ON the
                   // page, so the content underneath has to stop showing through it.
                   className={cn(
-                    "flex items-start gap-3 rounded-xl border border-border bg-card px-4 py-3 shadow-lg ring-1 ring-black/5",
+                    "rounded-xl border border-border bg-card px-4 py-3 shadow-lg ring-1 ring-black/5",
                     "transition-transform ease-out motion-reduce:transition-none",
                     isLeaving && "translate-x-6",
                   )}
                   style={{ transitionDuration: `${EXIT_MS}ms` }}
                   role="status"
                 >
-                  <span
-                    aria-hidden
-                    className="grid size-8 shrink-0 place-items-center rounded-full bg-brand-dark text-[0.7rem] font-medium text-white"
-                  >
-                    {item.fromName ? initials(item.fromName) : "?"}
-                  </span>
-                  <div className="min-w-0 flex-1">
-                    <p className="flex flex-wrap items-baseline gap-x-2 text-sm font-medium text-foreground">
-                      <span className="truncate">{item.fromName ?? labels.fromUnknown}</span>
-                      {item.sentAt ? (
-                        <span className="text-xs font-normal text-muted-foreground">
-                          {item.sentAt}
-                        </span>
-                      ) : null}
-                    </p>
-                    {item.note ? (
-                      <p className="mt-0.5 whitespace-pre-line break-words text-sm text-muted-foreground">
-                        {item.note}
+                  <div className="flex items-start gap-3">
+                    <span
+                      aria-hidden
+                      className="grid size-8 shrink-0 place-items-center rounded-full bg-brand-dark text-[0.7rem] font-medium text-white"
+                    >
+                      {item.fromName ? initials(item.fromName) : "?"}
+                    </span>
+                    <div className="min-w-0 flex-1">
+                      <p className="flex flex-wrap items-baseline gap-x-2 text-sm font-medium text-foreground">
+                        <span className="truncate">{item.fromName ?? labels.fromUnknown}</span>
+                        {item.sentAt ? (
+                          <span className="text-xs font-normal text-muted-foreground">
+                            {item.sentAt}
+                          </span>
+                        ) : null}
                       </p>
-                    ) : (
-                      // No note is still a message: somebody pointed you here on purpose.
-                      <p className="mt-0.5 text-sm text-muted-foreground">{labels.noNote}</p>
-                    )}
+                      <div className="mt-1 rounded-2xl rounded-tl-sm bg-muted px-3 py-2">
+                        {item.note ? (
+                          <p className="whitespace-pre-line break-words text-sm text-foreground">
+                            {item.note}
+                          </p>
+                        ) : (
+                          // No note is still a message: somebody pointed you here on purpose.
+                          <p className="text-sm text-foreground">{labels.noNote}</p>
+                        )}
+                      </div>
+                    </div>
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      className="-mr-1 -mt-1 size-7 shrink-0 p-0 text-muted-foreground hover:text-foreground"
+                      aria-label={labels.dismiss}
+                      title={labels.dismiss}
+                      onClick={() => startDismiss(item.id)}
+                    >
+                      <X className="size-4" />
+                    </Button>
                   </div>
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    className="-mr-1 size-7 shrink-0 p-0 text-muted-foreground hover:text-foreground"
-                    aria-label={labels.dismiss}
-                    title={labels.dismiss}
-                    onClick={() => startDismiss(item.id)}
-                  >
-                    <X className="size-4" />
-                  </Button>
                 </div>
               </div>
             </div>

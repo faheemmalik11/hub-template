@@ -38,7 +38,7 @@ export function OnboardingLearningCard({
           <p className="mt-0.5 text-sm text-foreground">{step.expectedOutcome}</p>
         </div>
       )}
-      {showHelp && step.helpText && (
+      {(showHelp || step.type === "info") && step.helpText && (
         <div className="mt-2 rounded-lg bg-amber-50 p-2.5">
           <p className="text-sm text-amber-900">{step.helpText}</p>
         </div>

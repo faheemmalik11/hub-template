@@ -25,6 +25,7 @@ import {
   UPLOAD_LIMIT_BYTES,
 } from "@/features/file-upload/config";
 import { uploadToStorage } from "@/features/file-upload/upload";
+import { paintOneFrameBeforeContinuing } from "@/lib/paint-before-continuing";
 import { useTranslation } from "@/lib/i18n";
 import { pageTitle } from "@/config/brand";
 import { errorText } from "@/lib/data/format";
@@ -90,6 +91,7 @@ function UploadPage() {
   const inputRef = useRef<HTMLInputElement>(null);
   const [dragOver, setDragOver] = useState(false);
   const [files, setFiles] = useState<UploadFile[]>([]);
+  const [submitting, setSubmitting] = useState(false);
   const controllers = useRef(new Map<string, AbortController>());
   const createUpload = useCreateUploadDocuments();
   const emitOnboardingEvent = useEmitOnboardingEvent();
@@ -137,6 +139,8 @@ function UploadPage() {
   async function upload() {
     const open = files.filter((d) => d.phase === "queued");
     if (open.length === 0) return;
+    setSubmitting(true);
+    await paintOneFrameBeforeContinuing();
     try {
       const inputs: UploadInput[] = [];
       for (const d of open) {
@@ -184,6 +188,8 @@ function UploadPage() {
       }
     } catch (e) {
       toast.error(t("upload.toast.failed", { error: errorText(e) }));
+    } finally {
+      setSubmitting(false);
     }
   }
 
@@ -206,9 +212,8 @@ function UploadPage() {
         <p className="mt-1 text-sm text-muted-foreground">{t("upload.subtitle")}</p>
       </div>
 
-      {/* Drag & Drop-Zone */}
       <div
-        data-tour="incoming-upload-dropzone"
+        data-tour={open === 0 ? "incoming-upload-dropzone" : undefined}
         onDragOver={(e) => {
           e.preventDefault();
           setDragOver(true);
@@ -252,7 +257,6 @@ function UploadPage() {
         />
       </div>
 
-      {/* Datei-Liste */}
       {files.length > 0 && (
         <div className="mt-6 overflow-hidden rounded-xl border border-border bg-card">
           <div className="flex items-center justify-between border-b border-border px-4 py-3">
@@ -340,7 +344,6 @@ function UploadPage() {
         </div>
       )}
 
-      {/* Aktionen */}
       <div
         data-tour="incoming-upload-actions"
         className="mt-6 flex flex-wrap items-center justify-end gap-3"
@@ -348,8 +351,12 @@ function UploadPage() {
         <Button variant="outline" onClick={() => navigate({ to: "/incoming-invoices" })}>
           {done ? t("upload.toOverview") : t("upload.cancel")}
         </Button>
-        <Button className="gap-2" onClick={upload} disabled={open === 0 || createUpload.isPending}>
-          {createUpload.isPending ? (
+        <Button
+          className="gap-2"
+          onClick={upload}
+          disabled={open === 0 || submitting || createUpload.isPending}
+        >
+          {submitting || createUpload.isPending ? (
             <>
               <Loader2 className="size-4 animate-spin" /> {t("upload.uploading")}
             </>

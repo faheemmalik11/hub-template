@@ -55,8 +55,7 @@ select d.*,
   left join public.suppliers s on s.id = d.supplier_id
  where d.deleted_at is null
    -- A document that was split into its parts is represented by those parts, not by itself.
-   and coalesce(d.status, '') <> 'split'
-   and d.private_hold = false;
+   and coalesce(d.status, '') <> 'split';
 
 -- The same list with one lower-cased haystack column, so a plain text box can match what a person
 -- typed without the caller assembling the same expression again.

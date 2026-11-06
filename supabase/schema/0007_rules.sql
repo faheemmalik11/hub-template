@@ -105,7 +105,7 @@ create table if not exists public.handover_routes (
     company_id uuid not null references public.companies(id) on delete cascade,
     direction text not null,
     address text not null,
-    is_enabled boolean not null default true,
+    is_enabled boolean not null default false,
     note text,
     updated_by text,
     created_at timestamptz not null default now(),
