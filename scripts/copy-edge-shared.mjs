@@ -6,7 +6,8 @@ const pairs = [
   ["src/lib/crm/propstack.ts", "supabase/functions/_shared/propstack.ts"],
   ["src/lib/inbox/sealed.server.ts", "supabase/functions/_shared/sealed.ts"],
 ];
-const header = (source) => `// Copy of ${source}. Edit that file and run scripts/copy-edge-shared.mjs.\n`;
+const header = (source) =>
+  `// Copy of ${source}. Edit that file and run scripts/copy-edge-shared.mjs.\n`;
 const check = process.argv.includes("--check");
 let drifted = false;
 
