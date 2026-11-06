@@ -83,6 +83,13 @@ From inside the client branch's worktree:
 git merge dev   # or main
 ```
 
+This merges the **local** `dev` branch, not `origin/dev` — every worktree of this repository shares
+the same local git history, so a fix committed on `dev` a moment ago is already there to merge, no
+push or pull required. This is the normal way to work through a round of local fixes while testing a
+client branch: commit small fixes on `dev` as you find them (rule 4 — fix them there, not on the
+client branch), merge `dev` into the client branch locally as often as you want, and only push either
+branch to GitHub once, when you are actually done, not per fix.
+
 A conflict here means the client branch and the shared branch both touched the same lines for
 unrelated reasons — read both sides' actual intent before resolving (`git log`/`git show` on both
 branches' commits for the conflicted file), the same discipline as any merge, not a reason to take

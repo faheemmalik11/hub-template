@@ -36,7 +36,10 @@ being brought in, can instead be **a long-lived branch of this repository**, off
   they would for a cloned client. The branch is for brand and code, not for which features are on.
 - New shared work lands on `main`/`dev` as before. A client branch picks it up with `git merge
   main`/`git merge dev` into the client branch, whenever that client wants the update — not
-  automatically, and not by rebuilding their branch from scratch.
+  automatically, and not by rebuilding their branch from scratch. This merge is local, not a push and
+  pull through GitHub: every worktree of this repository shares the same local git history, so a
+  round of small local fixes can be committed on `main`/`dev` and merged into a client branch
+  repeatedly while testing, with nothing pushed until the whole thing is actually ready.
 - **The reverse applies too, every time**: if you are working in a client's branch and find something
   to fix that is not that client's name, brand or data, fix it on `main`/`dev` first, then merge
   `main`/`dev` into the client branch to pick it up. Never fix it only on the branch you happen to be
