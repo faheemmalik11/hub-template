@@ -39,8 +39,14 @@ file edits) in a separate git worktree instead of switching that checkout's bran
 them — but don't create a worktree as a reflex for every task; ask first unless there's a concrete
 reason to isolate.
 
+Put the worktree in `.worktrees/<client>/` **inside this repo**, not as a sibling folder — that way
+it stays visible in the same project/editor view instead of living somewhere separate. `.worktrees/`
+is gitignored, the same way Claude Code's own default `.claude/worktrees/` is.
+
 ```
-git worktree add ../hub-template-<client> -b <client> dev   # or main
+git worktree add .worktrees/<client> -b <client> dev   # or main, if the branch doesn't exist yet
+git worktree add .worktrees/<client> <client>           # if it already exists, e.g. created earlier
+                                                          # with `git branch <client> dev`
 ```
 
 Set the client's name, colours and artwork in `src/config/brand.ts`, `src/styles.css`,
