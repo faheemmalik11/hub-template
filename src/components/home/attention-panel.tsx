@@ -25,18 +25,18 @@ import { cn } from "@/lib/utils";
 
 const MAX_PREVIEW = 4;
 
-type BucketKey = "abgelehnt" | "rueckfrage" | "zugewiesen";
+type BucketKey = "rejected" | "returned" | "assigned";
 
 const BUCKET_STYLE: Record<BucketKey, { icon: typeof XCircle; className: string }> = {
-  abgelehnt: {
+  rejected: {
     icon: XCircle,
     className: "border-red-500/30 bg-red-500/10 text-red-700 dark:text-red-400",
   },
-  rueckfrage: {
+  returned: {
     icon: MessageCircleQuestion,
     className: "border-amber-500/30 bg-amber-500/10 text-amber-800 dark:text-amber-500",
   },
-  zugewiesen: { icon: UserCheck, className: "border-border bg-muted/60 text-foreground" },
+  assigned: { icon: UserCheck, className: "border-border bg-muted/60 text-foreground" },
 };
 
 export function HomeAttention() {
@@ -56,9 +56,9 @@ export function HomeAttention() {
   const buckets = useMemo(() => {
     const claimed = new Set<string>();
     const ordered: { key: BucketKey; source: Document[] }[] = [
-      { key: "abgelehnt", source: rejectedQ.data ?? [] },
-      { key: "rueckfrage", source: returnedQ.data ?? [] },
-      { key: "zugewiesen", source: assignedQ.data ?? [] },
+      { key: "rejected", source: rejectedQ.data ?? [] },
+      { key: "returned", source: returnedQ.data ?? [] },
+      { key: "assigned", source: assignedQ.data ?? [] },
     ];
     return ordered
       .map(({ key, source }) => ({

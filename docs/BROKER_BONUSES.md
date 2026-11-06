@@ -6,7 +6,7 @@ Replaces the Excel list each broker emailed to the bookkeeper by the 15th of the
 ## What was asked
 
 A broker sees a bonus screen where they enter the date, the type of bonus and the amount. An
-administrator approves it. (Not commissions: those are the fees van Oepen invoices to buyers and
+administrator approves it. (Not commissions: those are the fees the agency invoices to buyers and
 sellers, see `COMMISSION_INVOICES.md`.)
 
 ## What is implemented

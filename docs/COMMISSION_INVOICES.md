@@ -122,7 +122,7 @@ rules are in the database (`supabase/schema/0017_broker_commissions.sql`), not i
   `supabase/schema/0019_deals_from_crm.sql`, run at the end of each `propstack-sync`). The deal is
   `incomplete`, with the realised price (`sold_price`), the property and the broker filled in; the
   broker and every administering role get a bell entry linking to it. The CRM's sold date is empty on
-  all 56 sold properties in the van Oepen data, so it is not used: a trigger stamps
+  every sold property seen so far, so it is not used: a trigger stamps
   `properties.became_sold_at` when the sync sees `crm_status` change to "Verkauft", and only a stamp
   newer than the day the switch was turned on opens a deal. Properties already sold never do, and one
   property never opens two. Both sides are created with the fee read from the CRM's structured rates:

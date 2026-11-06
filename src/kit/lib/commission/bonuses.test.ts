@@ -84,15 +84,15 @@ describe("bonus suggestions", () => {
   });
 
   test("a company lead worked by another broker gives that broker ten percent", () => {
-    const bonuses = suggestBonuses({ ...facts, acquiredBy: "julia" }, settings);
+    const bonuses = suggestBonuses({ ...facts, acquiredBy: "broker-2" }, settings);
     const share = bonuses.find((bonus) => bonus.type === "company_lead_share");
-    assert.equal(share?.brokerUserId, "julia");
+    assert.equal(share?.brokerUserId, "broker-2");
     assert.equal(share?.amountCents, 1_450_00);
   });
 
   test("the ten percent can be taken on the commission before costs", () => {
     const bonuses = suggestBonuses(
-      { ...facts, acquiredBy: "julia" },
+      { ...facts, acquiredBy: "broker-2" },
       { ...settings, companyLeadDeductsCosts: false },
     );
     assert.equal(
