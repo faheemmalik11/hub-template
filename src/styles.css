@@ -17,9 +17,8 @@
 /*
  * Design system
  *
- * Brand: white surfaces plus one blue accent. The ramp below is the template's default and is
- * meant to be replaced: a client sets their own colours here and nothing else needs editing.
- * The dark tone (--brand-ink) is the text tone only, never a background.
+ * Brand: warm white surfaces, Kohle (charcoal) for action, Gold as the accent. The ramp below is
+ * Immobilien van Oepen's. The dark tone (--brand-ink) is the text tone only, never a background.
  * Display = Cormorant Garamond (Serif). Body/UI = Hanken Grotesk.
  * Colours in oklch. Light-first; .dark stays defined but is not in use yet.
  *
@@ -123,41 +122,43 @@
 :root {
   --radius: 0.5rem;
 
-  /* Brand ramp: the single source of the brand colours, so primary, ring, accent, charts and
-     sidebar all derive from these. One hue runs through the whole ramp so the steps stay in
-     family; change the hue here and everything follows. */
-  --brand: oklch(0.8 0.041 250);
-  --brand-hover: oklch(0.52 0.108 250); /* primary blue: buttons, toggles, active states */
-  --brand-dark: oklch(0.45 0.105 250); /* button hover, active tab text, login panel */
-  --brand-soft: oklch(0.7 0.045 250);
-  --brand-tint: oklch(0.96 0.017 250); /* accent light background */
-  --brand-wash: oklch(0.985 0.005 250); /* page background */
+  /* Brand ramp for Immobilien van Oepen, from FARBEN_IvO_NEU_2026: Kohle #423F3B (primary), Gold
+     #C4A67E (secondary), Beige #EEEBE6 (tertiary). Primary, ring, accent, charts and sidebar all
+     derive from these.
+     --brand is a deeper gold than the sheet's, because it is used as text and as a selected-state
+     fill on white; the sheet's exact gold is --brand-soft, for fills, borders and the focus ring. */
+  --brand: #8f7549;
+  --brand-hover: #423f3b; /* Kohle: buttons, toggles, active states */
+  --brand-dark: #2e2c29; /* button hover, active tab text, login panel */
+  --brand-soft: #c4a67e; /* Gold */
+  --brand-tint: #f1e9dc; /* accent light background */
+  --brand-wash: #f7f5f1; /* page background */
   --shell-wash: var(--brand-wash);
-  --header: oklch(0.99 0.004 250); /* top bar, one step off the page */
-  --brand-ink: oklch(0.322 0.008 250); /* logo charcoal, cooled to the ramp */
+  --header: #fbfaf8; /* top bar, one step off the page */
+  --brand-ink: #423f3b; /* Kohle, the text tone */
 
-  --background: oklch(0.985 0.005 250);
-  --foreground: oklch(0.25 0.012 250);
+  --background: #f7f5f1;
+  --foreground: #2f2d2a;
   --card: #ffffff;
-  --card-foreground: oklch(0.25 0.012 250);
+  --card-foreground: #2f2d2a;
   --popover: #ffffff;
-  --popover-foreground: oklch(0.25 0.012 250);
+  --popover-foreground: #2f2d2a;
 
   --primary: var(--brand-hover);
   --primary-foreground: #ffffff;
   --secondary: var(--brand-wash);
-  --secondary-foreground: oklch(0.55 0.017 250);
-  --muted: oklch(0.94 0.008 250);
-  --muted-foreground: oklch(0.55 0.017 250);
+  --secondary-foreground: #6b665f;
+  --muted: #efece6;
+  --muted-foreground: #6b665f;
   --accent: var(--brand-tint);
-  --accent-foreground: oklch(0.25 0.012 250);
+  --accent-foreground: #2f2d2a;
   --destructive: #c64b4b;
   --destructive-foreground: #ffffff;
-  --border: oklch(0.91 0.011 250);
-  --input: oklch(0.89 0.013 250);
-  --switch-off: oklch(0.87 0.014 250);
-  --placeholder: oklch(0.65 0.018 250);
-  --ring: var(--brand-hover);
+  --border: #e4dfd6;
+  --input: #d9d3c8;
+  --switch-off: #d9d3c8;
+  --placeholder: #9b958b;
+  --ring: var(--brand-soft);
 
   --success: #16845b;
   --success-soft: #edf8f3;
@@ -167,49 +168,49 @@
   --danger-soft: #fbeeee;
 
   --chart-1: var(--brand-hover);
-  --chart-2: oklch(0.55 0.035 250);
-  --chart-3: oklch(0.68 0.03 250);
-  --chart-4: oklch(0.79 0.022 250);
-  --chart-5: oklch(0.87 0.015 250);
+  --chart-2: var(--brand-soft);
+  --chart-3: #8a847a;
+  --chart-4: #d9cdc0;
+  --chart-5: #eeebe6;
 
-  --sidebar: oklch(0.97 0.008 250);
-  --sidebar-foreground: oklch(0.25 0.012 250);
+  --sidebar: #eeebe6;
+  --sidebar-foreground: #2f2d2a;
   --sidebar-primary: var(--brand-hover);
   --sidebar-primary-foreground: #ffffff;
-  --sidebar-accent: oklch(0.93 0.015 250);
-  --sidebar-accent-foreground: oklch(0.25 0.012 250);
-  --sidebar-border: oklch(0.91 0.011 250);
-  --sidebar-ring: var(--brand-hover);
+  --sidebar-accent: #e3ddd1;
+  --sidebar-accent-foreground: #2f2d2a;
+  --sidebar-border: #dcd6ca;
+  --sidebar-ring: var(--brand-soft);
 }
 
 .dark {
-  --background: oklch(0.22 0.02 255);
-  --foreground: oklch(0.985 0.003 247.858);
-  --card: oklch(0.26 0.022 256);
-  --card-foreground: oklch(0.985 0.003 247.858);
-  --popover: oklch(0.26 0.022 256);
-  --popover-foreground: oklch(0.985 0.003 247.858);
-  --primary: oklch(0.72 0.05 196);
-  --primary-foreground: oklch(0.22 0.02 255);
-  --secondary: oklch(0.3 0.025 255);
-  --secondary-foreground: oklch(0.985 0.003 247.858);
-  --muted: oklch(0.3 0.025 255);
-  --muted-foreground: oklch(0.72 0.02 250);
-  --accent: oklch(0.32 0.03 240);
-  --accent-foreground: oklch(0.985 0.003 247.858);
+  --background: #1f1d1b;
+  --foreground: #f2efea;
+  --card: #2a2825;
+  --card-foreground: #f2efea;
+  --popover: #2a2825;
+  --popover-foreground: #f2efea;
+  --primary: #c4a67e;
+  --primary-foreground: #1f1d1b;
+  --secondary: #34312e;
+  --secondary-foreground: #f2efea;
+  --muted: #34312e;
+  --muted-foreground: #b5aea3;
+  --accent: #3a352e;
+  --accent-foreground: #f2efea;
   --destructive: oklch(0.704 0.191 22.216);
   --destructive-foreground: oklch(0.985 0 0);
   --border: oklch(1 0 0 / 12%);
   --input: oklch(1 0 0 / 15%);
-  --ring: oklch(0.72 0.05 196);
-  --sidebar: oklch(0.24 0.022 256);
-  --sidebar-foreground: oklch(0.985 0.003 247.858);
-  --sidebar-primary: oklch(0.72 0.05 196);
-  --sidebar-primary-foreground: oklch(0.22 0.02 255);
-  --sidebar-accent: oklch(0.32 0.03 240);
-  --sidebar-accent-foreground: oklch(0.985 0.003 247.858);
+  --ring: #c4a67e;
+  --sidebar: #242220;
+  --sidebar-foreground: #f2efea;
+  --sidebar-primary: #c4a67e;
+  --sidebar-primary-foreground: #1f1d1b;
+  --sidebar-accent: #34312e;
+  --sidebar-accent-foreground: #f2efea;
   --sidebar-border: oklch(1 0 0 / 12%);
-  --sidebar-ring: oklch(0.72 0.05 196);
+  --sidebar-ring: #c4a67e;
 }
 
 html {
