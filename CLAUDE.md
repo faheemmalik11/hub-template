@@ -37,6 +37,10 @@ being brought in, can instead be **a long-lived branch of this repository**, off
 - New shared work lands on `main`/`dev` as before. A client branch picks it up with `git merge
   main`/`git merge dev` into the client branch, whenever that client wants the update — not
   automatically, and not by rebuilding their branch from scratch.
+- **The reverse applies too, every time**: if you are working in a client's branch and find something
+  to fix that is not that client's name, brand or data, fix it on `main`/`dev` first, then merge
+  `main`/`dev` into the client branch to pick it up. Never fix it only on the branch you happen to be
+  in — see rule 4 below.
 - A feature built for one client, worth having generally, is ported the other direction: cherry-pick
   or merge the client branch's commits into `main`/`dev`, stripped of that client's name and data,
   same as any clone's own fix would be. Van Oepen's commission/bonus/CRM-sync feature set was ported
@@ -78,13 +82,19 @@ needs a better name or to be a named function, not a sentence above it.
 
 The same rule in SQL: a table, column or function named for what it holds needs no explanation.
 
-### The three rules of this repository
+### The four rules of this repository
 
 1. **Never delete a screen to suit one client.** Switch it off in their catalogue. A screen removed
    here is a fork; a screen switched off is a row.
 2. **Never write a client's name here.** Not in code, not in a comment, not in a migration.
 3. **New behaviour ships off by default**, behind a switch, so an existing client's Hub cannot change
    under them when the template moves forward.
+4. **A fix that is not specific to one client goes on `main`/`dev`, never only on a client's branch.**
+   Fixing it only on the branch where you noticed it means every other client, cloned or branched,
+   keeps the bug until someone remembers to port it by hand — the exact drift branches exist to
+   avoid. Make the fix on `main`/`dev`, then merge it into the client branch you were working on. If
+   you are not sure whether something is client-specific, it almost always is not: a client-specific
+   thing is their name, their brand, their data, or a setting in their own database, nothing else.
 
 The direction is the one the pipeline already reached: one shared codebase, and what makes a client
 different is data rather than code. There is no separate package: `src/kit/` holds the shared parts

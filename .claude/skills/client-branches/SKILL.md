@@ -5,6 +5,11 @@ description: How a client can be a long-lived branch of this repository instead 
 
 # Client branches
 
+**The one rule that matters most while working in any client branch**: if what you are fixing is not
+that client's name, brand or data, fix it on `main`/`dev`, not here, then merge `main`/`dev` into
+this branch to pick it up. A fix made only in a client's branch never reaches any other client —
+that silent drift is the exact thing this model exists to prevent. See CLAUDE.md's four rules.
+
 A client's Hub can be a branch of this repository rather than a clone kept in its own repo. The
 branch carries the one thing a clone used to carry that cannot be data: brand and artwork. Everything
 else — which features are on, who has which role, the client's own records — is still data, in that
