@@ -36,8 +36,7 @@ describe("buildPracticeInvoiceTask", () => {
       "upload",
       "open-invoice",
       "correct-amount",
-      "assign-company",
-      "assign-property",
+      "assign-company-and-property",
       "send-for-review",
       "approve",
       "final-approve",
@@ -51,11 +50,12 @@ describe("buildPracticeInvoiceTask", () => {
     ).toBeNull();
   });
 
-  it("points the assignment steps at the demo company and property codes", () => {
-    const company = resolved.steps.find((step) => step.id === "assign-company");
-    const property = resolved.steps.find((step) => step.id === "assign-property");
-    expect(company?.completionCondition?.data).toEqual({ company_code: "DEMO-ab12cd34" });
-    expect(property?.completionCondition?.data).toEqual({ property_code: "DEMO-ab12cd34-P1" });
+  it("points the assignment step at the demo company and property codes together", () => {
+    const assignment = resolved.steps.find((step) => step.id === "assign-company-and-property");
+    expect(assignment?.completionCondition?.data).toEqual({
+      company_code: "DEMO-ab12cd34",
+      property_code: "DEMO-ab12cd34-P1",
+    });
   });
 
   it("scopes every step after the upload to the uploaded document", () => {

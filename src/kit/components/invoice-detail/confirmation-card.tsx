@@ -86,7 +86,7 @@ export function ConfirmationCard({
   companies: ConfirmationCardCompany[];
   properties: ConfirmationCardProperty[];
   propertyCompanyLinks: ConfirmationCardPropertyCompanyLink[];
-  documentTypeOptions: string[];
+  documentTypeOptions: ComboboxOption[];
   noCompanyCode: string;
   onConfirm: (input: ConfirmationCardConfirmInput) => Promise<void>;
   labels: ConfirmationCardLabels;
@@ -96,6 +96,11 @@ export function ConfirmationCard({
   const [documentType, setDocumentType] = useState(document.documentType ?? "");
   const [isInvoice, setIsInvoice] = useState(document.isInvoice);
   const [saving, setSaving] = useState(false);
+
+  type TouchedField = "company" | "property" | "documentType" | "isInvoice";
+  const [touched, setTouched] = useState<Set<TouchedField>>(new Set());
+  const touch = (field: TouchedField) =>
+    setTouched((prev) => (prev.has(field) ? prev : new Set(prev).add(field)));
 
   const company = useMemo(
     () => companies.find((candidate) => candidate.code === companyCode) ?? null,
@@ -176,12 +181,12 @@ export function ConfirmationCard({
     })),
   ];
   const documentTypeAllOptions =
-    !documentType || documentTypeOptions.includes(documentType)
+    !documentType || documentTypeOptions.some((option) => option.value === documentType)
       ? documentTypeOptions
-      : [documentType, ...documentTypeOptions];
+      : [{ value: documentType, label: documentType }, ...documentTypeOptions];
   const documentTypeComboOptions: ComboboxOption[] = [
     { value: NO_SELECTION, label: labels.noDocumentTypeOption },
-    ...documentTypeAllOptions.map((value) => ({ value, label: value })),
+    ...documentTypeAllOptions,
   ];
 
   return (
@@ -205,27 +210,39 @@ export function ConfirmationCard({
           Document type and Is this an invoice? stay level with each other no matter whether
           Company or Property has an extra suggestion line between them and the input above. */}
       <div className="grid items-start gap-4 sm:grid-cols-2">
-        <div className="space-y-1" data-tour="invoice-detail-company">
+        <div
+          className="space-y-1"
+          data-tour={touched.has("company") ? undefined : "invoice-detail-company"}
+        >
           <span className="text-sm text-amber-900/80 group-data-[confirmed=true]:text-muted-foreground">
             {labels.companyLabel}
           </span>
           <Combobox
             ariaLabel={labels.companyLabel}
             value={companyCode}
-            onValueChange={setCompanyCode}
+            onValueChange={(value) => {
+              touch("company");
+              setCompanyCode(value);
+            }}
             placeholder={labels.companyPlaceholder}
             options={companyOptions}
           />
         </div>
 
-        <div className="space-y-1" data-tour="invoice-detail-property">
+        <div
+          className="space-y-1"
+          data-tour={touched.has("property") ? undefined : "invoice-detail-property"}
+        >
           <span className="text-sm text-amber-900/80 group-data-[confirmed=true]:text-muted-foreground">
             {labels.propertyLabel}
           </span>
           <Combobox
             ariaLabel={labels.propertyLabel}
             value={propertyCode || ""}
-            onValueChange={(value) => setPropertyCode(value === NO_SELECTION ? "" : value)}
+            onValueChange={(value) => {
+              touch("property");
+              setPropertyCode(value === NO_SELECTION ? "" : value);
+            }}
             placeholder={labels.propertyPlaceholder}
             options={propertyOptions}
           />
@@ -240,7 +257,10 @@ export function ConfirmationCard({
                 size="sm"
                 variant="ghost"
                 className="h-6 gap-1 rounded-full border-transparent bg-sky-100 px-2 text-xs text-sky-900 shadow-none hover:bg-sky-200"
-                onClick={() => setCompanyCode(companySuggestion.code)}
+                onClick={() => {
+                  touch("company");
+                  setCompanyCode(companySuggestion.code);
+                }}
               >
                 <Check className="size-3" />
                 {labels.companySuggestionAccept}
@@ -264,7 +284,10 @@ export function ConfirmationCard({
                       size="sm"
                       variant="ghost"
                       className="h-6 rounded-full border-transparent bg-sky-100 px-2 text-xs text-sky-900 shadow-none hover:bg-sky-200"
-                      onClick={() => setPropertyCode(suggestion.code)}
+                      onClick={() => {
+                        touch("property");
+                        setPropertyCode(suggestion.code);
+                      }}
                     >
                       {labels.propertySuggestion(
                         suggestion.code,
@@ -289,7 +312,10 @@ export function ConfirmationCard({
           <Combobox
             ariaLabel={labels.documentTypeLabel}
             value={documentType || ""}
-            onValueChange={(value) => setDocumentType(value === NO_SELECTION ? "" : value)}
+            onValueChange={(value) => {
+              touch("documentType");
+              setDocumentType(value === NO_SELECTION ? "" : value);
+            }}
             placeholder={labels.documentTypePlaceholder}
             options={documentTypeComboOptions}
           />
@@ -300,7 +326,13 @@ export function ConfirmationCard({
             {labels.isInvoiceLabel}
           </span>
           <div className="flex items-center gap-2">
-            <Switch checked={isInvoice} onCheckedChange={setIsInvoice} />
+            <Switch
+              checked={isInvoice}
+              onCheckedChange={(checked) => {
+                touch("isInvoice");
+                setIsInvoice(checked);
+              }}
+            />
             <span className="text-sm text-amber-900 group-data-[confirmed=true]:text-emerald-900">
               {isInvoice ? labels.isInvoiceYes : labels.isInvoiceNo}
             </span>
@@ -321,7 +353,13 @@ export function ConfirmationCard({
               {labels.discard}
             </Button>
           )}
-          <Button type="button" onClick={confirm} disabled={saving} className="gap-2 shadow-none">
+          <Button
+            type="button"
+            data-tour="confirmation-card-confirm"
+            onClick={confirm}
+            disabled={saving}
+            className="gap-2 shadow-none"
+          >
             {saving ? <Loader2 className="size-4 animate-spin" /> : <Check className="size-4" />}
             {labels.confirm}
           </Button>

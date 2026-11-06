@@ -1219,15 +1219,13 @@ const de = {
       amountDeviation: "Wer prüft bei Ihnen die Rechnungsbeträge?",
       amountHelp:
         "Vergleichen Sie den Bruttobetrag in der App mit dem Betrag auf der Datei. Ändern Sie nur diesen Betrag. Netto plus Umsatzsteuer muss den Bruttobetrag ergeben.",
-      companyInstruction: "Wählen Sie die Übungsgesellschaft. Ihr Kürzel beginnt mit DEMO-.",
-      companyOutcome:
-        "Jede Rechnung gehört zu genau einer Gesellschaft. Nur mit der richtigen Gesellschaft landet sie in der richtigen Buchhaltung und beim richtigen Freigeber.",
-      companyHelp: "Suchen Sie die Gesellschaft, deren Kürzel mit DEMO- beginnt.",
-      propertyInstruction: "Wählen Sie das Übungsobjekt. Sein Kürzel endet auf -P1.",
-      propertyOutcome:
-        "Kosten gehören zu einem bestimmten Objekt. Mit dem richtigen Objekt sehen Sie später, was jedes Gebäude wirklich kostet.",
+      companyPropertyInstruction:
+        "Wählen Sie die Übungsgesellschaft und das Übungsobjekt. Das Kürzel der Gesellschaft beginnt mit DEMO-, das Kürzel des Objekts endet auf -P1.",
+      companyPropertyOutcome:
+        "Jede Rechnung gehört zu genau einer Gesellschaft und einem Objekt. Die richtige Gesellschaft landet in der richtigen Buchhaltung und beim richtigen Freigeber. Das richtige Objekt zeigt Ihnen, was jedes Gebäude wirklich kostet.",
+      companyPropertyHelp:
+        "Suchen Sie die Gesellschaft, deren Kürzel mit DEMO- beginnt, und das Objekt, dessen Kürzel auf -P1 endet.",
       propertyDeviation: "Ordnen Sie Rechnungen auch Objekten zu, nicht nur Gesellschaften?",
-      propertyHelp: "Suchen Sie das Objekt, dessen Kürzel auf -P1 endet.",
       reviewInstruction: "Schicken Sie die Rechnung zur Prüfung.",
       reviewOutcome:
         "Mit diesem Klick sagen Sie: Die Daten stimmen. Jetzt prüft eine zweite Person, bevor Geld fließt.",
