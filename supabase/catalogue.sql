@@ -308,7 +308,8 @@ insert into public.feature_requirements (feature_key, requires_key) values
   ('page.assignment_rules',  'page.categories'),
   ('documents.write',        'documents.read'),
   ('master_data.write',      'master_data.read'),
-  ('invoices.approve_final', 'invoices.approve')
+  ('invoices.approve_final', 'invoices.approve'),
+  ('page.broker_bonuses',    'page.commission_deals')
 on conflict do nothing;
 
 -- Loud rather than silently empty: a project whose roles are named differently would insert nothing
