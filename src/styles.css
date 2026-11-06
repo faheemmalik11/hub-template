@@ -370,3 +370,16 @@ bugherd-sidebar {
   color: transparent;
   animation: chip-skeleton 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
 }
+
+@keyframes practice-blink {
+  0%,
+  100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0;
+  }
+}
+.practice-blink {
+  animation: practice-blink 1s ease-in-out infinite;
+}

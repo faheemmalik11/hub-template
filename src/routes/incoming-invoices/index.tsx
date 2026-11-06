@@ -121,6 +121,7 @@ import type { DocumentsFilter, DocumentListRow, DocumentSortKey, Employee } from
 import { pageTitle } from "@/config/brand";
 import {
   ALL,
+  CHANNEL_VALUES,
   DATEV_VALUES,
   DUE_FILTER_VALUES,
   PAGE_SIZES,
@@ -180,6 +181,7 @@ function IncomingInvoicesPage() {
 
   const statusLabel = (v: string) => t(`documents.status.${v}`, { defaultValue: v });
   const paymentLabel = (v: string) => t(`documents.badge.${v}`, { defaultValue: v });
+  const channelLabel = (v: string) => t(`documents.kanal.${v}`, { defaultValue: v });
   const datevLabel = (v: string) =>
     t(`documents.list.filter.datev${v === "uebergeben" ? "Uebergeben" : "Offen"}`, {
       defaultValue: v,
@@ -362,6 +364,7 @@ function IncomingInvoicesPage() {
     bankMatch: search.bankMatch,
     trafficLight: search.trafficLight,
     workflow: search.workflow,
+    channel: search.channel,
     archive: search.archive,
     fromDate: range.fromDate ?? undefined,
     toDate: range.toDate ?? undefined,
@@ -774,6 +777,16 @@ function IncomingInvoicesPage() {
         ...DUE_FILTER_VALUES.map((v) => ({ value: v, label: t(`openItems.due.${v}`) })),
       ],
       onChange: (v) => setSearch({ due: v }),
+    },
+    {
+      key: "channel",
+      label: t("documents.list.filter.channel"),
+      value: search.channel,
+      options: [
+        { value: ALL, label: t("documents.list.filter.allChannels") },
+        ...CHANNEL_VALUES.map((v) => ({ value: v, label: channelLabel(v) })),
+      ],
+      onChange: (v) => setSearch({ channel: v }),
     },
     {
       key: "datev",
@@ -1290,6 +1303,7 @@ function IncomingInvoicesPage() {
                       search={search}
                       onSort={toggleSort}
                     />
+                    <TableHead>{t("documents.list.col.kanal")}</TableHead>
                     <TableHead title={t("documents.list.col.konfidenzHint")}>
                       {t("documents.list.col.konfidenz")}
                     </TableHead>
@@ -1413,6 +1427,9 @@ function IncomingInvoicesPage() {
                         )}
                       </TableCell>
                       <TableCell>
+                        <ChannelBadge channel={b.intake_channel} />
+                      </TableCell>
+                      <TableCell>
                         <ConfidencePill score={b.confidence_score} />
                       </TableCell>
                       <TableCell>
@@ -1467,7 +1484,7 @@ function IncomingInvoicesPage() {
                       figure. The loading overlay below already covers that moment. */}
                   {rows.length === 0 && !listQ.isFetching && (
                     <TableRow>
-                      <TableCell colSpan={13} className="py-12 text-center text-muted-foreground">
+                      <TableCell colSpan={14} className="py-12 text-center text-muted-foreground">
                         {t("documents.list.empty")}
                       </TableCell>
                     </TableRow>

@@ -4,6 +4,7 @@ import {
   useMutation,
   useQuery,
   useQueryClient,
+  type QueryClient,
 } from "@tanstack/react-query";
 
 import { SEED_MODE } from "@/config/seed";
@@ -21,6 +22,11 @@ import {
   type InfinitePage,
 } from "@/data/shared";
 import { documentRechecked } from "@/features/invoice-detail/recheck";
+import {
+  PRACTICE_INVOICE,
+  PRACTICE_INVOICE_TASK_ID,
+} from "@/features/onboarding-practice/practice-invoice-task";
+import { readActivePracticeTaskId } from "@/kit/onboarding/practice-context";
 import { getInvoiceFileUrl } from "@/lib/api/invoice-files.functions";
 import {
   askInvoiceQuestion,
@@ -52,6 +58,13 @@ import type {
   LinkedDocument,
   OpenItemRow,
 } from "@/lib/data/types";
+
+function invalidateDocumentListQueries(qc: QueryClient) {
+  qc.invalidateQueries({
+    predicate: (query) =>
+      typeof query.queryKey[0] === "string" && query.queryKey[0].startsWith("belege"),
+  });
+}
 
 // Per-company invoice totals for the companies list, aggregated by Postgres (view
 // v_company_invoice_totals, migration 20260817170000).
@@ -815,6 +828,7 @@ function applyDocumentsFilter(query: any, f: DocumentsFilter) {
   else if (f.payment === "open") query = query.is("paid_at", null);
   if (f.paymentType === "direct_debit") query = query.eq("is_direct_debit", true);
   else if (f.paymentType === "transfer") query = query.eq("is_direct_debit", false);
+  if (f.channel) query = query.eq("intake_channel", f.channel);
   if (f.datev === "uebergeben") query = query.not("handed_over_at", "is", null);
   else if (f.datev === "open") query = query.is("handed_over_at", null);
   // Bank-reconciliation presence -- its own axis, separate from `zahlung`. `zahlung` says whether
@@ -1524,7 +1538,7 @@ export function useUpdateDocument(documentId: string) {
       // decide what the ladder offers, and holding the button until a full list refetch settles
       // would make every approval feel slow for no extra safety.
       const fresh = qc.invalidateQueries({ queryKey: ["beleg", documentId] });
-      qc.invalidateQueries({ queryKey: ["belege"] });
+      invalidateDocumentListQueries(qc);
       qc.invalidateQueries({ queryKey: ["beleg_verlauf", documentId] });
       // Editing the supplier, company, property or gross amount by hand can change which approval
       // rule wins, exactly as applying the assignment rules can.
@@ -1563,7 +1577,7 @@ export function useSoftDeleteDocument(documentId: string) {
       await insertHistory(documentId, "deletion", reason || "Beleg gelöscht");
     },
     onSuccess: () => {
-      qc.invalidateQueries({ queryKey: ["belege"] });
+      invalidateDocumentListQueries(qc);
       qc.invalidateQueries({ queryKey: ["beleg", documentId] });
     },
   });
@@ -1585,6 +1599,62 @@ export interface UploadInput {
   checksumSha256: string | null;
 }
 
+function seedWronglyExtractedFields(): Record<string, unknown> {
+  if (readActivePracticeTaskId() !== PRACTICE_INVOICE_TASK_ID) return {};
+  return {
+    issuer: PRACTICE_INVOICE.issuer,
+    invoice_number: PRACTICE_INVOICE.invoiceNumber,
+    document_date: PRACTICE_INVOICE.documentDate,
+    due_date: PRACTICE_INVOICE.dueDate,
+    amount_net: PRACTICE_INVOICE.amountNet,
+    vat_rate: PRACTICE_INVOICE.vatRate,
+    vat_amount: PRACTICE_INVOICE.vatAmount,
+    amount_gross: PRACTICE_INVOICE.wronglyExtractedAmountGross,
+    currency: "EUR",
+    traffic_light: "yellow",
+    confidence_score: 0.74,
+  };
+}
+
+async function seedCreateUploadedInvoices(args: {
+  files: UploadInput[];
+  forTransactionId?: string | null;
+}): Promise<string[]> {
+  const actor = (await actorEmail()) ?? "hub";
+  for (const f of args.files) {
+    await sb.from(TABLE.documents).insert({
+      id: f.invoiceId,
+      document_type: "rechnung",
+      intake_channel: "upload",
+      source: "upload",
+      status: "needs_review",
+      workflow_status: "received",
+      issuer: f.filename,
+      uploaded_for_transaction_id: args.forTransactionId ?? null,
+      ...seedWronglyExtractedFields(),
+    });
+    await sb.from(TABLE.documentFiles).insert({
+      document_id: f.invoiceId,
+      role: "original",
+      filename: f.filename,
+      mime: f.mime,
+      size_bytes: f.size,
+      storage_bucket: f.storageBucket,
+      storage_path: f.storagePath,
+      checksum_sha256: f.checksumSha256,
+    });
+    await sb.from(TABLE.documentHistory).insert({
+      document_id: f.invoiceId,
+      type: "change",
+      text: args.forTransactionId
+        ? "Uploaded for a bank transaction, AI extraction to follow."
+        : "Uploaded, AI extraction to follow.",
+      actor,
+    });
+  }
+  return args.files.map((f) => f.invoiceId);
+}
+
 export function useCreateUploadDocuments() {
   const qc = useQueryClient();
   return useMutation({
@@ -1593,6 +1663,7 @@ export function useCreateUploadDocuments() {
       /** Set when the upload started on a bank transaction that has no document. */
       forTransactionId?: string | null;
     }): Promise<string[]> => {
+      if (SEED_MODE) return seedCreateUploadedInvoices(args);
       return (await createUploadedInvoices({
         data: {
           forTransactionId: args.forTransactionId ?? null,
@@ -1609,7 +1680,7 @@ export function useCreateUploadDocuments() {
       })) as string[];
     },
     onSuccess: () => {
-      qc.invalidateQueries({ queryKey: ["belege"] });
+      invalidateDocumentListQueries(qc);
       // The transaction screens show whether a document is on its way.
       qc.invalidateQueries({ queryKey: ["bank-transactions"] });
       qc.invalidateQueries({ queryKey: ["transaction-uploads"] });
@@ -1737,6 +1808,7 @@ export interface OverviewInvoiceRow {
   supplier_id: string | null;
   // For the processing card's per-channel breakdown (email / upload / drive / ...).
   intake_channel: string | null;
+  is_invoice: boolean | null;
 }
 
 /**
@@ -1765,12 +1837,13 @@ export function useOverviewInvoices(from?: string | null, toDate?: string | null
         let query = sb
           .from(TABLE.documents)
           .select(
-            "status, amount_gross, document_date, issuer, company_code, supplier_id, intake_channel",
+            "status, amount_gross, document_date, issuer, company_code, supplier_id, intake_channel, is_invoice",
             withCount ? { count: "exact" } : undefined,
           )
           .is("deleted_at", null)
           .is("archived_at", null)
           .is("not_relevant_at", null)
+          .eq("private_hold", false)
           .neq("status", "split");
         if (from) query = query.gte("document_date", from);
         if (toDate) query = query.lte("document_date", toDate);

@@ -1,4 +1,5 @@
 import { TABLE } from "@/config/tables";
+import { SUPPLIERS, sampleId } from "./shared";
 import {
   approvalRules,
   assignmentRules,
@@ -227,19 +228,52 @@ const ANSWERS: Record<string, unknown> = {
 
 type Answer = { data: unknown; error: null; count: number };
 
-function builder(rows: unknown[]) {
-  const answer: Answer = { data: rows, error: null, count: rows.length };
+const TABLES_WITH_REAL_INSERTS = new Set<string>([
+  TABLE.documents,
+  TABLE.documentFiles,
+  TABLE.documentHistory,
+]);
 
-  // Every filter returns the same builder: accepted, recorded nowhere, applied to nothing.
+const documentInsertDefaults = {
+  has_suggested_bank_match: false,
+  has_confirmed_bank_match: false,
+};
+
+function normalizedSeedInsertRow(table: string, row: Record<string, unknown>) {
+  const defaults = table === TABLE.documents ? documentInsertDefaults : {};
+  return { created_at: new Date().toISOString(), ...defaults, ...row };
+}
+
+function builder(table: string, rows: unknown[]) {
+  let requestedId: unknown = undefined;
+  let pendingUpdate: Record<string, unknown> | undefined = undefined;
+  const rowsMatchingRequestedId = () =>
+    requestedId === undefined
+      ? rows
+      : rows.filter((row) => (row as Record<string, unknown> | null)?.id === requestedId);
+  const rowsToReturn = () => {
+    const matched = rowsMatchingRequestedId();
+    if (pendingUpdate && TABLES_WITH_REAL_INSERTS.has(table)) {
+      for (const row of matched) Object.assign(row as Record<string, unknown>, pendingUpdate);
+    }
+    return matched;
+  };
+
   const chain: Record<string, unknown> = {
-    then: (resolve: (value: Answer) => unknown) => Promise.resolve(answer).then(resolve),
-    single: async () => ({ data: rows[0] ?? null, error: null }),
-    maybeSingle: async () => ({ data: rows[0] ?? null, error: null }),
+    then: (resolve: (value: Answer) => unknown) => {
+      const matched = rowsToReturn();
+      return Promise.resolve({ data: matched, error: null, count: matched.length }).then(resolve);
+    },
+    single: async () => ({ data: rowsToReturn()[0] ?? null, error: null }),
+    maybeSingle: async () => ({ data: rowsToReturn()[0] ?? null, error: null }),
     csv: async () => ({ data: "", error: null }),
+  };
+  chain.eq = (column: string, value: unknown) => {
+    if (column === "id") requestedId = value;
+    return chain;
   };
   for (const name of [
     "select",
-    "eq",
     "neq",
     "gt",
     "gte",
@@ -265,8 +299,21 @@ function builder(rows: unknown[]) {
   ]) {
     chain[name] = () => chain;
   }
-  for (const name of ["insert", "update", "upsert", "delete"]) {
-    chain[name] = () => builder([]);
+  chain.insert = (payload: unknown) => {
+    if (!TABLES_WITH_REAL_INSERTS.has(table)) return builder(table, []);
+    const incoming = Array.isArray(payload) ? payload : [payload];
+    const inserted = incoming.map((row) =>
+      normalizedSeedInsertRow(table, row as Record<string, unknown>),
+    );
+    rows.push(...inserted);
+    return builder(table, inserted);
+  };
+  chain.update = (payload: unknown) => {
+    pendingUpdate = payload as Record<string, unknown>;
+    return chain;
+  };
+  for (const name of ["upsert", "delete"]) {
+    chain[name] = () => builder(table, []);
   }
   return chain;
 }
@@ -300,6 +347,20 @@ let session: SeedSession | null = typeof window === "undefined" ? null : readSto
 let authListener: ((event: string, session: SeedSession | null) => void) | null = null;
 
 /**
+ * Whether practice mode is on is session state, not fixture data: toggling it does not make any
+ * screen look different for no reason, so unlike every other write it is allowed to stick.
+ */
+let practiceModeActive = false;
+
+const stopCasesPracticeSeed = {
+  supplier_id: SUPPLIERS[0].id,
+  iban_account_id: sampleId(21, 1),
+  iban_document_id: sampleId(30, 1),
+  ai_document_id: sampleId(30, 2),
+  flyer_document_id: sampleId(30, 3),
+};
+
+/**
  * Any email on the seed team, any password: the same "a fixed answer regardless of the filter"
  * rule this whole client follows, applied to credentials instead of a query. An unknown email
  * fails the same way a wrong password would on the real screen, so the error path is also real.
@@ -329,9 +390,15 @@ export const seedAuth = {
 };
 
 export const seedClient = {
-  from: (table: string) => builder(ROWS[table] ?? []),
-  rpc: (name: string) => {
-    const value = ANSWERS[name] ?? null;
+  from: (table: string) => builder(table, ROWS[table] ?? []),
+  rpc: (name: string, args?: Record<string, unknown>) => {
+    if (name === "set_practice_mode") practiceModeActive = Boolean(args?.p_active);
+    const value =
+      name === "practice_mode_active"
+        ? practiceModeActive
+        : name === "seed_stop_cases_practice_data"
+          ? stopCasesPracticeSeed
+          : (ANSWERS[name] ?? null);
     const first = Array.isArray(value) ? (value[0] ?? null) : value;
     return {
       then: (resolve: (v: Answer) => unknown) =>

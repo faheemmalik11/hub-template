@@ -201,8 +201,11 @@ export function ConfirmationCard({
             ? labels.titleChanged
             : labels.title}
       </h2>
-      <div className="grid gap-4 sm:grid-cols-2">
-        <div className="space-y-1">
+      {/* A real grid, not two independent stacks: each row is shared across both columns, so
+          Document type and Is this an invoice? stay level with each other no matter whether
+          Company or Property has an extra suggestion line between them and the input above. */}
+      <div className="grid items-start gap-4 sm:grid-cols-2">
+        <div className="space-y-1" data-tour="invoice-detail-company">
           <span className="text-sm text-amber-900/80 group-data-[confirmed=true]:text-muted-foreground">
             {labels.companyLabel}
           </span>
@@ -213,24 +216,9 @@ export function ConfirmationCard({
             placeholder={labels.companyPlaceholder}
             options={companyOptions}
           />
-          {companySuggestion && (
-            <div className="flex flex-wrap items-center gap-2 rounded-md border border-sky-300 bg-sky-50 px-2 py-1.5 text-sm text-sky-800">
-              <span>{labels.companySuggestion(companySuggestion.code)}</span>
-              <Button
-                type="button"
-                size="sm"
-                variant="outline"
-                className="h-6 gap-1 border-sky-300 px-2 text-sm text-sky-900 hover:bg-sky-100"
-                onClick={() => setCompanyCode(companySuggestion.code)}
-              >
-                <Check className="size-3" />
-                {labels.companySuggestionAccept}
-              </Button>
-            </div>
-          )}
         </div>
 
-        <div className="space-y-1">
+        <div className="space-y-1" data-tour="invoice-detail-property">
           <span className="text-sm text-amber-900/80 group-data-[confirmed=true]:text-muted-foreground">
             {labels.propertyLabel}
           </span>
@@ -241,6 +229,27 @@ export function ConfirmationCard({
             placeholder={labels.propertyPlaceholder}
             options={propertyOptions}
           />
+        </div>
+
+        <div>
+          {companySuggestion && (
+            <div className="flex flex-wrap items-center gap-2 text-sm text-sky-800">
+              <span>{labels.companySuggestion(companySuggestion.code)}</span>
+              <Button
+                type="button"
+                size="sm"
+                variant="ghost"
+                className="h-6 gap-1 rounded-full border-transparent bg-sky-100 px-2 text-xs text-sky-900 shadow-none hover:bg-sky-200"
+                onClick={() => setCompanyCode(companySuggestion.code)}
+              >
+                <Check className="size-3" />
+                {labels.companySuggestionAccept}
+              </Button>
+            </div>
+          )}
+        </div>
+
+        <div>
           {extractedAddress && (
             <div className="space-y-2 rounded-lg border border-amber-300 bg-white/60 p-3 text-sm">
               <p className="text-amber-900 group-data-[confirmed=true]:text-emerald-900">
@@ -253,7 +262,8 @@ export function ConfirmationCard({
                       key={suggestion.id}
                       type="button"
                       size="sm"
-                      variant="outline"
+                      variant="ghost"
+                      className="h-6 rounded-full border-transparent bg-sky-100 px-2 text-xs text-sky-900 shadow-none hover:bg-sky-200"
                       onClick={() => setPropertyCode(suggestion.code)}
                     >
                       {labels.propertySuggestion(
@@ -301,11 +311,17 @@ export function ConfirmationCard({
       {showButtons && (
         <div className="mt-4 flex justify-end gap-2">
           {everyFieldConfirmed && (
-            <Button type="button" variant="outline" onClick={discard} disabled={saving}>
+            <Button
+              type="button"
+              variant="outline"
+              className="shadow-none"
+              onClick={discard}
+              disabled={saving}
+            >
               {labels.discard}
             </Button>
           )}
-          <Button type="button" onClick={confirm} disabled={saving} className="gap-2">
+          <Button type="button" onClick={confirm} disabled={saving} className="gap-2 shadow-none">
             {saving ? <Loader2 className="size-4 animate-spin" /> : <Check className="size-4" />}
             {labels.confirm}
           </Button>

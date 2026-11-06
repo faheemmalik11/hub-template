@@ -1,8 +1,5 @@
 import { TABLE } from "@/config/tables";
-import { supabase } from "@/integrations/supabase/client";
-
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-const sb = supabase as any;
+import { sb } from "@/data/client";
 
 async function liveIds(table: string, ids: string[]): Promise<string[]> {
   const { data, error } = await sb.from(table).select("id").in("id", ids).is("deleted_at", null);

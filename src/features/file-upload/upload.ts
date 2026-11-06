@@ -1,5 +1,6 @@
 import * as tus from "tus-js-client";
 
+import { SEED_MODE } from "@/config/seed";
 import { supabase } from "@/integrations/supabase/client";
 import { sha256Hex } from "./checksum";
 import { sanitizeFilename, UPLOAD_LIMIT_BYTES, type UploadBucket } from "./config";
@@ -45,12 +46,24 @@ export async function uploadToStorage(
     throw new UploadError("file exceeds the upload limit");
   }
 
+  const mime = opts.mime || file.type || "application/octet-stream";
+  const checksum = await sha256Hex(file);
+
+  if (SEED_MODE) {
+    opts.onProgress?.(100);
+    return {
+      bucket: opts.bucket,
+      path: opts.path,
+      filename: sanitizeFilename(file.name),
+      mime,
+      sizeBytes: file.size,
+      checksumSha256: checksum,
+    };
+  }
+
   const { data: sessionData } = await supabase.auth.getSession();
   const token = sessionData.session?.access_token;
   if (!token) throw new UploadError("not signed in");
-
-  const mime = opts.mime || file.type || "application/octet-stream";
-  const checksum = await sha256Hex(file);
 
   await new Promise<void>((resolve, reject) => {
     const upload = new tus.Upload(file, {

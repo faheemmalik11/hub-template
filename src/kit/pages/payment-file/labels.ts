@@ -89,6 +89,7 @@ export interface PaymentFileLabels {
     statusGenerated: string;
     statusDownloaded: string;
     statusDiscarded: string;
+    discardedNotice: string;
     skippedReason: (reason: string) => string;
   };
   track: {
@@ -229,6 +230,7 @@ export const englishPaymentFileLabels: PaymentFileLabels = {
     statusGenerated: "Generated",
     statusDownloaded: "Downloaded",
     statusDiscarded: "Discarded",
+    discardedNotice: "This file was discarded. Its invoices are available to add to a new file.",
     skippedReason: (reason) => SKIPPED_REASON_TEXT[reason] ?? reason,
   },
   track: {

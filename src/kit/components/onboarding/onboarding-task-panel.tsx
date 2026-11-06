@@ -1,4 +1,4 @@
-import { Download, FileText } from "lucide-react";
+import { Download, FileText, Loader2 } from "lucide-react";
 import { useEffect, useState } from "react";
 
 import { Button } from "@/kit/ui/button";
@@ -33,6 +33,7 @@ export interface OnboardingTaskPanelProps {
   onNavigate?: (path: string) => void;
   onClose?: () => void;
   onRestart?: () => void;
+  restartPending?: boolean;
   className?: string;
 }
 
@@ -46,6 +47,7 @@ export function OnboardingTaskPanel({
   onNavigate,
   onClose,
   onRestart,
+  restartPending = false,
   className,
 }: OnboardingTaskPanelProps) {
   const { task, currentStep, stepStatuses, isFinished, showHelp, completeInfoStep, restart } =
@@ -182,7 +184,7 @@ export function OnboardingTaskPanel({
           !targetOffScreen &&
           (currentStep.type === "info" || (showHelp && currentStep.helpText)) && (
             <div className="rounded-lg bg-muted/40 p-3">
-              {showHelp && currentStep.helpText && (
+              {(showHelp || currentStep.type === "info") && currentStep.helpText && (
                 <p className="text-sm text-muted-foreground">{currentStep.helpText}</p>
               )}
               {currentStep.type === "info" && (
@@ -203,15 +205,23 @@ export function OnboardingTaskPanel({
             variant="outline"
             size="sm"
             className="flex-1"
+            disabled={restartPending}
             onClick={() => {
               onRestart?.();
               restart();
             }}
           >
+            {restartPending && <Loader2 className="size-3.5 animate-spin" />}
             {labels.resetButton}
           </Button>
           {onClose && labels.closeButton && (
-            <Button variant="ghost" size="sm" className="flex-1" onClick={onClose}>
+            <Button
+              variant="outline"
+              size="sm"
+              className="flex-1"
+              disabled={restartPending}
+              onClick={onClose}
+            >
               {labels.closeButton}
             </Button>
           )}

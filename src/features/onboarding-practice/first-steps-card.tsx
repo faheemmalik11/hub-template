@@ -32,7 +32,7 @@ export function FirstStepsCard({ alwaysShow = false }: { alwaysShow?: boolean })
   if (!entries || (!alwaysShow && !shouldShowFirstSteps(entries))) return null;
 
   return (
-    <section data-tour="home-first-steps" className="rounded-2xl bg-brand-wash p-4">
+    <section data-tour="home-first-steps" className="rounded-2xl border border-border bg-card p-4">
       <div className="flex items-center gap-3">
         <span className="grid size-9 shrink-0 place-items-center rounded-full bg-brand-dark text-primary-foreground">
           <GraduationCap className="size-4" aria-hidden />

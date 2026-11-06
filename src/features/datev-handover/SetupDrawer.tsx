@@ -232,6 +232,6 @@ function AddressField({
 /** Switches seeded from what is stored; addresses always blank (see the component's note). */
 function emptyDraft(routes: Partial<Record<DatevDirection, DatevRoute | undefined>>): Draft {
   return Object.fromEntries(
-    DATEV_DIRECTIONS.map((d) => [d, { address: "", isEnabled: routes[d]?.is_enabled ?? true }]),
+    DATEV_DIRECTIONS.map((d) => [d, { address: "", isEnabled: routes[d]?.is_enabled ?? false }]),
   ) as Draft;
 }

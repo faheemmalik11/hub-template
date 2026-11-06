@@ -380,6 +380,7 @@ function PaymentFileForCompany({ companyId }: { companyId: string }) {
       statusGenerated: t("paymentFile.review.statusGenerated"),
       statusDownloaded: t("paymentFile.review.statusDownloaded"),
       statusDiscarded: t("paymentFile.review.statusDiscarded"),
+      discardedNotice: t("paymentFile.review.discardedNotice"),
       skippedReason: (reason: string) =>
         t(`paymentFile.review.skippedReason.${reason}`, { defaultValue: reason }),
     },

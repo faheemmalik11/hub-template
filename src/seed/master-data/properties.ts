@@ -1,5 +1,10 @@
 import type { Property } from "@/lib/data/types";
+import { demoCompanyAndPropertyCodes } from "@/features/onboarding-practice/practice-placeholder-values";
 import { COMPANIES, sampleId } from "../shared";
+import { team } from "../admin/team";
+import { DEMO_COMPANY_ID } from "./companies";
+
+const { demoPropertyCode } = demoCompanyAndPropertyCodes(team[0].id);
 
 /**
  * A property belongs to companies through `property_companies`, never by a column of its own, so
@@ -43,10 +48,23 @@ export const properties: Property[] = [
     deleted_by: null,
     delete_reason: null,
   } as Property,
+  {
+    id: sampleId(40, 4),
+    code: demoPropertyCode,
+    name: "Practice property",
+    address: "Musterstraße 1, 24103 Kiel",
+    vat_status: null,
+    created_at: "2026-01-10T09:10:00Z",
+    updated_at: "2026-01-10T09:10:00Z",
+    deleted_at: null,
+    deleted_by: null,
+    delete_reason: null,
+  } as Property,
 ];
 
 /** Which company each property belongs to, as the join table holds it. */
 export const propertyCompanies = [
   { property_id: sampleId(40, 1), company_id: COMPANIES[1].id },
   { property_id: sampleId(40, 2), company_id: COMPANIES[0].id },
+  { property_id: sampleId(40, 4), company_id: DEMO_COMPANY_ID },
 ];

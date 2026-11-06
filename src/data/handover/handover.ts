@@ -85,7 +85,7 @@ export function useSetDatevRoute() {
         p_company_id: input.company_id,
         p_direction: input.direction,
         p_address: input.address,
-        p_is_enabled: input.is_enabled ?? true,
+        p_is_enabled: input.is_enabled ?? false,
         p_note: input.note ?? null,
         p_updated_by: actor,
       });

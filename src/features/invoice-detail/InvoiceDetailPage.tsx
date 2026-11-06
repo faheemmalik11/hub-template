@@ -22,6 +22,7 @@ import {
   ChevronRight,
   CircleCheck,
   ExternalLink,
+  Loader2,
   MailQuestion,
   MessageCircleQuestion,
   Pencil,
@@ -42,6 +43,11 @@ import { useAuth } from "@/lib/auth";
 import { PERMISSIONS } from "@/config/permissions";
 import { usePaymentRight } from "@/lib/payment-right";
 import { useEmitOnboardingEvent } from "@/kit/components/onboarding";
+import { useOnboardingPractice } from "@/kit/onboarding/practice-context";
+import {
+  PRACTICE_INVOICE_TASK_ID,
+  practiceInvoiceAmountIsWrong,
+} from "@/features/onboarding-practice/practice-invoice-task";
 import { documentUpdatedEventData } from "@/features/onboarding-practice/document-updated-event";
 import { PaymentRightNotice } from "@/components/bank/payment-right-notice";
 import { CloseRemainderButton } from "@/components/bank/close-remainder";
@@ -150,6 +156,7 @@ import {
   isOpenSuggestion,
   approvalActionLabelDe,
   approvalQueryTarget,
+  discountOpportunity,
   errorText,
   fieldChangeDe,
   fieldSourceKey,
@@ -216,7 +223,6 @@ import { AccountChips, type AccountChip } from "@/components/suppliers/account-c
 import { BankAccountDialog } from "@/components/suppliers/bank-account-dialog";
 import { FactList } from "@/components/records/fact-list";
 import { PaymentAccounts } from "@/components/suppliers/payment-account-summary";
-import { PlainSection } from "@/components/records/plain-section";
 import { DocumentPreview } from "@/components/documents/document-preview";
 import { SplitOriginNote } from "@/components/documents/split-origin-note";
 import { ErrorState } from "@/components/documents/query-states";
@@ -518,6 +524,10 @@ function DocumentDetail({ doc }: { doc: Document }) {
     emitOnboardingEvent({ type: "document_opened", recordId: doc.id });
   });
   useEffect(() => emitDocumentOpenedOnMount.current(), []);
+  const { activeTaskId: activePracticeTaskId } = useOnboardingPractice();
+  const practiceGrossAmountNeedsFix =
+    activePracticeTaskId === PRACTICE_INVOICE_TASK_ID &&
+    practiceInvoiceAmountIsWrong(doc.amount_gross);
   const addNote = useAddNote(doc.id);
   const softDelete = useSoftDeleteDocument(doc.id);
   const applyRules = useApplyAssignmentRules();
@@ -526,6 +536,7 @@ function DocumentDetail({ doc }: { doc: Document }) {
   const archive = useArchiveDocument(doc.id);
   const unarchive = useUnarchiveDocument(doc.id);
   const approvalRuleQ = useResolveApprovalRule(doc.id);
+  const earlyPaymentDiscount = discountOpportunity(doc);
 
   // Per-section editing: only one section is editable at a time (its key here, or null).
   // Replaces the old single global edit button so a single field can be corrected in isolation.
@@ -1015,6 +1026,12 @@ function DocumentDetail({ doc }: { doc: Document }) {
       doc.service_description,
     ],
   };
+
+  const needsConfirmation =
+    doc.company_assignment_source !== "human" ||
+    doc.property_assignment_source !== "human" ||
+    doc.document_type_source !== "human" ||
+    doc.is_invoice_source !== "human";
 
   const confirmationCardLabels: ConfirmationCardLabels = {
     title: t("documents.detail.confirmationCard.title"),
@@ -3024,8 +3041,9 @@ function DocumentDetail({ doc }: { doc: Document }) {
 
             {/* No top margin: the row bottom-aligns this column (see above), so where it starts
                 is decided by how tall it is, and a margin here would only push the whole stack
-                down again. */}
-            <div className="flex shrink-0 flex-col items-end gap-2">
+                down again. One row, so it lands on the left column's chips line no matter what
+                else is in here, and nothing above it ever moves. */}
+            <div className="flex shrink-0 flex-wrap items-center justify-end gap-2">
               {/* AI confidence, stated in full rather than as a bare percentage tucked behind the
                   review chip. It used to ride the left-hand meta row as "96 %" with the words only
                   reachable by hovering, which made it the one number on the header nobody could
@@ -3034,31 +3052,18 @@ function DocumentDetail({ doc }: { doc: Document }) {
                   and unbordered by band on purpose: it reports how well the extraction read, it is
                   not a verdict, and colouring it would make it argue with the review chip. */}
               {doc.confidence_score != null && (
-                <ConfidencePill
-                  score={doc.confidence_score}
-                  withLabel
-                  className="px-2.5 py-1 text-base"
-                />
+                <ConfidencePill score={doc.confidence_score} withLabel />
               )}
-              {/* Last in the column, so bottom alignment lands it on the chips' line -- and ONE
-                  line, warning beside date rather than above it. Stacked, the overdue chip made
-                  this block two rows tall and shunted the confidence chip up a line, so an invoice
-                  going overdue silently rearranged the header above it. Side by side, the column
-                  is two rows whatever happens and nothing above moves. */}
-              {(daysOverdue != null || doc.due_date) && (
-                <div className="flex flex-wrap items-center justify-end gap-2">
-                  {daysOverdue != null && (
-                    <span className="inline-flex items-center gap-1 rounded-md bg-destructive/10 px-2 py-0.5 text-sm font-medium text-destructive">
-                      <AlertTriangle className="size-3.5 shrink-0" />
-                      {overdueText}
-                    </span>
-                  )}
-                  {doc.due_date && (
-                    <span className="text-sm text-muted-foreground">
-                      {t("documents.detail.faellig.am", { datum: formatDate(doc.due_date) })}
-                    </span>
-                  )}
-                </div>
+              {daysOverdue != null && (
+                <span className="inline-flex items-center gap-1 rounded-md bg-destructive/10 px-2 py-0.5 text-xs font-medium text-destructive">
+                  <AlertTriangle className="size-3.5 shrink-0" />
+                  {overdueText}
+                </span>
+              )}
+              {doc.due_date && (
+                <span className="text-xs text-muted-foreground">
+                  {t("documents.detail.faellig.am", { datum: formatDate(doc.due_date) })}
+                </span>
               )}
             </div>
           </div>
@@ -3434,7 +3439,8 @@ function DocumentDetail({ doc }: { doc: Document }) {
                 <Section
                   title={t("documents.detail.section.betraege")}
                   anchorId={AMOUNTS_ANCHOR}
-                  hint={t("documents.detail.hint.ampel")}
+                  tourId="invoice-detail-amounts"
+                  pointAtEdit={practiceGrossAmountNeedsFix}
                   editable
                   editDisabled={!canEdit("betraege")}
                   isEditing={isEdit("betraege")}
@@ -3448,7 +3454,7 @@ function DocumentDetail({ doc }: { doc: Document }) {
                       check: that net plus VAT makes the gross printed on the document. Right-aligned
                       tabular figures with a rule above the total read the way an invoice does.
                       Currency disappears into the symbol -- it was a labelled slot saying "EUR". */}
-                  <dl className="ml-auto w-full max-w-sm space-y-2 text-base">
+                  <dl className="w-full space-y-2 text-base">
                     <div className="flex items-baseline justify-between gap-4">
                       <dt className="text-muted-foreground">
                         {t("documents.detail.field.betragNetto")}
@@ -3489,7 +3495,13 @@ function DocumentDetail({ doc }: { doc: Document }) {
                       </dd>
                     </div>
                     {/* The rule, drawn where an invoice draws it. */}
-                    <div className="flex items-baseline justify-between gap-4 border-t border-border pt-2">
+                    <div
+                      className={cn(
+                        "flex items-baseline justify-between gap-4 border-t border-border pt-2",
+                        practiceGrossAmountNeedsFix &&
+                          "-mx-2 rounded-md border-t-0 bg-amber-50 px-2 py-1 ring-2 ring-amber-400 ring-offset-2",
+                      )}
+                    >
                       <dt className="font-medium text-foreground">
                         {t("documents.detail.field.betragBrutto")}
                       </dt>
@@ -3525,16 +3537,37 @@ function DocumentDetail({ doc }: { doc: Document }) {
                     )}
                   </dl>
 
+                  {earlyPaymentDiscount &&
+                    earlyPaymentDiscount.state !== "lapsed" &&
+                    earlyPaymentDiscount.saving != null && (
+                      <p
+                        className={cn(
+                          "ml-auto mt-2 w-full max-w-sm text-right text-sm",
+                          earlyPaymentDiscount.state === "closing"
+                            ? "font-medium text-emerald-700"
+                            : "text-muted-foreground",
+                        )}
+                      >
+                        {t("documents.detail.betraege.earlyPaymentDiscount", {
+                          amount: formatEUR(earlyPaymentDiscount.saving),
+                          percent: earlyPaymentDiscount.percent ?? 0,
+                          date: formatDate(earlyPaymentDiscount.deadline),
+                        })}
+                      </p>
+                    )}
+
                   {/* Deductibility as a sentence plus the one action that follows from it, rather
                       than four labelled cells most invoices never need. */}
                   <div className="mt-4 flex flex-wrap items-center justify-between gap-3 border-t border-border pt-3">
-                    <span className="text-sm text-muted-foreground">
-                      {doc.vat_deductible_pct != null
-                        ? t("documents.detail.betraege.abzugsfaehig", {
-                            percent: doc.vat_deductible_pct,
-                          })
-                        : t("documents.detail.betraege.abzugUnbestimmt")}
-                    </span>
+                    {doc.vat_deductible_pct != null ? (
+                      <span className="text-sm text-muted-foreground">
+                        {t("documents.detail.betraege.abzugsfaehig", {
+                          percent: doc.vat_deductible_pct,
+                        })}
+                      </span>
+                    ) : (
+                      <span />
+                    )}
                     {!isEdit("betraege") && doc.vat_rate != null && !rulesQ.data?.vat_rate ? (
                       <NewRuleDialog
                         fixedTarget="vat_rate"
@@ -3547,7 +3580,11 @@ function DocumentDetail({ doc }: { doc: Document }) {
                         defaultVatDeductiblePct={doc.vat_deductible_pct}
                         defaultVatSpecialCase={doc.vat_special_case}
                         trigger={
-                          <Button size="sm" variant="outline" className="h-7 gap-1.5 text-sm">
+                          <Button
+                            size="sm"
+                            variant="ghost"
+                            className="h-7 gap-1.5 rounded-full border-transparent bg-amber-100 text-sm text-amber-800 shadow-none hover:bg-amber-200 hover:text-amber-900"
+                          >
                             <Wand2 className="size-3" />
                             {t("documents.detail.regel.alsRegelUst", { rate: doc.vat_rate })}
                           </Button>
@@ -3663,159 +3700,103 @@ function DocumentDetail({ doc }: { doc: Document }) {
                     formValue={form.issuer}
                     onChange={(v) => set("issuer", v)}
                   />
-                  {isEdit("booking") ? (
-                    <div className="space-y-1">
-                      <span className="text-sm text-muted-foreground">
-                        {t("documents.detail.field.gesellschaft")}
-                      </span>
-                      <Combobox
-                        value={form.company_code || "__none"}
-                        onValueChange={(v) => set("company_code", v === "__none" ? "" : v)}
-                        options={[
-                          { value: "__none", label: t("documents.detail.field.ohne") },
-                          ...companies.map((g) => ({
-                            value: g.code,
-                            label: `${g.code} · ${g.name}`,
-                            keywords: g.name,
-                          })),
-                        ]}
-                      />
-                    </div>
-                  ) : (
-                    <div className="space-y-1">
-                      <ReadField
-                        label={t("documents.detail.field.gesellschaft")}
-                        confidence={confidence.gesellschaft_code}
-                        source={doc.company_assignment_source}
-                        value={company ? `${company.code} · ${company.name}` : doc.company_code}
-                        // The company's overhead cost centre (1000 or 10000), next to the company
-                        // it belongs to, whether or not this invoice is booked to Gemeinkosten.
-                        sub={
-                          company ? (
-                            company.overhead_cost_centre != null ? (
-                              t("documents.detail.field.gemeinkostenNummer", {
-                                nr: company.overhead_cost_centre,
-                              })
-                            ) : (
-                              <>
-                                {t("documents.detail.field.gemeinkostenNummerFehlt")}
-                                <Link
-                                  to="/companies/$id"
-                                  params={{ id: company.id }}
-                                  className="ml-1 text-brand underline-offset-4 hover:underline"
-                                >
-                                  {t("documents.detail.field.kostenstelleBeiGesellschaft")}
-                                </Link>
-                              </>
-                            )
-                          ) : undefined
-                        }
-                        badge={
-                          <SourceBadge
-                            source={doc.company_assignment_source}
-                            hasValue={!!doc.company_code}
-                          />
-                        }
-                      />
-                      {/* Unassigned is a legitimate state, not an error: the briefing wants an
-                          assignment removable without immediately setting a new one. It still has
-                          to be visible, because an unassigned receipt belongs to nobody's company
-                          and only shows up in the watch-all bucket. */}
-                      {!doc.company_code ? (
-                        <p className="text-sm text-muted-foreground">
-                          {t("documents.detail.field.ohneGesellschaftHinweis")}
-                        </p>
-                      ) : null}
-                    </div>
-                  )}
-                  {assignsProperties && (
-                    <div className="space-y-1">
-                      {isEdit("booking") ? (
-                        <>
-                          <span className="text-sm text-muted-foreground">
-                            {t("documents.detail.field.objekt")}
-                          </span>
-                          <Combobox
-                            value={form.property_code || "__none"}
-                            onValueChange={(v) => set("property_code", v === "__none" ? "" : v)}
-                            options={[
-                              { value: "__none", label: t("documents.detail.field.ohne") },
-                              // Overhead sits WITH the properties, not beside them: it is the other
-                              // answer to the same question, and the two are mutually exclusive.
-                              {
-                                value: OVERHEAD,
-                                label: t("documents.detail.field.gemeinkosten"),
-                              },
-                              // Legacy AI-extracted code not in the master data — keep it visible/selectable
-                              // so the current state is clear, but flag it (below) for correction.
-                              ...(propertyUnknown && form.property_code === doc.property_code
-                                ? [
-                                    {
-                                      value: doc.property_code as string,
-                                      label: `${doc.property_code} (${t("documents.detail.field.objektUnbekanntKurz")})`,
-                                    },
-                                  ]
-                                : []),
-                              ...properties.map((o) => ({
-                                value: o.code,
-                                label: o.name ? `${o.code} · ${o.name}` : o.code,
-                                keywords: o.name ?? "",
-                              })),
-                            ]}
-                          />
-                        </>
-                      ) : (
+                  {!needsConfirmation && (
+                    <>
+                      <div className="space-y-1">
                         <ReadField
-                          label={t("documents.detail.field.objekt")}
-                          confidence={confidence.objekt_code}
-                          source={doc.property_assignment_source}
-                          leerAls={propertyDecided ? <NoChoiceValue /> : undefined}
-                          value={
-                            doc.is_overhead
-                              ? t("documents.detail.field.gemeinkosten")
-                              : property
-                                ? `${property.code}${property.name ? ` · ${property.name}` : ""}`
-                                : propertyUnknown
-                                  ? `${doc.property_code} (${t("documents.detail.field.objektUnbekanntKurz")})`
-                                  : doc.property_code
-                          }
+                          label={t("documents.detail.field.gesellschaft")}
+                          confidence={confidence.gesellschaft_code}
+                          source={doc.company_assignment_source}
+                          value={company ? `${company.code} · ${company.name}` : doc.company_code}
                           sub={
-                            costCentre ? (
-                              <CostCentreHint
-                                costCentre={costCentre}
-                                propertyCode={property?.code ?? null}
-                              />
+                            company ? (
+                              company.overhead_cost_centre != null ? (
+                                t("documents.detail.field.gemeinkostenNummer", {
+                                  nr: company.overhead_cost_centre,
+                                })
+                              ) : (
+                                <>
+                                  {t("documents.detail.field.gemeinkostenNummerFehlt")}
+                                  <Link
+                                    to="/companies/$id"
+                                    params={{ id: company.id }}
+                                    className="ml-1 text-brand underline-offset-4 hover:underline"
+                                  >
+                                    {t("documents.detail.field.kostenstelleBeiGesellschaft")}
+                                  </Link>
+                                </>
+                              )
                             ) : undefined
                           }
                           badge={
                             <SourceBadge
-                              source={doc.property_assignment_source}
-                              hasValue={!!doc.property_code}
+                              source={doc.company_assignment_source}
+                              hasValue={!!doc.company_code}
                             />
                           }
                         />
-                      )}
-                      {/* Extracted property code isn't in the master data → offer to create it. */}
-                      {propertyUnknown ? (
-                        <div className="flex flex-wrap items-center gap-2 rounded-md border border-amber-300 bg-amber-50 px-2 py-1.5 text-sm text-amber-700">
-                          <span className="flex items-center gap-1">
-                            <TriangleAlert className="size-3 shrink-0" />
-                            {t("documents.detail.field.objektUnbekannt")}
-                          </span>
-                          <Button
-                            asChild
-                            size="sm"
-                            variant="outline"
-                            className="h-6 gap-1 border-amber-300 px-2 text-sm text-amber-800 hover:bg-amber-100"
-                          >
-                            <Link to="/properties" search={{ new: doc.property_code ?? undefined }}>
-                              <Plus className="size-3" />{" "}
-                              {t("documents.detail.field.objektAnlegen")}
-                            </Link>
-                          </Button>
+                        {!doc.company_code ? (
+                          <p className="text-sm text-muted-foreground">
+                            {t("documents.detail.field.ohneGesellschaftHinweis")}
+                          </p>
+                        ) : null}
+                      </div>
+                      {assignsProperties && (
+                        <div className="space-y-1">
+                          <ReadField
+                            label={t("documents.detail.field.objekt")}
+                            confidence={confidence.objekt_code}
+                            source={doc.property_assignment_source}
+                            leerAls={propertyDecided ? <NoChoiceValue /> : undefined}
+                            value={
+                              doc.is_overhead
+                                ? t("documents.detail.field.gemeinkosten")
+                                : property
+                                  ? `${property.code}${property.name ? ` · ${property.name}` : ""}`
+                                  : propertyUnknown
+                                    ? `${doc.property_code} (${t("documents.detail.field.objektUnbekanntKurz")})`
+                                    : doc.property_code
+                            }
+                            sub={
+                              costCentre ? (
+                                <CostCentreHint
+                                  costCentre={costCentre}
+                                  propertyCode={property?.code ?? null}
+                                />
+                              ) : undefined
+                            }
+                            badge={
+                              <SourceBadge
+                                source={doc.property_assignment_source}
+                                hasValue={!!doc.property_code}
+                              />
+                            }
+                          />
+                          {propertyUnknown ? (
+                            <div className="flex flex-wrap items-center gap-2 rounded-md border border-amber-300 bg-amber-50 px-2 py-1.5 text-sm text-amber-700">
+                              <span className="flex items-center gap-1">
+                                <TriangleAlert className="size-3 shrink-0" />
+                                {t("documents.detail.field.objektUnbekannt")}
+                              </span>
+                              <Button
+                                asChild
+                                size="sm"
+                                variant="outline"
+                                className="h-6 gap-1 border-amber-300 px-2 text-sm text-amber-800 hover:bg-amber-100"
+                              >
+                                <Link
+                                  to="/properties"
+                                  search={{ new: doc.property_code ?? undefined }}
+                                >
+                                  <Plus className="size-3" />{" "}
+                                  {t("documents.detail.field.objektAnlegen")}
+                                </Link>
+                              </Button>
+                            </div>
+                          ) : null}
                         </div>
-                      ) : null}
-                    </div>
+                      )}
+                    </>
                   )}
                   {/* ONE category, picked from the real BWA taxonomy (bwa_categories, migration
                       0030) — not free text. cost_category still exists in the schema as a legacy
@@ -3867,19 +3848,26 @@ function DocumentDetail({ doc }: { doc: Document }) {
                         // the screen disagree with the rule preview.
                         <div className="space-y-1">
                           <p className="text-sm text-muted-foreground">
-                            {t("documents.detail.field.freitextHinweis")}
+                            <Trans
+                              i18nKey="documents.detail.field.freitextHinweis"
+                              components={{ bold: <strong className="font-semibold" /> }}
+                            />
                           </p>
                           {matchingCategory ? (
                             <Button
-                              variant="outline"
+                              variant="ghost"
                               size="sm"
-                              className="mt-1"
+                              className="mt-1 rounded-full border-transparent bg-amber-100 text-amber-800 shadow-none hover:bg-amber-200 hover:text-amber-900"
                               disabled={updateDocument.isPending}
                               onClick={() => categoryLink(matchingCategory)}
                             >
-                              {t("documents.detail.field.verknuepfen", {
-                                name: categoryLabel(matchingCategory),
-                              })}
+                              <span>
+                                <Trans
+                                  i18nKey="documents.detail.field.verknuepfen"
+                                  values={{ name: categoryLabel(matchingCategory) }}
+                                  components={{ bold: <strong className="font-semibold" /> }}
+                                />
+                              </span>
                             </Button>
                           ) : null}
                         </div>
@@ -4614,56 +4602,54 @@ function DocumentDetail({ doc }: { doc: Document }) {
             </TabsContent>
 
             {/* Tab: Lieferant — supplier master data & bank/transfer details */}
-            <TabsContent value="lieferant" className="mt-6 space-y-8">
-              <PlainSection title={t("documents.detail.section.lieferant")}>
-                <div id={SUPPLIER_ANCHOR} className="scroll-mt-24">
-                  {doc.supplier_id && supplier ? (
-                    <div className="grid gap-x-12 gap-y-3.5 sm:grid-cols-2">
-                      <FactList
-                        facts={[
-                          {
-                            label: t("documents.detail.lieferant.name"),
-                            value: supplier.name,
-                            node: (
-                              <Link
-                                to="/suppliers/$id"
-                                params={{ id: supplier.id }}
-                                className="underline decoration-muted-foreground/40 underline-offset-4 transition-colors hover:text-brand-dark hover:decoration-brand"
-                              >
-                                {supplier.name}
-                              </Link>
-                            ),
-                          },
-                          { label: t("documents.detail.lieferant.ustId"), value: supplier.vat_id },
-                          {
-                            label: t("documents.detail.lieferant.ansprechpartner"),
-                            value: supplier.contact_person,
-                          },
-                        ]}
-                      />
-                      <FactList
-                        facts={[
-                          {
-                            label: t("documents.detail.lieferant.anschrift"),
-                            value: supplier.address,
-                          },
-                          {
-                            label: t("documents.detail.lieferant.telefon"),
-                            value: supplier.phone,
-                          },
-                        ]}
-                      />
-                    </div>
-                  ) : (
-                    <p className="text-base text-muted-foreground">
-                      {t("documents.detail.lieferant.none")}
-                    </p>
-                  )}
-                </div>
-              </PlainSection>
+            <TabsContent value="lieferant" className="mt-6 space-y-6">
+              <Section title={t("documents.detail.section.lieferant")} anchorId={SUPPLIER_ANCHOR}>
+                {doc.supplier_id && supplier ? (
+                  <div className="grid gap-x-12 gap-y-3.5 sm:grid-cols-2">
+                    <FactList
+                      facts={[
+                        {
+                          label: t("documents.detail.lieferant.name"),
+                          value: supplier.name,
+                          node: (
+                            <Link
+                              to="/suppliers/$id"
+                              params={{ id: supplier.id }}
+                              className="underline decoration-muted-foreground/40 underline-offset-4 transition-colors hover:text-brand-dark hover:decoration-brand"
+                            >
+                              {supplier.name}
+                            </Link>
+                          ),
+                        },
+                        { label: t("documents.detail.lieferant.ustId"), value: supplier.vat_id },
+                        {
+                          label: t("documents.detail.lieferant.ansprechpartner"),
+                          value: supplier.contact_person,
+                        },
+                      ]}
+                    />
+                    <FactList
+                      facts={[
+                        {
+                          label: t("documents.detail.lieferant.anschrift"),
+                          value: supplier.address,
+                        },
+                        {
+                          label: t("documents.detail.lieferant.telefon"),
+                          value: supplier.phone,
+                        },
+                      ]}
+                    />
+                  </div>
+                ) : (
+                  <p className="text-base text-muted-foreground">
+                    {t("documents.detail.lieferant.none")}
+                  </p>
+                )}
+              </Section>
 
               {doc.supplier_id && supplier && (
-                <PlainSection title={t("documents.detail.lieferant.konten.titel")}>
+                <Section title={t("documents.detail.lieferant.konten.titel")}>
                   {/* Master data, nothing else: this is who the supplier is and where they bank.
                       Paying is an act on THIS invoice, so the button lives on the Zahlung tab. */}
                   <PaymentAccounts {...paymentAccountsPanel} />
@@ -4684,7 +4670,7 @@ function DocumentDetail({ doc }: { doc: Document }) {
                       }}
                     />
                   </p>
-                </PlainSection>
+                </Section>
               )}
             </TabsContent>
 
@@ -5820,9 +5806,13 @@ function PaymentMatchingSection({ doc }: { doc: Document }) {
 // triggers write (rule application, bank matching). Never re-splits `text` on the separator, since
 // a value can contain it (a business line reads "GB-01 · Vermietung").
 
+const paintOneFrameBeforeContinuing = () =>
+  new Promise((resolve) => requestAnimationFrame(() => requestAnimationFrame(resolve)));
+
 function Section({
   title,
   anchorId,
+  tourId,
   hint,
   children,
   editable,
@@ -5834,9 +5824,11 @@ function Section({
   onEdit,
   onCancel,
   onSave,
+  pointAtEdit,
 }: {
   title: string;
   anchorId?: string;
+  tourId?: string;
   hint?: string;
   children: React.ReactNode;
   // Optional per-section editing controls, rendered in the header.
@@ -5853,12 +5845,30 @@ function Section({
   onEdit?: () => void;
   onCancel?: () => void;
   onSave?: () => void;
+  pointAtEdit?: boolean;
 }) {
   const { t } = useTranslation();
+  const [activatingEdit, setActivatingEdit] = useState(false);
+  const [activatingSave, setActivatingSave] = useState(false);
+
+  async function handleEditClick() {
+    setActivatingEdit(true);
+    await paintOneFrameBeforeContinuing();
+    onEdit?.();
+    setActivatingEdit(false);
+  }
+
+  async function handleSaveClick() {
+    setActivatingSave(true);
+    await paintOneFrameBeforeContinuing();
+    onSave?.();
+    setActivatingSave(false);
+  }
 
   return (
     <section
       id={anchorId}
+      data-tour={tourId}
       className={cn(
         "overflow-hidden rounded-xl border transition-shadow",
         anchorId && "scroll-mt-24",
@@ -5880,24 +5890,47 @@ function Section({
                 <Button variant="ghost" size="sm" onClick={onCancel} className="h-8 gap-1.5">
                   <X className="size-3.5" /> {t("documents.detail.action.abbrechen")}
                 </Button>
-                <Button size="sm" onClick={onSave} disabled={saving} className="h-8 gap-1.5">
-                  {saving
-                    ? t("documents.detail.action.speichere")
-                    : t("documents.detail.action.speichern")}
+                <Button
+                  size="sm"
+                  onClick={() => void handleSaveClick()}
+                  disabled={saving || activatingSave}
+                  className="h-8 gap-1.5"
+                >
+                  {saving || activatingSave ? (
+                    <>
+                      <Loader2 className="size-3.5 animate-spin" />
+                      {t("documents.detail.action.speichere")}
+                    </>
+                  ) : (
+                    t("documents.detail.action.speichern")
+                  )}
                 </Button>
               </>
             ) : (
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={onEdit}
-                disabled={editDisabled}
-                title={editDisabled ? t("documents.detail.action.bearbeitenGesperrt") : undefined}
-                className="h-8 gap-1.5"
-              >
-                <EditIcon className="size-3.5" />{" "}
-                {editLabel ?? t("documents.detail.action.bearbeiten")}
-              </Button>
+              <>
+                {pointAtEdit && (
+                  <ArrowRight aria-hidden className="practice-blink size-5 text-amber-500" />
+                )}
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => void handleEditClick()}
+                  disabled={editDisabled || activatingEdit}
+                  aria-label={editLabel ?? t("documents.detail.action.bearbeiten")}
+                  title={
+                    editDisabled
+                      ? t("documents.detail.action.bearbeitenGesperrt")
+                      : (editLabel ?? t("documents.detail.action.bearbeiten"))
+                  }
+                  className={cn("size-8 p-0", pointAtEdit && "bg-amber-100 ring-2 ring-amber-400")}
+                >
+                  {activatingEdit ? (
+                    <Loader2 className="size-3.5 animate-spin" />
+                  ) : (
+                    <EditIcon className="size-3.5" />
+                  )}
+                </Button>
+              </>
             ))}
         </div>
       </div>

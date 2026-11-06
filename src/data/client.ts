@@ -19,7 +19,7 @@ export const sb = (SEED_MODE ? seedClient : supabase) as any;
 export const STALE = 60_000;
 
 export async function actorEmail(): Promise<string | null> {
-  const { data } = await supabase.auth.getUser();
+  const { data } = await sb.auth.getUser();
   return data.user?.email ?? null;
 }
 

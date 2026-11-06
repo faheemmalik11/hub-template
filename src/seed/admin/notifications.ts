@@ -10,7 +10,7 @@ export const notificationChannels = [
 export const notificationSettings = [
   {
     user_id: team[0].id,
-    bell_events: ["zuweisung", "query", "rejected"],
+    bell_events: ["assigned", "query", "rejected"],
     bell_ack: true,
     digest_enabled: false,
     digest_events: [],
@@ -26,8 +26,8 @@ export const notificationSettings = [
 export const notificationEvents = [
   {
     id: sampleId(65, 1),
-    type: "zuweisung",
-    payload: { invoice_number: "TK-88120" },
+    type: "assigned",
+    payload: { invoice_number: "TK-88120", from_name: team[1].name },
     recipient_user_id: team[0].id,
     delivered: true,
     acknowledged_at: null,

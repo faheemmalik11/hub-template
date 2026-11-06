@@ -289,6 +289,7 @@ export interface Supplier {
   phone: string | null;
   email: string | null;
   contact_person: string | null;
+  trade: string | null;
   // Filled by the pipeline as it touches each row (migration 20260824100000), so it is null on
   // rows the pipeline has not seen since. Which token in vat_id is actually a VAT id depends on a
   // per-country format the pipeline owns, so the Hub reads this and never writes it.
@@ -1242,6 +1243,7 @@ export interface DocumentsListParams {
   // with no bank match at all, and can have a suggestion while still unpaid.
   bankMatch?: string;
   paymentType?: string;
+  channel?: string;
   // Archived receipts (wrongly ingested, kept with a warning note) are out of everyday lists.
   // 'nur' shows only the archive; undefined excludes it.
   archive?: "only";

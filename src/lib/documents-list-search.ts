@@ -28,6 +28,7 @@ export const STATUS_VALUES = ["recognised", "needs_review"] as const;
 export const PAYMENT_VALUES = ["paid", "open"] as const;
 export const PAYMENT_TYPE_VALUES = ["direct_debit", "transfer"] as const;
 export const DATEV_VALUES = ["uebergeben", "open"] as const;
+export const CHANNEL_VALUES = ["email", "upload", "scan", "erechnung", "drive"] as const;
 // The full approval chain plus its one terminal side path that still shows up in the everyday
 // list (rejecting a receipt doesn't archive or soft-delete it). 'not_relevant' is deliberately
 // excluded — those rows are unconditionally hidden from this list server-side (applyBelegeFilter),
@@ -62,6 +63,7 @@ export type DocumentsSearch = {
   fromDate?: string;
   toDate?: string;
   privateOwner?: string;
+  channel?: string;
 };
 
 export type NormalizedSearch = Required<
@@ -84,6 +86,7 @@ export type NormalizedSearch = Required<
     | "fromDate"
     | "toDate"
     | "privateOwner"
+    | "channel"
   >;
 
 export function normalize(s: DocumentsSearch): NormalizedSearch {
@@ -110,6 +113,7 @@ export function normalize(s: DocumentsSearch): NormalizedSearch {
     fromDate: s.fromDate,
     toDate: s.toDate,
     privateOwner: s.privateOwner,
+    channel: s.channel,
   };
 }
 
@@ -128,6 +132,7 @@ export function validateSearch(input: Record<string, unknown>): DocumentsSearch 
   const bankMatch = str(input.bankMatch);
   const trafficLight = str(input.trafficLight);
   const workflow = str(input.workflow);
+  const channel = str(input.channel);
   return {
     q: str(input.q) ?? "",
     view: input.view === "kanban" ? "kanban" : "liste",
@@ -170,6 +175,7 @@ export function validateSearch(input: Record<string, unknown>): DocumentsSearch 
     fromDate: str(input.fromDate),
     toDate: str(input.toDate),
     privateOwner: str(input.privateOwner),
+    channel: (CHANNEL_VALUES as readonly string[]).includes(channel ?? "") ? channel : undefined,
   };
 }
 

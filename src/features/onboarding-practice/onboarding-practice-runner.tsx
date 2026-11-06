@@ -130,6 +130,7 @@ function ActivePracticeTask({ task }: { task: OnboardingTask }) {
 
   const [panelCollapsed, setPanelCollapsed] = useState(false);
   const [completionModalOpen, setCompletionModalOpen] = useState(false);
+  const [restarting, setRestarting] = useState(false);
 
   const [modalOpen, setModalOpen] = useState(
     () => typeof document !== "undefined" && document.body.hasAttribute("data-scroll-locked"),
@@ -251,12 +252,20 @@ function ActivePracticeTask({ task }: { task: OnboardingTask }) {
   };
 
   const restartTask = async () => {
-    if (!taskSeedsItsOwnRecords(task.id)) return discardUploadedDocuments();
-    const rebuiltIds = await seedStopCasesPracticeData(true);
-    uploadedDocumentIds.current = rebuiltIds;
-    setSeededRecordIds(seededRecordValues(task.id, rebuiltIds));
-    writePracticeProgress(task.id, appUserId, { stepIndex: 0, uploadedIds: rebuiltIds });
-    await queryClient.invalidateQueries();
+    setRestarting(true);
+    try {
+      if (!taskSeedsItsOwnRecords(task.id)) {
+        await discardUploadedDocuments();
+        return;
+      }
+      const rebuiltIds = await seedStopCasesPracticeData(true);
+      uploadedDocumentIds.current = rebuiltIds;
+      setSeededRecordIds(seededRecordValues(task.id, rebuiltIds));
+      writePracticeProgress(task.id, appUserId, { stepIndex: 0, uploadedIds: rebuiltIds });
+      await queryClient.invalidateQueries();
+    } finally {
+      setRestarting(false);
+    }
   };
 
   const leavingRef = useRef(false);
@@ -416,6 +425,7 @@ function ActivePracticeTask({ task }: { task: OnboardingTask }) {
               onNavigate={navigateToOnboardingStepPath}
               onClose={leaveTutorial}
               onRestart={() => void restartTask()}
+              restartPending={restarting}
               className="max-h-[calc(100vh-14rem)] overflow-y-auto"
             />
           </>
