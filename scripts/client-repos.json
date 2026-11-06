@@ -1,0 +1,9 @@
+{
+  "van-oepen": {
+    "enabled": true,
+    "hubTemplateBranch": "van-oepen",
+    "clientRemoteName": "van-oepen-repo",
+    "clientRemoteUrl": "git@github.com:fabiantscheu-ship-it/vanoepen.git",
+    "clientRemoteBranch": "main"
+  }
+}

@@ -32,21 +32,37 @@ checkout of a given branch point at a given client's Supabase project.
 
 ## Creating a client branch
 
-Do this in a **separate git worktree**, never in a checkout someone else is actively using — check
-`git worktree list` first, and if the branch you would base it on (`main` or `dev`) is already
-checked out somewhere live, branch off that commit into a new worktree instead of touching the live
-checkout.
+Creating the branch itself (`git branch <client> dev`) never touches the working tree, so it is
+always safe directly in the live checkout. Only *checking it out* changes what is on disk. If someone
+else is actively using the live checkout on another branch, do the client branch's own work (commits,
+file edits) in a separate git worktree instead of switching that checkout's branch out from under
+them — but don't create a worktree as a reflex for every task; ask first unless there's a concrete
+reason to isolate.
 
 ```
 git worktree add ../hub-template-<client> -b <client> dev   # or main
 ```
 
-In that worktree: set the client's name, colours and artwork in `src/config/brand.ts`, `src/styles.css`,
+Set the client's name, colours and artwork in `src/config/brand.ts`, `src/styles.css`,
 `public/brand/*`, `public/favicon.ico`. Point a local `.env` at the client's own Supabase project. If
 the client is being moved from an existing cloned repo rather than starting fresh, port their own
 commits across the same way any client feature is ported back into the template (see below), then
 reset the brand files to the client's own values afterward, since the ported commits will carry
 whatever brand the clone had.
+
+## If a client still keeps their own separate repo too
+
+Some clients, during the move to this model or by choice, still have their own standalone repo (the
+one their deployment actually builds from) alongside their branch here. `scripts/client-repos.json`
+has one entry per such client, keyed by a client identifier (not necessarily the branch name):
+`hubTemplateBranch` (which branch of this repo to push), `clientRemoteName`/`clientRemoteUrl`/
+`clientRemoteBranch` (their repo and the branch on their side), and `enabled`. Add an entry there for
+a new client, never a hardcoded remote on one developer's machine. New entries default `enabled` to
+off, same as any other new behaviour here. `scripts/push-client-repo.sh <client-key>` pushes
+`hubTemplateBranch` to this repo's `origin`, and also to the client's own repo if `enabled` is `true`,
+adding the remote first if it is not already configured. The client's own repo is still the one
+actually deployed until its deployment is re-pointed at this repository — pushing here does not
+retire it by itself.
 
 ## Bringing in shared updates
 
