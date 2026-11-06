@@ -15,7 +15,7 @@ import { UIScaleProvider } from "@/lib/ui-scale";
 import { I18nProvider, useTranslation } from "@/lib/i18n";
 import { AuthProvider } from "@/lib/auth";
 import { AuthGate } from "@/components/layout/auth-gate";
-import { BRAND, pageTitle } from "@/config/brand";
+import { BRAND, faviconMimeType, pageTitle } from "@/config/brand";
 
 function NotFoundComponent() {
   const { t } = useTranslation();
@@ -94,7 +94,7 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
       { property: "og:type", content: "website" },
     ],
     links: [
-      { rel: "icon", href: BRAND.assets.icon, type: "image/svg+xml" },
+      { rel: "icon", href: BRAND.assets.icon, type: faviconMimeType() },
       { rel: "stylesheet", href: appCss },
       { rel: "preconnect", href: "https://fonts.googleapis.com" },
       {

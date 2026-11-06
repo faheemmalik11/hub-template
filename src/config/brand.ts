@@ -87,6 +87,17 @@ export function brandVars() {
   return { brand: BRAND.name, product: BRAND.productName, domain: BRAND.emailDomain };
 }
 
+const FAVICON_MIME_TYPES: Record<string, string> = {
+  svg: "image/svg+xml",
+  ico: "image/x-icon",
+  png: "image/png",
+};
+
+export function faviconMimeType() {
+  const extension = BRAND.assets.icon.split(".").pop() ?? "";
+  return FAVICON_MIME_TYPES[extension] ?? "image/x-icon";
+}
+
 /**
  * Page title for a route's `head()`. Call with the page name; omit it for the
  * app root. Routes must not concatenate the product name themselves.
