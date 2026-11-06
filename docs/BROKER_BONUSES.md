@@ -48,7 +48,7 @@ database and ends with the line that switches it on. Run `deal-details-for-an-ex
 
 - **Calculation:** `src/kit/lib/commission/bonuses.ts` (`suggestBonuses`, tests beside it), run on the saved
   deal. Rules: notary bonus 500 for the person who handled the sale, unless the sale is an own lead;
-  follow-up 300 when the sale came from a viewing; own lead gives 50 % of (net commission after discounts
+  follow-up 500 when the sale came from a viewing; own lead gives 50 % of (net commission after discounts
   minus the deal's costs minus the 1,500 personnel flat rate), no notary bonus; a lead won by another broker
   than the one who handled it gives that broker 10 %. The notary and follow-up bonuses are due at the notary
   date. The two shares wait until the costs are closed and every commission invoice of the deal is paid.

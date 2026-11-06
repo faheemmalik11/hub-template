@@ -17,7 +17,7 @@ create unique index if not exists broker_bonuses_one_per_deal_and_type
 create table if not exists public.bonus_settings (
     single_row boolean primary key default true check (single_row),
     notary_amount numeric(12, 2) not null default 500 check (notary_amount > 0),
-    follow_up_amount numeric(12, 2) not null default 300 check (follow_up_amount > 0),
+    follow_up_amount numeric(12, 2) not null default 500 check (follow_up_amount > 0),
     own_lead_share_percent numeric(5, 2) not null default 50 check (own_lead_share_percent > 0 and own_lead_share_percent <= 100),
     company_lead_share_percent numeric(5, 2) not null default 10 check (company_lead_share_percent > 0 and company_lead_share_percent <= 100),
     personnel_flat_amount numeric(12, 2) not null default 1500 check (personnel_flat_amount >= 0),
