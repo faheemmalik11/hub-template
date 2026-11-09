@@ -5,8 +5,7 @@ import { ProfilePage } from "@/kit/pages";
 import { useProfileAdapter } from "@/hub/adapters/profile";
 import { useProfileLabels } from "@/hub/adapters/profile-labels";
 import { useAuth } from "@/lib/auth";
-import { useFeature } from "@/data/use-feature";
-import { PERMISSIONS } from "@/config/permissions";
+import { useMfaRequirement } from "@/components/auth/use-mfa-gate";
 import { TwoFactorPanel } from "@/components/auth/two-factor-dialog";
 import { pageTitle } from "@/config/brand";
 
@@ -22,12 +21,12 @@ function ProfileRoute() {
   const { ready } = useAuth();
   const adapter = useProfileAdapter();
   const labels = useProfileLabels();
-  const hasMfa = useFeature(PERMISSIONS.authMfaEnabled);
+  const mfaRequirement = useMfaRequirement(ready);
   if (!ready) return null;
   return (
     <>
       <ProfilePage adapter={adapter} labels={labels} />
-      {hasMfa && (
+      {mfaRequirement.required && (
         <div className="mx-auto mt-6 max-w-2xl">
           <TwoFactorPanel />
         </div>

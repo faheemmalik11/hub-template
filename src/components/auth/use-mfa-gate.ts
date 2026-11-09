@@ -1,6 +1,35 @@
 import { useCallback, useEffect, useState } from "react";
 
 import { supabase } from "@/integrations/supabase/client";
+import { checkMfaRequirement } from "@/lib/api/region.functions";
+
+export function useMfaRequirement(enabled: boolean) {
+  const [state, setState] = useState<{ checked: boolean; required: boolean }>({
+    checked: false,
+    required: false,
+  });
+
+  useEffect(() => {
+    if (!enabled) {
+      setState({ checked: false, required: false });
+      return;
+    }
+    let cancelled = false;
+    void (async () => {
+      try {
+        const required = await checkMfaRequirement();
+        if (!cancelled) setState({ checked: true, required });
+      } catch {
+        if (!cancelled) setState({ checked: true, required: false });
+      }
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, [enabled]);
+
+  return { checking: enabled && !state.checked, required: state.checked && state.required };
+}
 
 export function useMfaGate(userId: string | null, enabled: boolean) {
   const [result, setResult] = useState<{

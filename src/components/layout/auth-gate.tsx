@@ -10,12 +10,10 @@ import { Label } from "@/components/ui/label";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { CodeInput } from "@/components/auth/code-input";
 import { TwoFactorPanel } from "@/components/auth/two-factor-dialog";
-import { useMfaGate } from "@/components/auth/use-mfa-gate";
+import { useMfaGate, useMfaRequirement } from "@/components/auth/use-mfa-gate";
 import { useAuth, type AuthResult } from "@/lib/auth";
 import { verifyWithAnyFactor } from "@/lib/mfa";
 import { checkRegion } from "@/lib/api/region.functions";
-import { useFeature } from "@/data/use-feature";
-import { PERMISSIONS } from "@/config/permissions";
 import { brandVars } from "@/config/brand";
 import { useTranslation } from "@/lib/i18n";
 import { cn } from "@/lib/utils";
@@ -53,14 +51,20 @@ function useRegionGate(enabled: boolean) {
 
 export function AuthGate({ children }: { children: ReactNode }) {
   const { ready, user, mustChangePassword } = useAuth();
-  const mfaEnabled = useFeature(PERMISSIONS.authMfaEnabled);
-  const mfa = useMfaGate(ready && user ? user.email : null, mfaEnabled);
+  const mfaRequirement = useMfaRequirement(!!ready && !!user);
+  const mfa = useMfaGate(ready && user ? user.email : null, mfaRequirement.required);
   const region = useRegionGate(
-    !!ready && !!user && !mfa.checking && !mfa.needsCode && !mfa.needsSetup && !mustChangePassword,
+    !!ready &&
+      !!user &&
+      !mfaRequirement.checking &&
+      !mfa.checking &&
+      !mfa.needsCode &&
+      !mfa.needsSetup &&
+      !mustChangePassword,
   );
 
   // Was an empty full-screen div; on a slow connection that read as a dead page (docs/audit/papierkorb/trash/ISSUES.md #8).
-  if (!ready || mfa.checking || region.checking) {
+  if (!ready || mfaRequirement.checking || mfa.checking || region.checking) {
     return <AppSkeleton />;
   }
 
