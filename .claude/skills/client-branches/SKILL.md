@@ -131,3 +131,48 @@ The clone model in the section above this one is not retired. An existing client
 separate repository keeps working exactly as it does today — nothing here requires migrating them to
 a branch. This is the model for a client being brought in or moved onto this way, starting with van
 Oepen, not a mandate to re-platform every client at once.
+
+## Known client branches
+
+### van-oepen
+
+The first one, and the worked example everything above is grounded in.
+
+- **Worktree**: `.worktrees/van-oepen` at this repository's root (not a sibling folder — see
+  "Creating a client branch" above for why). If that path is gone, recreate it: `git worktree add
+  .worktrees/van-oepen van-oepen` — the branch itself already exists and carries all the history
+  below, only the worktree checkout needs remaking.
+- **Local dev server port**: 3031, not the template's default 3030, so it can run alongside a `dev`
+  session in the same window. Start with `npx vite dev --port 3031` from inside the worktree (the
+  committed `vite.config.ts` still says 3030; that is the template's default, not this branch's).
+- **`.env`**: already present in the worktree, gitignored, pointing at this client's real Supabase
+  project. If it is missing (a fresh worktree, or `.env` was never copied), it needs to come from
+  wherever this engagement's credentials are kept — not reconstructed from guesswork.
+- **The live site**: deployed from the separate `vanoepen` repository
+  (`git@github.com:fabiantscheu-ship-it/vanoepen.git`, `main` branch), not from this branch yet.
+  `scripts/client-repos.json` has the `van-oepen` entry already configured to mirror there via
+  `scripts/push-client-repo.sh van-oepen`, currently `"enabled": true`.
+- **Database state, as of this writing**: the live project has been brought fully up to date with
+  what this branch's code expects — `supabase/catalogue.sql` and all three
+  `*-for-an-existing-client.sql` presets (practice mode, document privacy/classification,
+  handover-routes hardening) have been applied and verified object by object, and
+  `outgoing_invoices.last_synced_at` was renamed to `last_sync_at` to match the code. None of this
+  needs doing again unless the live project is reset or a new client is being brought up fresh, in
+  which case the same presets apply there too.
+- **Code parity with production, verified 2026-11-09**: every one of the 32 routes in
+  `src/config/routes.ts` was checked page by page against `https://vanoepen.vercel.app/`. They match,
+  with two expected gaps — both because production is still running older, unpushed code, not because
+  of a bug: `/onboarding-tour` works in the worktree and 404s on production; `/payment-file` 404s on
+  production and is a permission-gated "No access" page in the worktree (the route exists, this role
+  just isn't granted it). The worktree's permission labels and a few section headers read more
+  descriptively than production's (e.g. "Set the filename convention" vs. "File naming") — that's a
+  kept, deliberate difference, not drift to fix. One real bug surfaced during the check: the trash
+  screen's age filter read `trash.age.*` instead of `trash.ageFilter.*` and showed raw i18n keys
+  instead of labels — fixed on `dev` (not the branch) and merged in, per the one rule above.
+- **What's still open**: the actual push to the `vanoepen` repository (step 6 above) — the worktree
+  and the database are ready for it, and code parity is now verified, but nothing has been pushed
+  there yet as of this writing.
+
+A session with no memory of how any of this happened can pick it up cold: `cd` into the worktree,
+read `git log --oneline -10`, and the database state above is current unless a later session's own
+notes say otherwise.

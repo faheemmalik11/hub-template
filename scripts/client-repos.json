@@ -4,6 +4,7 @@
     "hubTemplateBranch": "van-oepen",
     "clientRemoteName": "van-oepen-repo",
     "clientRemoteUrl": "git@github.com:fabiantscheu-ship-it/vanoepen.git",
-    "clientRemoteBranch": "main"
+    "clientRemoteBranch": "main",
+    "pushCommand": "./scripts/push-client-repo.sh van-oepen"
   }
 }
