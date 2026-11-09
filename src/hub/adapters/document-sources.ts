@@ -417,40 +417,52 @@ export function useDocumentSourcesAdapter(): DocumentSourcesAdapter {
   })();
 
   // The array the kit receives. It must keep its identity until something in it really changes;
-  // see the note on the memoised views above for what happens when it does not.
+  // see the note on the memoised views above for what happens when it does not. `undefined` while
+  // the rows are still loading, same signal `useFilingStatus` below reads for "no channel of this
+  // kind exists" -- a client with only a mailbox and no filing channel (or the other way round)
+  // still gets the card for the one it has, not an empty list pretending nothing is configured.
   const runRequests = runRequestsQuery.data;
   const sources = useMemo(
     () =>
-      mailView && filingView
-        ? [
-            offeringFolders(
-              mailSource(
-                mailView,
-                mailFolders,
-                storedFolderNames,
-                runs,
-                actor,
-                runRequestFor("mail", runRequests),
-                t,
-              ),
-              "mail_source_folders",
-            ),
-            offeringFolders(
-              filingSource(
-                filingView,
-                filingFolders,
-                storedFolderNames,
-                runs,
-                actor,
-                runRequestFor("filing", runRequests),
-                t,
-              ),
-              "drive_source_folders",
-            ),
+      channelRows === undefined
+        ? undefined
+        : [
+            ...(mailView
+              ? [
+                  offeringFolders(
+                    mailSource(
+                      mailView,
+                      mailFolders,
+                      storedFolderNames,
+                      runs,
+                      actor,
+                      runRequestFor("mail", runRequests),
+                      t,
+                    ),
+                    "mail_source_folders",
+                  ),
+                ]
+              : []),
+            ...(filingView
+              ? [
+                  offeringFolders(
+                    filingSource(
+                      filingView,
+                      filingFolders,
+                      storedFolderNames,
+                      runs,
+                      actor,
+                      runRequestFor("filing", runRequests),
+                      t,
+                    ),
+                    "drive_source_folders",
+                  ),
+                ]
+              : []),
             uploadSource(runs, runRequestFor("upload", runRequests), t),
-          ]
-        : undefined,
+          ],
     [
+      channelRows,
       mailView,
       filingView,
       mailFolders,
