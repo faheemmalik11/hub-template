@@ -5,6 +5,11 @@
 
 begin;
 
+alter table public.documents add column if not exists is_overhead boolean not null default false;
+alter table public.documents add column if not exists tip_amount numeric(14, 2);
+alter table public.documents add column if not exists handed_over_at timestamptz;
+alter table public.documents add column if not exists private_owner_user_id uuid references public.app_users(id) on delete set null;
+
 create table if not exists public.review_score_rules (
     check_key text primary key,
     weight integer not null default 10,
@@ -54,7 +59,12 @@ create table if not exists public.document_transaction_matches (
 create unique index if not exists document_transaction_matches_pair
     on public.document_transaction_matches (document_id, transaction_id);
 
-create or replace view public.v_documents_list with (security_invoker = true) as
+-- A plain "create or replace" cannot add documents columns in the middle of what d.* already
+-- returned on an existing view, only append at the end, so an existing v_documents_list with an
+-- older column set has to be dropped and rebuilt instead of replaced in place.
+drop view if exists public.v_documents_list cascade;
+
+create view public.v_documents_list with (security_invoker = true) as
 select d.*,
        coalesce(s.name, d.issuer) as issuer_sort,
        (
