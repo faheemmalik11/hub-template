@@ -167,6 +167,7 @@ import {
   formatSignedEUR,
   isIncomingInvoice,
   isDirectDebit,
+  documentTypeKey,
   nextLegalActions,
   parseDecimalInput,
   type ApprovalAction,
@@ -1015,7 +1016,7 @@ function DocumentDetail({ doc }: { doc: Document }) {
   const confirmationCardDocument = {
     companyCode: doc.company_code,
     propertyCode: doc.property_code,
-    documentType: doc.document_type,
+    documentType: documentTypeKey(doc.document_type) ?? doc.document_type,
     isInvoice: doc.is_invoice ?? isIncomingInvoice(doc.document_type),
     companyConfirmedByHuman: doc.company_assignment_source === "human",
     propertyConfirmedByHuman: doc.property_assignment_source === "human",
@@ -1087,6 +1088,11 @@ function DocumentDetail({ doc }: { doc: Document }) {
           is_invoice: input.isInvoice,
         },
       },
+    });
+    emitOnboardingEvent({
+      type: "document_updated",
+      recordId: doc.id,
+      data: documentUpdatedEventData(doc, changes),
     });
   }
 
@@ -3378,7 +3384,16 @@ function DocumentDetail({ doc }: { doc: Document }) {
                 companies={companies}
                 properties={properties}
                 propertyCompanyLinks={propertyCompanyLinks}
-                documentTypeOptions={documentTypeFacetsQ.data?.documentTypes ?? []}
+                documentTypeOptions={Array.from(
+                  new Set(
+                    [...(documentTypeFacetsQ.data?.documentTypes ?? []), doc.document_type]
+                      .map((code) => documentTypeKey(code))
+                      .filter((key): key is string => key !== null),
+                  ),
+                ).map((key) => ({
+                  value: key,
+                  label: t(`documents.belegart.${key}`, { defaultValue: key }),
+                }))}
                 noCompanyCode={COMPANY_WITHOUT}
                 onConfirm={handleConfirmationCardConfirm}
                 labels={confirmationCardLabels}
@@ -3683,6 +3698,7 @@ function DocumentDetail({ doc }: { doc: Document }) {
               <Section
                 title={t("documents.detail.section.beteiligte")}
                 anchorId={PARTICIPANTS_ANCHOR}
+                tourId="invoice-assignment"
                 editable
                 editDisabled={!canEdit("booking")}
                 isEditing={isEdit("booking")}

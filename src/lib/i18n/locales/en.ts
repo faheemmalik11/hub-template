@@ -1167,15 +1167,13 @@ const en = {
       amountDeviation: "Who checks the invoice amounts at your company?",
       amountHelp:
         "Compare the gross amount in the app with the amount on the file. Change only that amount. Net plus VAT must equal the gross amount.",
-      companyInstruction: "Pick the practice company. Its code starts with DEMO-.",
-      companyOutcome:
-        "Every invoice belongs to exactly one company. The right company sends it to the right books and the right approver.",
-      companyHelp: "Look for the company whose code starts with DEMO-.",
-      propertyInstruction: "Pick the practice property. Its code ends with -P1.",
-      propertyOutcome:
-        "Costs belong to one specific property. The right property shows you what each building really costs.",
+      companyPropertyInstruction:
+        "Pick the practice company and the practice property. The company code starts with DEMO- and the property code ends with -P1.",
+      companyPropertyOutcome:
+        "Every invoice belongs to exactly one company and one property. The right company sends it to the right books and the right approver. The right property shows you what each building really costs.",
+      companyPropertyHelp:
+        "Look for the company whose code starts with DEMO- and the property whose code ends with -P1.",
       propertyDeviation: "Do you assign invoices to properties as well as companies?",
-      propertyHelp: "Look for the property whose code ends with -P1.",
       reviewInstruction: "Send the invoice for review.",
       reviewOutcome:
         "This click says the data is right. Now a second person checks it before any money moves.",
