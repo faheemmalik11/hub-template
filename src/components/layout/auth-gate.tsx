@@ -1,4 +1,4 @@
-import { useState, type ComponentProps, type FormEvent, type ReactNode } from "react";
+import { useEffect, useState, type ComponentProps, type FormEvent, type ReactNode } from "react";
 import { ArrowRight, Eye, EyeOff, Loader2, Lock } from "lucide-react";
 
 import { AppShell } from "@/components/layout/app-shell";
@@ -7,56 +7,73 @@ import { Logo } from "@/components/brand/logo";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { TooltipProvider } from "@/components/ui/tooltip";
+import { CodeInput } from "@/components/auth/code-input";
+import { TwoFactorPanel } from "@/components/auth/two-factor-dialog";
+import { useMfaGate } from "@/components/auth/use-mfa-gate";
 import { useAuth, type AuthResult } from "@/lib/auth";
+import { verifyWithAnyFactor } from "@/lib/mfa";
+import { checkRegion } from "@/lib/api/region.functions";
+import { useFeature } from "@/data/use-feature";
+import { PERMISSIONS } from "@/config/permissions";
 import { brandVars } from "@/config/brand";
 import { useTranslation } from "@/lib/i18n";
 import { cn } from "@/lib/utils";
 
+function useRegionGate(enabled: boolean) {
+  const [state, setState] = useState<{
+    checked: boolean;
+    blocked: boolean;
+    country: string | null;
+  }>({ checked: false, blocked: false, country: null });
+
+  useEffect(() => {
+    if (!enabled) {
+      setState({ checked: false, blocked: false, country: null });
+      return;
+    }
+    let cancelled = false;
+    void (async () => {
+      try {
+        const verdict = await checkRegion();
+        if (!cancelled) {
+          setState({ checked: true, blocked: !verdict.allowed, country: verdict.country });
+        }
+      } catch {
+        if (!cancelled) setState({ checked: true, blocked: false, country: null });
+      }
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, [enabled]);
+
+  return { checking: enabled && !state.checked, blocked: state.blocked, country: state.country };
+}
+
 export function AuthGate({ children }: { children: ReactNode }) {
   const { ready, user, mustChangePassword } = useAuth();
+  const mfaEnabled = useFeature(PERMISSIONS.authMfaEnabled);
+  const mfa = useMfaGate(ready && user ? user.email : null, mfaEnabled);
+  const region = useRegionGate(
+    !!ready && !!user && !mfa.checking && !mfa.needsCode && !mfa.needsSetup && !mustChangePassword,
+  );
 
   // Was an empty full-screen div; on a slow connection that read as a dead page (docs/audit/papierkorb/trash/ISSUES.md #8).
-  if (!ready) {
-    return (
-      <div className="flex min-h-screen bg-background" aria-busy="true" aria-live="polite">
-        <div className="hidden w-64 shrink-0 flex-col gap-4 border-r border-border/80 p-3 md:flex">
-          <div className="flex h-14 items-center px-1">
-            <Logo className="h-7" />
-          </div>
-          <div className="flex flex-col gap-1.5">
-            {Array.from({ length: 8 }).map((_, i) => (
-              <div key={i} className="h-8 w-full rounded-md bg-muted/50" />
-            ))}
-          </div>
-        </div>
-        <div className="flex min-w-0 flex-1 flex-col">
-          <div className="flex h-14 shrink-0 items-center gap-2 border-b border-border/80 px-4">
-            <div className="size-5 rounded bg-muted/50" />
-            <div className="h-4 w-40 rounded-md bg-muted/50" />
-          </div>
-          <div className="w-full min-w-0 px-4 py-4 sm:px-6">
-            <div className="grid gap-3 lg:grid-cols-3">
-              <div className="min-w-0 rounded-2xl bg-brand-wash p-4 lg:col-span-2">
-                <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-3">
-                  {Array.from({ length: 3 }).map((_, i) => (
-                    <div key={i} className="h-28 rounded-xl bg-card" />
-                  ))}
-                </div>
-              </div>
-              <div className="h-full min-h-56 rounded-2xl bg-brand-wash" />
-            </div>
-            <div className="mt-3 grid gap-3 lg:grid-cols-3">
-              <div className="h-48 rounded-2xl bg-brand-wash lg:col-span-2" />
-              <div className="h-48 rounded-2xl bg-brand-wash" />
-            </div>
-          </div>
-        </div>
-      </div>
-    );
+  if (!ready || mfa.checking || region.checking) {
+    return <AppSkeleton />;
   }
 
   if (!user) {
     return <LoginScreen />;
+  }
+
+  if (mfa.needsCode) {
+    return <TwoFactorChallengeScreen onVerified={mfa.recheck} />;
+  }
+
+  if (mfa.needsSetup) {
+    return <TwoFactorSetupScreen onEnrolled={mfa.recheck} />;
   }
 
   // Checked ahead of AppShell: no window where the real app is briefly reachable with a temp password still active.
@@ -64,7 +81,50 @@ export function AuthGate({ children }: { children: ReactNode }) {
     return <SetNewPasswordScreen />;
   }
 
+  if (region.blocked) {
+    return <RegionBlockedScreen country={region.country} />;
+  }
+
   return <AppShell>{children}</AppShell>;
+}
+
+function AppSkeleton() {
+  return (
+    <div className="flex min-h-screen bg-background" aria-busy="true" aria-live="polite">
+      <div className="hidden w-64 shrink-0 flex-col gap-4 border-r border-border/80 p-3 md:flex">
+        <div className="flex h-14 items-center px-1">
+          <Logo className="h-7" />
+        </div>
+        <div className="flex flex-col gap-1.5">
+          {Array.from({ length: 8 }).map((_, i) => (
+            <div key={i} className="h-8 w-full rounded-md bg-muted/50" />
+          ))}
+        </div>
+      </div>
+      <div className="flex min-w-0 flex-1 flex-col">
+        <div className="flex h-14 shrink-0 items-center gap-2 border-b border-border/80 px-4">
+          <div className="size-5 rounded bg-muted/50" />
+          <div className="h-4 w-40 rounded-md bg-muted/50" />
+        </div>
+        <div className="w-full min-w-0 px-4 py-4 sm:px-6">
+          <div className="grid gap-3 lg:grid-cols-3">
+            <div className="min-w-0 rounded-2xl bg-brand-wash p-4 lg:col-span-2">
+              <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-3">
+                {Array.from({ length: 3 }).map((_, i) => (
+                  <div key={i} className="h-28 rounded-xl bg-card" />
+                ))}
+              </div>
+            </div>
+            <div className="h-full min-h-56 rounded-2xl bg-brand-wash" />
+          </div>
+          <div className="mt-3 grid gap-3 lg:grid-cols-3">
+            <div className="h-48 rounded-2xl bg-brand-wash lg:col-span-2" />
+            <div className="h-48 rounded-2xl bg-brand-wash" />
+          </div>
+        </div>
+      </div>
+    </div>
+  );
 }
 
 function useAuthErrorText() {
@@ -298,6 +358,217 @@ function SetNewPasswordScreen() {
             {t("auth.setPassword.logout")}
           </button>
         </div>
+      </div>
+    </div>
+  );
+}
+
+function TwoFactorChallengeScreen({ onVerified }: { onVerified: () => void }) {
+  const { t } = useTranslation();
+  const { user, logout } = useAuth();
+  const [code, setCode] = useState("");
+  const [error, setError] = useState<string | null>(null);
+  const [submitting, setSubmitting] = useState(false);
+
+  async function submit(entered: string) {
+    setSubmitting(true);
+    setError(null);
+    const result = await verifyWithAnyFactor(entered);
+    setSubmitting(false);
+    if (!result.ok) {
+      const errorCode = String((result.error as { code?: string })?.code ?? "").toLowerCase();
+      setError(
+        errorCode === "over_request_rate_limit"
+          ? t("auth.mfa.errorTooManyAttempts")
+          : errorCode === "mfa_challenge_expired"
+            ? t("auth.mfa.errorExpired")
+            : t("auth.mfa.errorWrongCode"),
+      );
+      setCode("");
+      return;
+    }
+    onVerified();
+  }
+
+  async function handleSubmit(e: FormEvent) {
+    e.preventDefault();
+    await submit(code);
+  }
+
+  return (
+    <div className="grid min-h-screen lg:grid-cols-[1.05fr_1fr]">
+      <div className="relative hidden flex-col justify-between overflow-hidden bg-brand-dark p-12 text-white lg:flex">
+        <div
+          className="pointer-events-none absolute inset-0 opacity-[0.07]"
+          style={{
+            backgroundImage:
+              "linear-gradient(to right, white 1px, transparent 1px), linear-gradient(to bottom, white 1px, transparent 1px)",
+            backgroundSize: "44px 44px",
+          }}
+        />
+        <Logo variant="white" className="h-7" />
+        <div className="relative max-w-md">
+          <p className="font-display text-4xl leading-tight text-white">
+            {t("auth.mfa.panelTitleLine1")}
+            <br />
+            {t("auth.mfa.panelTitleLine2")}
+          </p>
+          <p className="mt-4 text-sm text-white/75">{t("auth.mfa.panelSubtitle")}</p>
+        </div>
+        <div className="relative text-xs uppercase tracking-brand text-white/60">
+          {t("auth.panelFooter", brandVars())}
+        </div>
+      </div>
+
+      <div className="relative flex items-center justify-center bg-background px-6 py-12">
+        <div className="absolute right-6 top-6">
+          <LanguageSwitch />
+        </div>
+        <div className="w-full max-w-sm">
+          <div className="mb-8 lg:hidden">
+            <Logo className="h-7" />
+          </div>
+          <div className="mb-8 flex items-center gap-2 text-muted-foreground">
+            <Lock className="size-4" />
+            <span className="text-xs uppercase tracking-brand">{t("auth.mfa.kicker")}</span>
+          </div>
+          <h1 className="font-display text-3xl text-foreground">{t("auth.mfa.heading")}</h1>
+          <p className="mt-2 text-sm text-muted-foreground">
+            {t("auth.mfa.hint", { email: user?.email })}
+          </p>
+          <form onSubmit={handleSubmit} className="mt-8 space-y-6">
+            <div className="space-y-3">
+              <Label htmlFor="totp-code">{t("auth.mfa.code")}</Label>
+              <CodeInput
+                value={code}
+                onChange={(v) => {
+                  setCode(v);
+                  setError(null);
+                }}
+                onComplete={(entered) => void submit(entered)}
+                disabled={submitting}
+                autoFocus
+              />
+            </div>
+            {error && <p className="text-sm text-destructive">{error}</p>}
+            <Button
+              type="submit"
+              className="w-full gap-2"
+              disabled={submitting || code.length !== 6}
+            >
+              {submitting ? <Loader2 className="size-4 animate-spin" /> : null}
+              {submitting ? t("auth.mfa.submitting") : t("auth.mfa.submit")}
+              {!submitting && <ArrowRight className="size-4" />}
+            </Button>
+          </form>
+
+          <button
+            type="button"
+            onClick={() => void logout()}
+            className="mt-6 text-xs text-muted-foreground underline-offset-2 hover:underline"
+          >
+            {t("auth.mfa.logout")}
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function TwoFactorSetupScreen({ onEnrolled }: { onEnrolled: () => void }) {
+  const { t } = useTranslation();
+  const { user, logout } = useAuth();
+
+  return (
+    <div className="grid min-h-screen lg:grid-cols-[1.05fr_1fr]">
+      <div className="relative hidden flex-col justify-between overflow-hidden bg-brand-dark p-12 text-white lg:flex">
+        <div
+          className="pointer-events-none absolute inset-0 opacity-[0.07]"
+          style={{
+            backgroundImage:
+              "linear-gradient(to right, white 1px, transparent 1px), linear-gradient(to bottom, white 1px, transparent 1px)",
+            backgroundSize: "44px 44px",
+          }}
+        />
+        <Logo variant="white" className="h-7" />
+        <div className="relative max-w-md">
+          <p className="font-display text-4xl leading-tight text-white">
+            {t("auth.mfa.panelTitleLine1")}
+            <br />
+            {t("auth.mfa.panelTitleLine2")}
+          </p>
+          <p className="mt-4 text-sm text-white/75">{t("auth.mfa.panelSubtitle")}</p>
+        </div>
+        <div className="relative text-xs uppercase tracking-brand text-white/60">
+          {t("auth.panelFooter", brandVars())}
+        </div>
+      </div>
+
+      <div className="relative flex items-center justify-center overflow-y-auto bg-background px-6 py-12">
+        <div className="absolute right-4 top-4 sm:right-6 sm:top-6">
+          <LanguageSwitch />
+        </div>
+        <div className="w-full max-w-sm">
+          <div className="mb-8 lg:hidden">
+            <Logo className="h-7" />
+          </div>
+          <div className="mb-8 flex items-center gap-2 text-muted-foreground">
+            <Lock className="size-4" />
+            <span className="text-xs uppercase tracking-brand">{t("auth.mfa.kicker")}</span>
+          </div>
+          <h1 className="font-display text-3xl text-foreground">{t("auth.mfa.setupHeading")}</h1>
+          <p className="mt-2 text-sm text-muted-foreground">
+            {t("auth.mfa.setupHint", { email: user?.email })}
+          </p>
+
+          <div className="mt-8">
+            <TooltipProvider delayDuration={200}>
+              <TwoFactorPanel autoStart onEnrolled={onEnrolled} />
+            </TooltipProvider>
+          </div>
+
+          <button
+            type="button"
+            onClick={() => void logout()}
+            className="mt-6 text-xs text-muted-foreground underline-offset-2 hover:underline"
+          >
+            {t("auth.mfa.logout")}
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function RegionBlockedScreen({ country }: { country: string | null }) {
+  const { t } = useTranslation();
+  const { user, logout } = useAuth();
+
+  return (
+    <div className="flex min-h-screen items-center justify-center bg-background px-6 py-12">
+      <div className="absolute right-6 top-6">
+        <LanguageSwitch />
+      </div>
+      <div className="w-full max-w-sm">
+        <Logo className="h-7" />
+        <div className="mt-8 flex items-center gap-2 text-muted-foreground">
+          <Lock className="size-4" />
+          <span className="text-xs uppercase tracking-brand">{t("auth.region.kicker")}</span>
+        </div>
+        <h1 className="mt-2 font-display text-3xl text-foreground">{t("auth.region.heading")}</h1>
+        <p className="mt-3 text-sm text-muted-foreground">
+          {country ? t("auth.region.bodyWithCountry", { country }) : t("auth.region.body")}
+        </p>
+        <p className="mt-3 text-sm text-muted-foreground">
+          {t("auth.region.howTo", { email: user?.email })}
+        </p>
+        <button
+          type="button"
+          onClick={() => void logout()}
+          className="mt-8 text-xs text-muted-foreground underline-offset-2 hover:underline"
+        >
+          {t("auth.region.logout")}
+        </button>
       </div>
     </div>
   );

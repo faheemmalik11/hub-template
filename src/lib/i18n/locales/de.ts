@@ -758,8 +758,21 @@ const de = {
   },
   auth: {
     mfa: {
+      panelTitleLine1: "Noch ein Schritt,",
+      panelTitleLine2: "um dein Konto zu schützen.",
+      panelSubtitle: "Gib den Code aus deiner Authenticator-App ein, um weiterzumachen.",
+      kicker: "Zwei-Faktor-Anmeldung",
+      heading: "Gib deinen Code ein",
+      hint: "Öffne deine Authenticator-App und gib den Code für {{email}} ein.",
+      code: "6-stelliger Code",
+      submitting: "Wird geprüft…",
+      submit: "Weiter",
+      logout: "Mit einem anderen Konto anmelden",
+      setupHeading: "Zwei-Faktor-Anmeldung einrichten",
+      setupHint: "Dein Konto braucht das, bevor du weitermachen kannst, {{email}}.",
       title: "Zwei-Faktor-Anmeldung",
-      description: "Füge einen zweiten Schritt zur Anmeldung hinzu, mit einer App auf deinem Handy.",
+      description:
+        "Füge einen zweiten Schritt zur Anmeldung hinzu, mit einer App auf deinem Handy.",
       step1: "Schritt 1: Code scannen",
       step1Hint: "Öffne deine Authenticator-App und scanne diesen Code.",
       step2: "Schritt 2: 6-stelligen Code eingeben",
@@ -803,6 +816,15 @@ const de = {
       errorNotEnabled: "Die Zwei-Faktor-Anmeldung ist für dieses Konto nicht an.",
       errorNetworkChanged: "Etwas ist schiefgegangen. Bitte versuche es noch einmal.",
     },
+    region: {
+      kicker: "Anmeldung blockiert",
+      heading: "Du kannst dich von hier aus nicht anmelden",
+      body: "Dein Konto kann sich von diesem Standort aus gerade nicht anmelden.",
+      bodyWithCountry: "Dein Konto kann sich von {{country}} aus gerade nicht anmelden.",
+      howTo:
+        "Bitte eine Administratorin oder einen Administrator, für {{email}} eine kurze Ausnahme einzurichten, wenn du jetzt Zugang brauchst.",
+      logout: "Mit einem anderen Konto anmelden",
+    },
     error: {
       missing_credentials: "Bitte E-Mail und Passwort eingeben.",
       invalid_login: "E-Mail oder Passwort ist falsch.",
@@ -811,7 +833,6 @@ const de = {
       account_deactivated:
         "Dieses Konto ist deaktiviert. Bitte wenden Sie sich an einen Administrator.",
       password_too_short: "Das Passwort muss mindestens 8 Zeichen lang sein.",
-      region_not_allowed: "Du kannst dich von diesem Standort aus gerade nicht anmelden.",
     },
     login: {
       heading: "Anmelden",
@@ -7806,7 +7827,8 @@ const de = {
       handoverRoutes: "Wohin der Stapel jeder Gesellschaft zur Übergabe geschickt wird.",
       approvers: "Die Personen, die einen Beleg freigeben dürfen.",
       approvalRules: "Die Regeln, die festlegen, wer einen Beleg freigeben muss.",
-      assignmentRules: "Die Regeln, die festlegen, welche Kategorie oder Gesellschaft ein Beleg bekommt.",
+      assignmentRules:
+        "Die Regeln, die festlegen, welche Kategorie oder Gesellschaft ein Beleg bekommt.",
       ingestExclusions: "Absender oder Dateien, die nie importiert werden sollen.",
       openItemWhitelistRules: "Offene Posten, die unausgeglichen bleiben dürfen.",
       filenameSettings: "Die Regeln für den Namen einer gespeicherten Datei.",
@@ -7849,7 +7871,8 @@ const de = {
       green: "Grün ab",
       yellow: "Gelb ab",
     },
-    orderInvalid: "Grün muss höher sein als Gelb, und Gelb muss höher sein als die Mindest-Sicherheit.",
+    orderInvalid:
+      "Grün muss höher sein als Gelb, und Gelb muss höher sein als die Mindest-Sicherheit.",
     saving: "Speichert…",
     save: "Speichern",
     toast: {
@@ -7900,7 +7923,7 @@ const de = {
       failed: "Konnte nicht gespeichert werden: {{error}}",
       isOwnCode: "Das ist schon das Kürzel dieser Belegart.",
       isOwnType: "Diese Schreibweise gehört schon zu einer anderen Belegart.",
-      belongsToOther: "Diese Schreibweise gehört zu \"{{type}}\".",
+      belongsToOther: 'Diese Schreibweise gehört zu "{{type}}".',
       alreadyHere: "Diese Schreibweise steht schon in der Liste.",
     },
   },

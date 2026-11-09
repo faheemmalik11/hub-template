@@ -714,6 +714,18 @@ const en = {
   },
   auth: {
     mfa: {
+      panelTitleLine1: "One more step",
+      panelTitleLine2: "to keep your account safe.",
+      panelSubtitle: "Enter the code from your authenticator app to continue.",
+      kicker: "Two-factor sign-in",
+      heading: "Enter your code",
+      hint: "Open your authenticator app and enter the code for {{email}}.",
+      code: "6-digit code",
+      submitting: "Checking…",
+      submit: "Continue",
+      logout: "Sign in with a different account",
+      setupHeading: "Set up two-factor sign-in",
+      setupHint: "Your account needs this before you can continue, {{email}}.",
       title: "Two-factor sign-in",
       description: "Add a second step to sign-in, using an app on your phone.",
       step1: "Step 1: Scan the code",
@@ -729,8 +741,7 @@ const en = {
       removing: "Removing…",
       remove: "Remove",
       appHint: "Use an app like Google Authenticator or 1Password.",
-      lastDeviceHint:
-        "This is your only authenticator. Removing it turns two-factor sign-in off.",
+      lastDeviceHint: "This is your only authenticator. Removing it turns two-factor sign-in off.",
       cancel: "Cancel",
       continue: "Continue",
       checking: "Checking…",
@@ -758,6 +769,15 @@ const en = {
       errorNotEnabled: "Two-factor sign-in is not on for this account.",
       errorNetworkChanged: "Something went wrong. Please try again.",
     },
+    region: {
+      kicker: "Sign-in blocked",
+      heading: "You cannot sign in from here",
+      body: "Your account cannot sign in from this location right now.",
+      bodyWithCountry: "Your account cannot sign in from {{country}} right now.",
+      howTo:
+        "Ask an administrator to add a short-term exception for {{email}} if you need access now.",
+      logout: "Sign in with a different account",
+    },
     error: {
       missing_credentials: "Please enter your email and password.",
       invalid_login: "Email or password is incorrect.",
@@ -765,7 +785,6 @@ const en = {
       rate_limited: "Too many attempts. Please wait a moment.",
       account_deactivated: "This account is deactivated. Please contact an administrator.",
       password_too_short: "The password must be at least 8 characters long.",
-      region_not_allowed: "You cannot sign in from this location right now.",
     },
     login: {
       heading: "Sign in",
@@ -7571,7 +7590,7 @@ const en = {
       failed: "Could not save: {{error}}",
       isOwnCode: "This is already the code of this document type.",
       isOwnType: "This spelling already belongs to another document type.",
-      belongsToOther: "This spelling belongs to \"{{type}}\".",
+      belongsToOther: 'This spelling belongs to "{{type}}".',
       alreadyHere: "This spelling is already in the list.",
     },
   },
