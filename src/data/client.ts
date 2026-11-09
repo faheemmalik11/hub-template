@@ -1,5 +1,4 @@
 import { supabase } from "@/integrations/supabase/client";
-import { TABLE } from "@/config/tables";
 import { SEED_MODE } from "@/config/seed";
 import { seedClient } from "@/seed/client";
 
@@ -23,7 +22,14 @@ export async function actorEmail(): Promise<string | null> {
   return data.user?.email ?? null;
 }
 
-/** Who changed what, for the tables that keep a trail. */
+/**
+ * Who changed what, for the tables that keep a trail.
+ *
+ * Goes through the `log_change_history` RPC, not a direct table insert: `change_history`'s own RLS
+ * policy allows nobody to write it directly (see supabase/schema/0010_access.sql), on purpose, so
+ * the actor is derived server-side from the caller's own session rather than trusted from the
+ * client.
+ */
 export async function insertChangeHistory(
   tableName: string,
   recordId: string,
@@ -31,10 +37,13 @@ export async function insertChangeHistory(
   text: string | null,
   data: Record<string, unknown> | null = null,
 ) {
-  const actor = await actorEmail();
-  const { error } = await sb
-    .from(TABLE.changeHistory)
-    .insert({ table_name: tableName, record_id: recordId, type, text, data, actor });
+  const { error } = await sb.rpc("log_change_history", {
+    p_table_name: tableName,
+    p_record_id: recordId,
+    p_type: type,
+    p_text: text,
+    p_data: data,
+  });
   if (error) throw error;
 }
 
