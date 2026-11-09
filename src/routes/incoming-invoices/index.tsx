@@ -412,7 +412,11 @@ function IncomingInvoicesPage() {
   const withoutCompanyActive = search.company === COMPANY_WITHOUT;
   const queueQ = useInvoiceQueueKpis();
   const queueCards = useMemo(() => {
-    const rows = new Map((queueQ.data ?? []).map((r) => [r.key, r]));
+    // A client not yet on the current invoice_queue_kpis() still names this row "overdue"
+    // instead of "pay_now" -- same card, same meaning, older key.
+    const rows = new Map(
+      (queueQ.data ?? []).map((r) => [r.key === "overdue" ? "pay_now" : r.key, r]),
+    );
     return QUEUE_CARDS.filter((spec) => rows.has(spec.key)).map((spec) => {
       const row = rows.get(spec.key)!;
       const active = CARD_FILTER_KEYS.every(

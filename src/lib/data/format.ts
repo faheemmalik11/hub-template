@@ -7,9 +7,6 @@
 
 import type { ChainPerson, ApprovalRule, Document, FieldSource, WorkflowStatus } from "./types";
 import i18n, { tDe } from "@/lib/i18n";
-import { createLocaleParser, DEFAULT_LOCALE_SETTINGS } from "@/lib/locale/locale-parser";
-
-const localeParser = createLocaleParser(DEFAULT_LOCALE_SETTINGS);
 
 // Dates follow the language the user picked. formatDate was pinned to "en-US" and formatMonthYear
 // to "de-DE", so with English selected the period filter still listed German month names while the
@@ -22,8 +19,13 @@ export function dateLocale(): string {
   return i18n.language?.startsWith("en") ? "en-US" : "de-DE";
 }
 
+// Same fix as dateLocale(): this used to always format "de-DE" (1.234,56 €) regardless of the
+// selected language, so switching to English still printed every amount the German way.
 export function formatEUR(value: number | null | undefined): string {
-  return localeParser.formatCurrency(value ?? 0);
+  return new Intl.NumberFormat(dateLocale(), {
+    style: "currency",
+    currency: "EUR",
+  }).format(value ?? 0);
 }
 
 export function formatNumber(value: number | null | undefined, digits = 2): string {
@@ -887,6 +889,38 @@ export const WORKFLOW_ORDER = [
   "handed_over",
   "closed",
 ] as const;
+
+// The German values workflow_status held before the English rename (supabase/schema/RENAMES.md),
+// for a client whose database still writes them. Kept here, next to WORKFLOW_ORDER, so every
+// screen that groups or filters by workflow_status can recognize both.
+export const WORKFLOW_STATUS_LEGACY_GERMAN: Record<string, string> = {
+  received: "eingegangen",
+  in_review: "in_pruefung",
+  query: "rueckfrage",
+  approved_first: "freigegeben_assistenz",
+  approved_final: "freigegeben_vorgesetzter",
+  paid: "bezahlt",
+  handed_over: "uebergeben_datev",
+  closed: "abgeschlossen",
+  rejected: "abgelehnt",
+  not_relevant: "nicht_relevant",
+};
+
+const WORKFLOW_STATUS_GERMAN_TO_ENGLISH: Record<string, string> = Object.fromEntries(
+  Object.entries(WORKFLOW_STATUS_LEGACY_GERMAN).map(([english, german]) => [german, english]),
+);
+
+export function normalizeWorkflowStatus(
+  value: string | null | undefined,
+): string | null | undefined {
+  if (!value) return value;
+  return WORKFLOW_STATUS_GERMAN_TO_ENGLISH[value] ?? value;
+}
+
+export function workflowStatusVariants(value: string): string[] {
+  const german = WORKFLOW_STATUS_LEGACY_GERMAN[value];
+  return german ? [value, german] : [value];
+}
 
 // German-only workflow label for PERSISTED audit/history text (beleg_verlauf). Always German
 // regardless of the active UI language, so the audit trail stays consistent. Do NOT use this

@@ -38,9 +38,11 @@ import type { VoiceRecordingMime } from "@/lib/api/voice-transcription-shared";
 import { transcribeVoiceQuery } from "@/lib/api/voice-transcription.functions";
 import {
   COMPANY_WITHOUT,
+  normalizeWorkflowStatus,
   PRIVATE_OWNER_UNASSIGNED,
   PROPERTY_WITHOUT,
   todayLocal,
+  workflowStatusVariants,
 } from "@/lib/data/format";
 import { OPEN_ITEM_COLUMNS } from "@/lib/data/types";
 import type {
@@ -1212,8 +1214,9 @@ export function useDocumentsKanbanCounts(filter: DocumentsFilter, opts?: { enabl
       const counts: Record<string, number> = {};
       for (const row of (data ?? []) as { workflow_status: string | null }[]) {
         // Same fallback the board itself uses, so a null status is counted in the column it is
-        // actually rendered in rather than vanishing from the totals.
-        const key = row.workflow_status ?? "received";
+        // actually rendered in rather than vanishing from the totals. normalizeWorkflowStatus
+        // folds in a client still writing the German values in supabase/schema/RENAMES.md.
+        const key = normalizeWorkflowStatus(row.workflow_status) ?? "received";
         counts[key] = (counts[key] ?? 0) + 1;
       }
       return counts;
@@ -1245,7 +1248,7 @@ export function useDocumentsKanbanColumn(
       const from = pageParam * KANBAN_PAGE;
       let query = sb.from(listenSource(filter)).select(DOCUMENTS_LIST_COLUMNS, { count: "exact" });
       query = applyDocumentsFilter(query, filter);
-      query = query.eq("workflow_status", workflow);
+      query = query.in("workflow_status", workflowStatusVariants(workflow));
       const { data, error, count } = await query
         .order("created_at", { ascending: false })
         .order("id", { ascending: true })
