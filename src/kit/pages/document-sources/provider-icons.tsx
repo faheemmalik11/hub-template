@@ -51,6 +51,24 @@ export function DropboxIcon({ className }: { className?: string }) {
   );
 }
 
+export function GenericMailIcon({ className }: { className?: string }) {
+  return (
+    <svg viewBox="0 0 24 24" className={className} aria-hidden="true">
+      <rect
+        x="2"
+        y="4"
+        width="20"
+        height="16"
+        rx="2"
+        fill="none"
+        stroke="currentColor"
+        strokeWidth="1.6"
+      />
+      <path d="M3 6.5l9 6.5 9-6.5" fill="none" stroke="currentColor" strokeWidth="1.6" />
+    </svg>
+  );
+}
+
 export function GmailIcon({ className }: { className?: string }) {
   return (
     <svg viewBox="0 0 49.4 37.4" className={className} aria-hidden="true">

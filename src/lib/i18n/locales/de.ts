@@ -3796,6 +3796,12 @@ const de = {
       returnFolder: "Nicht relevante Belege hierhin verschieben",
       mailRueckgabeHint:
         "Ist eine E-Mail kein Beleg, landet sie hier. Leer lassen, um sie liegen zu lassen.",
+      mailQuelleTextHint:
+        "Für dieses Postfach ist keine Ordnerauswahl verfügbar. Tragen Sie die Ordnernamen direkt ein, getrennt durch Kommas. Leer lassen, um das gesamte Postfach zu prüfen.",
+      mailZielTextHint:
+        "Für dieses Postfach ist keine Ordnerauswahl verfügbar. Tragen Sie den Zielordner direkt ein. Leer lassen, um nichts zu verschieben.",
+      mailRueckgabeTextHint:
+        "Für dieses Postfach ist keine Ordnerauswahl verfügbar. Tragen Sie den Ordner direkt ein. Leer lassen, um nicht relevante E-Mails liegen zu lassen.",
       driveQuelleHint:
         "Manche Belege liegen hier statt im Postfach. Jeder Ordner wird nacheinander geprüft.",
       driveZielHint:

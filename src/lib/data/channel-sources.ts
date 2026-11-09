@@ -22,6 +22,7 @@ import {
  */
 export type SourceView = {
   channelKey: string;
+  provider: string;
   is_active: boolean;
   address: string | null;
   sourceFolders: string[];
@@ -46,6 +47,7 @@ export function viewOf(
   const address = settings[addressKey];
   return {
     channelKey: channel.key,
+    provider: channel.provider,
     is_active: channel.enabled,
     // provider_ref is where the address used to live. Read as a fallback so a channel the panel
     // wrote before it moved into settings still shows one.
