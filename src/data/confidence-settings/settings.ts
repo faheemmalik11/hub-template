@@ -1,6 +1,7 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 
 import { STALE, actorEmail, insertChangeHistory, sb } from "@/data/client";
+import { TABLE } from "@/config/tables";
 
 export type ConfidenceSettings = {
   id: boolean;
@@ -18,7 +19,7 @@ export function useConfidenceSettings() {
     staleTime: STALE,
     queryFn: async (): Promise<ConfidenceSettings> => {
       const { data, error } = await sb
-        .from("confidence_settings")
+        .from(TABLE.confidenceSettings)
         .select("*")
         .eq("id", true)
         .single();
@@ -36,17 +37,17 @@ export function useUpdateConfidenceSettings() {
     ) => {
       const actor = await actorEmail();
       const { data: before } = await sb
-        .from("confidence_settings")
+        .from(TABLE.confidenceSettings)
         .select("*")
         .eq("id", true)
         .maybeSingle();
       const { error } = await sb
-        .from("confidence_settings")
+        .from(TABLE.confidenceSettings)
         .update({ ...changes, updated_at: new Date().toISOString(), updated_by: actor })
         .eq("id", true);
       if (error) throw error;
       await insertChangeHistory(
-        "confidence_settings",
+        TABLE.confidenceSettings,
         "00000000-0000-0000-0000-000000000000",
         "updated",
         null,

@@ -76,6 +76,13 @@ export const PERMISSIONS = {
   bonusesRead: "bonuses.read",
   bonusesSuggest: "bonuses.suggest",
   pageBankConnections: "page.bank_connections",
+  pageDataExport: "page.data_export",
+  pageConfidenceThresholds: "page.confidence_thresholds",
+  pageDocumentTypes: "page.document_types",
+  pageDocumentIntakeLog: "page.document_intake_log",
+  sourcesSharepoint: "sources.sharepoint",
+  authMfaEnabled: "auth.mfa_enabled",
+  documentsVoiceDictation: "documents.voice_dictation",
 
   // Menu groups. Switching one off takes its pages with it.
   moduleOverview: "module.overview",

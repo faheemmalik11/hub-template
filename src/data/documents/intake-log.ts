@@ -1,6 +1,7 @@
 import { keepPreviousData, useQuery } from "@tanstack/react-query";
 
 import { STALE, sb } from "@/data/client";
+import { TABLE } from "@/config/tables";
 
 export type DocumentIntakeOutcome =
   | "open"
@@ -82,7 +83,7 @@ export function useDocumentIntakeLog(args: {
     placeholderData: keepPreviousData,
     queryFn: async (): Promise<DocumentIntakeLogPage> => {
       let query = sb
-        .from("v_document_intake_log")
+        .from(TABLE.documentIntakeLog)
         .select(
           "id, invoice_number, created_at, issuer, service_description, document_type, company_code, intake_channel, outcome",
           { count: "exact" },

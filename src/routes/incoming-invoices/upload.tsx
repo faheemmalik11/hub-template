@@ -17,6 +17,9 @@ import {
 } from "@/components/ui/alert-dialog";
 import { cn } from "@/lib/utils";
 import { useCreateUploadDocuments, type UploadInput } from "@/data";
+import { useFeature } from "@/data/use-feature";
+import { PERMISSIONS } from "@/config/permissions";
+import { DictateDocumentButton } from "@/components/documents/dictate-document-button";
 import {
   ACCEPTED_EXTENSIONS,
   BUCKETS,
@@ -95,6 +98,7 @@ function UploadPage() {
   const controllers = useRef(new Map<string, AbortController>());
   const createUpload = useCreateUploadDocuments();
   const emitOnboardingEvent = useEmitOnboardingEvent();
+  const hasVoiceDictation = useFeature(PERMISSIONS.documentsVoiceDictation);
 
   function filesAdd(list: FileList | File[]) {
     const arr = Array.from(list);
@@ -241,9 +245,12 @@ function UploadPage() {
           </p>
           <p className="mt-1 text-xs text-muted-foreground">{t("upload.fileTypes")}</p>
         </div>
-        <Button variant="outline" className="mt-1" onClick={() => inputRef.current?.click()}>
-          {t("upload.chooseFiles")}
-        </Button>
+        <div className="mt-1 flex flex-wrap items-center justify-center gap-2">
+          <Button variant="outline" onClick={() => inputRef.current?.click()}>
+            {t("upload.chooseFiles")}
+          </Button>
+          {hasVoiceDictation && <DictateDocumentButton onCreated={() => navigate({ to: "/incoming-invoices" })} />}
+        </div>
         <input
           ref={inputRef}
           type="file"
