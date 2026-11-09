@@ -75,6 +75,7 @@ export const PERMISSIONS = {
   bonusesReview: "bonuses.review",
   bonusesRead: "bonuses.read",
   bonusesSuggest: "bonuses.suggest",
+  donationsManage: "donations.manage",
   pageBankConnections: "page.bank_connections",
   pageDataExport: "page.data_export",
   pageConfidenceThresholds: "page.confidence_thresholds",

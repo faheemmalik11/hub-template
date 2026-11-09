@@ -25,6 +25,10 @@ export const queryKeys = {
     settings: ["broker-bonuses", "settings"] as const,
     forDeal: (dealId: string) => ["broker-bonuses", "deal", dealId] as const,
   },
+  dealDonations: {
+    settings: ["deal-donations", "settings"] as const,
+    forDeal: (dealId: string) => ["deal-donations", "deal", dealId] as const,
+  },
   deals: {
     all: ["deals"] as const,
     one: (id: string) => ["deals", id] as const,

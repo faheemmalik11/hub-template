@@ -11,6 +11,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { ErrorState, TableSkeleton } from "@/components/documents/query-states";
 import { DealStatusBadge } from "@/components/commission/deal-status-badge";
 import { BonusSuggestionsCard } from "@/components/commission/bonus-suggestions-card";
+import { DealDonationCard } from "@/components/commission/deal-donation-card";
 import { DealCostsCard } from "@/components/commission/deal-costs-card";
 import { DealFactsCard } from "@/components/commission/deal-facts-card";
 import { DraftInvoices } from "@/components/commission/draft-invoices";
@@ -83,6 +84,7 @@ function DealEditor({ deal }: { deal: Deal }) {
     (can(PERMISSIONS.dealsSubmit) && (deal.status === "incomplete" || deal.status === "ready"));
   const mayApprove = can(PERMISSIONS.invoicesApprove);
   const suggestsBonuses = useFeature(PERMISSIONS.bonusesSuggest) && can(PERMISSIONS.bonusesReview);
+  const managesDonations = can(PERMISSIONS.donationsManage);
   const [form, setForm] = useState<DealForm>(() => dealFormOf(deal));
   const [savedForm, setSavedForm] = useState(() => JSON.stringify(dealFormOf(deal)));
   const customersQ = useCustomers();
@@ -275,6 +277,7 @@ function DealEditor({ deal }: { deal: Deal }) {
           </section>
 
           {suggestsBonuses && !unsaved && <BonusSuggestionsCard deal={deal} />}
+          {managesDonations && !unsaved && <DealDonationCard deal={deal} />}
 
           <div className="flex flex-wrap gap-2">
             {mayEdit && (

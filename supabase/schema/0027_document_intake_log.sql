@@ -20,12 +20,15 @@ select
                and f.source = 'sharepoint'
                and f.deleted_at is null
         ) then 'filed'
-        when d.handed_over_at is not null then 'handed_over'
+        when d.handed_over_at is not null or d.workflow_status = 'uebergeben_datev' then 'handed_over'
         when d.not_relevant_at is not null then 'not_relevant'
         when d.archived_at is not null then 'archived'
-        when d.workflow_status in ('approved_first', 'approved_final', 'paid', 'closed') then 'approved'
-        when d.workflow_status in ('in_review', 'query') then 'in_review'
-        when d.status = 'recognised' then 'recognised'
+        when d.workflow_status in (
+            'approved_first', 'approved_final', 'paid', 'closed',
+            'freigegeben_assistenz', 'freigegeben_vorgesetzter', 'bezahlt', 'abgeschlossen'
+        ) then 'approved'
+        when d.workflow_status in ('in_review', 'query', 'in_pruefung', 'rueckfrage') then 'in_review'
+        when d.status in ('recognised', 'erkannt') then 'recognised'
         else 'open'
     end as outcome
 from public.documents d
