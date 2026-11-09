@@ -5,6 +5,11 @@
 
 begin;
 
+alter table public.documents add column if not exists is_overhead boolean not null default false;
+alter table public.documents add column if not exists tip_amount numeric(14, 2);
+alter table public.documents add column if not exists handed_over_at timestamptz;
+alter table public.documents add column if not exists private_owner_user_id uuid references public.app_users(id) on delete set null;
+
 create table if not exists public.review_score_rules (
     check_key text primary key,
     weight integer not null default 10,
