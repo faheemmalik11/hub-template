@@ -34,11 +34,21 @@ export function nextAction(row: {
   paid_at?: string | null;
   has_confirmed_bank_match?: boolean | null;
 }): NextAction {
-  if (row.status === "needs_review") return "review";
+  // "zu_pruefen", "freigegeben_vorgesetzter" and "freigegeben_assistenz" are the same states
+  // under their German names, for a client not yet renamed to English.
+  if (row.status === "needs_review" || row.status === "zu_pruefen") return "review";
   // Only the supervisor step is payable. An invoice approved by the assistant still needs the
   // final approval, and offering "pay" there leads to a dialog whose button is disabled.
-  if (!row.paid_at && row.workflow_status === "approved_final") return "pay";
-  if (!row.paid_at && row.workflow_status === "approved_first") return "approve";
+  if (
+    !row.paid_at &&
+    (row.workflow_status === "approved_final" || row.workflow_status === "freigegeben_vorgesetzter")
+  )
+    return "pay";
+  if (
+    !row.paid_at &&
+    (row.workflow_status === "approved_first" || row.workflow_status === "freigegeben_assistenz")
+  )
+    return "approve";
   if (!row.paid_at && !row.has_confirmed_bank_match) return "match";
   return "none";
 }
