@@ -169,9 +169,25 @@ The first one, and the worked example everything above is grounded in.
   kept, deliberate difference, not drift to fix. One real bug surfaced during the check: the trash
   screen's age filter read `trash.age.*` instead of `trash.ageFilter.*` and showed raw i18n keys
   instead of labels — fixed on `dev` (not the branch) and merged in, per the one rule above.
-- **What's still open**: the actual push to the `vanoepen` repository (step 6 above) — the worktree
-  and the database are ready for it, and code parity is now verified, but nothing has been pushed
-  there yet as of this writing.
+- **Pushed to the real `vanoepen` repository on 2026-11-09.** Both pushes needed `--force-with-lease`,
+  not a plain push — `origin/van-oepen` (this repo's own mirror) was a stale branch from early in the
+  engagement sharing literal commit history with the old standalone repo, from before the branding
+  commit was rebuilt via cherry-pick + amend; the real repo's `main` had 15 commits of its own this
+  branch never had, made directly against the old standalone repo after the port began. Before
+  forcing either, each of those 15 commits was checked against this branch's current code — the 4
+  recent ones (hiding technical service errors, hiding a raw permission key, reading the real Edge
+  Function error, stripping a client name from shared code) were all already present here, done
+  independently and in some cases more thoroughly (e.g. a shared `edgeFunctionErrorText` helper used
+  in more places than the original's two inline copies); the other 11 were the original, hand-written
+  commission/bonus/Propstack feature build this branch already carries a ported, English-identifier
+  version of. Confirmed nothing was lost before either force-push went out. `van-oepen-repo/main` and
+  this repo's own `van-oepen` now point at the identical commit.
+- **Left deliberately undone**: 4 new schema files merged in from `dev` alongside this push
+  (`client_error_log`, `confidence_settings`, `document_intake_log`, `document_types`) were checked
+  and found unneeded on the live database — every code path that touches them is gated behind a page
+  permission that defaults off and isn't granted to anyone here, and `client_error_log`'s writer has
+  no caller yet at all. Apply the matching schema only if one of those features is actually turned on
+  for this client later; it isn't blocking anything today.
 
 A session with no memory of how any of this happened can pick it up cold: `cd` into the worktree,
 read `git log --oneline -10`, and the database state above is current unless a later session's own
