@@ -59,7 +59,12 @@ create table if not exists public.document_transaction_matches (
 create unique index if not exists document_transaction_matches_pair
     on public.document_transaction_matches (document_id, transaction_id);
 
-create or replace view public.v_documents_list with (security_invoker = true) as
+-- A plain "create or replace" cannot add documents columns in the middle of what d.* already
+-- returned on an existing view, only append at the end, so an existing v_documents_list with an
+-- older column set has to be dropped and rebuilt instead of replaced in place.
+drop view if exists public.v_documents_list cascade;
+
+create view public.v_documents_list with (security_invoker = true) as
 select d.*,
        coalesce(s.name, d.issuer) as issuer_sort,
        (
