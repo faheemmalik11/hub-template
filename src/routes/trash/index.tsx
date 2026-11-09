@@ -309,7 +309,7 @@ function TrashPage() {
             <SelectContent>
               {AGE_OPTIONS.map((o) => (
                 <SelectItem key={o.value} value={o.value}>
-                  {t(`trash.age.${o.value}`)}
+                  {t(`trash.ageFilter.${o.value}`)}
                 </SelectItem>
               ))}
             </SelectContent>
