@@ -6,7 +6,7 @@ These numbered files **are** the schema. Read them here; they are written to be 
 that is what the Supabase CLI applies. It is generated:
 
 ```bash
-node scripts/build-baseline.mjs
+node scripts/codebase/build-baseline.mjs
 ```
 
 **Edit a numbered file, never the baseline**, then run the script. The two cannot disagree, because
@@ -42,7 +42,7 @@ function bodies and 11 views. A question about why a column exists is answered b
 
 Always by running, never by reading, and always locally. See the `local-database` skill.
 
-1. Edit the numbered file, run `node scripts/build-baseline.mjs`.
+1. Edit the numbered file, run `node scripts/codebase/build-baseline.mjs`.
 2. Apply the baseline to an empty database. It must apply clean, in one pass.
 3. `pg_dump --schema-only` before and after, and read the diff.
 4. Every name in `src/config/tables.ts` must exist.

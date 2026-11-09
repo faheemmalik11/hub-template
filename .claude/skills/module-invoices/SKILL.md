@@ -119,7 +119,7 @@ shared with other modules: never delete one of those on the way out.
 `src/kit/lib/commission/` (`calculate.ts`, `bonuses.ts`) is the commission and bonus
 calculator: pure functions, no I/O, covered by `calculate.test.ts` and `bonuses.test.ts`.
 
-Regenerate this list rather than trusting it: `node scripts/module-map.mjs`.
+Regenerate this list rather than trusting it: `node scripts/codebase/module-map.mjs`.
 
 ## What it reads and writes
 
@@ -149,7 +149,7 @@ TABLE.vOpenItems, TABLE.vPropertyDocumentTotals, TABLE.vSupplierDocumentTotals, 
 
 `TABLE.dealSides` and `TABLE.dealCosts` are only ever named inside an embedded-resource
 string (`deal_sides:${TABLE.dealSides}(...)` in `src/data/deals/deals.ts`), which
-`node scripts/module-map.mjs` does not parse. Found by grepping `src/data/deals/` and
+`node scripts/codebase/module-map.mjs` does not parse. Found by grepping `src/data/deals/` and
 `src/data/broker-bonuses/` for `TABLE.` by hand; keep doing that rather than trusting the
 regenerated list alone for this pair.
 
@@ -236,7 +236,7 @@ inside them.
 3. Add the route entries to `src/config/routes.ts`. **A screen with no entry there has no
    menu item and no guard**, which is the one failure this arrangement is built to prevent.
 4. Check every table and function above exists in the client's schema. `node
-   scripts/gap-report.mjs` names what is missing.
+   scripts/codebase/gap-report.mjs` names what is missing.
 5. Copy the translation namespaces into both locale files.
 6. Grant the capabilities to the roles that should have them, and to nobody else.
 
@@ -267,8 +267,8 @@ be dropped by hand (`delete from public.roles where name = 'broker'`) if a clien
 ```
 npx tsc -p tsconfig.typecheck.json --noEmit
 npx eslint src --quiet
-node scripts/module-map.mjs          # the files and tables above, regenerated
-node scripts/check-query-keys.mjs    # no key read under one name and refreshed under another
-node scripts/walk-screens.mjs        # every screen, including this module's
+node scripts/codebase/module-map.mjs          # the files and tables above, regenerated
+node scripts/codebase/check-query-keys.mjs    # no key read under one name and refreshed under another
+node scripts/codebase/walk-screens.mjs        # every screen, including this module's
 npm test                             # the commission calculator and the bonus rules, pure functions
 ```

@@ -149,7 +149,7 @@ locale, never a rendered string typed into a component.
 - `docs/ROLES_AND_ACCESS.md` — roles/access/trash feature doc; model example for the
   convention below.
 - `supabase/schema.sql` — a real `pg_dump` of the live schema. Refresh it with
-  `./scripts/dump-live-schema.sh`, never by hand.
+  `./scripts/db/dump-live-schema.sh`, never by hand.
 - `docs/TABLE_NAMING_MIGRATION.md` — the bookkeeping rename (invoices → documents),
   applied 16.09.2026, and the tooling that did it.
 

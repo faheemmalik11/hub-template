@@ -41,7 +41,7 @@ shared with other modules: never delete one of those on the way out.
 - `src/routes/` — index.tsx
 - `src/routes/profil/` — index.tsx
 
-Regenerate this list rather than trusting it: `node scripts/module-map.mjs`.
+Regenerate this list rather than trusting it: `node scripts/codebase/module-map.mjs`.
 
 ## What it reads and writes
 
@@ -118,7 +118,7 @@ them.
 3. Add the route entries to `src/config/routes.ts`. **A screen with no entry there has no
    menu item and no guard**, which is the one failure this arrangement is built to prevent.
 4. Check every table and function above exists in the client's schema. `node
-   scripts/gap-report.mjs` names what is missing.
+   scripts/codebase/gap-report.mjs` names what is missing.
 5. Copy the translation namespaces into both locale files.
 6. Grant the capabilities to the roles that should have them, and to nobody else.
 
@@ -134,7 +134,7 @@ module, and then it is the owned files above and nothing else.
 ```
 npx tsc -p tsconfig.typecheck.json --noEmit
 npx eslint src --quiet
-node scripts/module-map.mjs          # the files and tables above, regenerated
-node scripts/check-query-keys.mjs    # no key read under one name and refreshed under another
-node scripts/walk-screens.mjs        # every screen, including this module's
+node scripts/codebase/module-map.mjs          # the files and tables above, regenerated
+node scripts/codebase/check-query-keys.mjs    # no key read under one name and refreshed under another
+node scripts/codebase/walk-screens.mjs        # every screen, including this module's
 ```

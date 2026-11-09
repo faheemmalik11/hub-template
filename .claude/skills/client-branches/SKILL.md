@@ -64,12 +64,12 @@ whatever brand the clone had.
 ## If a client still keeps their own separate repo too
 
 Some clients, during the move to this model or by choice, still have their own standalone repo (the
-one their deployment actually builds from) alongside their branch here. `scripts/client-repos.json`
+one their deployment actually builds from) alongside their branch here. `scripts/client/client-repos.json`
 has one entry per such client, keyed by a client identifier (not necessarily the branch name):
 `hubTemplateBranch` (which branch of this repo to push), `clientRemoteName`/`clientRemoteUrl`/
 `clientRemoteBranch` (their repo and the branch on their side), and `enabled`. Add an entry there for
 a new client, never a hardcoded remote on one developer's machine. New entries default `enabled` to
-off, same as any other new behaviour here. `scripts/push-client-repo.sh <client-key>` pushes
+off, same as any other new behaviour here. `scripts/client/push-client-repo.sh <client-key>` pushes
 `hubTemplateBranch` to this repo's `origin`, and also to the client's own repo if `enabled` is `true`,
 adding the remote first if it is not already configured. The client's own repo is still the one
 actually deployed until its deployment is re-pointed at this repository — pushing here does not
@@ -150,8 +150,8 @@ The first one, and the worked example everything above is grounded in.
   wherever this engagement's credentials are kept — not reconstructed from guesswork.
 - **The live site**: deployed from the separate `vanoepen` repository
   (`git@github.com:fabiantscheu-ship-it/vanoepen.git`, `main` branch), not from this branch yet.
-  `scripts/client-repos.json` has the `van-oepen` entry already configured to mirror there via
-  `scripts/push-client-repo.sh van-oepen`, currently `"enabled": true`.
+  `scripts/client/client-repos.json` has the `van-oepen` entry already configured to mirror there via
+  `scripts/client/push-client-repo.sh van-oepen`, currently `"enabled": true`.
 - **Database state, as of this writing**: the live project has been brought fully up to date with
   what this branch's code expects — `supabase/catalogue.sql` and all three
   `*-for-an-existing-client.sql` presets (practice mode, document privacy/classification,

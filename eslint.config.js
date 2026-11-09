@@ -10,14 +10,20 @@ export default tseslint.config(
   // pipeline_new is a Python project (see its own README) — its .venv contains vendored
   // third-party JS (e.g. urllib3's emscripten worker) that isn't this app's code and must never
   // be linted or reformatted.
-  // public/pdfjs is vendored pdfjs-dist output staged by scripts/copy-pdfjs-wasm.mjs (and
+  // public/pdfjs is vendored pdfjs-dist output staged by scripts/build/copy-pdfjs-wasm.mjs (and
   // git-ignored). Its *_nowasm_fallback.js files are hundreds of KB of minified emscripten
-  // output, which prettier takes minutes to reformat -- linting them stalls `bun run lint`.
+  // output, which prettier takes minutes to reformat -- linting them stalls `npm run lint`.
+  // .worktrees holds full checkouts of every client branch (see the client-branches skill). ESLint
+  // 9's flat config does not read .gitignore, so each worktree's own src/ and public/pdfjs/ would
+  // otherwise be linted again as if it were separate, unrelated code -- multiplying the file count
+  // by the number of worktrees and re-triggering the same public/pdfjs slowdown this ignores list
+  // already exists to avoid.
   {
     ignores: [
       "dist",
       ".output",
       ".vinxi",
+      ".worktrees/**",
       "public/pdfjs/**",
       "supabase/functions/**",
       "pipeline_new/**",

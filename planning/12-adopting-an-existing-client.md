@@ -10,7 +10,7 @@ That matters, because nobody gets a free week for six clients at once.
 ## 0. Measure the gap
 
 ```bash
-node scripts/gap-report.mjs "postgresql://…"
+node scripts/codebase/gap-report.mjs "postgresql://…"
 ```
 
 Reads only. Prints what they have that the template does not, what the template has that they lack,
@@ -88,7 +88,7 @@ baseline move forward without asking what each client has added.
 |---|---|
 | The schema is sound | apply the baseline to an empty database |
 | The code agrees | `npx tsc -p tsconfig.typecheck.json --noEmit` and `npx eslint src --quiet` |
-| The app works | `node scripts/walk-screens.mjs` against **their** database |
+| The app works | `node scripts/codebase/walk-screens.mjs` against **their** database |
 
 The third is the one that finds real defects, and it must be run more than once: a screen that
 renders before its slowest query fires looks fine.

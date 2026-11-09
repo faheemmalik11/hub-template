@@ -3,7 +3,7 @@
  *
  * Two consumers, and ONLY these two, must stay in lockstep:
  *   1. nachpruefung.ts executes these rules in TypeScript for the badge and the detail card.
- *   2. scripts/generate-review-recheck-sql.ts renders the SAME rules into the SQL function the
+ *   2. scripts/db/generate-review-recheck-sql.ts renders the SAME rules into the SQL function the
  *      review view columns use, so a database filter and a rendered badge can never disagree.
  * Change a rule here and regenerate the SQL migration; never edit the SQL by hand.
  */

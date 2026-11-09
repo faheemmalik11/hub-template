@@ -38,7 +38,7 @@ not add to it: new work goes in a domain folder.
    *"does not provide an export named X"*. Only the screen walk catches it.
 4. Add one line to `src/data/index.ts`.
 5. A helper both sides need goes to `src/data/shared.ts`, not copied.
-6. Verify: typecheck, lint, and `node scripts/walk-screens.mjs`.
+6. Verify: typecheck, lint, and `node scripts/codebase/walk-screens.mjs`.
 
 ## Adding a query
 

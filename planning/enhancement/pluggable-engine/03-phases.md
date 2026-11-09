@@ -177,7 +177,7 @@ bundling in.
 - **Apply `supabase/schema/` to an empty database, first try, in order — done.** All 17 files apply
   clean against a genuinely fresh local database (a stale `supabase start` backup gave a false
   failure on the first attempt; cleared with `supabase stop --no-backup` and restarted). `node
-  scripts/gap-report.mjs` against that database: 71/71 tables match, views match, no missing
+  scripts/codebase/gap-report.mjs` against that database: 71/71 tables match, views match, no missing
   functions.
 - **The four config accessor functions — done.** Queried directly against the fresh database;
   each returns exactly the stated default with no row in `tenant_settings.config`.

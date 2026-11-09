@@ -47,7 +47,7 @@ After every conversion, all three, and the walk more than once:
 ```bash
 npx tsc -p tsconfig.typecheck.json --noEmit     # 0
 npx eslint src --quiet                          # 0
-node scripts/walk-screens.mjs                   # all 29 screens clean
+node scripts/codebase/walk-screens.mjs                   # all 29 screens clean
 ```
 
 A screen that renders before its slowest query fires looks fine, which is why the walk runs three

@@ -1,4 +1,4 @@
-// Copy of src/lib/inbox/sealed.server.ts. Edit that file and run scripts/copy-edge-shared.mjs.
+// Copy of src/lib/inbox/sealed.server.ts. Edit that file and run scripts/build/copy-edge-shared.mjs.
 // Opens a "v2" sealed credential, the format the admin panel has written since each client got a key
 // of its own (book-keeping, src/composition/config/tenant_keys.py). The master key
 // (SECRET_ENCRYPTION_KEY) no longer opens these, only the client's key (TENANT_SECRET_KEY) does.

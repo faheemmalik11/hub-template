@@ -48,7 +48,7 @@ a backend surface instead of a nav entry.
    `supabase/functions/_shared/tables.ts` if an Edge Function touches it too. Never a bare string
    literal. → `data-layer` skill.
 4. **Query or mutation hook**, one place, React Query, English identifiers and query keys —
-   checked by `node scripts/check-query-keys.mjs`. → `data-layer` skill.
+   checked by `node scripts/codebase/check-query-keys.mjs`. → `data-layer` skill.
 5. **Server surface**, if this needs one: a TanStack server function or an Edge Function.
    → `backend-api` skill. If it talks to a vendor, gate it on that client's config (see Rule 3
    above) — do not assume the vendor is active.
@@ -62,7 +62,7 @@ a backend surface instead of a nav entry.
    does not know about, and the screen and the data will disagree.
 8. **i18n.** New keys in English, in both locale files. German values only in `de.ts`, never in a
    key, a comment, or a stored/logic value. → `i18n` skill.
-9. **Update the module's own skill**, or regenerate the parts `node scripts/module-map.mjs`
+9. **Update the module's own skill**, or regenerate the parts `node scripts/codebase/module-map.mjs`
    produces, if this extended an existing module. A brand-new module gets its own `module-*`
    skill once it is actually built — not mid-build, and not as a first step.
 
@@ -88,9 +88,9 @@ i18n namespace a module skill names, grep the actual code — this session alrea
 ```
 npx tsc -p tsconfig.typecheck.json --noEmit
 npx eslint src --quiet
-node scripts/module-map.mjs          # if an existing module gained a file or a table
-node scripts/check-query-keys.mjs    # no key read under one name and refreshed under another
-node scripts/walk-screens.mjs        # every screen still renders
+node scripts/codebase/module-map.mjs          # if an existing module gained a file or a table
+node scripts/codebase/check-query-keys.mjs    # no key read under one name and refreshed under another
+node scripts/codebase/walk-screens.mjs        # every screen still renders
 ```
 
 Add `deno check <file>` for anything under `supabase/functions/`.
