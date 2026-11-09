@@ -1,6 +1,6 @@
 import { Upload } from "lucide-react";
 
-import { DropboxIcon, MicrosoftIcon } from "@/kit/pages";
+import { DropboxIcon, GenericMailIcon, GmailIcon, MicrosoftIcon } from "@/kit/pages";
 
 import type {
   DocumentSource,
@@ -13,6 +13,7 @@ import type {
 } from "@/kit/adapters";
 
 import { formatDateTime } from "@/lib/data/format";
+import { providerSupportsFolderBrowsing } from "@/lib/data/channel-providers";
 import {
   useActorDisplay,
   useAskForARun,
@@ -161,6 +162,7 @@ function mailSource(
   runRequest: SourceRunRequest | undefined,
   t: Translate,
 ): DocumentSource {
+  const canBrowseFolders = providerSupportsFolderBrowsing(row.provider);
   const folderOptions = treeOptions(foldersQuery.data);
   const shared = {
     options: folderOptions,
@@ -172,7 +174,7 @@ function mailSource(
     kind: "mailbox",
     name: t("sources.mail.name"),
     detail: row.address ?? "—",
-    icon: MicrosoftIcon,
+    icon: row.provider === "gmail" ? GmailIcon : canBrowseFolders ? MicrosoftIcon : GenericMailIcon,
     status: row.is_active ? "connected" : "not_configured",
     statusDetail: row.is_active
       ? t("sources.mail.active", { count: row.sourceFolders.length })
@@ -199,31 +201,56 @@ function mailSource(
         label: t("sources.fields.mailAdresse"),
         value: row.address,
       },
-      {
-        key: "mail_source_folders",
-        kind: "multiSelect",
-        label: t("sources.fields.source"),
-        description: t("sources.fields.mailQuelleHint"),
-        value: row.sourceFolders,
-        ...shared,
-      },
-      {
-        key: "mail_processed_folder",
-        kind: "treeSelect",
-        label: t("sources.fields.destination"),
-        description: t("sources.fields.mailZielHint"),
-        value: row.processedFolder,
-        ...shared,
-      },
-      {
-        key: "mail_return_folder",
-        kind: "treeSelect",
-        label: t("sources.fields.returnFolder"),
-        description: t("sources.fields.mailRueckgabeHint"),
-        value: row.returnFolder,
-        ...shared,
-        advanced: true,
-      },
+      canBrowseFolders
+        ? {
+            key: "mail_source_folders",
+            kind: "multiSelect",
+            label: t("sources.fields.source"),
+            description: t("sources.fields.mailQuelleHint"),
+            value: row.sourceFolders,
+            ...shared,
+          }
+        : {
+            key: "mail_source_folders",
+            kind: "text",
+            label: t("sources.fields.source"),
+            description: t("sources.fields.mailQuelleTextHint"),
+            value: row.sourceFolders.join(", "),
+          },
+      canBrowseFolders
+        ? {
+            key: "mail_processed_folder",
+            kind: "treeSelect",
+            label: t("sources.fields.destination"),
+            description: t("sources.fields.mailZielHint"),
+            value: row.processedFolder,
+            ...shared,
+          }
+        : {
+            key: "mail_processed_folder",
+            kind: "text",
+            label: t("sources.fields.destination"),
+            description: t("sources.fields.mailZielTextHint"),
+            value: row.processedFolder ?? "",
+          },
+      canBrowseFolders
+        ? {
+            key: "mail_return_folder",
+            kind: "treeSelect",
+            label: t("sources.fields.returnFolder"),
+            description: t("sources.fields.mailRueckgabeHint"),
+            value: row.returnFolder,
+            ...shared,
+            advanced: true,
+          }
+        : {
+            key: "mail_return_folder",
+            kind: "text",
+            label: t("sources.fields.returnFolder"),
+            description: t("sources.fields.mailRueckgabeTextHint"),
+            value: row.returnFolder ?? "",
+            advanced: true,
+          },
     ],
   };
 }
@@ -352,7 +379,7 @@ export function useDocumentSourcesAdapter(): DocumentSourcesAdapter {
       storedFolderNames: namesOf(folders),
     };
   }, [channelRows, folderRows]);
-  const mailboxFoldersQuery = useMailboxFolders();
+  const mailboxFoldersQuery = useMailboxFolders(providerSupportsFolderBrowsing(mailView?.provider));
   const filingFoldersQuery = useFilingFolders();
   // Which listing somebody asked to reload. the kit already draws a loader for a field whose
   // options are loading (spinning Refresh icon, "loading" placeholder, disabled picker), but
@@ -527,9 +554,20 @@ export function useDocumentSourcesAdapter(): DocumentSourcesAdapter {
       }
 
       // A tree picker sends one id or null; the bindings table holds a list either way, so null
-      // becomes the empty list and the row is removed.
-      const asList = (value: SourceFieldValue): string[] =>
-        Array.isArray(value) ? (value as string[]) : value ? [value as string] : [];
+      // becomes the empty list and the row is removed. A source-folder field typed by hand, for a
+      // provider this Hub cannot browse live, sends one comma-separated string instead.
+      const asList = (value: SourceFieldValue, splitCommas: boolean): string[] => {
+        if (Array.isArray(value)) return value as string[];
+        if (typeof value === "string" && value) {
+          return splitCommas
+            ? value
+                .split(",")
+                .map((part) => part.trim())
+                .filter(Boolean)
+            : [value];
+        }
+        return [];
+      };
 
       const roles: Array<[string, ChannelFolderRole]> = [
         [sourceKey, "source"],
@@ -538,7 +576,7 @@ export function useDocumentSourcesAdapter(): DocumentSourcesAdapter {
       ];
       for (const [field, role] of roles) {
         if (!has(field)) continue;
-        const ids = asList(values[field]);
+        const ids = asList(values[field], field === sourceKey);
         const listing = (sourceId === "mail" ? mailFolders.data : filingFolders.data) ?? [];
         const names = Object.fromEntries(listing.map((folder) => [folder.id, folder.name]));
         await saveFolders.mutateAsync({ channelKey: view.channelKey, role, ids, names });

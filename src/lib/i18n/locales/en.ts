@@ -3672,6 +3672,12 @@ const en = {
       returnFolder: "Move irrelevant documents here",
       mailRueckgabeHint:
         "If an email turns out not to be a document, it lands here. Leave empty to leave it where it is.",
+      mailQuelleTextHint:
+        "Folder browsing is not available for this mailbox. Type the folder names directly, separated by commas. Leave empty to check the whole mailbox.",
+      mailZielTextHint:
+        "Folder browsing is not available for this mailbox. Type the destination folder directly. Leave empty to move nothing.",
+      mailRueckgabeTextHint:
+        "Folder browsing is not available for this mailbox. Type the folder directly. Leave empty to leave irrelevant emails where they are.",
       driveQuelleHint:
         "Some documents are saved here instead of emailed. Each folder is checked in turn.",
       driveZielHint: "Once a file is processed it lands here. Leave empty to move nothing.",
