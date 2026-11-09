@@ -1,6 +1,6 @@
 import { Upload } from "lucide-react";
 
-import { DropboxIcon, GenericMailIcon, MicrosoftIcon } from "@/kit/pages";
+import { DropboxIcon, GenericMailIcon, GmailIcon, MicrosoftIcon } from "@/kit/pages";
 
 import type {
   DocumentSource,
@@ -174,7 +174,7 @@ function mailSource(
     kind: "mailbox",
     name: t("sources.mail.name"),
     detail: row.address ?? "—",
-    icon: canBrowseFolders ? MicrosoftIcon : GenericMailIcon,
+    icon: row.provider === "gmail" ? GmailIcon : canBrowseFolders ? MicrosoftIcon : GenericMailIcon,
     status: row.is_active ? "connected" : "not_configured",
     statusDetail: row.is_active
       ? t("sources.mail.active", { count: row.sourceFolders.length })
