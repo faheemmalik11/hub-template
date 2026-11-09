@@ -888,6 +888,38 @@ export const WORKFLOW_ORDER = [
   "closed",
 ] as const;
 
+// The German values workflow_status held before the English rename (supabase/schema/RENAMES.md),
+// for a client whose database still writes them. Kept here, next to WORKFLOW_ORDER, so every
+// screen that groups or filters by workflow_status can recognize both.
+export const WORKFLOW_STATUS_LEGACY_GERMAN: Record<string, string> = {
+  received: "eingegangen",
+  in_review: "in_pruefung",
+  query: "rueckfrage",
+  approved_first: "freigegeben_assistenz",
+  approved_final: "freigegeben_vorgesetzter",
+  paid: "bezahlt",
+  handed_over: "uebergeben_datev",
+  closed: "abgeschlossen",
+  rejected: "abgelehnt",
+  not_relevant: "nicht_relevant",
+};
+
+const WORKFLOW_STATUS_GERMAN_TO_ENGLISH: Record<string, string> = Object.fromEntries(
+  Object.entries(WORKFLOW_STATUS_LEGACY_GERMAN).map(([english, german]) => [german, english]),
+);
+
+export function normalizeWorkflowStatus(
+  value: string | null | undefined,
+): string | null | undefined {
+  if (!value) return value;
+  return WORKFLOW_STATUS_GERMAN_TO_ENGLISH[value] ?? value;
+}
+
+export function workflowStatusVariants(value: string): string[] {
+  const german = WORKFLOW_STATUS_LEGACY_GERMAN[value];
+  return german ? [value, german] : [value];
+}
+
 // German-only workflow label for PERSISTED audit/history text (beleg_verlauf). Always German
 // regardless of the active UI language, so the audit trail stays consistent. Do NOT use this
 // for display — the UI translates `documents.workflow.<value>` via useTranslation.
