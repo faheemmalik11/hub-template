@@ -359,13 +359,6 @@ on conflict (key) do update
        default_enabled = excluded.default_enabled, sort_order = excluded.sort_order;
 
 insert into public.permissions (key, kind, parent_key, category, label_de, label_en, default_enabled, sort_order) values
-  ('auth.mfa_enabled', 'section', 'page.profile', 'menu', 'Zwei-Faktor-Anmeldung', 'Two-factor sign-in', false, 35)
-on conflict (key) do update
-   set kind = excluded.kind, parent_key = excluded.parent_key, category = excluded.category,
-       label_de = excluded.label_de, label_en = excluded.label_en,
-       default_enabled = excluded.default_enabled, sort_order = excluded.sort_order;
-
-insert into public.permissions (key, kind, parent_key, category, label_de, label_en, default_enabled, sort_order) values
   ('documents.voice_dictation', 'section', 'page.incoming_invoices', 'menu', 'Dokument diktieren', 'Voice dictation', false, 215)
 on conflict (key) do update
    set kind = excluded.kind, parent_key = excluded.parent_key, category = excluded.category,

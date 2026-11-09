@@ -56,7 +56,6 @@ export type AuthErrorCode =
   | "rate_limited"
   | "account_deactivated"
   | "password_too_short"
-  | "region_not_allowed"
   | "unknown";
 
 export type AuthResult = { ok: boolean; code?: AuthErrorCode; raw?: string };
@@ -293,13 +292,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     if (found && !found.isActive) {
       await sb.auth.signOut();
       return { ok: false, code: "account_deactivated" };
-    }
-
-    const { checkRegion } = await import("@/lib/api/region.functions");
-    const region = await checkRegion();
-    if (!region.allowed) {
-      await sb.auth.signOut();
-      return { ok: false, code: "region_not_allowed" };
     }
 
     return { ok: true };

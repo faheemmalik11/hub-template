@@ -14,15 +14,29 @@ import {
 
 type Db = any; // eslint-disable-line @typescript-eslint/no-explicit-any
 
-async function allowedCountriesForTenant(db: Db): Promise<Set<string>> {
+async function tenantSecurityConfig(db: Db): Promise<Record<string, unknown>> {
   const { data } = await db
     .from(TABLE.tenantSettings)
     .select("config")
     .eq("single_row", true)
     .maybeSingle();
   const config = (data as { config?: Record<string, unknown> } | null)?.config ?? {};
-  const security = config.security as { allowedCountries?: string[] } | undefined;
-  const list = Array.isArray(security?.allowedCountries) ? security!.allowedCountries : [];
+  return (config.security as Record<string, unknown> | undefined) ?? {};
+}
+
+export const checkMfaRequirement = createServerFn({ method: "GET" })
+  .middleware([requireSupabaseAuth])
+  .handler(async (): Promise<boolean> => {
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    const security = await tenantSecurityConfig(supabaseAdmin as Db);
+    return security.mfaEnabled === true;
+  });
+
+async function allowedCountriesForTenant(db: Db): Promise<Set<string>> {
+  const security = await tenantSecurityConfig(db);
+  const list = Array.isArray(security.allowedCountries)
+    ? (security.allowedCountries as string[])
+    : [];
   return new Set(list.map((code) => String(code).toUpperCase()));
 }
 
@@ -46,11 +60,18 @@ export const checkRegion = createServerFn({ method: "GET" })
     const country = request?.headers ? countryFromRequestHeaders(request.headers) : null;
     const extraAllowedCountries = parseExtraAllowedCountries(process.env.REGION_ALLOWED_EXTRA);
 
-    const quickVerdict = decideRegion(country, null, allowedCountries, new Date(), extraAllowedCountries);
+    const quickVerdict = decideRegion(
+      country,
+      null,
+      allowedCountries,
+      new Date(),
+      extraAllowedCountries,
+    );
     if (quickVerdict.allowed) return quickVerdict;
 
     const email = (context as { claims?: { email?: string } }).claims?.email ?? null;
-    if (!email) return decideRegion(country, null, allowedCountries, new Date(), extraAllowedCountries);
+    if (!email)
+      return decideRegion(country, null, allowedCountries, new Date(), extraAllowedCountries);
 
     const { data } = await db
       .from(TABLE.appUsers)

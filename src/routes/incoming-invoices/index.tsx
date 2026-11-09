@@ -200,7 +200,7 @@ function IncomingInvoicesPage() {
   const setSearch = (patch: Partial<DocumentsSearch>, resetPage = true) => {
     navigate({
       replace: true,
-      search: (prev) => {
+      search: (prev: DocumentsSearch) => {
         const next = { ...prev, ...patch };
         if (resetPage && patch.page === undefined) next.page = 1;
         return next;

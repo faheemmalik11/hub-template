@@ -81,7 +81,6 @@ export const PERMISSIONS = {
   pageDocumentTypes: "page.document_types",
   pageDocumentIntakeLog: "page.document_intake_log",
   sourcesSharepoint: "sources.sharepoint",
-  authMfaEnabled: "auth.mfa_enabled",
   documentsVoiceDictation: "documents.voice_dictation",
 
   // Menu groups. Switching one off takes its pages with it.
