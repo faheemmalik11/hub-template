@@ -166,6 +166,14 @@ on conflict (key) do update
        label_de = excluded.label_de, label_en = excluded.label_en,
        default_enabled = excluded.default_enabled, sort_order = excluded.sort_order;
 
+-- A donation tied to a sale above a configured threshold. Off by default.
+insert into public.permissions (key, kind, parent_key, category, label_de, label_en, default_enabled, sort_order) values
+  ('donations.manage', 'section', 'page.commission_deals', 'documents', 'Spenden aus Verkäufen', 'Donations from sales', false, 942)
+on conflict (key) do update
+   set kind = excluded.kind, parent_key = excluded.parent_key, category = excluded.category,
+       label_de = excluded.label_de, label_en = excluded.label_en,
+       default_enabled = excluded.default_enabled, sort_order = excluded.sort_order;
+
 -- A property the CRM marks as sold opens a deal by itself. Off by default.
 insert into public.permissions (key, kind, parent_key, category, label_de, label_en, default_enabled, sort_order) values
   ('deals.from_crm', 'section', 'page.commission_deals', 'documents', 'Verkäufe aus dem CRM übernehmen', 'Open deals from CRM sales', false, 939)
