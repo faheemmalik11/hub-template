@@ -80,7 +80,7 @@ this database. `vermerk` exists nowhere. Do not copy ANOTHER CLIENT's statements
 
 ## Step 1: the snapshot (done)
 
-`scripts/dump-live-schema.sh`, read only. Writes to `supabase/_backup/rename-snapshot/<UTC stamp>/`
+`scripts/db/dump-live-schema.sh`, read only. Writes to `supabase/_backup/rename-snapshot/<UTC stamp>/`
 with a `latest` symlink. `.gitignore` already covers `supabase/_backup/`.
 
 It exists because nothing in the repo describes this database correctly: `supabase/schema.sql` is a
@@ -133,7 +133,7 @@ removes the trap where dropping indiscriminately took `has_module_access` with i
 
 ### The string classification
 
-`scripts/classify-rename-strings.ts` over the dump, then every row read by hand. 30 occurrences.
+`scripts/i18n/classify-rename-strings.ts` over the dump, then every row read by hand. 30 occurrences.
 Worksheet at `supabase/_backup/rename-snapshot/latest/classification-worksheet.md`.
 
 **Leave alone (8).** Permission scopes, confirmed against the catalogue in inventory section 7,
@@ -286,7 +286,7 @@ not there fails to compile instead of 404-ing in production.
 `supabase/migrations/20260916120000_english_table_names.sql`, 3076 lines, and its rollback
 `20260916120001_english_table_names_rollback.sql.txt`, kept as `.txt` so it cannot run by accident.
 
-**Both are generated** by `scripts/generate-rename-migration.ts` from the snapshot, never written
+**Both are generated** by `scripts/db/generate-rename-migration.ts` from the snapshot, never written
 by hand. Re-run it if the schema moves before the migration is applied. Every count it emits
 matches the inventory: 10 tables, 14 columns, 11 views, 35 functions.
 
@@ -500,7 +500,7 @@ in both `tables.ts` files now.
 
 ### The bucket move
 
-`scripts/move-buckets-to-documents.ts`, dry run unless given `--commit`, nothing ever deleted.
+`scripts/db/move-buckets-to-documents.ts`, dry run unless given `--commit`, nothing ever deleted.
 
 this Hub has **two** source buckets where ANOTHER CLIENT had one: `receipts` (2738 file rows, what the
 pipeline writes) and `belege-files` (5, what the Hub's upload screen wrote). Both go to

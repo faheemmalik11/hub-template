@@ -105,7 +105,7 @@ The name should be `folder_id`. It is **not** renamed here, deliberately: the pi
 would fail that read on the first run. It is one rename on two sides, plus a migration for the
 clients already holding values in it, and it belongs with whoever owns the pipeline's persistence.
 
-Until then `scripts/check-pipeline-columns.mjs` holds the two sides to the same spelling.
+Until then `scripts/db/check-pipeline-columns.mjs` holds the two sides to the same spelling.
 
 ## The panel asks the ledger, when it means to ask the database
 
@@ -118,7 +118,7 @@ is already true; only the first half was false, and the whole of `sourceTablesRe
 The panel then declined to read credentials that were stored, and reported sources as unfinished.
 
 Recording the steps is the narrow fix and it is honest, because
-`scripts/check-pipeline-columns.mjs` proves the tables really do hold what the pipeline writes.
+`scripts/db/check-pipeline-columns.mjs` proves the tables really do hold what the pipeline writes.
 
 The real fix is on the panel's side: ask whether the tables and columns are there, which is the
 question it actually wants answered, and let the ledger be a record rather than the authority. Then

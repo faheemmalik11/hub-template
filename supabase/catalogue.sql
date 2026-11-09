@@ -323,6 +323,55 @@ insert into public.feature_requirements (feature_key, requires_key) values
   ('page.broker_bonuses',    'page.commission_deals')
 on conflict do nothing;
 
+insert into public.permissions (key, kind, parent_key, category, label_de, label_en, default_enabled, sort_order) values
+  ('page.data_export', 'page', 'module.admin', 'menu', 'Datenexport', 'Data export', false, 845)
+on conflict (key) do update
+   set kind = excluded.kind, parent_key = excluded.parent_key, category = excluded.category,
+       label_de = excluded.label_de, label_en = excluded.label_en,
+       default_enabled = excluded.default_enabled, sort_order = excluded.sort_order;
+
+insert into public.permissions (key, kind, parent_key, category, label_de, label_en, default_enabled, sort_order) values
+  ('page.confidence_thresholds', 'page', 'module.admin', 'menu', 'Erkennungsschwellen', 'Confidence thresholds', false, 860)
+on conflict (key) do update
+   set kind = excluded.kind, parent_key = excluded.parent_key, category = excluded.category,
+       label_de = excluded.label_de, label_en = excluded.label_en,
+       default_enabled = excluded.default_enabled, sort_order = excluded.sort_order;
+
+insert into public.permissions (key, kind, parent_key, category, label_de, label_en, default_enabled, sort_order) values
+  ('page.document_types', 'page', 'module.master_data', 'menu', 'Belegarten', 'Document types', false, 455)
+on conflict (key) do update
+   set kind = excluded.kind, parent_key = excluded.parent_key, category = excluded.category,
+       label_de = excluded.label_de, label_en = excluded.label_en,
+       default_enabled = excluded.default_enabled, sort_order = excluded.sort_order;
+
+insert into public.permissions (key, kind, parent_key, category, label_de, label_en, default_enabled, sort_order) values
+  ('page.document_intake_log', 'page', 'module.invoices', 'menu', 'Posteingangs-Protokoll', 'Document intake log', false, 215)
+on conflict (key) do update
+   set kind = excluded.kind, parent_key = excluded.parent_key, category = excluded.category,
+       label_de = excluded.label_de, label_en = excluded.label_en,
+       default_enabled = excluded.default_enabled, sort_order = excluded.sort_order;
+
+insert into public.permissions (key, kind, parent_key, category, label_de, label_en, default_enabled, sort_order) values
+  ('sources.sharepoint', 'section', 'page.document_sources', 'menu', 'SharePoint', 'SharePoint', false, 255)
+on conflict (key) do update
+   set kind = excluded.kind, parent_key = excluded.parent_key, category = excluded.category,
+       label_de = excluded.label_de, label_en = excluded.label_en,
+       default_enabled = excluded.default_enabled, sort_order = excluded.sort_order;
+
+insert into public.permissions (key, kind, parent_key, category, label_de, label_en, default_enabled, sort_order) values
+  ('auth.mfa_enabled', 'section', 'page.profile', 'menu', 'Zwei-Faktor-Anmeldung', 'Two-factor sign-in', false, 35)
+on conflict (key) do update
+   set kind = excluded.kind, parent_key = excluded.parent_key, category = excluded.category,
+       label_de = excluded.label_de, label_en = excluded.label_en,
+       default_enabled = excluded.default_enabled, sort_order = excluded.sort_order;
+
+insert into public.permissions (key, kind, parent_key, category, label_de, label_en, default_enabled, sort_order) values
+  ('documents.voice_dictation', 'section', 'page.incoming_invoices', 'menu', 'Dokument diktieren', 'Voice dictation', false, 215)
+on conflict (key) do update
+   set kind = excluded.kind, parent_key = excluded.parent_key, category = excluded.category,
+       label_de = excluded.label_de, label_en = excluded.label_en,
+       default_enabled = excluded.default_enabled, sort_order = excluded.sort_order;
+
 -- Loud rather than silently empty: a project whose roles are named differently would insert nothing
 -- above, and every screen would be locked for everyone with no clue why.
 do $$

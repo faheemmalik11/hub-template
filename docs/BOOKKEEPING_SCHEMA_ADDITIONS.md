@@ -83,5 +83,5 @@ Checked against the pipeline and left alone, because it is data or code rather t
 Rebuilt the local database from the baseline, dumped before and after: the diff is these additions
 and the views that now carry the new document columns. Each constraint was exercised with a valid
 and an invalid row, and `document_links` was read and written as the admin and refused for an
-anonymous caller. `scripts/check-drift.mjs` against that database reports no drift,
-`scripts/check-pipeline-columns.mjs` reports no gap.
+anonymous caller. `scripts/codebase/check-drift.mjs` against that database reports no drift,
+`scripts/db/check-pipeline-columns.mjs` reports no gap.

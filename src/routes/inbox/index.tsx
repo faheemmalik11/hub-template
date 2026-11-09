@@ -7,6 +7,9 @@ import { useTanstackDocumentSourcesRouter } from "@/kit/pages/document-sources/t
 
 import { useDocumentSourcesAdapter } from "@/hub/adapters/document-sources";
 import { useFilingFolders, useMailboxFolders } from "@/data";
+import { useFeature } from "@/data/use-feature";
+import { PERMISSIONS } from "@/config/permissions";
+import { SharePointSearchPanel } from "@/components/inbox/sharepoint-search-panel";
 import { useTranslation } from "@/lib/i18n";
 import { pageTitle } from "@/config/brand";
 
@@ -20,6 +23,7 @@ function InboxPage() {
   const { t } = useTranslation();
   const adapter = useDocumentSourcesAdapter();
   const router = useTanstackDocumentSourcesRouter();
+  const hasSharePoint = useFeature(PERMISSIONS.sourcesSharepoint);
   // The sheet already hides UNKNOWN options while the folder list loads, but it still labels an
   // already-selected id it cannot resolve yet as "Unknown entry …3tAAA=". Until the names arrive
   // every saved folder reads as broken, so say it is loading instead of showing the raw id.
@@ -106,11 +110,14 @@ function InboxPage() {
   };
 
   return (
-    <DocumentSourcesPage
-      adapter={adapter}
-      router={router}
-      labels={labels}
-      links={{ logs: "/activity-log" }}
-    />
+    <>
+      <DocumentSourcesPage
+        adapter={adapter}
+        router={router}
+        labels={labels}
+        links={{ logs: "/activity-log" }}
+      />
+      {hasSharePoint && <SharePointSearchPanel />}
+    </>
   );
 }

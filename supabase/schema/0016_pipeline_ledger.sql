@@ -7,7 +7,7 @@
 -- reports that it still needs something.
 --
 -- So the steps are recorded here, by the ids the pipeline uses. The claim is only honest because
--- scripts/check-pipeline-columns.mjs holds this schema to the pipeline's own column list; if that
+-- scripts/db/check-pipeline-columns.mjs holds this schema to the pipeline's own column list; if that
 -- check ever fails, this file is asserting something untrue and the failure is the warning.
 
 begin;

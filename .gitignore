@@ -97,7 +97,7 @@ e2e/.report/
 .env.test*
 .playwright-mcp
 
-# Copied from node_modules/pdfjs-dist by scripts/copy-pdfjs-wasm.mjs
+# Copied from node_modules/pdfjs-dist by scripts/build/copy-pdfjs-wasm.mjs
 public/pdfjs/
 supabase/functions/deno.lock
 

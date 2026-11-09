@@ -8,7 +8,7 @@ import { z } from "zod";
  * configures is a row, read at run time. See planning/08-startup.md.
  *
  * The schema below is the single source of truth: it validates at startup and it generates
- * `.env.example`, so the two can never drift. Run `node scripts/write-env-example.mjs` after
+ * `.env.example`, so the two can never drift. Run `node scripts/build/write-env-example.mjs` after
  * changing it.
  */
 export const envSchema = z.object({

@@ -65,8 +65,8 @@ install.
 ## Which module owns a file
 
 ```
-node scripts/module-map.mjs          # every module, its routes, files, tables and functions
-node scripts/module-map.mjs --json   # the same as data
+node scripts/codebase/module-map.mjs          # every module, its routes, files, tables and functions
+node scripts/codebase/module-map.mjs --json   # the same as data
 ```
 
 It resolves imports for real, including relative ones, and matches `@/data` barrel imports name by

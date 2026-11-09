@@ -42,7 +42,7 @@ their project is named.
 ## 4. Build their database
 
 ```bash
-node scripts/build-baseline.mjs                       # 17 schema files into one
+node scripts/codebase/build-baseline.mjs                       # 17 schema files into one
 psql "$THEIR_DB_URL" -f supabase/migrations/00000000000000_schema.sql
 psql "$THEIR_DB_URL" -f supabase/catalogue.sql
 ```
@@ -58,7 +58,7 @@ panel's own `applyHubBaseline` does check, and stops if `documents` already exis
 ```bash
 psql "$THEIR_DB_URL" -c "select count(*) from public.feature_tree()"     # 51
 psql "$THEIR_DB_URL" -c "select count(*) from public.schema_migrations"  # 5
-node scripts/check-pipeline-columns.mjs                                  # no gap
+node scripts/db/check-pipeline-columns.mjs                                  # no gap
 ```
 
 The middle one matters more than it looks: those five rows are what tells the admin panel this

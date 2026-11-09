@@ -110,7 +110,7 @@ and must not be attached to a bill.
    false, so the function has a place to write its result and the table does not start a second timer.
 
 The function shares `propstack.ts` and `sealed.ts` with the app as copies in `_shared/`. After
-changing either source, run `node scripts/copy-edge-shared.mjs`; `--check` fails when they differ.
+changing either source, run `node scripts/build/copy-edge-shared.mjs`; `--check` fails when they differ.
 Run once by hand against production: 760 properties fetched.
 
 ## No property on a document

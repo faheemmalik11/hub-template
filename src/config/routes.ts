@@ -229,6 +229,30 @@ export const ROUTES: RouteEntry[] = [
     key: PERMISSIONS.pageTrash,
     module: PERMISSIONS.moduleAdmin,
   },
+  {
+    path: "/export",
+    labelKey: "nav.dataExport",
+    key: PERMISSIONS.pageDataExport,
+    module: PERMISSIONS.moduleAdmin,
+  },
+  {
+    path: "/confidence-thresholds",
+    labelKey: "nav.confidenceThresholds",
+    key: PERMISSIONS.pageConfidenceThresholds,
+    module: PERMISSIONS.moduleAdmin,
+  },
+  {
+    path: "/document-types",
+    labelKey: "nav.documentTypes",
+    key: PERMISSIONS.pageDocumentTypes,
+    module: PERMISSIONS.moduleMasterData,
+  },
+  {
+    path: "/document-intake-log",
+    labelKey: "nav.documentIntakeLog",
+    key: PERMISSIONS.pageDocumentIntakeLog,
+    module: PERMISSIONS.moduleInvoices,
+  },
 ];
 
 /**

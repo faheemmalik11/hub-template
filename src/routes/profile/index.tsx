@@ -5,6 +5,9 @@ import { ProfilePage } from "@/kit/pages";
 import { useProfileAdapter } from "@/hub/adapters/profile";
 import { useProfileLabels } from "@/hub/adapters/profile-labels";
 import { useAuth } from "@/lib/auth";
+import { useFeature } from "@/data/use-feature";
+import { PERMISSIONS } from "@/config/permissions";
+import { TwoFactorPanel } from "@/components/auth/two-factor-dialog";
 import { pageTitle } from "@/config/brand";
 
 export const Route = createFileRoute("/profile/")({
@@ -19,6 +22,16 @@ function ProfileRoute() {
   const { ready } = useAuth();
   const adapter = useProfileAdapter();
   const labels = useProfileLabels();
+  const hasMfa = useFeature(PERMISSIONS.authMfaEnabled);
   if (!ready) return null;
-  return <ProfilePage adapter={adapter} labels={labels} />;
+  return (
+    <>
+      <ProfilePage adapter={adapter} labels={labels} />
+      {hasMfa && (
+        <div className="mx-auto mt-6 max-w-2xl">
+          <TwoFactorPanel />
+        </div>
+      )}
+    </>
+  );
 }

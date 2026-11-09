@@ -74,13 +74,13 @@ shared with other modules: never delete one of those on the way out.
 - `src/routes/properties/` — $code.tsx, index.tsx
 - `src/routes/suppliers/` — $id.tsx, index.tsx
 
-Two more files belong to this feature but are invisible to `node scripts/module-map.mjs`,
+Two more files belong to this feature but are invisible to `node scripts/codebase/module-map.mjs`,
 because nothing under `src/` imports them — see "What is worth knowing" below:
 
 - `src/lib/crm/` — propstack.ts
 - `supabase/functions/_shared/` — propstack.ts
 
-Regenerate the rest of this list rather than trusting it: `node scripts/module-map.mjs`.
+Regenerate the rest of this list rather than trusting it: `node scripts/codebase/module-map.mjs`.
 
 ## What it reads and writes
 
@@ -131,7 +131,7 @@ in this module. Each needs its keys in the vault before it answers.
 `propstack-sync` does not go through the `EDGE_FUNCTION` registry
 (`src/config/edge-functions.ts`) the other six do: `src/lib/api/property-listings.functions.ts`
 invokes it by its literal slug, `db.functions.invoke("propstack-sync", ...)`. That is why
-`node scripts/module-map.mjs` does not find it either — its regex only matches
+`node scripts/codebase/module-map.mjs` does not find it either — its regex only matches
 `EDGE_FUNCTION.xxx` or a bare string, and the call sits inside a server function the scope-
 building pass does not follow (see "What is worth knowing"). Found by grepping
 `src/lib/api/property-listings.functions.ts` for `functions.invoke` by hand.
@@ -175,11 +175,11 @@ actually fires; see that skill.
 
 **The Propstack adapter is copied, not imported.** `src/lib/crm/propstack.ts` maps a Propstack
 unit onto the Hub's property shape (`toSyncedProperty`), and is used by the Edge Function, not by
-anything under `src/`. `node scripts/module-map.mjs` walks import graphs reachable from
+anything under `src/`. `node scripts/codebase/module-map.mjs` walks import graphs reachable from
 `src/config/routes.ts`, so a file nothing imports — whether because an Edge Function cannot import
 from `src/`, or because it is reached only through a `supabase.functions.invoke` call the scope-
 building pass does not follow — is invisible to it, own file or not. `node
-scripts/copy-edge-shared.mjs` copies `src/lib/crm/propstack.ts` verbatim into
+scripts/build/copy-edge-shared.mjs` copies `src/lib/crm/propstack.ts` verbatim into
 `supabase/functions/_shared/propstack.ts`; edit the source, run the script, never edit the copy.
 `supabase/functions/_shared/matching.ts` (owned by `module.payments`) is the same pattern without
 the script, kept in sync by hand.
@@ -197,7 +197,7 @@ column from everything that joins to it.
 3. Add the route entries to `src/config/routes.ts`. **A screen with no entry there has no
    menu item and no guard**, which is the one failure this arrangement is built to prevent.
 4. Check every table and function above exists in the client's schema. `node
-   scripts/gap-report.mjs` names what is missing.
+   scripts/codebase/gap-report.mjs` names what is missing.
 5. Copy the translation namespaces into both locale files.
 6. Grant the capabilities to the roles that should have them, and to nobody else.
 
@@ -208,7 +208,7 @@ today, properties entered by hand. For a client that has Propstack:
 1. Create a read-only API key in Propstack (Verwaltung → API-Schlüssel) and store it as a
    `credentials` row (`channel_key = ''`, `name = 'PROPSTACK_API_KEY'`), sealed the same way a
    document-source channel credential is, never in `.env`.
-2. Deploy `supabase/functions/propstack-sync`, after running `node scripts/copy-edge-shared.mjs`
+2. Deploy `supabase/functions/propstack-sync`, after running `node scripts/build/copy-edge-shared.mjs`
    so its `_shared/propstack.ts` matches `src/lib/crm/propstack.ts`.
 3. Run `supabase/presets/propstack-hourly-sync.sql` and add the matching cron job in the Supabase
    dashboard (Integrations → Cron) calling the Edge Function hourly; the table row only records
@@ -234,9 +234,9 @@ anything on its next run, whether or not the switch is also off.
 ```
 npx tsc -p tsconfig.typecheck.json --noEmit
 npx eslint src --quiet
-node scripts/module-map.mjs          # the files and tables above, regenerated
-node scripts/check-query-keys.mjs    # no key read under one name and refreshed under another
-node scripts/walk-screens.mjs        # every screen, including this module's
-node scripts/copy-edge-shared.mjs --check   # propstack.ts (and sealed.ts) match their src/ source
+node scripts/codebase/module-map.mjs          # the files and tables above, regenerated
+node scripts/codebase/check-query-keys.mjs    # no key read under one name and refreshed under another
+node scripts/codebase/walk-screens.mjs        # every screen, including this module's
+node scripts/build/copy-edge-shared.mjs --check   # propstack.ts (and sealed.ts) match their src/ source
 npm test                                    # the Propstack mapping and CRM field rules, pure functions
 ```

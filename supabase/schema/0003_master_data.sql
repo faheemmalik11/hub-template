@@ -309,7 +309,7 @@ create unique index if not exists vat_rates_country_rate on public.vat_rates (co
 
 -- Columns the ingestion pipeline writes. Declared here so a Hub database is one the pipeline can
 -- run against: a column it writes and this schema lacks fails the whole run.
--- scripts/check-pipeline-columns.mjs holds this file and the pipeline's registry to each other.
+-- scripts/db/check-pipeline-columns.mjs holds this file and the pipeline's registry to each other.
 
 
 

@@ -49,7 +49,7 @@ already wrong.
 
 ## The procedure
 
-1. Dump the live schema of the most complete client, with `./scripts/dump-live-schema.sh`, which is
+1. Dump the live schema of the most complete client, with `./scripts/db/dump-live-schema.sh`, which is
    the script that already exists for this.
 2. Split the dump: what the Hub owns, what the pipeline owns. Drop the pipeline's half from the
    baseline and note where it comes from instead.

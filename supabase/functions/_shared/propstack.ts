@@ -1,4 +1,4 @@
-// Copy of src/lib/crm/propstack.ts. Edit that file and run scripts/copy-edge-shared.mjs.
+// Copy of src/lib/crm/propstack.ts. Edit that file and run scripts/build/copy-edge-shared.mjs.
 export const PROPSTACK_SOURCE = "propstack";
 export const PROPSTACK_API_URL = "https://api.propstack.de/v1";
 export const PROPSTACK_PAGE_SIZE = 100;

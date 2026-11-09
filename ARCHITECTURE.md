@@ -77,7 +77,7 @@ Nothing on that list is a code change, and that is the point. See `planning/08-s
 
 ## The database
 
-Thirteen numbered files in `supabase/schema/`, concatenated by `scripts/build-baseline.mjs` into the
+Thirteen numbered files in `supabase/schema/`, concatenated by `scripts/codebase/build-baseline.mjs` into the
 one migration the CLI applies. Order is not a preference: functions before views, because a view
 cannot be created without the function it calls, while a function may read a view that does not
 exist yet.
@@ -91,7 +91,7 @@ Local, always. `supabase start`, then:
 | The schema builds from nothing | apply the baseline to an EMPTY database |
 | Types agree | `npx tsc -p tsconfig.typecheck.json --noEmit` |
 | Style agrees | `npx eslint src --quiet` |
-| The app actually works | `node scripts/walk-screens.mjs` |
+| The app actually works | `node scripts/codebase/walk-screens.mjs` |
 
 The last one is the one that finds real defects: it signs in and opens all 29 screens, reporting
 console errors and failed requests. Run it more than once, since a screen that renders before its
