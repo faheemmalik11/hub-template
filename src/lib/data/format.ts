@@ -675,6 +675,11 @@ export function documentTypeKey(documentType: string | null | undefined): string
   return DOCUMENTTYPE_ALIASES.get(raw) ?? raw;
 }
 
+/** A document type key made readable ("kein_beleg" -> "Kein beleg") for when no translation exists. */
+export function documentTypeReadableFallback(key: string): string {
+  return key.replace(/_/g, " ").replace(/^./, (c) => c.toUpperCase());
+}
+
 export const DOCUMENTTYPE_META = new Map<string, { cls: string }>([
   ["rechnung", { cls: "bg-brand-tint text-brand-dark" }],
   ["gutschrift", { cls: "bg-brand-tint text-brand-dark" }],

@@ -20,6 +20,7 @@ import {
   trafficLightFromValue,
   DOCUMENTTYPE_META,
   documentTypeKey,
+  documentTypeReadableFallback,
   isOverdue,
   confidenceTrafficLight,
   STATUS_META,
@@ -424,9 +425,7 @@ export function DocumentTypeBadge({
   // Falls back to the stored value made readable ("kein_beleg" -> "Kein beleg") rather than
   // printing it raw, so an unknown type from the pipeline still reads as a word.
   const label = key
-    ? t(`documents.belegart.${key}`, {
-        defaultValue: key.replace(/_/g, " ").replace(/^./, (c) => c.toUpperCase()),
-      })
+    ? t(`documents.belegart.${key}`, { defaultValue: documentTypeReadableFallback(key) })
     : "—";
   return (
     <span

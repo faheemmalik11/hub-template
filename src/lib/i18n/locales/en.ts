@@ -850,6 +850,7 @@ const en = {
     openItems: "Bank reconciliation",
     oposWhitelist: "Excluded Payments",
     bankSettings: "Settings",
+    paymentFile: "Payment file",
     masterData: "Master data",
     suppliers: "Suppliers",
     customers: "Customers",

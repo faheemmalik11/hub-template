@@ -898,6 +898,7 @@ const de = {
     openItems: "Offene Posten",
     oposWhitelist: "Ausgeschlossene Zahlungen",
     bankSettings: "Einstellungen",
+    paymentFile: "Zahlungsdatei",
     masterData: "Stammdaten",
     suppliers: "Lieferanten",
     customers: "Kunden",

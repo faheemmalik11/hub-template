@@ -168,6 +168,7 @@ import {
   isIncomingInvoice,
   isDirectDebit,
   documentTypeKey,
+  documentTypeReadableFallback,
   nextLegalActions,
   parseDecimalInput,
   type ApprovalAction,
@@ -3392,7 +3393,9 @@ function DocumentDetail({ doc }: { doc: Document }) {
                   ),
                 ).map((key) => ({
                   value: key,
-                  label: t(`documents.belegart.${key}`, { defaultValue: key }),
+                  label: t(`documents.belegart.${key}`, {
+                    defaultValue: documentTypeReadableFallback(key),
+                  }),
                 }))}
                 noCompanyCode={COMPANY_WITHOUT}
                 onConfirm={handleConfirmationCardConfirm}
