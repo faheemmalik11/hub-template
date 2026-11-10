@@ -208,11 +208,16 @@ today, properties entered by hand. For a client that has Propstack:
 1. Create a read-only API key in Propstack (Verwaltung → API-Schlüssel) and store it as a
    `credentials` row (`channel_key = ''`, `name = 'PROPSTACK_API_KEY'`), sealed the same way a
    document-source channel credential is, never in `.env`.
-2. Deploy `supabase/functions/propstack-sync`, after running `node scripts/build/copy-edge-shared.mjs`
-   so its `_shared/propstack.ts` matches `src/lib/crm/propstack.ts`.
-3. Run `supabase/presets/propstack-hourly-sync.sql` and add the matching cron job in the Supabase
-   dashboard (Integrations → Cron) calling the Edge Function hourly; the table row only records
-   the last result, the dashboard job is the actual timer.
+2. Deploy `supabase/functions/propstack-sync` and `supabase/functions/propstack-webhook`, after
+   running `node scripts/build/copy-edge-shared.mjs` so `_shared/propstack.ts` matches
+   `src/lib/crm/propstack.ts`. See `docs/PROPSTACK_SYNC.md` for the full split between the two.
+3. Run `supabase/presets/propstack-daily-sync.sql` and add the matching cron job in the Supabase
+   dashboard (Integrations → Cron) calling `propstack-sync` daily; the table row only records
+   the last result, the dashboard job is the actual timer. Store a generated
+   `PROPSTACK_WEBHOOK_SECRET` the same way as `PROPSTACK_API_KEY`, then register
+   `propstack-webhook`'s URL in Propstack (Verwaltung → API-Schlüssel → Webhooks) against
+   "Property created" and "Property updated" with that secret, so edits reach the Hub in
+   near-real-time instead of waiting for the next daily reconciliation.
 4. Switch `properties.crm_sync` on in `feature_settings`.
 5. For deals to open themselves from a sold property, also port `module.invoices`'s
    `deals.from_crm` and the `broker-role.sql` preset if brokers submit their own commissions.

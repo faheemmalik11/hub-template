@@ -277,6 +277,13 @@ create table if not exists public.document_taxes (
 
 create index if not exists document_taxes_document on public.document_taxes (document_id);
 
+-- One row per plain VAT rate on a document: the pipeline's own upsert (adapters/db/receipt_store.py's
+-- _write_line_items_tax, book-keeping repo) targets exactly this pair with the same predicate, so a
+-- future federal/provincial split (a non-null component) stays free to add a second row for the
+-- same rate without this constraint blocking it.
+create unique index if not exists document_taxes_one_rate
+    on public.document_taxes (document_id, rate) where component is null;
+
 -- Every account seen on this document, in the order they appeared. Two accounts on one invoice is
 -- the case a person has to look at.
 create table if not exists public.document_bank_accounts (

@@ -95,19 +95,26 @@ and must not be attached to a bill.
   `BOOKKEEPING_SCHEMA_ADDITIONS.md`, "Not decided".
 - A real run against the client's mailbox and drive. Nothing above has been exercised on live data.
 
-## Hourly Propstack sync
+## Propstack sync (daily reconciliation + webhook)
 
-`supabase/functions/propstack-sync` is the one implementation of the Propstack sync. The cron calls it, and so does the "Jetzt abgleichen" button (through the Hub server function `syncPropertyListings`, which checks the caller's permission and then asks the function to wait and return the counts). It: it reads
-`PROPSTACK_API_KEY` from `credentials`, upserts every unit into `properties`, then runs
-`link_brokers_to_users()`. It records `last_status` and `last_message` on the `propstack_sync` row of
-`scheduled_jobs`, so a failing sync is visible without a server log.
+See `docs/PROPSTACK_SYNC.md` for the full picture. In short: `propstack-sync` is now a daily
+reconciliation pass (the "Jetzt abgleichen" button still runs it on demand, through the Hub server
+function `syncPropertyListings`), and `propstack-webhook` reacts to Propstack's
+`property_created`/`property_updated` events in near-real-time. Both write through the same
+`syncUnits()` in `supabase/functions/_shared/propstack-client.ts`.
 
-1. Deploy it: `supabase functions deploy propstack-sync --project-ref <ref>`.
-2. Give it the client's key: `supabase secrets set TENANT_SECRET_KEY=<key> --project-ref <ref>`.
-3. Create the timer in the Supabase dashboard (Integrations, Cron): schedule `0 * * * *`, type
-   Supabase Edge Function, POST, function `propstack-sync`, timeout 5000 ms (the function answers at once and syncs in the background).
-4. Run `supabase/presets/propstack-hourly-sync.sql`. It adds the `propstack_sync` row with `enabled`
+1. Deploy both: `supabase functions deploy propstack-sync --project-ref <ref>` and
+   `supabase functions deploy propstack-webhook --project-ref <ref>`.
+2. Give them the client's key: `supabase secrets set TENANT_SECRET_KEY=<key> --project-ref <ref>`.
+3. Create the reconciliation timer in the Supabase dashboard (Integrations, Cron): schedule
+   `0 3 * * *` (daily), type Supabase Edge Function, POST, function `propstack-sync`,
+   timeout 5000 ms (the function answers at once and syncs in the background).
+4. Run `supabase/presets/propstack-daily-sync.sql`. It adds the `propstack_sync` row with `enabled`
    false, so the function has a place to write its result and the table does not start a second timer.
+5. Generate a `PROPSTACK_WEBHOOK_SECRET`, store it as a sealed `credentials` row the same way
+   `PROPSTACK_API_KEY` is stored, then register the deployed `propstack-webhook` URL in Propstack
+   (Verwaltung → API-Schlüssel → Webhooks) against "Property created" and "Property updated", with
+   that same secret.
 
 The function shares `propstack.ts` and `sealed.ts` with the app as copies in `_shared/`. After
 changing either source, run `node scripts/build/copy-edge-shared.mjs`; `--check` fails when they differ.

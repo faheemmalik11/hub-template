@@ -172,6 +172,12 @@ create table if not exists public.supplier_bank_accounts (
 
 create index if not exists supplier_bank_accounts_supplier_idx on public.supplier_bank_accounts (supplier_id);
 
+-- One row per account the pipeline has ever seen for a supplier: the pipeline's own upsert
+-- (adapters/db/receipt_store.py's _record_bank_account, book-keeping repo) targets exactly this
+-- pair with no other predicate, so the constraint has to be a plain one, not partial on deleted_at.
+create unique index if not exists supplier_bank_accounts_supplier_iban
+    on public.supplier_bank_accounts (supplier_id, iban);
+
 -- Every time a supplier's account changed, and who was looking. A changed IBAN is the single most
 -- common invoice fraud, so the trail is kept whether or not anybody asked for it.
 create table if not exists public.supplier_iban_history (

@@ -628,8 +628,8 @@ CREATE OR REPLACE FUNCTION public.capture_supplier_iban_history() RETURNS trigge
     AS $$
 begin
   if new.iban is distinct from old.iban then
-    insert into public.supplier_iban_history (supplier_id, iban, bic, bank_name, changed_by)
-    values (old.id, old.iban, old.bic, old.bank_name, coalesce(auth.uid()::text, 'pipeline'));
+    insert into public.supplier_iban_history (supplier_id, old_iban, new_iban, changed_by, note)
+    values (old.id, old.iban, new.iban, coalesce(auth.uid()::text, 'pipeline'), 'iban_changed');
   end if;
   return new;
 end;
@@ -2053,20 +2053,20 @@ declare
 begin
     if tg_op = 'INSERT' then
         insert into public.supplier_iban_history
-            (supplier_id, iban, bic, bank_name, changed_by, event)
-        values (new.supplier_id, new.iban, new.bic, new.bank_name, akteur, 'account_added');
+            (supplier_id, old_iban, new_iban, changed_by, source, note)
+        values (new.supplier_id, null, new.iban, akteur, new.source, 'account_added');
         -- A supplier's first account arrives as the default, so both events are true of it and
         -- both are recorded. The list then reads the same whether the default was set on the way
         -- in or picked later.
         if new.is_default then
             insert into public.supplier_iban_history
-                (supplier_id, iban, bic, bank_name, changed_by, event)
-            values (new.supplier_id, new.iban, new.bic, new.bank_name, akteur, 'default_set');
+                (supplier_id, old_iban, new_iban, changed_by, source, note)
+            values (new.supplier_id, null, new.iban, akteur, new.source, 'default_set');
         end if;
     elsif new.is_default and not coalesce(old.is_default, false) then
         insert into public.supplier_iban_history
-            (supplier_id, iban, bic, bank_name, changed_by, event)
-        values (new.supplier_id, new.iban, new.bic, new.bank_name, akteur, 'default_set');
+            (supplier_id, old_iban, new_iban, changed_by, source, note)
+        values (new.supplier_id, null, new.iban, akteur, new.source, 'default_set');
     end if;
     return null;
 end;
@@ -2243,8 +2243,8 @@ begin
   -- Preserve the merged-away supplier's bank details if they differ from the survivor's, so
   -- nothing is silently lost even though only one IBAN can be "current" going forward.
   if v_merge.iban is not null and v_merge.iban is distinct from v_keep.iban then
-    insert into public.supplier_iban_history (supplier_id, iban, bic, bank_name, changed_by)
-    values (p_keep_id, v_merge.iban, v_merge.bic, v_merge.bank_name, p_merged_by);
+    insert into public.supplier_iban_history (supplier_id, old_iban, new_iban, changed_by, note)
+    values (p_keep_id, v_merge.iban, v_keep.iban, p_merged_by, 'supplier_merged');
   end if;
 
   -- Also carry the merged-away supplier's own history rows forward, so "IBAN-Verlauf" on the
