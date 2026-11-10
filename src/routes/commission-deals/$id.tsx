@@ -154,14 +154,24 @@ function DealEditor({ deal }: { deal: Deal }) {
         toast.error(t("commissionDeals.actions.approveFailed"), { description: errorText(error) }),
     });
 
-  const runCreateInvoices = () =>
-    createInvoices.mutate(invoiceInputsOf(deal, result), {
+  const runCreateInvoices = () => {
+    let invoices;
+    try {
+      invoices = invoiceInputsOf(deal, result);
+    } catch (error) {
+      toast.error(t("commissionDeals.actions.createInvoicesFailed"), {
+        description: errorText(error),
+      });
+      return;
+    }
+    createInvoices.mutate(invoices, {
       onSuccess: () => toast.success(t("commissionDeals.actions.invoicesCreated")),
       onError: (error) =>
         toast.error(t("commissionDeals.actions.createInvoicesFailed"), {
           description: errorText(error),
         }),
     });
+  };
 
   return (
     <>
