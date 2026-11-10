@@ -61,6 +61,24 @@ checkout at that client's own Supabase project.
 Load the `client-branches` skill before creating a client branch, merging shared work into one, or
 porting a client branch's feature back into `dev`.
 
+## Session memory: check `planning/communication/sessions/` before starting, update it after
+
+`planning/communication/sessions/` is this engagement's running log: what was asked, what was done,
+what was decided, what is still open. It is gitignored, same as the rest of
+`planning/communication/`, because it can reference real client specifics.
+
+- **Before starting work**, read `planning/communication/sessions/INDEX.md` in full. Its entries
+  carry a real summary of each session's decisions and open items, written so the index alone is
+  usually enough — open a dated file behind it only when its summary isn't detailed enough for what
+  you're doing right now. Don't open every dated file to find out whether it matters; that is the
+  token cost the index exists to avoid.
+- **After a session with a real outcome** — a decision, a migration, a deploy, a feature switched
+  on or off, an open question worth remembering — add an entry under
+  `planning/communication/sessions/YYYY-MM/YYYY-MM-DD-<slug>.md` **and** a summary in `INDEX.md`
+  that stands on its own (see `TEMPLATE.md` in that folder for the shape of both). A day with more
+  than one session gets more than one file. Skip this for pure Q&A or read-only exploration that
+  changed nothing.
+
 ### English only, everywhere a developer types (HARD RULE)
 
 No German in identifiers, function or component names, variables, types, filenames, directory

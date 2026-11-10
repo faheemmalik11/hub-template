@@ -18,6 +18,21 @@ what they do not use, without touching their code.
 | `08-startup.md` | Starting a clone: what stays in `.env`, what the panel writes, and the one table this creates |
 | `09-migrations-and-config.md` | Squashing 249 migrations into one honest baseline, and the `src/config/` folder every name is spelled in |
 | `10-data-layer.md` | One place for every database call, and modular inside it: the folder shape and how to get there without a big bang |
+| `11-schema-at-scale.md` | Whether the schema holds up for N clients, checked against what the field publishes and against the six Hubs already running |
+| `12-adopting-an-existing-client.md` | Bringing one of the four Hubs that already exist, with their own history and German-named tables, onto this codebase |
+| `13-kit-modularity-and-stories.md` | Making `src/kit` (42,766 lines, 45 primitives, 96 components, 148 page files) granular enough for Storybook |
+| `14-setting-up-a-new-client.md` | Setting up a new client start to finish, as it was actually run for `dev-tenant` on 21 Sept 2026 |
+
+`06-phases.md` is kept current against the actual code, not written once and left — check its
+"updated" line before trusting a checkbox in it.
+
+## `communication/` — this engagement, not the template
+
+`communication/` is gitignored: real client data, offers, transcripts and the dated session log for
+Immobilien van Oepen specifically, as opposed to everything above, which plans the template for
+every client. Start at `communication/README.md`, then `communication/sessions/INDEX.md` for what
+was discussed and decided session by session — its entries are written to stand on their own, so
+reading the index is usually enough without opening a dated file behind it.
 
 ## The one-paragraph version
 

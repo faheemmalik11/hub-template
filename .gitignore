@@ -68,8 +68,8 @@ pnpm-lock.yaml
 # Generated router tree — recreated by the TanStack router plugin on every dev/build
 src/routeTree.gen.ts
 
-# Client project messages and our replies — confidential, stays local
-communication/
+# Client project messages, replies and the session log — confidential, stays local
+planning/communication/
 
 # Local DB exports (real transaction data) — never commit
 supabase/_backup/
