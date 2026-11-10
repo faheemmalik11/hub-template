@@ -61,6 +61,21 @@ export const createUploadedInvoices = createServerFn({ method: "POST" })
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
     const db = supabaseAdmin as Db;
 
+    // This runs on the service-role client, which bypasses the RLS that is normally what hides a
+    // real row from someone in practice mode and a practice row from everyone else. Written here
+    // under the same role the service-role write already has to carry, so an upload made during
+    // practice mode is not a real document leaking into the real lists the moment it is created.
+    const { data: caller } = await db
+      .from(TABLE.appUsers)
+      .select("id, practice_mode_until")
+      .ilike("email", actor)
+      .maybeSingle();
+    const practiceRow = caller as { id: string; practice_mode_until: string | null } | null;
+    const isPractice = Boolean(
+      practiceRow?.practice_mode_until && new Date(practiceRow.practice_mode_until) > new Date(),
+    );
+    const demoFields = isPractice ? { is_demo: true, demo_owner_user_id: practiceRow!.id } : {};
+
     async function dropOrphan(bucket: string, path: string) {
       try {
         await db.storage.from(bucket).remove([path]);
@@ -78,6 +93,7 @@ export const createUploadedInvoices = createServerFn({ method: "POST" })
         source: "upload",
         status: "needs_review",
         workflow_status: "received",
+        ...demoFields,
         issuer: f.filename,
         uploaded_for_transaction_id: data.forTransactionId ?? null,
       });
