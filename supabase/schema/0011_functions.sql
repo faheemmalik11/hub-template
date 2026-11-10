@@ -472,6 +472,55 @@ begin
 end;
 $$;
 
+-- One outgoing invoice per paying deal_party, amounts computed client side the same way the
+-- draft preview already was (src/kit/lib/commission). Trusted the same way save_deal already
+-- trusts a submitted deal_sides/deal_parties shape, rather than recomputed here in a second
+-- language the two could drift apart in.
+CREATE OR REPLACE FUNCTION public.create_deal_invoices(p_deal_id uuid, p_invoices jsonb)
+    RETURNS SETOF public.outgoing_invoices
+    LANGUAGE plpgsql SECURITY INVOKER
+    SET search_path TO 'public'
+    AS $$
+declare
+  v_deal public.deals;
+  v_item jsonb;
+begin
+  select * into v_deal from public.deals where id = p_deal_id and deleted_at is null;
+  if not found then
+    raise exception 'create_deal_invoices: deal % not found', p_deal_id;
+  end if;
+  if v_deal.status <> 'approved' then
+    raise exception 'create_deal_invoices: deal % is not approved', p_deal_id
+      using errcode = 'check_violation';
+  end if;
+
+  for v_item in select * from jsonb_array_elements(p_invoices) loop
+    insert into public.outgoing_invoices (
+      company_id, customer_id, deal_party_id, kind, deal_id,
+      status, invoice_date, amount_net, amount_gross
+    ) values (
+      v_deal.company_id,
+      (v_item ->> 'customer_id')::uuid,
+      (v_item ->> 'deal_party_id')::uuid,
+      'commission',
+      p_deal_id,
+      'draft',
+      coalesce(v_deal.notarised_on, current_date),
+      (v_item ->> 'amount_net')::numeric,
+      (v_item ->> 'amount_gross')::numeric
+    );
+  end loop;
+
+  update public.deals set status = 'invoiced' where id = p_deal_id;
+
+  return query select * from public.outgoing_invoices
+    where deal_id = p_deal_id and kind = 'commission';
+end;
+$$;
+
+REVOKE ALL ON FUNCTION public.create_deal_invoices(uuid, jsonb) FROM public, anon;
+GRANT EXECUTE ON FUNCTION public.create_deal_invoices(uuid, jsonb) TO authenticated;
+
 
 CREATE OR REPLACE FUNCTION public.assignment_rule_preview(p_rule uuid) RETURNS TABLE(matches bigint, would_change bigint)
     LANGUAGE plpgsql STABLE

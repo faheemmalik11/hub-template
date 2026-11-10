@@ -89,6 +89,13 @@ export interface DealCostInput {
   incurred_on: string | null;
 }
 
+export interface DealInvoiceInput {
+  deal_party_id: string;
+  customer_id: string;
+  amount_net: number;
+  amount_gross: number;
+}
+
 export interface DealInput {
   company_id: string | null;
   notarised_on: string | null;
@@ -217,5 +224,22 @@ export function useApproveDeal(dealId: string) {
       if (error) throw error;
     },
     onSuccess: () => qc.invalidateQueries({ queryKey: queryKeys.deals.all }),
+  });
+}
+
+export function useCreateDealInvoices(dealId: string) {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async (invoices: DealInvoiceInput[]) => {
+      const { error } = await sb.rpc("create_deal_invoices", {
+        p_deal_id: dealId,
+        p_invoices: invoices,
+      });
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: queryKeys.deals.all });
+      qc.invalidateQueries({ queryKey: ["outgoing_invoices"] });
+    },
   });
 }

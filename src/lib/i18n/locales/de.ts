@@ -5039,6 +5039,10 @@ const de = {
       unsaved: "Nicht gespeichert",
       saveFirst: "Erst speichern, dann freigeben.",
       approvedNote: "Freigegeben am {{when}}. Jede Änderung hebt die Freigabe auf.",
+      createInvoices: "Rechnungen erstellen",
+      creatingInvoices: "Rechnungen werden erstellt …",
+      invoicesCreated: "Rechnungen erstellt.",
+      createInvoicesFailed: "Die Rechnungen konnten nicht erstellt werden.",
     },
   },
   bankSettings: {

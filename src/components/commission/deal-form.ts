@@ -5,6 +5,7 @@ import type {
   DealCostInput,
   DealCostKind,
   DealInput,
+  DealInvoiceInput,
   DealSide,
   DealSideInput,
   FeeKind,
@@ -225,4 +226,22 @@ export function dealGrossTotalCents(result: CommissionResult): number | null {
   return result.ok
     ? result.invoices.reduce((sum, invoice) => sum + invoice.totalGrossCents, 0)
     : null;
+}
+
+/** One row per paying deal_party, matched to the already-computed draft by side + customer. */
+export function invoiceInputsOf(deal: Deal, result: CommissionResult): DealInvoiceInput[] {
+  if (!result.ok) return [];
+  return result.invoices.map((invoice) => {
+    const side = deal.deal_sides.find((s) => s.side === invoice.side);
+    const party = side?.deal_parties.find((p) => p.customer_id === invoice.payerKey);
+    if (!party) {
+      throw new Error(`invoiceInputsOf: no deal_party for ${invoice.side}/${invoice.payerKey}`);
+    }
+    return {
+      deal_party_id: party.id,
+      customer_id: party.customer_id,
+      amount_net: invoice.totalNetCents / 100,
+      amount_gross: invoice.totalGrossCents / 100,
+    };
+  });
 }

@@ -4875,6 +4875,10 @@ const en = {
       unsaved: "Not saved",
       saveFirst: "Save first, then approve.",
       approvedNote: "Approved on {{when}}. Any change withdraws the approval.",
+      createInvoices: "Create invoices",
+      creatingInvoices: "Creating invoices …",
+      invoicesCreated: "Invoices created.",
+      createInvoicesFailed: "Creating the invoices failed.",
     },
   },
   bankSettings: {

@@ -20,6 +20,7 @@ import {
   SIDES,
   calculateDealForm,
   dealFormOf,
+  invoiceInputsOf,
   saveInputOf,
   type DealForm,
 } from "@/components/commission/deal-form";
@@ -27,6 +28,7 @@ import {
   useApproveDeal,
   useCompanies,
   useCreateCustomer,
+  useCreateDealInvoices,
   useCustomers,
   useDeal,
   useSaveDeal,
@@ -92,6 +94,7 @@ function DealEditor({ deal }: { deal: Deal }) {
   const createCustomer = useCreateCustomer();
   const save = useSaveDeal(deal.id);
   const approve = useApproveDeal(deal.id);
+  const createInvoices = useCreateDealInvoices(deal.id);
 
   useEffect(() => {
     const fresh = dealFormOf(deal);
@@ -149,6 +152,15 @@ function DealEditor({ deal }: { deal: Deal }) {
       onSuccess: () => toast.success(t("commissionDeals.actions.approved")),
       onError: (error) =>
         toast.error(t("commissionDeals.actions.approveFailed"), { description: errorText(error) }),
+    });
+
+  const runCreateInvoices = () =>
+    createInvoices.mutate(invoiceInputsOf(deal, result), {
+      onSuccess: () => toast.success(t("commissionDeals.actions.invoicesCreated")),
+      onError: (error) =>
+        toast.error(t("commissionDeals.actions.createInvoicesFailed"), {
+          description: errorText(error),
+        }),
     });
 
   return (
@@ -287,7 +299,7 @@ function DealEditor({ deal }: { deal: Deal }) {
                   : t("commissionDeals.actions.save")}
               </Button>
             )}
-            {mayApprove && deal.status !== "approved" && (
+            {mayApprove && deal.status !== "approved" && deal.status !== "invoiced" && (
               <Button
                 variant="outline"
                 onClick={runApprove}
@@ -297,6 +309,14 @@ function DealEditor({ deal }: { deal: Deal }) {
                 {approve.isPending
                   ? t("commissionDeals.actions.approving")
                   : t("commissionDeals.actions.approve")}
+              </Button>
+            )}
+            {mayApprove && deal.status === "approved" && result.ok && (
+              <Button onClick={runCreateInvoices} disabled={createInvoices.isPending}>
+                <Check className="size-4" />
+                {createInvoices.isPending
+                  ? t("commissionDeals.actions.creatingInvoices")
+                  : t("commissionDeals.actions.createInvoices")}
               </Button>
             )}
           </div>
