@@ -3180,35 +3180,50 @@ begin
     returning id into v_supplier_id;
   end if;
 
-  if not exists (
+  -- Bank matching only ever offers candidates from the invoice's own company (scopedToCompany in
+  -- matching.functions.ts), so a transaction seeded with no company_id can never be suggested. The
+  -- existence check also has to look past a soft-deleted row: reset_onboarding_demo_data() deletes
+  -- these on restart, and "not exists" alone would see the deleted row and skip reseeding it,
+  -- leaving no candidate behind for the rest of the session.
+  if exists (
     select 1 from public.bank_transactions
      where is_demo and demo_owner_user_id = v_user_id
        and payment_reference = 'MOELLER GARTENBAU RE 2026-1043 487,90'
   ) then
+    update public.bank_transactions
+       set deleted_at = null, company_id = v_company_id
+     where is_demo and demo_owner_user_id = v_user_id
+       and payment_reference = 'MOELLER GARTENBAU RE 2026-1043 487,90';
+  else
     insert into public.bank_transactions (
       amount, currency, booking_date, value_date, payment_reference, booking_text,
-      counterparty_holder, source, is_demo, demo_owner_user_id
+      counterparty_holder, source, company_id, is_demo, demo_owner_user_id
     )
     values (
       -487.90, 'EUR', current_date, current_date,
       'MOELLER GARTENBAU RE 2026-1043 487,90', 'MOELLER GARTENBAU RE 2026-1043 487,90',
-      'Gartenbau Möller', 'manual', true, v_user_id
+      'Gartenbau Möller', 'manual', v_company_id, true, v_user_id
     );
   end if;
 
-  if not exists (
+  if exists (
     select 1 from public.bank_transactions
      where is_demo and demo_owner_user_id = v_user_id
        and payment_reference = 'MOELLER GARTENBAU RE 2026-0987 478,90'
   ) then
+    update public.bank_transactions
+       set deleted_at = null, company_id = v_company_id
+     where is_demo and demo_owner_user_id = v_user_id
+       and payment_reference = 'MOELLER GARTENBAU RE 2026-0987 478,90';
+  else
     insert into public.bank_transactions (
       amount, currency, booking_date, value_date, payment_reference, booking_text,
-      counterparty_holder, source, is_demo, demo_owner_user_id
+      counterparty_holder, source, company_id, is_demo, demo_owner_user_id
     )
     values (
       -478.90, 'EUR', current_date - 28, current_date - 28,
       'MOELLER GARTENBAU RE 2026-0987 478,90', 'MOELLER GARTENBAU RE 2026-0987 478,90',
-      'Gartenbau Möller', 'manual', true, v_user_id
+      'Gartenbau Möller', 'manual', v_company_id, true, v_user_id
     );
   end if;
 end $$;
