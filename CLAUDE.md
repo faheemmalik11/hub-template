@@ -29,8 +29,8 @@ being brought in, can instead be **a long-lived branch of this repository**, off
 
 **The exact order of work, every time (2026-11-10):**
 
-1. `dev` (or `main`) is the one, latest, shared codebase — this is where generic work starts,
-   never in a client's own worktree.
+1. `dev` is the one, latest, shared codebase — this is where generic work starts, never in a
+   client's own worktree.
 2. Make the change on `dev`, in the main checkout. Commit it there, and test it there — typecheck,
    lint, and run the app — before it touches a client's worktree at all.
 3. Each client branch has its own worktree (`.worktrees/<client>/`), checked out on its own branch,
