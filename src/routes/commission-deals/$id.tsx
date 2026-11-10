@@ -18,6 +18,7 @@ import { DealFactsCard } from "@/components/commission/deal-facts-card";
 import { DealInvoicesCard } from "@/components/commission/deal-invoices-card";
 import { DraftInvoices } from "@/components/commission/draft-invoices";
 import { SideCard } from "@/components/commission/side-card";
+import { useShellLeafLabel } from "@/kit/components/shell";
 import {
   SIDES,
   calculateDealForm,
@@ -53,6 +54,7 @@ function CommissionDealPage() {
   const { id } = Route.useParams();
   const { t } = useTranslation();
   const dealQ = useDeal(id);
+  useShellLeafLabel(dealQ.data ? (dealQ.data.property?.name ?? dealQ.data.property_label) : null);
 
   return (
     <div>
