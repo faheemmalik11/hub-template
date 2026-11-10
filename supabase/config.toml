@@ -13,3 +13,9 @@ verify_jwt = false
 # outcome itself, only to look up which row to re-check with BANKSapi directly.
 [functions.payment-callback]
 verify_jwt = false
+
+# Propstack posts here with no JWT attached. Unlike the two callbacks above this can insert a
+# brand-new property, so it checks X-Propstack-Signature against PROPSTACK_WEBHOOK_SECRET instead
+# of relying on a narrower trust model.
+[functions.propstack-webhook]
+verify_jwt = false
