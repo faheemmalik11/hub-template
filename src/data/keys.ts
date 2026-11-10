@@ -29,6 +29,11 @@ export const queryKeys = {
     settings: ["deal-donations", "settings"] as const,
     forDeal: (dealId: string) => ["deal-donations", "deal", dealId] as const,
   },
+  dealReferrerBonuses: {
+    forDeal: (dealId: string) => ["deal-referrer-bonuses", "deal", dealId] as const,
+    tier: (customerId: string, earnedOn: string) =>
+      ["deal-referrer-bonuses", "tier", customerId, earnedOn] as const,
+  },
   deals: {
     all: ["deals"] as const,
     one: (id: string) => ["deals", id] as const,

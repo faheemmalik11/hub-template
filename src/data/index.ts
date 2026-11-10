@@ -28,6 +28,7 @@ export * from "./properties";
 export * from "./deals";
 export * from "./broker-bonuses";
 export * from "./deal-donations";
+export * from "./deal-referrer-bonuses";
 
 export { useFeature, useFeatureGate } from "./use-feature";
 export { searchTokens, searchWasDropped } from "./shared";
