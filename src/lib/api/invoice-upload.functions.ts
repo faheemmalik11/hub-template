@@ -14,6 +14,10 @@ import { z } from "zod";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 import { AppError } from "./errors";
 import { TABLE } from "@/config/tables";
+import {
+  PRACTICE_INVOICE,
+  PRACTICE_INVOICE_SAMPLE_FILENAME,
+} from "@/features/onboarding-practice/practice-invoice-task";
 
 const FileSchema = z.object({
   invoiceId: z.string().uuid(),
@@ -86,6 +90,20 @@ export const createUploadedInvoices = createServerFn({ method: "POST" })
 
     const ids: string[] = [];
     for (const f of data.files) {
+      // The sample file for the "process an invoice" practice task carries none of the fields a
+      // real AI extraction would have filled in: no invoice number, no supplier, an issuer that
+      // would otherwise read as the filename itself. Without them, bank matching (step 8) has
+      // nothing to anchor the practice transaction to besides the amount, which alone never clears
+      // the candidate threshold. Filled in here, once, instead of being left for step 8 to fail on.
+      const practiceSampleFields =
+        isPractice && f.filename === PRACTICE_INVOICE_SAMPLE_FILENAME
+          ? {
+              issuer: PRACTICE_INVOICE.issuer,
+              invoice_number: PRACTICE_INVOICE.invoiceNumber,
+              document_date: PRACTICE_INVOICE.documentDate,
+              due_date: PRACTICE_INVOICE.dueDate,
+            }
+          : { issuer: f.filename };
       const { error: invoiceError } = await db.from(TABLE.documents).insert({
         id: f.invoiceId,
         document_type: "rechnung",
@@ -94,7 +112,7 @@ export const createUploadedInvoices = createServerFn({ method: "POST" })
         status: "needs_review",
         workflow_status: "received",
         ...demoFields,
-        issuer: f.filename,
+        ...practiceSampleFields,
         uploaded_for_transaction_id: data.forTransactionId ?? null,
       });
       if (invoiceError) {

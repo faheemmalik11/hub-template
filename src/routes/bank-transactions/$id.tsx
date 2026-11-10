@@ -139,7 +139,7 @@ function TransactionDetailPage() {
         </h1>
         <TransactionTypeBadge type={txn.transaction_type} />
         <DirectionBadge direction={txn.direction} />
-        {/* Same reading as the list: an undecided match (kandidat/auto) leaves matching_status at
+        {/* Same reading as the list: an undecided match (candidate/auto) leaves matching_status at
             'open', so without this the header said "Offen" on a transaction that in fact has a
             suggestion waiting right below it on this very screen. */}
         <TxnMatchingBadge status={txn.matching_status} hasSuggested={hasSuggestedMatch} />

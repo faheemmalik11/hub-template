@@ -38,7 +38,7 @@ export interface MatchCandidate {
   document_id: string;
   transaction_id: string;
   score: number;
-  status: "auto" | "kandidat";
+  status: "auto" | "candidate";
   match_reasons: MatchReasons;
   /**
    * Suggested amount for THIS pair, capped by what the invoice is worth. A proposal never consumes
@@ -181,7 +181,7 @@ export function runMatching(
         document_id: beleg.id,
         transaction_id: txn.id,
         score: Number(score.toFixed(2)),
-        status: score >= autoThreshold ? "auto" : "kandidat",
+        status: score >= autoThreshold ? "auto" : "candidate",
         match_reasons: reasons,
         amount_matched: pairAmount(beleg, txn),
       });
