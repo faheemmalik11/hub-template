@@ -183,7 +183,13 @@ export function ConfirmationCard({
   const documentTypeAllOptions =
     !documentType || documentTypeOptions.some((option) => option.value === documentType)
       ? documentTypeOptions
-      : [{ value: documentType, label: documentType }, ...documentTypeOptions];
+      : [
+          {
+            value: documentType,
+            label: documentType.replace(/_/g, " ").replace(/^./, (c) => c.toUpperCase()),
+          },
+          ...documentTypeOptions,
+        ];
   const documentTypeComboOptions: ComboboxOption[] = [
     { value: NO_SELECTION, label: labels.noDocumentTypeOption },
     ...documentTypeAllOptions,
