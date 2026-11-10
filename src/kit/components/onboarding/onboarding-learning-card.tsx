@@ -2,6 +2,7 @@ import { Button } from "@/kit/ui/button";
 import type { OnboardingStep } from "@/kit/onboarding";
 
 import type { OnboardingHighlightLabels } from "./onboarding-highlight-labels";
+import { SampleFileChip } from "./sample-file-chip";
 
 export interface OnboardingLearningCardProps {
   step: OnboardingStep;
@@ -10,6 +11,7 @@ export interface OnboardingLearningCardProps {
   labels: OnboardingHighlightLabels;
   showHelp: boolean;
   onCompleteInfoStep: () => void;
+  pathname: string;
 }
 
 export function OnboardingLearningCard({
@@ -19,7 +21,12 @@ export function OnboardingLearningCard({
   labels,
   showHelp,
   onCompleteInfoStep,
+  pathname,
 }: OnboardingLearningCardProps) {
+  const showSampleFile =
+    Boolean(step.sampleFileUrl) &&
+    Boolean(labels.sampleFileButton) &&
+    (!step.sampleFileDropPath || step.sampleFileDropPath === pathname);
   return (
     <div>
       <div className="flex items-center gap-2">
@@ -41,6 +48,15 @@ export function OnboardingLearningCard({
       {(showHelp || step.type === "info") && step.helpText && (
         <div className="mt-2 rounded-lg bg-amber-50 p-2.5">
           <p className="text-sm text-amber-900">{step.helpText}</p>
+        </div>
+      )}
+      {showSampleFile && step.sampleFileUrl && (
+        <div className="mt-2">
+          <SampleFileChip
+            label={labels.sampleFileButton ?? ""}
+            sampleFileUrl={step.sampleFileUrl}
+            sampleFileName={step.sampleFileName}
+          />
         </div>
       )}
       {step.type === "info" ? (

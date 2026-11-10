@@ -113,6 +113,7 @@ export function OnboardingHighlight({
       labels={labels}
       showHelp={runner.showHelp}
       onCompleteInfoStep={completeInfoStep}
+      pathname={pathname}
     />
   );
 
