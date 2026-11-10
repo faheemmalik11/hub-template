@@ -1,9 +1,31 @@
 import { serviceClient } from "../_shared/supabase.ts";
 import { jsonResponse } from "../_shared/cors.ts";
+import { TABLE } from "../_shared/tables.ts";
 import { fetchUnit, propstackKey, propstackWebhookSecret, syncUnits } from "../_shared/propstack-client.ts";
 
 // deno-lint-ignore no-explicit-any
 type Db = any;
+
+async function recordEvent(db: Db, unitId: string, payload: unknown): Promise<string | null> {
+  const { data, error } = await db
+    .from(TABLE.crmWebhookEvents)
+    .insert({ crm_provider: "propstack", crm_record_id: unitId, payload: payload ?? {} })
+    .select("id")
+    .single();
+  if (error) {
+    console.error("propstack-webhook: could not record the event:", error.message);
+    return null;
+  }
+  return (data as { id: string }).id;
+}
+
+async function settle(db: Db, eventId: string | null, status: "done" | "failed", error?: string): Promise<void> {
+  if (!eventId) return;
+  await db
+    .from(TABLE.crmWebhookEvents)
+    .update({ status, error: error ?? null, processed_at: new Date().toISOString() })
+    .eq("id", eventId);
+}
 
 async function hmacSha256Hex(secret: string, body: string): Promise<string> {
   const key = await crypto.subtle.importKey(
@@ -89,12 +111,17 @@ Deno.serve(async (request) => {
     return jsonResponse({ error: "missing unit id" }, 400);
   }
 
+  const eventId = await recordEvent(db, unitId, payload);
+
   try {
     const unit = await fetchUnit(await propstackKey(db), unitId);
     const result = await syncUnits(db, [unit]);
+    await settle(db, eventId, "done");
     return jsonResponse({ unitId, ...result });
   } catch (error) {
-    console.error("propstack-webhook: sync failed for unit", unitId, error instanceof Error ? error.message : error);
+    const message = error instanceof Error ? error.message : String(error);
+    console.error("propstack-webhook: sync failed for unit", unitId, message);
+    await settle(db, eventId, "failed", message);
     return jsonResponse({ error: "sync failed" }, 502);
   }
 });

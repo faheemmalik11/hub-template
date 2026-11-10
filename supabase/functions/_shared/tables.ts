@@ -10,6 +10,7 @@ export const TABLE = {
   bankTransactions: "bank_transactions",
   brokerBonuses: "broker_bonuses",
   credentials: "credentials",
+  crmWebhookEvents: "crm_webhook_events",
   customers: "customers",
   documentFiles: "document_files",
   documentHistory: "document_history",
