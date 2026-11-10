@@ -1238,7 +1238,7 @@ export interface DocumentsListParams {
   // human nod but the pipeline still leaves status='recognised', so no status filter ever showed them.
   trafficLight?: string;
   // Whether a bank transaction has been reconciled against this invoice, and whether that match is
-  // still open. 'suggestion' = a suggestion (status kandidat or auto) nobody has decided on yet,
+  // still open. 'suggestion' = a suggestion (status candidate or auto) nobody has decided on yet,
   // 'matched' = confirmed. Its own axis, separate from `zahlung`: an invoice can be marked paid
   // with no bank match at all, and can have a suggestion while still unpaid.
   bankMatch?: string;
@@ -1568,7 +1568,7 @@ export interface BankTransaction {
   // linked invoice, not this column.
   category_id: string | null;
   category_source: "rule" | "human" | null;
-  // Attached by useBankTransactionsPage, not a column: an undecided match (kandidat/auto)
+  // Attached by useBankTransactionsPage, not a column: an undecided match (candidate/auto)
   // exists for this transaction. matching_status stays 'open' while a suggestion is pending.
   has_suggested_match?: boolean;
   /**

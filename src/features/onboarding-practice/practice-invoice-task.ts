@@ -2,6 +2,8 @@ import type { OnboardingTask } from "@/kit/onboarding";
 
 export const PRACTICE_INVOICE_TASK_ID = "process-an-invoice";
 
+export const PRACTICE_INVOICE_SAMPLE_FILENAME = "sample-invoice.pdf";
+
 export const PRACTICE_INVOICE = {
   issuer: "Gartenbau Möller",
   invoiceNumber: "2026-1043",
@@ -42,8 +44,8 @@ export function buildPracticeInvoiceTask(t: PracticeTranslate): OnboardingTask {
         placement: "bottom",
         path: "/incoming-invoices",
         pageLabel: pageInvoices,
-        sampleFileUrl: "/seed/sample-invoice.pdf",
-        sampleFileName: "sample-invoice.pdf",
+        sampleFileUrl: `/seed/${PRACTICE_INVOICE_SAMPLE_FILENAME}`,
+        sampleFileName: PRACTICE_INVOICE_SAMPLE_FILENAME,
         sampleFileDropPath: "/incoming-invoices/upload",
         completionCondition: { eventType: "document_uploaded" },
       },
