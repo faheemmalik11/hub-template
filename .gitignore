@@ -31,7 +31,8 @@ dist-ssr
 *.sln
 *.sw?
 
-# Binaeres Bun-Lockfile (Repo nutzt Text-bun.lock)
+# Repo uses npm (package-lock.json) — a stray bun.lock/bun.lockb is noise, not the real lockfile
+bun.lock
 bun.lockb
 
 # Local secrets
@@ -61,7 +62,7 @@ downloaded_invoices/
 handover/pipeline/eval/last_predictions.json
 handover/pipeline/eval/readout.md
 handover/pipeline/eval/context.md
-# Repo uses bun.lock — competing lockfiles are noise and drift apart
+# Repo uses npm — competing lockfiles are noise and drift apart
 yarn.lock
 pnpm-lock.yaml
 
