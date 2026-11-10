@@ -102,6 +102,9 @@ create table if not exists public.app_users (
     -- Who this person is in the CRM, so they see only what the CRM says is theirs.
     crm_external_id text,
     notifications_seen_at timestamptz,
+    -- Set by set_practice_mode(), cleared by passing false. While in the future, this person sees
+    -- only their own practice rows on the demo-flagged tables, never real ones. See 0010_access.sql.
+    practice_mode_until timestamptz,
     created_by uuid,
     created_at timestamptz not null default now(),
     updated_at timestamptz not null default now(),
@@ -149,6 +152,17 @@ as $$
    where lower(email) = lower(coalesce(auth.jwt() ->> 'email', ''))
      and is_active
    limit 1;
+$$;
+
+-- Whether the signed-in person is currently trying the app out in practice mode. Read by the
+-- restrictive RLS policies in 0010_access.sql, so it must exist before that file runs.
+create or replace function public.practice_mode_active() returns boolean
+language sql stable security definer set search_path to 'public'
+as $$
+  select coalesce(
+    (select u.practice_mode_until > now() from public.app_users u where u.id = public.current_app_user_id()),
+    false
+  );
 $$;
 
 create or replace function public.current_role_name() returns text
@@ -604,11 +618,13 @@ create table if not exists public.companies (
     -- Where a filed copy of this company's documents lands: the path, the provider's own id for
     -- that folder, and how the two were bound together.
     filing_folder text,
-    drive_folder_id text,
     filing_binding text,
     -- What a client calls its parts of the business, if it has any. The names are that client's data.
     area text,
     overhead_cost_centre integer,
+    -- A row a person is trying out in practice mode, never a real company. See 0010_access.sql.
+    is_demo boolean not null default false,
+    demo_owner_user_id uuid references public.app_users(id),
     created_at timestamptz not null default now(),
     updated_at timestamptz not null default now(),
     deleted_at timestamptz,
@@ -620,6 +636,8 @@ create table if not exists public.companies (
     constraint companies_filing_folder_shape check (public.is_folder_path(filing_folder))
 );
 
+create index if not exists companies_is_demo_idx on public.companies (demo_owner_user_id) where is_demo;
+
 create table if not exists public.properties (
     id uuid primary key default gen_random_uuid(),
     code text not null unique,
@@ -629,8 +647,10 @@ create table if not exists public.properties (
     vat_status text,
     -- Where a filed copy lands: the path, the provider's own id for that folder, and the binding.
     filing_folder text,
-    drive_folder_id text,
     filing_binding text,
+    -- A row a person is trying out in practice mode, never a real property. See 0010_access.sql.
+    is_demo boolean not null default false,
+    demo_owner_user_id uuid references public.app_users(id),
     -- Where the row came from, and its id there, for a property kept in step with a CRM.
     source text not null default 'app',
     external_id text,
@@ -666,6 +686,7 @@ create table if not exists public.properties (
     constraint properties_source_external_id unique (source, external_id)
 );
 
+create index if not exists properties_is_demo_idx on public.properties (demo_owner_user_id) where is_demo;
 create index if not exists properties_crm_status on public.properties (crm_status)
     where crm_status is not null;
 
@@ -703,6 +724,10 @@ create table if not exists public.suppliers (
     bank_name text,
     fax text,
     website text,
+    trade text,
+    -- A row a person is trying out in practice mode, never a real supplier. See 0010_access.sql.
+    is_demo boolean not null default false,
+    demo_owner_user_id uuid references public.app_users(id),
     created_at timestamptz not null default now(),
     updated_at timestamptz not null default now(),
     deleted_at timestamptz,
@@ -711,6 +736,7 @@ create table if not exists public.suppliers (
 );
 
 create index if not exists suppliers_normalized_name_idx on public.suppliers (normalized_name);
+create index if not exists suppliers_is_demo_idx on public.suppliers (demo_owner_user_id) where is_demo;
 
 -- Every account this supplier has ever been seen with, and who vouched for it. A payment may only
 -- use one a person confirmed, which is what stops an invoice with a swapped IBAN being paid.
@@ -742,6 +768,12 @@ create table if not exists public.supplier_bank_accounts (
 );
 
 create index if not exists supplier_bank_accounts_supplier_idx on public.supplier_bank_accounts (supplier_id);
+
+-- One row per account the pipeline has ever seen for a supplier: the pipeline's own upsert
+-- (adapters/db/receipt_store.py's _record_bank_account, book-keeping repo) targets exactly this
+-- pair with no other predicate, so the constraint has to be a plain one, not partial on deleted_at.
+create unique index if not exists supplier_bank_accounts_supplier_iban
+    on public.supplier_bank_accounts (supplier_id, iban);
 
 -- Every time a supplier's account changed, and who was looking. A changed IBAN is the single most
 -- common invoice fraud, so the trail is kept whether or not anybody asked for it.
@@ -910,6 +942,7 @@ create table if not exists public.documents (
 
     -- What it is and where it came from
     document_type text,
+    is_invoice boolean,
     source text,
     intake_channel text,
     source_item_id text,
@@ -965,6 +998,8 @@ create table if not exists public.documents (
     assignment_source text,
     company_assignment_source text,
     property_assignment_source text,
+    document_type_source text,
+    is_invoice_source text,
     assignment_decided_by text,
     cost_category_source text,
     vat_source text,
@@ -1024,6 +1059,9 @@ create table if not exists public.documents (
     drive_named_at timestamptz,
     note text,
     private_hold boolean not null default false,
+    -- Who a private-held document belongs to. Null until an administering role assigns it; see
+    -- 0010_access.sql for how this widens read access past administering roles alone.
+    private_owner_user_id uuid references public.app_users(id) on delete set null,
 
     -- Set aside rather than deleted
     not_relevant_at timestamptz,
@@ -1033,6 +1071,10 @@ create table if not exists public.documents (
     archived_by text,
     archive_note text,
     mailbox_reset_at timestamptz,
+
+    -- A row a person is trying out in practice mode, never a real document. See 0010_access.sql.
+    is_demo boolean not null default false,
+    demo_owner_user_id uuid references public.app_users(id),
 
     created_at timestamptz not null default now(),
     updated_at timestamptz not null default now(),
@@ -1069,6 +1111,8 @@ create index if not exists documents_property on public.documents (property_id) 
 create index if not exists documents_supplier on public.documents (supplier_id) where deleted_at is null;
 create index if not exists documents_document_date on public.documents (document_date desc) where deleted_at is null;
 create index if not exists documents_content_hash on public.documents (content_hash) where deleted_at is null;
+create index if not exists documents_is_demo_idx on public.documents (demo_owner_user_id) where is_demo;
+create index if not exists documents_private_owner_idx on public.documents (private_owner_user_id) where private_hold;
 
 -- One file per role, so a second scan replaces the first instead of piling up beside it.
 create table if not exists public.document_files (
@@ -1148,10 +1192,20 @@ create table if not exists public.document_taxes (
     rate numeric(5, 2),
     net numeric(14, 2),
     vat_amount numeric(14, 2),
+    -- Which tax this row is, for regimes where two rows can share a rate (GST + PST, a
+    -- federal/provincial split). Null for a plain VAT line, where the rate alone is unique.
+    component text,
     created_at timestamptz not null default now()
 );
 
 create index if not exists document_taxes_document on public.document_taxes (document_id);
+
+-- One row per plain VAT rate on a document: the pipeline's own upsert (adapters/db/receipt_store.py's
+-- _write_line_items_tax, book-keeping repo) targets exactly this pair with the same predicate, so a
+-- future federal/provincial split (a non-null component) stays free to add a second row for the
+-- same rate without this constraint blocking it.
+create unique index if not exists document_taxes_one_rate
+    on public.document_taxes (document_id, rate) where component is null;
 
 -- Every account seen on this document, in the order they appeared. Two accounts on one invoice is
 -- the case a person has to look at.
@@ -1637,6 +1691,9 @@ create table if not exists public.bank_transactions (
     fully_used_note text,
     is_sandbox boolean not null default false,
     raw_data jsonb,
+    -- A row a person is trying out in practice mode, never a real movement. See 0010_access.sql.
+    is_demo boolean not null default false,
+    demo_owner_user_id uuid references public.app_users(id),
     imported_at timestamptz not null default now(),
     created_at timestamptz not null default now(),
     deleted_at timestamptz,
@@ -1647,12 +1704,12 @@ create table if not exists public.bank_transactions (
 );
 
 create index if not exists bank_transactions_account on public.bank_transactions (account_id);
+create index if not exists bank_transactions_is_demo_idx on public.bank_transactions (demo_owner_user_id) where is_demo;
 create index if not exists bank_transactions_company on public.bank_transactions (company_id);
 create index if not exists bank_transactions_booking_date on public.bank_transactions (booking_date desc);
 create index if not exists bank_transactions_matching_status on public.bank_transactions (matching_status)
     where deleted_at is null;
-create unique index if not exists bank_transactions_provider_hash on public.bank_transactions (provider_hash)
-    where provider_hash is not null;
+create unique index if not exists bank_transactions_provider_hash on public.bank_transactions (provider_hash);
 
 -- What a run of the sync did, for a person asking why a line is missing.
 create table if not exists public.bank_sync_logs (
@@ -1897,7 +1954,7 @@ create table if not exists public.handover_routes (
     company_id uuid not null references public.companies(id) on delete cascade,
     direction text not null,
     address text not null,
-    is_enabled boolean not null default true,
+    is_enabled boolean not null default false,
     note text,
     updated_by text,
     created_at timestamptz not null default now(),
@@ -2105,7 +2162,7 @@ create table if not exists public.outgoing_invoices (
     accounting_external_id text,
     handed_over_at timestamptz,
     handover_batch_id uuid references public.handover_batches(id),
-    last_synced_at timestamptz,
+    last_sync_at timestamptz,
     created_by text,
     created_at timestamptz not null default now(),
     updated_at timestamptz not null default now(),
@@ -2501,7 +2558,7 @@ begin
             ('payments.write', 'payments.write', array['payment_orders']),
             ('documents.read', 'rules.write', array[
                 'assignment_rules', 'approval_rules', 'approvers',
-                'handover_routes', 'handover_batches', 'category_account_mapping']),
+                'handover_batches', 'category_account_mapping']),
             ('documents.read', 'settings.manage', array[
                 'channels', 'channel_folders', 'channel_state', 'read_cursors',
                 'imported_items', 'pipeline_runs', 'processing_log', 'ai_usage',
@@ -2568,6 +2625,25 @@ drop policy if exists customers_own_deals_read on public.customers;
 create policy customers_own_deals_read on public.customers for select to authenticated
     using (public.owns_customer_through_a_deal(id));
 
+-- handover_routes (the DATEV handover addresses) never gets the generic rules.write "for all"
+-- policy above: with that policy plus Postgres's default table grants, anyone holding rules.write
+-- could PATCH the row directly over the REST API, bypassing set_datev_route() and
+-- update_datev_route_status() entirely, along with the auth.uid() and has_company_access() checks
+-- written into those two functions and the address column this table exists to keep unreadable.
+-- Read stays capability-gated; every write goes through the two SECURITY DEFINER functions, never
+-- through a table grant, so there is no direct path left for RLS alone to have to stop.
+alter table public.handover_routes enable row level security;
+
+drop policy if exists handover_routes_read on public.handover_routes;
+create policy handover_routes_read on public.handover_routes for select to authenticated
+    using (public.may_read('documents.read'));
+
+revoke insert, update, delete on public.handover_routes from authenticated;
+
+revoke select on public.handover_routes from authenticated;
+grant select (id, company_id, direction, is_enabled, note, updated_by, created_at, updated_at)
+    on public.handover_routes to authenticated;
+
 -- A person's own rows, regardless of capability: their notification settings, their tour progress,
 -- and what was sent to them.
 alter table public.notification_settings enable row level security;
@@ -2607,6 +2683,133 @@ alter table public.credential_reads enable row level security;
 drop policy if exists credential_reads_read on public.credential_reads;
 create policy credential_reads_read on public.credential_reads for select to authenticated
     using (public.may_read('settings.manage'));
+
+-- Practice mode: a person trying the app out sees only their own is_demo rows while it is active,
+-- and only real rows otherwise. Restrictive, so it narrows what the area policies above already
+-- allow rather than granting anything on its own -- a person with no documents.read grant still
+-- sees nothing here either way.
+drop policy if exists documents_demo_owner_read on public.documents;
+create policy documents_demo_owner_read on public.documents as restrictive for select to authenticated
+    using (case when public.practice_mode_active()
+                then is_demo and demo_owner_user_id = public.current_app_user_id()
+                else not is_demo end);
+drop policy if exists documents_demo_owner_write on public.documents;
+create policy documents_demo_owner_write on public.documents as restrictive for insert to authenticated
+    with check (not is_demo or demo_owner_user_id = public.current_app_user_id());
+drop policy if exists documents_demo_owner_write_update on public.documents;
+create policy documents_demo_owner_write_update on public.documents as restrictive for update to authenticated
+    using (not is_demo or demo_owner_user_id = public.current_app_user_id())
+    with check (not is_demo or demo_owner_user_id = public.current_app_user_id());
+
+drop policy if exists suppliers_demo_owner_read on public.suppliers;
+create policy suppliers_demo_owner_read on public.suppliers as restrictive for select to authenticated
+    using (case when public.practice_mode_active()
+                then is_demo and demo_owner_user_id = public.current_app_user_id()
+                else not is_demo end);
+drop policy if exists suppliers_demo_owner_write on public.suppliers;
+create policy suppliers_demo_owner_write on public.suppliers as restrictive for insert to authenticated
+    with check (not is_demo or demo_owner_user_id = public.current_app_user_id());
+drop policy if exists suppliers_demo_owner_write_update on public.suppliers;
+create policy suppliers_demo_owner_write_update on public.suppliers as restrictive for update to authenticated
+    using (not is_demo or demo_owner_user_id = public.current_app_user_id())
+    with check (not is_demo or demo_owner_user_id = public.current_app_user_id());
+
+drop policy if exists companies_demo_owner_read on public.companies;
+create policy companies_demo_owner_read on public.companies as restrictive for select to authenticated
+    using (case when public.practice_mode_active()
+                then is_demo and demo_owner_user_id = public.current_app_user_id()
+                else not is_demo end);
+drop policy if exists companies_demo_owner_write on public.companies;
+create policy companies_demo_owner_write on public.companies as restrictive for insert to authenticated
+    with check (not is_demo or demo_owner_user_id = public.current_app_user_id());
+drop policy if exists companies_demo_owner_write_update on public.companies;
+create policy companies_demo_owner_write_update on public.companies as restrictive for update to authenticated
+    using (not is_demo or demo_owner_user_id = public.current_app_user_id())
+    with check (not is_demo or demo_owner_user_id = public.current_app_user_id());
+
+drop policy if exists properties_demo_owner_read on public.properties;
+create policy properties_demo_owner_read on public.properties as restrictive for select to authenticated
+    using (case when public.practice_mode_active()
+                then is_demo and demo_owner_user_id = public.current_app_user_id()
+                else not is_demo end);
+drop policy if exists properties_demo_owner_write on public.properties;
+create policy properties_demo_owner_write on public.properties as restrictive for insert to authenticated
+    with check (not is_demo or demo_owner_user_id = public.current_app_user_id());
+drop policy if exists properties_demo_owner_write_update on public.properties;
+create policy properties_demo_owner_write_update on public.properties as restrictive for update to authenticated
+    using (not is_demo or demo_owner_user_id = public.current_app_user_id())
+    with check (not is_demo or demo_owner_user_id = public.current_app_user_id());
+
+drop policy if exists bank_transactions_demo_owner_read on public.bank_transactions;
+create policy bank_transactions_demo_owner_read on public.bank_transactions as restrictive for select to authenticated
+    using (case when public.practice_mode_active()
+                then is_demo and demo_owner_user_id = public.current_app_user_id()
+                else not is_demo end);
+drop policy if exists bank_transactions_demo_owner_write on public.bank_transactions;
+create policy bank_transactions_demo_owner_write on public.bank_transactions as restrictive for insert to authenticated
+    with check (not is_demo or demo_owner_user_id = public.current_app_user_id());
+drop policy if exists bank_transactions_demo_owner_write_update on public.bank_transactions;
+create policy bank_transactions_demo_owner_write_update on public.bank_transactions as restrictive for update to authenticated
+    using (not is_demo or demo_owner_user_id = public.current_app_user_id())
+    with check (not is_demo or demo_owner_user_id = public.current_app_user_id());
+
+-- Private post: mail the pipeline never files into a company folder because it belongs to a person,
+-- not the business (briefing: this must not be readable by whoever happens to hold documents.read).
+-- Restrictive, so it narrows what the area policies above already allow rather than granting
+-- anything on its own -- a person with no documents.read grant still sees nothing here either way.
+-- An administering role always sees it; the person it was assigned to (private_owner_user_id) sees
+-- that one row once an admin has made the assignment. Nobody else, regardless of capability.
+drop policy if exists documents_private_hold_read on public.documents;
+create policy documents_private_hold_read on public.documents as restrictive for select to authenticated
+    using (not private_hold or public.is_admin() or private_owner_user_id = public.current_app_user_id());
+drop policy if exists documents_private_hold_write on public.documents;
+create policy documents_private_hold_write on public.documents as restrictive for insert to authenticated
+    with check (not private_hold or public.is_admin() or private_owner_user_id = public.current_app_user_id());
+drop policy if exists documents_private_hold_write_update on public.documents;
+create policy documents_private_hold_write_update on public.documents as restrictive for update to authenticated
+    using (not private_hold or public.is_admin() or private_owner_user_id = public.current_app_user_id())
+    with check (not private_hold or public.is_admin() or private_owner_user_id = public.current_app_user_id());
+
+-- Everything that hangs off a document follows the document's own visibility. Without this, a
+-- private row stayed hidden itself but its files, history, line items, taxes, bank accounts, bank
+-- matches, import log and processing log were still readable sideways by document_id, through
+-- their own capability-scoped policy alone.
+do $$
+declare
+    t text;
+begin
+    foreach t in array array['document_files', 'document_history', 'document_line_items',
+                              'document_taxes', 'document_bank_accounts',
+                              'document_transaction_matches', 'imported_items', 'processing_log',
+                              'ai_usage', 'payment_orders'] loop
+        execute format('drop policy if exists %I on public.%I', t || '_private_hold_read', t);
+        execute format(
+            'create policy %I on public.%I as restrictive for select to authenticated using ('
+            || '%I.document_id is null or not exists ('
+            || 'select 1 from public.documents d where d.id = %I.document_id and d.private_hold '
+            || 'and not (public.is_admin() or d.private_owner_user_id = public.current_app_user_id())))',
+            t || '_private_hold_read', t, t, t);
+    end loop;
+end
+$$;
+
+-- document_history additionally has to refuse WRITING a row against a private document the caller
+-- may not read, the same way documents_private_hold_write guards the document itself.
+drop policy if exists document_history_private_hold_write on public.document_history;
+create policy document_history_private_hold_write on public.document_history as restrictive for insert to authenticated
+    with check (
+        not exists (
+            select 1 from public.documents d
+             where d.id = document_history.document_id and d.private_hold
+               and not (public.is_admin() or d.private_owner_user_id = public.current_app_user_id())
+        )
+    );
+
+-- The trail is written once and never changed, so a client role cannot rewrite its own history
+-- after the fact even through a capability it otherwise holds. See 0011_functions.sql and
+-- 0014_triggers.sql for the trigger that blocks UPDATE/DELETE/TRUNCATE for every role, including
+-- this one's own service role; the revoke below is the belt to that trigger's suspenders.
+revoke update, delete, truncate on public.document_history from authenticated, anon;
 
 commit;
 
@@ -2665,7 +2868,7 @@ begin
 end;
 $$;
 
-CREATE OR REPLACE FUNCTION public.acknowledge_notification(p_event_id bigint) RETURNS void
+CREATE OR REPLACE FUNCTION public.acknowledge_notification(p_event_id uuid) RETURNS void
     LANGUAGE plpgsql SECURITY DEFINER
     SET search_path TO 'public'
     AS $$
@@ -2724,6 +2927,7 @@ begin
     v_text := case new.paid_source
       when 'bank_match' then 'Workflow: paid, confirmed by the bank'
       when 'manual' then 'Workflow: Bezahlt (manuell markiert)'
+      when 'payment_file' then 'Workflow: paid, confirmed after a payment file'
       else 'Workflow: Bezahlt'
     end;
 
@@ -3241,8 +3445,8 @@ CREATE OR REPLACE FUNCTION public.capture_supplier_iban_history() RETURNS trigge
     AS $$
 begin
   if new.iban is distinct from old.iban then
-    insert into public.supplier_iban_history (supplier_id, iban, bic, bank_name, changed_by)
-    values (old.id, old.iban, old.bic, old.bank_name, coalesce(auth.uid()::text, 'pipeline'));
+    insert into public.supplier_iban_history (supplier_id, old_iban, new_iban, changed_by, note)
+    values (old.id, old.iban, new.iban, coalesce(auth.uid()::text, 'pipeline'), 'iban_changed');
   end if;
   return new;
 end;
@@ -3314,6 +3518,20 @@ CREATE OR REPLACE FUNCTION public.chain_people() RETURNS TABLE(id uuid, name tex
     left join public.roles r on r.id = u.role_id
    order by u.name nulls last;
 $$;
+
+CREATE OR REPLACE FUNCTION public.team_login_status() RETURNS TABLE(user_id uuid, last_sign_in_at timestamptz, never_signed_in boolean)
+    LANGUAGE sql STABLE SECURITY DEFINER
+    SET search_path TO 'public', 'auth'
+    AS $$
+  select a.id, u.last_sign_in_at, u.last_sign_in_at is null
+    from public.app_users a
+    left join auth.users u on u.id = a.auth_user_id
+   where public.is_admin();
+$$;
+
+revoke execute on function public.team_login_status() from public;
+revoke execute on function public.team_login_status() from anon;
+grant execute on function public.team_login_status() to authenticated;
 
 CREATE OR REPLACE FUNCTION public.channel_secret_name(p_channel text) RETURNS text
     LANGUAGE sql IMMUTABLE
@@ -3673,6 +3891,32 @@ begin
 end
 $$;
 
+-- document_history is the audit trail a person reads on the detail screen, so once a row is
+-- written it has to stay exactly as written. INSERT is still open to anyone the area policy in
+-- 0010_access.sql already lets write; UPDATE, DELETE and TRUNCATE are refused unconditionally, for
+-- every role including the pipeline's own service role, which is why this is a trigger and not
+-- only the grant revoked beside it. actor/created_at are stamped here rather than trusted from the
+-- caller only for authenticated/anon: a client role could otherwise write history under somebody
+-- else's name or backdate it; the pipeline's own service-role writes keep the timestamp it sends.
+CREATE OR REPLACE FUNCTION public.guard_document_history_immutable() RETURNS trigger
+    LANGUAGE plpgsql
+    AS $$
+begin
+  if tg_op = 'INSERT' then
+    if current_user in ('authenticated', 'anon') then
+      new.actor := auth.jwt() ->> 'email';
+      new.created_at := now();
+    end if;
+    return new;
+  elsif tg_op = 'UPDATE' then
+    raise exception 'document_history rows cannot be changed' using errcode = '42501';
+  elsif tg_op = 'DELETE' then
+    raise exception 'document_history rows cannot be deleted' using errcode = '42501';
+  end if;
+  raise exception 'document_history cannot be truncated' using errcode = '42501';
+end;
+$$;
+
 CREATE OR REPLACE FUNCTION public.invoice_iban_checksum_ok(candidate text) RETURNS boolean
     LANGUAGE sql IMMUTABLE
     SET search_path TO 'public'
@@ -3724,6 +3968,13 @@ CREATE OR REPLACE FUNCTION public.amount_paid_out(p_gross numeric, p_tip numeric
   select case when p_gross > 0 then p_gross + coalesce(p_tip, 0) else p_gross end;
 $$;
 
+CREATE OR REPLACE FUNCTION public.document_is_countable(p_status text, p_private_hold boolean) RETURNS boolean
+    LANGUAGE sql IMMUTABLE
+    SET search_path TO 'public'
+    AS $$
+  select p_status is distinct from 'duplicate' and not coalesce(p_private_hold, false);
+$$;
+
 CREATE OR REPLACE FUNCTION public.invoice_matched_sum(p_invoice uuid) RETURNS numeric
     LANGUAGE sql STABLE
     SET search_path TO 'public'
@@ -3737,10 +3988,10 @@ CREATE OR REPLACE FUNCTION public.invoice_queue_kpis(p_today date DEFAULT CURREN
     LANGUAGE sql STABLE
     SET search_path TO 'public'
     AS $$
-      with base as (select * from public.documents where true and deleted_at is null and archived_at is null and not_relevant_at is null)
+      with base as (select * from public.documents where true and private_hold = false and deleted_at is null and archived_at is null and not_relevant_at is null)
       select 'all'::text, count(*), coalesce(sum(amount_gross), 0) from base
       union all
-      select 'needs_action'::text, count(*), coalesce(sum(amount_gross), 0) from base where status = 'needs_review'
+      select 'needs_action'::text, count(*), coalesce(sum(amount_gross), 0) from base where status = 'needs_review' and is_invoice = true
       union all
       select 'missing_assignment'::text, count(*), coalesce(sum(amount_gross), 0) from base where company_id is null
       union all
@@ -4183,6 +4434,9 @@ begin
   if not found or v_inv.supplier_id is null then
     return null;
   end if;
+  if v_inv.is_demo then
+    return null;
+  end if;
 
   if coalesce(v_inv.cost_category_source, 'ai') not in ('rule', 'human') then
     return null;
@@ -4616,20 +4870,20 @@ declare
 begin
     if tg_op = 'INSERT' then
         insert into public.supplier_iban_history
-            (supplier_id, iban, bic, bank_name, changed_by, event)
-        values (new.supplier_id, new.iban, new.bic, new.bank_name, akteur, 'account_added');
+            (supplier_id, old_iban, new_iban, changed_by, source, note)
+        values (new.supplier_id, null, new.iban, akteur, new.source, 'account_added');
         -- A supplier's first account arrives as the default, so both events are true of it and
         -- both are recorded. The list then reads the same whether the default was set on the way
         -- in or picked later.
         if new.is_default then
             insert into public.supplier_iban_history
-                (supplier_id, iban, bic, bank_name, changed_by, event)
-            values (new.supplier_id, new.iban, new.bic, new.bank_name, akteur, 'default_set');
+                (supplier_id, old_iban, new_iban, changed_by, source, note)
+            values (new.supplier_id, null, new.iban, akteur, new.source, 'default_set');
         end if;
     elsif new.is_default and not coalesce(old.is_default, false) then
         insert into public.supplier_iban_history
-            (supplier_id, iban, bic, bank_name, changed_by, event)
-        values (new.supplier_id, new.iban, new.bic, new.bank_name, akteur, 'default_set');
+            (supplier_id, old_iban, new_iban, changed_by, source, note)
+        values (new.supplier_id, null, new.iban, akteur, new.source, 'default_set');
     end if;
     return null;
 end;
@@ -4776,6 +5030,9 @@ begin
   if v_merge.deleted_at is not null then
     raise exception 'merge_suppliers: merge-away supplier % is already deleted', p_merge_id;
   end if;
+  if v_keep.is_demo is distinct from v_merge.is_demo then
+    raise exception 'merge_suppliers: a practice supplier cannot be merged with a real supplier';
+  end if;
 
   -- Reassign every FK column pointing at suppliers(id), across every table in `public`. Discovered
   -- dynamically rather than hardcoded: suppliers/documents predate this repo's tracked migration
@@ -4803,8 +5060,8 @@ begin
   -- Preserve the merged-away supplier's bank details if they differ from the survivor's, so
   -- nothing is silently lost even though only one IBAN can be "current" going forward.
   if v_merge.iban is not null and v_merge.iban is distinct from v_keep.iban then
-    insert into public.supplier_iban_history (supplier_id, iban, bic, bank_name, changed_by)
-    values (p_keep_id, v_merge.iban, v_merge.bic, v_merge.bank_name, p_merged_by);
+    insert into public.supplier_iban_history (supplier_id, old_iban, new_iban, changed_by, note)
+    values (p_keep_id, v_merge.iban, v_keep.iban, p_merged_by, 'supplier_merged');
   end if;
 
   -- Also carry the merged-away supplier's own history rows forward, so "IBAN-Verlauf" on the
@@ -4939,6 +5196,9 @@ declare
   v_invoice_number text;
 begin
   if new.type not in ('query', 'ablehnung', 'zuweisung') then
+    return null;
+  end if;
+  if exists (select 1 from public.documents d where d.id = new.document_id and d.is_demo) then
     return null;
   end if;
 
@@ -5549,6 +5809,85 @@ CREATE OR REPLACE FUNCTION public.run_now_enabled() RETURNS boolean
                        from public.tenant_settings where single_row), false)
 $$;
 
+CREATE OR REPLACE FUNCTION public.tenant_locale_settings() RETURNS jsonb
+    LANGUAGE sql STABLE SECURITY DEFINER
+    SET search_path TO 'public'
+    AS $$
+    select coalesce(
+        (select config -> 'locale' from public.tenant_settings where single_row),
+        '{"dateFormat": "dd.MM.yyyy", "decimalSeparator": ",", "currency": "EUR"}'::jsonb
+    )
+$$;
+
+CREATE OR REPLACE FUNCTION public.tenant_tax_regime() RETURNS jsonb
+    LANGUAGE sql STABLE SECURITY DEFINER
+    SET search_path TO 'public'
+    AS $$
+    select coalesce(
+        (select config -> 'tax' from public.tenant_settings where single_row),
+        '{"country": "DE", "defaultVatRate": 19, "taxModel": "flat"}'::jsonb
+    )
+$$;
+
+CREATE OR REPLACE FUNCTION public.tenant_banking_provider() RETURNS text
+    LANGUAGE sql STABLE SECURITY DEFINER
+    SET search_path TO 'public'
+    AS $$
+    select coalesce(
+        (select config -> 'banking' ->> 'provider' from public.tenant_settings where single_row),
+        'banksapi'
+    )
+$$;
+
+CREATE OR REPLACE FUNCTION public.tenant_card_provider() RETURNS text
+    LANGUAGE sql STABLE SECURITY DEFINER
+    SET search_path TO 'public'
+    AS $$
+    select coalesce(
+        (select config -> 'cards' ->> 'provider' from public.tenant_settings where single_row),
+        'pleo'
+    )
+$$;
+
+CREATE OR REPLACE FUNCTION public.set_practice_mode(p_active boolean) RETURNS void
+    LANGUAGE plpgsql SECURITY DEFINER
+    SET search_path TO 'public'
+    AS $$
+declare
+  v_user_id uuid := public.current_app_user_id();
+begin
+  if v_user_id is null then
+    raise exception 'set_practice_mode: no signed-in app user';
+  end if;
+
+  update public.app_users
+     set practice_mode_until = case when p_active then now() + interval '30 minutes' else null end
+   where id = v_user_id;
+end $$;
+
+CREATE OR REPLACE FUNCTION public.reset_onboarding_demo_data() RETURNS void
+    LANGUAGE plpgsql SECURITY DEFINER
+    SET search_path TO 'public'
+    AS $$
+declare
+  v_user_id uuid := public.current_app_user_id();
+begin
+  if v_user_id is null then
+    raise exception 'reset_onboarding_demo_data: no signed-in app user';
+  end if;
+
+  update public.documents set deleted_at = now()
+   where is_demo and demo_owner_user_id = v_user_id and deleted_at is null;
+  update public.bank_transactions set deleted_at = now()
+   where is_demo and demo_owner_user_id = v_user_id and deleted_at is null;
+  update public.suppliers set deleted_at = now()
+   where is_demo and demo_owner_user_id = v_user_id and deleted_at is null;
+  update public.companies set deleted_at = now()
+   where is_demo and demo_owner_user_id = v_user_id and deleted_at is null;
+  update public.properties set deleted_at = now()
+   where is_demo and demo_owner_user_id = v_user_id and deleted_at is null;
+end $$;
+
 -- Saves a deal with its sides, payers and costs in one transaction, as the caller. Any edit withdraws
 -- an approval, because what was approved is no longer what is saved.
 CREATE OR REPLACE FUNCTION public.save_deal(p_deal_id uuid, p_deal jsonb, p_sides jsonb, p_status text, p_costs jsonb DEFAULT '[]'::jsonb) RETURNS void
@@ -5624,7 +5963,6 @@ begin
   end loop;
 end;
 $$;
-
 
 CREATE OR REPLACE FUNCTION public.send_notification(p_recipient uuid, p_note text DEFAULT NULL::text, p_target_kind text DEFAULT NULL::text, p_target_id text DEFAULT NULL::text, p_target_path text DEFAULT NULL::text) RETURNS bigint
     LANGUAGE plpgsql SECURITY DEFINER
@@ -5727,12 +6065,12 @@ CREATE OR REPLACE FUNCTION public.set_bank_account_connect_route() RETURNS trigg
     LANGUAGE plpgsql
     AS $$
 begin
-  if new.provider_id is null then
+  if new.provider_ref is null then
     new.connect_route := coalesce(new.connect_route, 'ebics_or_manual');
   else
     select case when p.is_supported then 'banksapi' else 'ebics_or_manual' end
       into new.connect_route
-      from bank_providers p where p.id = new.provider_id;
+      from bank_providers p where p.provider_ref = new.provider_ref;
   end if;
   return new;
 end $$;
@@ -5815,6 +6153,9 @@ begin
   if auth.uid() is null then
     raise exception 'set_datev_route: authentication required' using errcode = 'insufficient_privilege';
   end if;
+  if not public.may_write('rules.write') then
+    raise exception 'set_datev_route: rules.write required' using errcode = 'insufficient_privilege';
+  end if;
   if not public.has_company_access(p_company_id) then
     raise exception 'set_datev_route: no access to this company' using errcode = 'insufficient_privilege';
   end if;
@@ -5829,6 +6170,10 @@ begin
     updated_at = excluded.updated_at;
 end;
 $$;
+
+revoke execute on function public.set_datev_route(uuid, text, text, boolean, text, text) from public;
+revoke execute on function public.set_datev_route(uuid, text, text, boolean, text, text) from anon;
+grant execute on function public.set_datev_route(uuid, text, text, boolean, text, text) to authenticated;
 
 CREATE OR REPLACE FUNCTION public.set_my_name(p_name text) RETURNS void
     LANGUAGE plpgsql SECURITY DEFINER
@@ -6194,6 +6539,24 @@ begin
   return null;
 end $$;
 
+CREATE OR REPLACE FUNCTION public.check_match_same_world() RETURNS trigger
+    LANGUAGE plpgsql SECURITY DEFINER
+    SET search_path TO 'public'
+    AS $$
+declare
+  v_document_demo boolean;
+  v_transaction_demo boolean;
+begin
+  select d.is_demo into v_document_demo from public.documents d where d.id = new.document_id;
+  select t.is_demo into v_transaction_demo from public.bank_transactions t where t.id = new.transaction_id;
+  if v_document_demo is not null
+     and v_transaction_demo is not null
+     and v_document_demo <> v_transaction_demo then
+    raise exception 'a practice row cannot be matched with a real row' using errcode = 'check_violation';
+  end if;
+  return new;
+end $$;
+
 CREATE OR REPLACE FUNCTION public.sync_transaction_matching_status() RETURNS trigger
     LANGUAGE plpgsql SECURITY DEFINER
     SET search_path TO 'public'
@@ -6393,6 +6756,9 @@ begin
   if auth.uid() is null then
     raise exception 'update_datev_route_status: authentication required' using errcode = 'insufficient_privilege';
   end if;
+  if not public.may_write('rules.write') then
+    raise exception 'update_datev_route_status: rules.write required' using errcode = 'insufficient_privilege';
+  end if;
 
   select company_id into v_company from public.handover_routes where id = p_id;
   if v_company is null then
@@ -6407,6 +6773,10 @@ begin
    where id = p_id;
 end;
 $$;
+
+revoke execute on function public.update_datev_route_status(uuid, boolean, text, text) from public;
+revoke execute on function public.update_datev_route_status(uuid, boolean, text, text) from anon;
+grant execute on function public.update_datev_route_status(uuid, boolean, text, text) to authenticated;
 
 CREATE OR REPLACE FUNCTION public.upsert_external_transactions(p_rows jsonb, p_account_id uuid DEFAULT NULL::uuid) RETURNS TABLE(inserted_count integer, updated_count integer)
     LANGUAGE plpgsql SECURITY DEFINER
@@ -6672,7 +7042,8 @@ select d.*,
  where d.deleted_at is null
    and d.archived_at is null
    and d.not_relevant_at is null
-   and coalesce(d.status, '') <> 'split';
+   and coalesce(d.status, '') <> 'split'
+   and public.document_is_countable(d.status, d.private_hold);
 
 -- Bank lines with the account and company they belong to, and whether a document claims them.
 create or replace view public.v_bank_transactions_list with (security_invoker = true) as
@@ -7142,6 +7513,18 @@ create trigger trg_notify_event_from_history
   after insert on public.document_history
   for each row execute function public.notify_event_from_history();
 
+-- document_history is tamper-proof once written: see guard_document_history_immutable in
+-- 0011_functions.sql for what each operation does.
+drop trigger if exists trg_guard_document_history_row on public.document_history;
+create trigger trg_guard_document_history_row
+  before insert or update or delete on public.document_history
+  for each row execute function public.guard_document_history_immutable();
+
+drop trigger if exists trg_guard_document_history_truncate on public.document_history;
+create trigger trg_guard_document_history_truncate
+  before truncate on public.document_history
+  for each statement execute function public.guard_document_history_immutable();
+
 -- from 20260829140000_first_bank_account_is_default.sql
 drop trigger if exists trg_promote_first_bank_account_to_default on public.supplier_bank_accounts;
 create trigger trg_promote_first_bank_account_to_default
@@ -7222,6 +7605,13 @@ drop trigger if exists trg_sync_uploaded_outgoing_invoice_status on public.outgo
 create trigger trg_sync_uploaded_outgoing_invoice_status
   after insert or update or delete on public.outgoing_invoice_transaction_matches
   for each row execute function public.sync_uploaded_outgoing_invoice_status_from_matches();
+
+-- A match must stay inside one world, both practice or both real. Covers every writer: the
+-- manual link function, bank-sync, and the pipeline.
+drop trigger if exists trg_check_match_same_world on public.document_transaction_matches;
+create trigger trg_check_match_same_world
+  before insert or update of document_id, transaction_id on public.document_transaction_matches
+  for each row execute function public.check_match_same_world();
 
 commit;
 
@@ -7852,7 +8242,7 @@ create unique index if not exists broker_bonuses_one_per_deal_and_type
 create table if not exists public.bonus_settings (
     single_row boolean primary key default true check (single_row),
     notary_amount numeric(12, 2) not null default 500 check (notary_amount > 0),
-    follow_up_amount numeric(12, 2) not null default 300 check (follow_up_amount > 0),
+    follow_up_amount numeric(12, 2) not null default 500 check (follow_up_amount > 0),
     own_lead_share_percent numeric(5, 2) not null default 50 check (own_lead_share_percent > 0 and own_lead_share_percent <= 100),
     company_lead_share_percent numeric(5, 2) not null default 10 check (company_lead_share_percent > 0 and company_lead_share_percent <= 100),
     personnel_flat_amount numeric(12, 2) not null default 1500 check (personnel_flat_amount >= 0),
@@ -8009,5 +8399,725 @@ revoke execute on function public.notify_overdue_payments() from public, anon, a
 grant execute on function public.notify_overdue_payments() to service_role;
 revoke execute on function public.expected_payment_for_party(uuid) from public, anon, authenticated;
 revoke execute on function public.set_expected_payment_on() from public, anon, authenticated;
+
+commit;
+
+-- ===================================================================== 0024_payment_files.sql
+
+-- The manual SEPA payment file: which account a company pays from, the files built from approved
+-- documents, and what went into each one.
+--
+-- Separate from payment_orders (0006_bank.sql), which is a different mechanism: an order sent
+-- straight to a bank provider through its API. This is the opposite shape, a file a person
+-- downloads and uploads to their own bank, so it has no provider_* column anywhere.
+--
+-- Created after 0010_access.sql and 0014_triggers.sql, so its own row level security and its own
+-- triggers are written here rather than folded into those files: a fresh apply runs this file last,
+-- and a loop over a table name that does not exist yet fails.
+
+begin;
+
+-- A company may pay from more than one account, so this is company_id -> many rows rather than
+-- company_id -> one. The one marked is_default is where a new payment file starts out pointed, and
+-- the trigger below keeps that column honest: at most one default row per company, and never zero
+-- while the company has an active account at all.
+create table if not exists public.payment_settings (
+    id uuid primary key default gen_random_uuid(),
+    company_id uuid not null references public.companies(id),
+
+    label text not null default 'Main account',
+    payer_name text not null,
+    payer_iban text not null,
+    payer_bic text,
+
+    pain_version text not null default 'pain.001.001.09',
+    execution_date_rule text not null default 'as_soon_as_possible',
+    batch_booking boolean not null default false,
+    max_transfers_per_file integer,
+    extra_closing_days date[] not null default '{}',
+
+    is_default boolean not null default true,
+
+    updated_at timestamptz not null default now(),
+    updated_by text,
+    deleted_at timestamptz,
+
+    constraint payment_settings_pain_version_known
+        check (pain_version in ('pain.001.001.02', 'pain.001.001.03', 'pain.001.001.08', 'pain.001.001.09')),
+    constraint payment_settings_execution_date_rule_known
+        check (execution_date_rule in ('as_soon_as_possible', 'on_due_date'))
+);
+
+create index if not exists payment_settings_company on public.payment_settings (company_id);
+
+-- Only one row per company may be the default, and only among the ones still active. A deleted
+-- account keeps whatever it last held so the unique index below does not block its replacement.
+create unique index if not exists payment_settings_one_default_per_company
+    on public.payment_settings (company_id) where is_default and deleted_at is null;
+
+-- A file this Hub built from a set of approved documents, paid from one account. Kept once
+-- downloaded even if every item in it later gets discarded some other way, because a client needs
+-- to see that it was built and what it said at the time.
+create table if not exists public.payment_files (
+    id uuid primary key default gen_random_uuid(),
+    company_id uuid not null references public.companies(id),
+    payment_settings_id uuid references public.payment_settings(id) on delete set null,
+
+    created_by text,
+    created_at timestamptz not null default now(),
+
+    downloaded_at timestamptz,
+    download_count integer not null default 0,
+
+    filename text,
+    pain_version text,
+    total numeric(14, 2) not null default 0,
+    item_count integer not null default 0,
+
+    status text not null default 'draft',
+    note text,
+
+    constraint payment_files_status_known
+        check (status in ('draft', 'generated', 'downloaded', 'discarded'))
+);
+
+create index if not exists payment_files_company on public.payment_files (company_id);
+create index if not exists payment_files_status on public.payment_files (status) where status != 'discarded';
+
+-- One document queued into one payment file. A document can only sit in one open (non-discarded)
+-- file at a time, enforced below, so the same invoice can never end up in two files waiting to be
+-- downloaded.
+create table if not exists public.payment_file_items (
+    id uuid primary key default gen_random_uuid(),
+    payment_file_id uuid not null references public.payment_files(id) on delete cascade,
+    company_id uuid not null references public.companies(id),
+    document_id uuid not null references public.documents(id),
+
+    recipient_name text not null,
+    iban text not null,
+    bic text,
+    amount numeric(14, 2) not null,
+    payment_reference text,
+    discount_applied boolean not null default false,
+
+    -- Set when this item could not be turned into a transfer: no confirmed account, an invalid
+    -- IBAN, a direct debit that must not be transferred again, and so on. One of the sepa engine's
+    -- own rejection reasons, kept as plain text so a new reason needs no migration here.
+    skipped_reason text,
+
+    created_at timestamptz not null default now(),
+
+    constraint payment_file_items_amount_positive check (amount > 0),
+    unique (payment_file_id, document_id)
+);
+
+create index if not exists payment_file_items_file on public.payment_file_items (payment_file_id);
+create index if not exists payment_file_items_document on public.payment_file_items (document_id);
+create index if not exists payment_file_items_company on public.payment_file_items (company_id);
+
+-- The pain.001 XML the engine actually produced for one payment file. A file can split into more
+-- than one document when the account settings cap how many transfers go in one message, which is
+-- why this is its own table rather than a column on payment_files.
+create table if not exists public.payment_file_documents (
+    id uuid primary key default gen_random_uuid(),
+    payment_file_id uuid not null references public.payment_files(id) on delete cascade,
+    company_id uuid not null references public.companies(id),
+
+    file_name text not null,
+    message_id text not null,
+    content text not null,
+    transfer_count integer not null,
+    total numeric(14, 2) not null,
+
+    created_at timestamptz not null default now(),
+
+    unique (message_id)
+);
+
+create index if not exists payment_file_documents_file on public.payment_file_documents (payment_file_id);
+create index if not exists payment_file_documents_company on public.payment_file_documents (company_id);
+
+-- A company's first account becomes its default without anyone ticking a box, and a company left
+-- with no default while it still has an active account is a state the deferred check below refuses
+-- to let a transaction commit in.
+create or replace function public.payment_settings_ensure_default()
+returns trigger
+language plpgsql
+security definer
+set search_path = public
+as $$
+begin
+    if not exists (
+        select 1 from public.payment_settings
+         where company_id = new.company_id
+           and is_default
+           and deleted_at is null
+           and id != new.id
+    ) then
+        new.is_default := true;
+    end if;
+    return new;
+end;
+$$;
+
+drop trigger if exists trg_payment_settings_ensure_default on public.payment_settings;
+create trigger trg_payment_settings_ensure_default
+    before insert on public.payment_settings
+    for each row execute function public.payment_settings_ensure_default();
+
+-- Promoting the next account runs AFTER the soft delete, not before: a BEFORE trigger racing the
+-- partial unique index above would try to set the new default default while the old one still held
+-- it, and the index would refuse the row that was supposed to replace it.
+create or replace function public.payment_settings_promote_next_default()
+returns trigger
+language plpgsql
+security definer
+set search_path = public
+as $$
+declare
+    v_next uuid;
+begin
+    if new.deleted_at is not null and old.deleted_at is null and old.is_default then
+        update public.payment_settings set is_default = false where id = new.id;
+
+        select id into v_next
+          from public.payment_settings
+         where company_id = new.company_id
+           and deleted_at is null
+           and id != new.id
+         order by updated_at desc
+         limit 1;
+
+        if v_next is not null then
+            update public.payment_settings set is_default = true where id = v_next;
+        end if;
+    end if;
+    return null;
+end;
+$$;
+
+drop trigger if exists trg_payment_settings_promote_next_default on public.payment_settings;
+create trigger trg_payment_settings_promote_next_default
+    after update on public.payment_settings
+    for each row execute function public.payment_settings_promote_next_default();
+
+-- The one way to switch a company's default account deliberately, checked the same way every other
+-- write to this table is: company access plus the payments capability.
+create or replace function public.set_default_payment_account(p_account_id uuid)
+returns void
+language plpgsql
+security definer
+set search_path = public
+as $$
+declare
+    v_company_id uuid;
+begin
+    select company_id into v_company_id
+      from public.payment_settings
+     where id = p_account_id and deleted_at is null;
+
+    if v_company_id is null then
+        raise exception 'payment account % not found', p_account_id;
+    end if;
+    if not public.has_company_access(v_company_id) or not public.may_write('payments.write') then
+        raise exception 'insufficient permission';
+    end if;
+
+    update public.payment_settings set is_default = false
+     where company_id = v_company_id and id != p_account_id and is_default;
+    update public.payment_settings set is_default = true
+     where id = p_account_id;
+end;
+$$;
+
+revoke execute on function public.set_default_payment_account(uuid) from public, anon;
+grant execute on function public.set_default_payment_account(uuid) to authenticated;
+
+-- The invariant the two triggers above exist to keep: at the end of any transaction that touched
+-- this table, a company has exactly one default account among its active ones, or none at all if it
+-- has no active account left. Deferred to commit time because a switch is two updates (clear the
+-- old one, set the new one) and the row count is briefly wrong between them.
+create or replace function public.payment_settings_check_exactly_one_default()
+returns trigger
+language plpgsql
+as $$
+declare
+    v_company_id uuid := coalesce(new.company_id, old.company_id);
+    v_default_count integer;
+    v_active_count integer;
+begin
+    select count(*) into v_default_count
+      from public.payment_settings
+     where company_id = v_company_id and is_default and deleted_at is null;
+
+    select count(*) into v_active_count
+      from public.payment_settings
+     where company_id = v_company_id and deleted_at is null;
+
+    if v_default_count > 1 then
+        raise exception 'company % ended the transaction with % default payment accounts', v_company_id, v_default_count;
+    end if;
+    if v_default_count = 0 and v_active_count > 0 then
+        raise exception 'company % has % active payment account(s) but none marked default', v_company_id, v_active_count;
+    end if;
+    return null;
+end;
+$$;
+
+drop trigger if exists trg_payment_settings_check_exactly_one_default on public.payment_settings;
+create constraint trigger trg_payment_settings_check_exactly_one_default
+    after insert or update or delete on public.payment_settings
+    deferrable initially deferred
+    for each row execute function public.payment_settings_check_exactly_one_default();
+
+-- A payment_file_items row never states its own company: it inherits the one its payment file was
+-- raised for, so a caller cannot slip a document into another company's file by naming a different
+-- company_id at insert time.
+create or replace function public.payment_file_item_set_company()
+returns trigger
+language plpgsql
+security definer
+set search_path = public
+as $$
+begin
+    select company_id into strict new.company_id
+      from public.payment_files where id = new.payment_file_id;
+    return new;
+end;
+$$;
+
+drop trigger if exists trg_payment_file_item_set_company on public.payment_file_items;
+create trigger trg_payment_file_item_set_company
+    before insert on public.payment_file_items
+    for each row execute function public.payment_file_item_set_company();
+
+-- The same document must never sit in two files that are both still open, so a person cannot build
+-- two payment files from one invoice and pay it twice.
+create or replace function public.payment_file_item_prevent_double_queue()
+returns trigger
+language plpgsql
+security definer
+set search_path = public
+as $$
+begin
+    if exists (
+        select 1
+          from public.payment_file_items pfi
+          join public.payment_files pf on pf.id = pfi.payment_file_id
+         where pfi.document_id = new.document_id
+           and pfi.payment_file_id != new.payment_file_id
+           and pf.status != 'discarded'
+    ) then
+        raise exception 'document % is already queued in an open payment file', new.document_id
+            using errcode = 'unique_violation';
+    end if;
+    return new;
+end;
+$$;
+
+drop trigger if exists trg_payment_file_item_prevent_double_queue on public.payment_file_items;
+create trigger trg_payment_file_item_prevent_double_queue
+    before insert on public.payment_file_items
+    for each row execute function public.payment_file_item_prevent_double_queue();
+
+create or replace function public.payment_file_document_set_company()
+returns trigger
+language plpgsql
+security definer
+set search_path = public
+as $$
+begin
+    select company_id into strict new.company_id
+      from public.payment_files where id = new.payment_file_id;
+    return new;
+end;
+$$;
+
+drop trigger if exists trg_payment_file_document_set_company on public.payment_file_documents;
+create trigger trg_payment_file_document_set_company
+    before insert on public.payment_file_documents
+    for each row execute function public.payment_file_document_set_company();
+
+-- Row level security, written out directly rather than through the generic loop in 0010_access.sql:
+-- that file runs before this one, so a loop there over a table this file creates would fail on a
+-- fresh apply. Same contract as every other table in that loop: the payments.write capability for
+-- read and write, has_company_access as an additional restrictive filter.
+alter table public.payment_settings enable row level security;
+alter table public.payment_files enable row level security;
+alter table public.payment_file_items enable row level security;
+alter table public.payment_file_documents enable row level security;
+
+do $$
+declare
+    t text;
+begin
+    foreach t in array array[
+        'payment_settings', 'payment_files', 'payment_file_items', 'payment_file_documents'
+    ] loop
+        execute format('drop policy if exists %I on public.%I', t || '_read', t);
+        execute format(
+            'create policy %I on public.%I for select to authenticated using (public.may_read(%L))',
+            t || '_read', t, 'payments.write');
+
+        execute format('drop policy if exists %I on public.%I', t || '_write', t);
+        execute format(
+            'create policy %I on public.%I for all to authenticated using (public.may_write(%L)) with check (public.may_write(%L))',
+            t || '_write', t, 'payments.write', 'payments.write');
+
+        execute format('drop policy if exists %I on public.%I', t || '_company_scope', t);
+        execute format(
+            'create policy %I on public.%I as restrictive for all to authenticated using (public.has_company_access(company_id)) with check (public.has_company_access(company_id))',
+            t || '_company_scope', t);
+    end loop;
+end
+$$;
+
+commit;
+
+-- ===================================================================== 0025_client_error_log.sql
+
+begin;
+
+create table if not exists public.client_error_log (
+  id          uuid primary key default gen_random_uuid(),
+  occurred_at timestamptz not null default now(),
+  message     text not null,
+  stack       text,
+  route       text,
+  boundary    text,
+  user_id     uuid references auth.users(id) on delete set null
+);
+
+create index if not exists client_error_log_occurred_at_idx
+  on public.client_error_log (occurred_at desc);
+
+alter table public.client_error_log enable row level security;
+
+drop policy if exists "client_error_log_insert" on public.client_error_log;
+create policy "client_error_log_insert" on public.client_error_log
+  for insert to authenticated with check (true);
+
+drop policy if exists "client_error_log_select" on public.client_error_log;
+create policy "client_error_log_select" on public.client_error_log
+  for select to authenticated using (public.is_admin());
+
+commit;
+
+do $$
+declare
+  v_missing text[] := '{}';
+begin
+  if to_regclass('public.client_error_log') is null then
+    v_missing := v_missing || 'client_error_log table';
+  end if;
+  if not exists (
+    select 1 from pg_policies
+     where schemaname = 'public' and tablename = 'client_error_log'
+       and policyname = 'client_error_log_insert'
+  ) then
+    v_missing := v_missing || 'client_error_log_insert policy';
+  end if;
+  if not exists (
+    select 1 from pg_policies
+     where schemaname = 'public' and tablename = 'client_error_log'
+       and policyname = 'client_error_log_select'
+  ) then
+    v_missing := v_missing || 'client_error_log_select policy';
+  end if;
+  if array_length(v_missing, 1) is not null then
+    raise exception '0025_client_error_log self-check failed, missing: %', array_to_string(v_missing, ', ');
+  end if;
+end $$;
+
+-- ===================================================================== 0026_confidence_settings.sql
+
+begin;
+
+create table if not exists public.confidence_settings (
+    id boolean primary key default true check (id),
+    ampel_green_min numeric not null default 0.95
+        check (ampel_green_min > 0 and ampel_green_min <= 1),
+    ampel_yellow_min numeric not null default 0.80
+        check (ampel_yellow_min > 0 and ampel_yellow_min <= 1),
+    relevance_min_konfidenz numeric not null default 0.5
+        check (relevance_min_konfidenz > 0 and relevance_min_konfidenz <= 1),
+    relevance_noninvoice_max_konfidenz numeric not null default 0.3
+        check (relevance_noninvoice_max_konfidenz > 0 and relevance_noninvoice_max_konfidenz <= 1),
+    updated_at timestamptz not null default now(),
+    updated_by text,
+    constraint confidence_settings_bands_ordered
+        check (ampel_green_min >= ampel_yellow_min and ampel_yellow_min >= relevance_min_konfidenz)
+);
+
+insert into public.confidence_settings (id) values (true) on conflict (id) do nothing;
+
+alter table public.confidence_settings enable row level security;
+
+drop policy if exists confidence_settings_read on public.confidence_settings;
+create policy confidence_settings_read on public.confidence_settings
+    for select to authenticated using (public.may_read('documents.read'));
+
+drop policy if exists confidence_settings_write on public.confidence_settings;
+create policy confidence_settings_write on public.confidence_settings
+    for all to authenticated
+    using (public.may_write('settings.manage'))
+    with check (public.may_write('settings.manage'));
+
+commit;
+
+-- ===================================================================== 0027_document_intake_log.sql
+
+begin;
+
+drop view if exists public.v_document_intake_log;
+
+create view public.v_document_intake_log with (security_invoker = true) as
+select
+    d.id,
+    d.invoice_number,
+    d.created_at,
+    d.issuer,
+    d.service_description,
+    d.document_type,
+    d.company_code,
+    d.intake_channel,
+    d.fts,
+    case
+        when exists (
+            select 1 from public.document_files f
+             where f.document_id = d.id
+               and f.source = 'sharepoint'
+               and f.deleted_at is null
+        ) then 'filed'
+        when d.handed_over_at is not null or d.workflow_status = 'uebergeben_datev' then 'handed_over'
+        when d.not_relevant_at is not null then 'not_relevant'
+        when d.archived_at is not null then 'archived'
+        when d.workflow_status in (
+            'approved_first', 'approved_final', 'paid', 'closed',
+            'freigegeben_assistenz', 'freigegeben_vorgesetzter', 'bezahlt', 'abgeschlossen'
+        ) then 'approved'
+        when d.workflow_status in ('in_review', 'query', 'in_pruefung', 'rueckfrage') then 'in_review'
+        when d.status in ('recognised', 'erkannt') then 'recognised'
+        else 'open'
+    end as outcome
+from public.documents d
+where d.deleted_at is null;
+
+comment on view public.v_document_intake_log is
+    'Everything that arrived, with what became of it. Feeds the intake log screen, which answers '
+    '"what came in" rather than "what is there to work on", so archived, not relevant and already '
+    'filed documents stay visible instead of being hidden the way the document list hides them.';
+
+grant select on public.v_document_intake_log to authenticated;
+
+commit;
+
+do $$
+begin
+    if to_regclass('public.v_document_intake_log') is null then
+        raise exception 'v_document_intake_log self-check FAILED: the view is missing';
+    end if;
+    if not exists (
+        select 1 from pg_class c
+         where c.oid = 'public.v_document_intake_log'::regclass
+           and c.reloptions @> array['security_invoker=true']
+    ) then
+        raise exception 'v_document_intake_log self-check FAILED: security_invoker is not set, a private document would leak';
+    end if;
+    raise notice 'v_document_intake_log ok: view in place, security_invoker set';
+end $$;
+
+-- ===================================================================== 0028_document_types.sql
+
+begin;
+
+create table if not exists public.document_types (
+    id uuid primary key default gen_random_uuid(),
+    code text not null,
+    label text not null,
+    description text,
+    maps_from text[] not null default '{}',
+    is_fallback boolean not null default false,
+    is_active boolean not null default true,
+    is_seeded boolean not null default false,
+    sort_order integer not null default 0,
+    created_at timestamptz not null default now(),
+    updated_at timestamptz not null default now()
+);
+
+create unique index if not exists document_types_one_active_fallback
+    on public.document_types ((true))
+    where is_fallback and is_active;
+
+create unique index if not exists document_types_code_active_uniq
+    on public.document_types (lower(code))
+    where is_active;
+
+create or replace function public.document_type_canonical(p_value text)
+returns text
+language sql
+immutable
+set search_path = ''
+as $$
+  select case
+           when btrim(coalesce(p_value, '')) = '' then null
+           else regexp_replace(lower(btrim(p_value)), '\s+', '_', 'g')
+         end;
+$$;
+
+comment on function public.document_type_canonical(text) is
+  'Trimmed, lowercased spelling of a document type with whitespace folded to underscores.';
+
+revoke all on function public.document_type_canonical(text) from public;
+grant execute on function public.document_type_canonical(text) to authenticated;
+
+commit;
+
+-- ===================================================================== 0029_deal_donations.sql
+
+-- A donation tied to a sale above a configured threshold, for an administrator to record when the
+-- organisation and its details are known, and mark paid once the transfer is made. Inert until a
+-- role holds `donations.manage`, which no role does by default. Re-runnable.
+
+begin;
+
+create table if not exists public.deal_donations (
+    id uuid primary key default gen_random_uuid(),
+    deal_id uuid not null references public.deals(id),
+    organisation text not null,
+    iban text,
+    contact_person text,
+    contact_reachability text,
+    handover_date date,
+    amount numeric(12, 2) not null check (amount > 0),
+    status text not null default 'suggested' check (status in ('suggested', 'paid', 'cancelled')),
+    cancel_reason text,
+    created_by uuid references public.app_users(id),
+    created_at timestamptz not null default now(),
+    paid_by uuid references public.app_users(id),
+    paid_at timestamptz,
+    updated_at timestamptz not null default now()
+);
+
+-- A cancelled donation does not block a fresh suggestion for the same deal; a suggested or paid one
+-- does, since a deal gives one organisation its donation, not several.
+create unique index if not exists deal_donations_one_active_per_deal
+    on public.deal_donations (deal_id)
+    where status <> 'cancelled';
+
+create table if not exists public.donation_settings (
+    single_row boolean primary key default true check (single_row),
+    threshold_amount numeric(12, 2) not null default 500000 check (threshold_amount > 0),
+    donation_amount numeric(12, 2) not null default 1000 check (donation_amount > 0),
+    updated_at timestamptz not null default now()
+);
+
+insert into public.donation_settings (single_row) values (true) on conflict do nothing;
+
+drop trigger if exists donation_settings_touch on public.donation_settings;
+create trigger donation_settings_touch before update on public.donation_settings
+    for each row execute function public.set_updated_at();
+
+drop trigger if exists deal_donations_touch on public.deal_donations;
+create trigger deal_donations_touch before update on public.deal_donations
+    for each row execute function public.set_updated_at();
+
+create or replace function public.stamp_deal_donation() returns trigger
+language plpgsql set search_path to 'public'
+as $$
+begin
+  if tg_op = 'INSERT' then
+    new.created_by := public.current_app_user_id();
+  elsif new.status = 'paid' and old.status <> 'paid' then
+    new.paid_by := public.current_app_user_id();
+    new.paid_at := now();
+  end if;
+  return new;
+end;
+$$;
+
+drop trigger if exists deal_donations_stamp_insert on public.deal_donations;
+create trigger deal_donations_stamp_insert before insert on public.deal_donations
+    for each row execute function public.stamp_deal_donation();
+
+drop trigger if exists deal_donations_stamp_paid on public.deal_donations;
+create trigger deal_donations_stamp_paid before update on public.deal_donations
+    for each row execute function public.stamp_deal_donation();
+
+alter table public.donation_settings enable row level security;
+alter table public.deal_donations enable row level security;
+
+drop policy if exists donation_settings_read on public.donation_settings;
+create policy donation_settings_read on public.donation_settings for select to authenticated
+    using (public.has_permission('donations.manage'));
+
+drop policy if exists donation_settings_write on public.donation_settings;
+create policy donation_settings_write on public.donation_settings for update to authenticated
+    using (public.has_permission('donations.manage'))
+    with check (public.has_permission('donations.manage'));
+
+drop policy if exists deal_donations_rw on public.deal_donations;
+create policy deal_donations_rw on public.deal_donations for all to authenticated
+    using (public.has_permission('donations.manage'))
+    with check (public.has_permission('donations.manage'));
+
+grant select, update on public.donation_settings to authenticated;
+grant select, insert, update, delete on public.deal_donations to authenticated;
+
+create or replace function public.notify_donation_suggested() returns trigger
+language plpgsql security definer set search_path to 'public'
+as $$
+begin
+  perform public.notify_administrators(
+    'Spende vorgeschlagen: ' || new.organisation || ', '
+      || replace(to_char(new.amount, 'FM999999990.00'), '.', ',') || ' €',
+    '/commission-deals/' || new.deal_id, 'donation', new.created_by,
+    coalesce((select coalesce(name, email) from public.app_users where id = new.created_by), 'Hub'));
+  return null;
+end;
+$$;
+
+drop trigger if exists deal_donations_notify_suggested on public.deal_donations;
+create trigger deal_donations_notify_suggested after insert on public.deal_donations
+    for each row when (new.status = 'suggested')
+    execute function public.notify_donation_suggested();
+
+commit;
+
+-- ===================================================================== 0030_change_history_log_function.sql
+
+-- `change_history` is readable by whoever may read the thing it is about, and written by nobody
+-- directly (see 0010_access.sql) -- a raw client insert is rejected by RLS, on purpose: the audit
+-- trail stays authoritative only if nothing can fabricate an entry attributing arbitrary text to
+-- arbitrary data. `insertChangeHistory()` in src/data/client.ts was written assuming a direct
+-- insert would work and has been failing silently on every call since the table existed: the
+-- underlying write (e.g. a role permission grant) succeeds, the change_history insert after it is
+-- rejected, the whole mutation throws, and the screen never learns the real write went through.
+--
+-- log_change_history() is the trusted path that policy was always meant to require: it derives the
+-- actor itself from the caller's own session, the same way every other security definer writer in
+-- this schema does, rather than trusting a client-supplied value.
+
+begin;
+
+create or replace function public.log_change_history(
+    p_table_name text,
+    p_record_id uuid,
+    p_type text,
+    p_text text,
+    p_data jsonb default null
+) returns void
+language plpgsql security definer set search_path to 'public'
+as $$
+declare
+  v_actor text := coalesce(nullif(auth.jwt() ->> 'email', ''), 'hub');
+begin
+  insert into public.change_history (table_name, record_id, type, text, data, actor, at)
+  values (p_table_name, p_record_id, p_type, p_text, p_data, v_actor, now());
+end;
+$$;
+
+revoke all on function public.log_change_history(text, uuid, text, text, jsonb) from public, anon;
+grant execute on function public.log_change_history(text, uuid, text, text, jsonb) to authenticated;
 
 commit;
