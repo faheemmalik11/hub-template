@@ -7,6 +7,7 @@ export interface OnboardingHighlightLabels {
   goToPageButton: string;
   scrollToTarget: string;
   scrollToTargetButton: string;
+  sampleFileButton?: string;
 }
 
 export const englishOnboardingHighlightLabels: OnboardingHighlightLabels = {

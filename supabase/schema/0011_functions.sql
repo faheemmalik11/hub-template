@@ -891,7 +891,7 @@ CREATE OR REPLACE FUNCTION public.enforce_invoice_write_permissions() RETURNS tr
 declare
   v_email text := lower(coalesce(auth.jwt() ->> 'email', ''));
   -- Columns governed by another permission, or written by triggers on every update. Anything NOT
-  -- in here counts as receipt content and requires invoices.book -- so a column added later is
+  -- in here counts as receipt content and requires documents.write -- so a column added later is
   -- protected by default, and a column that is governed elsewhere has to be named here.
   v_ignore constant text[] := array[
     'workflow_status', 'approved_by',
@@ -910,7 +910,7 @@ begin
   end if;
 
   if new.paid_at is not null and old.paid_at is null
-     and not public.has_permission('invoices.pay') then
+     and not public.has_permission('payments.write') then
     raise exception 'not permitted: marking an invoice paid requires the payment permission'
       using errcode = '42501';
   end if;
@@ -918,7 +918,7 @@ begin
   -- Both columns, so a stray write to the frozen one cannot route around the permission.
   if (new.assigned_user_id is distinct from old.assigned_user_id
       or new.assigned_to is distinct from old.assigned_to)
-     and not public.has_permission('invoices.assign') then
+     and not public.has_permission('documents.write') then
     raise exception 'not permitted: assigning an invoice requires the assign permission'
       using errcode = '42501';
   end if;
@@ -954,7 +954,7 @@ begin
   end if;
 
   if (to_jsonb(new) - v_ignore) is distinct from (to_jsonb(old) - v_ignore)
-     and not public.has_permission('invoices.book') then
+     and not public.has_permission('documents.write') then
     raise exception 'not permitted: editing a receipt requires the booking permission'
       using errcode = '42501';
   end if;
@@ -3069,6 +3069,99 @@ begin
    where is_demo and demo_owner_user_id = v_user_id and deleted_at is null;
   update public.properties set deleted_at = now()
    where is_demo and demo_owner_user_id = v_user_id and deleted_at is null;
+end $$;
+
+-- The one scenario the "process an invoice" practice task walks through: a company and a property
+-- to assign the uploaded sample invoice to, a supplier matching its issuer, and two bank
+-- transactions (one correct, one a close decoy) for the bank-matching step to offer as candidates.
+-- Codes are derived from the caller's id the same way the front end derives them
+-- (demoCompanyAndPropertyCodes), so re-running this is idempotent per person.
+CREATE OR REPLACE FUNCTION public.seed_onboarding_demo_data() RETURNS void
+    LANGUAGE plpgsql SECURITY DEFINER
+    SET search_path TO 'public'
+    AS $$
+declare
+  v_user_id uuid := public.current_app_user_id();
+  v_tag text;
+  v_company_id uuid;
+  v_property_id uuid;
+  v_supplier_id uuid;
+begin
+  if v_user_id is null then
+    raise exception 'seed_onboarding_demo_data: no signed-in app user';
+  end if;
+
+  v_tag := substr(replace(v_user_id::text, '-', ''), 1, 8);
+
+  select id into v_company_id from public.companies
+   where is_demo and demo_owner_user_id = v_user_id and code = 'DEMO-' || v_tag;
+  if v_company_id is not null then
+    update public.companies set deleted_at = null where id = v_company_id and deleted_at is not null;
+  else
+    insert into public.companies (code, name, is_demo, demo_owner_user_id)
+    values ('DEMO-' || v_tag, 'Demo Immobilien GmbH', true, v_user_id)
+    returning id into v_company_id;
+  end if;
+
+  select id into v_property_id from public.properties
+   where is_demo and demo_owner_user_id = v_user_id and code = 'DEMO-' || v_tag || '-P1';
+  if v_property_id is not null then
+    update public.properties set deleted_at = null where id = v_property_id and deleted_at is not null;
+  else
+    insert into public.properties (code, name, address, is_demo, demo_owner_user_id)
+    values ('DEMO-' || v_tag || '-P1', 'Musterstrasse 12',
+            'Musterstrasse 12, 20535 Hamburg', true, v_user_id)
+    returning id into v_property_id;
+  end if;
+
+  insert into public.property_companies (property_id, company_id)
+  select v_property_id, v_company_id
+   where not exists (
+     select 1 from public.property_companies pc
+      where pc.property_id = v_property_id and pc.company_id = v_company_id and pc.deleted_at is null
+   );
+
+  select id into v_supplier_id from public.suppliers
+   where is_demo and demo_owner_user_id = v_user_id;
+  if v_supplier_id is not null then
+    update public.suppliers set deleted_at = null where id = v_supplier_id and deleted_at is not null;
+  else
+    insert into public.suppliers (name, is_demo, demo_owner_user_id)
+    values ('Gartenbau Möller', true, v_user_id)
+    returning id into v_supplier_id;
+  end if;
+
+  if not exists (
+    select 1 from public.bank_transactions
+     where is_demo and demo_owner_user_id = v_user_id
+       and payment_reference = 'MOELLER GARTENBAU RE 2026-1043 487,90'
+  ) then
+    insert into public.bank_transactions (
+      amount, currency, booking_date, value_date, payment_reference, booking_text,
+      counterparty_holder, source, is_demo, demo_owner_user_id
+    )
+    values (
+      -487.90, 'EUR', current_date, current_date,
+      'MOELLER GARTENBAU RE 2026-1043 487,90', 'MOELLER GARTENBAU RE 2026-1043 487,90',
+      'Gartenbau Möller', 'manual', true, v_user_id
+    );
+  end if;
+
+  if not exists (
+    select 1 from public.bank_transactions
+     where is_demo and demo_owner_user_id = v_user_id
+       and payment_reference = 'MOELLER GARTENBAU RE 2026-0987 478,90'
+  ) then
+    insert into public.bank_transactions (
+      amount, currency, booking_date, value_date, payment_reference, booking_text,
+      counterparty_holder, source, is_demo, demo_owner_user_id
+    )
+    values (
+      -478.90, 'EUR', current_date - 28, current_date - 28,
+      'MOELLER GARTENBAU RE 2026-0987 478,90', 'MOELLER GARTENBAU RE 2026-0987 478,90',
+      'Gartenbau Möller', 'manual', true, v_user_id
+    );
+  end if;
 end $$;
 
 -- Saves a deal with its sides, payers and costs in one transaction, as the caller. Any edit withdraws

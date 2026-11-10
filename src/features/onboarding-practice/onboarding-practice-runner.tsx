@@ -95,6 +95,7 @@ function ActivePracticeTask({ task }: { task: OnboardingTask }) {
     goToPageButton: t("onboarding.practice.goToPageButton"),
     scrollToTarget: t("onboarding.practice.scrollToTarget"),
     scrollToTargetButton: t("onboarding.practice.scrollToTargetButton"),
+    sampleFileButton: t("onboarding.practice.panelSampleFile"),
   };
   const { stopTask, setAllowedPath } = useOnboardingPractice();
   const pathname = useRouterState({ select: (state) => state.location.pathname });

@@ -40,6 +40,7 @@ export const TABLE = {
   companies: "companies",
   credentialReads: "credential_reads",
   credentials: "credentials",
+  crmWebhookEvents: "crm_webhook_events",
   bonusSettings: "bonus_settings",
   brokerBonuses: "broker_bonuses",
   customers: "customers",
