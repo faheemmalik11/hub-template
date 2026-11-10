@@ -27,6 +27,25 @@ Decided 2026-11-06, first done for van Oepen. The clone model above still descri
 clients' own repositories, and nothing here retires those. But a new client, and any existing one
 being brought in, can instead be **a long-lived branch of this repository**, off `main` or `dev`:
 
+**The exact order of work, every time (2026-11-10):**
+
+1. `dev` (or `main`) is the one, latest, shared codebase — this is where generic work starts,
+   never in a client's own worktree.
+2. Make the change on `dev`, in the main checkout. Commit it there, and test it there — typecheck,
+   lint, and run the app — before it touches a client's worktree at all.
+3. Each client branch has its own worktree (`.worktrees/<client>/`), checked out on its own branch,
+   not on `dev`. Once `dev`'s commit is proven, go into that worktree and `git merge dev` — this is
+   local, not a GitHub round trip, since every worktree shares this repository's own git history.
+4. If the client's own worktree needs something nobody else does (their brand, a one-off setting),
+   that work happens only in the worktree, on their own branch — never on `dev`.
+5. Only after the worktree is fully synced with `dev` and the client's own branch is ready, sync it
+   outward: push the branch to `origin`, and if that client still keeps their own separate deployed
+   repo, run `scripts/client/push-client-repo.sh <client-key>` to mirror it there too.
+
+Skipping step 2 and committing straight into a client's worktree is exactly the drift this model
+exists to prevent — see rule 4 below. The client-branches skill below has the full detail; this is
+the order to follow without having to load it every time.
+
 - The branch carries what a clone used to carry on its own: `src/config/brand.ts`, the `--brand*`
   ramp in `src/styles.css`, `public/brand/*`, `public/favicon.ico`. The rule against writing a
   client's name applies to `main`/`dev` and every other shared branch, never to a client's own branch.
