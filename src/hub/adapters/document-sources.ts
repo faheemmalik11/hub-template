@@ -174,7 +174,12 @@ function mailSource(
     kind: "mailbox",
     name: t("sources.mail.name"),
     detail: row.address ?? "—",
-    icon: row.provider === "gmail" ? GmailIcon : canBrowseFolders ? MicrosoftIcon : GenericMailIcon,
+    icon:
+      row.provider === "gmail"
+        ? GmailIcon
+        : row.provider === "imap"
+          ? GenericMailIcon
+          : MicrosoftIcon,
     status: row.is_active ? "connected" : "not_configured",
     statusDetail: row.is_active
       ? t("sources.mail.active", { count: row.sourceFolders.length })

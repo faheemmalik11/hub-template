@@ -54,6 +54,7 @@
     "date-fns": "^4.1.0",
     "embla-carousel-react": "^8.6.0",
     "i18next": "^26.3.5",
+    "imapflow": "^2.11.0",
     "input-otp": "^1.4.2",
     "jszip": "^3.10.1",
     "lucide-react": "^0.575.0",
@@ -95,11 +96,11 @@
     "eslint-plugin-react-refresh": "^0.4.20",
     "globals": "^15.15.0",
     "nitro": "3.0.260603-beta",
+    "playwright": "latest",
     "playwright-core": "^1.61.1",
     "prettier": "^3.7.3",
     "typescript": "^5.8.3",
     "typescript-eslint": "^8.56.1",
-    "vite": "^8.0.16",
-    "playwright": "latest"
+    "vite": "^8.0.16"
   }
 }
