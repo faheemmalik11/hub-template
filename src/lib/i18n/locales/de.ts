@@ -6147,6 +6147,12 @@ const de = {
       fileFailed: "Die Datei konnte nicht geöffnet werden.",
       fileFailedWithError: "Die Datei konnte nicht geöffnet werden: {{error}}",
       statusFailed: "Status konnte nicht geändert werden: {{error}}",
+      lexoffice: {
+        send: "An Lexoffice senden",
+        sent: "An Lexoffice gesendet",
+        success: "Rechnung an Lexoffice gesendet.",
+        failed: "Konnte nicht an Lexoffice gesendet werden: {{error}}",
+      },
       filter: {
         company: "Gesellschaft",
         allCompanies: "Alle Gesellschaften",

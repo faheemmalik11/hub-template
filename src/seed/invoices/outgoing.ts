@@ -2,7 +2,6 @@ import type { OutgoingInvoice } from "@/lib/data/types";
 import { COMPANIES, sampleId } from "../shared";
 
 const base = {
-  lexoffice_voucher_id: null,
   currency: "EUR",
   line_items: null,
   source: "upload" as const,

@@ -76,6 +76,7 @@ export const PERMISSIONS = {
   bonusesRead: "bonuses.read",
   bonusesSuggest: "bonuses.suggest",
   donationsManage: "donations.manage",
+  lexofficeSync: "lexoffice.sync",
   pageBankConnections: "page.bank_connections",
   pageDataExport: "page.data_export",
   pageConfidenceThresholds: "page.confidence_thresholds",

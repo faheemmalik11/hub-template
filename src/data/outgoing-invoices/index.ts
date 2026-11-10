@@ -12,6 +12,7 @@ export {
   useSetUploadedOutgoingInvoiceStatus,
   useSoftDeleteCustomer,
   useSoftDeleteOutgoingInvoice,
+  useSyncInvoiceToLexoffice,
   useUpdateCustomer,
 } from "./outgoing-invoices";
 export type {

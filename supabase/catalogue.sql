@@ -182,6 +182,13 @@ on conflict (key) do update
        label_de = excluded.label_de, label_en = excluded.label_en,
        default_enabled = excluded.default_enabled, sort_order = excluded.sort_order;
 
+insert into public.permissions (key, kind, parent_key, category, label_de, label_en, default_enabled, sort_order) values
+  ('lexoffice.sync', 'section', 'page.outgoing_invoices', 'documents', 'Rechnungen an Lexoffice senden', 'Send invoices to Lexoffice', false, 221)
+on conflict (key) do update
+   set kind = excluded.kind, parent_key = excluded.parent_key, category = excluded.category,
+       label_de = excluded.label_de, label_en = excluded.label_en,
+       default_enabled = excluded.default_enabled, sort_order = excluded.sort_order;
+
 -- A broker entering their own commissions, for an administrator to review and approve. Held by no role
 -- until a client gives it to one; see supabase/presets/broker-role.sql.
 insert into public.permissions (key, kind, parent_key, category, label_de, label_en, description_de, description_en, default_enabled, sort_order) values
