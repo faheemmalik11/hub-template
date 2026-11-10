@@ -27,48 +27,39 @@ Decided 2026-11-06, first done for van Oepen. The clone model above still descri
 clients' own repositories, and nothing here retires those. But a new client, and any existing one
 being brought in, can instead be **a long-lived branch of this repository**, off `main` or `dev`:
 
-**The exact order of work, every time (2026-11-10):**
+**The order of work, every time:**
 
-1. `dev` is the one, latest, shared codebase — this is where generic work starts, never in a
-   client's own worktree.
-2. Make the change on `dev`, in the main checkout. Commit it there, and test it there — typecheck,
-   lint, and run the app — before it touches a client's worktree at all.
-3. Each client branch has its own worktree (`.worktrees/<client>/`), checked out on its own branch,
-   not on `dev`. Once `dev`'s commit is proven, go into that worktree and `git merge dev` — this is
-   local, not a GitHub round trip, since every worktree shares this repository's own git history.
-4. If the client's own worktree needs something nobody else does (their brand, a one-off setting),
-   that work happens only in the worktree, on their own branch — never on `dev`.
-5. Only after the worktree is fully synced with `dev` and the client's own branch is ready, sync it
-   outward: push the branch to `origin`, and if that client still keeps their own separate deployed
-   repo, run `scripts/client/push-client-repo.sh <client-key>` to mirror it there too.
+1. `dev` is the one, latest, shared codebase. Generic work starts here, in the main checkout, never
+   in a client's own worktree. Commit it on `dev` and test it there — typecheck, lint, run the
+   app — before it touches any client.
+2. Each client branch has its own worktree (`.worktrees/<client>/`), checked out on its own branch,
+   not on `dev`. Once `dev`'s commit is proven, go into that worktree and `git merge dev` to pick it
+   up — local, not a GitHub round trip, since every worktree shares this repository's own git
+   history. Nothing pushed until the whole thing is ready.
+3. Only a client's own brand (`src/config/brand.ts`, the `--brand*` ramp in `src/styles.css`,
+   `public/brand/*`, `public/favicon.ico`) or a genuine one-off for that client alone belongs only in
+   their worktree, on their own branch — never on `dev`. Rule 2 below (never write a client's name)
+   applies to `dev` and every other shared branch, never to a client's own branch — their name is the
+   whole point of their brand files. Their catalogue choices (`feature_settings`) are data in their
+   own database either way, not something the branch carries.
+4. Only once the worktree is synced with `dev` and the client's branch is ready, sync it outward:
+   push the branch to `origin`, and if that client still keeps their own separate deployed repo, run
+   `scripts/client/push-client-repo.sh <client-key>` to mirror it there too.
 
-Skipping step 2 and committing straight into a client's worktree is exactly the drift this model
-exists to prevent — see rule 4 below. The client-branches skill below has the full detail; this is
-the order to follow without having to load it every time.
+**The reverse direction, just as strict**: find something to fix while in a client's worktree that
+is not that client's name, brand or data? Fix it on `dev` first (step 1), then merge `dev` into the
+client branch to pick it up (step 2). Never fix it only on the branch you happen to be in — that is
+exactly the drift this model exists to prevent, and it is rule 4 below. A feature built for one
+client that turns out to be worth having generally goes the other way: cherry-pick or merge the
+client branch's commits into `dev`, stripped of that client's name and data, same as any clone's own
+fix would be — van Oepen's commission/bonus/CRM-sync feature set reached this template exactly this
+way.
 
-- The branch carries what a clone used to carry on its own: `src/config/brand.ts`, the `--brand*`
-  ramp in `src/styles.css`, `public/brand/*`, `public/favicon.ico`. The rule against writing a
-  client's name applies to `main`/`dev` and every other shared branch, never to a client's own branch.
-- `.env` is never committed on any branch, client or shared — it is local config, pointing whichever
-  checkout at that client's own Supabase project.
-- A client's own catalogue choices (`feature_settings`) live in their database, as data, the same way
-  they would for a cloned client. The branch is for brand and code, not for which features are on.
-- New shared work lands on `main`/`dev` as before. A client branch picks it up with `git merge
-  main`/`git merge dev` into the client branch, whenever that client wants the update — not
-  automatically, and not by rebuilding their branch from scratch. This merge is local, not a push and
-  pull through GitHub: every worktree of this repository shares the same local git history, so a
-  round of small local fixes can be committed on `main`/`dev` and merged into a client branch
-  repeatedly while testing, with nothing pushed until the whole thing is actually ready.
-- **The reverse applies too, every time**: if you are working in a client's branch and find something
-  to fix that is not that client's name, brand or data, fix it on `main`/`dev` first, then merge
-  `main`/`dev` into the client branch to pick it up. Never fix it only on the branch you happen to be
-  in — see rule 4 below.
-- A feature built for one client, worth having generally, is ported the other direction: cherry-pick
-  or merge the client branch's commits into `main`/`dev`, stripped of that client's name and data,
-  same as any clone's own fix would be. Van Oepen's commission/bonus/CRM-sync feature set was ported
-  into this template exactly this way.
-- Load the `client-branches` skill before creating one, merging shared work into one, or porting a
-  client branch's feature back into `main`/`dev`.
+`.env` is never committed on any branch, client or shared — it is local config, pointing whichever
+checkout at that client's own Supabase project.
+
+Load the `client-branches` skill before creating a client branch, merging shared work into one, or
+porting a client branch's feature back into `dev`.
 
 ### English only, everywhere a developer types (HARD RULE)
 
