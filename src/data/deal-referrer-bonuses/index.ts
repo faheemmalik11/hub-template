@@ -1,5 +1,6 @@
 export {
   useCancelReferrerBonus,
+  useCreateReferrerCreditNote,
   useDealReferrerBonus,
   useMarkReferrerBonusPaid,
   useReferrerBonusTier,

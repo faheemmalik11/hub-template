@@ -2586,6 +2586,21 @@ begin
 end
 $$;
 
+-- The table policies above cover the row the browser inserts once a file has reached storage, but
+-- storage.objects itself carries no policy of its own, so the upload that writes the bytes there
+-- is refused before any table is ever touched: "new row violates row-level security policy". Insert
+-- only, same as the table policies allow nothing beyond writing a new document in -- overwriting an
+-- existing object is a different operation this does not open.
+drop policy if exists documents_bucket_write on storage.objects;
+create policy documents_bucket_write on storage.objects
+    for insert to authenticated
+    with check (bucket_id = 'documents' and public.may_write('documents.write'));
+
+drop policy if exists outgoing_invoice_files_bucket_write on storage.objects;
+create policy outgoing_invoice_files_bucket_write on storage.objects
+    for insert to authenticated
+    with check (bucket_id = 'outgoing-invoice-files' and public.may_write('documents.write'));
+
 -- Where a row names a company, the company grants narrow what the capability opened.
 do $$
 declare
@@ -5998,35 +6013,50 @@ begin
     returning id into v_supplier_id;
   end if;
 
-  if not exists (
+  -- Bank matching only ever offers candidates from the invoice's own company (scopedToCompany in
+  -- matching.functions.ts), so a transaction seeded with no company_id can never be suggested. The
+  -- existence check also has to look past a soft-deleted row: reset_onboarding_demo_data() deletes
+  -- these on restart, and "not exists" alone would see the deleted row and skip reseeding it,
+  -- leaving no candidate behind for the rest of the session.
+  if exists (
     select 1 from public.bank_transactions
      where is_demo and demo_owner_user_id = v_user_id
        and payment_reference = 'MOELLER GARTENBAU RE 2026-1043 487,90'
   ) then
+    update public.bank_transactions
+       set deleted_at = null, company_id = v_company_id
+     where is_demo and demo_owner_user_id = v_user_id
+       and payment_reference = 'MOELLER GARTENBAU RE 2026-1043 487,90';
+  else
     insert into public.bank_transactions (
       amount, currency, booking_date, value_date, payment_reference, booking_text,
-      counterparty_holder, source, is_demo, demo_owner_user_id
+      counterparty_holder, source, company_id, is_demo, demo_owner_user_id
     )
     values (
       -487.90, 'EUR', current_date, current_date,
       'MOELLER GARTENBAU RE 2026-1043 487,90', 'MOELLER GARTENBAU RE 2026-1043 487,90',
-      'Gartenbau Möller', 'manual', true, v_user_id
+      'Gartenbau Möller', 'manual', v_company_id, true, v_user_id
     );
   end if;
 
-  if not exists (
+  if exists (
     select 1 from public.bank_transactions
      where is_demo and demo_owner_user_id = v_user_id
        and payment_reference = 'MOELLER GARTENBAU RE 2026-0987 478,90'
   ) then
+    update public.bank_transactions
+       set deleted_at = null, company_id = v_company_id
+     where is_demo and demo_owner_user_id = v_user_id
+       and payment_reference = 'MOELLER GARTENBAU RE 2026-0987 478,90';
+  else
     insert into public.bank_transactions (
       amount, currency, booking_date, value_date, payment_reference, booking_text,
-      counterparty_holder, source, is_demo, demo_owner_user_id
+      counterparty_holder, source, company_id, is_demo, demo_owner_user_id
     )
     values (
       -478.90, 'EUR', current_date - 28, current_date - 28,
       'MOELLER GARTENBAU RE 2026-0987 478,90', 'MOELLER GARTENBAU RE 2026-0987 478,90',
-      'Gartenbau Möller', 'manual', true, v_user_id
+      'Gartenbau Möller', 'manual', v_company_id, true, v_user_id
     );
   end if;
 end $$;
@@ -9293,5 +9323,187 @@ create table if not exists public.crm_webhook_events (
 
 create index if not exists crm_webhook_events_received on public.crm_webhook_events (received_at desc);
 create index if not exists crm_webhook_events_record on public.crm_webhook_events (crm_provider, crm_record_id);
+
+commit;
+
+-- ===================================================================== 0032_referrer_bonuses.sql
+
+-- Fixed-amount referrer ("Tippgeber") bonuses, by how many of that referrer's deals have already
+-- succeeded this calendar year. Fixed amounts replaced a percentage model the client used until
+-- 27 October; see docs/REFERRER_BONUSES.md. A referrer is a customer, never an app_user, so this
+-- is its own table rather than a row in broker_bonuses, the same reasoning docs/DEAL_DONATIONS.md
+-- already gives for deal_donations. Inert until a role holds `bonuses.review`, same gate as broker
+-- bonuses. Re-runnable.
+
+begin;
+
+alter table public.bonus_settings
+    add column if not exists referrer_tier1_amount numeric(12, 2) not null default 1000
+        check (referrer_tier1_amount > 0),
+    add column if not exists referrer_tier2_amount numeric(12, 2) not null default 1500
+        check (referrer_tier2_amount > 0),
+    add column if not exists referrer_tier3_amount numeric(12, 2) not null default 2000
+        check (referrer_tier3_amount > 0),
+    add column if not exists referrer_tier4plus_amount numeric(12, 2) not null default 2000
+        check (referrer_tier4plus_amount > 0);
+
+create table if not exists public.deal_referrer_bonuses (
+    id uuid primary key default gen_random_uuid(),
+    deal_id uuid not null references public.deals(id),
+    referrer_customer_id uuid not null references public.customers(id),
+    tier integer not null check (tier > 0),
+    amount numeric(12, 2) not null check (amount > 0),
+    earned_on date not null,
+    status text not null default 'suggested' check (status in ('suggested', 'paid', 'cancelled')),
+    cancel_reason text,
+    created_by uuid references public.app_users(id),
+    created_at timestamptz not null default now(),
+    paid_by uuid references public.app_users(id),
+    paid_at timestamptz,
+    updated_at timestamptz not null default now()
+);
+
+-- A cancelled bonus does not block a fresh suggestion for the same deal; a suggested or paid one
+-- does, since a deal earns its referrer one bonus, not several.
+create unique index if not exists deal_referrer_bonuses_one_active_per_deal
+    on public.deal_referrer_bonuses (deal_id)
+    where status <> 'cancelled';
+
+create index if not exists deal_referrer_bonuses_referrer_year
+    on public.deal_referrer_bonuses (referrer_customer_id, earned_on)
+    where status <> 'cancelled';
+
+-- Which referral number this would be for that referrer this calendar year, counting only
+-- non-cancelled bonuses already recorded -- the client reads this to default the amount field,
+-- same as the donation card defaults to donation_settings.donation_amount.
+create or replace function public.referrer_bonus_tier(p_referrer_customer_id uuid, p_earned_on date)
+returns integer
+language sql stable security definer set search_path to 'public'
+as $$
+  select count(*)::integer + 1
+    from public.deal_referrer_bonuses
+   where referrer_customer_id = p_referrer_customer_id
+     and status <> 'cancelled'
+     and extract(year from earned_on) = extract(year from p_earned_on);
+$$;
+
+revoke execute on function public.referrer_bonus_tier(uuid, date) from public, anon;
+grant execute on function public.referrer_bonus_tier(uuid, date) to authenticated;
+
+drop trigger if exists deal_referrer_bonuses_touch on public.deal_referrer_bonuses;
+create trigger deal_referrer_bonuses_touch before update on public.deal_referrer_bonuses
+    for each row execute function public.set_updated_at();
+
+create or replace function public.stamp_deal_referrer_bonus() returns trigger
+language plpgsql set search_path to 'public'
+as $$
+begin
+  if tg_op = 'INSERT' then
+    new.created_by := public.current_app_user_id();
+  elsif new.status = 'paid' and old.status <> 'paid' then
+    new.paid_by := public.current_app_user_id();
+    new.paid_at := now();
+  end if;
+  return new;
+end;
+$$;
+
+drop trigger if exists deal_referrer_bonuses_stamp_insert on public.deal_referrer_bonuses;
+create trigger deal_referrer_bonuses_stamp_insert before insert on public.deal_referrer_bonuses
+    for each row execute function public.stamp_deal_referrer_bonus();
+
+drop trigger if exists deal_referrer_bonuses_stamp_paid on public.deal_referrer_bonuses;
+create trigger deal_referrer_bonuses_stamp_paid before update on public.deal_referrer_bonuses
+    for each row execute function public.stamp_deal_referrer_bonus();
+
+alter table public.deal_referrer_bonuses enable row level security;
+
+drop policy if exists deal_referrer_bonuses_rw on public.deal_referrer_bonuses;
+create policy deal_referrer_bonuses_rw on public.deal_referrer_bonuses for all to authenticated
+    using (public.has_permission('bonuses.review'))
+    with check (public.has_permission('bonuses.review'));
+
+grant select, insert, update, delete on public.deal_referrer_bonuses to authenticated;
+
+create or replace function public.notify_referrer_bonus_suggested() returns trigger
+language plpgsql security definer set search_path to 'public'
+as $$
+declare
+  v_referrer_name text;
+begin
+  select name into v_referrer_name from public.customers where id = new.referrer_customer_id;
+  perform public.notify_administrators(
+    'Tippgeber-Bonus vorgeschlagen: ' || coalesce(v_referrer_name, 'Tippgeber') || ', '
+      || replace(to_char(new.amount, 'FM999999990.00'), '.', ',') || ' €',
+    '/commission-deals/' || new.deal_id, 'referrer_bonus', new.created_by,
+    coalesce((select coalesce(name, email) from public.app_users where id = new.created_by), 'Hub'));
+  return null;
+end;
+$$;
+
+drop trigger if exists deal_referrer_bonuses_notify_suggested on public.deal_referrer_bonuses;
+create trigger deal_referrer_bonuses_notify_suggested after insert on public.deal_referrer_bonuses
+    for each row when (new.status = 'suggested')
+    execute function public.notify_referrer_bonus_suggested();
+
+commit;
+
+-- ===================================================================== 0033_referrer_credit_notes.sql
+
+-- Turns a paid referrer bonus (deal_referrer_bonuses, migration 0032) into the accounting record of
+-- that payout: an outgoing_invoices row with kind = 'referral_credit', the kind the table already
+-- anticipated (0008_workspace.sql) for exactly this — "paid out to whoever recommended the
+-- customer, so it names the deal that earned it rather than another invoice". No VAT split: the
+-- client's figures are flat euro amounts with no VAT ever mentioned, so net and gross are the same.
+-- Re-runnable.
+
+begin;
+
+create or replace function public.create_referrer_credit_note(p_bonus_id uuid)
+    returns public.outgoing_invoices
+    language plpgsql security invoker
+    set search_path to 'public'
+    as $$
+declare
+  v_bonus public.deal_referrer_bonuses;
+  v_deal public.deals;
+  v_invoice public.outgoing_invoices;
+begin
+  select * into v_bonus from public.deal_referrer_bonuses where id = p_bonus_id;
+  if not found then
+    raise exception 'create_referrer_credit_note: bonus % not found', p_bonus_id;
+  end if;
+  if v_bonus.status <> 'paid' then
+    raise exception 'create_referrer_credit_note: bonus % is not paid', p_bonus_id
+      using errcode = 'check_violation';
+  end if;
+  if exists (
+    select 1 from public.outgoing_invoices
+     where deal_id = v_bonus.deal_id and kind = 'referral_credit' and deleted_at is null
+  ) then
+    raise exception 'create_referrer_credit_note: a credit note already exists for deal %',
+      v_bonus.deal_id using errcode = 'unique_violation';
+  end if;
+
+  select * into v_deal from public.deals where id = v_bonus.deal_id and deleted_at is null;
+  if not found then
+    raise exception 'create_referrer_credit_note: deal % not found', v_bonus.deal_id;
+  end if;
+
+  insert into public.outgoing_invoices (
+    company_id, customer_id, kind, deal_id,
+    status, invoice_date, amount_net, amount_gross
+  ) values (
+    v_deal.company_id, v_bonus.referrer_customer_id, 'referral_credit', v_bonus.deal_id,
+    'draft', coalesce(v_bonus.paid_at::date, current_date), v_bonus.amount, v_bonus.amount
+  )
+  returning * into v_invoice;
+
+  return v_invoice;
+end;
+$$;
+
+revoke execute on function public.create_referrer_credit_note(uuid) from public, anon;
+grant execute on function public.create_referrer_credit_note(uuid) to authenticated;
 
 commit;
