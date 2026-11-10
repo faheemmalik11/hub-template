@@ -179,6 +179,21 @@ begin
 end
 $$;
 
+-- The table policies above cover the row the browser inserts once a file has reached storage, but
+-- storage.objects itself carries no policy of its own, so the upload that writes the bytes there
+-- is refused before any table is ever touched: "new row violates row-level security policy". Insert
+-- only, same as the table policies allow nothing beyond writing a new document in -- overwriting an
+-- existing object is a different operation this does not open.
+drop policy if exists documents_bucket_write on storage.objects;
+create policy documents_bucket_write on storage.objects
+    for insert to authenticated
+    with check (bucket_id = 'documents' and public.may_write('documents.write'));
+
+drop policy if exists outgoing_invoice_files_bucket_write on storage.objects;
+create policy outgoing_invoice_files_bucket_write on storage.objects
+    for insert to authenticated
+    with check (bucket_id = 'outgoing-invoice-files' and public.may_write('documents.write'));
+
 -- Where a row names a company, the company grants narrow what the capability opened.
 do $$
 declare
