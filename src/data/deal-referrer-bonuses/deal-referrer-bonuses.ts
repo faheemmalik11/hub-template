@@ -75,8 +75,10 @@ export function useSuggestReferrerBonus(dealId: string) {
       });
       if (error) throw error;
     },
-    onSuccess: () =>
-      qc.invalidateQueries({ queryKey: queryKeys.dealReferrerBonuses.forDeal(dealId) }),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: queryKeys.dealReferrerBonuses.forDeal(dealId) });
+      qc.invalidateQueries({ queryKey: ["deal-referrer-bonuses", "tier"] });
+    },
   });
 }
 
@@ -95,6 +97,7 @@ export function useMarkReferrerBonusPaid(dealId: string) {
   });
 }
 
+/** Cancelling frees up that referral slot, so any cached next-tier preview must refetch too. */
 export function useCancelReferrerBonus(dealId: string) {
   const qc = useQueryClient();
   return useMutation({
@@ -105,7 +108,9 @@ export function useCancelReferrerBonus(dealId: string) {
         .eq("id", input.id);
       if (error) throw error;
     },
-    onSuccess: () =>
-      qc.invalidateQueries({ queryKey: queryKeys.dealReferrerBonuses.forDeal(dealId) }),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: queryKeys.dealReferrerBonuses.forDeal(dealId) });
+      qc.invalidateQueries({ queryKey: ["deal-referrer-bonuses", "tier"] });
+    },
   });
 }
