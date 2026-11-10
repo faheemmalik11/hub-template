@@ -25,7 +25,11 @@ export function approvalSkippedFinalApprove(
 ): boolean {
   if (currentStepId !== "approve") return false;
   if (event.type !== "document_status_changed") return false;
-  return event.data?.actionId === "final_approve";
+  if (event.data?.actionId === "final_approve") return true;
+  // Someone who may also give the final approval never sees a separate "final_approve" action:
+  // nextLegalActions sends their "approve" straight to approved_final in one click, so the event
+  // this step is waiting to replay never arrives on its own.
+  return event.data?.actionId === "approve" && event.data?.nextStatus === "approved_final";
 }
 
 export function approveEvent(recordId: string): OnboardingEventInput {
