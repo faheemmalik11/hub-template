@@ -8,6 +8,7 @@ export {
   useOutgoingInvoice,
   useOutgoingInvoiceFileUrl,
   useOutgoingInvoices,
+  useSetOutgoingInvoiceNumber,
   useSetUploadedOutgoingInvoiceStatus,
   useSoftDeleteCustomer,
   useSoftDeleteOutgoingInvoice,
