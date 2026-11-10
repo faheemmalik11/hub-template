@@ -32,6 +32,10 @@ export function approvalSkippedFinalApprove(
   return event.data?.actionId === "approve" && event.data?.nextStatus === "approved_final";
 }
 
-export function approveEvent(recordId: string): OnboardingEventInput {
-  return { type: "document_status_changed", recordId, data: { actionId: "approve" } };
+export function approveEvent(recordId: string, nextStatus?: string): OnboardingEventInput {
+  return {
+    type: "document_status_changed",
+    recordId,
+    data: nextStatus ? { actionId: "approve", nextStatus } : { actionId: "approve" },
+  };
 }

@@ -186,22 +186,25 @@ function ActivePracticeTask({ task }: { task: OnboardingTask }) {
     if (runner.isFinished) setCompletionModalOpen(true);
   }, [runner.isFinished]);
 
-  const replayApproveForRecord = useRef<string | null>(null);
+  const replayApproveForRecord = useRef<{ recordId: string; nextStatus?: string } | null>(null);
   const currentStepId = runner.currentStep.id;
   useEffect(() => {
     if (!events || runner.isFinished) return;
     return events.subscribe((event) => {
       if (!approvalSkippedTheReviewStep(currentStepId, event)) return;
       if (event.recordId !== lastUploadedId) return;
-      replayApproveForRecord.current = event.recordId;
+      replayApproveForRecord.current = {
+        recordId: event.recordId,
+        nextStatus: typeof event.data?.nextStatus === "string" ? event.data.nextStatus : undefined,
+      };
       events.emit(sendForReviewEvent(event.recordId));
     });
   }, [events, currentStepId, lastUploadedId, runner.isFinished]);
   useEffect(() => {
-    const recordId = replayApproveForRecord.current;
-    if (!events || !recordId || currentStepId !== "approve") return;
+    const pending = replayApproveForRecord.current;
+    if (!events || !pending || currentStepId !== "approve") return;
     replayApproveForRecord.current = null;
-    events.emit(approveEvent(recordId));
+    events.emit(approveEvent(pending.recordId, pending.nextStatus));
   }, [events, currentStepId]);
 
   const replayFinalApproveForRecord = useRef<string | null>(null);
