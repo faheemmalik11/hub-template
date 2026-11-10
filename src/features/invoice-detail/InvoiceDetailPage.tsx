@@ -2160,7 +2160,7 @@ function DocumentDetail({ doc }: { doc: Document }) {
           emitOnboardingEvent({
             type: "document_status_changed",
             recordId: doc.id,
-            data: { actionId: action.id },
+            data: { actionId: action.id, nextStatus: action.nextStatus },
           });
         },
         onError: (e) =>
