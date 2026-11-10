@@ -4965,6 +4965,9 @@ const de = {
       cancelReason: "Grund (optional)",
       confirmCancel: "Bonus absagen",
       keepCancel: "Doch nicht absagen",
+      createCreditNote: "Gutschrift erstellen",
+      creditNoteCreated: "Gutschrift erstellt.",
+      creditNoteNote: "Eine Gutschrift für diese Auszahlung steht unter Rechnungen.",
       status: {
         suggested: "Vorgeschlagen",
         paid: "Ausgezahlt",

@@ -1,91 +1,123 @@
 ---
 name: map
-description: Architecture, navigation, and file map for the this Hub codebase. Use FIRST for any task in this repo — to understand where code lives, how the layers connect, how data flows browser→Supabase, what's real vs placeholder, and which doc answers a question. Load before editing so you don't re-read the whole tree.
+description: Architecture, navigation, and file map for this Hub codebase — including how every credential and external integration (Microsoft Graph, Propstack, BANKSapi, Pleo, book-keeping, Supabase itself) is stored and reached. Use FIRST for any task in this repo — to understand where code lives, how data flows browser→Supabase, which integration a feature actually depends on, and which doc answers a question. Load before editing so you don't re-read the whole tree.
 ---
 
 # this Hub — codebase map
 
-Internal accounting cockpit ("Buchhaltungs-Cockpit") for a German property company.
-It **reads and corrects** invoices that a **Python ingestion pipeline** (Outlook/Graph +
-Dropbox → OCR → AI extraction) has already written into Supabase. That pipeline is **not in
-this repo**. It runs in the multi-tenant `book-keeping` service
-(`github.com/fabiantscheu-ship-it/book-keeping`, branch `dev`, the sibling folder
-`../book-keeping` locally), in which this repository is one tenant, with behaviour picked by one
-`tenant_config` row edited in that project's admin panel. `pipeline_new/` here is a superseded
-copy kept for reading only. Beyond it, there is **no custom backend in this repo**, the browser
-talks directly to Supabase (Postgres).
+Internal accounting cockpit for a German property company. It reads and corrects invoices that
+book-keeping (a separate Python pipeline, sibling repo, cron-driven, not in this repo) has already
+written into Supabase, and it owns several features of its own on top: outgoing invoices, DATEV
+handover, bank reconciliation, card-expense import, broker commissions, approval rules. This Hub is
+one tenant of that pipeline, behaviour picked by one `tenant_settings`/`tenant_config` row. For the
+Hub↔book-keeping boundary specifically (three databases, why the Hub can't read its own mailbox
+password, the `pipeline_run_requests` "Run now" mechanism), see the **book-keeping-integration**
+skill — this doc covers the rest: the Hub's own features and its *other* integrations.
 
 ## Stack
 
 - **TanStack Start** (React 19 + TS) — file-based routing (`src/routes/*.tsx` → URLs).
 - **TanStack React Query** — all data fetching/caching (`staleTime` 60s).
-- **Supabase** (`@supabase/supabase-js`) — Postgres + auth, called from the browser with the
-  public/publishable key + user bearer token. Data protection = **Supabase RLS** (not in repo).
-- **shadcn/ui** (`src/components/ui/*`, ~46 vendored primitives — read, rarely edit) + Tailwind v4.
-- Package manager **npm**. Lint `npm run lint`. Build `npm run build`. Dev `npm run dev`. **No tests exist.**
+- **Supabase** (`@supabase/supabase-js`) — Postgres + auth + Edge Functions (Deno).
+- **shadcn/ui** (`src/components/ui/*`) + Tailwind v4. npm. `npm run lint` / `build` / `dev`.
 
 ## The 7 layers (walk down this to read any feature)
 
 ```
-1 ROUTE   src/routes/<module>/index.tsx, $param.tsx   ← the page = the exported component
+1 ROUTE   src/routes/<name>/index.tsx, $param.tsx       ← the page = the exported component
 2 LAYOUT  src/routes/__root.tsx + src/components/layout/  (providers, AppShell, AuthGate)
-3 UI KIT  src/components/ui/*                          ← generic shadcn widgets
-4 FEATURE src/components/documents/*, /brand/             ← project pieces (design lives here)
-5 DATA    src/lib/data/queries.ts                      ← EVERY DB call (React Query hooks)
-6 SHAPE   src/lib/data/format.ts, types.ts            ← labels/formatting + domain types
-7 CLIENT  src/integrations/supabase/                   → Supabase tables
+3 UI KIT  src/components/ui/*                             ← generic shadcn widgets
+4 FEATURE src/components/<domain>/*, src/features/<domain>/*  ← project pieces
+5 DATA    src/lib/data/queries.ts, src/data/<domain>/*    ← EVERY DB call (React Query hooks)
+6 SHAPE   src/lib/data/format.ts, types.ts                ← labels/formatting + domain types
+7 CLIENT  src/integrations/supabase/                      → Supabase tables / Edge Functions
 ```
 
-Data flow: `component → useXxx() hook → supabase.from(table) → Postgres → .data`.
-Writes go the same way, then `onSuccess` calls `queryClient.invalidateQueries(...)` to refresh.
+Writes go the same way, then `onSuccess` calls `queryClient.invalidateQueries(...)`.
 
-## Provider chain (`__root.tsx`)
+## Routes — current, English-first; every German path is a redirect stub, not a second page
 
-`QueryClientProvider → UIScaleProvider → AuthProvider → AuthGate → <Outlet/>`.
-AuthGate: `!ready`→blank; `!user`→LoginScreen; else `<AppShell>{page}</AppShell>`. Every route
-sits behind it. **Gating is client-side only** — real security is RLS on the live project.
+A template-wide pass anglicised every route. **Verified directly, not assumed**: `bankkonten`,
+`kategorien`, `gesellschaften`, `eingangsrechnungen`, `ausgangsrechnungen`, `datev-uebergabe` and
+every other German-named directory under `src/routes/` now contain only a `beforeLoad` redirect to
+the English equivalent, with the same comment each time: *"Moved to /X when this template anglicised
+its URLs... the old path stays as a redirect... so a client merging this keeps every bookmark
+working."* Always read the English path's own directory for the real implementation; treat the
+German one as a compatibility shim only.
 
-## The 80% trio
+| Domain | English route | What it is |
+|---|---|---|
+| Incoming invoices | `incoming-invoices`, `/$nr` | The main cockpit screen: list/Kanban, view/edit/workflow/assign/paid/notes |
+| Outgoing invoices | `outgoing-invoices` | Real feature now (not a placeholder) — commission/sale invoices |
+| DATEV handover | `datev-handover` | Sends incoming-invoice batches to the tax advisor's `@uploadmail.datev.de` address; see `docs/DATEV_HANDOVER.md` |
+| Inbox / Postfach | `postfach`, `inbox` | Document-source setup (mailbox/scan-folder channels) and the triage inbox |
+| Bank | `bank-accounts`, `bank-connections`, `bank-transactions`, `bank-settings` | BANKSapi-backed reconciliation — see "Bank connections" below |
+| Commissions | `broker-bonuses`, `commission-deals` | Referrer/broker payout tracking |
+| Master data | `companies`, `suppliers`, `customers`, `categories`, `properties` | The VAT rates / companies / categories book-keeping's rule packs read at runtime |
+| Rules | `approval-rules`, `assignment-rules`, `exclusion-rules`, `confidence-thresholds` | Tenant-tunable routing knobs, mirrors of what book-keeping's packs consume |
+| Tax | `vat-rules`, `vat-reserve`, `open-items` | VAT handling and open-item tracking |
+| Other | `manual-bookings`, `document-intake-log`, `document-types`, `file-naming`, `export`, `team`, `notifications`, `activity-log`, `trash`, `onboarding` | One feature each, named for what they do |
 
-`src/routes/eingangsrechnungen/index.tsx` + `src/lib/data/queries.ts` + `src/lib/data/types.ts`.
-Read those three and you understand most of the app. The nav/module list is `src/components/layout/app-shell.tsx` (`nav` array).
+## Credentials and external integrations — two different mechanisms, not one
 
-## Routes (all under `src/routes/`)
+Two genuinely different storage mechanisms exist side by side; don't assume uniformity across
+integrations.
 
-| URL                                | File                            | Status                                                  |
-| ---------------------------------- | ------------------------------- | ------------------------------------------------------- |
-| `/` dashboard                      | `index.tsx`                     | real (KPIs + tiles + last-6 invoices)                   |
-| `/eingangsrechnungen`              | `eingangsrechnungen/index.tsx`  | real — list + Kanban, client filters, server FTS        |
-| `/eingangsrechnungen/$nr`          | `eingangsrechnungen/$nr.tsx`    | real — view/edit/workflow/assign/paid/notes/delete      |
-| `/eingangsrechnungen/upload`       | `eingangsrechnungen/upload.tsx` | real — writes file bytes to Postgres                    |
-| `/suppliers`, `/suppliers/$id` | `suppliers/*`                 | real — supplier CRUD (soft-delete)                      |
-| `/objekte`, `/objekte/$code`       | `objekte/*`                     | real but **derived** (distinct `objekt_code`, no table) |
-| `/auswertungen`                    | `auswertungen/index.tsx`        | real — sums + recharts                                  |
-| `/protokoll`                       | `protokoll/index.tsx`           | real — reads `processing_log` (pipeline output)      |
-| `/ausgangsrechnungen`              | `ausgangsrechnungen/index.tsx`  | **PLACEHOLDER** (static empty state)                    |
+### Mechanism A — `public.credentials`, dual-encrypted, used by Graph / Propstack / OpenAI
 
-## Real vs. not-in-repo
+Rows keyed by `channel_key` (a real channel's own key for channel-scoped secrets, `""` for
+tenant-wide ones like `OPENAI_API_KEY`/`PROPSTACK_API_KEY`). Two encryption generations coexist in
+the same table: older Fernet values decrypted with `SECRET_ENCRYPTION_KEY`, newer "sealed" values
+(a `"v2."`-prefixed envelope) decrypted with the tenant's own `TENANT_SECRET_KEY` — read via
+`src/lib/inbox/channel-credentials.server.ts` (main app, 60s per-process cache) and
+`supabase/functions/_shared/sealed.ts` (Edge Functions).
 
-- **Real & wired:** login, invoice list/detail/edit, notes, soft-delete, workflow-status + assignment
-  - paid toggle, supplier CRUD, manual upload (bytes → Postgres).
-- **External pipeline (the `book-keeping` service, not this repo):** Outlook/Dropbox import,
-  OCR, AI extraction, `validierung`, dedup. Change it there, never here.
-- **Not built anywhere:** bank-transaction import, invoice↔transaction matching, missing-receipt
-  detection, approval rules/roles, DATEV/Lexware export, Ausgangsrechnungen.
+- **Microsoft Graph** (`src/lib/graph/auth.server.ts`): app-only client-credentials grant, reading
+  `GRAPH_TENANT_ID`/`GRAPH_CLIENT_ID`/`GRAPH_CLIENT_SECRET` via `channelCredential("mailbox", ...)`
+  — deliberately NOT from `.env`, because env rotation used to go stale against what the panel
+  showed. Used by `src/lib/graph/mail-folders.server.ts` (the folder picker) and
+  `send-mail.server.ts` (DATEV handover send — see `docs/DATEV_HANDOVER.md` for the still-missing
+  `Mail.Send` admin-consent step).
+- **Propstack** (`supabase/functions/propstack-sync/index.ts` + `_shared/propstack-client.ts`):
+  `PROPSTACK_API_KEY` + `PROPSTACK_WEBHOOK_SECRET`, tenant-wide (`channel_key = ""`). Triggered by
+  a `scheduled_jobs` cron row or the "Jetzt abgleichen" button calling the same function. Pulls
+  Propstack units into `properties`, links brokers, opens deals.
 
-## Authoritative docs (read the matching one instead of re-scanning code)
+### Mechanism B — Edge Function environment secrets, used by BANKSapi / Pleo
 
-- `READING-GUIDE.md` — layer-by-layer newcomer walkthrough + German glossary.
-- `docs/CODEBASE_AUDIT.md` — deepest reference: every hook, flow trace, bugs/risks (§10), hardcoded data (§9).
-- `docs/EINGANGSRECHNUNGEN_FEATURE.md` — the main invoice screen in detail.
-  The live one is `book-keeping`.
-- `docs/PIPELINE-OVERVIEW.md` — a different client's (immonetz) legacy pipeline; context only.
-- `docs/PROJECT-ROADMAP.md` — client's 7-step product vision. `docs/HUB-ACTION-ITEMS.md` — front-end to-dos.
-- `supabase/schema.sql` — version-controlled snapshot of the live DB schema (not applied from here).
-- `CLAUDE.md` — language convention + project shape (READ THIS; rules override defaults).
+Read with plain `Deno.env.get(...)`, set via `supabase secrets set`, never touching
+`public.credentials` at all:
+
+- **Bank connections** — confirmed in code as **BANKSapi** (`supabase/functions/bank-connect/index.ts`
+  line 1: *"start a BANKSapi bank-access (REG/Protect) session"*). Reads
+  `BANKSAPI_ONE_CONNECT_API_KEY`, `BANKSAPI_BASE_URL`, `BANKSAPI_MODE`, `BANKSAPI_CALLBACK_URL`,
+  `BANKSAPI_CUSTOMER_IP` (`_shared/adapters/banksapi/client.ts`). Flow: `bank-connect` opens a
+  pending `bank_connections` row and returns a webform URL for the user's own bank consent;
+  `bank-callback` finalizes it; `bank-disconnect` revokes it; `bank-sync` is the transaction
+  fetch/match step — the same one book-keeping's `bank_sync_stage.py` pings after a run, confirming
+  the actual bank data lives here, not in book-keeping. Whether banking is even on for a tenant is a
+  config flag, not a credential check: `tenant_settings.config.banking.provider`
+  (`_shared/tenant-config.ts`).
+- **Pleo** (`_shared/adapters/pleo/client.ts`): `PLEO_API_KEY`, `PLEO_COMPANY_ID`, `PLEO_BASE_URL`,
+  same env-var pattern. Provider flag: `tenant_settings.config.cards.provider`, defaulting to
+  `"pleo"`. Functions: `pleo-receipts`, `pleo-master-data`, `pleo-sync`, `pleo-employees`.
+
+### Supabase's own auth — two keys, two trust levels
+
+- **Browser**: `src/integrations/supabase/client.ts` — anon/publishable key + the signed-in user's
+  JWT, gated entirely by Postgres RLS. `AuthGate` in `__root.tsx` is UI-only; the real boundary is
+  RLS, not the React tree.
+- **Server (this Hub's own host)**: `src/integrations/supabase/client.server.ts` — plain
+  `process.env.SUPABASE_SERVICE_ROLE_KEY`, bypasses RLS. **This is a separate copy of the same
+  secret value** book-keeping's own admin panel needs saved into `public.credentials` for *its*
+  Edge Function calls — two different callers, two different homes, same value, each one
+  chicken-and-egg-necessary for its own side. Don't assume saving it in one place satisfies the
+  other.
 
 ## Related skills
 
-- `instructions` — standing team rules to follow on EVERY task (load at the start).
-- `data-layer` — how to add/change Supabase reads & mutations.
-- `ui` — routes, badges, formatting, German/English rule, the 3 status axes.
+- `book-keeping-integration` — the Hub↔pipeline boundary specifically (three databases, why the Hub
+  can't decrypt its own stored mailbox password, `pipeline_run_requests`).
+- `instructions` — standing team rules, load at the start of any task.
+- `data-layer` — how to add/change a Supabase read or mutation.
+- `ui` — routes, badges, formatting conventions, the English/German rule.

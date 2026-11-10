@@ -4801,6 +4801,9 @@ const en = {
       cancelReason: "Reason (optional)",
       confirmCancel: "Cancel the bonus",
       keepCancel: "Don't cancel after all",
+      createCreditNote: "Create credit note",
+      creditNoteCreated: "Credit note created.",
+      creditNoteNote: "A credit note for this payout is listed under Invoices.",
       status: {
         suggested: "Suggested",
         paid: "Paid",

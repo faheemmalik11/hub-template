@@ -114,3 +114,17 @@ export function useCancelReferrerBonus(dealId: string) {
     },
   });
 }
+
+export function useCreateReferrerCreditNote(dealId: string) {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async (bonusId: string) => {
+      const { error } = await sb.rpc("create_referrer_credit_note", { p_bonus_id: bonusId });
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: queryKeys.dealReferrerBonuses.forDeal(dealId) });
+      qc.invalidateQueries({ queryKey: ["outgoing_invoices"] });
+    },
+  });
+}

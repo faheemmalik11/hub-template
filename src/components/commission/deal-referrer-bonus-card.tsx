@@ -7,9 +7,11 @@ import { Input } from "@/components/ui/input";
 import {
   useBonusSettings,
   useCancelReferrerBonus,
+  useCreateReferrerCreditNote,
   useCustomer,
   useDealReferrerBonus,
   useMarkReferrerBonusPaid,
+  useOutgoingInvoices,
   useReferrerBonusTier,
   useSuggestReferrerBonus,
 } from "@/data";
@@ -35,6 +37,8 @@ export function DealReferrerBonusCard({ deal }: { deal: Deal }) {
   const suggest = useSuggestReferrerBonus(deal.id);
   const markPaid = useMarkReferrerBonusPaid(deal.id);
   const cancel = useCancelReferrerBonus(deal.id);
+  const invoicesQ = useOutgoingInvoices({ dealId: deal.id });
+  const createCreditNote = useCreateReferrerCreditNote(deal.id);
 
   const [amount, setAmount] = useState("");
   const [cancelReason, setCancelReason] = useState("");
@@ -45,6 +49,7 @@ export function DealReferrerBonusCard({ deal }: { deal: Deal }) {
 
   const bonus = bonusQ.data;
   const suggestedAmount = tierAmountOf(settingsQ.data, tierQ.data);
+  const creditNote = (invoicesQ.data ?? []).find((invoice) => invoice.kind === "referral_credit");
 
   const create = () => {
     const parsedAmount = Number((amount || String(suggestedAmount)).replace(",", "."));
@@ -160,6 +165,31 @@ export function DealReferrerBonusCard({ deal }: { deal: Deal }) {
                 {t("commissionDeals.referrerBonus.keepCancel")}
               </Button>
             </div>
+          )}
+          {bonus.status === "paid" && !creditNote && (
+            <div className="mt-3">
+              <Button
+                size="sm"
+                disabled={createCreditNote.isPending}
+                onClick={() =>
+                  createCreditNote.mutate(bonus.id, {
+                    onSuccess: () =>
+                      toast.success(t("commissionDeals.referrerBonus.creditNoteCreated")),
+                    onError: (error) =>
+                      toast.error(t("commissionDeals.referrerBonus.failed"), {
+                        description: errorText(error),
+                      }),
+                  })
+                }
+              >
+                {t("commissionDeals.referrerBonus.createCreditNote")}
+              </Button>
+            </div>
+          )}
+          {bonus.status === "paid" && creditNote && (
+            <p className="mt-3 text-xs text-muted-foreground">
+              {t("commissionDeals.referrerBonus.creditNoteNote")}
+            </p>
           )}
         </div>
       )}
