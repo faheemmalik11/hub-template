@@ -1,4 +1,5 @@
 import { getRouteApi, Link, useBlocker, useNavigate } from "@tanstack/react-router";
+import { useQueryClient } from "@tanstack/react-query";
 import {
   forwardRef,
   type ReactNode,
@@ -49,6 +50,8 @@ import {
   practiceInvoiceAmountIsWrong,
 } from "@/features/onboarding-practice/practice-invoice-task";
 import { documentUpdatedEventData } from "@/features/onboarding-practice/document-updated-event";
+import { runTransactionMatching } from "@/lib/api/matching.functions";
+import { invalidateMatchState } from "@/data/shared";
 import { PaymentRightNotice } from "@/components/bank/payment-right-notice";
 import { CloseRemainderButton } from "@/components/bank/close-remainder";
 import { Button } from "@/components/ui/button";
@@ -521,6 +524,7 @@ function DocumentDetail({ doc }: { doc: Document }) {
   const rulesQ = useResolvedRules(doc.id);
 
   const updateDocument = useUpdateDocument(doc.id);
+  const queryClient = useQueryClient();
   const emitOnboardingEvent = useEmitOnboardingEvent();
   const emitDocumentOpenedOnMount = useRef(() => {
     emitOnboardingEvent({ type: "document_opened", recordId: doc.id });
@@ -1095,6 +1099,15 @@ function DocumentDetail({ doc }: { doc: Document }) {
       recordId: doc.id,
       data: documentUpdatedEventData(doc, changes),
     });
+    // A company assigned just now may already have an open bank transaction waiting for it: the
+    // only other place matching runs is bank-sync, which looks at newly arrived transactions, not
+    // at invoices that just gained a company. Best effort: a failed or slow match check here should
+    // never block the confirmation that already saved.
+    if (changes.company_id) {
+      runTransactionMatching({ data: { direction: "incoming", companyId: changes.company_id } })
+        .then(() => invalidateMatchState(queryClient))
+        .catch(() => {});
+    }
   }
 
   const validationFlatValue = useMemo(() => validationFlat(doc), [doc]);
