@@ -60,6 +60,21 @@ async function channelKeyOf(kind: ChannelKind): Promise<string | null> {
   return [...(got.data ?? [])].sort((a, b) => a.position - b.position)[0]?.key ?? null;
 }
 
+/** `channels.provider` for this kind's channel: "graph" (also null/""), "imap" or "gmail". */
+export async function channelProvider(kind: ChannelKind): Promise<string | null> {
+  const got = (await (
+    await db()
+  )
+    .from(TABLE.channels)
+    .select("provider, position")
+    .eq("kind", kind)) as {
+    data: Array<{ provider: string | null; position: number }> | null;
+    error: unknown;
+  };
+  if (got.error) throw got.error;
+  return [...(got.data ?? [])].sort((a, b) => a.position - b.position)[0]?.provider ?? null;
+}
+
 async function readStored(channelKey: string): Promise<Stored> {
   const hit = cache.get(channelKey);
   if (hit && Date.now() - hit.at < CACHE_MS) return hit.stored;

@@ -8,7 +8,9 @@ import { createServerFn } from "@tanstack/react-start";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 import { AppError } from "./errors";
 import { listGraphMailFolders } from "@/lib/graph/mail-folders.server";
+import { listImapMailFolders } from "@/lib/inbox/imap-folders.server";
 import { listDropboxFolders } from "@/lib/dropbox/folders.server";
+import { channelProvider } from "@/lib/inbox/channel-credentials.server";
 import type { FolderOption } from "@/lib/inbox/folder-option";
 import { errorText } from "@/lib/data/format";
 
@@ -25,9 +27,11 @@ async function callProvider<T>(fn: () => Promise<T>, code: string): Promise<T> {
 
 export const getMailboxFolders = createServerFn({ method: "GET" })
   .middleware([requireSupabaseAuth])
-  .handler(async (): Promise<FolderOption[]> =>
-    callProvider(listGraphMailFolders, "GRAPH_API_ERROR"),
-  );
+  .handler(async (): Promise<FolderOption[]> => {
+    const provider = await channelProvider("mailbox");
+    if (provider === "imap") return callProvider(listImapMailFolders, "IMAP_API_ERROR");
+    return callProvider(listGraphMailFolders, "GRAPH_API_ERROR");
+  });
 
 export const getFilingFolders = createServerFn({ method: "GET" })
   .middleware([requireSupabaseAuth])
