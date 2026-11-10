@@ -4,6 +4,7 @@ import { PERMISSIONS } from "@/config/permissions";
 
 import { TABLE } from "@/config/tables";
 import { SINGLETON_ROW_ID, STALE, actorEmail, insertChangeHistory, sb } from "@/data/client";
+import { queryKeys } from "@/data/keys";
 import {
   FILE_URL_STALE,
   fetchAllRows,
@@ -160,6 +161,7 @@ export function useSoftDeleteCustomer(customerId: string) {
 export interface OutgoingInvoiceFilter {
   companyId?: string;
   customerId?: string;
+  dealId?: string;
 }
 
 export function useOutgoingInvoices(filter?: OutgoingInvoiceFilter) {
@@ -179,6 +181,7 @@ export function useOutgoingInvoices(filter?: OutgoingInvoiceFilter) {
           .is("deleted_at", null);
         if (filter?.companyId) query = query.eq("company_id", filter.companyId);
         if (filter?.customerId) query = query.eq("customer_id", filter.customerId);
+        if (filter?.dealId) query = query.eq("deal_id", filter.dealId);
         return query
           .order("invoice_date", { ascending: false })
           .range(from, to) as unknown as Promise<{
@@ -187,6 +190,26 @@ export function useOutgoingInvoices(filter?: OutgoingInvoiceFilter) {
           count?: number | null;
         }>;
       });
+    },
+  });
+}
+
+// A deal-generated outgoing invoice (create_deal_invoices, migration 0011) is created with no
+// invoice_number: this business issues the actual invoice number outside the Hub and staff type
+// it in here afterwards, the same manual write-back the client asked for on the deal/property.
+export function useSetOutgoingInvoiceNumber(invoiceId: string) {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async (invoiceNumber: string) => {
+      const { error } = await sb
+        .from(TABLE.outgoingInvoices)
+        .update({ invoice_number: invoiceNumber, updated_at: new Date().toISOString() })
+        .eq("id", invoiceId);
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ["outgoing_invoices"] });
+      qc.invalidateQueries({ queryKey: queryKeys.deals.all });
     },
   });
 }

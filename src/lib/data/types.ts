@@ -1721,6 +1721,9 @@ export interface OutgoingInvoice {
   id: string;
   company_id: string;
   customer_id: string;
+  deal_id: string | null;
+  deal_party_id: string | null;
+  kind: "commission" | "coaching" | "referral_credit" | null;
   invoice_number: string | null;
   status: OutgoingVoucherStatus;
   invoice_date: string | null;
@@ -1732,9 +1735,9 @@ export interface OutgoingInvoice {
   // Never populated by the current (upload-only) creation path — totals only, no line-item
   // breakdown. Kept as a column/type for a future structured-upload pass, not actively used.
   line_items: OutgoingInvoiceLineItem[] | null;
-  // Always "upload" (migration 0086) — LexOffice removed entirely, so there is no other way an
-  // outgoing invoice enters this table.
-  source: "upload";
+  // "upload": AI-extracted from an uploaded file. "app": created directly, e.g. from an approved
+  // deal (create_deal_invoices, migration 0011) — no file, no extraction.
+  source: "upload" | "app";
   // Who last set status: 'auto' (a confirmed bank match) or 'manual'
   // (set_uploaded_outgoing_invoice_status, migration 0085).
   status_source: "auto" | "manual" | null;

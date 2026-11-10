@@ -15,6 +15,7 @@ import { DealDonationCard } from "@/components/commission/deal-donation-card";
 import { DealReferrerBonusCard } from "@/components/commission/deal-referrer-bonus-card";
 import { DealCostsCard } from "@/components/commission/deal-costs-card";
 import { DealFactsCard } from "@/components/commission/deal-facts-card";
+import { DealInvoicesCard } from "@/components/commission/deal-invoices-card";
 import { DraftInvoices } from "@/components/commission/draft-invoices";
 import { SideCard } from "@/components/commission/side-card";
 import {
@@ -298,6 +299,8 @@ function DealEditor({ deal }: { deal: Deal }) {
               <DraftInvoices result={result} customerName={customerName} />
             </div>
           </section>
+
+          <DealInvoicesCard deal={deal} />
 
           {suggestsBonuses && !unsaved && <BonusSuggestionsCard deal={deal} />}
           {suggestsBonuses && !unsaved && <DealReferrerBonusCard deal={deal} />}

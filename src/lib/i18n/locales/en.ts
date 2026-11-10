@@ -4875,6 +4875,15 @@ const en = {
       sum: "All invoices together",
       unknownCustomer: "Unknown customer",
     },
+    invoices: {
+      title: "Invoices",
+      hint: "Type in the invoice number once it has been issued, and it stays here with the deal.",
+      number: "Invoice number",
+      numberPlaceholder: "Invoice number",
+      saveNumber: "Save",
+      numberFailed: "Saving the invoice number failed.",
+      unknownCustomer: "Unknown customer",
+    },
     problems: {
       title: "Still missing",
       purchase_price_missing: "The purchase price is missing.",

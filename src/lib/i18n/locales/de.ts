@@ -5039,6 +5039,15 @@ const de = {
       sum: "Summe aller Rechnungen",
       unknownCustomer: "Unbekannter Kunde",
     },
+    invoices: {
+      title: "Rechnungen",
+      hint: "Rechnungsnummer eintragen, sobald die Rechnung gestellt ist. Sie bleibt dann hier am Deal.",
+      number: "Rechnungsnummer",
+      numberPlaceholder: "Rechnungsnummer",
+      saveNumber: "Speichern",
+      numberFailed: "Die Rechnungsnummer konnte nicht gespeichert werden.",
+      unknownCustomer: "Unbekannter Kunde",
+    },
     problems: {
       title: "Was noch fehlt",
       purchase_price_missing: "Der Kaufpreis fehlt.",
