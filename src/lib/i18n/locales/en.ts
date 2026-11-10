@@ -5924,6 +5924,12 @@ const en = {
       fileFailed: "The file could not be opened.",
       fileFailedWithError: "The file could not be opened: {{error}}",
       statusFailed: "Status could not be changed: {{error}}",
+      lexoffice: {
+        send: "Send to Lexoffice",
+        sent: "Sent to Lexoffice",
+        success: "Invoice sent to Lexoffice.",
+        failed: "Could not send to Lexoffice: {{error}}",
+      },
       filter: {
         company: "Company",
         allCompanies: "All companies",

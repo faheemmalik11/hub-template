@@ -1706,6 +1706,8 @@ export interface Customer {
 // `status === "open" && due_date < today` (see format.ts).
 export type OutgoingVoucherStatus = "draft" | "open" | "paidoff" | "voided";
 
+export type OutgoingInvoiceStatus = OutgoingVoucherStatus | "sent" | "paid" | "cancelled";
+
 export interface OutgoingInvoiceLineItem {
   description: string;
   quantity: number;
@@ -1716,8 +1718,6 @@ export interface OutgoingInvoiceLineItem {
 }
 
 export interface OutgoingInvoice {
-  // Optional on this Hub: only present where LexOffice sync exists. undefined reads as null.
-  lexoffice_voucher_id?: string | null;
   id: string;
   company_id: string;
   customer_id: string;
@@ -1725,7 +1725,7 @@ export interface OutgoingInvoice {
   deal_party_id: string | null;
   kind: "commission" | "coaching" | "referral_credit" | null;
   invoice_number: string | null;
-  status: OutgoingVoucherStatus;
+  status: OutgoingInvoiceStatus;
   invoice_date: string | null;
   due_date: string | null;
   expected_payment_on?: string | null;
@@ -1747,6 +1747,8 @@ export interface OutgoingInvoice {
   created_at: string;
   updated_at: string;
   last_sync_at: string | null;
+  accounting_external_id?: string | null;
+  lexoffice_sync_requested_at?: string | null;
   // Optional PostgREST-embedded relation (select "*, customers(*)").
   customers?: Customer | null;
 }

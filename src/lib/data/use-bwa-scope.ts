@@ -32,7 +32,7 @@ import {
 import type {
   CostAnalysisCategory,
   OutgoingInvoice,
-  OutgoingVoucherStatus,
+  OutgoingInvoiceStatus,
 } from "@/lib/data/types";
 
 export type BookingBasis = "invoice_date" | "payment_date";
@@ -100,7 +100,7 @@ export interface CostAnalysisScopeItem {
   // null for source='upload' outgoing invoices (migration 20260806120000) — no LexOffice voucher
   // exists for those at all, distinct from "not an outgoing invoice at all" (undefined).
   lexofficeVoucherId?: string | null;
-  lexofficeStatus?: OutgoingVoucherStatus;
+  lexofficeStatus?: OutgoingInvoiceStatus;
   amount: number;
   categoryId: string | null;
   label: string;
@@ -448,7 +448,7 @@ export function useCostAnalysisScope(filter: CostAnalysisScopeFilter): CostAnaly
 
       items.push({
         outgoingInvoiceId: oi.id,
-        lexofficeVoucherId: oi.lexoffice_voucher_id,
+        lexofficeVoucherId: oi.accounting_external_id,
         lexofficeStatus: oi.status,
         amount:
           basis === "gross" ? (oi.amount_gross ?? 0) : (oi.amount_net ?? oi.amount_gross ?? 0),

@@ -7,6 +7,7 @@ import {
   FileText,
   Loader2,
   Search,
+  Send,
   Trash2,
   UploadCloud,
 } from "lucide-react";
@@ -50,7 +51,10 @@ import {
   useOutgoingInvoices,
   useSetUploadedOutgoingInvoiceStatus,
   useSoftDeleteOutgoingInvoice,
+  useSyncInvoiceToLexoffice,
 } from "@/data";
+import { useFeature } from "@/data/use-feature";
+import { PERMISSIONS } from "@/config/permissions";
 import { errorText, formatDate, formatEUR } from "@/lib/data/format";
 import { ErrorState, TableSkeleton } from "@/components/documents/query-states";
 import { CompanyChip } from "@/components/documents/badges";
@@ -58,7 +62,11 @@ import { SortControl } from "@/components/data-table/sort-control";
 import { TablePagination } from "@/components/data-table/table-pagination";
 import { useTableView } from "@/lib/use-table-view";
 import { useTranslation } from "@/lib/i18n";
-import type { OutgoingInvoice, OutgoingVoucherStatus } from "@/lib/data/types";
+import type {
+  OutgoingInvoice,
+  OutgoingInvoiceStatus,
+  OutgoingVoucherStatus,
+} from "@/lib/data/types";
 import { brandVars, pageTitle } from "@/config/brand";
 
 export const Route = createFileRoute("/outgoing-invoices/")({
@@ -75,9 +83,9 @@ function paymentDueOn(invoice: OutgoingInvoice) {
   return invoice.due_date ?? invoice.expected_payment_on ?? null;
 }
 
-function effectiveStatus(status: OutgoingVoucherStatus, dueDate: string | null): StatusFilter {
-  if (status === "paidoff") return "paid";
-  if (status === "voided") return "voided";
+function effectiveStatus(status: OutgoingInvoiceStatus, dueDate: string | null): StatusFilter {
+  if (status === "paidoff" || status === "paid") return "paid";
+  if (status === "voided" || status === "cancelled") return "voided";
   if (status === "draft") return "draft";
   const today = new Date().toISOString().slice(0, 10);
   return !!dueDate && dueDate < today ? "overdue" : "open";
@@ -374,6 +382,7 @@ function OutgoingInvoicesPage() {
                   </TableCell>
                   <TableCell>
                     <div className="flex items-center justify-end gap-1">
+                      <LexofficeSyncButton invoice={inv} />
                       <OutgoingInvoiceFileButton invoiceId={inv.id} />
                       <DeleteInvoiceButton invoice={inv} />
                     </div>
@@ -451,6 +460,45 @@ function OutgoingStatusCell({ invoice }: { invoice: OutgoingInvoice }) {
         ))}
       </SelectContent>
     </Select>
+  );
+}
+
+function LexofficeSyncButton({ invoice }: { invoice: OutgoingInvoice }) {
+  const { t } = useTranslation();
+  const canSync = useFeature(PERMISSIONS.lexofficeSync);
+  const sync = useSyncInvoiceToLexoffice();
+
+  if (!canSync || invoice.source !== "app") return null;
+
+  if (invoice.accounting_external_id) {
+    return (
+      <span
+        className="inline-flex text-muted-foreground"
+        title={t("outgoingInvoices.list.lexoffice.sent")}
+      >
+        <CheckCircle2 className="size-4" />
+      </span>
+    );
+  }
+
+  if (invoice.status !== "draft") return null;
+
+  return (
+    <button
+      type="button"
+      onClick={() =>
+        sync.mutate(invoice.id, {
+          onSuccess: () => toast.success(t("outgoingInvoices.list.lexoffice.success")),
+          onError: (e: Error) =>
+            toast.error(t("outgoingInvoices.list.lexoffice.failed", { error: errorText(e) })),
+        })
+      }
+      disabled={sync.isPending}
+      className="inline-flex text-muted-foreground transition-colors hover:text-foreground disabled:opacity-50"
+      title={t("outgoingInvoices.list.lexoffice.send")}
+    >
+      {sync.isPending ? <Loader2 className="size-4 animate-spin" /> : <Send className="size-4" />}
+    </button>
   );
 }
 

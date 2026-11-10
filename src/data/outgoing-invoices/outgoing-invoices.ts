@@ -3,6 +3,7 @@ import { useFeatureGate } from "@/data/use-feature";
 import { PERMISSIONS } from "@/config/permissions";
 
 import { TABLE } from "@/config/tables";
+import { EDGE_FUNCTION } from "@/config/edge-functions";
 import { SINGLETON_ROW_ID, STALE, actorEmail, insertChangeHistory, sb } from "@/data/client";
 import { queryKeys } from "@/data/keys";
 import {
@@ -17,6 +18,7 @@ import { getOutgoingInvoiceFileUrl } from "@/lib/api/outgoing-invoice-files.func
 import { extractOutgoingInvoiceFields } from "@/lib/api/outgoing-invoice-extraction.functions";
 import { createUploadedOutgoingInvoice } from "@/lib/api/outgoing-invoice-upload.functions";
 import type { Customer, OutgoingInvoice, OutgoingVoucherStatus } from "@/lib/data/types";
+import { edgeFunctionErrorText } from "@/lib/data/format";
 import type { OutgoingInvoiceUploadMime } from "@/lib/api/outgoing-invoice-shared";
 import { keepPreviousData, useInfiniteQuery } from "@tanstack/react-query";
 
@@ -211,6 +213,22 @@ export function useSetOutgoingInvoiceNumber(invoiceId: string) {
       qc.invalidateQueries({ queryKey: ["outgoing_invoices"] });
       qc.invalidateQueries({ queryKey: queryKeys.deals.all });
     },
+  });
+}
+
+export function useSyncInvoiceToLexoffice() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async (outgoingInvoiceId: string) => {
+      const { data, error } = await sb.functions.invoke(EDGE_FUNCTION.lexofficeInvoicePush, {
+        body: { outgoing_invoice_id: outgoingInvoiceId },
+      });
+      if (error) throw new Error(await edgeFunctionErrorText(error));
+      const result = (data ?? {}) as { error?: string; lexofficeInvoiceId?: string };
+      if (result.error) throw new Error(result.error);
+      return result;
+    },
+    onSuccess: () => qc.invalidateQueries({ queryKey: ["outgoing_invoices"] }),
   });
 }
 

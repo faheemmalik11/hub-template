@@ -12,6 +12,7 @@ export const TABLE = {
   credentials: "credentials",
   crmWebhookEvents: "crm_webhook_events",
   customers: "customers",
+  deals: "deals",
   documentFiles: "document_files",
   documentHistory: "document_history",
   documentTransactionMatches: "document_transaction_matches",
