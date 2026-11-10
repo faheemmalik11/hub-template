@@ -48,7 +48,7 @@ files own which part, and what is still open.
      (if it has one) can fire. No `notify_administrators` call here — the daily reconciliation pass
      is the backstop if a webhook is ever dropped outright.
 
-- `supabase/presets/propstack-hourly-sync.sql` — the inserted `scheduled_jobs` row's `schedule`
+- `supabase/presets/propstack-daily-sync.sql` — the inserted `scheduled_jobs` row's `schedule`
   changed from `0 * * * *` to `0 3 * * *`, and its description now says "reconciliation", matching
   the daily cadence the live cron job needs to move to (see below). This is a one-time INSERT
   (`on conflict (key) do nothing`), so it only affects a brand-new client's catalogue — an
