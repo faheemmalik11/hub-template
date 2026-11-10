@@ -214,7 +214,7 @@ export const runTransactionMatching = createServerFn({ method: "POST" })
 
     if (companyId) {
       const { data: mayAccess, error } = await (context.supabase as Db).rpc("has_company_access", {
-        p_company: companyId,
+        p_company_id: companyId,
       });
       if (error) throw new AppError(errorMessage(error), 500, "ACCESS_CHECK_FAILED");
       if (mayAccess !== true) throw new AppError("No access to this company.", 403, "FORBIDDEN");
