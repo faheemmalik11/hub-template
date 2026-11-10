@@ -28,6 +28,10 @@ const NUMBER_FIELDS: NumberKey[] = [
   "own_lead_share_percent",
   "company_lead_share_percent",
   "personnel_flat_amount",
+  "referrer_tier1_amount",
+  "referrer_tier2_amount",
+  "referrer_tier3_amount",
+  "referrer_tier4plus_amount",
 ];
 
 export function BonusSettingsDialog() {

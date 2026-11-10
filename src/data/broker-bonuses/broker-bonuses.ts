@@ -130,11 +130,16 @@ export interface BonusSettings {
   company_lead_share_percent: number;
   personnel_flat_amount: number;
   company_lead_deducts_costs: boolean;
+  referrer_tier1_amount: number;
+  referrer_tier2_amount: number;
+  referrer_tier3_amount: number;
+  referrer_tier4plus_amount: number;
 }
 
 const SETTINGS_SELECT =
   "notary_amount, follow_up_amount, own_lead_share_percent, company_lead_share_percent, " +
-  "personnel_flat_amount, company_lead_deducts_costs";
+  "personnel_flat_amount, company_lead_deducts_costs, referrer_tier1_amount, " +
+  "referrer_tier2_amount, referrer_tier3_amount, referrer_tier4plus_amount";
 
 export function useBonusSettings(enabled = true) {
   return useQuery({

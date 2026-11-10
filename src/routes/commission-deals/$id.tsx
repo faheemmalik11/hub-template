@@ -12,6 +12,7 @@ import { ErrorState, TableSkeleton } from "@/components/documents/query-states";
 import { DealStatusBadge } from "@/components/commission/deal-status-badge";
 import { BonusSuggestionsCard } from "@/components/commission/bonus-suggestions-card";
 import { DealDonationCard } from "@/components/commission/deal-donation-card";
+import { DealReferrerBonusCard } from "@/components/commission/deal-referrer-bonus-card";
 import { DealCostsCard } from "@/components/commission/deal-costs-card";
 import { DealFactsCard } from "@/components/commission/deal-facts-card";
 import { DraftInvoices } from "@/components/commission/draft-invoices";
@@ -299,6 +300,7 @@ function DealEditor({ deal }: { deal: Deal }) {
           </section>
 
           {suggestsBonuses && !unsaved && <BonusSuggestionsCard deal={deal} />}
+          {suggestsBonuses && !unsaved && <DealReferrerBonusCard deal={deal} />}
           {managesDonations && !unsaved && <DealDonationCard deal={deal} />}
 
           <div className="flex flex-wrap gap-2">

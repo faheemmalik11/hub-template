@@ -46,6 +46,7 @@ export const TABLE = {
   customers: "customers",
   dealCosts: "deal_costs",
   dealDonations: "deal_donations",
+  dealReferrerBonuses: "deal_referrer_bonuses",
   dealParties: "deal_parties",
   deals: "deals",
   dealSides: "deal_sides",
