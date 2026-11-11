@@ -18,8 +18,8 @@ which functions are missing, whether the stored vocabulary is still German, and 
 permission model is present with its four catalogue columns.
 
 Nothing is planned before this runs, because the distance is different for every client. From the
-table counts alone: Olivia is about 11 tables away, eiffler 75 with a whole second accounting area
-of its own.
+table counts alone, one client is about 11 tables away, another 75 with a whole second accounting
+area of its own.
 
 ## 1. Adopt `src/config/`
 
@@ -72,8 +72,8 @@ locale, its `.env` and its own tables in the 9000 file range. Nothing else.**
 
 ## Their own tables
 
-Every established client has some: eiffler's second accounting area and Airtable sync, immonetz's
-Lexoffice integration, Olivia's payment runs. They keep them, in their own numbered file:
+Every established client has some: a second accounting area and Airtable sync for one, a Lexoffice
+integration for another, payment runs for a third. They keep them, in their own numbered file:
 
 ```
 supabase/schema/9000_<client>_payment_runs.sql

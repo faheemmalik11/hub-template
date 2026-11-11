@@ -8,7 +8,7 @@ the other three are the technical ground truth — this one is the narrative.
 
 This template runs a complete financial-operations cycle on top of Supabase/Postgres — AI document
 intake, tax coding, bank sync, invoice-to-payment reconciliation — and is already proven across
-several deployment forks, this client's own Hub among them and Immonetz as a sibling fork. The goal
+several deployment forks, this client's own Hub among them and another client's Hub as a sibling fork. The goal
 is to keep scaling it to new clients, industries and countries with minimal code modification per
 client.
 

@@ -99,7 +99,15 @@ The same rule in SQL: a table, column or function named for what it holds needs 
 
 1. **Never delete a screen to suit one client.** Switch it off in their catalogue. A screen removed
    here is a fork; a screen switched off is a row.
-2. **Never write a client's name here.** Not in code, not in a comment, not in a migration.
+2. **Never write a client's name here.** Not in code, not in a comment, not in a migration. This
+   includes `planning/`: an analysis that genuinely needs one client's real specifics (their stack,
+   their data, a comparison against their codebase) is written on that client's own branch, in
+   their own worktree, the same place their brand and their data already live — never inline in a
+   shared planning doc. What goes in the shared `planning/` folder is the generic finding, with a
+   reference to where the client-specific detail lives (`see <client>'s own branch`), not the
+   client's name or their numbers themselves. `planning/15-feature-portability-audit-1/` is the
+   example: the audit itself is generic (no client named anywhere in it); the specific client it
+   was run against is recorded only on that client's own branch, not here.
 3. **New behaviour ships off by default**, behind a switch, so an existing client's Hub cannot change
    under them when the template moves forward.
 4. **A fix that is not specific to one client goes on `main`/`dev`, never only on a client's branch.**
