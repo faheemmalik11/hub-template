@@ -38,12 +38,14 @@ import type { VoiceRecordingMime } from "@/lib/api/voice-transcription-shared";
 import { transcribeVoiceQuery } from "@/lib/api/voice-transcription.functions";
 import {
   COMPANY_WITHOUT,
+  edgeFunctionErrorText,
   normalizeWorkflowStatus,
   PRIVATE_OWNER_UNASSIGNED,
   PROPERTY_WITHOUT,
   todayLocal,
   workflowStatusVariants,
 } from "@/lib/data/format";
+import { EDGE_FUNCTION } from "@/config/edge-functions";
 import { OPEN_ITEM_COLUMNS } from "@/lib/data/types";
 import type {
   Document,
@@ -1583,6 +1585,22 @@ export function useSoftDeleteDocument(documentId: string) {
       invalidateDocumentListQueries(qc);
       qc.invalidateQueries({ queryKey: ["beleg", documentId] });
     },
+  });
+}
+
+export function useRetryLexofficeDocumentPush(documentId: string) {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async () => {
+      const { data, error } = await sb.functions.invoke(EDGE_FUNCTION.lexofficeDocumentPush, {
+        body: { document_id: documentId },
+      });
+      if (error) throw new Error(await edgeFunctionErrorText(error));
+      const result = (data ?? {}) as { error?: string };
+      if (result.error) throw new Error(result.error);
+      return result;
+    },
+    onSuccess: () => qc.invalidateQueries({ queryKey: ["beleg", documentId] }),
   });
 }
 

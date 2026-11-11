@@ -36,6 +36,7 @@ export {
   usePropertyDocumentTotals,
   useOpenDocuments,
   useOpenDocumentsInfinite,
+  useRetryLexofficeDocumentPush,
   useSoftDeleteDocument,
   useTranscribeVoiceQuery,
   useTransactionDocuments,

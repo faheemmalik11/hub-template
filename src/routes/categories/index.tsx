@@ -40,6 +40,7 @@ import { cn } from "@/lib/utils";
 import {
   useCostAnalysisCategories,
   useCreateCostAnalysisCategory,
+  useLexofficeCategories,
   useSoftDeleteCostAnalysisCategory,
   useUpdateCostAnalysisCategory,
   type CostAnalysisCategoryInput,
@@ -50,6 +51,8 @@ import type { CostAnalysisCategory } from "@/lib/data/types";
 import { LEER } from "@/components/assignment/rule-row";
 import { pageTitle } from "@/config/brand";
 import { errorText } from "@/lib/data/format";
+import { useFeature } from "@/data/use-feature";
+import { PERMISSIONS } from "@/config/permissions";
 
 export const Route = createFileRoute("/categories/")({
   head: () => ({ meta: [{ title: pageTitle("Kategorien") }] }),
@@ -303,11 +306,33 @@ function CategoryActions({ category }: { category: CostAnalysisCategory }) {
   // only carries a real translation for the categories seeded from Appendix A3 (migration 0030).
   const [name, setName] = useState(category.name);
   const [note, setNote] = useState(category.note ?? "");
+  const [lexwareCategoryId, setLexwareCategoryId] = useState(category.lexware_category_id ?? LEER);
   const [reason, setReason] = useState("");
+
+  const lexofficeDocumentSyncOn = useFeature(PERMISSIONS.lexofficeDocumentSync);
+  const lexofficeCategories = useLexofficeCategories(editOpen && lexofficeDocumentSyncOn);
+
+  const normalizedNote = note.trim() === "" ? null : note.trim();
+  const normalizedLexwareCategoryId = lexwareCategoryId === LEER ? null : lexwareCategoryId;
+  const formIsUnchanged =
+    name.trim() === category.name &&
+    normalizedNote === category.note &&
+    (!lexofficeDocumentSyncOn || normalizedLexwareCategoryId === category.lexware_category_id);
+
+  // Opening the dialog always starts from this category's current saved values, never from
+  // whatever was left over from the last time it was opened or from a different row's edit.
+  function handleEditOpenChange(open: boolean) {
+    if (open) {
+      setName(category.name);
+      setNote(category.note ?? "");
+      setLexwareCategoryId(category.lexware_category_id ?? LEER);
+    }
+    setEditOpen(open);
+  }
 
   return (
     <div className="flex justify-end gap-1">
-      <Dialog open={editOpen} onOpenChange={setEditOpen}>
+      <Dialog open={editOpen} onOpenChange={handleEditOpenChange}>
         <DialogTrigger asChild>
           <Button variant="ghost" size="sm">
             {t("categories.action.edit")}
@@ -326,13 +351,35 @@ function CategoryActions({ category }: { category: CostAnalysisCategory }) {
               <Label>{t("categories.field.note")}</Label>
               <Textarea value={note} onChange={(e) => setNote(e.target.value)} rows={3} />
             </div>
+            {lexofficeDocumentSyncOn && (
+              <div className="space-y-1.5">
+                <Label>{t("categories.field.lexwareCategory")}</Label>
+                <Combobox
+                  value={lexwareCategoryId === LEER ? null : lexwareCategoryId}
+                  onValueChange={setLexwareCategoryId}
+                  disabled={lexofficeCategories.isLoading}
+                  options={[
+                    { value: LEER, label: t("categories.field.lexwareCategoryNone") },
+                    ...(lexofficeCategories.data ?? []).map((c) => ({
+                      value: c.id,
+                      label: c.name,
+                    })),
+                  ]}
+                />
+                {lexofficeCategories.isError && (
+                  <p className="text-xs text-destructive">
+                    {t("categories.field.lexwareCategoryError")}
+                  </p>
+                )}
+              </div>
+            )}
           </div>
           <DialogFooter>
             <Button variant="outline" onClick={() => setEditOpen(false)}>
               {t("assignmentRules.action.cancel")}
             </Button>
             <Button
-              disabled={update.isPending || name.trim() === ""}
+              disabled={update.isPending || name.trim() === "" || formIsUnchanged}
               onClick={() =>
                 update.mutate(
                   {
@@ -342,7 +389,10 @@ function CategoryActions({ category }: { category: CostAnalysisCategory }) {
                     // every edit would destroy that. It only ever gets set once, at creation.
                     changes: {
                       name: name.trim(),
-                      note: note.trim() === "" ? null : note.trim(),
+                      note: normalizedNote,
+                      ...(lexofficeDocumentSyncOn
+                        ? { lexware_category_id: normalizedLexwareCategoryId }
+                        : {}),
                     },
                   },
                   {

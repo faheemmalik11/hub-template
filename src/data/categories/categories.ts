@@ -1,10 +1,12 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 
+import { EDGE_FUNCTION } from "@/config/edge-functions";
 import { TABLE } from "@/config/tables";
 import { SINGLETON_ROW_ID, STALE, actorEmail, insertChangeHistory, sb } from "@/data/client";
 import { fetchAllRows, invalidateMatchState, requiredReason } from "@/data/shared";
 import { invalidateRuleState } from "@/data/shared";
 import { extractChartOfAccounts } from "@/lib/api/chart-of-accounts-extraction.functions";
+import { edgeFunctionErrorText } from "@/lib/data/format";
 import type {
   CostAnalysisAccountMapping,
   CostAnalysisCategory,
@@ -51,6 +53,7 @@ export type CostAnalysisCategoryInput = {
   report_line: string;
   direction: CostAnalysisCategory["direction"];
   note?: string | null;
+  lexware_category_id?: string | null;
 };
 
 export function useCreateCostAnalysisCategory() {
@@ -81,6 +84,28 @@ export function useUpdateCostAnalysisCategory() {
       if (error) throw error;
     },
     onSuccess: () => invalidateCategoryState(qc),
+  });
+}
+
+export interface LexofficeCategoryOption {
+  id: string;
+  name: string;
+}
+
+/** Lexware's own posting categories, read live so the dropdown always matches what Lexware has
+ *  today. Enabled only once the Lexware document-sync feature is live for this person. */
+export function useLexofficeCategories(enabled: boolean) {
+  return useQuery({
+    queryKey: ["lexoffice-categories"],
+    enabled,
+    staleTime: 60_000,
+    retry: false,
+    queryFn: async (): Promise<LexofficeCategoryOption[]> => {
+      const { data, error } = await sb.functions.invoke(EDGE_FUNCTION.lexofficeCategories);
+      if (error) throw new Error(await edgeFunctionErrorText(error));
+      if (data?.error) throw new Error(String(data.error));
+      return (data?.categories ?? []) as LexofficeCategoryOption[];
+    },
   });
 }
 

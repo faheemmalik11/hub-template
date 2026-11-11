@@ -62,6 +62,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Separator } from "@/components/ui/separator";
 import { Switch } from "@/components/ui/switch";
 import { Combobox } from "@/components/ui/combobox";
+import { LexofficeDocumentSyncCard } from "@/components/documents/lexoffice-document-sync-card";
 import { LinkedDocuments } from "@/components/documents/linked-documents";
 import { PingDialog, PingNotice, usePingRecipients } from "@/components/documents/ping-button";
 import { useShellLeafLabel } from "@/kit/components/shell";
@@ -4262,6 +4263,8 @@ function DocumentDetail({ doc }: { doc: Document }) {
               <div id={MATCHING_ANCHOR} className="scroll-mt-24">
                 <PaymentMatchingSection doc={doc} />
               </div>
+
+              <LexofficeDocumentSyncCard doc={doc} />
             </TabsContent>
 
             {/* Tab: Details — everything else + all extracted data */}

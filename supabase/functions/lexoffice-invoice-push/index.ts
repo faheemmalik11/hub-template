@@ -6,12 +6,13 @@ import { TABLE } from "../_shared/tables.ts";
 import {
   createContact,
   createInvoice,
+  featureIsLive,
   getInvoice,
+  type LexofficeAddress,
+  type LexofficeInvoiceInput,
   lexofficeKey,
   mapLexofficeVoucherStatus,
   searchContacts,
-  type LexofficeAddress,
-  type LexofficeInvoiceInput,
 } from "../_shared/lexoffice-client.ts";
 
 // deno-lint-ignore no-explicit-any
@@ -36,6 +37,7 @@ interface OutgoingInvoiceRow {
   source: string;
   status: string;
   accounting_external_id: string | null;
+  due_date: string | null;
 }
 
 interface CustomerRow {
@@ -66,7 +68,7 @@ async function claimInvoice(db: Db, id: string): Promise<OutgoingInvoiceRow | nu
     .is("lexoffice_sync_requested_at", null)
     .is("deleted_at", null)
     .select(
-      "id, customer_id, deal_id, kind, amount_net, amount_gross, currency, source, status, accounting_external_id",
+      "id, customer_id, deal_id, kind, amount_net, amount_gross, currency, source, status, accounting_external_id, due_date",
     )
     .maybeSingle();
   if (error) throw new Error(`claim failed: ${error.message}`);
@@ -80,7 +82,9 @@ async function releaseClaim(db: Db, id: string): Promise<void> {
 async function loadCustomer(db: Db, customerId: string): Promise<CustomerRow> {
   const { data, error } = await db
     .from(TABLE.customers)
-    .select("id, name, is_company, address_street, address_zip, address_city, address_country_code, accounting_external_id")
+    .select(
+      "id, name, is_company, address_street, address_zip, address_city, address_country_code, accounting_external_id",
+    )
     .eq("id", customerId)
     .single();
   if (error) throw new Error(`customer lookup failed: ${error.message}`);
@@ -100,10 +104,10 @@ async function loadDeal(db: Db, dealId: string): Promise<DealRow | null> {
 async function resolveContactId(db: Db, apiKey: string, customer: CustomerRow): Promise<string> {
   if (customer.accounting_external_id) return customer.accounting_external_id;
 
-  const matches = await searchContacts(apiKey, customer.name);
+  const matches = await searchContacts(db, apiKey, customer.name);
   const existingId = matches[0]?.id;
   const contactId = existingId ??
-    (await createContact(apiKey, {
+    (await createContact(db, apiKey, {
       version: 0,
       roles: { customer: {} },
       ...(customer.is_company
@@ -155,6 +159,7 @@ function buildInvoicePayload(
 
   return {
     voucherDate: new Date().toISOString().slice(0, 10),
+    dueDate: invoice.due_date ?? undefined,
     address: buildAddress(customer, contactId),
     lineItems: [
       {
@@ -182,7 +187,12 @@ Deno.serve(async (req) => {
   let claimedId: string | null = null;
 
   try {
-    await requirePermission(db, callerEmailFromAuthHeader(req), PERMISSION);
+    const callerEmail = callerEmailFromAuthHeader(req);
+    if (callerEmail) {
+      await requirePermission(db, callerEmail, PERMISSION);
+    } else if (!(await featureIsLive(db, PERMISSION))) {
+      return jsonResponse({ skipped: "feature not live" });
+    }
 
     const body = await req.json().catch(() => ({}));
     const outgoingInvoiceId = body.outgoing_invoice_id as string | undefined;
@@ -205,8 +215,8 @@ Deno.serve(async (req) => {
     const contactId = await resolveContactId(db, apiKey, customer);
     const payload = buildInvoicePayload(invoice, customer, deal, contactId);
 
-    const created = await createInvoice(apiKey, payload);
-    const lexofficeInvoice = await getInvoice(apiKey, created.id);
+    const created = await createInvoice(db, apiKey, payload);
+    const lexofficeInvoice = await getInvoice(db, apiKey, created.id);
 
     const { error: updateError } = await db
       .from(TABLE.outgoingInvoices)
@@ -216,7 +226,9 @@ Deno.serve(async (req) => {
         sent_at: new Date().toISOString(),
       })
       .eq("id", invoice.id);
-    if (updateError) throw new Error(`could not record the Lexoffice invoice id: ${updateError.message}`);
+    if (updateError) {
+      throw new Error(`could not record the Lexoffice invoice id: ${updateError.message}`);
+    }
 
     return jsonResponse({ outgoingInvoiceId: invoice.id, lexofficeInvoiceId: created.id });
   } catch (error) {
