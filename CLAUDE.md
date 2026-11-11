@@ -79,6 +79,26 @@ what was decided, what is still open. It is gitignored, same as the rest of
   than one session gets more than one file. Skip this for pure Q&A or read-only exploration that
   changed nothing.
 
+### A new client message, and any reply to one, gets filed immediately — not at session end
+
+The session log above is a summary written *after* the fact. A new message from the client or from
+Fabian (a briefing, a Slack message, an email, a call transcript) is a different kind of thing: the
+source record itself, and it goes into `planning/communication/YYYY-MM-DD/` (new dated folder, or
+`files/` under an existing one) **as the first step**, before reading it closely or acting on
+anything in it. The 11 Nov briefing and Fabian's covering Slack message are the model for this.
+
+The same applies to a reply sent back — save the message actually sent (not a draft, the final
+wording) as its own file in that same dated folder, named for who sent it
+(`reply-<name>-to-<name>-<date>.md`, see `2026-11-11/files/reply-faheem-to-fabian-11nov2026.md`).
+This was skipped once already: a full reply to a briefing was drafted, reviewed and sent entirely
+within a Claude conversation with no file ever recording it, and would have been lost once that
+conversation ended. Don't let that happen again — the reply is saved as part of sending it, not as
+a cleanup pass afterward.
+
+Add a line to `README.md`'s Timeline and Folders sections for the new dated folder while you're in
+there; both tables are the index for everything else in this directory and go stale fast if a new
+folder doesn't get a row.
+
 ### English only, everywhere a developer types (HARD RULE)
 
 No German in identifiers, function or component names, variables, types, filenames, directory
