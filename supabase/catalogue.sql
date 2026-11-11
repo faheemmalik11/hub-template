@@ -189,6 +189,20 @@ on conflict (key) do update
        label_de = excluded.label_de, label_en = excluded.label_en,
        default_enabled = excluded.default_enabled, sort_order = excluded.sort_order;
 
+insert into public.permissions (key, kind, parent_key, category, label_de, label_en, default_enabled, sort_order) values
+  ('lexoffice.document_sync', 'section', 'page.incoming_invoices', 'documents', 'Belege an Lexware senden', 'Send documents to Lexware', false, 216)
+on conflict (key) do update
+   set kind = excluded.kind, parent_key = excluded.parent_key, category = excluded.category,
+       label_de = excluded.label_de, label_en = excluded.label_en,
+       default_enabled = excluded.default_enabled, sort_order = excluded.sort_order;
+
+insert into public.permissions (key, kind, parent_key, category, label_de, label_en, default_enabled, sort_order) values
+  ('propstack.payment_due_date_sync', 'section', 'page.commission_deals', 'documents', 'Zahlungsziel an PropStack zurückmelden', 'Send the payment due date back to PropStack', false, 940)
+on conflict (key) do update
+   set kind = excluded.kind, parent_key = excluded.parent_key, category = excluded.category,
+       label_de = excluded.label_de, label_en = excluded.label_en,
+       default_enabled = excluded.default_enabled, sort_order = excluded.sort_order;
+
 -- A broker entering their own commissions, for an administrator to review and approve. Held by no role
 -- until a client gives it to one; see supabase/presets/broker-role.sql.
 insert into public.permissions (key, kind, parent_key, category, label_de, label_en, description_de, description_en, default_enabled, sort_order) values
@@ -312,7 +326,9 @@ insert into public.scheduled_jobs (key, edge_function, schedule, enabled, descri
   ('notify_dispatch', 'notify-dispatch', '*/15 * * * *', false,
    'Sends the notifications that are waiting. Every fifteen minutes.'),
   ('propstack_sync', 'propstack-sync', '0 * * * *', false,
-   'Pulls the properties from the CRM and links brokers to their accounts. Hourly.')
+   'Pulls the properties from the CRM and links brokers to their accounts. Hourly.'),
+  ('payment_due_date_reminder', 'payment-due-date-reminder', '0 6 * * *', false,
+   'Reminds administrators about a deal whose property still has no payment due date, six weeks after the notary date. Daily at 6am.')
 on conflict (key) do update
    set edge_function = excluded.edge_function,
        description = excluded.description;
@@ -379,6 +395,10 @@ on conflict (key) do update
    set kind = excluded.kind, parent_key = excluded.parent_key, category = excluded.category,
        label_de = excluded.label_de, label_en = excluded.label_en,
        default_enabled = excluded.default_enabled, sort_order = excluded.sort_order;
+
+update public.permissions
+   set shown_in_admin_panel = false
+ where kind = 'action';
 
 -- Loud rather than silently empty: a project whose roles are named differently would insert nothing
 -- above, and every screen would be locked for everyone with no clue why.
