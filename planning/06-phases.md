@@ -1,10 +1,11 @@
 # Phases
 
-**Updated 2026-10-15, against the actual code and the live `vanoepen` project** — this file
-previously said "nothing here is started," which stopped being true some time before this branch
-became van Oepen's Hub. Each item below was checked, not assumed: file paths and function names are
-named so the next check is a grep, not a re-read of this file. Each phase leaves the system working
-and is worth shipping on its own.
+**Updated 2026-11-11, against the actual code and a live tenant** — this file previously said
+"nothing here is started," which stopped being true some time before this branch became van
+Oepen's Hub, and the next pass (2026-10-15, on the `van-oepen` branch) never made it back here.
+Each item below was checked, not assumed: file paths and function names are named so the next
+check is a grep, not a re-read of this file. Each phase leaves the system working and is worth
+shipping on its own.
 
 ## Phase 1 — the mechanism — done
 
@@ -42,17 +43,30 @@ entry in `src/components/layout/app-shell.tsx`'s nav array carries a `permission
 **Done when** switching a module off by hand hides it everywhere including a typed URL, and
 switching it back restores it with its data intact. Confirmed live on 2026-10-15.
 
-## Phase 4 — the panel tab — not started
+## Phase 4 — the panel tab — done, in a different repo
 
-- [ ] Read `feature_tree()` per client, render the tree, save only what changed.
-- [ ] Locked nodes without a switch, history and last editor shown.
-- [ ] A clear message for a Hub without the mechanism.
+Not in this repo at all, which is why the earlier pass here called it "not started": the panel is
+`admin-ui`, inside the separate `book-keeping` repository (`github.com/fabiantscheu-ship-it/book-keeping`,
+locally `../book-keeping`), deployed at `book-keeping-wt.vercel.app`. Confirmed against that repo's
+actual source on 2026-11-11, not assumed from the deployed screen alone:
 
-No reference to `feature_tree` or `feature_settings` anywhere under `src/routes/` or `src/kit/` —
-checked by grep, not absence of memory. Switching a feature today means a direct SQL write against
-`feature_settings`, as done by hand for `module.reports`/`page.tax_reserve` on 2026-10-15. **Done
-when** a client can be shaped from the panel during onboarding without touching their code, or a SQL
-console.
+- [x] Reads a tenant's real feature catalogue and renders it as a checkbox tree:
+      `admin-ui/src/lib/server/tenant-features.ts` (`loadFeatureCatalogue`) and
+      `admin-ui/src/components/hub-features-tab.tsx`.
+- [x] Saves per key, not a bulk overwrite: `saveFeatureChoices` in `tenant-features.ts`.
+- [x] A locked key cannot be switched off — enforced server-side, not just hidden in the UI:
+      `saveFeatureChoices` reads `locked` per key from `public.permissions` and rejects the write
+      with `"<key> cannot be switched off"` if a locked key's choice would disable it.
+- [x] "Set here" distinguishes an explicit per-tenant choice from an inherited default
+      (`node.chosen !== null` in `hub-features-tab.tsx`), confirmed live on the `vanopen` tenant.
+- [ ] "History and last editor shown" — not built. Neither `updated_by` nor `change_history` appears
+      anywhere in `hub-features-tab.tsx` or `tenant-features.ts` (checked by grep). A switch can be
+      flipped and saved with no record of who did it or when, beyond whatever `feature_settings`
+      itself stores.
+
+**Done when** a client can be shaped from the panel during onboarding without touching their code, or
+a SQL console. True for the switching itself; the audit trail from the original spec is the one
+piece still missing.
 
 ## Phase 5 — the other Hubs — not from this repo
 
@@ -89,9 +103,9 @@ were exercised this session.
 
 ## Later, not part of this
 
-- A tab inside a Hub letting the client change their own switches.
+- The history/last-editor part of Phase 4 (`updated_by`/`change_history` surfaced in `admin-ui`).
 - The permission model itself ported to the Hubs that do not have it yet, which is the prerequisite
-  for them.
+  for Phase 5.
 - Driving the navigation itself from the catalogue, so a Hub stops hand-writing its own menu. That is
   the step that removes the last fork between the Hubs, and it is only safe once every page is keyed,
   which phases 2 and 5 do anyway.

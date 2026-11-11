@@ -60,6 +60,9 @@ import { useTranslation } from "@/lib/i18n";
 export const Route = createFileRoute("/broker-bonuses/")({
   head: () => ({ meta: [{ title: pageTitle("Boni") }] }),
   staticData: { titleKey: "brokerBonuses" },
+  validateSearch: (input: Record<string, unknown>) => ({
+    rules: typeof input.rules === "string" ? input.rules : undefined,
+  }),
   component: BrokerBonusesPage,
 });
 
@@ -148,7 +151,7 @@ function BrokerBonusesPage() {
         </div>
         <div className="flex gap-2">
           {seesAllBrokers && (
-            <Button variant="outline" onClick={exportApproved}>
+            <Button variant="outline" className="shadow-none" onClick={exportApproved}>
               <Download /> {t("brokerBonuses.export.button")}
             </Button>
           )}

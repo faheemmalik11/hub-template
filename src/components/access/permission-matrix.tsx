@@ -50,7 +50,7 @@ export function PermissionMatrix({
   if (groups.length === 0 || roles.length === 0) return null;
 
   return (
-    <div className={cn("max-w-4xl space-y-5", className)}>
+    <div className={cn("max-w-[72rem] space-y-5", className)}>
       {groups.map(([category, entries], groupsIndex) => (
         <section
           key={category}
@@ -62,7 +62,7 @@ export function PermissionMatrix({
           <div className="overflow-x-auto">
             <div className="min-w-[38rem]">
               <header className="flex items-end gap-4 border-b border-border bg-muted/40 px-4 py-3">
-                <div className="min-w-0 flex-1">
+                <div className="min-w-[14rem] flex-1">
                   <div className="text-base font-semibold text-foreground">
                     {categoryLabel(category)}
                   </div>
@@ -90,7 +90,7 @@ export function PermissionMatrix({
                     data-tour={groupsIndex === 0 && rowsIndex === 0 ? "permission-row" : undefined}
                     className="flex items-center gap-4 px-4 py-3 transition-colors hover:bg-muted/40"
                   >
-                    <div className="min-w-0 flex-1">
+                    <div className="min-w-[14rem] flex-1">
                       <div className="text-base font-medium leading-snug text-foreground">
                         {p.label}
                       </div>

@@ -1414,6 +1414,49 @@ const de = {
       outroOutcome:
         "Der Hub hält lieber einmal zu oft an, als einmal falsch zu zahlen oder zu buchen.",
     },
+    paymentFile: {
+      startTitle: "Übung: eine Zahlungsdatei erstellen",
+      startIntro:
+        "Sie wählen eine Übungsrechnung aus, erstellen dafür eine SEPA-Zahlungsdatei, laden sie herunter und markieren sie als bezahlt.",
+      progressLost: "Die Übungsrechnung existiert nicht mehr. Die Übung beginnt von vorn.",
+      taskTitle: "Eine Zahlungsdatei erstellen und versenden",
+      taskGoal:
+        "Lernen Sie, wie Sie Rechnungen auswählen, eine Zahlungsdatei erstellen, herunterladen und die Zahlung bestätigen.",
+      pagePayment: "Zahlungsdatei",
+      groupPrepare: "Vorbereiten",
+      groupCheck: "Prüfen",
+      groupTrack: "Verfolgen",
+      companyInstruction: "Wählen Sie die Übungsgesellschaft. Ihr Code beginnt mit DEMO-.",
+      companyOutcome:
+        "Eine Zahlungsdatei zahlt immer nur Rechnungen einer Gesellschaft, vom Konto dieser Gesellschaft.",
+      openAccountsInstruction: "Öffnen Sie die Zahlungskonten.",
+      openAccountsOutcome: "Hier verwalten Sie, von welchem Bankkonto die Zahlung abgeht.",
+      seePayerInstruction:
+        "Schauen Sie sich das Übungs-Zahlungskonto an und schließen Sie den Dialog.",
+      seePayerOutcome:
+        "Die IBAN hier landet in der Zahlungsdatei. Ein Fehler hier schickt das Geld ans falsche Konto.",
+      selectInvoicesInstruction: "Wählen Sie die Übungsrechnung in der Liste aus.",
+      selectInvoicesOutcome: "Nur ausgewählte Rechnungen landen in der Zahlungsdatei.",
+      selectInvoicesHelp: "Setzen Sie den Haken bei der Rechnung von Dachdecker Brandt.",
+      buildInstruction: "Erstellen Sie die Zahlungsdatei.",
+      buildOutcome:
+        "Daraus wird eine SEPA-Datei, die Ihre Bank lesen kann. Verschickt ist dabei noch nichts.",
+      checkListInstruction: "Prüfen Sie die Liste der Zahlungen, bevor Sie etwas verschicken.",
+      checkListOutcome:
+        "Das ist die letzte Prüfung, bevor echtes Geld fließen würde. Ein Fehler kostet hier noch nichts.",
+      downloadInstruction: "Laden Sie die Datei herunter.",
+      downloadOutcome:
+        "Diese Datei laden Sie ins Online-Banking Ihrer Bank hoch, um die Überweisungen auszulösen.",
+      downloadHelp: "In der Übung wird nichts wirklich an eine Bank geschickt.",
+      openTrackInstruction: "Öffnen Sie den Schritt „Verfolgen“.",
+      openTrackOutcome: "Hier sehen Sie jede gesendete Zahlung, bis Ihre Bank sie bestätigt.",
+      markPaidInstruction: "Bestätigen Sie die Zahlung, sobald Ihre Bank sie zeigt.",
+      markPaidOutcome:
+        "Das schließt den Kreis: Die Rechnung ist bezahlt, niemand zahlt sie aus Versehen ein zweites Mal.",
+      markPaidHelp: "In der echten Nutzung prüfen Sie zuerst Ihren Kontoauszug.",
+      restartHint:
+        "Hängen Sie fest? Mit „{{button}}“ im Schrittfenster erhalten Sie frische Übungsdaten.",
+    },
   },
   home: {
     priority: {
@@ -1433,6 +1476,11 @@ const de = {
         title: "Wann hält das System an?",
         description:
           "Erleben Sie an drei Übungsrechnungen, wann der Hub anhält und eine Person entscheiden muss (ca. 10 Minuten).",
+      },
+      paymentFile: {
+        title: "Eine Zahlungsdatei erstellen",
+        description:
+          "Wählen Sie eine Rechnung aus, erstellen Sie die Zahlungsdatei, laden Sie sie herunter und bestätigen Sie die Zahlung (ca. 10 Minuten).",
       },
       action: {
         new: "Übung starten",
@@ -2544,6 +2592,17 @@ const de = {
       unknownSteller: "Unbekannter Steller",
       openSupplierTitle: "{{name}}: Stammdaten öffnen",
       ohneNr: "ohne Nr.",
+
+      lexoffice: {
+        title: "An Lexware senden",
+        pending: "Wird an Lexware gesendet.",
+        sent: "An Lexware gesendet.",
+        failed: "Konnte nicht an Lexware gesendet werden.",
+        retry: "Erneut versuchen",
+        retrying: "Wird erneut versucht.",
+        retrySuccess: "An Lexware gesendet.",
+        retryFailed: "Konnte nicht an Lexware gesendet werden: {{error}}",
+      },
 
       // Original-document preview (left column). File names / OCR are never translated.
       preview: {
@@ -4157,6 +4216,9 @@ const de = {
       block: "BWA-Block",
       line: "BWA-Zeile (technischer Schlüssel)",
       blockInherited: "Übernimmt BWA-Block und -Zeile von „{{name}}“.",
+      lexwareCategory: "Lexware-Kategorie",
+      lexwareCategoryNone: "Keine Lexware-Kategorie ausgewählt",
+      lexwareCategoryError: "Die Kategorien von Lexware konnten nicht geladen werden.",
     },
     block: {
       einnahmen: "Einnahmen",
@@ -4783,9 +4845,31 @@ const de = {
       referrer_tier2_amount: "Tippgeber-Bonus, 2. Empfehlung in diesem Jahr (€)",
       referrer_tier3_amount: "Tippgeber-Bonus, 3. Empfehlung in diesem Jahr (€)",
       referrer_tier4plus_amount: "Tippgeber-Bonus, ab der 4. Empfehlung in diesem Jahr (€)",
+      referrer_tier_counts_status: "Was als erfolgreiche Empfehlung zählt",
+      referrerTierCountsStatus: {
+        suggested: "Sobald der Bonus vorgeschlagen wird",
+        paid: "Erst wenn der Bonus bezahlt ist",
+      },
+      referrer_tier_reset: "Wann die Zählung neu beginnt",
+      referrerTierReset: {
+        yearly: "Jedes Jahr neu",
+        never: "Zählt für immer weiter",
+      },
+      referrer_tier_scope: "Für wen die Stufen gelten",
+      referrerTierScope: {
+        per_referrer: "Für jeden Tippgeber einzeln",
+        company_wide: "Für alle Tippgeber zusammen",
+      },
+      referrer_payout_timing: "Wann der Tippgeber-Bonus fällig wird",
+      referrerPayoutTiming: {
+        on_suggestion: "Sobald der Bonus vorgeschlagen wird",
+        after_commission_paid: "Erst wenn die Provision bezahlt ist",
+      },
       save: "Speichern",
       saved: "Gespeichert",
       invalid: "Bitte nur Zahlen eintragen.",
+      invalidNumber: "Bitte eine Zahl eintragen.",
+      invalidNegative: "Bitte 0 oder mehr eintragen.",
     },
     expandNote: "Notiz ausklappen",
     collapseNote: "Notiz einklappen",
@@ -4890,6 +4974,14 @@ const de = {
       invoiced: "Abgerechnet",
       cancelled: "Storniert",
     },
+    list: {
+      search: "Objekt suchen …",
+      filter: {
+        status: "Status",
+        allStatuses: "Alle",
+      },
+      empty: "Keine Verkäufe für diese Filter.",
+    },
     back: "Provisionen",
     notFound: "Diesen Verkauf gibt es nicht mehr.",
     sale: {
@@ -4900,6 +4992,17 @@ const de = {
       price: "Kaufpreis (€)",
       vat: "USt (%)",
       note: "Notiz",
+      dueDate: "Zahlungsziel",
+      dueDateNote: "Zahlungsziel, Hinweis",
+      dueDateNotePlaceholder: "z. B. sofort nach Eintragung",
+    },
+    review: {
+      title: "Was hier noch fehlt",
+      fix: "Beheben",
+      missingPrice: "Kaufpreis fehlt",
+      missingNotarisedOn: "Notartermin fehlt",
+      missingFee: "Provisionssatz oder -betrag fehlt",
+      missingDueDate: "Zahlungsziel fehlt, und es gibt auch keinen Hinweis dazu",
     },
     bonuses: {
       title: "Boni für diesen Verkauf",
@@ -7667,8 +7770,15 @@ const de = {
     },
     rolePermissions: {
       title: "Rollen & Rechte",
-      hint: "Legt fest, was eine Rolle standardmäßig erlaubt. Eine Änderung gilt sofort für alle Personen mit dieser Rolle, außer für die, bei denen unter „Personen“ eine Ausnahme gesetzt ist.",
+      hint: "Das legt fest, was jede Rolle darf. Speichern Sie Ihre Änderungen, damit sie für alle Personen mit dieser Rolle gelten. Wenn eine Person eine eigene Ausnahme unter „Personen“ hat, gilt das für sie nicht.",
       col: "Was erlaubt ist",
+      unsavedCount_one: "{{count}} Änderung noch nicht gespeichert",
+      unsavedCount_other: "{{count}} Änderungen noch nicht gespeichert",
+      discard: "Verwerfen",
+      save: "Speichern",
+      saving: "Wird gespeichert …",
+      saved: "Änderungen gespeichert.",
+      saveFailed: "Einige Änderungen konnten nicht gespeichert werden: {{error}}",
       create: {
         button: "Rolle hinzufügen",
         title: "Rolle hinzufügen",
@@ -7706,10 +7816,13 @@ const de = {
       title: "Was diese Person darf",
       hint: "Standardmäßig gilt, was die Rolle erlaubt. Hier setzen Sie Ausnahmen für diese eine Person — an- oder abwählen.",
       category: {
+        access: "Zugriff",
+        approval: "Freigabe",
         bank: "Bank",
         documents: "Belege",
         invoices: "Rechnungen",
         master_data: "Stammdaten",
+        menu: "Menü",
         module: "Module",
         page: "Seiten",
         payments: "Zahlungen",

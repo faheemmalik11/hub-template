@@ -46,7 +46,7 @@ export function ReviewTable({
   downloading,
 }: ReviewTableProps) {
   return (
-    <div className="space-y-4">
+    <div className="space-y-4" data-tour="payment-review-table">
       <Table>
         <TableHeader>
           <TableRow>
@@ -96,7 +96,7 @@ export function ReviewTable({
         <p className="text-sm text-muted-foreground">{labels.review.discardedNotice}</p>
       ) : (
         <div className="flex gap-2">
-          <Button disabled={downloading} onClick={onDownload}>
+          <Button data-tour="payment-download-button" disabled={downloading} onClick={onDownload}>
             {labels.review.downloadFile}
           </Button>
           <AlertDialog>
@@ -132,7 +132,7 @@ export function MarkPaidButton({
   return (
     <AlertDialog>
       <AlertDialogTrigger asChild>
-        <Button size="sm" variant="outline">
+        <Button size="sm" variant="outline" data-tour="payment-mark-paid">
           {labels.markPaid}
         </Button>
       </AlertDialogTrigger>

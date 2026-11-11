@@ -139,8 +139,7 @@ begin
             ('master_data.read', 'master_data.write', array[
                 'companies', 'properties', 'property_companies', 'suppliers',
                 'supplier_bank_accounts', 'supplier_iban_history', 'customers',
-                'categories', 'category_aliases', 'entity_aliases', 'vat_rates',
-                'crm_webhook_events']),
+                'categories', 'category_aliases', 'entity_aliases', 'vat_rates']),
             ('documents.read', 'documents.write', array[
                 'documents', 'document_files', 'document_history', 'document_line_items',
                 'document_taxes', 'document_bank_accounts', 'document_links', 'outgoing_invoices',
@@ -335,6 +334,27 @@ drop policy if exists companies_demo_owner_write_update on public.companies;
 create policy companies_demo_owner_write_update on public.companies as restrictive for update to authenticated
     using (not is_demo or demo_owner_user_id = public.current_app_user_id())
     with check (not is_demo or demo_owner_user_id = public.current_app_user_id());
+
+-- For a table with no is_demo column of its own (payment_settings and friends in
+-- 0024_payment_files.sql). Security definer so this sees the company's real is_demo flag even
+-- when companies_demo_owner_read itself would hide that row from the caller.
+create or replace function public.company_demo_visible(p_company_id uuid) returns boolean
+language sql stable security definer set search_path to 'public'
+as $$
+  select case when public.practice_mode_active()
+              then exists (
+                  select 1 from public.companies c
+                   where c.id = p_company_id and c.is_demo
+                     and c.demo_owner_user_id = public.current_app_user_id()
+              )
+              else not exists (
+                  select 1 from public.companies c where c.id = p_company_id and c.is_demo
+              )
+         end;
+$$;
+
+revoke execute on function public.company_demo_visible(uuid) from public, anon;
+grant execute on function public.company_demo_visible(uuid) to authenticated;
 
 drop policy if exists properties_demo_owner_read on public.properties;
 create policy properties_demo_owner_read on public.properties as restrictive for select to authenticated

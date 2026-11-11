@@ -4,6 +4,7 @@ import { COMPANIES, sampleId } from "../shared";
 const base = {
   parent_id: null,
   note: null,
+  lexware_category_id: null,
   created_by: null,
   created_at: "2026-01-05T08:00:00Z",
   updated_at: "2026-01-05T08:00:00Z",

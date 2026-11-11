@@ -62,11 +62,8 @@ export function SideCard({
   };
 
   return (
-    <section className="rounded-xl border border-border bg-card p-5">
-      <div className="flex items-center justify-between gap-3">
-        <h2 className="text-base font-semibold text-foreground">
-          {t(`commissionDeals.side.${side}`)}
-        </h2>
+    <div>
+      <div className="flex items-center justify-end gap-3">
         <label className="flex items-center gap-2 text-sm text-muted-foreground">
           {t("commissionDeals.side.pays")}
           <Switch
@@ -79,7 +76,7 @@ export function SideCard({
 
       {value.enabled && (
         <div className="mt-4 space-y-4">
-          <div className="grid gap-3 sm:grid-cols-2">
+          <div id={`side-${side}-fee`} className="grid gap-3 sm:grid-cols-2">
             <div className="space-y-1.5">
               <Label>{t("commissionDeals.side.feeKind")}</Label>
               <Select
@@ -120,7 +117,7 @@ export function SideCard({
             )}
           </div>
 
-          <div>
+          <div id={`side-${side}-payers`}>
             <Label>{t("commissionDeals.side.payers")}</Label>
             <p className="text-xs text-muted-foreground">{t("commissionDeals.side.shareHint")}</p>
             <div className="mt-2 space-y-2">
@@ -180,6 +177,7 @@ export function SideCard({
             </div>
             <div className="mt-2 flex flex-wrap gap-2">
               <Button
+                className="shadow-none"
                 variant="outline"
                 size="sm"
                 onClick={() => set({ parties: [...value.parties, EMPTY_PARTY] })}
@@ -197,6 +195,7 @@ export function SideCard({
                   disabled={disabled}
                 />
                 <Button
+                  className="shadow-none"
                   variant="outline"
                   size="sm"
                   onClick={addNewCustomer}
@@ -209,6 +208,6 @@ export function SideCard({
           </div>
         </div>
       )}
-    </section>
+    </div>
   );
 }

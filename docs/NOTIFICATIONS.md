@@ -196,7 +196,7 @@ stored as sent. None of it needs Slack; Slack, when connected, delivers the same
 | --- | --- | --- |
 | A broker saves a deal as ready for approval | every administering role except the sender | trigger `deals_notify_status_changed` |
 | An administrator approves a deal | the broker the deal belongs to | the same trigger |
-| A property turns "Verkauft" in the CRM and opens a deal | the administrators and the broker | `create_deals_for_sold_properties` |
+| A property turns "Verkauft" or "Abgeschlossen" in the CRM and opens a deal | the administrators and the broker | `create_deals_for_sold_properties` |
 | A broker enters a bonus | every administering role | trigger `broker_bonuses_notify_submitted` |
 | A bonus is approved, rejected (with the note) or paid | the broker it belongs to | trigger `broker_bonuses_notify_decided` |
 | The hourly CRM sync fails after working | every administering role, once until it recovers | `propstack-sync`, through `notify_administrators` |

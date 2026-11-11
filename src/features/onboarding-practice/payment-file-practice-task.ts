@@ -78,7 +78,7 @@ export function buildPaymentFilePracticeTask(t: PracticeTranslate): OnboardingTa
         role: "preparer",
         instruction: text("buildInstruction"),
         expectedOutcome: text("buildOutcome"),
-        target: "payment-build-button|payment-build-button-inline",
+        target: "payment-build-button",
         path: PAYMENT_PAGE_PATH,
         pageLabel: pagePayment,
         completionCondition: { eventType: "payment_file_created" },

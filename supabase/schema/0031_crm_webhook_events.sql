@@ -25,4 +25,16 @@ create table if not exists public.crm_webhook_events (
 create index if not exists crm_webhook_events_received on public.crm_webhook_events (received_at desc);
 create index if not exists crm_webhook_events_record on public.crm_webhook_events (crm_provider, crm_record_id);
 
+alter table public.crm_webhook_events enable row level security;
+
+drop policy if exists crm_webhook_events_read on public.crm_webhook_events;
+create policy crm_webhook_events_read on public.crm_webhook_events
+    for select to authenticated using (public.may_read('master_data.read'));
+
+drop policy if exists crm_webhook_events_write on public.crm_webhook_events;
+create policy crm_webhook_events_write on public.crm_webhook_events
+    for all to authenticated
+    using (public.may_write('master_data.write'))
+    with check (public.may_write('master_data.write'));
+
 commit;

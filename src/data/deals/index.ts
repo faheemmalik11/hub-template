@@ -1,10 +1,12 @@
 export {
   DEAL_COST_KINDS,
+  DEAL_STATUSES,
   useApproveDeal,
   useCreateDeal,
   useCreateDealInvoices,
   useDeal,
   useDeals,
+  useDealsList,
   useSaveDeal,
 } from "./deals";
 export type {
@@ -14,9 +16,12 @@ export type {
   DealCostKind,
   DealInput,
   DealInvoiceInput,
+  DealListRow,
   DealParty,
   DealSide,
   DealSideInput,
+  DealsListFilter,
+  DealsPage,
   DealStatus,
   FeeKind,
 } from "./deals";

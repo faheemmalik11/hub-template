@@ -27,7 +27,7 @@ default rather than a reversal of that decision.
   `credentials` table via the admin panel, opened with `TENANT_SECRET_KEY` if sealed
   (`supabase/functions/_shared/lexoffice-client.ts`). Not written by Hub code.
 - **Shared client** (`_shared/lexoffice-client.ts`): a small typed wrapper over
-  `https://api.lexoffice.io/v1` — `searchContacts`, `createContact`, `createInvoice`, `getInvoice`,
+  `https://api.lexware.io/v1` — `searchContacts`, `createContact`, `createInvoice`, `getInvoice`,
   with 429 retry/backoff. `mapLexofficeVoucherStatus()` maps Lexoffice's `voucherStatus`
   (`draft/open/overdue/paid/paidoff/voided`) onto `outgoing_invoices`'s own vocabulary
   (`draft/sent/paid/cancelled`).
@@ -55,7 +55,25 @@ default rather than a reversal of that decision.
   (`LexofficeSyncButton`, `src/routes/outgoing-invoices/index.tsx`), visible only for
   `source === "app" && status === "draft" && !accounting_external_id`, gated by
   `useFeature(PERMISSIONS.lexofficeSync)`. A row already carrying `accounting_external_id` shows a
-  sent indicator instead.
+  sent indicator instead. Since the automatic push below (`supabase/schema/0037_lexoffice_invoice_auto_push.sql`)
+  normally handles this already, the button mostly exists as a **retry** for an invoice the
+  automatic push failed on — it stays visible exactly when that's true.
+- **Automatic on deal approval** (`supabase/schema/0037_lexoffice_invoice_auto_push.sql`): per
+  Fabian's 11 November briefing (§3.2 — "After approval the Hub creates customer and invoice in
+  Lexware and finalises them in the same step"), a trigger on `outgoing_invoices` fires
+  `lexoffice-invoice-push` the moment `create_deal_invoices` inserts a `source = 'app', kind =
+  'commission'` row — same `net.http_post` pattern as `lexoffice_document_push_now()`
+  (`0035_lexoffice_document_handover.sql`) and the pre-existing `notify_dispatch_now()`. Referrer
+  credit notes (`kind = 'referral_credit'`) are explicitly excluded from this trigger — §13.2 of the
+  briefing says that path stays manual/switched off until the tax firm specifies details, unrelated
+  to this feature's own scope decision below.
+  **`lexoffice-invoice-push` itself had to change for this**: it used to require a real signed-in
+  caller (`requirePermission`) for every call, which a database trigger using the service-role key
+  cannot provide (no caller email in that JWT). It now checks for a caller email first and runs the
+  original permission check if one exists (the manual button's behaviour is byte-for-byte unchanged),
+  and falls back to a feature-liveness check (the same `featureIsLive()` helper
+  `lexoffice-document-push` already introduced) only when there is no caller at all — i.e. only for
+  the trigger's own system-level call.
 - **Type fixes made along the way**: `OutgoingInvoice.lexoffice_voucher_id` was dead code — the
   column doesn't exist in the schema (dropped by 0086, the field was never removed from the type).
   Replaced with the real `accounting_external_id`; the one real reader of the old field
@@ -68,8 +86,8 @@ default rather than a reversal of that decision.
 - **No webhook / no payment-status sync back from Lexoffice.** This only pushes; it never listens.
   A later feature if the client wants it — a different scope, chosen deliberately over this one.
 - **No bulk contact sync.** Contacts resolve lazily, one at a time, only when an invoice is pushed.
-- **No change to `create_deal_invoices` or its UI.** This adds an action on an invoice that already
-  exists; it doesn't change how that invoice got created.
+- **No change to `create_deal_invoices` itself.** The automatic push (above) reacts to the row it
+  inserts; the function's own logic — what gets created, and how — is untouched.
 
 ## Known issues (pre-existing, not introduced here, flagged rather than silently worked around)
 

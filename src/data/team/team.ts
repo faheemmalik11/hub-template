@@ -170,12 +170,17 @@ export function usePermissionCatalogue() {
     queryKey: ["permission-catalogue"],
     staleTime: STALE,
     queryFn: async (): Promise<PermissionRow[]> => {
-      const { data, error } = await sb
-        .from(TABLE.permissions)
-        .select("key, category, label_de, label_en, description_de, description_en, sort_order")
-        .order("sort_order");
-      if (error) throw error;
-      return (data ?? []) as PermissionRow[];
+      const [permissionsResult, liveResult] = await Promise.all([
+        sb
+          .from(TABLE.permissions)
+          .select("key, category, label_de, label_en, description_de, description_en, sort_order")
+          .order("sort_order"),
+        sb.rpc("live_features"),
+      ]);
+      if (permissionsResult.error) throw permissionsResult.error;
+      if (liveResult.error) throw liveResult.error;
+      const liveKeys = new Set((liveResult.data as { key: string }[]).map((row) => row.key));
+      return (permissionsResult.data as PermissionRow[]).filter((row) => liveKeys.has(row.key));
     },
   });
 }

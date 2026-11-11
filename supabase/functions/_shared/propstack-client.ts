@@ -5,9 +5,9 @@ import {
   PROPSTACK_API_URL,
   PROPSTACK_PAGE_SIZE,
   PROPSTACK_SOURCE,
-  toSyncedProperty,
   type PropstackUnit,
   type PropstackUnitPage,
+  toSyncedProperty,
 } from "./propstack.ts";
 
 // deno-lint-ignore no-explicit-any
@@ -41,9 +41,20 @@ export function propstackWebhookSecret(db: Db): Promise<string> {
   return readCredential(db, "PROPSTACK_WEBHOOK_SECRET");
 }
 
-async function propstackFetch(apiKey: string, path: string): Promise<Response> {
+async function propstackFetch(
+  apiKey: string,
+  path: string,
+  init: { method?: string; body?: unknown } = {},
+): Promise<Response> {
+  const { method = "GET", body } = init;
   const response = await fetch(`${PROPSTACK_API_URL}${path}`, {
-    headers: { "X-API-KEY": apiKey, Accept: "application/json" },
+    method,
+    headers: {
+      "X-API-KEY": apiKey,
+      Accept: "application/json",
+      ...(body ? { "Content-Type": "application/json" } : {}),
+    },
+    body: body ? JSON.stringify(body) : undefined,
     redirect: "manual",
     signal: AbortSignal.timeout(REQUEST_TIMEOUT_MS),
   });
@@ -80,6 +91,20 @@ function unwrapUnit(body: unknown): PropstackUnit {
 export async function fetchUnit(apiKey: string, id: number | string): Promise<PropstackUnit> {
   const response = await propstackFetch(apiKey, `/units/${id}?new=1&expand=1&archived=-1`);
   return unwrapUnit(await response.json());
+}
+
+// Confirmed against PropStack's own public API docs (docs.propstack.de/reference/objekte), not
+// against the internal web-app API their own UI calls over session auth — a different,
+// undocumented endpoint this deliberately does not use.
+export async function updateUnitCustomFields(
+  apiKey: string,
+  id: number | string,
+  fields: Record<string, string | null>,
+): Promise<void> {
+  await propstackFetch(apiKey, `/units/${id}`, {
+    method: "PUT",
+    body: { property: { partial_custom_fields: fields } },
+  });
 }
 
 export async function syncUnits(db: Db, units: PropstackUnit[]) {

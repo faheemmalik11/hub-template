@@ -12,4 +12,13 @@ export {
   useSubmitBrokerBonus,
   useSuggestBonuses,
 } from "./broker-bonuses";
-export type { BonusSettings, BonusStatus, BonusType, BrokerBonus } from "./broker-bonuses";
+export type {
+  BonusSettings,
+  BonusStatus,
+  BonusType,
+  BrokerBonus,
+  ReferrerPayoutTiming,
+  ReferrerTierCountsStatus,
+  ReferrerTierReset,
+  ReferrerTierScope,
+} from "./broker-bonuses";

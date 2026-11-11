@@ -163,6 +163,8 @@ export interface Property {
   name: string | null;
   address: string | null;
   vat_status: string | null;
+  payment_due_date: string | null;
+  payment_due_date_note: string | null;
   created_at: string;
   updated_at: string;
   // Archive, not a hard delete: a sold property stays intact for its historical invoices, just out
@@ -588,6 +590,9 @@ export interface Document {
   private_hold: boolean;
   // Who private_hold mail belongs to. Null until an admin assigns it; see assignPrivateOwner.
   private_owner_user_id: string | null;
+  accounting_external_id?: string | null;
+  lexoffice_sync_requested_at?: string | null;
+  lexoffice_sync_error?: string | null;
 }
 
 // ---- Open items (view v_open_items, migration 20260819210000) ----
@@ -799,6 +804,10 @@ export interface CostAnalysisCategory {
   is_catchall: boolean;
   is_active: boolean;
   note: string | null;
+  // The Lexware posting category this expense maps to, picked from a dropdown on the edit dialog.
+  // Null until someone has set it; lexoffice-document-push refuses to push a document whose
+  // category has no mapping yet.
+  lexware_category_id: string | null;
   created_by: string | null;
   created_at: string;
   updated_at: string;

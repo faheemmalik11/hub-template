@@ -613,6 +613,14 @@ export const STATUS_META: Record<string, { cls: string }> = {
   needs_review: { cls: "bg-amber-100 text-amber-800 border-transparent" },
 };
 
+export const DEAL_STATUS_META: Record<string, { cls: string }> = {
+  incomplete: { cls: "bg-muted text-muted-foreground border-transparent" },
+  ready: { cls: "bg-amber-100 text-amber-800 border-transparent" },
+  approved: { cls: "bg-sky-100 text-sky-800 border-transparent" },
+  invoiced: { cls: "bg-emerald-100 text-emerald-800 border-transparent" },
+  cancelled: { cls: "bg-red-100 text-red-800 border-transparent" },
+};
+
 // ---- Field provenance (migration 0025; label text via i18n key `documents.quelle.<value>`) ----
 // Deliberately ranked by authority rather than by field: a human decision is the strongest and
 // gets the strongest colour, a rule is settled but automatic, and the AI is a suggestion. The

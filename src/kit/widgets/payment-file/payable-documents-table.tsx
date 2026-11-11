@@ -21,7 +21,7 @@ export function PayableDocumentsTable({
   const allOnPageSelected = rows.length > 0 && rows.every((row) => selection.selected.has(row.id));
 
   return (
-    <Table>
+    <Table data-tour="payment-invoice-table">
       <TableHeader>
         <TableRow>
           <TableHead className="w-10">

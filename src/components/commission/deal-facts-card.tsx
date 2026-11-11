@@ -24,10 +24,7 @@ export function DealFactsCard({
 }) {
   const { t } = useTranslation();
   return (
-    <section className="rounded-xl border border-border bg-card p-5">
-      <h2 className="text-base font-semibold text-foreground">
-        {t("commissionDeals.facts.title")}
-      </h2>
+    <div>
       {assignsBrokers && <BrokerFields form={form} onChange={onChange} disabled={disabled} />}
       <div className="mt-4 grid gap-3 sm:grid-cols-2">
         {FLAGS.map((flag) => (
@@ -59,7 +56,7 @@ export function DealFactsCard({
           disabled={disabled}
         />
       </div>
-    </section>
+    </div>
   );
 }
 

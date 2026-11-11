@@ -3,10 +3,17 @@ export const PROPSTACK_SOURCE = "propstack";
 export const PROPSTACK_API_URL = "https://api.propstack.de/v1";
 export const PROPSTACK_PAGE_SIZE = 100;
 
+// The two custom fields added in PropStack's own interface for the payment due date (Fabian's 11
+// November briefing, §4.2). Keys are fixed once created there; confirmed live against the real
+// PropStack API on 11 November 2026.
+export const PROPSTACK_PAYMENT_DUE_DATE_FIELD = "zahlungsziel";
+export const PROPSTACK_PAYMENT_DUE_DATE_NOTE_FIELD = "zahlungsziel_hinweis";
+
 type LabelledValue<T> = { label?: string | null; value?: T | null } | null | undefined;
 
 export interface PropstackUnit {
   id: number;
+  custom_fields?: Record<string, { value?: string | null } | null>;
   title?: LabelledValue<string>;
   street?: string | null;
   house_number?: string | null;
@@ -62,6 +69,8 @@ export interface SyncedProperty {
   plot_area: number | null;
   room_count: number | null;
   commission_note: string | null;
+  payment_due_date: string | null;
+  payment_due_date_note: string | null;
   broker_external_id: string | null;
   broker_name: string | null;
   broker_email: string | null;
@@ -96,6 +105,10 @@ export function propertyCode(unit: PropstackUnit): string {
   return `CRM-${unit.id}`;
 }
 
+function customField(unit: PropstackUnit, key: string): string | null {
+  return text(unit.custom_fields?.[key]?.value);
+}
+
 function brokerName(unit: PropstackUnit): string | null {
   const broker = unit.broker;
   if (!broker) return null;
@@ -123,6 +136,8 @@ export function toSyncedProperty(unit: PropstackUnit): SyncedProperty {
     plot_area: amount(unit.plot_area),
     room_count: amount(unit.number_of_rooms),
     commission_note: text(unit.courtage?.value),
+    payment_due_date: customField(unit, PROPSTACK_PAYMENT_DUE_DATE_FIELD)?.slice(0, 10) ?? null,
+    payment_due_date_note: customField(unit, PROPSTACK_PAYMENT_DUE_DATE_NOTE_FIELD),
     broker_external_id: unit.broker_id ? String(unit.broker_id) : null,
     broker_name: brokerName(unit),
     broker_email: text(unit.broker?.email),
