@@ -14,6 +14,9 @@ export const EDGE_FUNCTION = {
   paymentCancel: "payment-cancel",
   expenseToolEmployees: "pleo-employees",
   lexofficeInvoicePush: "lexoffice-invoice-push",
+  lexofficeDocumentPush: "lexoffice-document-push",
+  lexofficeCategories: "lexoffice-categories",
+  propstackPaymentDueDatePush: "propstack-payment-due-date-push",
 } as const;
 
 export type EdgeFunctionName = (typeof EDGE_FUNCTION)[keyof typeof EDGE_FUNCTION];

@@ -77,6 +77,8 @@ export const PERMISSIONS = {
   bonusesSuggest: "bonuses.suggest",
   donationsManage: "donations.manage",
   lexofficeSync: "lexoffice.sync",
+  lexofficeDocumentSync: "lexoffice.document_sync",
+  propstackPaymentDueDateSync: "propstack.payment_due_date_sync",
   pageBankConnections: "page.bank_connections",
   pageDataExport: "page.data_export",
   pageConfidenceThresholds: "page.confidence_thresholds",

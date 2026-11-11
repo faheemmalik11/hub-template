@@ -111,6 +111,7 @@ begin
       when 'bank_match' then 'Workflow: paid, confirmed by the bank'
       when 'manual' then 'Workflow: Bezahlt (manuell markiert)'
       when 'payment_file' then 'Workflow: paid, confirmed after a payment file'
+      when 'lexware' then 'Workflow: paid, confirmed by Lexware'
       else 'Workflow: Bezahlt'
     end;
 
@@ -483,6 +484,7 @@ CREATE OR REPLACE FUNCTION public.create_deal_invoices(p_deal_id uuid, p_invoice
     AS $$
 declare
   v_deal public.deals;
+  v_due_date date;
   v_item jsonb;
 begin
   select * into v_deal from public.deals where id = p_deal_id and deleted_at is null;
@@ -494,10 +496,13 @@ begin
       using errcode = 'check_violation';
   end if;
 
+  select p.payment_due_date into v_due_date
+    from public.properties p where p.id = v_deal.property_id;
+
   for v_item in select * from jsonb_array_elements(p_invoices) loop
     insert into public.outgoing_invoices (
       company_id, customer_id, deal_party_id, kind, deal_id,
-      status, invoice_date, amount_net, amount_gross
+      status, invoice_date, due_date, amount_net, amount_gross
     ) values (
       v_deal.company_id,
       (v_item ->> 'customer_id')::uuid,
@@ -506,6 +511,7 @@ begin
       p_deal_id,
       'draft',
       coalesce(v_deal.notarised_on, current_date),
+      v_due_date,
       (v_item ->> 'amount_net')::numeric,
       (v_item ->> 'amount_gross')::numeric
     );
