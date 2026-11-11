@@ -61,6 +61,12 @@ checkout at that client's own Supabase project.
 Load the `client-branches` skill before creating a client branch, merging shared work into one, or
 porting a client branch's feature back into `dev`.
 
+### A client message arriving while working in the shared checkout
+
+Identify which client it's for, file it (and any reply) in that client's own worktree under
+`planning/communication/YYYY-MM-DD/` — never in the shared checkout. Then add a one-line pointer
+(which client, which date) in the shared `planning/` folder too — never the content, just the pointer.
+
 ### English only, everywhere a developer types (HARD RULE)
 
 No German in identifiers, function or component names, variables, types, filenames, directory

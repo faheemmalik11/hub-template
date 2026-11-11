@@ -103,3 +103,7 @@ supabase/functions/deno.lock
 
 # Nested worktrees created in-project so they stay visible in the same editor/session
 .worktrees/
+
+# A client's own briefings, call transcripts and credentials, filed per CLAUDE.md's rule on a new
+# client message — real client specifics, stays on that client's own branch, never shared
+planning/communication/
