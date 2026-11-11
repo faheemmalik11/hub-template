@@ -366,4 +366,24 @@ begin
 end
 $$;
 
+-- None of these four tables carries its own is_demo column, so company_demo_visible()
+-- (0010_access.sql) asks the company instead. has_company_access() above has no demo awareness, so
+-- without this a practice tour's payment data would stay reachable outside practice mode.
+do $$
+declare
+    t text;
+begin
+    foreach t in array array[
+        'payment_settings', 'payment_files', 'payment_file_items', 'payment_file_documents'
+    ] loop
+        execute format('drop policy if exists %I on public.%I', t || '_demo_owner', t);
+        execute format(
+            'create policy %I on public.%I as restrictive for all to authenticated '
+            || 'using (public.company_demo_visible(company_id)) '
+            || 'with check (public.company_demo_visible(company_id))',
+            t || '_demo_owner', t);
+    end loop;
+end
+$$;
+
 commit;

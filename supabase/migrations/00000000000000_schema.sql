@@ -2742,6 +2742,27 @@ create policy companies_demo_owner_write_update on public.companies as restricti
     using (not is_demo or demo_owner_user_id = public.current_app_user_id())
     with check (not is_demo or demo_owner_user_id = public.current_app_user_id());
 
+-- For a table with no is_demo column of its own (payment_settings and friends in
+-- 0024_payment_files.sql). Security definer so this sees the company's real is_demo flag even
+-- when companies_demo_owner_read itself would hide that row from the caller.
+create or replace function public.company_demo_visible(p_company_id uuid) returns boolean
+language sql stable security definer set search_path to 'public'
+as $$
+  select case when public.practice_mode_active()
+              then exists (
+                  select 1 from public.companies c
+                   where c.id = p_company_id and c.is_demo
+                     and c.demo_owner_user_id = public.current_app_user_id()
+              )
+              else not exists (
+                  select 1 from public.companies c where c.id = p_company_id and c.is_demo
+              )
+         end;
+$$;
+
+revoke execute on function public.company_demo_visible(uuid) from public, anon;
+grant execute on function public.company_demo_visible(uuid) to authenticated;
+
 drop policy if exists properties_demo_owner_read on public.properties;
 create policy properties_demo_owner_read on public.properties as restrictive for select to authenticated
     using (case when public.practice_mode_active()
@@ -3316,6 +3337,7 @@ CREATE OR REPLACE FUNCTION public.create_deal_invoices(p_deal_id uuid, p_invoice
     AS $$
 declare
   v_deal public.deals;
+  v_due_date date;
   v_item jsonb;
 begin
   select * into v_deal from public.deals where id = p_deal_id and deleted_at is null;
@@ -3327,10 +3349,13 @@ begin
       using errcode = 'check_violation';
   end if;
 
+  select p.payment_due_date into v_due_date
+    from public.properties p where p.id = v_deal.property_id;
+
   for v_item in select * from jsonb_array_elements(p_invoices) loop
     insert into public.outgoing_invoices (
       company_id, customer_id, deal_party_id, kind, deal_id,
-      status, invoice_date, amount_net, amount_gross
+      status, invoice_date, due_date, amount_net, amount_gross
     ) values (
       v_deal.company_id,
       (v_item ->> 'customer_id')::uuid,
@@ -3339,6 +3364,7 @@ begin
       p_deal_id,
       'draft',
       coalesce(v_deal.notarised_on, current_date),
+      v_due_date,
       (v_item ->> 'amount_net')::numeric,
       (v_item ->> 'amount_gross')::numeric
     );
@@ -9097,6 +9123,26 @@ begin
 end
 $$;
 
+-- None of these four tables carries its own is_demo column, so company_demo_visible()
+-- (0010_access.sql) asks the company instead. has_company_access() above has no demo awareness, so
+-- without this a practice tour's payment data would stay reachable outside practice mode.
+do $$
+declare
+    t text;
+begin
+    foreach t in array array[
+        'payment_settings', 'payment_files', 'payment_file_items', 'payment_file_documents'
+    ] loop
+        execute format('drop policy if exists %I on public.%I', t || '_demo_owner', t);
+        execute format(
+            'create policy %I on public.%I as restrictive for all to authenticated '
+            || 'using (public.company_demo_visible(company_id)) '
+            || 'with check (public.company_demo_visible(company_id))',
+            t || '_demo_owner', t);
+    end loop;
+end
+$$;
+
 commit;
 
 -- ===================================================================== 0025_client_error_log.sql
@@ -10100,5 +10146,59 @@ end $$;
 
 revoke execute on function public.seed_payment_file_practice_data() from public, anon;
 grant execute on function public.seed_payment_file_practice_data() to authenticated;
+
+commit;
+
+-- ===================================================================== 0041_propstack_payment_due_date.sql
+
+begin;
+
+-- Both columns stay null until the real PropStack sync reads them: the two custom fields this
+-- depends on do not exist in PropStack yet, so nothing writes here today except manual test data
+-- and, eventually, the sync itself.
+alter table public.properties
+    add column if not exists payment_due_date date,
+    add column if not exists payment_due_date_note text,
+    add column if not exists payment_due_date_notified_at timestamptz;
+
+-- Six weeks after the notary date, if a deal still has no payment due date on its property,
+-- someone should be asked to chase it or enter the note explaining why there is none. Modelled
+-- directly on notify_overdue_payments() (0023_expected_payment.sql): date math, a scan for the
+-- still-missing case, one notification, a stamp column so it never fires twice for the same deal.
+create or replace function public.notify_missing_payment_dates() returns integer
+    language plpgsql security definer set search_path to 'public'
+    as $$
+declare
+  v_ids uuid[];
+  v_count integer;
+begin
+  select array_agg(d.id) into v_ids
+    from public.deals d
+    join public.properties p on p.id = d.property_id
+   where d.deleted_at is null
+     and d.notarised_on < current_date - 42
+     and p.payment_due_date is null
+     and p.payment_due_date_note is null
+     and p.payment_due_date_notified_at is null;
+  v_count := coalesce(cardinality(v_ids), 0);
+  if v_count = 0 then
+    return 0;
+  end if;
+
+  perform public.notify_administrators(
+    case when v_count = 1 then 'Eine Provision wartet seit über sechs Wochen auf ein Zahlungsziel'
+         else v_count || ' Provisionen warten seit über sechs Wochen auf ein Zahlungsziel' end,
+    '/commission-deals', 'reminder');
+
+  update public.properties
+     set payment_due_date_notified_at = now()
+   where id in (select d.property_id from public.deals d where d.id = any (v_ids));
+
+  return v_count;
+end;
+$$;
+
+revoke execute on function public.notify_missing_payment_dates() from public, anon, authenticated;
+grant execute on function public.notify_missing_payment_dates() to service_role;
 
 commit;
