@@ -1,6 +1,6 @@
 # Tier 2 — generic concept, real implementation work needed before porting
 
-Points 10–12. The need behind each of these is real and not mayestate-specific, but the current
+Points 10–12. The need behind each of these is real and not specific to this one client, but the current
 implementation cannot be copy-pasted — it needs genuine design work, or (for point 12) should not
 be ported at all because the template already has something better.
 
@@ -16,7 +16,7 @@ general inbox.
 - Template equivalent: **none**. Zero hits for `private_person`/`PrivatePerson`.
 - Verdict: **generic concept, needs real stripping/generalization before porting** — "some
   incoming mail is a private person's, not the business's" is a real need for any owner-managed
-  company, not just mayestate, but the current implementation is wired tightly to mayestate's own
+  company, not just this one, but the current implementation is wired tightly to this client's own
   people/alias model and German legal framing. Also feeds the private-post filter in point 6 of
   `00-generic-port-as-is.md`. Treat as a feature to redesign data-driven, not copy-paste.
 - Size: medium (2 files, but a real entity concept behind it)
@@ -39,5 +39,5 @@ validity date range, active flag — used for DATEV-style bookkeeping on expense
 ## 12. Voice search button — no action (superseded)
 
 The template's own `src/components/documents/voice-search-button.tsx` is already a more advanced
-build (ported from a different client). **No action — do not port mayestate2's version, it would
+build (ported from a different client). **No action — do not port this client's version, it would
 be a regression.**

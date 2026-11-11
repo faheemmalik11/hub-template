@@ -18,6 +18,11 @@ what they do not use, without touching their code.
 | `08-startup.md` | Starting a clone: what stays in `.env`, what the panel writes, and the one table this creates |
 | `09-migrations-and-config.md` | Squashing 249 migrations into one honest baseline, and the `src/config/` folder every name is spelled in |
 | `10-data-layer.md` | One place for every database call, and modular inside it: the folder shape and how to get there without a big bang |
+| `11-schema-at-scale.md` | Whether the schema holds up for many clients, checked against the field and against every Hub already running |
+| `12-adopting-an-existing-client.md` | Bringing an existing client's own Hub onto this codebase, not cloning them fresh |
+| `13-kit-modularity-and-stories.md` | Breaking `src/kit` into pieces that can be looked at, tested and storied one at a time |
+| `14-setting-up-a-new-client.md` | Every step of standing up a brand-new client, as it actually happened, start to finish |
+| `15-feature-portability-audit-1/` | The first per-client feature-portability audit: what a real client's Hub has that this template doesn't, and a port-or-not call for each |
 
 ## The one-paragraph version
 

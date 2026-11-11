@@ -1,6 +1,6 @@
 # Tier 1 — generic, valuable, port as-is (or with trivial renaming)
 
-Points 1–9. Each of these is missing from the template, carries no mayestate-specific business
+Points 1–9. Each of these is missing from the template, carries no client-specific business
 logic, and needs no stripping before a port.
 
 ## 1. Bulk data export tool
@@ -51,9 +51,9 @@ full-text search across SharePoint, on the same app-only Graph token the mailbox
 - Files: `src/lib/graph/client.server.ts`, `drive-folders.server.ts`, `search-sharepoint.server.ts`
   (~260 lines total)
 - Template equivalent: **partial** — the template's `src/lib/graph/` has mailbox folder-picking
-  and DATEV-handover mail-sending (same as mayestate2), but **no SharePoint browsing/search at
+  and DATEV-handover mail-sending (same as this client's Hub), but **no SharePoint browsing/search at
   all**.
-- Verdict: **generic as-is**. Nothing mayestate-specific; useful to any client whose documents
+- Verdict: **generic as-is**. Nothing client-specific here; useful to any client whose documents
   live in SharePoint/OneDrive rather than (or alongside) a mailbox.
 - Size: small (3 files)
 
@@ -98,8 +98,8 @@ then upload it as a new document with the transcript attached as context.
   `src/components/voice/voice-orb.tsx` + `use-voice-recorder.ts`
 - Template equivalent: **none**. The template's voice feature
   (`src/components/documents/voice-search-button.tsx`) only covers voice *search*, and is actually
-  a more advanced build than mayestate2's own voice-search button (ported from a different
-  client, "immonetz" — real-time mic-reactive glow, Safari/codec fallbacks). Mayestate2's
+  a more advanced build than this client's own voice-search button (ported from a different
+  client — real-time mic-reactive glow, Safari/codec fallbacks). This client's own
   voice-search is strictly behind and **not worth porting**; its dictation-to-upload feature is
   the one piece with no counterpart (see point 12 in `01-generic-needs-generalizing.md`).
 - Verdict: **generic as-is**, small, reuses primitives the template would still need to add (the

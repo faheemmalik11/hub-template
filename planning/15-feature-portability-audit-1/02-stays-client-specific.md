@@ -1,6 +1,6 @@
 # Tier 3 — stays client-specific
 
-Points 13–15. These are tied to mayestate's own business decisions (a buy-side acquisition
+Points 13–15. These are tied to this client's own business decisions (a buy-side acquisition
 workflow, its own mailbox and named assignees, code-as-rules rather than data-as-rules) and are
 not worth generalizing unless a second client with the same need shows up.
 
@@ -23,12 +23,12 @@ discount defaults).
 - Template equivalent: **none directly**; closest conceptual relatives are the template's
   `properties.crm_sync` (Propstack-synced listings) and `module.invoices`'s
   `commission-deals`/`broker-bonuses` — both built for the *sell-side* (an estate agency earning
-  commission, ported from client "van Oepen"). Mayestate2's feature is the mirror image: *buy-side*
+  commission, ported from another client). This client's feature is the mirror image: *buy-side*
   intake and qualification before acquisition. Different direction, different data shape.
 - Verdict: **stays client-specific**, large effort to generalize. The pattern (inbound-offer inbox
   → rule-based scoring against a configurable profile → kanban pipeline → deal-calculation
-  defaults) is reusable in principle, but the implementation hardcodes a specific mailbox
-  (`einkauf@mayestate.com`), named assignees as literal values rather than roles, and
+  defaults) is reusable in principle, but the implementation hardcodes a specific department
+  mailbox, named assignees as literal values rather than roles, and
   German-law-specific deadline concepts, and the "rules" are code, not data (unlike the template's
   own assignment/approval rules, which are rows). Revisit only if a second buy-side client
   justifies rebuilding the rule engine as data-driven.
