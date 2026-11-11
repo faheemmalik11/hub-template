@@ -2546,8 +2546,7 @@ begin
             ('master_data.read', 'master_data.write', array[
                 'companies', 'properties', 'property_companies', 'suppliers',
                 'supplier_bank_accounts', 'supplier_iban_history', 'customers',
-                'categories', 'category_aliases', 'entity_aliases', 'vat_rates',
-                'crm_webhook_events']),
+                'categories', 'category_aliases', 'entity_aliases', 'vat_rates']),
             ('documents.read', 'documents.write', array[
                 'documents', 'document_files', 'document_history', 'document_line_items',
                 'document_taxes', 'document_bank_accounts', 'document_links', 'outgoing_invoices',
@@ -9476,6 +9475,18 @@ create table if not exists public.crm_webhook_events (
 
 create index if not exists crm_webhook_events_received on public.crm_webhook_events (received_at desc);
 create index if not exists crm_webhook_events_record on public.crm_webhook_events (crm_provider, crm_record_id);
+
+alter table public.crm_webhook_events enable row level security;
+
+drop policy if exists crm_webhook_events_read on public.crm_webhook_events;
+create policy crm_webhook_events_read on public.crm_webhook_events
+    for select to authenticated using (public.may_read('master_data.read'));
+
+drop policy if exists crm_webhook_events_write on public.crm_webhook_events;
+create policy crm_webhook_events_write on public.crm_webhook_events
+    for all to authenticated
+    using (public.may_write('master_data.write'))
+    with check (public.may_write('master_data.write'));
 
 commit;
 

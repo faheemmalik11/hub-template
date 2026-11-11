@@ -139,8 +139,7 @@ begin
             ('master_data.read', 'master_data.write', array[
                 'companies', 'properties', 'property_companies', 'suppliers',
                 'supplier_bank_accounts', 'supplier_iban_history', 'customers',
-                'categories', 'category_aliases', 'entity_aliases', 'vat_rates',
-                'crm_webhook_events']),
+                'categories', 'category_aliases', 'entity_aliases', 'vat_rates']),
             ('documents.read', 'documents.write', array[
                 'documents', 'document_files', 'document_history', 'document_line_items',
                 'document_taxes', 'document_bank_accounts', 'document_links', 'outgoing_invoices',
