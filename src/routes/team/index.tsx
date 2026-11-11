@@ -553,6 +553,12 @@ function slugifyRoleName(label: string): string {
     .replace(/^_+|_+$/g, "");
 }
 
+interface PendingPermissionChange {
+  roleId: string;
+  key: string;
+  value: boolean;
+}
+
 function RolePermissionMatrix() {
   const { t } = useTranslation();
   const { refreshProfile } = useAuth();
@@ -561,6 +567,8 @@ function RolePermissionMatrix() {
   const rolePermsQ = useRolePermissions();
   const setRolePermission = useSetRolePermission();
   const roleLabel = useRoleLabel();
+  const [pendingChanges, setPendingChanges] = useState<PendingPermissionChange[]>([]);
+  const [isSaving, setIsSaving] = useState(false);
 
   const permissionText = usePermissionText();
   const permissions = useMemo<AccessPermission[]>(
@@ -582,6 +590,64 @@ function RolePermissionMatrix() {
     () => new Map((rolesQ.data ?? []).map((r) => [r.id, r.name])),
     [rolesQ.data],
   );
+
+  const effectiveGrantedByRole = useMemo(() => {
+    const base = rolePermsQ.data ?? {};
+    if (pendingChanges.length === 0) return base;
+    const next: Record<string, string[]> = {};
+    for (const role of roles) {
+      const granted = new Set(base[role.id] ?? []);
+      for (const change of pendingChanges) {
+        if (change.roleId !== role.id) continue;
+        if (change.value) granted.add(change.key);
+        else granted.delete(change.key);
+      }
+      next[role.id] = [...granted];
+    }
+    return next;
+  }, [rolePermsQ.data, pendingChanges, roles]);
+
+  function stageToggle(roleId: string, key: string, next: boolean) {
+    const base = rolePermsQ.data ?? {};
+    const current = (base[roleId] ?? []).includes(key);
+    setPendingChanges((prev) => {
+      const withoutThis = prev.filter(
+        (change) => !(change.roleId === roleId && change.key === key),
+      );
+      return next === current ? withoutThis : [...withoutThis, { roleId, key, value: next }];
+    });
+  }
+
+  function discardPendingChanges() {
+    setPendingChanges([]);
+  }
+
+  async function savePendingChanges() {
+    setIsSaving(true);
+    const results = await Promise.allSettled(
+      pendingChanges.map((change) =>
+        setRolePermission
+          .mutateAsync({
+            roleId: change.roleId,
+            roleName: roleNames.get(change.roleId) ?? "",
+            key: change.key,
+            value: change.value,
+          })
+          .then(() => change),
+      ),
+    );
+    const succeeded = new Set(results.filter((r) => r.status === "fulfilled").map((r) => r.value));
+    setPendingChanges((prev) => prev.filter((change) => !succeeded.has(change)));
+    setIsSaving(false);
+    void refreshProfile();
+    const failed = results.find((r) => r.status === "rejected") as
+      PromiseRejectedResult | undefined;
+    if (failed) {
+      toast.error(t("team.rolePermissions.saveFailed", { error: errorText(failed.reason) }));
+    } else {
+      toast.success(t("team.rolePermissions.saved"));
+    }
+  }
 
   // The order permissions already arrive in from the catalogue query (sort_order), not
   // alphabetical -- the first category found is what gets selected by default below.
@@ -644,21 +710,27 @@ function RolePermissionMatrix() {
             <PermissionMatrix
               permissions={permissions.filter((p) => p.category === activeCategory)}
               roles={roles}
-              grantedByRole={rolePermsQ.data ?? {}}
-              disabled={setRolePermission.isPending}
+              grantedByRole={effectiveGrantedByRole}
+              disabled={isSaving}
               permissionColumnLabel={t("team.rolePermissions.col")}
               categoryLabel={categoryLabel}
-              onToggle={(roleId, key, next) =>
-                setRolePermission.mutate(
-                  { roleId, roleName: roleNames.get(roleId) ?? "", key, value: next },
-                  {
-                    // A role change can move the signed-in admin without naming them.
-                    onSuccess: () => void refreshProfile(),
-                    onError: (e) => toast.error(errorText(e)),
-                  },
-                )
-              }
+              onToggle={stageToggle}
             />
+          </div>
+        </div>
+      )}
+      {pendingChanges.length > 0 && (
+        <div className="sticky bottom-0 z-10 -mx-4 mt-4 flex items-center justify-between gap-4 border-t border-border bg-card px-4 py-3 shadow-lg sm:-mx-6 sm:px-6">
+          <span className="text-sm text-muted-foreground">
+            {t("team.rolePermissions.unsavedCount", { count: pendingChanges.length })}
+          </span>
+          <div className="flex gap-2">
+            <Button variant="outline" disabled={isSaving} onClick={discardPendingChanges}>
+              {t("team.rolePermissions.discard")}
+            </Button>
+            <Button disabled={isSaving} onClick={() => void savePendingChanges()}>
+              {isSaving ? t("team.rolePermissions.saving") : t("team.rolePermissions.save")}
+            </Button>
           </div>
         </div>
       )}

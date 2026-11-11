@@ -39,15 +39,13 @@ export function PermissionMatrix({
     <div className={cn("max-w-4xl space-y-5", className)}>
       {groups.map(([category, entries], groupsIndex) => (
         <section key={category} className="overflow-hidden rounded-xl border border-border bg-card">
-          {}
           <div className="overflow-x-auto">
             <div className="min-w-[38rem]">
               <header className="flex items-end gap-4 border-b border-border bg-muted/40 px-4 py-3">
-                <div className="min-w-0 flex-1">
+                <div className="min-w-[14rem] flex-1">
                   <div className="text-base font-semibold text-foreground">
                     {categoryLabel(category)}
                   </div>
-                  {}
                   {groupsIndex === 0 && (
                     <div className="text-sm text-muted-foreground">{permissionColumnLabel}</div>
                   )}
@@ -68,7 +66,7 @@ export function PermissionMatrix({
                     key={p.key}
                     className="flex items-center gap-4 px-4 py-3 transition-colors hover:bg-muted/40"
                   >
-                    <div className="min-w-0 flex-1">
+                    <div className="min-w-[14rem] flex-1">
                       <div className="text-base font-medium leading-snug text-foreground">
                         {p.label}
                       </div>
