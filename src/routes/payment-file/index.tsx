@@ -73,6 +73,7 @@ function PaymentFileRoute() {
 function PaymentFileForCompany({ companyId }: { companyId: string }) {
   const { t } = useTranslation();
   const docNavigate = useNavigate();
+  const emitOnboardingEvent = useEmitOnboardingEvent();
 
   const createAccount = useCreatePaymentAccount();
   const updateAccount = useUpdatePaymentAccount();
@@ -269,6 +270,7 @@ function PaymentFileForCompany({ companyId }: { companyId: string }) {
         { documentId },
         { onError: () => toast.error(t("paymentFile.error.confirmPaid")) },
       );
+      emitOnboardingEvent({ type: "payment_marked_paid", recordId: documentId });
     },
 
     openDocument(documentId) {
