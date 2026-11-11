@@ -56,8 +56,8 @@ console.
 
 ## Phase 5 — the other Hubs — not from this repo
 
-Not checkable from here: it is about porting the mechanism into the *other* Hub repositories
-(Immonetz, Stäy, etc.), not this one. This repo already has the mechanism, independently of whether
+Not checkable from here: it is about porting the mechanism into the *other* Hub repositories, not
+this one. This repo already has the mechanism, independently of whether
 it arrived here via that port or via this branch's own history.
 
 ## Phase 6 — sections, as they come up — ongoing
