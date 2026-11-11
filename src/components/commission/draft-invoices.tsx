@@ -1,4 +1,4 @@
-import type { CommissionResult, CommissionSide } from "@/kit/lib/commission";
+import type { CommissionProblem, CommissionResult, CommissionSide } from "@/kit/lib/commission";
 import { formatEUR } from "@/lib/data/format";
 import { useTranslation } from "@/lib/i18n";
 
@@ -10,12 +10,25 @@ function percent(value: number): string {
   return value.toLocaleString("de-DE", { maximumFractionDigits: 3 });
 }
 
+function anchorForProblem(
+  side: CommissionSide,
+  problem: CommissionProblem,
+): { tab: string; id: string } {
+  if (problem === "purchase_price_missing") return { tab: "sale", id: "field-purchase-price" };
+  if (problem === "fee_missing" || problem === "fee_not_positive") {
+    return { tab: side, id: `side-${side}-fee` };
+  }
+  return { tab: side, id: `side-${side}-payers` };
+}
+
 export function DraftInvoices({
   result,
   customerName,
+  onJumpToField,
 }: {
   result: CommissionResult;
   customerName: (customerId: string) => string | undefined;
+  onJumpToField?: (tab: string, id: string) => void;
 }) {
   const { t } = useTranslation();
   const sideName = (side: CommissionSide | null) => (side ? t(`commissionDeals.side.${side}`) : "");
@@ -26,10 +39,25 @@ export function DraftInvoices({
         <h3 className="text-sm font-medium text-foreground">
           {t("commissionDeals.problems.title")}
         </h3>
-        <ul className="mt-2 list-disc space-y-1 pl-5 text-sm text-muted-foreground">
+        <ul className="mt-2 space-y-1.5 text-sm text-muted-foreground">
           {result.problems.map((problem, index) => (
-            <li key={index}>
-              {t(`commissionDeals.problems.${problem.problem}`, { side: sideName(problem.side) })}
+            <li key={index} className="flex flex-wrap items-center gap-x-1.5">
+              <span>
+                •{" "}
+                {t(`commissionDeals.problems.${problem.problem}`, { side: sideName(problem.side) })}
+              </span>
+              {problem.side && onJumpToField && (
+                <button
+                  type="button"
+                  onClick={() => {
+                    const target = anchorForProblem(problem.side!, problem.problem);
+                    onJumpToField(target.tab, target.id);
+                  }}
+                  className="text-xs font-medium text-brand-dark underline-offset-4 hover:underline"
+                >
+                  {t("commissionDeals.review.fix")}
+                </button>
+              )}
             </li>
           ))}
         </ul>

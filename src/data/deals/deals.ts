@@ -1,11 +1,19 @@
-import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { keepPreviousData, useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 
 import { TABLE } from "@/config/tables";
 import { STALE, actorEmail, sb } from "@/data/client";
 import { queryKeys } from "@/data/keys";
+import { searchTokens, searchWasDropped } from "@/data/shared";
 import type { CommissionSide } from "@/kit/lib/commission";
 
 export type DealStatus = "incomplete" | "ready" | "approved" | "invoiced" | "cancelled";
+export const DEAL_STATUSES: DealStatus[] = [
+  "incomplete",
+  "ready",
+  "approved",
+  "invoiced",
+  "cancelled",
+];
 export type FeeKind = "percent" | "fixed";
 
 export interface DealParty {
@@ -64,7 +72,12 @@ export interface Deal {
   ready_for_bookkeeping_at: string | null;
   approved_at: string | null;
   created_at: string;
-  property: { code: string; name: string } | null;
+  property: {
+    code: string;
+    name: string;
+    payment_due_date: string | null;
+    payment_due_date_note: string | null;
+  } | null;
   deal_sides: DealSide[];
   deal_costs: DealCost[];
 }
@@ -114,7 +127,8 @@ export interface DealInput {
 const DEAL_SELECT =
   `id, company_id, property_id, property_label, status, notarised_on, purchase_price, vat_rate, ` +
   `note, acquired_by, handled_by, own_lead, from_viewing, referrer_customer_id, costs_closed_at, ` +
-  `ready_for_bookkeeping_at, approved_at, created_at, property:${TABLE.properties}(code, name), ` +
+  `ready_for_bookkeeping_at, approved_at, created_at, ` +
+  `property:${TABLE.properties}(code, name, payment_due_date, payment_due_date_note), ` +
   `deal_sides:${TABLE.dealSides}(id, side, fee_kind, fee_net_rate, fee_net_amount, ` +
   `deal_parties:${TABLE.dealParties}(id, customer_id, share_percent, discount_gross, ` +
   `discount_reason, position, customer:${TABLE.customers}(name))), ` +
@@ -146,6 +160,103 @@ export function useDeals() {
         .order("created_at", { ascending: false });
       if (error) throw error;
       return ((data ?? []) as Deal[]).map(sortedParties);
+    },
+  });
+}
+
+export interface DealsListFilter {
+  search?: string;
+  status?: DealStatus | "";
+}
+
+const DEAL_LIST_SELECT =
+  `id, property_id, property_label, status, notarised_on, purchase_price, vat_rate, ` +
+  `property:${TABLE.properties}(name), ` +
+  `deal_sides:${TABLE.dealSides}(side, fee_kind, fee_net_rate, fee_net_amount, ` +
+  `deal_parties:${TABLE.dealParties}(customer_id, share_percent, discount_gross, discount_reason))`;
+
+export interface DealListRow {
+  id: string;
+  property_id: string | null;
+  property_label: string | null;
+  status: DealStatus;
+  notarised_on: string | null;
+  purchase_price: number | null;
+  vat_rate: number;
+  property: { name: string } | null;
+  deal_sides: Array<{
+    side: CommissionSide;
+    fee_kind: FeeKind;
+    fee_net_rate: number | null;
+    fee_net_amount: number | null;
+    deal_parties: Array<{
+      customer_id: string;
+      share_percent: number | null;
+      discount_gross: number;
+      discount_reason: string | null;
+    }>;
+  }>;
+}
+
+export interface DealsPage {
+  rows: DealListRow[];
+  total: number;
+}
+
+async function propertyIdsMatchingToken(token: string): Promise<string[]> {
+  const { data, error } = await sb
+    .from(TABLE.properties)
+    .select("id")
+    .or(`name.ilike.%${token}%,code.ilike.%${token}%,address.ilike.%${token}%`)
+    .limit(500);
+  if (error) throw error;
+  return ((data ?? []) as Array<{ id: string }>).map((row) => row.id);
+}
+
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+function applyDealsFilter<T extends { or: any; eq: any }>(
+  query: T,
+  filter: { status?: DealStatus | ""; tokens: string[]; idsByToken: string[][] },
+): T {
+  let q = query;
+  if (filter.status) q = q.eq("status", filter.status);
+  filter.tokens.forEach((token, i) => {
+    const ids = filter.idsByToken[i];
+    const idsPart = ids.length ? `,property_id.in.(${ids.join(",")})` : "";
+    q = q.or(`property_label.ilike.%${token}%${idsPart}`);
+  });
+  return q;
+}
+
+export function useDealsList(filter: DealsListFilter & { page: number; pageSize: number }) {
+  const { search, status, page, pageSize } = filter;
+  const tokens = searchTokens(search ?? "");
+  const searchMatchesNothing = searchWasDropped(search ?? "");
+  return useQuery({
+    queryKey: queryKeys.deals.list({
+      tokens,
+      searchMatchesNothing,
+      status: status ?? "",
+      page,
+      pageSize,
+    }),
+    staleTime: STALE,
+    placeholderData: keepPreviousData,
+    queryFn: async (): Promise<DealsPage> => {
+      if (searchMatchesNothing) return { rows: [], total: 0 };
+      const from = (page - 1) * pageSize;
+      const to = from + pageSize - 1;
+      const idsByToken = await Promise.all(tokens.map(propertyIdsMatchingToken));
+      const query = applyDealsFilter(
+        sb.from(TABLE.deals).select(DEAL_LIST_SELECT, { count: "exact" }).is("deleted_at", null),
+        { status, tokens, idsByToken },
+      );
+      const { data, error, count } = await query
+        .order("notarised_on", { ascending: false, nullsFirst: true })
+        .order("created_at", { ascending: false })
+        .range(from, to);
+      if (error) throw error;
+      return { rows: (data ?? []) as unknown as DealListRow[], total: count ?? 0 };
     },
   });
 }

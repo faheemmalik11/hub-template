@@ -1,9 +1,10 @@
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
-import { useMemo, useState } from "react";
-import { Plus } from "lucide-react";
+import { useEffect, useMemo, useState } from "react";
+import { Plus, Search } from "lucide-react";
 import { toast } from "sonner";
 
 import { Button } from "@/components/ui/button";
+import { Combobox } from "@/components/ui/combobox";
 import {
   Dialog,
   DialogContent,
@@ -12,6 +13,7 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
+import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import {
   Table,
@@ -25,21 +27,26 @@ import { EmptyState, ErrorState, TableSkeleton } from "@/components/documents/qu
 import { BrokerNumbersCard } from "@/components/commission/broker-numbers-card";
 import { DealStatusBadge } from "@/components/commission/deal-status-badge";
 import { PropertyPicker } from "@/components/commission/property-picker";
+import { dealGrossTotalCentsOf } from "@/components/commission/deal-form";
 import {
-  calculateDealForm,
-  dealFormOf,
-  dealGrossTotalCents,
-} from "@/components/commission/deal-form";
-import { propertyChoiceTitle, useCompanies, useCreateDeal, useDeals } from "@/data";
-import type { PropertyChoice } from "@/data";
+  DEAL_STATUSES,
+  propertyChoiceTitle,
+  useCompanies,
+  useCreateDeal,
+  useDealsList,
+} from "@/data";
+import type { DealStatus, PropertyChoice } from "@/data";
 import { PERMISSIONS } from "@/config/permissions";
 import { pageTitle } from "@/config/brand";
 import { TablePagination } from "@/kit/components/feedback/table-pagination";
 import { useAuth } from "@/lib/auth";
 import { usePaginationLabels } from "@/lib/use-pagination-labels";
-import { useTableView } from "@/lib/use-table-view";
 import { errorText, formatDate, formatEUR } from "@/lib/data/format";
 import { useTranslation } from "@/lib/i18n";
+
+const ALL_STATUSES = "__all";
+const SEARCH_DELAY_MS = 250;
+const DEFAULT_PAGE_SIZE = 25;
 
 export const Route = createFileRoute("/commission-deals/")({
   head: () => ({ meta: [{ title: pageTitle("Provisionen") }] }),
@@ -50,21 +57,36 @@ export const Route = createFileRoute("/commission-deals/")({
 function CommissionDealsPage() {
   const { t } = useTranslation();
   const { can } = useAuth();
-  const dealsQ = useDeals();
-  const deals = useMemo(() => dealsQ.data ?? [], [dealsQ.data]);
+  const [typed, setTyped] = useState("");
+  const [search, setSearch] = useState("");
+  const [status, setStatus] = useState<DealStatus | typeof ALL_STATUSES>(ALL_STATUSES);
+  const [page, setPage] = useState(1);
+  const [pageSize, setPageSize] = useState(DEFAULT_PAGE_SIZE);
+
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setSearch(typed);
+      setPage(1);
+    }, SEARCH_DELAY_MS);
+    return () => clearTimeout(timer);
+  }, [typed]);
+
+  const dealsQ = useDealsList({
+    search,
+    status: status === ALL_STATUSES ? "" : status,
+    page,
+    pageSize,
+  });
+  const deals = useMemo(() => dealsQ.data?.rows ?? [], [dealsQ.data]);
+  const total = dealsQ.data?.total ?? 0;
+  const totalPages = Math.max(1, Math.ceil(total / pageSize));
+  const from = total === 0 ? 0 : (page - 1) * pageSize + 1;
+  const to = Math.min(page * pageSize, total);
   const totals = useMemo(
-    () =>
-      new Map(
-        deals.map((deal) => [deal.id, dealGrossTotalCents(calculateDealForm(dealFormOf(deal)))]),
-      ),
+    () => new Map(deals.map((deal) => [deal.id, dealGrossTotalCentsOf(deal)])),
     [deals],
   );
-
-  const view = useTableView(deals, {
-    sortValue: (deal) => deal.created_at,
-    initialSort: "created",
-    initialDir: "desc",
-  });
+  const filtering = search !== "" || status !== ALL_STATUSES;
   const paginationLabels = usePaginationLabels();
 
   return (
@@ -83,12 +105,40 @@ function CommissionDealsPage() {
 
       {can(PERMISSIONS.dealsSubmit) && !can(PERMISSIONS.documentsWrite) && <BrokerNumbersCard />}
 
+      <div className="mt-6 flex flex-wrap items-end gap-3">
+        <div className="relative w-full max-w-sm">
+          <Search className="absolute left-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
+          <Input
+            value={typed}
+            onChange={(event) => setTyped(event.target.value)}
+            placeholder={t("commissionDeals.list.search")}
+            className="pl-9"
+          />
+        </div>
+        <div className="w-full space-y-1.5 sm:w-[200px]">
+          <Label className="text-xs text-muted-foreground">
+            {t("commissionDeals.list.filter.status")}
+          </Label>
+          <Combobox
+            value={status}
+            onValueChange={(value) => {
+              setStatus(value as DealStatus | typeof ALL_STATUSES);
+              setPage(1);
+            }}
+            options={[
+              { value: ALL_STATUSES, label: t("commissionDeals.list.filter.allStatuses") },
+              ...DEAL_STATUSES.map((s) => ({ value: s, label: t(`commissionDeals.status.${s}`) })),
+            ]}
+          />
+        </div>
+      </div>
+
       <div className="mt-6">
-        {dealsQ.isLoading ? (
-          <TableSkeleton cols={5} />
-        ) : dealsQ.error ? (
+        {dealsQ.isError ? (
           <ErrorState error={dealsQ.error} onRetry={() => dealsQ.refetch()} />
-        ) : deals.length === 0 ? (
+        ) : dealsQ.isLoading ? (
+          <TableSkeleton cols={5} />
+        ) : total === 0 && !filtering ? (
           <EmptyState
             title={t("commissionDeals.emptyTitle")}
             hint={t("commissionDeals.emptyHint")}
@@ -111,8 +161,8 @@ function CommissionDealsPage() {
                   </TableRow>
                 </TableHeader>
                 <TableBody>
-                  {view.pageRows.map((deal) => {
-                    const total = totals.get(deal.id);
+                  {deals.map((deal) => {
+                    const dealTotal = totals.get(deal.id);
                     return (
                       <TableRow key={deal.id}>
                         <TableCell>
@@ -131,7 +181,9 @@ function CommissionDealsPage() {
                           {deal.purchase_price === null ? "—" : formatEUR(deal.purchase_price)}
                         </TableCell>
                         <TableCell className="text-right tabular-nums">
-                          {total === null || total === undefined ? "—" : formatEUR(total / 100)}
+                          {dealTotal === null || dealTotal === undefined
+                            ? "—"
+                            : formatEUR(dealTotal / 100)}
                         </TableCell>
                         <TableCell>
                           <DealStatusBadge status={deal.status} />
@@ -139,19 +191,29 @@ function CommissionDealsPage() {
                       </TableRow>
                     );
                   })}
+                  {total === 0 && (
+                    <TableRow>
+                      <TableCell colSpan={5} className="py-12 text-center text-muted-foreground">
+                        {t("commissionDeals.list.empty")}
+                      </TableCell>
+                    </TableRow>
+                  )}
                 </TableBody>
               </Table>
             </div>
             <div className="mt-3">
               <TablePagination
-                page={view.page}
-                totalPages={view.totalPages}
-                pageSize={view.pageSize}
-                total={view.total}
-                from={view.from}
-                to={view.to}
-                onPage={view.setPage}
-                onPageSize={view.setPageSize}
+                page={page}
+                totalPages={totalPages}
+                pageSize={pageSize}
+                total={total}
+                from={from}
+                to={to}
+                onPage={setPage}
+                onPageSize={(size) => {
+                  setPageSize(size);
+                  setPage(1);
+                }}
                 labels={paginationLabels}
               />
             </div>

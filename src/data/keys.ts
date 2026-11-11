@@ -37,6 +37,7 @@ export const queryKeys = {
   deals: {
     all: ["deals"] as const,
     one: (id: string) => ["deals", id] as const,
+    list: (params: unknown) => ["deals", "list", params] as const,
   },
   categories: { all: ["categories"] as const },
   bank: {

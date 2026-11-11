@@ -118,12 +118,13 @@ rules are in the database (`supabase/schema/0017_broker_commissions.sql`), not i
   reason, so the discount sits on `deal_parties` and the calculator takes it per payer. A database
   built before this runs `supabase/presets/deal-details-for-an-existing-client.sql`, which moves an
   old side discount onto the payers by share.
-- A property the CRM marks "Verkauft" opens a deal by itself (`deals.from_crm`, off by default,
-  `supabase/schema/0019_deals_from_crm.sql`, run at the end of each `propstack-sync`). The deal is
+- A property the CRM marks "Verkauft" or "Abgeschlossen" opens a deal by itself (`deals.from_crm`,
+  off by default, `supabase/schema/0019_deals_from_crm.sql` + `0038_crm_sold_status_abgeschlossen.sql`,
+  run at the end of each `propstack-sync`). The deal is
   `incomplete`, with the realised price (`sold_price`), the property and the broker filled in; the
   broker and every administering role get a bell entry linking to it. The CRM's sold date is empty on
   every sold property seen so far, so it is not used: a trigger stamps
-  `properties.became_sold_at` when the sync sees `crm_status` change to "Verkauft", and only a stamp
+  `properties.became_sold_at` when the sync sees `crm_status` change to either value, and only a stamp
   newer than the day the switch was turned on opens a deal. Properties already sold never do, and one
   property never opens two. Both sides are created with the fee read from the CRM's structured rates:
   `external_commission_percentage` (buyer) and `internal_commission_percentage` (seller), which the
@@ -132,13 +133,12 @@ rules are in the database (`supabase/schema/0017_broker_commissions.sql`), not i
   deal note asks the broker to check. A side without a rate is created empty. Not read: the notary date, the free-text
   notes (discount, own lead; the "warning" field is empty on every sold property today), and the owners
   and buyers as payers, so the broker enters those. Checked on the local database, not yet against Propstack data.
-- No Lexware call yet. The
-  Lexware contact and invoice calls exist in another Hub (`createLexofficeContact`,
-  `createLexofficeInvoice`) and are the starting point. A Lexware draft should not consume a
-  number, so the invoice is drafted on calculation and finalised on approval. This needs checking
-  against the client's Lexware plan.
-- Referral credit notes (10, 15 or 20% by referrals in the calendar year) and coaching invoices are
-  not modelled.
+- Lexware is now called: `docs/LEXOFFICE_SYNC.md` (commission invoices, created and finalised
+  automatically on deal approval, no draft step) and `docs/LEXOFFICE_DOCUMENT_HANDOVER.md`
+  (incoming documents).
+- Referrer credit notes are modelled as fixed euro amounts by yearly referral tier, not the
+  percentage model this line used to describe — `docs/REFERRER_BONUSES.md`. Coaching invoices are
+  still not modelled.
 - A rate typed as "2.975" is read as 2975 (German thousands), not 2,975. The field asks for the net
   rate, normally 2,0 to 3,0.
 - The breadcrumb shows the sale's id rather than the property name.

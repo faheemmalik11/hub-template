@@ -32,18 +32,15 @@ export function DealCostsCard({
   const total = costs.reduce((sum, cost) => sum + (parseDecimal(cost.amount) ?? 0), 0);
 
   return (
-    <section className="rounded-xl border border-border bg-card p-5">
+    <div>
       <div className="flex items-baseline justify-between gap-3">
-        <h2 className="text-base font-semibold text-foreground">
-          {t("commissionDeals.costs.title")}
-        </h2>
+        <p className="text-xs text-muted-foreground">{t("commissionDeals.costs.hint")}</p>
         {costs.length > 0 && (
           <span className="text-sm tabular-nums text-muted-foreground">
             {t("commissionDeals.costs.total", { total: formatEUR(total) })}
           </span>
         )}
       </div>
-      <p className="mt-1 text-xs text-muted-foreground">{t("commissionDeals.costs.hint")}</p>
 
       <div className="mt-3 space-y-2">
         {costs.map((cost, index) => (
@@ -102,7 +99,7 @@ export function DealCostsCard({
         ))}
       </div>
       <Button
-        className="mt-3"
+        className="mt-3 shadow-none"
         variant="outline"
         size="sm"
         onClick={() => onChange([...costs, EMPTY_COST])}
@@ -110,6 +107,6 @@ export function DealCostsCard({
       >
         <Plus className="size-4" /> {t("commissionDeals.costs.add")}
       </Button>
-    </section>
+    </div>
   );
 }

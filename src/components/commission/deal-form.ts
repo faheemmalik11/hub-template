@@ -6,6 +6,7 @@ import type {
   DealCostKind,
   DealInput,
   DealInvoiceInput,
+  DealListRow,
   DealSide,
   DealSideInput,
   FeeKind,
@@ -226,6 +227,37 @@ export function dealGrossTotalCents(result: CommissionResult): number | null {
   return result.ok
     ? result.invoices.reduce((sum, invoice) => sum + invoice.totalGrossCents, 0)
     : null;
+}
+
+export function dealGrossTotalCentsOf(deal: DealListRow): number | null {
+  const sideOf = (side: CommissionSide) => deal.deal_sides.find((s) => s.side === side);
+  const feeOf = (side: DealListRow["deal_sides"][number]): SideFee | null =>
+    side.fee_kind === "percent"
+      ? side.fee_net_rate === null
+        ? null
+        : { kind: "percent", netRatePercent: side.fee_net_rate }
+      : side.fee_net_amount === null
+        ? null
+        : { kind: "fixed", netAmountCents: Math.round(side.fee_net_amount * 100) };
+  const sideInput = (side: DealListRow["deal_sides"][number] | undefined) =>
+    side
+      ? {
+          fee: feeOf(side),
+          payers: side.deal_parties.map((party) => ({
+            key: party.customer_id,
+            ...(party.share_percent === null ? {} : { sharePercent: party.share_percent }),
+            discountGrossCents: Math.round(party.discount_gross * 100),
+            discountReason: party.discount_reason?.trim() || undefined,
+          })),
+        }
+      : undefined;
+  const result = calculateDealCommission({
+    purchasePriceCents: deal.purchase_price === null ? null : Math.round(deal.purchase_price * 100),
+    vatRatePercent: deal.vat_rate,
+    buyer: sideInput(sideOf("buyer")),
+    seller: sideInput(sideOf("seller")),
+  });
+  return dealGrossTotalCents(result);
 }
 
 /** One row per paying deal_party, matched to the already-computed draft by side + customer. */
