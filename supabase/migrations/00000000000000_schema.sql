@@ -2944,6 +2944,7 @@ begin
       when 'bank_match' then 'Workflow: paid, confirmed by the bank'
       when 'manual' then 'Workflow: Bezahlt (manuell markiert)'
       when 'payment_file' then 'Workflow: paid, confirmed after a payment file'
+      when 'lexware' then 'Workflow: paid, confirmed by Lexware'
       else 'Workflow: Bezahlt'
     end;
 
@@ -6059,6 +6060,158 @@ begin
       'Gartenbau Möller', 'manual', v_company_id, true, v_user_id
     );
   end if;
+end $$;
+
+-- The "when does the system stop" practice task walks through three documents, each a different
+-- reason the system refuses to go further on its own: a bank account the supplier has never
+-- billed from before, a net amount the AI read wrong, and a document that is not an invoice at
+-- all. One supplier carries the first case: a confirmed account (the one on file) plus a second,
+-- unconfirmed one that the practice invoice names, which is exactly what useInvoiceBankAccounts
+-- and accountChips read as "new" (src/data/suppliers/bank-accounts.ts,
+-- InvoiceDetailPage.tsx:881). p_reset is always true from the one caller this has
+-- (seedStopCasesPracticeData), because a fresh start or an explicit restart is meant to undo
+-- whatever the practice run before it confirmed, corrected or set aside.
+CREATE OR REPLACE FUNCTION public.seed_stop_cases_practice_data(p_reset boolean DEFAULT true) RETURNS jsonb
+    LANGUAGE plpgsql SECURITY DEFINER
+    SET search_path TO 'public'
+    AS $$
+declare
+  v_user_id uuid := public.current_app_user_id();
+  v_supplier_id uuid;
+  v_new_account_id uuid;
+  v_iban_doc_id uuid;
+  v_ai_doc_id uuid;
+  v_flyer_doc_id uuid;
+begin
+  if v_user_id is null then
+    raise exception 'seed_stop_cases_practice_data: no signed-in app user';
+  end if;
+
+  select id into v_supplier_id from public.suppliers
+   where is_demo and demo_owner_user_id = v_user_id and name = 'Stadtwerke Nord GmbH';
+  if v_supplier_id is not null then
+    update public.suppliers set deleted_at = null where id = v_supplier_id and deleted_at is not null;
+  else
+    insert into public.suppliers (name, is_demo, demo_owner_user_id)
+    values ('Stadtwerke Nord GmbH', true, v_user_id)
+    returning id into v_supplier_id;
+  end if;
+
+  -- The account already on file. trg_supplier_default_account_sync copies this onto
+  -- suppliers.iban/bic/bank_name, so nothing writes that column directly.
+  insert into public.supplier_bank_accounts (
+    supplier_id, iban, bic, bank_name, source, is_active, is_default, is_payable,
+    confirmed_at, confirmed_by
+  )
+  values (
+    v_supplier_id, 'DE89370400440532013000', 'COBADEFFXXX', 'Commerzbank',
+    'human', true, true, true, now(), 'system'
+  )
+  on conflict (supplier_id, iban) do update
+     set is_active = true, is_default = true, is_payable = true,
+         confirmed_at = coalesce(public.supplier_bank_accounts.confirmed_at, now()),
+         deleted_at = null, deleted_by = null, delete_reason = null;
+
+  -- The account this one practice invoice names. Left unconfirmed on every (re)start: a previous
+  -- run may have confirmed it, and the practice is meant to offer the same choice again.
+  insert into public.supplier_bank_accounts (
+    supplier_id, iban, bic, bank_name, source, is_active, is_default, is_payable,
+    confirmed_at, confirmed_by, first_seen_at
+  )
+  values (
+    v_supplier_id, 'DE12500105170648489890', 'INGDDEFFXXX', 'ING-DiBa',
+    'pipeline', true, false, true, null, null, now()
+  )
+  on conflict (supplier_id, iban) do update
+     set is_active = true, is_payable = true, confirmed_at = null, confirmed_by = null,
+         deleted_at = null, deleted_by = null, delete_reason = null
+  returning id into v_new_account_id;
+
+  -- 1) The changed-bank-account invoice. document_bank_accounts is what makes
+  -- useInvoiceBankAccounts say this account came off the document rather than off the supplier.
+  select id into v_iban_doc_id from public.documents
+   where is_demo and demo_owner_user_id = v_user_id and invoice_number = 'STOP-IBAN-1';
+  if v_iban_doc_id is not null then
+    update public.documents set deleted_at = null where id = v_iban_doc_id and deleted_at is not null;
+  else
+    insert into public.documents (
+      document_type, is_invoice, intake_channel, source, status, workflow_status,
+      issuer, supplier_id, invoice_number, document_date, due_date,
+      amount_net, vat_rate, vat_amount, amount_gross, currency,
+      is_demo, demo_owner_user_id
+    )
+    values (
+      'rechnung', true, 'upload', 'manual', 'needs_review', 'received',
+      'Stadtwerke Nord GmbH', v_supplier_id, 'STOP-IBAN-1', current_date - 10, current_date + 20,
+      150.00, 19, 28.50, 178.50, 'EUR',
+      true, v_user_id
+    )
+    returning id into v_iban_doc_id;
+  end if;
+
+  insert into public.document_bank_accounts (document_id, supplier_bank_account_id, position, origin)
+  values (v_iban_doc_id, v_new_account_id, 1, 'invoice')
+  on conflict (document_id, supplier_bank_account_id) do nothing;
+  -- Drop any other link a previous run left (e.g. the confirmed account, once this one has been
+  -- confirmed too), so the practice invoice always names exactly the one account under test.
+  delete from public.document_bank_accounts
+   where document_id = v_iban_doc_id and supplier_bank_account_id <> v_new_account_id;
+
+  -- 2) The AI-misread invoice. vat_amount and amount_gross already agree with the CORRECT net
+  -- (STOP_CASES_CORRECT_NET_AMOUNT in practice-stop-cases-task.ts), so correcting amount_net is
+  -- the one edit that makes documentUpdatedEventData's amounts_add_up true.
+  select id into v_ai_doc_id from public.documents
+   where is_demo and demo_owner_user_id = v_user_id and invoice_number = 'STOP-AI-1';
+  if v_ai_doc_id is not null then
+    update public.documents
+       set deleted_at = null, amount_net = 1200.00, amount_gross = 1475.60
+     where id = v_ai_doc_id;
+  else
+    insert into public.documents (
+      document_type, is_invoice, intake_channel, source, status, workflow_status,
+      issuer, invoice_number, document_date, due_date,
+      amount_net, vat_rate, vat_amount, amount_gross, currency,
+      is_demo, demo_owner_user_id
+    )
+    values (
+      'rechnung', true, 'upload', 'manual', 'needs_review', 'received',
+      'Gebäudereinigung Blitz GmbH', 'STOP-AI-1', current_date - 5, current_date + 25,
+      1200.00, 19, 235.60, 1475.60, 'EUR',
+      true, v_user_id
+    )
+    returning id into v_ai_doc_id;
+  end if;
+
+  -- 3) The not-an-invoice document. Reset back to relevant on every (re)start so "set aside" can
+  -- be practiced again.
+  select id into v_flyer_doc_id from public.documents
+   where is_demo and demo_owner_user_id = v_user_id and invoice_number = 'STOP-FLYER-1';
+  if v_flyer_doc_id is not null then
+    update public.documents
+       set deleted_at = null, not_relevant_at = null, not_relevant_by = null,
+           not_relevant_note = null, workflow_status = 'received'
+     where id = v_flyer_doc_id;
+  else
+    insert into public.documents (
+      document_type, is_invoice, intake_channel, source, status, workflow_status,
+      issuer, invoice_number, document_date,
+      is_demo, demo_owner_user_id
+    )
+    values (
+      'werbung', false, 'upload', 'manual', 'needs_review', 'received',
+      'Büromöbel Profi Werbung', 'STOP-FLYER-1', current_date - 2,
+      true, v_user_id
+    )
+    returning id into v_flyer_doc_id;
+  end if;
+
+  return jsonb_build_object(
+    'supplier_id', v_supplier_id,
+    'iban_account_id', v_new_account_id,
+    'iban_document_id', v_iban_doc_id,
+    'ai_document_id', v_ai_doc_id,
+    'flyer_document_id', v_flyer_doc_id
+  );
 end $$;
 
 -- Saves a deal with its sides, payers and costs in one transaction, as the caller. Any edit withdraws
@@ -9505,5 +9658,436 @@ $$;
 
 revoke execute on function public.create_referrer_credit_note(uuid) from public, anon;
 grant execute on function public.create_referrer_credit_note(uuid) to authenticated;
+
+commit;
+
+-- ===================================================================== 0034_lexoffice_sync.sql
+
+begin;
+
+alter table public.outgoing_invoices
+    add column if not exists lexoffice_sync_requested_at timestamptz;
+
+commit;
+
+-- ===================================================================== 0035_lexoffice_document_handover.sql
+
+begin;
+
+alter table public.documents
+    add column if not exists accounting_external_id text,
+    add column if not exists lexoffice_sync_requested_at timestamptz,
+    add column if not exists lexoffice_sync_error text;
+
+create unique index if not exists documents_accounting_external_id
+    on public.documents (accounting_external_id)
+    where accounting_external_id is not null and deleted_at is null;
+
+alter table public.suppliers
+    add column if not exists accounting_external_id text;
+
+create unique index if not exists suppliers_accounting_external_id
+    on public.suppliers (accounting_external_id)
+    where accounting_external_id is not null and deleted_at is null;
+
+alter table public.categories
+    add column if not exists lexware_category_id text;
+
+create or replace function public.lexoffice_document_push_now() returns trigger
+    language plpgsql security definer set search_path to 'public'
+    as $$
+declare
+  v_key text;
+  v_url text;
+begin
+  v_key := public.deployment_secret('service_role_key');
+  v_url := public.deployment_secret('project_url');
+  if v_key is null or v_url is null then
+    return null;
+  end if;
+
+  perform net.http_post(
+    url := rtrim(v_url, '/') || '/functions/v1/lexoffice-document-push',
+    headers := jsonb_build_object(
+      'Content-Type', 'application/json',
+      'Authorization', 'Bearer ' || v_key
+    ),
+    body := jsonb_build_object('document_id', new.id),
+    timeout_milliseconds := 30000
+  );
+  return null;
+end;
+$$;
+
+drop trigger if exists documents_lexoffice_push_insert on public.documents;
+create trigger documents_lexoffice_push_insert after insert on public.documents
+    for each row
+    when (new.workflow_status in ('approved_final', 'paid'))
+    execute function public.lexoffice_document_push_now();
+
+drop trigger if exists documents_lexoffice_push_update on public.documents;
+create trigger documents_lexoffice_push_update after update of workflow_status on public.documents
+    for each row
+    when (new.workflow_status in ('approved_final', 'paid')
+        and old.workflow_status is distinct from new.workflow_status)
+    execute function public.lexoffice_document_push_now();
+
+commit;
+
+-- ===================================================================== 0036_referrer_bonus_rules_configurable.sql
+
+begin;
+
+alter table public.bonus_settings
+    add column if not exists referrer_tier_counts_status text not null default 'suggested'
+        check (referrer_tier_counts_status in ('suggested', 'paid')),
+    add column if not exists referrer_tier_reset text not null default 'yearly'
+        check (referrer_tier_reset in ('yearly', 'never')),
+    add column if not exists referrer_tier_scope text not null default 'per_referrer'
+        check (referrer_tier_scope in ('per_referrer', 'company_wide')),
+    add column if not exists referrer_payout_timing text not null default 'on_suggestion'
+        check (referrer_payout_timing in ('on_suggestion', 'after_commission_paid'));
+
+create or replace function public.referrer_bonus_tier(p_referrer_customer_id uuid, p_earned_on date)
+returns integer
+language plpgsql stable security definer set search_path to 'public'
+as $$
+declare
+  v_settings public.bonus_settings;
+  v_count integer;
+begin
+  select * into v_settings from public.bonus_settings;
+
+  select count(*) into v_count
+    from public.deal_referrer_bonuses b
+   where (
+     case v_settings.referrer_tier_scope
+       when 'company_wide' then true
+       else b.referrer_customer_id = p_referrer_customer_id
+     end
+   )
+     and (
+       case v_settings.referrer_tier_counts_status
+         when 'paid' then b.status = 'paid'
+         else b.status <> 'cancelled'
+       end
+     )
+     and (
+       case v_settings.referrer_tier_reset
+         when 'never' then true
+         else extract(year from b.earned_on) = extract(year from p_earned_on)
+       end
+     );
+
+  return v_count + 1;
+end;
+$$;
+
+revoke execute on function public.referrer_bonus_tier(uuid, date) from public, anon;
+grant execute on function public.referrer_bonus_tier(uuid, date) to authenticated;
+
+commit;
+
+-- ===================================================================== 0037_lexoffice_invoice_auto_push.sql
+
+begin;
+
+create or replace function public.lexoffice_invoice_push_now() returns trigger
+    language plpgsql security definer set search_path to 'public'
+    as $$
+declare
+  v_key text;
+  v_url text;
+begin
+  v_key := public.deployment_secret('service_role_key');
+  v_url := public.deployment_secret('project_url');
+  if v_key is null or v_url is null then
+    return null;
+  end if;
+
+  perform net.http_post(
+    url := rtrim(v_url, '/') || '/functions/v1/lexoffice-invoice-push',
+    headers := jsonb_build_object(
+      'Content-Type', 'application/json',
+      'Authorization', 'Bearer ' || v_key
+    ),
+    body := jsonb_build_object('outgoing_invoice_id', new.id),
+    timeout_milliseconds := 30000
+  );
+  return null;
+end;
+$$;
+
+drop trigger if exists outgoing_invoices_lexoffice_push on public.outgoing_invoices;
+create trigger outgoing_invoices_lexoffice_push after insert on public.outgoing_invoices
+    for each row
+    when (new.source = 'app' and new.kind = 'commission')
+    execute function public.lexoffice_invoice_push_now();
+
+commit;
+
+-- ===================================================================== 0038_crm_sold_status_abgeschlossen.sql
+
+begin;
+
+create or replace function public.stamp_became_sold() returns trigger
+language plpgsql set search_path to 'public'
+as $$
+begin
+  if new.crm_status in ('Verkauft', 'Abgeschlossen')
+     and old.crm_status is distinct from new.crm_status then
+    new.became_sold_at := now();
+  end if;
+  return new;
+end;
+$$;
+
+drop function if exists public.create_deals_for_sold_properties(text);
+
+create or replace function public.create_deals_for_sold_properties(
+    p_sold_statuses text[] default array['Verkauft', 'Abgeschlossen']
+)
+returns integer
+language plpgsql security definer set search_path to 'public'
+as $$
+declare
+  v_switched_on timestamptz;
+  v_created integer := 0;
+  v_deal record;
+begin
+  if not exists (select 1 from public.live_features() f where f.key = 'deals.from_crm') then
+    return 0;
+  end if;
+
+  select updated_at into v_switched_on
+    from public.feature_settings where feature_key = 'deals.from_crm' and enabled;
+  if v_switched_on is null then
+    return 0;
+  end if;
+
+  for v_deal in
+    with opened as (
+      insert into public.deals (
+          company_id, property_id, property_label, source, external_id, status,
+          notarised_on, purchase_price, acquired_by, handled_by, created_by)
+      select (select c.id from public.companies c where c.deleted_at is null order by c.created_at limit 1),
+             p.id,
+             concat_ws(', ', coalesce(p.name, p.code), p.address),
+             p.source, p.external_id, 'incomplete',
+             p.sold_on, nullif(p.sold_price, 0),
+             b.id, b.id, 'crm'
+        from public.properties p
+        left join public.app_users b
+               on b.crm_external_id = p.broker_external_id and b.is_active
+       where p.deleted_at is null
+         and p.crm_status = any(p_sold_statuses)
+         and p.became_sold_at >= v_switched_on
+         and p.external_id is not null
+      on conflict (source, external_id) where external_id is not null do nothing
+      returning id, property_id, property_label, acquired_by
+    )
+    select * from opened
+  loop
+    v_created := v_created + 1;
+
+    insert into public.deal_sides (deal_id, side, fee_kind, fee_net_rate)
+    select v_deal.id, side.name, 'percent',
+           public.crm_net_rate(side.gross_rate, d.vat_rate)
+      from public.deals d
+      join public.properties p on p.id = v_deal.property_id
+      cross join lateral (values
+        ('buyer',  public.crm_rate(p.crm_data ->> 'external_commission_percentage')),
+        ('seller', public.crm_rate(p.crm_data ->> 'internal_commission_percentage'))
+      ) as side(name, gross_rate)
+     where d.id = v_deal.id;
+
+    update public.deals
+       set note = 'Provisionssätze aus dem CRM übernommen (Bruttosätze auf netto umgerechnet). Bitte prüfen.'
+     where id = v_deal.id;
+
+    perform public.notify_administrators(
+      'Verkauft im CRM: ' || coalesce(v_deal.property_label, 'Objekt')
+        || '. Die Provision wartet auf Vervollständigung.',
+      '/commission-deals/' || v_deal.id, 'crm', v_deal.acquired_by);
+    if v_deal.acquired_by is not null then
+      perform public.send_system_ping(
+        v_deal.acquired_by, 'Hub',
+        'Verkauft im CRM: ' || coalesce(v_deal.property_label, 'Objekt')
+          || '. Die Provision wartet auf Vervollständigung.',
+        '/commission-deals/' || v_deal.id, 'crm');
+    end if;
+  end loop;
+
+  return v_created;
+end;
+$$;
+
+revoke execute on function public.create_deals_for_sold_properties(text[]) from public, anon, authenticated;
+grant execute on function public.create_deals_for_sold_properties(text[]) to service_role;
+
+commit;
+
+-- ===================================================================== 0039_lexoffice_rate_limit.sql
+
+begin;
+
+create table if not exists public.lexware_rate_limit (
+    id boolean primary key default true,
+    next_allowed_at timestamptz not null default now(),
+    constraint lexware_rate_limit_single_row check (id)
+);
+
+insert into public.lexware_rate_limit (id) values (true) on conflict (id) do nothing;
+
+-- No policy is added on purpose: only the security-definer function below ever touches this row,
+-- so every other caller, including a signed-in admin, is correctly refused by default.
+alter table public.lexware_rate_limit enable row level security;
+
+-- Lexware allows 2 requests/second across all endpoints. Every call to the shared Lexware client,
+-- from any Edge Function invocation, asks this function first and sleeps for the milliseconds it
+-- returns. The row lock below makes the wait correct even when several invocations call this at
+-- the same instant, which a module-level counter inside one Edge Function could never guarantee.
+create or replace function public.lexware_throttle_wait() returns integer
+    language plpgsql security definer set search_path to 'public'
+    as $$
+declare
+  v_now timestamptz := clock_timestamp();
+  v_next timestamptz;
+  v_wait_ms integer;
+begin
+  select next_allowed_at into v_next from public.lexware_rate_limit where id for update;
+  if v_next < v_now then
+    v_next := v_now;
+  end if;
+  update public.lexware_rate_limit set next_allowed_at = v_next + interval '500 milliseconds' where id;
+  v_wait_ms := greatest(0, ceil(extract(epoch from (v_next - v_now)) * 1000))::integer;
+  return v_wait_ms;
+end;
+$$;
+
+revoke execute on function public.lexware_throttle_wait() from public, anon, authenticated;
+grant execute on function public.lexware_throttle_wait() to service_role;
+
+commit;
+
+-- ===================================================================== 0040_payment_file_practice_seed.sql
+
+-- Finishes the payment-file practice tour (payment-file-practice-task.ts, migration e85e471): the
+-- task steps were written and committed, but nothing ever seeded the one payable invoice, its
+-- confirmed bank account, or the payer account the tour walks through — so the tour could never
+-- actually be completed.
+--
+-- seedPracticeData() (seed_onboarding_demo_data) always runs before this one, per
+-- OnboardingPracticeStart's own start/resume/restart sequence, so the demo company already exists
+-- by the time this runs — this reads it, it does not create its own.
+--
+-- Returns the seeded document's id, the same shape seedStopCasesPracticeData's caller expects, so
+-- restart/resume can validate and clean up through the existing generic
+-- findLivePracticeDocumentIds/discardPracticeDocuments (is_demo + demo_owner_user_id is all those
+-- need, nothing payment-file-specific). Any payment file a previous run built against that
+-- document is reset to 'discarded' on every call, so a restart does not leave a stray draft or
+-- generated file sitting in the history/track views.
+
+begin;
+
+create or replace function public.seed_payment_file_practice_data() returns uuid[]
+    language plpgsql security definer set search_path to 'public'
+    as $$
+declare
+  v_user_id uuid := public.current_app_user_id();
+  v_tag text;
+  v_company_id uuid;
+  v_supplier_id uuid;
+  v_bank_account_id uuid;
+  v_document_id uuid;
+begin
+  if v_user_id is null then
+    raise exception 'seed_payment_file_practice_data: no signed-in app user';
+  end if;
+
+  v_tag := substr(replace(v_user_id::text, '-', ''), 1, 8);
+
+  select id into v_company_id from public.companies
+   where is_demo and demo_owner_user_id = v_user_id and code = 'DEMO-' || v_tag;
+  if v_company_id is null then
+    raise exception 'seed_payment_file_practice_data: no demo company for user %, seedPracticeData should have run first', v_user_id;
+  end if;
+
+  select id into v_supplier_id from public.suppliers
+   where is_demo and demo_owner_user_id = v_user_id and name = 'Dachdecker Brandt';
+  if v_supplier_id is not null then
+    update public.suppliers set deleted_at = null where id = v_supplier_id and deleted_at is not null;
+  else
+    insert into public.suppliers (name, is_demo, demo_owner_user_id)
+    values ('Dachdecker Brandt', true, v_user_id)
+    returning id into v_supplier_id;
+  end if;
+
+  select id into v_bank_account_id from public.supplier_bank_accounts
+   where supplier_id = v_supplier_id and iban = 'DE89370400440532013000';
+  if v_bank_account_id is not null then
+    update public.supplier_bank_accounts
+       set deleted_at = null, is_active = true, is_payable = true,
+           confirmed_at = coalesce(confirmed_at, now())
+     where id = v_bank_account_id;
+  else
+    insert into public.supplier_bank_accounts (
+      supplier_id, iban, bic, source, is_active, is_payable, confirmed_at
+    )
+    values (
+      v_supplier_id, 'DE89370400440532013000', 'COBADEFFXXX', 'human', true, true, now()
+    )
+    returning id into v_bank_account_id;
+  end if;
+
+  select id into v_document_id from public.documents
+   where is_demo and demo_owner_user_id = v_user_id
+     and payment_reference = 'BRANDT RE 2026-2201 890,00';
+  if v_document_id is not null then
+    update public.documents
+       set deleted_at = null, company_id = v_company_id, supplier_id = v_supplier_id,
+           workflow_status = 'approved_final', paid_at = null,
+           due_date = current_date + 4
+     where id = v_document_id;
+  else
+    insert into public.documents (
+      issuer, supplier_id, invoice_number, document_date, due_date,
+      amount_net, vat_rate, vat_amount, amount_gross, currency,
+      payment_reference, payment_method, workflow_status,
+      company_id, is_invoice, is_demo, demo_owner_user_id
+    )
+    values (
+      'Dachdecker Brandt', v_supplier_id, 'RE-2026-2201', current_date - 10, current_date + 4,
+      747.90, 19, 142.10, 890.00, 'EUR',
+      'BRANDT RE 2026-2201 890,00', 'transfer', 'approved_final',
+      v_company_id, true, true, v_user_id
+    )
+    returning id into v_document_id;
+  end if;
+
+  insert into public.document_bank_accounts (document_id, supplier_bank_account_id, position)
+  select v_document_id, v_bank_account_id, 1
+   where not exists (
+     select 1 from public.document_bank_accounts
+      where document_id = v_document_id and supplier_bank_account_id = v_bank_account_id
+   );
+
+  if not exists (select 1 from public.payment_settings where company_id = v_company_id) then
+    insert into public.payment_settings (company_id, label, payer_name, payer_iban, is_default)
+    values (v_company_id, 'Demo-Geschäftskonto', 'Demo Immobilien GmbH', 'DE02500105174917781216', true);
+  end if;
+
+  update public.payment_files f
+     set status = 'discarded'
+    from public.payment_file_items i
+   where i.payment_file_id = f.id
+     and i.document_id = v_document_id
+     and f.status <> 'discarded';
+
+  return array[v_document_id];
+end $$;
+
+revoke execute on function public.seed_payment_file_practice_data() from public, anon;
+grant execute on function public.seed_payment_file_practice_data() to authenticated;
 
 commit;

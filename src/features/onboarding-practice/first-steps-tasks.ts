@@ -1,3 +1,4 @@
+import { PAYMENT_FILE_PRACTICE_TASK_ID } from "./payment-file-practice-task";
 import { PRACTICE_INVOICE_TASK_ID } from "./practice-invoice-task";
 import { STOP_CASES_PRACTICE_TASK_ID } from "./practice-stop-cases-task";
 
@@ -27,6 +28,12 @@ export const FIRST_STEPS_TASKS: FirstStepsTask[] = [
     to: "/onboarding-tour/when-does-it-stop",
     titleKey: "home.firstSteps.stopCases.title",
     descriptionKey: "home.firstSteps.stopCases.description",
+  },
+  {
+    id: PAYMENT_FILE_PRACTICE_TASK_ID,
+    to: "/onboarding-tour/payment-file",
+    titleKey: "home.firstSteps.paymentFile.title",
+    descriptionKey: "home.firstSteps.paymentFile.description",
   },
 ];
 

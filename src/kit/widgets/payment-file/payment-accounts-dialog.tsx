@@ -47,7 +47,10 @@ export function PaymentAccountsDialog({
           <DialogHeader className="shrink-0">
             <DialogTitle>{labels.accounts.title}</DialogTitle>
           </DialogHeader>
-          <div className="-mx-6 flex-1 space-y-3 overflow-y-auto px-6 py-1">
+          <div
+            className="-mx-6 flex-1 space-y-3 overflow-y-auto px-6 py-1"
+            data-tour="payment-accounts-list"
+          >
             {loading ? (
               <Skeleton className="h-24 w-full" />
             ) : accounts.length === 0 ? (

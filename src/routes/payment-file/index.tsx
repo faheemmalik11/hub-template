@@ -3,6 +3,7 @@ import { toast } from "sonner";
 
 import { Combobox } from "@/components/ui/combobox";
 import { Label } from "@/components/ui/label";
+import { useEmitOnboardingEvent } from "@/kit/components/onboarding";
 import { pageTitle } from "@/config/brand";
 import {
   useCompanies,
@@ -39,17 +40,21 @@ function PaymentFileRoute() {
   const search = Route.useSearch();
   const navigate = Route.useNavigate();
   const companiesQuery = useCompanies();
+  const emitOnboardingEvent = useEmitOnboardingEvent();
   const companyId = search.company;
 
   if (!companyId) {
     return (
       <div className="space-y-4">
         <h1 className="text-2xl font-semibold text-foreground">{t("paymentFile.title")}</h1>
-        <div className="max-w-sm space-y-1.5">
+        <div className="max-w-sm space-y-1.5" data-tour="payment-company">
           <Label>{t("paymentFile.companyLabel")}</Label>
           <Combobox
             value={null}
-            onValueChange={(value) => void navigate({ search: { company: value } })}
+            onValueChange={(value) => {
+              emitOnboardingEvent({ type: "payment_company_chosen", recordId: value });
+              void navigate({ search: { company: value } });
+            }}
             options={(companiesQuery.data ?? []).map((company) => ({
               value: company.id,
               label: `${company.code} · ${company.name}`,

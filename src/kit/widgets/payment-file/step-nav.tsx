@@ -26,6 +26,7 @@ export function StepNav({ step, onStepChange, labels }: StepNavProps) {
             <div className="flex items-center">
               <button
                 type="button"
+                data-tour={key === "track" ? "payment-step-track" : undefined}
                 onClick={() => onStepChange(key)}
                 aria-label={labels.steps[key].title}
                 className={cn(

@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 
+import { useEmitOnboardingEvent } from "../../components/onboarding";
 import { Button } from "../../ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "../../ui/card";
 import { ErrorState, TableSkeleton } from "../../components/feedback/query-states";
@@ -35,9 +36,26 @@ export function PaymentFilePage({
 }: PaymentFilePageProps) {
   const view = usePaymentFileView(DEFAULT_PAGE_SIZE);
   const [accountsDialogOpen, setAccountsDialogOpen] = useState(false);
+  const emitOnboardingEvent = useEmitOnboardingEvent();
 
   const accountsQuery = adapter.useAccounts();
   const accounts = accountsQuery.data;
+
+  function openAccounts() {
+    emitOnboardingEvent({ type: "payment_accounts_opened", recordId: "" });
+    setAccountsDialogOpen(true);
+  }
+
+  function closeAccounts(open: boolean) {
+    if (!open) emitOnboardingEvent({ type: "payment_accounts_closed", recordId: "" });
+    setAccountsDialogOpen(open);
+  }
+
+  function changeStep(step: Parameters<typeof view.setStep>[0]) {
+    if (step === "track")
+      emitOnboardingEvent({ type: "payment_step_opened", recordId: "", data: { step } });
+    view.setStep(step);
+  }
 
   useEffect(() => {
     if (view.accountId && accounts.some((one) => one.id === view.accountId)) return;
@@ -56,8 +74,8 @@ export function PaymentFilePage({
       </div>
 
       <div className="flex items-center justify-between">
-        <StepNav step={view.step} onStepChange={view.setStep} labels={labels} />
-        <Button variant="outline" onClick={() => setAccountsDialogOpen(true)}>
+        <StepNav step={view.step} onStepChange={changeStep} labels={labels} />
+        <Button variant="outline" data-tour="payment-accounts-button" onClick={openAccounts}>
           {labels.manageAccounts}
         </Button>
       </div>
@@ -69,8 +87,9 @@ export function PaymentFilePage({
           view={view}
           accounts={accounts}
           accountsLoading={accountsQuery.loading}
-          onOpenAccounts={() => setAccountsDialogOpen(true)}
+          onOpenAccounts={openAccounts}
           onFileCreated={(fileId) => {
+            emitOnboardingEvent({ type: "payment_file_created", recordId: fileId });
             view.setFileId(fileId);
             view.setStep("review");
           }}
@@ -100,7 +119,7 @@ export function PaymentFilePage({
         accounts={accounts}
         loading={accountsQuery.loading}
         open={accountsDialogOpen}
-        onOpenChange={setAccountsDialogOpen}
+        onOpenChange={closeAccounts}
         labels={labels}
       />
     </div>
@@ -126,6 +145,18 @@ function PrepareStep({
 }) {
   const selection = useDocumentSelection();
   const payableQuery = adapter.usePayableDocuments(view.search, view.page, view.pageSize);
+  const emitOnboardingEvent = useEmitOnboardingEvent();
+
+  useEffect(() => {
+    if (selection.selected.size > 0) {
+      emitOnboardingEvent({
+        type: "payment_invoices_selected",
+        recordId: "",
+        data: { count: selection.selected.size },
+      });
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [selection.selected.size]);
 
   const rows = payableQuery.data.rows;
   const total = payableQuery.data.total;
@@ -277,6 +308,7 @@ function ReviewStep({
   onGoToPrepare: () => void;
 }) {
   const fileQuery = adapter.useFile(fileId);
+  const emitOnboardingEvent = useEmitOnboardingEvent();
 
   if (!fileId) {
     return (
@@ -315,6 +347,7 @@ function ReviewStep({
           onDownload={() => {
             void adapter.generateAndDownloadFile(fileId).then((files) => {
               for (const one of files) adapter.downloadFile(one.fileName, one.content);
+              emitOnboardingEvent({ type: "payment_file_downloaded", recordId: fileId });
             });
           }}
           onDiscard={() => void adapter.discardFile(fileId)}

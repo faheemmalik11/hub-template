@@ -1352,6 +1352,48 @@ const en = {
         "Well done! You now know three stops: a changed bank account, an unsure reading, and a document that is not an invoice. A person decides in all three cases.",
       outroOutcome: "The Hub would rather stop once too often than pay or book something wrong.",
     },
+    paymentFile: {
+      startTitle: "Practice: build a payment file",
+      startIntro:
+        "You pick a practice invoice, build a SEPA payment file for it, download it and mark it as paid.",
+      progressLost:
+        "The practice invoice no longer exists. The practice starts from the beginning.",
+      taskTitle: "Build and send a payment file",
+      taskGoal:
+        "Learn how to pick invoices, build a payment file, download it and confirm payment.",
+      pagePayment: "Payment file",
+      groupPrepare: "Prepare",
+      groupCheck: "Check",
+      groupTrack: "Track",
+      companyInstruction: "Choose the practice company. Its code starts with DEMO-.",
+      companyOutcome:
+        "A payment file only ever pays invoices that belong to one company, from that company's own account.",
+      openAccountsInstruction: "Open the payer accounts.",
+      openAccountsOutcome: "This is where you manage which bank account the payment goes out from.",
+      seePayerInstruction: "Look at the demo payer account, then close this dialog.",
+      seePayerOutcome:
+        "The IBAN here is what ends up in the payment file. Get it wrong once and the money goes to the wrong account.",
+      selectInvoicesInstruction: "Select the practice invoice in the list.",
+      selectInvoicesOutcome: "Only selected invoices are included when you build the file.",
+      selectInvoicesHelp: "Tick the checkbox next to the invoice from Dachdecker Brandt.",
+      buildInstruction: "Build the payment file.",
+      buildOutcome:
+        "This turns your selection into one SEPA file your bank can read. Nothing is sent yet.",
+      checkListInstruction: "Check the list of payments in the file before sending it anywhere.",
+      checkListOutcome:
+        "This is the last check before real money would move. A mistake found here costs nothing to fix.",
+      downloadInstruction: "Download the file.",
+      downloadOutcome:
+        "The file is what you upload to your bank's own online banking to actually trigger the transfers.",
+      downloadHelp: "In the practice, nothing is really sent to any bank.",
+      openTrackInstruction: "Open the Track step.",
+      openTrackOutcome: "Here you see every payment you have sent until your bank confirms it.",
+      markPaidInstruction: "Confirm the payment once your bank shows it went through.",
+      markPaidOutcome:
+        "This is what closes the loop: the invoice is paid, and nobody will pay it again by mistake.",
+      markPaidHelp: "In real use, you would check your bank statement first.",
+      restartHint: 'Stuck? Use "{{button}}" in the steps panel to get fresh practice data.',
+    },
   },
   home: {
     priority: {
@@ -1370,6 +1412,11 @@ const en = {
         title: "When does the system stop?",
         description:
           "See on three practice invoices when the Hub stops and a person has to decide (about 10 minutes).",
+      },
+      paymentFile: {
+        title: "Build a payment file",
+        description:
+          "Pick an invoice, build the payment file, download it and confirm it is paid (about 10 minutes).",
       },
       action: {
         new: "Start the practice",
@@ -2457,6 +2504,17 @@ const en = {
       unknownSteller: "Unknown supplier",
       openSupplierTitle: "{{name}}: open master data",
       ohneNr: "no number",
+
+      lexoffice: {
+        title: "Send to Lexware",
+        pending: "Being sent to Lexware.",
+        sent: "Sent to Lexware.",
+        failed: "Could not be sent to Lexware.",
+        retry: "Try again",
+        retrying: "Trying again.",
+        retrySuccess: "Sent to Lexware.",
+        retryFailed: "Could not be sent to Lexware: {{error}}",
+      },
 
       preview: {
         loadError: "The original could not be loaded.",
@@ -4014,6 +4072,9 @@ const en = {
       block: "BWA block",
       line: "BWA line (technical key)",
       blockInherited: 'Inherits its BWA block and line from "{{name}}".',
+      lexwareCategory: "Lexware category",
+      lexwareCategoryNone: "No Lexware category selected",
+      lexwareCategoryError: "Could not load the categories from Lexware.",
     },
     block: {
       einnahmen: "Income",
@@ -4619,6 +4680,26 @@ const en = {
       referrer_tier2_amount: "Referrer bonus, 2nd referral this year (€)",
       referrer_tier3_amount: "Referrer bonus, 3rd referral this year (€)",
       referrer_tier4plus_amount: "Referrer bonus, 4th referral this year and later (€)",
+      referrer_tier_counts_status: "What counts as a successful referral",
+      referrerTierCountsStatus: {
+        suggested: "As soon as the bonus is suggested",
+        paid: "Only once the bonus is paid",
+      },
+      referrer_tier_reset: "When the count starts again",
+      referrerTierReset: {
+        yearly: "Starts over every year",
+        never: "Keeps counting forever",
+      },
+      referrer_tier_scope: "Who the tiers apply to",
+      referrerTierScope: {
+        per_referrer: "Each referrer separately",
+        company_wide: "All referrers together",
+      },
+      referrer_payout_timing: "When the referrer bonus is due",
+      referrerPayoutTiming: {
+        on_suggestion: "As soon as the bonus is suggested",
+        after_commission_paid: "Only once the commission is paid",
+      },
       save: "Save",
       saved: "Saved",
       invalid: "Please enter numbers only.",

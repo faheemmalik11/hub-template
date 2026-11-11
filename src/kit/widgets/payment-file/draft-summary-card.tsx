@@ -44,7 +44,12 @@ export function DraftSummaryCard({
   labels,
 }: DraftSummaryCardProps) {
   const button = (
-    <Button className="w-full" disabled={disabled} onClick={onBuild}>
+    <Button
+      className="w-full"
+      data-tour="payment-build-button"
+      disabled={disabled}
+      onClick={onBuild}
+    >
       {pending ? labels.draft.building : labels.draft.build}
     </Button>
   );

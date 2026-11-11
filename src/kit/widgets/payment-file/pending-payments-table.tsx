@@ -1,3 +1,4 @@
+import { useEmitOnboardingEvent } from "../../components/onboarding";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "../../ui/table";
 import type { PaymentFileAdapter, PendingPaymentRow } from "../../adapters/payment-file";
 import type { PaymentFileLabels } from "../../pages/payment-file/labels";
@@ -10,6 +11,7 @@ export interface PendingPaymentsTableProps {
 }
 
 export function PendingPaymentsTable({ rows, adapter, labels }: PendingPaymentsTableProps) {
+  const emitOnboardingEvent = useEmitOnboardingEvent();
   return (
     <Table>
       <TableHeader>
@@ -39,7 +41,10 @@ export function PendingPaymentsTable({ rows, adapter, labels }: PendingPaymentsT
             <TableCell>
               <MarkPaidButton
                 labels={labels}
-                onConfirm={() => void adapter.confirmPaid(row.documentId)}
+                onConfirm={() => {
+                  emitOnboardingEvent({ type: "payment_marked_paid", recordId: row.documentId });
+                  void adapter.confirmPaid(row.documentId);
+                }}
               />
             </TableCell>
           </TableRow>
