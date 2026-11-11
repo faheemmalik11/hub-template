@@ -1,12 +1,12 @@
-# mayestate2 feature audit
+# Feature portability audit — client Hub #1
 
-mayestate2 is a real client's Hub, forked from an earlier snapshot of this template with no shared
-git history left. This folder surveys its codebase end to end against the template's current state
-(eight modules, English routes) and lists every feature area mayestate2 has that this template does
-not, with a portability call for each.
+This surveys a real client's Hub — forked from an earlier snapshot of this template with no shared
+git history left — end to end against the template's current state (eight modules, English routes),
+and lists every feature area it has that this template does not, with a portability call for each.
 
-This is the first of what will be several per-client audits under `planning/`; each client gets its
-own folder alongside this one (`planning/<client>/`), same shape.
+This is the first of what will be several such audits under `planning/`. Later ones get their own
+numbered folder alongside this one, never a client's name — see CLAUDE.md's hard rule against
+writing a client's name in this repository.
 
 Standard screens already confirmed identical (not written up as points): incoming/outgoing
 invoices, suppliers, customers, companies, properties, categories, bank accounts/transactions/
@@ -18,7 +18,7 @@ file — all map 1:1 onto the template's current routes.
 |---|---|
 | `00-generic-port-as-is.md` | Points 1–9: missing, fully generic, no stripping needed |
 | `01-generic-needs-generalizing.md` | Points 10–12: generic concept, real design/implementation work before porting |
-| `02-stays-client-specific.md` | Points 13–15: tied to mayestate's own business decisions, not worth generalizing yet |
+| `02-stays-client-specific.md` | Points 13–15: tied to this client's own business decisions, not worth generalizing yet |
 | `03-onboarding-and-confirmed-no-gap.md` | Point 16 (the one real onboarding-tour gap) and point 17 (areas checked and found already shared) |
 
 ## Checklist
