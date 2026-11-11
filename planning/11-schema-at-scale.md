@@ -1,18 +1,20 @@
 # Is this schema good for N clients?
 
 Checked two ways on 18.09.2026: against what the field publishes, and against the six Hubs we
-already run. Five searches, and a count of what every client's database actually contains.
+already run. Five searches, and a count of what every client's database actually contains. Clients
+are labelled A–F below rather than named, per CLAUDE.md's rule against writing a client's name in
+the shared codebase; the label is only a stable reference across the two tables in this file.
 
 ## What our own clients show
 
 | Hub | Migrations | Distinct tables |
 |---|---|---|
-| eiffler-hubv2 | 271 | 75 |
-| staeyhub | 248 | 70 |
-| immonetz | 209 | 50 |
-| living-immo-hub | 122 | 12 |
-| oliviabarbarinomokrus | 28 | 11 |
-| mayestate | 0 | 0 |
+| Client A | 271 | 75 |
+| Client B | 248 | 70 |
+| Client C | 209 | 50 |
+| Client D | 122 | 12 |
+| Client E | 28 | 11 |
+| Client F | 0 | 0 |
 | **this template** | **1 baseline** | **69** |
 
 Most of what a client "has and the template lacks" is a rename the template already carries:
@@ -23,9 +25,9 @@ What is left is the real answer to the question:
 
 | Hub | Genuinely its own |
 |---|---|
-| eiffler-hubv2 | a whole second accounting area (`acc_*`), Airtable sync, bank statement imports |
-| immonetz | Lexoffice config and sync log |
-| oliviabarbarinomokrus | payment runs, run items, run files, payment settings |
+| Client A | a whole second accounting area (`acc_*`), Airtable sync, bank statement imports |
+| Client C | Lexoffice config and sync log |
+| Client E | payment runs, run items, run files, payment settings |
 
 **So a shared schema is right, and it is not enough by itself.** Every established client grows
 tables the others do not have, and the template must say where those go, or the first client who
