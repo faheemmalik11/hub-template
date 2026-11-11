@@ -19,16 +19,27 @@ rather than an assumption.
   not a new settings table — `referrer_tier1_amount` (1000), `referrer_tier2_amount` (1500),
   `referrer_tier3_amount` (2000), `referrer_tier4plus_amount` (2000, independently configurable,
   since the source material never specifies this one). Editable from the existing "Bonus rules"
-  dialog (`src/components/broker-bonuses/bonus-settings-dialog.tsx`) — just four more rows in its
-  generic `NUMBER_FIELDS` list, no new UI needed.
+  dialog (`src/components/broker-bonuses/bonus-settings-dialog.tsx`) — four more rows in its
+  generic `NUMBER_FIELDS` list.
 - **Table** `deal_referrer_bonuses`: deal, referrer (a `customers` row — **never** an `app_users`
   row, which is why this isn't a `broker_bonuses` row), tier, amount, earned date, status, cancel
   reason. `created_by`/`paid_by`/`paid_at` stamped server-side by `stamp_deal_referrer_bonus()`,
   never trusted from the client, same pattern as `stamp_deal_donation()`.
-- **Tier counting**: `referrer_bonus_tier(referrer_customer_id, earned_on)` counts that referrer's
-  own non-cancelled bonuses already recorded in the same calendar year as `earned_on`, plus one. The
-  client calls this to default the amount field; it does not gate what gets saved — same trust model
-  `save_deal` and `create_deal_invoices` already use for client-submitted amounts.
+- **Tier counting**: `referrer_bonus_tier(referrer_customer_id, earned_on)` counts, plus one. Four
+  rules that shape that count are configurable on `bonus_settings`
+  (`supabase/schema/0036_referrer_bonus_rules_configurable.sql`), not hard-coded, per Fabian's 11
+  November briefing (§13.1): `referrer_tier_counts_status` (`suggested` default — count as soon as
+  a bonus is suggested, or `paid` to only count once actually paid), `referrer_tier_reset` (`yearly`
+  default — count resets each calendar year, or `never` for a lifetime count), `referrer_tier_scope`
+  (`per_referrer` default, or `company_wide` to pool every referrer into one shared scale), and
+  `referrer_payout_timing` (`on_suggestion` default, or `after_commission_paid`). All four are
+  editable from the existing "Bonus rules" dialog, same as the tier amounts. The client calls this
+  to default the amount field; it does not gate what gets saved — same trust model `save_deal` and
+  `create_deal_invoices` already use for client-submitted amounts.
+  **`referrer_payout_timing` is stored and counted, but not yet enforced** — setting it to
+  `after_commission_paid` does not currently stop `DealReferrerBonusCard`'s "Create bonus" button
+  from being usable before the deal's commission is actually paid; wiring that check in is still
+  open.
 - **Permission**: reuses `bonuses.review` (no new permission key) — a referrer bonus is managed by
   the same role that reviews broker bonuses, and the card is shown under the same `suggestsBonuses`
   gate (`bonuses.suggest` feature + `bonuses.review` permission) as `BonusSuggestionsCard`.
