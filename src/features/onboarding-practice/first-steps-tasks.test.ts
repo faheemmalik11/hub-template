@@ -7,10 +7,11 @@ import {
 } from "./first-steps-tasks";
 
 describe("first steps card", () => {
-  it("offers the invoice practice task first and the stop cases task second", () => {
+  it("offers the invoice practice task first, then stop cases, then the payment file", () => {
     expect(FIRST_STEPS_TASKS.map((task) => task.id)).toEqual([
       "process-an-invoice",
       "when-does-it-stop",
+      "payment-file",
     ]);
   });
 
@@ -21,6 +22,7 @@ describe("first steps card", () => {
     expect(entries.map((entry) => [entry.task.id, entry.state])).toEqual([
       ["process-an-invoice", "completed"],
       ["when-does-it-stop", "started"],
+      ["payment-file", "started"],
     ]);
   });
 
