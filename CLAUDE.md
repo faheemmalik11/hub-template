@@ -99,6 +99,12 @@ Add a line to `README.md`'s Timeline and Folders sections for the new dated fold
 there; both tables are the index for everything else in this directory and go stale fast if a new
 folder doesn't get a row.
 
+### A client message arriving while working in the shared checkout instead
+
+Same rule, for when you're working in the main `hub-template` checkout rather than here: identify
+which client it's for, file it (and any reply) in their own worktree the same way, then add a
+one-line pointer (which client, which date) in the shared `planning/` folder too — never the content.
+
 ### English only, everywhere a developer types (HARD RULE)
 
 No German in identifiers, function or component names, variables, types, filenames, directory
