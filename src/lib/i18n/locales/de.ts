@@ -4186,16 +4186,18 @@ const de = {
   categories: {
     list: {
       title: "Kategorien",
-      subtitle: "Kosten und Erlöse in Kategorien bündeln, auf die Zuordnungsregeln verweisen.",
+      subtitle:
+        "Kategorien bündeln Kosten und Erlöse für die Zuordnungsregeln, können Unterkategorien haben und behalten ihren Namen auf Belegen, die sie schon nutzen, auch nach dem Löschen.",
     },
     search: "Kategorie suchen …",
     noMatches: "Keine Kategorie passt zur Suche.",
     noMatchesHint: "Suchbegriff kürzen oder leeren, um wieder alle Gruppen zu sehen.",
     empty: "Noch keine Kategorien angelegt.",
-    hint: "Jede Kategorie kann Unterkategorien haben. Wenn Sie eine löschen, verschwindet sie aus den Listen. Belege, die sie schon nutzen, behalten den Namen.",
     col: {
       name: "Name",
+      type: "Art",
       hint: "Notiz",
+      lexwareCategory: "Lexware-Kategorie",
       actions: "Aktionen",
     },
     action: {
@@ -4207,7 +4209,6 @@ const de = {
     },
     field: {
       childOf: "Wird unter „{{name}}“ angelegt.",
-      type: "Art",
       name: "Name",
       note: "Notiz (optional)",
       parent: "Übergeordnete Kostengruppe",
@@ -4845,11 +4846,7 @@ const de = {
       referrer_tier2_amount: "Tippgeber-Bonus, 2. Empfehlung in diesem Jahr (€)",
       referrer_tier3_amount: "Tippgeber-Bonus, 3. Empfehlung in diesem Jahr (€)",
       referrer_tier4plus_amount: "Tippgeber-Bonus, ab der 4. Empfehlung in diesem Jahr (€)",
-      referrer_tier_counts_status: "Was als erfolgreiche Empfehlung zählt",
-      referrerTierCountsStatus: {
-        suggested: "Sobald der Bonus vorgeschlagen wird",
-        paid: "Erst wenn der Bonus bezahlt ist",
-      },
+      referrer_tier_counts_status: "Ab welchem Schritt eine Empfehlung zählt",
       referrer_tier_reset: "Wann die Zählung neu beginnt",
       referrerTierReset: {
         yearly: "Jedes Jahr neu",
@@ -4860,10 +4857,11 @@ const de = {
         per_referrer: "Für jeden Tippgeber einzeln",
         company_wide: "Für alle Tippgeber zusammen",
       },
-      referrer_payout_timing: "Wann der Tippgeber-Bonus fällig wird",
-      referrerPayoutTiming: {
-        on_suggestion: "Sobald der Bonus vorgeschlagen wird",
-        after_commission_paid: "Erst wenn die Provision bezahlt ist",
+      referrer_payout_timing: "Ab welchem Schritt der Tippgeber-Bonus fällig wird",
+      dealStage: {
+        notarised: "Sobald der Notarvertrag unterschrieben ist",
+        invoiced: "Sobald die Rechnung an Käufer und Verkäufer raus ist",
+        commission_received: "Erst wenn unsere Provision bezahlt ist",
       },
       save: "Speichern",
       saved: "Gespeichert",
@@ -5064,6 +5062,12 @@ const de = {
       failed: "Das hat nicht geklappt.",
       markPaid: "Als ausgezahlt markieren",
       markedPaid: "Als ausgezahlt markiert",
+      payoutStageNotReached: {
+        notarised: "Kann erst ausgezahlt werden, sobald der Notarvertrag unterschrieben ist.",
+        invoiced:
+          "Kann erst ausgezahlt werden, sobald die Rechnung an Käufer und Verkäufer raus ist.",
+        commission_received: "Kann erst ausgezahlt werden, wenn unsere Provision bezahlt ist.",
+      },
       cancel: "Abbrechen",
       cancelReason: "Grund (optional)",
       confirmCancel: "Bonus absagen",
