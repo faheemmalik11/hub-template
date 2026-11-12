@@ -3344,6 +3344,8 @@ function DocumentDetail({ doc }: { doc: Document }) {
             </div>
           )}
 
+          <LexofficeDocumentSyncCard doc={doc} />
+
           <LinkedDocuments documentId={doc.id} />
 
           {/* Review box: the checks that did NOT pass, and nothing else. Lives in src/kit so
@@ -3433,7 +3435,6 @@ function DocumentDetail({ doc }: { doc: Document }) {
                   labels={confirmationCardLabels}
                 />
               </div>
-              <LexofficeDocumentSyncCard doc={doc} />
               <FrontChecklist
                 gates={frontChecklistGates}
                 document={frontChecklistDocument}

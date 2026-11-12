@@ -33,7 +33,8 @@ export function lexofficeKey(db: Db): Promise<string> {
 export async function featureIsLive(db: Db, featureKey: string): Promise<boolean> {
   const { data, error } = await db.rpc("live_features");
   if (error) throw new Error(`could not read live features: ${error.message}`);
-  return Array.isArray(data) && data.includes(featureKey);
+  const rows = (data ?? []) as { key: string }[];
+  return rows.some((row) => row.key === featureKey);
 }
 
 function sleep(ms: number) {
