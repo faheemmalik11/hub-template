@@ -186,11 +186,12 @@ Deno.serve(async (req) => {
   let claimedId: string | null = null;
 
   try {
+    if (!(await featureIsLive(db, PERMISSION))) {
+      return jsonResponse({ skipped: "feature not live" });
+    }
     const callerEmail = callerEmailFromAuthHeader(req);
     if (callerEmail) {
       await requirePermission(db, callerEmail, PERMISSION);
-    } else if (!(await featureIsLive(db, PERMISSION))) {
-      return jsonResponse({ skipped: "feature not live" });
     }
 
     const body = await req.json().catch(() => ({}));

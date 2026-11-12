@@ -1596,8 +1596,11 @@ export function useRetryLexofficeDocumentPush(documentId: string) {
         body: { document_id: documentId },
       });
       if (error) throw new Error(await edgeFunctionErrorText(error));
-      const result = (data ?? {}) as { error?: string };
+      const result = (data ?? {}) as { error?: string; skipped?: string };
       if (result.error) throw new Error(result.error);
+      // The function itself can decline to even try (feature not live for this tenant), which
+      // is not success -- a skip with no body is indistinguishable from "it worked" otherwise.
+      if (result.skipped) throw new Error(result.skipped);
       return result;
     },
     onSuccess: () => qc.invalidateQueries({ queryKey: ["beleg", documentId] }),
