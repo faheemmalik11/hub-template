@@ -210,3 +210,9 @@ and forgotten.**
 - The generated `Database` type covers 7 of 65 tables, not all of them, so most reads and every
   write use an untyped `sb` cast. Keep new mutations consistent with that until the types are
   regenerated. A stale name in it fails the typecheck, so it is worth keeping in step.
+
+## Keep docs and skills current
+
+A change that makes a `docs/*.md` file or a `.claude/skills/*/SKILL.md` wrong does not wait for
+someone to notice later — fix it in the same pass, the same discipline as the Feature documentation
+rule above.
