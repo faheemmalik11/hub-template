@@ -164,7 +164,7 @@ function buildVoucherPayload(
   const taxAmount = doc.vat_amount ?? Math.max(0, amountGross - amountNet);
 
   const voucherItem: LexofficeVoucherItem = {
-    amount: amountGross,
+    amount: amountNet,
     taxAmount,
     taxRatePercent: doc.vat_rate ?? 19,
     categoryId: category.lexware_category_id as string,
