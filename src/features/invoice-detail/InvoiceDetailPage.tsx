@@ -518,6 +518,11 @@ function DocumentDetail({ doc }: { doc: Document }) {
   const invoiceAccountsQ = useInvoiceBankAccounts(doc.id, doc.supplier_id);
   const companiesQ = useCompanies();
   const assignsProperties = useFeature(PERMISSIONS.documentsPropertyAssignment);
+  const lexofficeDocumentSyncOn = useFeature(PERMISSIONS.lexofficeDocumentSync);
+  // Whichever external bookkeeping system owns payment tracking and the tax-firm handover for
+  // this tenant today (only Lexware so far) — add it here with `||`, every check below reads
+  // this, none of them read a specific integration's flag directly.
+  const paymentsHandledExternally = lexofficeDocumentSyncOn;
   const propertiesQ = useProperties();
   const categoriesQ = useCostAnalysisCategories();
   const propertyCompaniesQ = usePropertyCompanies();
@@ -1354,11 +1359,23 @@ function DocumentDetail({ doc }: { doc: Document }) {
 
   const legalActions = useMemo(
     () =>
-      nextLegalActions(wf, approvalRuleQ.data ?? null, actingAs, doc.assigned_user_id, {
-        canApprove,
-        canFinalApprove,
-      }),
-    [wf, approvalRuleQ.data, actingAs, doc.assigned_user_id, canApprove, canFinalApprove],
+      nextLegalActions(
+        wf,
+        approvalRuleQ.data ?? null,
+        actingAs,
+        doc.assigned_user_id,
+        { canApprove, canFinalApprove },
+        paymentsHandledExternally,
+      ),
+    [
+      wf,
+      approvalRuleQ.data,
+      actingAs,
+      doc.assigned_user_id,
+      canApprove,
+      canFinalApprove,
+      paymentsHandledExternally,
+    ],
   );
 
   // Rechnungsinfo opened with sixteen fields in four stacked grids, every one of them styled the
@@ -1378,7 +1395,14 @@ function DocumentDetail({ doc }: { doc: Document }) {
   // The full ladder, taken from WORKFLOW_REIHENFOLGE rather than a second list kept in step by
   // hand. `rueckfrage` is dropped: it is a loop back to the review step, not a stage of its own,
   // which is why the canonical order has eight entries and the ladder has seven.
-  const WORKFLOW_STEPS = useMemo(() => WORKFLOW_ORDER.filter((s) => s !== "query"), []);
+  // 'handed_over' is only reached by a pipeline stage switched off once bookkeeping is external, so skip it here too.
+  const WORKFLOW_STEPS = useMemo(
+    () =>
+      WORKFLOW_ORDER.filter(
+        (s) => s !== "query" && !(paymentsHandledExternally && s === "handed_over"),
+      ),
+    [paymentsHandledExternally],
+  );
   // A document in `rueckfrage` is back at the review step, so that is where the marker sits; the
   // query itself is carried by the review chip and the Freigabe tab, not by a node on the line.
   const currentStep = WORKFLOW_STEPS.indexOf(
@@ -1775,7 +1799,7 @@ function DocumentDetail({ doc }: { doc: Document }) {
     headerHatSuggestion,
     Boolean(doc.paid_at),
   );
-  const paymentReasonIds = paymentReasons(doc, matching);
+  const paymentReasonIds = paymentReasons(doc, matching, !paymentsHandledExternally);
 
   function save() {
     // Against `basis` (the receipt when this edit opened), so the write covers exactly the fields
@@ -2112,7 +2136,6 @@ function DocumentDetail({ doc }: { doc: Document }) {
   const actionRunning = useRef(false);
   const [pendingAction, setPendingAction] = useState<ApprovalAction | null>(null);
   const [actionComment, setActionComment] = useState("");
-  const lexofficeDocumentSyncOn = useFeature(PERMISSIONS.lexofficeDocumentSync);
   const [pendingFinalApprove, setPendingFinalApprove] = useState<ApprovalAction | null>(null);
 
   // What Lexware is known to reject (the 11 Nov briefing, §2.3): no supplier, no category, a
@@ -3111,29 +3134,31 @@ function DocumentDetail({ doc }: { doc: Document }) {
                     -- nothing matched, a suggestion is waiting, partly covered, fully covered --
                     and every one of them is acted on in the same place, so making the reader hunt
                     for the tab was a step with no decision in it. */}
-                <Tooltip>
-                  <TooltipTrigger asChild>
-                    <button
-                      type="button"
-                      onClick={() => jumpZu("zahlung", MATCHING_ANCHOR)}
-                      aria-label={t("documents.detail.abgleichTip.oeffnen")}
-                      // brightness, not a colour swap: the badge's own background and label move
-                      // together, so the hover is visible and the text stays as readable as it was
-                      // at rest. Whatever state colour the pill is carrying keeps working.
-                      className="cursor-pointer rounded-md transition hover:brightness-95 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand focus-visible:ring-offset-2"
-                    >
-                      <MatchingBadge status={matching} />
-                    </button>
-                  </TooltipTrigger>
-                  <TooltipContent className="max-w-[18rem]">
-                    <div className="font-medium">
-                      {t(`documents.detail.abgleichTip.${matching}`)}
-                    </div>
-                    <div className="mt-1 text-sm opacity-80">
-                      {t("documents.detail.abgleichTip.oeffnen")}
-                    </div>
-                  </TooltipContent>
-                </Tooltip>
+                {!paymentsHandledExternally && (
+                  <Tooltip>
+                    <TooltipTrigger asChild>
+                      <button
+                        type="button"
+                        onClick={() => jumpZu("zahlung", MATCHING_ANCHOR)}
+                        aria-label={t("documents.detail.abgleichTip.oeffnen")}
+                        // brightness, not a colour swap: the badge's own background and label move
+                        // together, so the hover is visible and the text stays as readable as it was
+                        // at rest. Whatever state colour the pill is carrying keeps working.
+                        className="cursor-pointer rounded-md transition hover:brightness-95 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand focus-visible:ring-offset-2"
+                      >
+                        <MatchingBadge status={matching} />
+                      </button>
+                    </TooltipTrigger>
+                    <TooltipContent className="max-w-[18rem]">
+                      <div className="font-medium">
+                        {t(`documents.detail.abgleichTip.${matching}`)}
+                      </div>
+                      <div className="mt-1 text-sm opacity-80">
+                        {t("documents.detail.abgleichTip.oeffnen")}
+                      </div>
+                    </TooltipContent>
+                  </Tooltip>
+                )}
                 {lexofficeDocumentSyncOn && doc.accounting_external_id && (
                   <Tooltip>
                     <TooltipTrigger asChild>
@@ -4389,7 +4414,7 @@ function DocumentDetail({ doc }: { doc: Document }) {
                   lists, with the pay control under them. The transfer payload (IBAN, amount,
                   reference) is no longer restated here. It is what the pay dialog shows, right
                   before the money moves, assembled from the choices made in it. */}
-              {doc.supplier_id && supplier && (
+              {!paymentsHandledExternally && doc.supplier_id && supplier && (
                 <div id={TRANSFER_ANCHOR} className="scroll-mt-24">
                   <Section title={t("documents.detail.lieferant.ueberweisung")}>
                     {/* The account nobody has vouched for yet is called out HERE, where the
@@ -4424,10 +4449,11 @@ function DocumentDetail({ doc }: { doc: Document }) {
                 </div>
               )}
 
-              {/* Zahlung & Abgleich (BANKSapi reconciliation) */}
-              <div id={MATCHING_ANCHOR} className="scroll-mt-24">
-                <PaymentMatchingSection doc={doc} />
-              </div>
+              {!paymentsHandledExternally && (
+                <div id={MATCHING_ANCHOR} className="scroll-mt-24">
+                  <PaymentMatchingSection doc={doc} />
+                </div>
+              )}
             </TabsContent>
 
             {/* Tab: Details — everything else + all extracted data */}

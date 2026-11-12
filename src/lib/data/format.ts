@@ -835,6 +835,10 @@ export function paymentReasons(
   // 'suggested' falls through to the same lines as 'open' below: a suggestion nobody has
   // confirmed has not reconciled anything yet, whatever the header badge calls it.
   matching: MatchingStatus,
+  // False once the Hub's own bank matching and DATEV handover are switched off for a tenant
+  // (Lexware does both instead) — those two lines would otherwise describe a process that no
+  // longer runs.
+  bankFeaturesOn = true,
 ): PaymentReasonId[] {
   const g: PaymentReasonId[] = [];
   const isLs = isDirectDebit(doc.payment_method);
@@ -850,14 +854,16 @@ export function paymentReasons(
   } else {
     g.push("open");
   }
-  g.push(
-    matching === "reconciled"
-      ? "reconciled"
-      : matching === "partial"
-        ? "partial"
-        : "not_reconciled",
-  );
-  g.push(isDatevReady(doc.workflow_status) ? "datev_bereit" : "datev_offen");
+  if (bankFeaturesOn) {
+    g.push(
+      matching === "reconciled"
+        ? "reconciled"
+        : matching === "partial"
+          ? "partial"
+          : "not_reconciled",
+    );
+    g.push(isDatevReady(doc.workflow_status) ? "datev_bereit" : "datev_offen");
+  }
   return g;
 }
 
@@ -1023,6 +1029,10 @@ export function nextLegalActions(
     canApprove: true,
     canFinalApprove: true,
   },
+  // True once a tenant's handover to the tax firm happens through Lexware instead of the Hub's
+  // own DATEV pipeline stage — 'handed_over' can then never be reached, so closing becomes
+  // available straight from 'paid' instead.
+  handoverIsExternal = false,
 ): ApprovalAction[] {
   if (!me || !capabilities.canApprove) return [];
   const s = (status ?? "received") as WorkflowStatus;
@@ -1120,7 +1130,10 @@ export function nextLegalActions(
   // to 'closed' at all except the manual status correction on the Workflow tab -- which is
   // there to fix a wrong status, not to perform a normal step. Handing over to DATEV and then
   // closing the invoice IS a normal step, so it gets a real action and a clickable circle.
-  if (s === "handed_over" && capabilities.canFinalApprove) {
+  if (
+    (s === "handed_over" || (handoverIsExternal && s === "paid")) &&
+    capabilities.canFinalApprove
+  ) {
     actions.push({
       id: "complete",
       nextStatus: "closed",
