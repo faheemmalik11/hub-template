@@ -1,5 +1,5 @@
 import { serviceClient } from "../_shared/supabase.ts";
-import { jsonResponse } from "../_shared/cors.ts";
+import { corsHeaders, jsonResponse } from "../_shared/cors.ts";
 import { TABLE } from "../_shared/tables.ts";
 import { getVoucherPayment, lexofficeKey } from "../_shared/lexoffice-client.ts";
 
@@ -102,7 +102,7 @@ async function syncAndRecord(db: Db) {
 }
 
 Deno.serve(async (request) => {
-  if (request.method === "OPTIONS") return new Response("ok");
+  if (request.method === "OPTIONS") return new Response("ok", { headers: corsHeaders });
   const db = serviceClient();
   const outcome = await syncAndRecord(db);
   return outcome.ok ? jsonResponse(outcome.result) : jsonResponse({ error: outcome.message }, 500);
