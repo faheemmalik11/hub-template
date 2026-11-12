@@ -36,7 +36,11 @@ function gateStatus(value: boolean | null | undefined): CheckStatus {
 }
 
 function StatusDot({ status }: { status: CheckStatus }) {
-  return <span className={cn("inline-block size-1.5 shrink-0 rounded-full", DOT[status])} />;
+  return (
+    <span className="flex size-4 shrink-0 items-center justify-center">
+      <span className={cn("size-1.5 rounded-full", DOT[status])} />
+    </span>
+  );
 }
 
 export interface FrontChecklistGate {
@@ -168,7 +172,7 @@ export function FrontChecklist({
           <h3 className="mb-3 text-sm font-semibold text-foreground">
             {labels.automaticSectionTitle}
           </h3>
-          <ul className="grid grid-cols-1 gap-x-4 gap-y-1.5 text-sm text-foreground sm:grid-cols-2">
+          <ul className="grid grid-cols-1 gap-x-4 gap-y-2 text-sm text-foreground sm:grid-cols-2">
             {VALIDATION_GATES.map((key) => {
               const gate = gates.find((candidate) => candidate.key === key);
               if (!gate) return null;
@@ -176,7 +180,7 @@ export function FrontChecklist({
               return (
                 <Tooltip key={key}>
                   <TooltipTrigger asChild>
-                    <li className="inline-flex w-fit items-center gap-1.5">
+                    <li className="inline-flex w-fit items-center gap-2">
                       <StatusDot status={status} />
                       <span className={cn(status === "fail" && "text-red-700")}>{gate.label}</span>
                     </li>
