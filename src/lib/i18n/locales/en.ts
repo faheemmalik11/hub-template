@@ -2509,6 +2509,7 @@ const en = {
         title: "Send to Lexware",
         pending: "Being sent to Lexware.",
         sent: "Sent to Lexware.",
+        openInLexware: "Open in Lexware",
         failed: "Could not be sent to Lexware.",
         retry: "Try again",
         retrying: "Trying again.",

@@ -257,7 +257,6 @@ import {
   AMOUNTS_ANCHOR,
   PARTICIPANTS_ANCHOR,
   CONFIRMATION_ANCHOR,
-  LEXOFFICE_SYNC_ANCHOR,
   FIELD_JUMPTARGET,
   SUPPLIER_ANCHOR,
   TRANSFER_ANCHOR,
@@ -2181,10 +2180,10 @@ function DocumentDetail({ doc }: { doc: Document }) {
             data: { actionId: action.id, nextStatus: action.nextStatus },
           });
           if (action.nextStatus === "approved_final" && lexofficeDocumentSyncOn) {
-            jumpZu("zahlung", LEXOFFICE_SYNC_ANCHOR);
             // The push itself runs async, outside this request — this is the one refetch that
-            // gives the card a real answer instead of leaving it on "pending" until the reader's
-            // next navigation happens to refresh it.
+            // lets the sync card resolve to a real answer on its own, the same way it already
+            // does after a manual retry, instead of staying on "pending" until something else
+            // happens to refetch the document.
             window.setTimeout(() => {
               void queryClient.invalidateQueries({ queryKey: ["beleg", doc.id] });
             }, 3000);
@@ -3434,6 +3433,7 @@ function DocumentDetail({ doc }: { doc: Document }) {
                   labels={confirmationCardLabels}
                 />
               </div>
+              <LexofficeDocumentSyncCard doc={doc} />
               <FrontChecklist
                 gates={frontChecklistGates}
                 document={frontChecklistDocument}
@@ -4310,10 +4310,6 @@ function DocumentDetail({ doc }: { doc: Document }) {
               {/* Zahlung & Abgleich (BANKSapi reconciliation) */}
               <div id={MATCHING_ANCHOR} className="scroll-mt-24">
                 <PaymentMatchingSection doc={doc} />
-              </div>
-
-              <div id={LEXOFFICE_SYNC_ANCHOR} className="scroll-mt-24">
-                <LexofficeDocumentSyncCard doc={doc} />
               </div>
             </TabsContent>
 
