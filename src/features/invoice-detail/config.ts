@@ -86,6 +86,11 @@ export const AMOUNTS_ANCHOR = "overview-amounts";
 export const INVOICEDATA_ANCHOR = "overview-invoice-data";
 export const PARTICIPANTS_ANCHOR = "overview-participants";
 export const SUPPLIER_ANCHOR = "supplier-master-data";
+// The company/property/document-type confirmation card, not the Zuordnung section below it: that
+// section hides its company field whenever this card is showing (InvoiceDetailPage's
+// `needsConfirmation` branch), so a "company missing" check has to land here, where the field
+// actually is.
+export const CONFIRMATION_ANCHOR = "confirmation-card";
 
 export const FIELD_JUMPTARGET: Record<string, { tab: string; anchor: string }> = {
   // The `validation_detail` column's check names. Same destinations as the German keys below.
@@ -97,7 +102,7 @@ export const FIELD_JUMPTARGET: Record<string, { tab: string; anchor: string }> =
   date_not_future: { tab: "uebersicht", anchor: INVOICEDATA_ANCHOR },
   issuer_present: { tab: "uebersicht", anchor: PARTICIPANTS_ANCHOR },
   recipient_present: { tab: "uebersicht", anchor: PARTICIPANTS_ANCHOR },
-  assignment_resolved: { tab: "uebersicht", anchor: PARTICIPANTS_ANCHOR },
+  assignment_resolved: { tab: "uebersicht", anchor: CONFIRMATION_ANCHOR },
   iban_checksum_valid: { tab: "lieferant", anchor: SUPPLIER_ANCHOR },
   iban_unambiguous: { tab: "lieferant", anchor: SUPPLIER_ANCHOR },
   payable_iban_present: { tab: "lieferant", anchor: SUPPLIER_ANCHOR },
@@ -109,7 +114,7 @@ export const FIELD_JUMPTARGET: Record<string, { tab: string; anchor: string }> =
   datum_plausibel: { tab: "uebersicht", anchor: INVOICEDATA_ANCHOR },
   steller_vorhanden: { tab: "uebersicht", anchor: PARTICIPANTS_ANCHOR },
   empfaenger_name: { tab: "uebersicht", anchor: PARTICIPANTS_ANCHOR },
-  assignment: { tab: "uebersicht", anchor: PARTICIPANTS_ANCHOR },
+  assignment: { tab: "uebersicht", anchor: CONFIRMATION_ANCHOR },
   iban_ok: { tab: "lieferant", anchor: SUPPLIER_ANCHOR },
   iban_anzahl: { tab: "lieferant", anchor: SUPPLIER_ANCHOR },
 };

@@ -256,6 +256,7 @@ import {
   MATCHING_ANCHOR,
   AMOUNTS_ANCHOR,
   PARTICIPANTS_ANCHOR,
+  CONFIRMATION_ANCHOR,
   FIELD_JUMPTARGET,
   SUPPLIER_ANCHOR,
   TRANSFER_ANCHOR,
@@ -3394,27 +3395,29 @@ function DocumentDetail({ doc }: { doc: Document }) {
 
             {/* Tab: Übersicht — Kerndaten (Rechnungsinformationen) + Zuordnung */}
             <TabsContent value="uebersicht" className="mt-4 space-y-6">
-              <ConfirmationCard
-                document={confirmationCardDocument}
-                companies={companies}
-                properties={properties}
-                propertyCompanyLinks={propertyCompanyLinks}
-                documentTypeOptions={Array.from(
-                  new Set(
-                    [...(documentTypeFacetsQ.data?.documentTypes ?? []), doc.document_type]
-                      .map((code) => documentTypeKey(code))
-                      .filter((key): key is string => key !== null),
-                  ),
-                ).map((key) => ({
-                  value: key,
-                  label: t(`documents.belegart.${key}`, {
-                    defaultValue: documentTypeReadableFallback(key),
-                  }),
-                }))}
-                noCompanyCode={COMPANY_WITHOUT}
-                onConfirm={handleConfirmationCardConfirm}
-                labels={confirmationCardLabels}
-              />
+              <div id={CONFIRMATION_ANCHOR} className="scroll-mt-24">
+                <ConfirmationCard
+                  document={confirmationCardDocument}
+                  companies={companies}
+                  properties={properties}
+                  propertyCompanyLinks={propertyCompanyLinks}
+                  documentTypeOptions={Array.from(
+                    new Set(
+                      [...(documentTypeFacetsQ.data?.documentTypes ?? []), doc.document_type]
+                        .map((code) => documentTypeKey(code))
+                        .filter((key): key is string => key !== null),
+                    ),
+                  ).map((key) => ({
+                    value: key,
+                    label: t(`documents.belegart.${key}`, {
+                      defaultValue: documentTypeReadableFallback(key),
+                    }),
+                  }))}
+                  noCompanyCode={COMPANY_WITHOUT}
+                  onConfirm={handleConfirmationCardConfirm}
+                  labels={confirmationCardLabels}
+                />
+              </div>
               <FrontChecklist
                 gates={frontChecklistGates}
                 document={frontChecklistDocument}
