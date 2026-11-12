@@ -2594,7 +2594,7 @@ const de = {
       ohneNr: "ohne Nr.",
 
       lexoffice: {
-        title: "An Lexware senden",
+        title: "Lexware",
         pending: "Wird an Lexware gesendet.",
         sent: "An Lexware gesendet.",
         openInLexware: "In Lexware öffnen",
