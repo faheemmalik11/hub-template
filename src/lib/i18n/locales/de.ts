@@ -2387,6 +2387,7 @@ const de = {
           manual: "manuell markiert",
           bank_match: "Bankabgleich bestätigt",
           banksapi_payment: "per BANKSapi überwiesen",
+          lexware: "über Lexware bezahlt",
         },
         rueckfrageZusatz: "Rückfrage gestellt",
       },

@@ -511,7 +511,7 @@ export interface Document {
   paid_at: string | null;
   // Where paid_at came from (migration 0024). 'bank_match' = derived from confirmed bank matches
   // and withdrawn again if coverage drops; 'manual' or null = a human set it, never auto-cleared.
-  paid_source: "bank_match" | "manual" | "payment_file" | null;
+  paid_source: "bank_match" | "manual" | "payment_file" | "lexware" | null;
   // "Handed over to DATEV" — its own checkbox (Briefing Appendix A6), not just a status.
   // workflow_status='handed_over' is DERIVED from this by a DB trigger (migration 0038),
   // never written directly by the front-end, mirroring how paid_at drives 'paid'.
