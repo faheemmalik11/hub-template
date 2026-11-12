@@ -194,7 +194,7 @@ export async function listPostingCategories(
 export interface LexofficeVoucherItem {
   amount: number;
   taxAmount: number;
-  taxRatePercentage: number;
+  taxRatePercent: number;
   categoryId: string;
 }
 
@@ -279,4 +279,46 @@ export function mapLexofficeVoucherStatus(
   voucherStatus: LexofficeInvoice["voucherStatus"],
 ): string {
   return VOUCHER_STATUS_MAP[voucherStatus] ?? "sent";
+}
+
+const LEXOFFICE_FIELD_LABEL: Record<string, string> = {
+  voucherNumber: "the document number",
+  voucherDate: "the document date",
+  dueDate: "the due date",
+  contactId: "the vendor",
+  "voucherItems[0].taxRatePercent": "the VAT rate",
+  "voucherItems[0].amount": "the amount",
+  "voucherItems[0].categoryId": "the category",
+  remark: "the note",
+  totalGrossAmount: "the total amount",
+};
+
+function readableFieldName(source: string): string {
+  return LEXOFFICE_FIELD_LABEL[source] ?? source.replace(/\[\d+\]/g, "").replace(/\./g, " → ");
+}
+
+interface LexofficeIssue {
+  i18nKey?: string;
+  source?: string;
+}
+
+/**
+ * Lexware's own 406 body is a developer-facing validation report, not something to show on
+ * screen as-is. Named field + the reader's own next step, falling back to a plain sentence when
+ * the body is not this shape (a network error, a timeout, Lexoffice's own 401/403/429 messages,
+ * all already plain English from lexofficeFetch above).
+ */
+export function friendlyLexofficeError(raw: string): string {
+  const match = raw.match(/^Lexoffice answered 406: (.+)$/s);
+  if (!match) return raw;
+  try {
+    const body = JSON.parse(match[1]) as { IssueList?: LexofficeIssue[] };
+    const fields = (body.IssueList ?? [])
+      .map((issue) => (issue.source ? readableFieldName(issue.source) : null))
+      .filter((label): label is string => label !== null);
+    if (fields.length === 0) return "Lexware rejected this document for an unknown reason.";
+    return `Lexware rejected this document. Please check ${fields.join(", ")}.`;
+  } catch {
+    return "Lexware rejected this document for an unknown reason.";
+  }
 }

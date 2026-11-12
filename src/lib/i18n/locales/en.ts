@@ -2515,6 +2515,15 @@ const en = {
         retrying: "Trying again.",
         retrySuccess: "Sent to Lexware.",
         retryFailed: "Could not be sent to Lexware: {{error}}",
+        readiness: {
+          title: "Before this can be sent to Lexware",
+          supplierMissing: "No supplier is set on this document.",
+          categoryMissing: "No category is set on this document.",
+          categoryNotMapped: 'The category "{{category}}" has no matching Lexware category yet.',
+          dueDateMissing: "No due date is set on this document.",
+          negativeAmount: "The amount on this document is negative.",
+          blocked: "Please fix the points listed below before sending this to Lexware.",
+        },
       },
 
       preview: {

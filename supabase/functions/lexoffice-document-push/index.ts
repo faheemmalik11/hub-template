@@ -6,6 +6,7 @@ import {
   createContact,
   createPurchaseVoucher,
   featureIsLive,
+  friendlyLexofficeError,
   lexofficeKey,
   type LexofficePurchaseVoucherInput,
   type LexofficeVoucherItem,
@@ -252,10 +253,13 @@ Deno.serve(async (req) => {
     if (claimedId) {
       await db
         .from(TABLE.documents)
-        .update({ lexoffice_sync_requested_at: null, lexoffice_sync_error: message })
+        .update({
+          lexoffice_sync_requested_at: null,
+          lexoffice_sync_error: friendlyLexofficeError(message),
+        })
         .eq("id", claimedId);
     }
     console.error("lexoffice-document-push failed:", message);
-    return jsonResponse({ error: message }, 502);
+    return jsonResponse({ error: friendlyLexofficeError(message) }, 502);
   }
 });
