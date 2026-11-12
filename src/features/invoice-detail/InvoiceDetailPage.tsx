@@ -4088,7 +4088,11 @@ function DocumentDetail({ doc }: { doc: Document }) {
                         defaultReferencePattern={doc.payment_reference ?? undefined}
                         defaultCategoryId={doc.category_id ?? undefined}
                         trigger={
-                          <Button size="sm" variant="outline" className="h-7 gap-1.5 text-sm">
+                          <Button
+                            size="sm"
+                            variant="ghost"
+                            className="h-7 gap-1.5 rounded-full border-transparent bg-amber-100 text-sm text-amber-800 shadow-none hover:bg-amber-200 hover:text-amber-900"
+                          >
                             <Wand2 className="size-3" />
                             {t("documents.detail.regel.alsRegel")}
                           </Button>
