@@ -4042,16 +4042,18 @@ const en = {
   categories: {
     list: {
       title: "Categories",
-      subtitle: "Group costs and revenue into categories that the assignment rules refer to.",
+      subtitle:
+        "Categories group costs and revenue for the assignment rules, can have subcategories, and keep their name on documents that already use them even after you delete them.",
     },
     search: "Search categories …",
     noMatches: "No category matches the search.",
     noMatchesHint: "Shorten or clear the search to see every group again.",
     empty: "No categories yet.",
-    hint: "Every category can have subcategories. If you delete one, it disappears from the lists, but documents that already use it keep the name.",
     col: {
       name: "Name",
+      type: "Type",
       hint: "Note",
+      lexwareCategory: "Lexware category",
       actions: "Actions",
     },
     action: {
@@ -4063,7 +4065,6 @@ const en = {
     },
     field: {
       childOf: 'Will be created under "{{name}}".',
-      type: "Type",
       name: "Name",
       note: "Note (optional)",
       parent: "Parent cost group",
@@ -4079,7 +4080,7 @@ const en = {
     block: {
       einnahmen: "Income",
       wareneinsatz: "Cost of goods",
-      kosten: "Costs",
+      kosten: "Expense",
       neutral: "Neutral area",
       steuern: "Taxes",
       sonderfall: "Special case",
@@ -4680,11 +4681,7 @@ const en = {
       referrer_tier2_amount: "Referrer bonus, 2nd referral this year (€)",
       referrer_tier3_amount: "Referrer bonus, 3rd referral this year (€)",
       referrer_tier4plus_amount: "Referrer bonus, 4th referral this year and later (€)",
-      referrer_tier_counts_status: "What counts as a successful referral",
-      referrerTierCountsStatus: {
-        suggested: "As soon as the bonus is suggested",
-        paid: "Only once the bonus is paid",
-      },
+      referrer_tier_counts_status: "At what step a referral counts",
       referrer_tier_reset: "When the count starts again",
       referrerTierReset: {
         yearly: "Starts over every year",
@@ -4695,10 +4692,11 @@ const en = {
         per_referrer: "Each referrer separately",
         company_wide: "All referrers together",
       },
-      referrer_payout_timing: "When the referrer bonus is due",
-      referrerPayoutTiming: {
-        on_suggestion: "As soon as the bonus is suggested",
-        after_commission_paid: "Only once the commission is paid",
+      referrer_payout_timing: "At what step the referrer bonus is due",
+      dealStage: {
+        notarised: "As soon as the deal is notarised",
+        invoiced: "As soon as the invoice to buyer and seller is sent",
+        commission_received: "Only once our commission is paid",
       },
       save: "Save",
       saved: "Saved",
@@ -4899,6 +4897,11 @@ const en = {
       failed: "That did not work.",
       markPaid: "Mark as paid",
       markedPaid: "Marked as paid",
+      payoutStageNotReached: {
+        notarised: "Can only be paid once the deal is notarised.",
+        invoiced: "Can only be paid once the invoice to buyer and seller is sent.",
+        commission_received: "Can only be paid once our commission is paid.",
+      },
       cancel: "Cancel",
       cancelReason: "Reason (optional)",
       confirmCancel: "Cancel the bonus",

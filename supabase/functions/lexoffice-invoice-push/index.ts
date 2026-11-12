@@ -23,7 +23,6 @@ const PERMISSION = "lexoffice.sync";
 const KIND_LABEL: Record<string, string> = {
   commission: "Provision",
   coaching: "Coaching",
-  referral_credit: "Tippgeber-Gutschrift",
 };
 
 interface OutgoingInvoiceRow {
@@ -207,6 +206,9 @@ Deno.serve(async (req) => {
     }
     claimedId = invoice.id;
 
+    if (invoice.kind === "referral_credit") {
+      throw new Error("a referral credit note is never sent to Lexoffice");
+    }
     if (!invoice.customer_id) throw new Error("invoice has no customer to bill");
     const customer = await loadCustomer(db, invoice.customer_id);
     const deal = invoice.deal_id ? await loadDeal(db, invoice.deal_id) : null;

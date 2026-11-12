@@ -10202,3 +10202,236 @@ revoke execute on function public.notify_missing_payment_dates() from public, an
 grant execute on function public.notify_missing_payment_dates() to service_role;
 
 commit;
+
+-- ===================================================================== 0042_admin_panel_feature_audit.sql
+
+begin;
+
+alter table public.permissions
+    add column if not exists shown_in_admin_panel boolean not null default true;
+
+do $$
+declare
+  v_constraint text;
+begin
+  select tc.constraint_name
+    into v_constraint
+    from information_schema.table_constraints tc
+    join information_schema.key_column_usage kcu
+      on tc.constraint_name = kcu.constraint_name
+     and tc.table_schema = kcu.table_schema
+   where tc.table_schema = 'public'
+     and tc.table_name = 'feature_settings'
+     and tc.constraint_type = 'FOREIGN KEY'
+     and kcu.column_name = 'updated_by';
+  if v_constraint is not null then
+    execute format('alter table public.feature_settings drop constraint %I', v_constraint);
+  end if;
+end;
+$$;
+
+alter table public.feature_settings
+    alter column updated_by type text using updated_by::text;
+
+create table if not exists public.feature_settings_history (
+    id bigserial primary key,
+    feature_key text not null,
+    enabled boolean,
+    changed_at timestamptz not null default now(),
+    changed_by text,
+    operation text
+);
+
+create index if not exists feature_settings_history_changed
+    on public.feature_settings_history (changed_at desc);
+
+create or replace function public.feature_settings_audit() returns trigger
+language plpgsql set search_path to 'public'
+as $$
+begin
+    if tg_op = 'UPDATE' and new.enabled is not distinct from old.enabled then
+        return new;
+    end if;
+    if tg_op = 'DELETE' then
+        insert into public.feature_settings_history (feature_key, enabled, changed_by, operation)
+        values (old.feature_key, old.enabled, old.updated_by, 'delete');
+        return old;
+    end if;
+    insert into public.feature_settings_history (feature_key, enabled, changed_by, operation)
+    values (new.feature_key, new.enabled, new.updated_by, lower(tg_op));
+    return new;
+end;
+$$;
+
+drop trigger if exists feature_settings_audit on public.feature_settings;
+create trigger feature_settings_audit before insert or update or delete on public.feature_settings
+    for each row execute function public.feature_settings_audit();
+
+drop function if exists public.feature_tree();
+create or replace function public.feature_tree()
+returns table (
+    key text, parent_key text, kind text, category text,
+    label_de text, label_en text, sort_order integer,
+    locked boolean, default_enabled boolean, chosen boolean,
+    effective boolean, requires text[], off_because text,
+    shown_in_admin_panel boolean
+)
+language sql stable set search_path to 'public'
+as $$
+  with live as (select key from public.live_features())
+  select p.key, p.parent_key, p.kind, p.category,
+         p.label_de, p.label_en, p.sort_order,
+         p.locked, p.default_enabled, f.enabled,
+         p.key in (select key from live),
+         coalesce((select array_agg(fr.requires_key order by fr.requires_key)
+                     from public.feature_requirements fr
+                    where fr.feature_key = p.key), '{}'),
+         case
+           when p.key in (select key from live) then null
+           when not coalesce(f.enabled, p.default_enabled) then 'switched off here'
+           when p.parent_key is not null and p.parent_key not in (select key from live)
+             then p.parent_key
+           else (select fr.requires_key
+                   from public.feature_requirements fr
+                  where fr.feature_key = p.key
+                    and fr.requires_key not in (select key from live)
+                  order by fr.requires_key
+                  limit 1)
+         end,
+         p.shown_in_admin_panel
+    from public.permissions p
+    left join public.feature_settings f on f.feature_key = p.key
+   order by p.sort_order, p.key;
+$$;
+
+revoke execute on function public.feature_tree() from public, anon;
+grant execute on function public.feature_tree() to authenticated;
+
+commit;
+
+-- ===================================================================== 0043_referrer_bonus_stage_timing.sql
+
+-- referrer_payout_timing and referrer_tier_counts_status used to be two hard-wired cases each
+-- (on_suggestion/after_commission_paid, suggested/paid). Both now pick from the same three stages a
+-- deal already passes through: notarised_on is set, the deal is invoiced (create_deal_invoices sets
+-- deals.status = 'invoiced' only once every party's invoice in the batch exists), or every commission
+-- invoice on the deal is paid. Column names kept: what they hold hasn't changed, only how precisely.
+
+begin;
+
+alter table public.bonus_settings
+    drop constraint if exists bonus_settings_referrer_payout_timing_check,
+    drop constraint if exists bonus_settings_referrer_tier_counts_status_check;
+
+update public.bonus_settings set referrer_payout_timing = case referrer_payout_timing
+    when 'on_suggestion' then 'notarised'
+    when 'after_commission_paid' then 'commission_received'
+    else referrer_payout_timing
+end;
+
+update public.bonus_settings set referrer_tier_counts_status = case referrer_tier_counts_status
+    when 'suggested' then 'notarised'
+    when 'paid' then 'commission_received'
+    else referrer_tier_counts_status
+end;
+
+alter table public.bonus_settings
+    alter column referrer_payout_timing set default 'invoiced',
+    alter column referrer_tier_counts_status set default 'invoiced',
+    add constraint bonus_settings_referrer_payout_timing_check
+        check (referrer_payout_timing in ('notarised', 'invoiced', 'commission_received')),
+    add constraint bonus_settings_referrer_tier_counts_status_check
+        check (referrer_tier_counts_status in ('notarised', 'invoiced', 'commission_received'));
+
+create or replace function public.deal_stage_reached(p_deal_id uuid, p_stage text) returns boolean
+language sql stable security definer set search_path to 'public'
+as $$
+  select case p_stage
+    when 'notarised' then exists (
+        select 1 from public.deals where id = p_deal_id and notarised_on is not null
+    )
+    when 'invoiced' then exists (
+        select 1 from public.deals where id = p_deal_id and status = 'invoiced'
+    )
+    when 'commission_received' then
+        exists (
+            select 1 from public.outgoing_invoices
+             where deal_id = p_deal_id and kind = 'commission' and deleted_at is null
+        )
+        and not exists (
+            select 1 from public.outgoing_invoices
+             where deal_id = p_deal_id and kind = 'commission' and deleted_at is null
+               and status <> 'paid'
+        )
+    else false
+  end;
+$$;
+
+revoke execute on function public.deal_stage_reached(uuid, text) from public, anon;
+grant execute on function public.deal_stage_reached(uuid, text) to authenticated;
+
+create or replace function public.referrer_bonus_tier(p_referrer_customer_id uuid, p_earned_on date)
+returns integer
+language plpgsql stable security definer set search_path to 'public'
+as $$
+declare
+  v_settings public.bonus_settings;
+  v_count integer;
+begin
+  select * into v_settings from public.bonus_settings;
+
+  select count(*) into v_count
+    from public.deal_referrer_bonuses b
+   where (
+     case v_settings.referrer_tier_scope
+       when 'company_wide' then true
+       else b.referrer_customer_id = p_referrer_customer_id
+     end
+   )
+     and b.status <> 'cancelled'
+     and public.deal_stage_reached(b.deal_id, v_settings.referrer_tier_counts_status)
+     and (
+       case v_settings.referrer_tier_reset
+         when 'never' then true
+         else extract(year from b.earned_on) = extract(year from p_earned_on)
+       end
+     );
+
+  return v_count + 1;
+end;
+$$;
+
+-- Mark-paid had no stage gate at all before this: any bonus could be marked paid the moment it was
+-- suggested, regardless of referrer_payout_timing. An RPC, not a plain update, so the check runs
+-- where it cannot be skipped, the same way create_deal_invoices and create_referrer_credit_note
+-- validate their own preconditions server-side rather than trusting the caller.
+create or replace function public.mark_referrer_bonus_paid(p_bonus_id uuid) returns void
+language plpgsql security invoker set search_path to 'public'
+as $$
+declare
+  v_bonus public.deal_referrer_bonuses;
+  v_stage text;
+begin
+  select * into v_bonus from public.deal_referrer_bonuses where id = p_bonus_id;
+  if not found then
+    raise exception 'mark_referrer_bonus_paid: bonus % not found', p_bonus_id;
+  end if;
+  if v_bonus.status <> 'suggested' then
+    raise exception 'mark_referrer_bonus_paid: bonus % is not suggested', p_bonus_id
+      using errcode = 'check_violation';
+  end if;
+
+  select referrer_payout_timing into v_stage from public.bonus_settings;
+  if not public.deal_stage_reached(v_bonus.deal_id, v_stage) then
+    raise exception 'mark_referrer_bonus_paid: deal % has not reached the % stage yet',
+      v_bonus.deal_id, v_stage using errcode = 'check_violation';
+  end if;
+
+  update public.deal_referrer_bonuses set status = 'paid' where id = p_bonus_id;
+end;
+$$;
+
+revoke execute on function public.mark_referrer_bonus_paid(uuid) from public, anon;
+grant execute on function public.mark_referrer_bonus_paid(uuid) to authenticated;
+
+commit;

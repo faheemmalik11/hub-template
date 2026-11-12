@@ -1,6 +1,6 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { Fragment, useMemo, useState } from "react";
-import { Plus, Search, Trash2 } from "lucide-react";
+import { Loader2, Plus, Search, Trash2 } from "lucide-react";
 import { toast } from "sonner";
 
 import { Button } from "@/components/ui/button";
@@ -82,6 +82,7 @@ function CategoriesTab() {
   const { t } = useTranslation();
   const categoriesQ = useCostAnalysisCategories();
   const categories = useMemo(() => categoriesQ.data ?? [], [categoriesQ.data]);
+  const lexofficeDocumentSyncOn = useFeature(PERMISSIONS.lexofficeDocumentSync);
   const [expanded, setExpanded] = useState<Set<string>>(new Set());
   const [search, setSearch] = useState("");
   const coarse = useMemo(
@@ -135,21 +136,19 @@ function CategoriesTab() {
 
   return (
     <div>
-      <div className="flex flex-wrap items-center justify-between gap-4">
-        <p className="max-w-2xl text-sm text-muted-foreground">{t("categories.hint")}</p>
-        <NewCategoryDialog categories={categories} />
-      </div>
-
       {/* ~19 coarse groups today, several with double-digit child counts, and no way to jump to
           one by name. Same client-side bar the other master-data tables use. */}
-      <div className="relative mt-4 w-full max-w-sm">
-        <Search className="absolute left-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
-        <Input
-          value={search}
-          onChange={(e) => setSearch(e.target.value)}
-          placeholder={t("categories.search")}
-          className="pl-9"
-        />
+      <div className="flex flex-wrap items-center justify-between gap-4">
+        <div className="relative w-full max-w-sm">
+          <Search className="absolute left-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
+          <Input
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
+            placeholder={t("categories.search")}
+            className="pl-9"
+          />
+        </div>
+        <NewCategoryDialog categories={categories} />
       </div>
 
       {categoriesQ.isError ? (
@@ -158,7 +157,7 @@ function CategoriesTab() {
         </div>
       ) : categoriesQ.isLoading ? (
         <div className="mt-6">
-          <TableSkeleton rows={8} cols={3} />
+          <TableSkeleton rows={8} cols={lexofficeDocumentSyncOn ? 5 : 4} />
         </div>
       ) : coarse.length === 0 ? (
         <p className="mt-6 rounded-xl border border-border p-8 text-center text-sm text-muted-foreground">
@@ -171,7 +170,11 @@ function CategoriesTab() {
               <TableHeader>
                 <TableRow>
                   <TableHead>{t("categories.col.name")}</TableHead>
+                  <TableHead>{t("categories.col.type")}</TableHead>
                   <TableHead>{t("categories.col.hint")}</TableHead>
+                  {lexofficeDocumentSyncOn && (
+                    <TableHead>{t("categories.col.lexwareCategory")}</TableHead>
+                  )}
                   <TableHead className="text-right">{t("categories.col.actions")}</TableHead>
                 </TableRow>
               </TableHeader>
@@ -190,7 +193,9 @@ function CategoriesTab() {
                               onClick={() => toggle(group.id)}
                               className="flex items-center gap-1.5 font-medium text-foreground"
                             >
-                              <span className="text-muted-foreground">{isOpen ? "▾" : "▸"}</span>
+                              {kids.length > 0 && (
+                                <span className="text-muted-foreground">{isOpen ? "▾" : "▸"}</span>
+                              )}
                               {group.name}
                               <span className="text-xs font-normal text-muted-foreground">
                                 ({kids.length})
@@ -199,8 +204,18 @@ function CategoriesTab() {
                           </div>
                         </TableCell>
                         <TableCell className="text-xs text-muted-foreground">
+                          {t(
+                            `categories.block.${group.direction === "incoming" ? "einnahmen" : "kosten"}`,
+                          )}
+                        </TableCell>
+                        <TableCell className="text-xs text-muted-foreground">
                           {group.note}
                         </TableCell>
+                        {lexofficeDocumentSyncOn && (
+                          <TableCell>
+                            <LexwareCategoryCell category={group} />
+                          </TableCell>
+                        )}
                         <TableCell className="text-right">
                           <div className="flex items-center justify-end gap-1">
                             {/* The spec's "+ on a parent adds a subcategory beneath it". */}
@@ -216,8 +231,18 @@ function CategoriesTab() {
                                 {k.name}
                               </TableCell>
                               <TableCell className="text-xs text-muted-foreground">
+                                {t(
+                                  `categories.block.${k.direction === "incoming" ? "einnahmen" : "kosten"}`,
+                                )}
+                              </TableCell>
+                              <TableCell className="text-xs text-muted-foreground">
                                 {k.note}
                               </TableCell>
+                              {lexofficeDocumentSyncOn && (
+                                <TableCell>
+                                  <LexwareCategoryCell category={k} />
+                                </TableCell>
+                              )}
                               <TableCell className="text-right">
                                 <CategoryActions category={k} />
                               </TableCell>
@@ -251,9 +276,11 @@ function CategoriesTab() {
                     onClick={() => toggle(group.id)}
                     className="flex w-full items-start gap-1.5 text-left font-medium text-foreground"
                   >
-                    <span className="mt-px shrink-0 text-muted-foreground">
-                      {isOpen ? "▾" : "▸"}
-                    </span>
+                    {kids.length > 0 && (
+                      <span className="mt-px shrink-0 text-muted-foreground">
+                        {isOpen ? "▾" : "▸"}
+                      </span>
+                    )}
                     <span>
                       {group.name}{" "}
                       <span className="text-xs font-normal text-muted-foreground">
@@ -261,7 +288,17 @@ function CategoriesTab() {
                       </span>
                     </span>
                   </button>
+                  <p className="mt-1 text-xs text-muted-foreground">
+                    {t(
+                      `categories.block.${group.direction === "incoming" ? "einnahmen" : "kosten"}`,
+                    )}
+                  </p>
                   {group.note && <p className="mt-1 text-xs text-muted-foreground">{group.note}</p>}
+                  {lexofficeDocumentSyncOn && (
+                    <div className="mt-2">
+                      <LexwareCategoryCell category={group} />
+                    </div>
+                  )}
                   <div className="mt-2 flex items-center gap-1">
                     <NewCategoryDialog categories={categories} presetParentId={group.id} />
                     <CategoryActions category={group} />
@@ -271,8 +308,18 @@ function CategoriesTab() {
                       {kids.map((k) => (
                         <div key={k.id} className={cn("pl-3", !k.is_active && "opacity-60")}>
                           <p className="text-sm text-foreground">{k.name}</p>
+                          <p className="mt-0.5 text-xs text-muted-foreground">
+                            {t(
+                              `categories.block.${k.direction === "incoming" ? "einnahmen" : "kosten"}`,
+                            )}
+                          </p>
                           {k.note && (
                             <p className="mt-0.5 text-xs text-muted-foreground">{k.note}</p>
+                          )}
+                          {lexofficeDocumentSyncOn && (
+                            <div className="mt-1.5">
+                              <LexwareCategoryCell category={k} />
+                            </div>
                           )}
                           <div className="mt-1.5">
                             <CategoryActions category={k} />
@@ -306,18 +353,10 @@ function CategoryActions({ category }: { category: CostAnalysisCategory }) {
   // only carries a real translation for the categories seeded from Appendix A3 (migration 0030).
   const [name, setName] = useState(category.name);
   const [note, setNote] = useState(category.note ?? "");
-  const [lexwareCategoryId, setLexwareCategoryId] = useState(category.lexware_category_id ?? LEER);
   const [reason, setReason] = useState("");
 
-  const lexofficeDocumentSyncOn = useFeature(PERMISSIONS.lexofficeDocumentSync);
-  const lexofficeCategories = useLexofficeCategories(editOpen && lexofficeDocumentSyncOn);
-
   const normalizedNote = note.trim() === "" ? null : note.trim();
-  const normalizedLexwareCategoryId = lexwareCategoryId === LEER ? null : lexwareCategoryId;
-  const formIsUnchanged =
-    name.trim() === category.name &&
-    normalizedNote === category.note &&
-    (!lexofficeDocumentSyncOn || normalizedLexwareCategoryId === category.lexware_category_id);
+  const formIsUnchanged = name.trim() === category.name && normalizedNote === category.note;
 
   // Opening the dialog always starts from this category's current saved values, never from
   // whatever was left over from the last time it was opened or from a different row's edit.
@@ -325,7 +364,6 @@ function CategoryActions({ category }: { category: CostAnalysisCategory }) {
     if (open) {
       setName(category.name);
       setNote(category.note ?? "");
-      setLexwareCategoryId(category.lexware_category_id ?? LEER);
     }
     setEditOpen(open);
   }
@@ -351,28 +389,6 @@ function CategoryActions({ category }: { category: CostAnalysisCategory }) {
               <Label>{t("categories.field.note")}</Label>
               <Textarea value={note} onChange={(e) => setNote(e.target.value)} rows={3} />
             </div>
-            {lexofficeDocumentSyncOn && (
-              <div className="space-y-1.5">
-                <Label>{t("categories.field.lexwareCategory")}</Label>
-                <Combobox
-                  value={lexwareCategoryId === LEER ? null : lexwareCategoryId}
-                  onValueChange={setLexwareCategoryId}
-                  disabled={lexofficeCategories.isLoading}
-                  options={[
-                    { value: LEER, label: t("categories.field.lexwareCategoryNone") },
-                    ...(lexofficeCategories.data ?? []).map((c) => ({
-                      value: c.id,
-                      label: c.name,
-                    })),
-                  ]}
-                />
-                {lexofficeCategories.isError && (
-                  <p className="text-xs text-destructive">
-                    {t("categories.field.lexwareCategoryError")}
-                  </p>
-                )}
-              </div>
-            )}
           </div>
           <DialogFooter>
             <Button variant="outline" onClick={() => setEditOpen(false)}>
@@ -390,9 +406,6 @@ function CategoryActions({ category }: { category: CostAnalysisCategory }) {
                     changes: {
                       name: name.trim(),
                       note: normalizedNote,
-                      ...(lexofficeDocumentSyncOn
-                        ? { lexware_category_id: normalizedLexwareCategoryId }
-                        : {}),
                     },
                   },
                   {
@@ -467,6 +480,40 @@ function CategoryActions({ category }: { category: CostAnalysisCategory }) {
   );
 }
 
+function LexwareCategoryCell({ category }: { category: CostAnalysisCategory }) {
+  const { t } = useTranslation();
+  const lexofficeCategories = useLexofficeCategories(true);
+  const update = useUpdateCostAnalysisCategory();
+
+  if (lexofficeCategories.isLoading) {
+    return <Loader2 className="size-4 animate-spin text-muted-foreground" />;
+  }
+
+  if (lexofficeCategories.isError) {
+    return <p className="text-xs text-destructive">{t("categories.field.lexwareCategoryError")}</p>;
+  }
+
+  return (
+    <Combobox
+      value={category.lexware_category_id}
+      onValueChange={(next) =>
+        update.mutate(
+          { id: category.id, changes: { lexware_category_id: next === LEER ? null : next } },
+          {
+            onError: (e) => toast.error(t("assignmentRules.toast.failed", { error: errorText(e) })),
+          },
+        )
+      }
+      disabled={update.isPending}
+      className="w-full max-w-[16rem] min-w-[12rem]"
+      options={[
+        { value: LEER, label: t("categories.field.lexwareCategoryNone") },
+        ...(lexofficeCategories.data ?? []).map((c) => ({ value: c.id, label: c.name })),
+      ]}
+    />
+  );
+}
+
 /**
  * Derive a unique storage code from the German name, e.g. "Reisekosten" -> "REISEKOSTEN".
  *
@@ -512,7 +559,6 @@ function NewCategoryDialog({
   // way simply has no distinct translation, and mirrors the German name into that column.
   const [name, setName] = useState("");
   const [note, setNote] = useState("");
-  const [direction, setDirection] = useState<CostAnalysisCategory["direction"]>("outgoing");
   const create = useCreateCostAnalysisCategory();
 
   const coarseOptions: ComboboxOption[] = useMemo(
@@ -529,24 +575,20 @@ function NewCategoryDialog({
     setParentId(presetParentId ?? LEER);
     setName("");
     setNote("");
-    setDirection("outgoing");
   }
 
   function save() {
-    // BWA block and line are derived, never asked for. A child inherits its parent's; a new
-    // top-level category takes the block its income/cost choice implies. The client's
-    // specification has no BWA concept at all, and whether BWA survives at all is still open with
-    // them — so the columns stay populated and valid, without a bookkeeper ever seeing them.
-    const derivedBlock: CostAnalysisCategory["report_block"] =
-      direction === "incoming" ? "einnahmen" : "kosten";
+    // BWA block, line and direction are never asked for: a child inherits its parent's, and a new
+    // top-level category takes a fixed default. No current specification has a BWA concept, so
+    // these columns stay populated and valid without a bookkeeper ever seeing or choosing them.
     const input: CostAnalysisCategoryInput = {
       code: codeFromName(name, takenCodes),
       name: name.trim(),
       name_en: name.trim(),
       parent_id: parentId === LEER ? null : parentId,
-      report_block: parent ? parent.report_block : derivedBlock,
+      report_block: parent ? parent.report_block : "kosten",
       report_line: parent ? parent.report_line : codeFromName(name, takenCodes).toLowerCase(),
-      direction: parent ? parent.direction : direction,
+      direction: parent ? parent.direction : "outgoing",
       note: note.trim() === "" ? null : note.trim(),
     };
     if (!input.name) {
@@ -610,19 +652,6 @@ function NewCategoryDialog({
                 options={[
                   { value: LEER, label: t("categories.field.parentNone") },
                   ...coarseOptions,
-                ]}
-              />
-            </div>
-          )}
-          {!presetParentId && parentId === LEER && (
-            <div className="space-y-1.5">
-              <Label>{t("categories.field.type")}</Label>
-              <Combobox
-                value={direction}
-                onValueChange={(v) => setDirection(v as CostAnalysisCategory["direction"])}
-                options={[
-                  { value: "outgoing", label: t("categories.block.kosten") },
-                  { value: "incoming", label: t("categories.block.einnahmen") },
                 ]}
               />
             </div>

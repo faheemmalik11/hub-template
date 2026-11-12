@@ -26,6 +26,7 @@ import { parseDecimal } from "@/components/commission/deal-form";
 import { useBonusSettings, useSaveBonusSettings } from "@/data";
 import type {
   BonusSettings,
+  DealStage,
   ReferrerPayoutTiming,
   ReferrerTierCountsStatus,
   ReferrerTierReset,
@@ -55,13 +56,11 @@ const NUMBER_FIELDS: NumberKey[] = [
   "referrer_tier4plus_amount",
 ];
 
-const REFERRER_TIER_COUNTS_STATUS_OPTIONS: ReferrerTierCountsStatus[] = ["suggested", "paid"];
+const DEAL_STAGE_OPTIONS: DealStage[] = ["notarised", "invoiced", "commission_received"];
+const REFERRER_TIER_COUNTS_STATUS_OPTIONS: ReferrerTierCountsStatus[] = DEAL_STAGE_OPTIONS;
 const REFERRER_TIER_RESET_OPTIONS: ReferrerTierReset[] = ["yearly", "never"];
 const REFERRER_TIER_SCOPE_OPTIONS: ReferrerTierScope[] = ["per_referrer", "company_wide"];
-const REFERRER_PAYOUT_TIMING_OPTIONS: ReferrerPayoutTiming[] = [
-  "on_suggestion",
-  "after_commission_paid",
-];
+const REFERRER_PAYOUT_TIMING_OPTIONS: ReferrerPayoutTiming[] = DEAL_STAGE_OPTIONS;
 
 function useRulesOpenParam(): [boolean, (next: boolean) => void] {
   const navigate = useNavigate();
@@ -212,7 +211,7 @@ export function BonusSettingsDialog() {
                   <SelectContent>
                     {REFERRER_TIER_COUNTS_STATUS_OPTIONS.map((option) => (
                       <SelectItem key={option} value={option}>
-                        {t(`brokerBonuses.settings.referrerTierCountsStatus.${option}`)}
+                        {t(`brokerBonuses.settings.dealStage.${option}`)}
                       </SelectItem>
                     ))}
                   </SelectContent>
@@ -269,7 +268,7 @@ export function BonusSettingsDialog() {
                   <SelectContent>
                     {REFERRER_PAYOUT_TIMING_OPTIONS.map((option) => (
                       <SelectItem key={option} value={option}>
-                        {t(`brokerBonuses.settings.referrerPayoutTiming.${option}`)}
+                        {t(`brokerBonuses.settings.dealStage.${option}`)}
                       </SelectItem>
                     ))}
                   </SelectContent>

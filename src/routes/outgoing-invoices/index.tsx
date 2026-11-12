@@ -468,7 +468,7 @@ function LexofficeSyncButton({ invoice }: { invoice: OutgoingInvoice }) {
   const canSync = useFeature(PERMISSIONS.lexofficeSync);
   const sync = useSyncInvoiceToLexoffice();
 
-  if (!canSync || invoice.source !== "app") return null;
+  if (!canSync || invoice.source !== "app" || invoice.kind === "referral_credit") return null;
 
   if (invoice.accounting_external_id) {
     return (

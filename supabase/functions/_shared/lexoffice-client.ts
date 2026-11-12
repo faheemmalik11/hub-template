@@ -185,10 +185,9 @@ export async function listPostingCategories(
   db: Db,
   apiKey: string,
 ): Promise<LexofficePostingCategory[]> {
-  const result = (await lexofficeFetch(db, apiKey, "/posting-categories")) as {
-    content?: LexofficePostingCategory[];
-  };
-  return (result.content ?? []).filter((category) => category.type === "outgo");
+  const result = (await lexofficeFetch(db, apiKey, "/posting-categories")) as
+    LexofficePostingCategory[];
+  return result.filter((category) => category.type === "outgo");
 }
 
 export interface LexofficeVoucherItem {
