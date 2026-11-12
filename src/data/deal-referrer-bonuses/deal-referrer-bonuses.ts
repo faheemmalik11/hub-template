@@ -86,10 +86,7 @@ export function useMarkReferrerBonusPaid(dealId: string) {
   const qc = useQueryClient();
   return useMutation({
     mutationFn: async (id: string) => {
-      const { error } = await sb
-        .from(TABLE.dealReferrerBonuses)
-        .update({ status: "paid" })
-        .eq("id", id);
+      const { error } = await sb.rpc("mark_referrer_bonus_paid", { p_bonus_id: id });
       if (error) throw error;
     },
     onSuccess: () =>

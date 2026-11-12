@@ -123,10 +123,11 @@ export function useConfirmSuggestedBonus() {
   });
 }
 
-export type ReferrerTierCountsStatus = "suggested" | "paid";
+export type DealStage = "notarised" | "invoiced" | "commission_received";
+export type ReferrerTierCountsStatus = DealStage;
 export type ReferrerTierReset = "yearly" | "never";
 export type ReferrerTierScope = "per_referrer" | "company_wide";
-export type ReferrerPayoutTiming = "on_suggestion" | "after_commission_paid";
+export type ReferrerPayoutTiming = DealStage;
 
 export interface BonusSettings {
   notary_amount: number;

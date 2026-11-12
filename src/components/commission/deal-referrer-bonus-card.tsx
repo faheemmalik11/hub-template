@@ -4,6 +4,7 @@ import { toast } from "sonner";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import {
   useBonusSettings,
   useCancelReferrerBonus,
@@ -15,8 +16,9 @@ import {
   useReferrerBonusTier,
   useSuggestReferrerBonus,
 } from "@/data";
-import type { BonusSettings, Deal } from "@/data";
+import type { BonusSettings, Deal, DealStage } from "@/data";
 import { errorText, formatEUR } from "@/lib/data/format";
+import type { OutgoingInvoice } from "@/lib/data/types";
 import { useTranslation } from "@/lib/i18n";
 
 function tierAmountOf(settings: BonusSettings, tier: number): number {
@@ -24,6 +26,16 @@ function tierAmountOf(settings: BonusSettings, tier: number): number {
   if (tier === 2) return settings.referrer_tier2_amount;
   if (tier === 3) return settings.referrer_tier3_amount;
   return settings.referrer_tier4plus_amount;
+}
+
+function dealStageReached(deal: Deal, invoices: OutgoingInvoice[], stage: DealStage): boolean {
+  if (stage === "notarised") return !!deal.notarised_on;
+  if (stage === "invoiced") return deal.status === "invoiced";
+  const commissionInvoices = invoices.filter((invoice) => invoice.kind === "commission");
+  return (
+    commissionInvoices.length > 0 &&
+    commissionInvoices.every((invoice) => invoice.status === "paid")
+  );
 }
 
 export function DealReferrerBonusCard({ deal }: { deal: Deal }) {
@@ -50,6 +62,11 @@ export function DealReferrerBonusCard({ deal }: { deal: Deal }) {
   const bonus = bonusQ.data;
   const suggestedAmount = tierAmountOf(settingsQ.data, tierQ.data);
   const creditNote = (invoicesQ.data ?? []).find((invoice) => invoice.kind === "referral_credit");
+  const payoutStageReached = dealStageReached(
+    deal,
+    invoicesQ.data ?? [],
+    settingsQ.data.referrer_payout_timing,
+  );
 
   const create = () => {
     const parsedAmount = Number((amount || String(suggestedAmount)).replace(",", "."));
@@ -112,22 +129,36 @@ export function DealReferrerBonusCard({ deal }: { deal: Deal }) {
             </div>
           </div>
           {bonus.status === "suggested" && !cancelling && (
-            <div className="mt-3 flex flex-wrap gap-2">
-              <Button
-                size="sm"
-                disabled={markPaid.isPending}
-                onClick={() =>
-                  markPaid.mutate(bonus.id, {
-                    onSuccess: () => toast.success(t("commissionDeals.referrerBonus.markedPaid")),
-                    onError: (error) =>
-                      toast.error(t("commissionDeals.referrerBonus.failed"), {
-                        description: errorText(error),
-                      }),
-                  })
-                }
-              >
-                {t("commissionDeals.referrerBonus.markPaid")}
-              </Button>
+            <div className="mt-3 flex flex-wrap items-center gap-2">
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <span>
+                    <Button
+                      size="sm"
+                      disabled={markPaid.isPending || !payoutStageReached}
+                      onClick={() =>
+                        markPaid.mutate(bonus.id, {
+                          onSuccess: () =>
+                            toast.success(t("commissionDeals.referrerBonus.markedPaid")),
+                          onError: (error) =>
+                            toast.error(t("commissionDeals.referrerBonus.failed"), {
+                              description: errorText(error),
+                            }),
+                        })
+                      }
+                    >
+                      {t("commissionDeals.referrerBonus.markPaid")}
+                    </Button>
+                  </span>
+                </TooltipTrigger>
+                {!payoutStageReached && (
+                  <TooltipContent>
+                    {t(
+                      `commissionDeals.referrerBonus.payoutStageNotReached.${settingsQ.data.referrer_payout_timing}`,
+                    )}
+                  </TooltipContent>
+                )}
+              </Tooltip>
               <Button size="sm" variant="outline" onClick={() => setCancelling(true)}>
                 {t("commissionDeals.referrerBonus.cancel")}
               </Button>
