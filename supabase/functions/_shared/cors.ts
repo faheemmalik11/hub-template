@@ -5,7 +5,7 @@ export const corsHeaders = {
     "authorization, x-client-info, apikey, content-type, x-sync-secret",
   "Access-Control-Allow-Methods": "GET, POST, DELETE, OPTIONS",
 };
-export function jsonResponse(body, status = 200) {
+export function jsonResponse(body: unknown, status = 200) {
   return new Response(JSON.stringify(body), {
     status,
     headers: {
