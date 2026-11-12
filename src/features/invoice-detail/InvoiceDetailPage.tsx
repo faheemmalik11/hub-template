@@ -2112,6 +2112,60 @@ function DocumentDetail({ doc }: { doc: Document }) {
   const lexofficeDocumentSyncOn = useFeature(PERMISSIONS.lexofficeDocumentSync);
   const [pendingFinalApprove, setPendingFinalApprove] = useState<ApprovalAction | null>(null);
 
+  // What Lexware is known to reject (the 11 Nov briefing, §2.3): no supplier, no category, a
+  // category nobody has mapped to a Lexware posting category yet, no due date (mandatory on an
+  // "open" voucher), a negative amount. Checked here, before sending, instead of only finding out
+  // from Lexware's own 406 after the fact.
+  const lexofficeReadinessIssues = useMemo(() => {
+    if (!lexofficeDocumentSyncOn || doc.accounting_external_id) return [];
+    const issues: { text: string; onFix?: () => void; linkTo?: string }[] = [];
+    if (!doc.supplier_id) {
+      issues.push({
+        text: t("documents.detail.lexoffice.readiness.supplierMissing"),
+        onFix: () => jumpZu("lieferant", SUPPLIER_ANCHOR),
+      });
+    }
+    if (!doc.category_id) {
+      issues.push({
+        text: t("documents.detail.lexoffice.readiness.categoryMissing"),
+        onFix: () => jumpZu("uebersicht", PARTICIPANTS_ANCHOR),
+      });
+    } else if (!category?.lexware_category_id) {
+      issues.push({
+        text: t("documents.detail.lexoffice.readiness.categoryNotMapped", {
+          category: category?.name ?? "",
+        }),
+        linkTo: "/categories",
+      });
+    }
+    if (!doc.due_date) {
+      issues.push({
+        text: t("documents.detail.lexoffice.readiness.dueDateMissing"),
+        onFix: () => jumpZu("uebersicht", INVOICEDATA_ANCHOR),
+      });
+    }
+    if ((doc.amount_gross ?? 0) < 0) {
+      issues.push({
+        text: t("documents.detail.lexoffice.readiness.negativeAmount"),
+        onFix: () => jumpZu("uebersicht", AMOUNTS_ANCHOR),
+      });
+    }
+    return issues;
+    // jumpZu is a plain, unmemoized function recreated every render; depending on it would make
+    // this list recompute every render too, which defeats the memo for no benefit, since its
+    // own identity is never what changes this list.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [
+    lexofficeDocumentSyncOn,
+    doc.accounting_external_id,
+    doc.supplier_id,
+    doc.category_id,
+    doc.due_date,
+    doc.amount_gross,
+    category,
+    t,
+  ]);
+
   function runApprovalAction(action: ApprovalAction, comment: string) {
     if (actionRunning.current) return;
     actionRunning.current = true;
@@ -2209,6 +2263,10 @@ function DocumentDetail({ doc }: { doc: Document }) {
       return;
     }
     if (action.nextStatus === "approved_final" && lexofficeDocumentSyncOn) {
+      if (lexofficeReadinessIssues.length > 0) {
+        toast.error(t("documents.detail.lexoffice.readiness.blocked"));
+        return;
+      }
       setPendingFinalApprove(action);
       return;
     }
@@ -3332,19 +3390,56 @@ function DocumentDetail({ doc }: { doc: Document }) {
               rather than the amber triangle the "Braucht deine Eingabe" card uses. Saskia read the
               triangle as an error or a required action (17.09.2026); same rule as H13 in
               TriangleAlert only where the user must act. */}
-          {directDebit && (
-            <div className="flex items-start gap-3 rounded-xl border border-border bg-muted/40 p-4 text-base text-foreground">
-              <Info className="mt-0.5 size-5 shrink-0 text-brand" />
-              <div>
-                <p className="font-medium">{t("documents.detail.lastschrift.bannerTitle")}</p>
-                <p className="mt-0.5 text-muted-foreground">
-                  {t("documents.detail.lastschrift.bannerBody")}
-                </p>
+          <div className="space-y-2">
+            {directDebit && (
+              <div className="flex items-start gap-3 rounded-xl border border-border bg-muted/40 p-4 text-base text-foreground">
+                <Info className="mt-0.5 size-5 shrink-0 text-brand" />
+                <div>
+                  <p className="font-medium">{t("documents.detail.lastschrift.bannerTitle")}</p>
+                  <p className="mt-0.5 text-muted-foreground">
+                    {t("documents.detail.lastschrift.bannerBody")}
+                  </p>
+                </div>
               </div>
-            </div>
-          )}
+            )}
 
-          <LexofficeDocumentSyncCard doc={doc} />
+            {lexofficeReadinessIssues.length > 0 && (
+              <section className="rounded-xl border border-amber-300 bg-amber-50/60 p-5">
+                <h2 className="flex items-center gap-1.5 text-base font-semibold uppercase tracking-wide text-amber-900">
+                  <AlertTriangle className="size-4 shrink-0" />
+                  {t("documents.detail.lexoffice.readiness.title")}
+                </h2>
+                <ul className="mt-3 list-disc space-y-2 pl-5 text-sm text-amber-900">
+                  {lexofficeReadinessIssues.map((issue) => (
+                    <li key={issue.text} className="flex flex-wrap items-center gap-1.5">
+                      <span>{issue.text}</span>
+                      {issue.onFix && (
+                        <button
+                          type="button"
+                          onClick={issue.onFix}
+                          className="inline-flex items-center gap-0.5 text-xs font-medium underline-offset-4 hover:underline"
+                        >
+                          {t("documents.detail.review.beheben")}
+                          <ArrowRight className="size-3" />
+                        </button>
+                      )}
+                      {issue.linkTo && (
+                        <Link
+                          to={issue.linkTo}
+                          className="inline-flex items-center gap-0.5 text-xs font-medium underline-offset-4 hover:underline"
+                        >
+                          {t("documents.detail.review.beheben")}
+                          <ArrowRight className="size-3" />
+                        </Link>
+                      )}
+                    </li>
+                  ))}
+                </ul>
+              </section>
+            )}
+
+            <LexofficeDocumentSyncCard doc={doc} />
+          </div>
 
           <LinkedDocuments documentId={doc.id} />
 

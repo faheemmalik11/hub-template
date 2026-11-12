@@ -2603,6 +2603,17 @@ const de = {
         retrying: "Wird erneut versucht.",
         retrySuccess: "An Lexware gesendet.",
         retryFailed: "Konnte nicht an Lexware gesendet werden: {{error}}",
+        readiness: {
+          title: "Vor dem Senden an Lexware",
+          supplierMissing: "Für diesen Beleg ist kein Lieferant eingetragen.",
+          categoryMissing: "Für diesen Beleg ist keine Kategorie eingetragen.",
+          categoryNotMapped:
+            "Die Kategorie „{{category}}“ hat noch keine passende Lexware-Kategorie.",
+          dueDateMissing: "Für diesen Beleg ist kein Fälligkeitsdatum eingetragen.",
+          negativeAmount: "Der Betrag auf diesem Beleg ist negativ.",
+          blocked:
+            "Bitte zuerst die unten genannten Punkte beheben, bevor dieser Beleg an Lexware gesendet wird.",
+        },
       },
 
       // Original-document preview (left column). File names / OCR are never translated.

@@ -71,7 +71,7 @@ export function LexofficeDocumentSyncCard({ doc }: { doc: Document }) {
           <Button
             variant="outline"
             size="sm"
-            className="mt-3 gap-2"
+            className="mt-3 gap-2 shadow-none"
             disabled={retry.isPending}
             onClick={() =>
               retry.mutate(undefined, {
