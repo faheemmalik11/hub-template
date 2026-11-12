@@ -91,7 +91,6 @@ export const SUPPLIER_ANCHOR = "supplier-master-data";
 // `needsConfirmation` branch), so a "company missing" check has to land here, where the field
 // actually is.
 export const CONFIRMATION_ANCHOR = "confirmation-card";
-export const LEXOFFICE_SYNC_ANCHOR = "lexoffice-sync-card";
 
 export const FIELD_JUMPTARGET: Record<string, { tab: string; anchor: string }> = {
   // The `validation_detail` column's check names. Same destinations as the German keys below.
