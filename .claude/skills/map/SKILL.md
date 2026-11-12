@@ -21,6 +21,17 @@ skill — this doc covers the rest: the Hub's own features and its *other* integ
 - **Supabase** (`@supabase/supabase-js`) — Postgres + auth + Edge Functions (Deno).
 - **shadcn/ui** (`src/components/ui/*`) + Tailwind v4. npm. `npm run lint` / `build` / `dev`.
 
+## Running it — two different things, don't conflate them
+
+- **`VITE_SEED=1 npm run dev`** — no database, no Supabase project, nothing to start. `src/data/
+  client.ts`'s one client (`sb`) swaps to `src/seed/client.ts`'s in-memory fixture object: fake
+  `.from()`/`.rpc()`/`.auth`/`.storage`, any password signs in as any seed team member. Good for
+  looking at screens; writes mostly no-op, queries ignore filters/order/paging. See `src/seed/
+  README.md`.
+- **A real Supabase project** (local or cloud) — needed for real queries, RLS, permissions, or
+  anything that has to persist. See the **local-database** skill for the local stack, and
+  `supabase/catalogue.sql` + `supabase/seed-local.sql` for data to look at once it's up.
+
 ## The 7 layers (walk down this to read any feature)
 
 ```
@@ -121,3 +132,4 @@ Read with plain `Deno.env.get(...)`, set via `supabase secrets set`, never touch
 - `instructions` — standing team rules, load at the start of any task.
 - `data-layer` — how to add/change a Supabase read or mutation.
 - `ui` — routes, badges, formatting conventions, the English/German rule.
+- `local-database` — the local Supabase stack, for when seed mode above isn't enough.
