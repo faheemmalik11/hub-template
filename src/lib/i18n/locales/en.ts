@@ -2314,6 +2314,7 @@ const en = {
           manual: "marked manually",
           bank_match: "Bank reconciliation confirmed",
           banksapi_payment: "transferred via BANKSapi",
+          lexware: "paid via Lexware",
         },
         rueckfrageZusatz: "Query added",
       },
