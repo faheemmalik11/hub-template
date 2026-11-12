@@ -62,7 +62,10 @@ import { Textarea } from "@/components/ui/textarea";
 import { Separator } from "@/components/ui/separator";
 import { Switch } from "@/components/ui/switch";
 import { Combobox } from "@/components/ui/combobox";
-import { LexofficeDocumentSyncCard } from "@/components/documents/lexoffice-document-sync-card";
+import {
+  LexofficeDocumentSyncCard,
+  lexwareVoucherUrl,
+} from "@/components/documents/lexoffice-document-sync-card";
 import { LinkedDocuments } from "@/components/documents/linked-documents";
 import { PingDialog, PingNotice, usePingRecipients } from "@/components/documents/ping-button";
 import { useShellLeafLabel } from "@/kit/components/shell";
@@ -3131,6 +3134,24 @@ function DocumentDetail({ doc }: { doc: Document }) {
                     </div>
                   </TooltipContent>
                 </Tooltip>
+                {lexofficeDocumentSyncOn && doc.accounting_external_id && (
+                  <Tooltip>
+                    <TooltipTrigger asChild>
+                      <a
+                        href={lexwareVoucherUrl(doc.accounting_external_id)}
+                        target="_blank"
+                        rel="noreferrer"
+                        className="inline-flex items-center gap-1 rounded-md bg-brand/10 px-2 py-0.5 text-xs font-medium text-brand transition hover:brightness-95"
+                      >
+                        {t("documents.detail.lexoffice.sent")}
+                        <ExternalLink className="size-3" />
+                      </a>
+                    </TooltipTrigger>
+                    <TooltipContent className="max-w-[18rem]">
+                      {t("documents.detail.lexoffice.openInLexware")}
+                    </TooltipContent>
+                  </Tooltip>
+                )}
               </div>
             </div>
 
