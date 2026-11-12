@@ -2633,6 +2633,9 @@ const de = {
         commentRequired: "Bitte einen Kommentar hinzufügen.",
         abbrechen: "Abbrechen",
         bestaetigen: "Bestätigen",
+        finalApproveLexwareTitle: "Freigeben und an Lexware senden?",
+        finalApproveLexwareDesc:
+          "Dieser Beleg wird direkt nach der Freigabe automatisch an Lexware gesendet.",
         overdue: "{{name}} ist seit {{days}} Tagen ohne Rückmeldung überfällig.",
         overdueDeputy: "Vertretung: {{name}}.",
         verantwortlich: "Verantwortlich: {{name}}",

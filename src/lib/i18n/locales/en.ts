@@ -2544,6 +2544,9 @@ const en = {
         commentRequired: "Please add a comment.",
         abbrechen: "Cancel",
         bestaetigen: "Confirm",
+        finalApproveLexwareTitle: "Approve and send to Lexware?",
+        finalApproveLexwareDesc:
+          "This document will be sent to Lexware automatically right after you approve it.",
         overdue: "{{name}} has been overdue for {{days}} days without any movement.",
         overdueDeputy: "Deputy: {{name}}.",
         verantwortlich: "Responsible: {{name}}",

@@ -257,6 +257,7 @@ import {
   AMOUNTS_ANCHOR,
   PARTICIPANTS_ANCHOR,
   CONFIRMATION_ANCHOR,
+  LEXOFFICE_SYNC_ANCHOR,
   FIELD_JUMPTARGET,
   SUPPLIER_ANCHOR,
   TRANSFER_ANCHOR,
@@ -2109,6 +2110,8 @@ function DocumentDetail({ doc }: { doc: Document }) {
   const actionRunning = useRef(false);
   const [pendingAction, setPendingAction] = useState<ApprovalAction | null>(null);
   const [actionComment, setActionComment] = useState("");
+  const lexofficeDocumentSyncOn = useFeature(PERMISSIONS.lexofficeDocumentSync);
+  const [pendingFinalApprove, setPendingFinalApprove] = useState<ApprovalAction | null>(null);
 
   function runApprovalAction(action: ApprovalAction, comment: string) {
     if (actionRunning.current) return;
@@ -2177,6 +2180,15 @@ function DocumentDetail({ doc }: { doc: Document }) {
             recordId: doc.id,
             data: { actionId: action.id, nextStatus: action.nextStatus },
           });
+          if (action.nextStatus === "approved_final" && lexofficeDocumentSyncOn) {
+            jumpZu("zahlung", LEXOFFICE_SYNC_ANCHOR);
+            // The push itself runs async, outside this request — this is the one refetch that
+            // gives the card a real answer instead of leaving it on "pending" until the reader's
+            // next navigation happens to refresh it.
+            window.setTimeout(() => {
+              void queryClient.invalidateQueries({ queryKey: ["beleg", doc.id] });
+            }, 3000);
+          }
         },
         onError: (e) =>
           toast.error(
@@ -2195,6 +2207,10 @@ function DocumentDetail({ doc }: { doc: Document }) {
   function onApprovalAction(action: ApprovalAction) {
     if (action.requiresComment) {
       setPendingAction(action);
+      return;
+    }
+    if (action.nextStatus === "approved_final" && lexofficeDocumentSyncOn) {
+      setPendingFinalApprove(action);
       return;
     }
     runApprovalAction(action, "");
@@ -4057,6 +4073,35 @@ function DocumentDetail({ doc }: { doc: Document }) {
             </Dialog>
 
             <AlertDialog
+              open={!!pendingFinalApprove}
+              onOpenChange={(open) => !open && setPendingFinalApprove(null)}
+            >
+              <AlertDialogContent>
+                <AlertDialogHeader>
+                  <AlertDialogTitle>
+                    {t("documents.detail.workflow.finalApproveLexwareTitle")}
+                  </AlertDialogTitle>
+                  <AlertDialogDescription>
+                    {t("documents.detail.workflow.finalApproveLexwareDesc")}
+                  </AlertDialogDescription>
+                </AlertDialogHeader>
+                <AlertDialogFooter>
+                  <AlertDialogCancel>{t("documents.detail.workflow.abbrechen")}</AlertDialogCancel>
+                  <AlertDialogAction
+                    disabled={updateDocument.isPending}
+                    onClick={() => {
+                      if (pendingFinalApprove) runApprovalAction(pendingFinalApprove, "");
+                      setPendingFinalApprove(null);
+                    }}
+                  >
+                    <Send className="size-4" />
+                    {t("documents.detail.workflow.bestaetigen")}
+                  </AlertDialogAction>
+                </AlertDialogFooter>
+              </AlertDialogContent>
+            </AlertDialog>
+
+            <AlertDialog
               open={!!pendingCorrection}
               onOpenChange={(open) => {
                 if (!open) {
@@ -4267,7 +4312,9 @@ function DocumentDetail({ doc }: { doc: Document }) {
                 <PaymentMatchingSection doc={doc} />
               </div>
 
-              <LexofficeDocumentSyncCard doc={doc} />
+              <div id={LEXOFFICE_SYNC_ANCHOR} className="scroll-mt-24">
+                <LexofficeDocumentSyncCard doc={doc} />
+              </div>
             </TabsContent>
 
             {/* Tab: Details — everything else + all extracted data */}
