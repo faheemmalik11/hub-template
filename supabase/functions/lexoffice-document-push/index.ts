@@ -165,8 +165,8 @@ function refuseOversizedAttachment(sizeBytes: number | null): void {
   if (sizeBytes === null || sizeBytes <= LEXWARE_MAX_ATTACHMENT_BYTES) return;
   const sizeMb = (sizeBytes / (1024 * 1024)).toFixed(1);
   throw new Error(
-    `the attached file is ${sizeMb} MB, over Lexware's 5 MB attachment limit. ` +
-      "Shrink the file (e.g. re-save the PDF at a lower resolution) and try again.",
+    `The file is ${sizeMb} MB. Lexware only accepts files up to 5 MB. Save the file smaller, ` +
+      "then try again.",
   );
 }
 
@@ -231,8 +231,8 @@ function refuseAmountsLexwareCannotBook(doc: DocumentRow): void {
   );
   if (negative) {
     throw new Error(
-      "this document has a negative amount, so it is a credit note rather than a purchase " +
-        "invoice. Book it in Lexware by hand.",
+      "This document has a negative amount, so it is a credit note, not an invoice. " +
+        "Enter it in Lexware by hand.",
     );
   }
 }
@@ -242,8 +242,8 @@ function refuseVatRateTheCategoryCannotCarry(doc: DocumentRow, allowed: number[]
   const rate = Number(doc.vat_rate);
   if (allowed.some((one) => Math.abs(one - rate) < 0.01)) return;
   throw new Error(
-    `VAT rate ${rate}% is not one this Hub has set up (${allowed.join("%, ")}%). ` +
-      "Correct the rate on the document, or add the rate under master data.",
+    `The VAT rate ${rate}% is not set up here. Allowed rates: ${allowed.join("%, ")}%. ` +
+      "Change the rate on the document, or add it under master data.",
   );
 }
 
@@ -262,8 +262,8 @@ async function refuseReverseChargeRateMismatch(
   const matched = postingCategories.find((one) => one.id === category.lexware_category_id);
   if (!matched || !REVERSE_CHARGE_CATEGORY_NAME.test(matched.name)) return;
   throw new Error(
-    `"${matched.name}" is a reverse-charge category in Lexware and can only carry a 0% rate, ` +
-      `not ${doc.vat_rate}%. Correct the category or the rate before approving.`,
+    `The category "${matched.name}" only allows a VAT rate of 0% in Lexware, but this document ` +
+      `has ${doc.vat_rate}%. Change the category or the rate, then try again.`,
   );
 }
 
@@ -324,14 +324,15 @@ Deno.serve(async (req) => {
     }
     claimedId = doc.id;
 
-    if (!doc.supplier_id) throw new Error("document has no supplier to bill");
-    if (!doc.category_id) throw new Error("document has no category assigned");
+    if (!doc.supplier_id) throw new Error("This document has no supplier yet. Add one first.");
+    if (!doc.category_id) throw new Error("This document has no category yet. Add one first.");
 
     const supplier = await loadSupplier(db, doc.supplier_id);
     const category = await loadCategory(db, doc.category_id);
     if (!category.lexware_category_id) {
       throw new Error(
-        `category "${category.name}" has no matching Lexware posting category set up`,
+        `The category "${category.name}" is not linked to a Lexware category yet. ` +
+          "Link it under master data, then try again.",
       );
     }
 

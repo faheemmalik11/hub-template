@@ -88,16 +88,19 @@ export function LexofficeErrorCell({
   if (!doc.lexoffice_sync_error) return null;
 
   return (
-    <div className="flex max-w-[260px] items-start gap-2">
+    <div className="flex w-[280px] items-start gap-2">
       <AlertTriangle className="mt-0.5 size-4 shrink-0 text-destructive" />
       <div className="min-w-0">
-        <p className="truncate text-sm text-destructive" title={doc.lexoffice_sync_error}>
+        <p className="text-sm font-medium text-destructive">
+          {t("documents.list.lexoffice.notSent")}
+        </p>
+        <p className="mt-0.5 text-sm leading-snug text-muted-foreground">
           {doc.lexoffice_sync_error}
         </p>
         <Button
           variant="outline"
           size="sm"
-          className="mt-1 h-6 gap-1.5 px-2 text-xs shadow-none"
+          className="mt-2 h-7 gap-1.5 px-2 text-xs shadow-none"
           disabled={retry.isPending}
           onClick={(event) => {
             event.stopPropagation();

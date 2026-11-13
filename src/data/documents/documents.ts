@@ -772,6 +772,7 @@ const DOCUMENTS_LIST_COLUMNS = [
   "validation",
   "private_hold",
   "private_owner_user_id",
+  "lexoffice_sync_error",
 ].join(",");
 
 // Which view a list read should come from.

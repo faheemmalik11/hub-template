@@ -2110,6 +2110,9 @@ const de = {
         match: "Zahlung zuordnen",
         none: "Nichts zu tun",
       },
+      lexoffice: {
+        notSent: "Nicht an Lexware gesendet",
+      },
       nlSearch: {
         titel: "Fragen Sie nach Ihren Rechnungen",
         desc: "Stellen Sie Ihre Frage in eigenen Worten, getippt oder gesprochen.",
