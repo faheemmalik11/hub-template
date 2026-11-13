@@ -2,6 +2,8 @@ import { Check } from "lucide-react";
 
 import { cn } from "@/lib/utils";
 import { useTranslation } from "@/lib/i18n";
+import { useMatchingSettings } from "@/data";
+import { DEFAULT_MATCHING_SETTINGS } from "@/kit/lib/bank-matching";
 import { formatEUR } from "@/lib/data/format";
 import type { MatchReasons } from "@/lib/data/types";
 
@@ -9,11 +11,16 @@ import type { MatchReasons } from "@/lib/data/types";
 // here: the weights themselves are an implementation detail of the scorer and are not shown.
 const SIGNALS: (keyof MatchReasons)[] = ["amount", "reference", "customerNumber", "iban", "name"];
 
-// Thresholds mirror _shared/matching.ts (AUTO_THRESHOLD .90 / CANDIDATE_THRESHOLD .60).
-function confidenceKey(score: number): "hoch" | "mittel" | "niedrig" {
-  if (score >= 0.9) return "hoch";
-  if (score >= 0.6) return "mittel";
-  return "niedrig";
+type ConfidenceLevel = "high" | "medium" | "low";
+
+function confidenceLevel(
+  score: number,
+  autoThreshold: number,
+  candidateThreshold: number,
+): ConfidenceLevel {
+  if (score >= autoThreshold) return "high";
+  if (score >= candidateThreshold) return "medium";
+  return "low";
 }
 
 /**
@@ -30,7 +37,19 @@ export function MatchScoreBreakdown({
   score: number | null;
 }) {
   const { t } = useTranslation();
+  const matchingSettingsQ = useMatchingSettings();
   if (!reasons) return null;
+
+  const level =
+    score == null
+      ? null
+      : confidenceLevel(
+          score,
+          matchingSettingsQ.data?.auto_match_threshold ??
+            DEFAULT_MATCHING_SETTINGS.autoMatchThreshold,
+          matchingSettingsQ.data?.candidate_threshold ??
+            DEFAULT_MATCHING_SETTINGS.candidateThreshold,
+        );
 
   const dayDiff = typeof reasons.dayDiff === "number" ? reasons.dayDiff : null;
   // "The amount agrees" and "the amount agrees to within the 50 cents you allow" are different
@@ -53,18 +72,18 @@ export function MatchScoreBreakdown({
 
   return (
     <div className="mt-2 w-full text-xs">
-      {score != null && (
+      {level != null && (
         <span
           className={cn(
             "inline-flex rounded-md px-1.5 py-0.5 font-medium",
-            confidenceKey(score) === "hoch"
+            level === "high"
               ? "bg-emerald-100 text-emerald-900"
-              : confidenceKey(score) === "mittel"
+              : level === "medium"
                 ? "bg-amber-100 text-amber-900"
                 : "bg-muted text-muted-foreground",
           )}
         >
-          {t(`bank.matchScore.confidence.${confidenceKey(score)}`)}
+          {t(`bank.matchScore.confidence.${level}`)}
         </span>
       )}
       {match.length > 0 && (

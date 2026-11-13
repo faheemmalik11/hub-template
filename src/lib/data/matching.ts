@@ -9,6 +9,8 @@
 // matching.ts has ZERO imports and is pure TypeScript (no Deno globals, no I/O), so it bundles into the
 // browser untouched. Keep it that way — if that file ever grows a Deno-only dependency, this indirection
 // is the single place that has to change.
+import { DEFAULT_MATCHING_SETTINGS } from "@/kit/lib/bank-matching";
+
 export { scoreMatch, runMatching } from "../../../supabase/functions/_shared/matching";
 export type {
   MatchDocument,
@@ -17,15 +19,17 @@ export type {
   MatchCandidate,
 } from "../../../supabase/functions/_shared/matching";
 
-// Thresholds mirror _shared/matching.ts (AUTO_THRESHOLD / CANDIDATE_THRESHOLD), which does not export
-// them. Used only to label a score in the UI with the same words the matcher would use.
-export const AUTO_THRESHOLD = 0.9;
-export const CANDIDATE_THRESHOLD = 0.6;
+export const AUTO_THRESHOLD = DEFAULT_MATCHING_SETTINGS.autoMatchThreshold;
+export const CANDIDATE_THRESHOLD = DEFAULT_MATCHING_SETTINGS.candidateThreshold;
 
-export type ConfidenceBand = "auto" | "candidate" | "schwach";
+export type ConfidenceBand = "auto" | "candidate" | "weak";
 
-export function confidenceBand(score: number): ConfidenceBand {
-  if (score >= AUTO_THRESHOLD) return "auto";
-  if (score >= CANDIDATE_THRESHOLD) return "candidate";
-  return "schwach";
+export function confidenceBand(
+  score: number,
+  autoThreshold: number = AUTO_THRESHOLD,
+  candidateThreshold: number = CANDIDATE_THRESHOLD,
+): ConfidenceBand {
+  if (score >= autoThreshold) return "auto";
+  if (score >= candidateThreshold) return "candidate";
+  return "weak";
 }
