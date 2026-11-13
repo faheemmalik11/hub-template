@@ -3093,6 +3093,7 @@ const en = {
         keineAenderungen: "No changes.",
         ungueltigeZahl: 'Invalid number in: {{fields}}. Please enter e.g. "1.234,56".',
         statusGesetzt: "Status: {{label}}",
+        statusWirdGesetzt: "Saving…",
         zugewiesenAn: "Assigned to {{name}}",
         zuweisungEntfernt: "Assignment removed",
         notizGespeichert: "Note saved.",
