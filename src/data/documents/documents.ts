@@ -23,6 +23,12 @@ import {
 } from "@/data/shared";
 import { documentRechecked } from "@/features/invoice-detail/recheck";
 import {
+  refreshDocumentWhileReading,
+  refreshListWhileReading,
+  refreshPageWhileReading,
+  refreshPagesWhileReading,
+} from "@/lib/data/document-reading";
+import {
   PRACTICE_INVOICE,
   PRACTICE_INVOICE_TASK_ID,
 } from "@/features/onboarding-practice/practice-invoice-task";
@@ -642,6 +648,7 @@ export function useDocuments(search?: string) {
   return useQuery({
     queryKey: ["belege", q],
     staleTime: STALE,
+    refetchInterval: refreshListWhileReading,
     queryFn: async (): Promise<Document[]> => {
       // Container rows of a split multi-receipt scan (status='split', document_type='Sammelscan')
       // are NOT invoices — they hold the original of the scan for the audit trail while their children
@@ -901,6 +908,7 @@ export function useDocumentsList(params: DocumentsListParams, opts?: { enabled?:
     queryKey: ["belege-liste", params],
     enabled: opts?.enabled ?? true,
     staleTime: STALE,
+    refetchInterval: refreshPageWhileReading,
     placeholderData: keepPreviousData, // smooth page/filter transitions
     queryFn: async (): Promise<DocumentsPage> => {
       const from = (params.page - 1) * params.pageSize;
@@ -1243,6 +1251,7 @@ export function useDocumentsKanbanColumn(
     queryKey: ["belege-kanban-spalte", filter, workflow],
     enabled: opts?.enabled ?? true,
     staleTime: STALE,
+    refetchInterval: refreshPagesWhileReading,
     initialPageParam: 0,
     getNextPageParam: (_lastPage: InfinitePage<DocumentListRow>, allPages) =>
       hasNextInfinitePage(allPages) ? allPages.length : undefined,
@@ -1289,6 +1298,7 @@ export function useDocument(id: string) {
     queryKey: ["beleg", id],
     enabled: !!id,
     staleTime: STALE,
+    refetchInterval: refreshDocumentWhileReading,
     queryFn: async (): Promise<Document | null> => {
       const { data, error } = await sb
         .from(TABLE.documents)

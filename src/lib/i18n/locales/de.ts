@@ -2346,6 +2346,7 @@ const de = {
     },
 
     detail: {
+      readingTitle: "Beleg wird gelesen …",
       // Einzeilige Labels für Freigabe-Verlauf und "Dauer je Stufe" — benannt nach dem ZUSTAND,
       // den der Beleg erreicht hat, nicht nach dem Ereignis. Bewusst getrennt von
       // `documents.workflow.<status>` (Leiter und Belegliste), wo ein Substantiv wie "In Prüfung"
