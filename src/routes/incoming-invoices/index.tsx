@@ -1,4 +1,6 @@
 import { TABLE } from "@/config/tables";
+import { PERMISSIONS } from "@/config/permissions";
+import { useFeature } from "@/data/use-feature";
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { toast } from "sonner";
 import { PeriodPicker } from "@/components/data-table/period-picker";
@@ -401,6 +403,7 @@ function IncomingInvoicesPage() {
     dueUnknown: filter.dueUnknown,
   };
 
+  const paymentsHandledExternally = useFeature(PERMISSIONS.lexofficeDocumentSync);
   const isList = search.view === "liste";
   const listQ = useDocumentsList(
     { ...filter, sort: search.sort, dir: search.dir, page: search.page, pageSize: search.pageSize },
@@ -1467,7 +1470,7 @@ function IncomingInvoicesPage() {
                           </TableCell>
                           <TableCell>
                             {(() => {
-                              const action = nextAction(b);
+                              const action = nextAction(b, paymentsHandledExternally);
                               if (action === "none")
                                 return (
                                   <NextActionCell muted label={t("documents.list.aktion.none")} />
