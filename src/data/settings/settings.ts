@@ -75,6 +75,33 @@ export function useMatchingSettings() {
   });
 }
 
+// ---- Approval settings (tenant_settings.config.approval) ----
+// A free-form key on the same singleton row the Hub already reads for locale/tax regime
+// (src/lib/tenant-config.server.ts) -- a one-off boolean does not earn its own table the way
+// filename/matching settings did. Off by default, so no existing client's approval flow changes
+// until a tenant deliberately turns it on.
+
+export function useApprovalSettings() {
+  return useQuery({
+    queryKey: ["approval_settings"],
+    staleTime: STALE,
+    queryFn: async (): Promise<{ requireCompanyBeforeFinalApprove: boolean }> => {
+      const { data, error } = await sb
+        .from(TABLE.tenantSettings)
+        .select("config")
+        .eq("single_row", true)
+        .maybeSingle();
+      if (error) throw error;
+      const approval = (
+        data?.config as { approval?: { requireCompanyBeforeFinalApprove?: boolean } } | null
+      )?.approval;
+      return {
+        requireCompanyBeforeFinalApprove: approval?.requireCompanyBeforeFinalApprove ?? false,
+      };
+    },
+  });
+}
+
 export function useUpdateMatchingSettings() {
   const qc = useQueryClient();
   return useMutation({

@@ -146,6 +146,7 @@ import {
   useUpdateDocument,
   useProcessingLogForDocument,
   useFeature,
+  useApprovalSettings,
 } from "@/data";
 import { resolveCostCentre, type CostCentre } from "@/lib/data/cost-centre";
 import {
@@ -545,6 +546,8 @@ function DocumentDetail({ doc }: { doc: Document }) {
   // this tenant today (only Lexware so far) — add it here with `||`, every check below reads
   // this, none of them read a specific integration's flag directly.
   const paymentsHandledExternally = lexofficeDocumentSyncOn;
+  const requireCompanyBeforeFinalApprove =
+    useApprovalSettings().data?.requireCompanyBeforeFinalApprove ?? false;
   const propertiesQ = useProperties();
   const categoriesQ = useCostAnalysisCategories();
   const propertyCompaniesQ = usePropertyCompanies();
@@ -2308,6 +2311,14 @@ function DocumentDetail({ doc }: { doc: Document }) {
   function onApprovalAction(action: ApprovalAction) {
     if (action.requiresComment) {
       setPendingAction(action);
+      return;
+    }
+    if (
+      action.nextStatus === "approved_final" &&
+      requireCompanyBeforeFinalApprove &&
+      !doc.company_id
+    ) {
+      toast.error(t("documents.detail.workflow.companyRequiredForFinalApprove"));
       return;
     }
     if (action.nextStatus === "approved_final" && lexofficeDocumentSyncOn) {

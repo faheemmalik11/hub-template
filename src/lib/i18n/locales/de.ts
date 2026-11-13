@@ -2651,6 +2651,8 @@ const de = {
         commentRequired: "Bitte einen Kommentar hinzufügen.",
         abbrechen: "Abbrechen",
         bestaetigen: "Bestätigen",
+        companyRequiredForFinalApprove:
+          "Bitte weisen Sie eine Gesellschaft zu, bevor Sie freigeben.",
         finalApproveLexwareTitle: "Freigeben und an Lexware senden?",
         finalApproveLexwareDesc:
           "Dieser Beleg wird direkt nach der Freigabe automatisch an Lexware gesendet.",
