@@ -16,7 +16,30 @@ create or replace function public.purge_stale_demo_data() returns void
 as $$
 declare
   v_cutoff timestamptz := now() - interval '48 hours';
+  v_demo_deal_ids uuid[];
+  v_demo_customer_ids uuid[];
 begin
+  -- deals/customers/outgoing_invoices carry no is_demo column of their own (0010_access.sql's
+  -- company_demo_visible() reads the parent's instead), but a practice run creates them tied to a
+  -- demo property/company all the same, and they block deleting that property/company (NO ACTION
+  -- foreign keys) if left behind. Collected once so every statement below agrees on the same set.
+  select array_agg(d.id) into v_demo_deal_ids
+    from public.deals d join public.properties p on p.id = d.property_id
+   where p.is_demo and p.created_at < v_cutoff;
+  select array_agg(c.id) into v_demo_customer_ids
+    from public.customers c join public.companies co on co.id = c.company_id
+   where co.is_demo and co.created_at < v_cutoff;
+
+  delete from public.outgoing_invoices
+   where deal_id = any (v_demo_deal_ids) or customer_id = any (v_demo_customer_ids);
+  delete from public.broker_bonuses where deal_id = any (v_demo_deal_ids);
+  delete from public.deal_donations where deal_id = any (v_demo_deal_ids);
+  delete from public.deal_referrer_bonuses
+   where deal_id = any (v_demo_deal_ids) or referrer_customer_id = any (v_demo_customer_ids);
+  delete from public.deal_parties where customer_id = any (v_demo_customer_ids);
+  delete from public.deals where id = any (v_demo_deal_ids);
+  delete from public.customers where id = any (v_demo_customer_ids);
+
   alter table public.document_history disable trigger trg_guard_document_history_row;
   delete from public.document_history
    where document_id in (select id from public.documents where is_demo and created_at < v_cutoff);
