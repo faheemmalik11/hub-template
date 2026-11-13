@@ -9,6 +9,18 @@ const LEXOFFICE_API_URL = "https://api.lexware.io/v1";
 const REQUEST_TIMEOUT_MS = 30_000;
 const MAX_RETRIES = 3;
 const RETRY_BASE_DELAY_MS = 1_000;
+const STALE_CLAIM_MS = 5 * 60 * 1000;
+
+// A claim this old is treated as abandoned (the invocation that made it was killed by the platform
+// before its own catch block could release it), so a retry can take it over instead of being
+// refused forever. `column` is the table's own `lexoffice_sync_requested_at` column name.
+export function staleClaimFilter<T extends { or: (query: string) => T }>(
+  query: T,
+  column = "lexoffice_sync_requested_at",
+): T {
+  const cutoff = new Date(Date.now() - STALE_CLAIM_MS).toISOString();
+  return query.or(`${column}.is.null,${column}.lt.${cutoff}`);
+}
 
 async function readCredential(db: Db, name: string): Promise<string> {
   const { data, error } = await db
@@ -54,9 +66,9 @@ async function lexofficeFetch(
   db: Db,
   apiKey: string,
   path: string,
-  init: { method?: string; body?: unknown } = {},
+  init: { method?: string; body?: unknown; accept?: string; parse?: "json" | "arraybuffer" } = {},
 ): Promise<unknown> {
-  const { method = "GET", body } = init;
+  const { method = "GET", body, accept = "application/json", parse = "json" } = init;
   let lastError: Error | undefined;
 
   for (let attempt = 0; attempt <= MAX_RETRIES; attempt++) {
@@ -65,7 +77,7 @@ async function lexofficeFetch(
       method,
       headers: {
         Authorization: `Bearer ${apiKey}`,
-        Accept: "application/json",
+        Accept: accept,
         ...(body ? { "Content-Type": "application/json" } : {}),
       },
       body: body ? JSON.stringify(body) : undefined,
@@ -84,6 +96,7 @@ async function lexofficeFetch(
       const text = await response.text();
       throw new Error(`Lexoffice answered ${response.status}: ${text}`);
     }
+    if (parse === "arraybuffer") return await response.arrayBuffer();
     return response.status === 204 ? null : await response.json();
   }
 
@@ -125,6 +138,7 @@ export interface LexofficeInvoiceInput {
   lineItems: LexofficeLineItem[];
   totalPrice: { currency: string };
   taxConditions: { taxType: "net" };
+  shippingConditions: { shippingDate: string; shippingType: "service" };
   contactId?: string;
 }
 
@@ -136,6 +150,7 @@ export interface LexofficeInvoiceResult {
 export interface LexofficeInvoice {
   id: string;
   voucherStatus: "draft" | "open" | "paid" | "paidoff" | "voided" | "overdue";
+  voucherNumber?: string;
 }
 
 export async function searchContacts(
@@ -174,6 +189,14 @@ export async function createInvoice(
 
 export async function getInvoice(db: Db, apiKey: string, id: string): Promise<LexofficeInvoice> {
   return (await lexofficeFetch(db, apiKey, `/invoices/${id}`)) as LexofficeInvoice;
+}
+
+export async function getInvoiceFile(db: Db, apiKey: string, id: string): Promise<Uint8Array> {
+  const buffer = (await lexofficeFetch(db, apiKey, `/invoices/${id}/file`, {
+    accept: "application/pdf",
+    parse: "arraybuffer",
+  })) as ArrayBuffer;
+  return new Uint8Array(buffer);
 }
 
 export interface LexofficePostingCategory {
@@ -222,6 +245,8 @@ export interface LexofficeVoucherResult {
 export interface LexofficeVoucherListEntry {
   id: string;
   voucherNumber?: string;
+  voucherDate?: string;
+  totalAmount?: number;
 }
 
 // A push that failed after Lexware had already created the voucher leaves the document unsynced,
@@ -232,6 +257,8 @@ export async function findPurchaseVoucher(
   apiKey: string,
   voucherNumber: string,
   contactId: string,
+  voucherDate?: string,
+  totalGrossAmount?: number,
 ): Promise<string | null> {
   const params = new URLSearchParams({
     voucherType: "purchaseinvoice",
@@ -242,8 +269,18 @@ export async function findPurchaseVoucher(
   const result = (await lexofficeFetch(db, apiKey, `/voucherlist?${params}`)) as {
     content?: LexofficeVoucherListEntry[];
   };
-  const already = (result.content ?? []).find((one) => one.voucherNumber === voucherNumber);
-  return already?.id ?? null;
+  // voucherNumber is free text the vendor chose, not a real identifier -- a single match on it
+  // alone is not proof it is this document's own voucher. Date and amount, when the caller has
+  // them, must also agree before treating a found voucher as a match.
+  const matches = (result.content ?? []).filter(
+    (one) =>
+      one.voucherNumber === voucherNumber &&
+      (voucherDate === undefined || one.voucherDate === undefined || one.voucherDate === voucherDate) &&
+      (totalGrossAmount === undefined ||
+        one.totalAmount === undefined ||
+        Math.abs(one.totalAmount - totalGrossAmount) < 0.01),
+  );
+  return matches[0]?.id ?? null;
 }
 
 export async function createPurchaseVoucher(
@@ -341,12 +378,13 @@ export function friendlyLexofficeError(raw: string): string {
   const match = raw.match(/^Lexoffice answered 406: (.+)$/s);
   if (!match) return raw;
   try {
-    const body = JSON.parse(match[1]) as { IssueList?: LexofficeIssue[] };
+    const body = JSON.parse(match[1]) as { IssueList?: LexofficeIssue[]; message?: string };
     const fields = (body.IssueList ?? [])
       .map((issue) => (issue.source ? readableFieldName(issue.source) : null))
       .filter((label): label is string => label !== null);
-    if (fields.length === 0) return "Lexware rejected this document for an unknown reason.";
-    return `Lexware rejected this document. Please check ${fields.join(", ")}.`;
+    if (fields.length > 0) return `Lexware rejected this document. Please check ${fields.join(", ")}.`;
+    if (body.message) return `Lexware rejected this document: ${body.message}`;
+    return "Lexware rejected this document for an unknown reason.";
   } catch {
     return "Lexware rejected this document for an unknown reason.";
   }
