@@ -13,6 +13,7 @@ export interface LocaleSettings {
 export interface TaxDefaults {
   country: string;
   defaultVatRate: number;
+  paymentTermDays: number;
 }
 
 export interface InvoiceWording {
@@ -25,6 +26,7 @@ export interface InvoiceWording {
 
 interface InvoiceSettingsRow {
   default_vat_rate: number | string;
+  payment_term_days: number | string;
   country_code: string;
   invoice_fallback_label: string;
   invoice_unit_name: string;
@@ -40,6 +42,7 @@ const DEFAULT_LOCALE_SETTINGS: LocaleSettings = {
 
 const DEFAULT_INVOICE_SETTINGS: InvoiceSettingsRow = {
   default_vat_rate: 19,
+  payment_term_days: 14,
   country_code: "DE",
   invoice_fallback_label: "Rechnung",
   invoice_unit_name: "Pauschal",
@@ -85,7 +88,7 @@ async function invoiceSettings(): Promise<{
   const { data, error } = await db
     .from(TABLE.invoiceSettings)
     .select(
-      "default_vat_rate, country_code, invoice_fallback_label, invoice_unit_name, default_payment_method, document_fallback_label",
+      "default_vat_rate, payment_term_days, country_code, invoice_fallback_label, invoice_unit_name, default_payment_method, document_fallback_label",
     )
     .eq("id", true)
     .maybeSingle();
@@ -116,6 +119,7 @@ export async function taxDefaults(): Promise<TaxDefaults> {
   return {
     country: settings.country_code,
     defaultVatRate: Number(settings.default_vat_rate),
+    paymentTermDays: Number(settings.payment_term_days),
   };
 }
 

@@ -1,7 +1,7 @@
 import { serviceClient } from "../_shared/supabase.ts";
 import { corsHeaders, jsonResponse } from "../_shared/cors.ts";
 import { TABLE } from "../_shared/tables.ts";
-import { getVoucherPayment, lexofficeKey } from "../_shared/lexoffice-client.ts";
+import { getVoucherPayment, lexofficeKey, paidOnFrom } from "../_shared/lexoffice-client.ts";
 
 // deno-lint-ignore no-explicit-any
 type Db = any;
@@ -67,7 +67,7 @@ async function sync(db: Db) {
     const { error } = await db
       .from(TABLE.documents)
       .update({
-        paid_at: payment.paymentDate ?? new Date().toISOString(),
+        paid_at: paidOnFrom(payment) ?? new Date().toISOString(),
         paid_source: "lexware",
         lexoffice_open_amount: 0,
       })

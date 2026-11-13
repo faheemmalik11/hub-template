@@ -321,10 +321,26 @@ export async function attachVoucherFile(
   }
 }
 
+export interface LexofficePaymentItem {
+  postingDate?: string;
+  amount?: number;
+}
+
 export interface LexofficePayment {
   voucherStatus: LexofficeInvoice["voucherStatus"];
   openAmount: number;
-  paymentDate?: string;
+  paidDate?: string;
+  paymentItems?: LexofficePaymentItem[];
+}
+
+// Lexware has no `paymentDate` field; confirmed against the live API.
+export function paidOnFrom(payment: LexofficePayment): string | null {
+  const latestItem = (payment.paymentItems ?? [])
+    .map((item) => item.postingDate)
+    .filter((date): date is string => !!date)
+    .sort()
+    .at(-1);
+  return payment.paidDate ?? latestItem ?? null;
 }
 
 export async function getVoucherPayment(
