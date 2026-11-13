@@ -1,0 +1,10 @@
+{
+  "<client-key>": {
+    "enabled": false,
+    "hubTemplateBranch": "<client-key>",
+    "clientRemoteName": "<client-key>-repo",
+    "clientRemoteUrl": "git@github.com:<owner>/<repo>.git",
+    "clientRemoteBranch": "main",
+    "pushCommand": "./scripts/client/push-client-repo.sh <client-key>"
+  }
+}

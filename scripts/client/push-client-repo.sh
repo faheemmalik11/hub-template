@@ -21,6 +21,12 @@
 set -euo pipefail
 cd "$(dirname "$0")/../.."
 
+if [ ! -f scripts/client/client-repos.json ]; then
+  echo "scripts/client/client-repos.json is missing. It is local config, not committed." >&2
+  echo "Copy scripts/client/client-repos.example.json to it and fill in the client's remote." >&2
+  exit 1
+fi
+
 CLIENT_KEY="${1:-}"
 if [ -z "$CLIENT_KEY" ]; then
   echo "Usage: $0 <client-key>" >&2
