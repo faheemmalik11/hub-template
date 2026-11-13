@@ -43,6 +43,7 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { cn } from "@/lib/utils";
+import { isDocumentBeingRead, isForegroundPageFetch } from "@/lib/data/document-reading";
 import { useCostCentreResolver } from "@/lib/data/cost-centre";
 
 const LAST_OPENED_INVOICE_KEY = "documents.lastOpenedInvoice";
@@ -1243,7 +1244,7 @@ function IncomingInvoicesPage() {
           <>
             <p className="mt-4 text-sm text-muted-foreground">
               {t("documents.list.pagination.showing", { from: fromRow, to: toRow, total })}
-              {listQ.isFetching && ` · ${t("documents.list.updating")}`}
+              {isForegroundPageFetch(listQ) && ` · ${t("documents.list.updating")}`}
             </p>
 
             {/* Only with something ticked, so the everyday list is unchanged for everyone who is
@@ -1265,7 +1266,7 @@ function IncomingInvoicesPage() {
                 DATEV) were simply gone, and the workflow badge at the boundary was sliced
                 mid-word. Nothing on screen said so either. */}
             <div className="relative mt-3 hidden rounded-xl border border-border bg-card sm:block overflow-hidden">
-              {listQ.isFetching && <TableLoadingOverlay />}
+              {isForegroundPageFetch(listQ) && <TableLoadingOverlay />}
               {/* `min-w` so the columns SCROLL instead of squeezing. Without it an auto-layout table just
                   compresses to fit: on a 1468px screen the issuer truncated mid-word and every received
                   date wrapped onto three lines, while the table technically still "fitted", so it never
@@ -1366,16 +1367,19 @@ function IncomingInvoicesPage() {
                           </div>
                           <OutgoingBadge doc={b} />
                         </div>
-                        <div
-                          className="truncate text-xs text-muted-foreground"
-                          title={b.invoice_number ?? ""}
-                        >
-                          {b.invoice_number
-                            ? t("documents.list.row.nr", { nr: b.invoice_number })
-                            : t("documents.list.row.ohneNr")}
-                          {b.cost_category ? ` · ${b.cost_category}` : ""}
-                        </div>
-                        {!isIncomingInvoice(b.document_type) || isDirectDebit(b.payment_method) ? (
+                        {!isDocumentBeingRead(b) && (
+                          <div
+                            className="truncate text-xs text-muted-foreground"
+                            title={b.invoice_number ?? ""}
+                          >
+                            {b.invoice_number
+                              ? t("documents.list.row.nr", { nr: b.invoice_number })
+                              : t("documents.list.row.ohneNr")}
+                            {b.cost_category ? ` · ${b.cost_category}` : ""}
+                          </div>
+                        )}
+                        {!isDocumentBeingRead(b) &&
+                        (!isIncomingInvoice(b.document_type) || isDirectDebit(b.payment_method)) ? (
                           <div className="mt-1 flex flex-wrap items-center gap-1">
                             {!isIncomingInvoice(b.document_type) && (
                               <DocumentTypeBadge documentType={b.document_type} />
@@ -1402,84 +1406,98 @@ function IncomingInvoicesPage() {
                           />
                         )}
                       </TableCell>
-                      <TableCell>
-                        <CompanyChip code={b.company_code} />
-                        <CostCentreRow doc={b} resolver={costCentres} />
-                      </TableCell>
-                      <TableCell className="text-right tabular-nums">
-                        <span className="block font-medium">{formatEUR(b.amount_gross)}</span>
-                        <span className="mt-0.5 block">
-                          <VatBadge vatRate={b.vat_rate} tax={b.tax} />
-                        </span>
-                      </TableCell>
-                      {/* The invoice date, on its own. The service period used to hang under it as
-                          a subtitle, and being a full date RANGE it set the width of the whole
-                          column and pushed every column right of it off the screen, for a line
-                          only a minority of rows carry. It lives on the detail screen now, in
-                          Rechnungsdaten, where there is room to read it. */}
-                      <TableCell className="whitespace-nowrap text-sm text-muted-foreground tabular-nums">
-                        <span className="block">{formatDate(b.document_date)}</span>
-                        {b.due_date && !b.paid_at && (
-                          <span
-                            className={cn(
-                              "block text-xs",
-                              dueBucket(b.due_date, today) === "overdue" && "text-destructive",
-                            )}
-                          >
-                            {t("documents.list.col.faelligAm", { datum: formatDate(b.due_date) })}
-                          </span>
-                        )}
-                      </TableCell>
-                      <TableCell>
-                        <ChannelBadge channel={b.intake_channel} />
-                      </TableCell>
-                      <TableCell>
-                        <ConfidencePill score={b.confidence_score} />
-                      </TableCell>
-                      <TableCell>
-                        <ReviewBadge
-                          reasonCount={checkReasons(b).length}
-                          unchecked={withoutChecks(b)}
-                          status={b.status}
-                        />
-                      </TableCell>
-                      <TableCell>
-                        <PaymentBadge paidAm={b.paid_at} />
-                      </TableCell>
-                      <TableCell>
-                        <BankMatchBadge
-                          hasConfirmed={b.has_confirmed_bank_match}
-                          hasSuggested={b.has_suggested_bank_match}
-                          showWhenEmpty
-                        />
-                      </TableCell>
-                      <TableCell>
-                        {(() => {
-                          const action = nextAction(b);
-                          if (action === "none")
-                            return <NextActionCell muted label={t("documents.list.aktion.none")} />;
-                          // "pay" opens the payment tab straight away instead of the overview, so
-                          // working down the pay list is one click per invoice.
-                          if (action === "pay")
-                            return (
-                              <Button
-                                size="sm"
-                                className="h-7"
-                                onClick={(e) => {
-                                  e.stopPropagation();
-                                  navigate({
-                                    to: "/incoming-invoices/$nr",
-                                    params: { nr: b.id },
-                                    search: { ...detailSearch, tab: "zahlung" },
-                                  });
-                                }}
+                      {isDocumentBeingRead(b) ? (
+                        <TableCell colSpan={9}>
+                          <ReadingNotice />
+                        </TableCell>
+                      ) : (
+                        <>
+                          <TableCell>
+                            <CompanyChip code={b.company_code} />
+                            <CostCentreRow doc={b} resolver={costCentres} />
+                          </TableCell>
+                          <TableCell className="text-right tabular-nums">
+                            <span className="block font-medium">{formatEUR(b.amount_gross)}</span>
+                            <span className="mt-0.5 block">
+                              <VatBadge vatRate={b.vat_rate} tax={b.tax} />
+                            </span>
+                          </TableCell>
+                          {/* The invoice date, on its own. The service period used to hang under it as
+                              a subtitle, and being a full date RANGE it set the width of the whole
+                              column and pushed every column right of it off the screen, for a line
+                              only a minority of rows carry. It lives on the detail screen now, in
+                              Rechnungsdaten, where there is room to read it. */}
+                          <TableCell className="whitespace-nowrap text-sm text-muted-foreground tabular-nums">
+                            <span className="block">{formatDate(b.document_date)}</span>
+                            {b.due_date && !b.paid_at && (
+                              <span
+                                className={cn(
+                                  "block text-xs",
+                                  dueBucket(b.due_date, today) === "overdue" && "text-destructive",
+                                )}
                               >
-                                {t("documents.list.aktion.pay")}
-                              </Button>
-                            );
-                          return <NextActionCell label={t(`documents.list.aktion.${action}`)} />;
-                        })()}
-                      </TableCell>
+                                {t("documents.list.col.faelligAm", {
+                                  datum: formatDate(b.due_date),
+                                })}
+                              </span>
+                            )}
+                          </TableCell>
+                          <TableCell>
+                            <ChannelBadge channel={b.intake_channel} />
+                          </TableCell>
+                          <TableCell>
+                            <ConfidencePill score={b.confidence_score} />
+                          </TableCell>
+                          <TableCell>
+                            <ReviewBadge
+                              reasonCount={checkReasons(b).length}
+                              unchecked={withoutChecks(b)}
+                              status={b.status}
+                            />
+                          </TableCell>
+                          <TableCell>
+                            <PaymentBadge paidAm={b.paid_at} />
+                          </TableCell>
+                          <TableCell>
+                            <BankMatchBadge
+                              hasConfirmed={b.has_confirmed_bank_match}
+                              hasSuggested={b.has_suggested_bank_match}
+                              showWhenEmpty
+                            />
+                          </TableCell>
+                          <TableCell>
+                            {(() => {
+                              const action = nextAction(b);
+                              if (action === "none")
+                                return (
+                                  <NextActionCell muted label={t("documents.list.aktion.none")} />
+                                );
+                              // "pay" opens the payment tab straight away instead of the overview, so
+                              // working down the pay list is one click per invoice.
+                              if (action === "pay")
+                                return (
+                                  <Button
+                                    size="sm"
+                                    className="h-7"
+                                    onClick={(e) => {
+                                      e.stopPropagation();
+                                      navigate({
+                                        to: "/incoming-invoices/$nr",
+                                        params: { nr: b.id },
+                                        search: { ...detailSearch, tab: "zahlung" },
+                                      });
+                                    }}
+                                  >
+                                    {t("documents.list.aktion.pay")}
+                                  </Button>
+                                );
+                              return (
+                                <NextActionCell label={t(`documents.list.aktion.${action}`)} />
+                              );
+                            })()}
+                          </TableCell>
+                        </>
+                      )}
                     </TableRow>
                   ))}
                   {/* Not while a fetch is still running. Changing the filter (an AI search most
@@ -1499,7 +1517,7 @@ function IncomingInvoicesPage() {
 
             {/* Mobile card list — same rows, same order, nothing clipped. */}
             <div className="relative mt-3 space-y-2 sm:hidden">
-              {listQ.isFetching && <TableLoadingOverlay />}
+              {isForegroundPageFetch(listQ) && <TableLoadingOverlay />}
               {rows.map((b) => (
                 <Link
                   key={b.id}
@@ -1516,68 +1534,79 @@ function IncomingInvoicesPage() {
                     <span className="min-w-0 break-words font-medium text-foreground">
                       {issuerName(b)}
                     </span>
-                    <span className="shrink-0 font-medium tabular-nums text-foreground">
-                      {formatEUR(b.amount_gross)}
-                    </span>
-                  </div>
-                  <div className="mt-1 break-words text-xs text-muted-foreground">
-                    {b.invoice_number
-                      ? t("documents.list.row.nr", { nr: b.invoice_number })
-                      : t("documents.list.row.ohneNr")}
-                    {b.cost_category ? ` · ${b.cost_category}` : ""}
-                  </div>
-                  <div className="mt-2 flex flex-wrap items-center gap-1.5">
-                    <CompanyChip code={b.company_code} />
-                    <CostCentreRow doc={b} resolver={costCentres} inline />
-                    <VatBadge vatRate={b.vat_rate} tax={b.tax} />
-                    <ChannelBadge channel={b.intake_channel} />
-                    {!isIncomingInvoice(b.document_type) && (
-                      <DocumentTypeBadge documentType={b.document_type} />
-                    )}
-                    {isDirectDebit(b.payment_method) && <DirectDebitBadge />}
-                  </div>
-                  <div className="mt-1.5 flex flex-wrap items-center gap-1.5">
-                    <ConfidencePill score={b.confidence_score} />
-                    <ReviewBadge
-                      reasonCount={checkReasons(b).length}
-                      unchecked={withoutChecks(b)}
-                      status={b.status}
-                    />
-                    <WorkflowBadge status={b.workflow_status} />
-                  </div>
-                  {/* Labelled: the table distinguished these two by column header, and without
-                      that a card can show two badges both reading "Offen" with no way to tell
-                      which is the payment and which is the DATEV hand-off. */}
-                  <div className="mt-1.5 flex flex-wrap items-center gap-x-3 gap-y-1.5 text-xs text-muted-foreground">
-                    <span className="flex items-center gap-1">
-                      {t("documents.list.col.zahlungAbgleich")}: <PaymentBadge paidAm={b.paid_at} />
-                      <BankMatchBadge
-                        hasConfirmed={b.has_confirmed_bank_match}
-                        hasSuggested={b.has_suggested_bank_match}
-                      />
-                    </span>
-                    <span className="flex items-center gap-1">
-                      {t("documents.list.col.datev")}:{" "}
-                      <DatevHandoverBadge handedOverAt={b.handed_over_at} />
-                    </span>
-                  </div>
-                  <div className="mt-2 flex flex-wrap items-center gap-x-3 gap-y-1 text-xs text-muted-foreground tabular-nums">
-                    <span>
-                      {t("documents.list.col.rechnungsdatum")}: {formatDate(b.document_date)}
-                    </span>
-                    <span>
-                      {t("documents.list.col.eingang")}: {formatDateTime(b.created_at)}
-                    </span>
-                    {b.due_date && !b.paid_at && (
-                      <span
-                        className={cn(
-                          dueBucket(b.due_date, today) === "overdue" && "text-destructive",
-                        )}
-                      >
-                        {t("documents.list.col.faelligAm", { datum: formatDate(b.due_date) })}
+                    {!isDocumentBeingRead(b) && (
+                      <span className="shrink-0 font-medium tabular-nums text-foreground">
+                        {formatEUR(b.amount_gross)}
                       </span>
                     )}
                   </div>
+                  {isDocumentBeingRead(b) ? (
+                    <div className="mt-2">
+                      <ReadingNotice />
+                    </div>
+                  ) : (
+                    <>
+                      <div className="mt-1 break-words text-xs text-muted-foreground">
+                        {b.invoice_number
+                          ? t("documents.list.row.nr", { nr: b.invoice_number })
+                          : t("documents.list.row.ohneNr")}
+                        {b.cost_category ? ` · ${b.cost_category}` : ""}
+                      </div>
+                      <div className="mt-2 flex flex-wrap items-center gap-1.5">
+                        <CompanyChip code={b.company_code} />
+                        <CostCentreRow doc={b} resolver={costCentres} inline />
+                        <VatBadge vatRate={b.vat_rate} tax={b.tax} />
+                        <ChannelBadge channel={b.intake_channel} />
+                        {!isIncomingInvoice(b.document_type) && (
+                          <DocumentTypeBadge documentType={b.document_type} />
+                        )}
+                        {isDirectDebit(b.payment_method) && <DirectDebitBadge />}
+                      </div>
+                      <div className="mt-1.5 flex flex-wrap items-center gap-1.5">
+                        <ConfidencePill score={b.confidence_score} />
+                        <ReviewBadge
+                          reasonCount={checkReasons(b).length}
+                          unchecked={withoutChecks(b)}
+                          status={b.status}
+                        />
+                        <WorkflowBadge status={b.workflow_status} />
+                      </div>
+                      {/* Labelled: the table distinguished these two by column header, and without
+                          that a card can show two badges both reading "Offen" with no way to tell
+                          which is the payment and which is the DATEV hand-off. */}
+                      <div className="mt-1.5 flex flex-wrap items-center gap-x-3 gap-y-1.5 text-xs text-muted-foreground">
+                        <span className="flex items-center gap-1">
+                          {t("documents.list.col.zahlungAbgleich")}:{" "}
+                          <PaymentBadge paidAm={b.paid_at} />
+                          <BankMatchBadge
+                            hasConfirmed={b.has_confirmed_bank_match}
+                            hasSuggested={b.has_suggested_bank_match}
+                          />
+                        </span>
+                        <span className="flex items-center gap-1">
+                          {t("documents.list.col.datev")}:{" "}
+                          <DatevHandoverBadge handedOverAt={b.handed_over_at} />
+                        </span>
+                      </div>
+                      <div className="mt-2 flex flex-wrap items-center gap-x-3 gap-y-1 text-xs text-muted-foreground tabular-nums">
+                        <span>
+                          {t("documents.list.col.rechnungsdatum")}: {formatDate(b.document_date)}
+                        </span>
+                        <span>
+                          {t("documents.list.col.eingang")}: {formatDateTime(b.created_at)}
+                        </span>
+                        {b.due_date && !b.paid_at && (
+                          <span
+                            className={cn(
+                              dueBucket(b.due_date, today) === "overdue" && "text-destructive",
+                            )}
+                          >
+                            {t("documents.list.col.faelligAm", { datum: formatDate(b.due_date) })}
+                          </span>
+                        )}
+                      </div>
+                    </>
+                  )}
                 </Link>
               ))}
               {rows.length === 0 && !listQ.isFetching && (
@@ -1746,6 +1775,16 @@ function TableLoadingOverlay() {
       aria-label={t("documents.list.loading")}
     >
       <Loader2 className="size-6 animate-spin text-brand" />
+    </div>
+  );
+}
+
+function ReadingNotice() {
+  const { t } = useTranslation();
+  return (
+    <div className="flex items-center gap-2 text-sm text-muted-foreground">
+      <Loader2 aria-hidden className="size-4 shrink-0 animate-spin" />
+      {t("documents.list.reading")}
     </div>
   );
 }

@@ -235,6 +235,7 @@ import { PaymentAccounts } from "@/components/suppliers/payment-account-summary"
 import { DocumentPreview } from "@/components/documents/document-preview";
 import { SplitOriginNote } from "@/components/documents/split-origin-note";
 import { ErrorState } from "@/components/documents/query-states";
+import { isDocumentBeingRead } from "@/lib/data/document-reading";
 import { NewRuleDialog } from "@/components/assignment/new-rule-dialog";
 import type {
   AssignmentRule,
@@ -316,6 +317,27 @@ export function DocumentDetailPage() {
 
   if (isError) {
     return <ErrorState error={error} onRetry={() => refetch()} />;
+  }
+
+  if (doc && isDocumentBeingRead(doc)) {
+    return (
+      <div className="space-y-6" aria-busy="true">
+        <div>
+          <h1 className="text-xl font-semibold tracking-tight text-foreground">{doc.issuer}</h1>
+          <p className="mt-1 flex items-center gap-2 text-base font-medium text-foreground">
+            <Loader2 aria-hidden className="size-4 animate-spin text-muted-foreground" />
+            {t("documents.detail.readingTitle")}
+          </p>
+        </div>
+        <div className="grid gap-6 lg:grid-cols-[minmax(320px,420px)_1fr]">
+          <Skeleton className="h-[520px] rounded-xl" />
+          <div className="space-y-4">
+            <Skeleton className="h-48 rounded-xl" />
+            <Skeleton className="h-48 rounded-xl" />
+          </div>
+        </div>
+      </div>
+    );
   }
 
   if (!doc) {
