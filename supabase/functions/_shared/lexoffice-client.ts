@@ -206,7 +206,9 @@ export interface LexofficePurchaseVoucherInput {
   dueDate?: string;
   totalGrossAmount: number;
   totalTaxAmount: number;
-  taxType: "net";
+  // Lexware rejects taxType "net" on an "unchecked" voucher (confirmed live, 406 invalid_value) --
+  // an unchecked voucher can only be gross.
+  taxType: "net" | "gross";
   contactId: string;
   voucherItems: LexofficeVoucherItem[];
   remark?: string;
