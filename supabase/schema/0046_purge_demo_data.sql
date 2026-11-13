@@ -17,6 +17,11 @@ as $$
 declare
   v_cutoff timestamptz := now() - interval '48 hours';
 begin
+  alter table public.document_history disable trigger trg_guard_document_history_row;
+  delete from public.document_history
+   where document_id in (select id from public.documents where is_demo and created_at < v_cutoff);
+  alter table public.document_history enable trigger trg_guard_document_history_row;
+
   delete from public.documents where is_demo and created_at < v_cutoff;
   delete from public.bank_transactions where is_demo and created_at < v_cutoff;
   delete from public.suppliers where is_demo and created_at < v_cutoff;
