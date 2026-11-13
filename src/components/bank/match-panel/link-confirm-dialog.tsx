@@ -1,6 +1,7 @@
 import { useEffect, useState, type ReactNode } from "react";
 import { Info, Loader2 } from "lucide-react";
 
+import { DEFAULT_MATCHING_SETTINGS } from "@/kit/lib/bank-matching";
 import { HintTooltip } from "@/kit/components/data-table";
 
 import {
@@ -53,9 +54,9 @@ export function LinkConfirmDialog({
     pair: LinkConfirmPair,
     options?: {
       differenceReason?: string;
-      /** Close the invoice even though `rechnungRest` stays unallocated. */
+      /** Close the invoice even though `invoiceRest` stays unallocated. */
       closeInvoice?: boolean;
-      /** Close the transaction even though `transaktionRest` stays unallocated. */
+      /** Close the transaction even though `transactionRest` stays unallocated. */
       closeTransaction?: boolean;
     },
   ) => void;
@@ -111,11 +112,12 @@ export function LinkConfirmDialog({
   // The checkbox appears once the leftover is BIGGER than the allowance -- a real partial payment,
   // where writing off the rest is a decision somebody has to take on purpose, and where a
   // pre-ticked box would let 71,64 € disappear on one careless confirm.
-  const tolerance = Math.max(matchingSettingsQ.data?.amount_tolerance ?? 0.01, 0.01);
+  const tolerance =
+    matchingSettingsQ.data?.amount_tolerance ?? DEFAULT_MATCHING_SETTINGS.amountTolerance;
   const invoiceQuestionOpen = invoiceRest > tolerance + 1e-9;
   const transactionQuestionOpen = transactionRest > tolerance + 1e-9;
   /** Inside the allowance the invoice counts as paid whether or not anybody ticks anything. */
-  const invoiceGilt = invoiceRest > 0.01 && !invoiceQuestionOpen;
+  const invoiceCountsAsPaid = invoiceRest > 0.01 && !invoiceQuestionOpen;
 
   useEffect(() => {
     setCloseInvoice(false);
@@ -252,10 +254,10 @@ export function LinkConfirmDialog({
               <ul className="space-y-1.5">
                 <Sequence
                   text={
-                    willFullPaid || invoiceGilt || closeInvoice
+                    willFullPaid || invoiceCountsAsPaid || closeInvoice
                       ? isOutgoing
                         ? t("manualLink.confirm.consequence.paidOutgoing")
-                        : isCashDiscount || invoiceGilt || closeInvoice
+                        : isCashDiscount || invoiceCountsAsPaid || closeInvoice
                           ? t("manualLink.confirm.consequence.paidDiscount", {
                               difference: formatEUR(invoiceOpen - amount),
                             })
@@ -268,7 +270,7 @@ export function LinkConfirmDialog({
                             rest: formatEUR(invoiceRest),
                           })
                   }
-                  ton={willFullPaid || invoiceGilt || closeInvoice ? "gut" : "warn"}
+                  tone={willFullPaid || invoiceCountsAsPaid || closeInvoice ? "good" : "warn"}
                 />
                 <Sequence
                   text={
@@ -285,7 +287,7 @@ export function LinkConfirmDialog({
                             rest: formatEUR(transactionRest),
                           })
                   }
-                  ton={transactionRest <= 0.01 || closeTransaction ? "gut" : "warn"}
+                  tone={transactionRest <= 0.01 || closeTransaction ? "good" : "warn"}
                 />
               </ul>
             )}
@@ -337,9 +339,13 @@ function Row({ label, value, stark }: { label: string; value: ReactNode; stark?:
   );
 }
 
-function Sequence({ text, ton }: { text: string; ton: "gut" | "warn" | "neutral" }) {
+function Sequence({ text, tone }: { text: string; tone: "good" | "warn" | "neutral" }) {
   const dot =
-    ton === "gut" ? "bg-emerald-500" : ton === "warn" ? "bg-amber-500" : "bg-muted-foreground/40";
+    tone === "good"
+      ? "bg-emerald-500"
+      : tone === "warn"
+        ? "bg-amber-500"
+        : "bg-muted-foreground/40";
   return (
     <li className="flex items-start gap-2">
       <span className={cn("mt-1.5 size-1.5 shrink-0 rounded-full", dot)} />

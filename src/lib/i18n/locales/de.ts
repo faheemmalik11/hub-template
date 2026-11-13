@@ -926,6 +926,7 @@ const de = {
     documentTypes: "Belegarten",
     documentIntakeLog: "Posteingangs-Protokoll",
     fileNaming: "Dateibenennung",
+    invoiceSettings: "Rechnungsvorgaben",
     toOverview: "Zur Übersicht",
     menu: "Menü",
     myProfile: "Mein Profil",
@@ -1688,6 +1689,7 @@ const de = {
     fileNaming: "Dateibenennung",
     inbox: "Postfach & Ablage",
     incomingInvoices: "Eingangsrechnungen",
+    invoiceSettings: "Rechnungsvorgaben",
     manualBookings: "Manuelle Buchungen",
     overview: "Übersicht",
     notifications: "Benachrichtigungen",
@@ -4503,6 +4505,62 @@ const de = {
       passwordChangeFailed: "Das Passwort konnte nicht geändert werden.",
     },
   },
+  invoiceSettings: {
+    title: "Rechnungsvorgaben",
+    subtitle:
+      "Welcher Steuersatz, welches Land und welche Texte verwendet werden, wenn eine Rechnung oder ein Beleg an die Buchhaltung geht und die Angabe am Vorgang selbst fehlt.",
+    readOnlyHint:
+      "Nur Administratoren können diese Vorgaben ändern. Wer das darf, steht unter Verwaltung › Team.",
+    effectHint:
+      "Gilt ab dem Speichern. Bereits übertragene Rechnungen und Belege bleiben unverändert.",
+    lastChangedBy: "Zuletzt geändert von {{who}} am {{when}}.",
+    unknown: "unbekannt",
+    save: "Speichern",
+    saving: "Wird gespeichert …",
+    textRequired: "Bitte einen Text eintragen.",
+    defaultVatRateInvalid: "Bitte eine Zahl zwischen 0 und 100 eintragen.",
+    countryCodeInvalid:
+      "Bitte ein Länderkürzel aus zwei Großbuchstaben eintragen, zum Beispiel DE.",
+    kindInvalid:
+      "Nur Kleinbuchstaben, Ziffern und Unterstriche, und jede Rechnungsart darf nur einmal vorkommen.",
+    card: {
+      tax: {
+        title: "Steuer",
+        desc: "Wird verwendet, wenn am Vorgang kein Steuersatz steht. Das Land bestimmt außerdem, welche Steuersätze erlaubt sind und welches Land in der Rechnungsanschrift steht.",
+      },
+      wording: {
+        title: "Texte auf der Rechnung",
+        desc: "Die Bezeichnung der Rechnungsposition und die Einheit, die dabei angegeben wird.",
+      },
+      voucherRemark: {
+        title: "Vermerk auf dem Beleg",
+        desc: "Wird verwendet, wenn am Beleg keine Zahlungsart oder kein Verwendungszweck steht.",
+      },
+      kindLabels: {
+        title: "Bezeichnung je Rechnungsart",
+        desc: "Die Bezeichnung, die auf der Rechnung steht. Ohne Eintrag wird die allgemeine Bezeichnung verwendet.",
+      },
+    },
+    field: {
+      defaultVatRate: "Standard-Steuersatz in Prozent",
+      countryCode: "Länderkürzel",
+      invoiceFallbackLabel: "Allgemeine Bezeichnung",
+      invoiceUnitName: "Einheit",
+      defaultPaymentMethod: "Zahlungsart",
+      documentFallbackLabel: "Allgemeine Belegbezeichnung",
+      kind: "Rechnungsart",
+      kindLabel: "Bezeichnung",
+    },
+    kindLabels: {
+      add: "Rechnungsart hinzufügen",
+      remove: "Rechnungsart entfernen",
+      empty: "Noch keine Rechnungsart eingetragen.",
+    },
+    toast: {
+      saved: "Die Rechnungsvorgaben wurden gespeichert.",
+      failed: "Speichern fehlgeschlagen: {{error}}",
+    },
+  },
   fileNaming: {
     readOnlyHint:
       "Nur Administratoren können diese Einstellungen ändern. Wer das darf, steht unter Verwaltung › Team.",
@@ -4896,6 +4954,12 @@ const de = {
         invoiced: "Sobald die Rechnung an Käufer und Verkäufer raus ist",
         commission_received: "Erst wenn unsere Provision bezahlt ist",
       },
+      broker_bonus_counts_status: "Welche Boni die Maklerauswertung zählt",
+      brokerBonusCountsStatus: {
+        paid: "Nur Boni, die schon ausgezahlt sind",
+        approved_and_paid: "Freigegebene und ausgezahlte Boni zusammen",
+        separate: "Ausgezahlte Boni, freigegebene getrennt daneben",
+      },
       save: "Speichern",
       saved: "Gespeichert",
       invalid: "Bitte nur Zahlen eintragen.",
@@ -4984,6 +5048,7 @@ const de = {
         volume: "Objektvolumen",
         commission: "Provision",
         bonuses: "Boni",
+        bonusesApproved: "Freigegeben, noch nicht ausgezahlt",
         lastYear: "{{year}}: {{value}}",
       },
       table: {
@@ -5227,6 +5292,8 @@ const de = {
       saving: "Wird gespeichert …",
       saved: "Gespeichert.",
       saveFailed: "Speichern ist fehlgeschlagen.",
+      dueDateNotInCrm:
+        "Hier gespeichert, aber nicht ans CRM gesendet. Der Wert bleibt erhalten und wird später erneut gesendet.",
       approve: "Freigeben",
       approving: "Wird freigegeben …",
       approved: "Freigegeben.",
@@ -5439,9 +5506,9 @@ const de = {
     },
     matchScore: {
       confidence: {
-        hoch: "Sehr wahrscheinlich der richtige Treffer",
-        mittel: "Wahrscheinlich der richtige Treffer",
-        niedrig: "Möglicherweise der richtige Treffer",
+        high: "Sehr wahrscheinlich der richtige Treffer",
+        medium: "Wahrscheinlich der richtige Treffer",
+        low: "Möglicherweise der richtige Treffer",
       },
       why: "Warum vorgeschlagen:",
       signal: {
@@ -6304,6 +6371,11 @@ const de = {
       viewFile: "Datei ansehen",
       fileFailed: "Die Datei konnte nicht geöffnet werden.",
       fileFailedWithError: "Die Datei konnte nicht geöffnet werden: {{error}}",
+      fileDialog: {
+        title: "Rechnung {{number}}",
+        titleDraft: "Rechnung (Entwurf)",
+        cannotDisplay: "Diese Datei kann hier nicht angezeigt werden.",
+      },
       statusFailed: "Status konnte nicht geändert werden: {{error}}",
       lexoffice: {
         send: "An Lexoffice senden",

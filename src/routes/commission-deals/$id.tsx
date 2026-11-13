@@ -46,7 +46,7 @@ import { EDGE_FUNCTION } from "@/config/edge-functions";
 import { pageTitle } from "@/config/brand";
 import { useAuth } from "@/lib/auth";
 import { sb } from "@/data/client";
-import { errorText, formatDateTime } from "@/lib/data/format";
+import { edgeFunctionErrorText, errorText, formatDateTime } from "@/lib/data/format";
 import { useTranslation } from "@/lib/i18n";
 import { tabSearch, useTabParam } from "@/lib/use-tab-param";
 import { cn } from "@/lib/utils";
@@ -99,13 +99,21 @@ function CommissionDealPage() {
   );
 }
 
+async function pushDueDateToCrm(propertyId: string): Promise<void> {
+  const { error } = await sb.functions.invoke(EDGE_FUNCTION.propstackPaymentDueDatePush, {
+    body: { property_id: propertyId },
+  });
+  if (error) throw new Error(await edgeFunctionErrorText(error));
+}
+
 function DealEditor({ deal }: { deal: Deal }) {
   const { t } = useTranslation();
   const { can } = useAuth();
   const mayEditAny = can(PERMISSIONS.documentsWrite);
   const mayEdit =
-    mayEditAny ||
-    (can(PERMISSIONS.dealsSubmit) && (deal.status === "incomplete" || deal.status === "ready"));
+    deal.status !== "settled" &&
+    (mayEditAny ||
+      (can(PERMISSIONS.dealsSubmit) && (deal.status === "incomplete" || deal.status === "ready")));
   const mayApprove = can(PERMISSIONS.invoicesApprove);
   const suggestsBonuses = useFeature(PERMISSIONS.bonusesSuggest) && can(PERMISSIONS.bonusesReview);
   const managesDonations = can(PERMISSIONS.donationsManage);
@@ -256,22 +264,24 @@ function DealEditor({ deal }: { deal: Deal }) {
           toast.error(t("commissionDeals.actions.saveFailed"), { description: errorText(error) }),
       },
     );
-    if (dueDateUnsaved && deal.property_id) {
+    const propertyId = deal.property_id;
+    if (dueDateUnsaved && propertyId) {
       updateDueDate.mutate(
         {
           payment_due_date: dueDate.trim() === "" ? null : dueDate,
           payment_due_date_note: dueDateNote.trim() === "" ? null : dueDateNote.trim(),
+          payment_due_date_source: "hub",
         },
         {
           onSuccess: () => {
             setSavedDueDate(dueDate);
             setSavedDueDateNote(dueDateNote);
             if (syncsPaymentDueDate) {
-              sb.functions
-                .invoke(EDGE_FUNCTION.propstackPaymentDueDatePush, {
-                  body: { property_id: deal.property_id },
-                })
-                .catch(() => {});
+              pushDueDateToCrm(propertyId).catch((error: unknown) =>
+                toast.warning(t("commissionDeals.actions.dueDateNotInCrm"), {
+                  description: errorText(error),
+                }),
+              );
             }
           },
           onError: (error) =>
@@ -515,9 +525,15 @@ function DealEditor({ deal }: { deal: Deal }) {
 
           <DealInvoicesCard deal={deal} />
 
-          {suggestsBonuses && !unsaved && <BonusSuggestionsCard deal={deal} />}
-          {suggestsBonuses && !unsaved && <DealReferrerBonusCard deal={deal} />}
-          {managesDonations && !unsaved && <DealDonationCard deal={deal} />}
+          {suggestsBonuses && !unsaved && deal.status !== "settled" && (
+            <BonusSuggestionsCard deal={deal} />
+          )}
+          {suggestsBonuses && !unsaved && deal.status !== "settled" && (
+            <DealReferrerBonusCard deal={deal} />
+          )}
+          {managesDonations && !unsaved && deal.status !== "settled" && (
+            <DealDonationCard deal={deal} />
+          )}
 
           <div className="flex flex-wrap gap-2">
             {mayEdit && (
@@ -531,19 +547,22 @@ function DealEditor({ deal }: { deal: Deal }) {
                   : t("commissionDeals.actions.save")}
               </Button>
             )}
-            {mayApprove && deal.status !== "approved" && deal.status !== "invoiced" && (
-              <Button
-                className="shadow-none"
-                variant="outline"
-                onClick={runApprove}
-                disabled={approve.isPending || unsaved || deal.status !== "ready"}
-              >
-                <Check className="size-4" />
-                {approve.isPending
-                  ? t("commissionDeals.actions.approving")
-                  : t("commissionDeals.actions.approve")}
-              </Button>
-            )}
+            {mayApprove &&
+              deal.status !== "approved" &&
+              deal.status !== "invoiced" &&
+              deal.status !== "settled" && (
+                <Button
+                  className="shadow-none"
+                  variant="outline"
+                  onClick={runApprove}
+                  disabled={approve.isPending || unsaved || deal.status !== "ready"}
+                >
+                  <Check className="size-4" />
+                  {approve.isPending
+                    ? t("commissionDeals.actions.approving")
+                    : t("commissionDeals.actions.approve")}
+                </Button>
+              )}
             {mayApprove && deal.status === "approved" && result.ok && (
               <Button
                 className="shadow-none"

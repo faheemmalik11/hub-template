@@ -2,7 +2,12 @@
 // hubs' other three copies of this screen and anything else that has to agree about "8759 is
 // probably 8795" all answer identically. The Deno edge function keeps its own copy -- it cannot
 // import from node_modules -- and that one is the exception, not the pattern.
-import { amountMatch, hasTransposedDigits, TOLERANCE_PENALTY } from "@/kit/lib/bank-matching";
+import {
+  amountMatch,
+  DEFAULT_MATCHING_SETTINGS,
+  hasTransposedDigits,
+  TOLERANCE_PENALTY,
+} from "@/kit/lib/bank-matching";
 
 export interface MatchDocument {
   id: string;
@@ -54,8 +59,8 @@ export const WEIGHT = { amount: 0.45, reference: 0.25, customerNumber: 0.05, iba
 export const DATE_WINDOW_DAYS = 60;
 export const DATE_PROXIMITY_DAYS = 7;
 export const DATE_PROXIMITY_BONUS = 0.03;
-export const AUTO_THRESHOLD = 0.9;
-export const CANDIDATE_THRESHOLD = 0.6;
+export const AUTO_THRESHOLD = DEFAULT_MATCHING_SETTINGS.autoMatchThreshold;
+export const CANDIDATE_THRESHOLD = DEFAULT_MATCHING_SETTINGS.candidateThreshold;
 
 const AMOUNT_EPSILON = 0.01;
 const NAME_PREFIX_LENGTH = 6;
@@ -96,7 +101,7 @@ function pairAmount(doc: MatchDocument, txn: MatchTransaction): number {
 export function scoreMatch(
   doc: MatchDocument,
   txn: MatchTransaction,
-  amountTolerance: number = 0.01,
+  amountTolerance: number = DEFAULT_MATCHING_SETTINGS.amountTolerance,
 ): { score: number; reasons: MatchReasons } {
   const gross = amountPaidOut(doc);
   const txnAmount = Math.abs(txn.amount);
@@ -148,7 +153,7 @@ export function runMatching(
   documents: MatchDocument[],
   transactions: MatchTransaction[],
   direction: MatchDirection = "incoming",
-  amountTolerance: number = 0.01,
+  amountTolerance: number = DEFAULT_MATCHING_SETTINGS.amountTolerance,
   candidateThreshold: number = CANDIDATE_THRESHOLD,
   autoThreshold: number = AUTO_THRESHOLD,
 ): MatchCandidate[] {

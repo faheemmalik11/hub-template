@@ -1,8 +1,15 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 
 import { TABLE } from "@/config/tables";
-import type { FilenameSettings, MatchingSettings } from "@/lib/data/types";
+import { DEFAULT_MATCHING_SETTINGS } from "@/kit/lib/bank-matching";
+import type {
+  FilenameSettings,
+  InvoiceKindLabel,
+  InvoiceSettings,
+  MatchingSettings,
+} from "@/lib/data/types";
 import { STALE, SINGLETON_ROW_ID, actorEmail, insertChangeHistory, sb } from "@/data/client";
+import { queryKeys } from "@/data/keys";
 
 // ---- Filename settings (filename_settings; migration 20260804090000_filename_settings) ----
 // Singleton row driving the admin-configurable uniform filename pattern. See
@@ -67,9 +74,9 @@ export function useMatchingSettings() {
       if (error) throw error;
       return (data ?? {
         id: true,
-        amount_tolerance: 0.01,
-        auto_match_threshold: 0.9,
-        candidate_threshold: 0.6,
+        amount_tolerance: DEFAULT_MATCHING_SETTINGS.amountTolerance,
+        auto_match_threshold: DEFAULT_MATCHING_SETTINGS.autoMatchThreshold,
+        candidate_threshold: DEFAULT_MATCHING_SETTINGS.candidateThreshold,
       }) as MatchingSettings;
     },
   });
@@ -116,5 +123,96 @@ export function useUpdateMatchingSettings() {
       qc.invalidateQueries({ queryKey: ["matching_settings"] });
       qc.invalidateQueries({ queryKey: ["match_candidates"] });
     },
+  });
+}
+
+export function useInvoiceSettings() {
+  return useQuery({
+    queryKey: queryKeys.settings.invoiceSettings,
+    staleTime: STALE,
+    queryFn: async (): Promise<InvoiceSettings> => {
+      const { data, error } = await sb
+        .from(TABLE.invoiceSettings)
+        .select("*")
+        .eq("id", true)
+        .single();
+      if (error) throw error;
+      return data as unknown as InvoiceSettings;
+    },
+  });
+}
+
+export function useUpdateInvoiceSettings() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async (
+      changes: Partial<Omit<InvoiceSettings, "id" | "updated_at" | "updated_by">>,
+    ) => {
+      const actor = await actorEmail();
+      const { data: before } = await sb
+        .from(TABLE.invoiceSettings)
+        .select("*")
+        .eq("id", true)
+        .maybeSingle();
+      const { error } = await sb
+        .from(TABLE.invoiceSettings)
+        .update({ ...changes, updated_at: new Date().toISOString(), updated_by: actor })
+        .eq("id", true);
+      if (error) throw error;
+      await insertChangeHistory("invoice_settings", SINGLETON_ROW_ID, "updated", null, {
+        vorher: before ?? null,
+        nachher: changes,
+      });
+    },
+    onSuccess: () => qc.invalidateQueries({ queryKey: queryKeys.settings.invoiceSettings }),
+  });
+}
+
+export function useInvoiceKindLabels() {
+  return useQuery({
+    queryKey: queryKeys.settings.invoiceKindLabels,
+    staleTime: STALE,
+    queryFn: async (): Promise<InvoiceKindLabel[]> => {
+      const { data, error } = await sb
+        .from(TABLE.invoiceKindLabels)
+        .select("kind, label")
+        .order("kind");
+      if (error) throw error;
+      return (data ?? []) as unknown as InvoiceKindLabel[];
+    },
+  });
+}
+
+export function useSaveInvoiceKindLabels() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async (labels: InvoiceKindLabel[]) => {
+      const actor = await actorEmail();
+      if (labels.length > 0) {
+        const { error } = await sb.from(TABLE.invoiceKindLabels).upsert(
+          labels.map((one) => ({
+            kind: one.kind,
+            label: one.label,
+            updated_at: new Date().toISOString(),
+            updated_by: actor,
+          })),
+          { onConflict: "kind" },
+        );
+        if (error) throw error;
+      }
+      const { data: stored, error: readError } = await sb
+        .from(TABLE.invoiceKindLabels)
+        .select("kind");
+      if (readError) throw readError;
+      const keptKinds = new Set(labels.map((one) => one.kind));
+      const removedKinds = ((stored ?? []) as unknown as { kind: string }[])
+        .map((one) => one.kind)
+        .filter((kind) => !keptKinds.has(kind));
+      if (removedKinds.length > 0) {
+        const { error } = await sb.from(TABLE.invoiceKindLabels).delete().in("kind", removedKinds);
+        if (error) throw error;
+      }
+    },
+    onSuccess: () => qc.invalidateQueries({ queryKey: queryKeys.settings.invoiceKindLabels }),
   });
 }

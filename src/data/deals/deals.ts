@@ -6,13 +6,14 @@ import { queryKeys } from "@/data/keys";
 import { searchTokens, searchWasDropped } from "@/data/shared";
 import type { CommissionSide } from "@/kit/lib/commission";
 
-export type DealStatus = "incomplete" | "ready" | "approved" | "invoiced" | "cancelled";
+export type DealStatus = "incomplete" | "ready" | "approved" | "invoiced" | "cancelled" | "settled";
 export const DEAL_STATUSES: DealStatus[] = [
   "incomplete",
   "ready",
   "approved",
   "invoiced",
   "cancelled",
+  "settled",
 ];
 export type FeeKind = "percent" | "fixed";
 
@@ -214,12 +215,13 @@ async function propertyIdsMatchingToken(token: string): Promise<string[]> {
 }
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
-function applyDealsFilter<T extends { or: any; eq: any }>(
+function applyDealsFilter<T extends { or: any; eq: any; neq: any }>(
   query: T,
   filter: { status?: DealStatus | ""; tokens: string[]; idsByToken: string[][] },
 ): T {
   let q = query;
   if (filter.status) q = q.eq("status", filter.status);
+  else q = q.neq("status", "settled");
   filter.tokens.forEach((token, i) => {
     const ids = filter.idsByToken[i];
     const idsPart = ids.length ? `,property_id.in.(${ids.join(",")})` : "";
@@ -335,6 +337,38 @@ export function useApproveDeal(dealId: string) {
       if (error) throw error;
     },
     onSuccess: () => qc.invalidateQueries({ queryKey: queryKeys.deals.all }),
+  });
+}
+
+export interface DealCrmChange {
+  field: string;
+  was: string | null;
+  became: string | null;
+}
+
+export function useDealCrmChanges(dealId: string) {
+  return useQuery({
+    queryKey: queryKeys.deals.crmChanges(dealId),
+    queryFn: async (): Promise<DealCrmChange[]> => {
+      const { data, error } = await sb.rpc("deal_crm_changes", { p_deal_id: dealId });
+      if (error) throw error;
+      return (data ?? []) as DealCrmChange[];
+    },
+    enabled: !!dealId,
+  });
+}
+
+export function useAcknowledgeDealCrmChanges(dealId: string) {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async () => {
+      const { error } = await sb.rpc("acknowledge_deal_crm_changes", { p_deal_id: dealId });
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: queryKeys.deals.crmChanges(dealId) });
+      qc.invalidateQueries({ queryKey: queryKeys.deals.all });
+    },
   });
 }
 

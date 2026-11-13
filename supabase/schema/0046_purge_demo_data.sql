@@ -19,10 +19,11 @@ declare
   v_demo_deal_ids uuid[];
   v_demo_customer_ids uuid[];
 begin
-  -- deals/customers/outgoing_invoices carry no is_demo column of their own (0010_access.sql's
-  -- company_demo_visible() reads the parent's instead), but a practice run creates them tied to a
-  -- demo property/company all the same, and they block deleting that property/company (NO ACTION
-  -- foreign keys) if left behind. Collected once so every statement below agrees on the same set.
+  -- deals/customers/outgoing_invoices/manual_bookings carry no is_demo column of their own
+  -- (0010_access.sql's company_demo_visible() reads the parent's instead), but a practice run
+  -- creates them tied to a demo property/company all the same, and they block deleting that
+  -- property/company (NO ACTION foreign keys) if left behind. Collected once so every statement
+  -- below agrees on the same set.
   select array_agg(d.id) into v_demo_deal_ids
     from public.deals d join public.properties p on p.id = d.property_id
    where p.is_demo and p.created_at < v_cutoff;
@@ -39,6 +40,10 @@ begin
   delete from public.deal_parties where customer_id = any (v_demo_customer_ids);
   delete from public.deals where id = any (v_demo_deal_ids);
   delete from public.customers where id = any (v_demo_customer_ids);
+
+  delete from public.manual_bookings mb
+   where exists (select 1 from public.properties p where p.id = mb.property_id and p.is_demo and p.created_at < v_cutoff)
+      or exists (select 1 from public.companies co where co.id = mb.company_id and co.is_demo and co.created_at < v_cutoff);
 
   alter table public.document_history disable trigger trg_guard_document_history_row;
   delete from public.document_history
@@ -57,6 +62,12 @@ begin
 
   delete from public.properties where is_demo and created_at < v_cutoff;
   delete from public.companies where is_demo and created_at < v_cutoff;
+exception
+  -- A row this can't reach yet fails loudly to an administrator instead of silently every night.
+  when others then
+    perform public.notify_administrators(
+      'The nightly demo-data cleanup failed: ' || sqlerrm,
+      '/administration', 'purge_stale_demo_data');
 end;
 $$;
 

@@ -197,6 +197,20 @@ on conflict (key) do update
        default_enabled = excluded.default_enabled, sort_order = excluded.sort_order;
 
 insert into public.permissions (key, kind, parent_key, category, label_de, label_en, default_enabled, sort_order) values
+  ('lexoffice.invoice_file_fetch', 'section', 'page.outgoing_invoices', 'documents', 'PDF und Rechnungsnummer von Lexware abholen', 'Fetch PDF and invoice number from Lexware', false, 222)
+on conflict (key) do update
+   set kind = excluded.kind, parent_key = excluded.parent_key, category = excluded.category,
+       label_de = excluded.label_de, label_en = excluded.label_en,
+       default_enabled = excluded.default_enabled, sort_order = excluded.sort_order;
+
+insert into public.permissions (key, kind, parent_key, category, label_de, label_en, default_enabled, sort_order) values
+  ('lexoffice.webhook', 'section', 'page.incoming_invoices', 'documents', 'Zahlungen sofort von Lexware übernehmen', 'Take payments from Lexware straight away', false, 217)
+on conflict (key) do update
+   set kind = excluded.kind, parent_key = excluded.parent_key, category = excluded.category,
+       label_de = excluded.label_de, label_en = excluded.label_en,
+       default_enabled = excluded.default_enabled, sort_order = excluded.sort_order;
+
+insert into public.permissions (key, kind, parent_key, category, label_de, label_en, default_enabled, sort_order) values
   ('propstack.payment_due_date_sync', 'section', 'page.commission_deals', 'documents', 'Zahlungsziel an PropStack zurückmelden', 'Send the payment due date back to PropStack', false, 940)
 on conflict (key) do update
    set kind = excluded.kind, parent_key = excluded.parent_key, category = excluded.category,
@@ -209,6 +223,21 @@ insert into public.permissions (key, kind, parent_key, category, label_de, label
   ('deals.submit', 'action', 'page.commission_deals', 'documents', 'Eigene Provisionen erfassen', 'Enter own commissions',
    'Verkäufe auf den eigenen Objekten anlegen und bearbeiten, bis die Geschäftsführung sie freigibt. Freigeben lässt sich damit nichts.',
    'Create and edit deals on your own properties until an administrator approves them. It approves nothing.', false, 935)
+on conflict (key) do update
+   set kind = excluded.kind, parent_key = excluded.parent_key, category = excluded.category,
+       label_de = excluded.label_de, label_en = excluded.label_en,
+       description_de = excluded.description_de, description_en = excluded.description_en,
+       default_enabled = excluded.default_enabled, sort_order = excluded.sort_order;
+
+-- Per-agent closings, volume, commission and bonuses, this year vs. last. Off by default; the
+-- section switch shows the tab at all, the action decides every agent vs. only the viewer's own.
+insert into public.permissions (key, kind, parent_key, category, label_de, label_en, description_de, description_en, default_enabled, sort_order) values
+  ('deals.report', 'section', 'page.commission_deals', 'documents', 'Auswertung', 'Reporting',
+   'Eine Übersicht je Makler mit Abschlüssen, Volumen, Provision und Boni im Vorjahresvergleich.',
+   'A per-agent overview of closings, volume, commission and bonuses, compared with the previous year.', false, 943),
+  ('deals.report_all', 'action', 'page.commission_deals', 'documents', 'Auswertung aller Makler sehen', 'See every agent''s reporting',
+   'In der Auswertung alle Makler im Vergleich sehen, nicht nur die eigenen Zahlen.',
+   'See every agent compared in the reporting tab, not only your own figures.', false, 944)
 on conflict (key) do update
    set kind = excluded.kind, parent_key = excluded.parent_key, category = excluded.category,
        label_de = excluded.label_de, label_en = excluded.label_en,
@@ -296,7 +325,8 @@ select r.id, k
           'invoices.approve', 'invoices.approve_final', 'invoices.override_workflow',
           'master_data.read', 'master_data.write',
           'bank.read', 'bank.write', 'payments.write',
-          'rules.write', 'settings.manage', 'bonuses.review', 'bonuses.suggest']
+          'rules.write', 'settings.manage', 'bonuses.review', 'bonuses.suggest',
+          'deals.report_all']
         when r.name = 'supervisor' then array[
           'documents.read', 'documents.write',
           'invoices.approve', 'invoices.approve_final',
@@ -393,6 +423,13 @@ on conflict (key) do update
 
 insert into public.permissions (key, kind, parent_key, category, label_de, label_en, default_enabled, sort_order) values
   ('documents.voice_dictation', 'section', 'page.incoming_invoices', 'menu', 'Dokument diktieren', 'Voice dictation', false, 215)
+on conflict (key) do update
+   set kind = excluded.kind, parent_key = excluded.parent_key, category = excluded.category,
+       label_de = excluded.label_de, label_en = excluded.label_en,
+       default_enabled = excluded.default_enabled, sort_order = excluded.sort_order;
+
+insert into public.permissions (key, kind, parent_key, category, label_de, label_en, default_enabled, sort_order) values
+  ('page.invoice_settings', 'page', 'module.invoices', 'menu', 'Rechnungsvorgaben', 'Invoice defaults', false, 245)
 on conflict (key) do update
    set kind = excluded.kind, parent_key = excluded.parent_key, category = excluded.category,
        label_de = excluded.label_de, label_en = excluded.label_en,

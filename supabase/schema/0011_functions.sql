@@ -3398,9 +3398,16 @@ declare
   v_party jsonb;
   v_cost jsonb;
   v_position integer;
+  v_current_status text;
 begin
   if p_status not in ('incomplete', 'ready') then
     raise exception 'save_deal: a saved deal is incomplete or ready, not %', p_status
+      using errcode = 'check_violation';
+  end if;
+
+  select status into v_current_status from public.deals where id = p_deal_id;
+  if v_current_status not in ('incomplete', 'ready') then
+    raise exception 'save_deal: deal % is % and can no longer be edited this way', p_deal_id, v_current_status
       using errcode = 'check_violation';
   end if;
 
@@ -3988,6 +3995,7 @@ begin
       update public.documents
          set paid_at     = coalesce(v_paydate::timestamptz, now()),
              paid_source = 'bank_match',
+             lexoffice_open_amount = 0,
              updated_at  = now()
        where id = v_invoice;
 

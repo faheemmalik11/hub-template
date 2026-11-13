@@ -1,8 +1,10 @@
 import type { MatchDifferenceReason, MatchingSettingsConfig } from "./types";
 
+// Kept in step with matching_settings' own column defaults (0055), so a client with no row
+// bands scores the same way as a client with the shipped one.
 export const DEFAULT_MATCHING_SETTINGS: MatchingSettingsConfig = {
   amountTolerance: 0.01,
-  autoMatchThreshold: 0.9,
+  autoMatchThreshold: 0.95,
   candidateThreshold: 0.6,
 };
 

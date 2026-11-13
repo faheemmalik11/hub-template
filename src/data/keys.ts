@@ -38,6 +38,8 @@ export const queryKeys = {
     all: ["deals"] as const,
     one: (id: string) => ["deals", id] as const,
     list: (params: unknown) => ["deals", "list", params] as const,
+    agentReport: (cutoff: string) => ["deals", "agent-report", cutoff] as const,
+    crmChanges: (id: string) => ["deals", id, "crm-changes"] as const,
   },
   categories: { all: ["categories"] as const },
   bank: {
@@ -53,5 +55,7 @@ export const queryKeys = {
   settings: {
     features: ["settings", "features"] as const,
     scheduledJobs: ["settings", "scheduled-jobs"] as const,
+    invoiceSettings: ["settings", "invoice-settings"] as const,
+    invoiceKindLabels: ["settings", "invoice-kind-labels"] as const,
   },
 } as const;

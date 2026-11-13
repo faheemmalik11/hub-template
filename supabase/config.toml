@@ -19,3 +19,9 @@ verify_jwt = false
 # of relying on a narrower trust model.
 [functions.propstack-webhook]
 verify_jwt = false
+
+# Lexware posts here with no JWT attached. It carries no signature of its own, so the function
+# checks X-Lexware-Webhook-Secret against LEXWARE_WEBHOOK_SECRET, verifies the organization the
+# payload claims against this Hub's own, and never trusts the payload for data.
+[functions.lexoffice-webhook]
+verify_jwt = false

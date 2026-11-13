@@ -9,6 +9,8 @@ export {
   useDealsList,
   useSaveDeal,
 } from "./deals";
+export { useAgentCommissionReport } from "./agent-report";
+export type { AgentCommissionReportRow } from "./agent-report";
 export type {
   Deal,
   DealCost,

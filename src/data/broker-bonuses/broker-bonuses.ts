@@ -128,6 +128,7 @@ export type ReferrerTierCountsStatus = DealStage;
 export type ReferrerTierReset = "yearly" | "never";
 export type ReferrerTierScope = "per_referrer" | "company_wide";
 export type ReferrerPayoutTiming = DealStage;
+export type BrokerBonusCountsStatus = "paid" | "approved_and_paid" | "separate";
 
 export interface BonusSettings {
   notary_amount: number;
@@ -144,13 +145,15 @@ export interface BonusSettings {
   referrer_tier_reset: ReferrerTierReset;
   referrer_tier_scope: ReferrerTierScope;
   referrer_payout_timing: ReferrerPayoutTiming;
+  broker_bonus_counts_status: BrokerBonusCountsStatus;
 }
 
 const SETTINGS_SELECT =
   "notary_amount, follow_up_amount, own_lead_share_percent, company_lead_share_percent, " +
   "personnel_flat_amount, company_lead_deducts_costs, referrer_tier1_amount, " +
   "referrer_tier2_amount, referrer_tier3_amount, referrer_tier4plus_amount, " +
-  "referrer_tier_counts_status, referrer_tier_reset, referrer_tier_scope, referrer_payout_timing";
+  "referrer_tier_counts_status, referrer_tier_reset, referrer_tier_scope, referrer_payout_timing, " +
+  "broker_bonus_counts_status";
 
 export function useBonusSettings(enabled = true) {
   return useQuery({

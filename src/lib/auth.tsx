@@ -239,10 +239,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         setProfile(null);
         return;
       }
-      // Prefer the real saved name (app_users.name) over the email-derived fallback in nextUser
-      // -- toUser() has no way to know it, since that field lives in app_users, not the Supabase
-      // Auth session/metadata it reads. "buchhaltung@netz.immo" was showing as "Buchhaltung" in
-      // the header for exactly this reason before this fix.
       setUser(found?.name ? { ...nextUser, name: found.name } : nextUser);
       setProfile(
         found

@@ -74,6 +74,12 @@ export const ROUTES: RouteEntry[] = [
     module: PERMISSIONS.moduleInvoices,
   },
   {
+    path: "/invoice-settings",
+    labelKey: "nav.invoiceSettings",
+    key: PERMISSIONS.pageInvoiceSettings,
+    module: PERMISSIONS.moduleInvoices,
+  },
+  {
     path: "/inbox",
     labelKey: "nav.mailbox",
     key: PERMISSIONS.pageDocumentSources,

@@ -22,17 +22,6 @@ export type ParsedSender = {
   raw: string;
 };
 
-/**
- * Splits a From header into name and address.
- *
- * Issue #6: the column printed the raw header, so a cell could read
- * `"Linda Spiegelberg | Immobilienverwaltung Walther GmbH & Co. KG" <lsp@immo-walther.de>` next to a
- * bare `buchhaltung@netz-immo.de`. Quoting and angle brackets were never stripped and the two shapes
- * never lined up.
- *
- * Not every value is a mail address: this log also carries `scan_folder` for documents picked up from
- * a watched directory. Those come back as a name with no address, which is the honest reading.
- */
 export function parseSender(raw: string | null | undefined): ParsedSender {
   const value = (raw ?? "").trim();
   if (!value) return { name: null, address: null, raw: "" };
@@ -81,30 +70,18 @@ export type ParsedReason = {
   raw: string;
 };
 
-/**
- * Splits a reason into its verdict and its individual causes.
- *
- * Issue #5: five semicolon-separated findings were chained into one `truncate`d cell whose only full
- * copy lived in a `title` attribute. Live example, one cell:
- *
- *   "Needs review: relevance verdict: discard; Bruttobetrag fehlt; Rechnungsnummer oder Datum fehlt
- *    (§14 UStG, kein Kleinbetrag); Keine IBAN vorhanden, aber Überweisung erforderlich; Kein
- *    Empfängername (nicht Kleinbetrag)."
- *
- * The findings are `;`-separated, but a verdict can also start a new sentence mid-string — duplicate
- * detections read "möglicher Doppel-Beleg: … same invoice number 212 733 461 846. Needs review: no
- * company could be resolved…". So a full stop before a verdict is promoted to a separator first,
- * otherwise the duplicate finding and everything after it collapse into one giant cause.
- */
 export function parseReason(raw: string | null | undefined): ParsedReason {
   const value = (raw ?? "").trim().replace(/\s+/g, " ");
   if (!value) return { verdict: null, causes: [], raw: "" };
 
-  const promoted = value.replace(/\.\s+(?=(?:Needs review|Accepted automatically):)/g, "; ");
+  const withVerdictsSeparated = value.replace(
+    /\.\s+(?=(?:Needs review|Accepted automatically):)/g,
+    "; ",
+  );
   let verdict: ReasonVerdict = null;
   const causes: string[] = [];
 
-  for (const part of promoted.split(";")) {
+  for (const part of withVerdictsSeparated.split(";")) {
     let segment = part.trim();
     if (!segment) continue;
 

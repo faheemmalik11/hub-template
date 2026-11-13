@@ -107,16 +107,47 @@ export async function updateUnitCustomFields(
   });
 }
 
+interface HubEditedDueDate {
+  external_id: string;
+  payment_due_date: string | null;
+  payment_due_date_note: string | null;
+}
+
+async function dueDatesEditedInTheHub(
+  db: Db,
+  externalIds: string[],
+): Promise<Map<string, HubEditedDueDate>> {
+  const { data, error } = await db
+    .from(TABLE.properties)
+    .select("external_id, payment_due_date, payment_due_date_note")
+    .eq("source", PROPSTACK_SOURCE)
+    .eq("payment_due_date_source", "hub")
+    .in("external_id", externalIds);
+  if (error) throw error;
+  return new Map(((data ?? []) as HubEditedDueDate[]).map((row) => [row.external_id, row]));
+}
+
 export async function syncUnits(db: Db, units: PropstackUnit[]) {
   const syncedAt = new Date().toISOString();
 
   for (let start = 0; start < units.length; start += UPSERT_BATCH) {
-    const batch = units.slice(start, start + UPSERT_BATCH).map((unit) => ({
+    const rows = units.slice(start, start + UPSERT_BATCH).map((unit) => ({
       ...toSyncedProperty(unit),
       source: PROPSTACK_SOURCE,
       crm_synced_at: syncedAt,
       updated_at: syncedAt,
     }));
+    const keepTheirs = await dueDatesEditedInTheHub(db, rows.map((row) => row.external_id));
+    const batch = rows.map((row) => {
+      const theirs = keepTheirs.get(row.external_id);
+      return theirs
+        ? {
+          ...row,
+          payment_due_date: theirs.payment_due_date,
+          payment_due_date_note: theirs.payment_due_date_note,
+        }
+        : row;
+    });
     const { error } = await db
       .from(TABLE.properties)
       .upsert(batch, { onConflict: "source,external_id" });

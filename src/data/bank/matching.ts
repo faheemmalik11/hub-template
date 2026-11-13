@@ -299,6 +299,7 @@ async function closeSidesAfterLink(args: {
       .update({
         paid_at: new Date().toISOString(),
         paid_source: "manual",
+        lexoffice_open_amount: 0,
         updated_at: new Date().toISOString(),
       })
       .eq("id", args.documentId)
@@ -491,6 +492,7 @@ export function useCloseInvoiceRemainder() {
         .update({
           paid_at: new Date().toISOString(),
           paid_source: "manual",
+          lexoffice_open_amount: 0,
           updated_at: new Date().toISOString(),
         })
         .eq("id", args.documentId)

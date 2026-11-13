@@ -1,5 +1,5 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
-import { useMemo, useState, type ComponentType } from "react";
+import { forwardRef, useMemo, useState, type ComponentType, type ReactNode } from "react";
 import {
   AlertTriangle,
   CheckCircle2,
@@ -37,6 +37,9 @@ import {
   AlertDialogTitle,
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { Skeleton } from "@/components/ui/skeleton";
+import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import {
   Table,
   TableBody,
@@ -55,9 +58,12 @@ import {
 } from "@/data";
 import { useFeature } from "@/data/use-feature";
 import { PERMISSIONS } from "@/config/permissions";
+import { lexofficeSyncIsStuck } from "@/lib/lexoffice-sync";
 import { errorText, formatDate, formatEUR } from "@/lib/data/format";
 import { ErrorState, TableSkeleton } from "@/components/documents/query-states";
 import { CompanyChip } from "@/components/documents/badges";
+import { PdfPane } from "@/components/documents/pdf-pane";
+import { cn } from "@/lib/utils";
 import { SortControl } from "@/components/data-table/sort-control";
 import { TablePagination } from "@/components/data-table/table-pagination";
 import { useTableView } from "@/lib/use-table-view";
@@ -348,7 +354,7 @@ function OutgoingInvoicesPage() {
                   {t("outgoingInvoices.list.col.amount")}
                 </TableHead>
                 <TableHead>{t("outgoingInvoices.list.col.status")}</TableHead>
-                <TableHead className="w-[70px]" />
+                <TableHead className="w-[132px]" />
               </TableRow>
             </TableHeader>
             <TableBody>
@@ -383,7 +389,10 @@ function OutgoingInvoicesPage() {
                   <TableCell>
                     <div className="flex items-center justify-end gap-1">
                       <LexofficeSyncButton invoice={inv} />
-                      <OutgoingInvoiceFileButton invoiceId={inv.id} />
+                      <OutgoingInvoiceFileButton
+                        invoiceId={inv.id}
+                        invoiceNumber={inv.invoice_number}
+                      />
                       <DeleteInvoiceButton invoice={inv} />
                     </div>
                   </TableCell>
@@ -417,8 +426,6 @@ function OutgoingInvoicesPage() {
   );
 }
 
-// Every outgoing invoice is editable here directly — there's no external system with its own
-// opinion on status (LexOffice removed entirely, migration 0086).
 const UPLOAD_STATUS_VALUES: OutgoingVoucherStatus[] = ["draft", "open", "paidoff", "voided"];
 const STATUS_LABEL_KEY: Record<OutgoingVoucherStatus, string> = {
   draft: "draft",
@@ -463,83 +470,214 @@ function OutgoingStatusCell({ invoice }: { invoice: OutgoingInvoice }) {
   );
 }
 
+const ROW_ICON_BOX = "inline-flex size-9 shrink-0 items-center justify-center";
+
+const RowIconAction = forwardRef<
+  HTMLButtonElement,
+  React.ComponentProps<typeof Button> & { label: string }
+>(function RowIconAction({ label, className, children, ...props }, ref) {
+  return (
+    <Tooltip>
+      <TooltipTrigger asChild>
+        <Button
+          ref={ref}
+          variant="ghost"
+          size="icon"
+          aria-label={label}
+          className={cn(ROW_ICON_BOX, className)}
+          {...props}
+        >
+          {children}
+        </Button>
+      </TooltipTrigger>
+      <TooltipContent>{label}</TooltipContent>
+    </Tooltip>
+  );
+});
+
+function RowIconStatus({
+  label,
+  className,
+  children,
+}: {
+  label: string;
+  className?: string;
+  children: ReactNode;
+}) {
+  return (
+    <Tooltip>
+      <TooltipTrigger asChild>
+        <span role="img" aria-label={label} className={cn(ROW_ICON_BOX, className)}>
+          {children}
+        </span>
+      </TooltipTrigger>
+      <TooltipContent>{label}</TooltipContent>
+    </Tooltip>
+  );
+}
+
 function LexofficeSyncButton({ invoice }: { invoice: OutgoingInvoice }) {
   const { t } = useTranslation();
   const canSync = useFeature(PERMISSIONS.lexofficeSync);
+  const fetchesFile = useFeature(PERMISSIONS.lexofficeInvoiceFileFetch);
   const sync = useSyncInvoiceToLexoffice();
 
   if (!canSync || invoice.source !== "app" || invoice.kind === "referral_credit") return null;
 
-  if (invoice.accounting_external_id) {
+  const fileDone = !fetchesFile || !!invoice.lexoffice_file_fetched_at;
+  const stuck = lexofficeSyncIsStuck(invoice.lexoffice_sync_requested_at);
+
+  function requestSync() {
+    sync.mutate(invoice.id, {
+      onSuccess: () => toast.success(t("outgoingInvoices.list.lexoffice.success")),
+      onError: (e: Error) =>
+        toast.error(t("outgoingInvoices.list.lexoffice.failed", { error: errorText(e) })),
+    });
+  }
+
+  if (invoice.accounting_external_id && fileDone && !invoice.lexoffice_sync_error) {
     return (
-      <span
-        className="inline-flex text-muted-foreground"
-        title={t("outgoingInvoices.list.lexoffice.sent")}
+      <RowIconStatus
+        label={t("outgoingInvoices.list.lexoffice.sent")}
+        className="text-muted-foreground"
       >
         <CheckCircle2 className="size-4" />
-      </span>
+      </RowIconStatus>
+    );
+  }
+
+  if (invoice.lexoffice_sync_requested_at && !invoice.lexoffice_sync_error && !stuck) {
+    return (
+      <RowIconStatus
+        label={t("outgoingInvoices.list.lexoffice.pending")}
+        className="text-muted-foreground"
+      >
+        <Loader2 className="size-4 animate-spin" />
+      </RowIconStatus>
+    );
+  }
+
+  if (invoice.accounting_external_id || invoice.lexoffice_sync_error || stuck) {
+    return (
+      <RowIconAction
+        onClick={requestSync}
+        disabled={sync.isPending}
+        className="text-destructive hover:bg-destructive/10 hover:text-destructive"
+        label={
+          invoice.lexoffice_sync_error ??
+          (stuck
+            ? t("outgoingInvoices.list.lexoffice.timedOut")
+            : t("outgoingInvoices.list.lexoffice.retry"))
+        }
+      >
+        {sync.isPending ? (
+          <Loader2 className="size-4 animate-spin" />
+        ) : (
+          <AlertTriangle className="size-4" />
+        )}
+      </RowIconAction>
     );
   }
 
   if (invoice.status !== "draft") return null;
 
   return (
-    <button
-      type="button"
-      onClick={() =>
-        sync.mutate(invoice.id, {
-          onSuccess: () => toast.success(t("outgoingInvoices.list.lexoffice.success")),
-          onError: (e: Error) =>
-            toast.error(t("outgoingInvoices.list.lexoffice.failed", { error: errorText(e) })),
-        })
-      }
+    <RowIconAction
+      onClick={requestSync}
       disabled={sync.isPending}
-      className="inline-flex text-muted-foreground transition-colors hover:text-foreground disabled:opacity-50"
-      title={t("outgoingInvoices.list.lexoffice.send")}
+      className="text-muted-foreground"
+      label={t("outgoingInvoices.list.lexoffice.send")}
     >
       {sync.isPending ? <Loader2 className="size-4 animate-spin" /> : <Send className="size-4" />}
-    </button>
+    </RowIconAction>
   );
 }
 
 // Signed URL is minted lazily on click (enabled: false) rather than for every rendered row — a
 // list page can show many upload-sourced invoices at once, and each mint is its own RLS-checked
 // server round trip.
-function OutgoingInvoiceFileButton({ invoiceId }: { invoiceId: string }) {
+function OutgoingInvoiceFileButton({
+  invoiceId,
+  invoiceNumber,
+}: {
+  invoiceId: string;
+  invoiceNumber: string | null;
+}) {
   const { t } = useTranslation();
   const fileUrlQ = useOutgoingInvoiceFileUrl(invoiceId, { enabled: false });
-  const [loading, setLoading] = useState(false);
+  const [open, setOpen] = useState(false);
+  const [file, setFile] = useState<{ previewUrl: string; mime: string | null } | null>(null);
+  const [pageRendered, setPageRendered] = useState(false);
 
-  async function open() {
-    setLoading(true);
+  const title = invoiceNumber
+    ? t("outgoingInvoices.list.fileDialog.title", { number: invoiceNumber })
+    : t("outgoingInvoices.list.fileDialog.titleDraft");
+
+  async function showFile() {
+    setPageRendered(false);
+    setOpen(true);
     try {
       const res = await fileUrlQ.refetch();
       if (res.data?.previewUrl) {
-        window.open(res.data.previewUrl, "_blank", "noreferrer");
+        setFile({ previewUrl: res.data.previewUrl, mime: res.data.mime });
       } else {
+        setOpen(false);
         toast.error(t("outgoingInvoices.list.fileFailed"));
       }
     } catch (e) {
+      setOpen(false);
       toast.error(
         t("outgoingInvoices.list.fileFailedWithError", {
           error: errorText(e),
         }),
       );
-    } finally {
-      setLoading(false);
     }
   }
 
+  function changeOpen(next: boolean) {
+    setOpen(next);
+    if (!next) setFile(null);
+  }
+
   return (
-    <button
-      type="button"
-      onClick={open}
-      disabled={loading}
-      className="inline-flex text-muted-foreground transition-colors hover:text-foreground disabled:opacity-50"
-      title={t("outgoingInvoices.list.viewFile")}
-    >
-      {loading ? <Loader2 className="size-4 animate-spin" /> : <FileText className="size-4" />}
-    </button>
+    <>
+      <RowIconAction
+        onClick={showFile}
+        className="text-muted-foreground"
+        label={t("outgoingInvoices.list.viewFile")}
+      >
+        <FileText className="size-4" />
+      </RowIconAction>
+      <Dialog open={open} onOpenChange={changeOpen}>
+        <DialogContent className="max-w-[95vw] sm:max-w-5xl">
+          <DialogHeader>
+            <DialogTitle className="font-semibold tracking-tight">{title}</DialogTitle>
+          </DialogHeader>
+          {!file ? (
+            <Skeleton className="h-[80vh] w-full" />
+          ) : file.mime === "application/pdf" ? (
+            <div className="relative h-[80vh] w-full overflow-hidden rounded-lg border border-border bg-muted/40">
+              {!pageRendered && (
+                <Skeleton className="absolute inset-0 z-10 h-full w-full rounded-none" />
+              )}
+              <PdfPane
+                url={file.previewUrl}
+                onReady={() => setPageRendered(true)}
+                className="h-full w-full"
+              />
+            </div>
+          ) : file.mime?.startsWith("image/") ? (
+            <div className="max-h-[80vh] overflow-auto rounded-lg border border-border bg-muted/40 p-4">
+              <img src={file.previewUrl} alt={title} className="mx-auto w-full" />
+            </div>
+          ) : (
+            <p className="rounded-lg border border-dashed border-border bg-muted/30 px-4 py-10 text-center text-sm text-muted-foreground">
+              {t("outgoingInvoices.list.fileDialog.cannotDisplay")}
+            </p>
+          )}
+        </DialogContent>
+      </Dialog>
+    </>
   );
 }
 
@@ -569,14 +707,12 @@ function DeleteInvoiceButton({ invoice }: { invoice: OutgoingInvoice }) {
   return (
     <AlertDialog>
       <AlertDialogTrigger asChild>
-        <Button
-          variant="ghost"
-          size="icon"
+        <RowIconAction
           className="text-destructive hover:bg-destructive/10 hover:text-destructive"
-          aria-label={t("outgoingInvoices.list.delete.button")}
+          label={t("outgoingInvoices.list.delete.button")}
         >
           <Trash2 className="size-4" />
-        </Button>
+        </RowIconAction>
       </AlertDialogTrigger>
       <AlertDialogContent>
         <AlertDialogHeader>
