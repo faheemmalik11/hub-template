@@ -142,7 +142,7 @@ rules are in the database (`supabase/schema/0017_broker_commissions.sql`), not i
 - A rate typed as "2.975" is read as 2975 (German thousands), not 2,975. The field asks for the net
   rate, normally 2,0 to 3,0.
 - The breadcrumb shows the sale's id rather than the property name.
-- Outgoing e-invoices are mandatory for this client from 1 January 2027. Check that the accounting
+- Outgoing e-invoices are mandatory for the client from 1 January 2027. Check that the accounting
   tool issues them.
 
 ## Expected payment of seller invoices
@@ -154,3 +154,85 @@ rules are in the database (`supabase/schema/0017_broker_commissions.sql`), not i
 ## Overview: attention panel and blockers
 
 `src/components/home/attention-panel.tsx` greets the person and lists the incoming invoices waiting on them: rejected back to them, queries addressed to them, assigned to them, each invoice in one bucket only. The deputy bucket of the sibling Hub is not ported. `src/components/home/system-blockers.tsx` shows what is stuck system-wide: invoices to review, overdue outgoing invoices (due date, else the expected payment date), payments without a receipt, receipts that cannot be reconciled. A zero row is not drawn; all zeros collapse to one line. Both are mounted in `src/routes/index.tsx`. The manual outgoing-invoice form of the sibling Hub is not ported: it creates invoices through the accounting tool.
+
+## Historic deals (briefing §3.4)
+
+A `settled` deal status exists for historic sales entered for statistics only
+(`supabase/schema/0048_deal_settled_status.sql`). Every function that can open a commission or
+invoice (`approve_deal`, `create_deal_invoices`, `save_deal`) already only accepts specific other
+status values, so a settled deal can never reach them. `DealEditor` (`src/routes/commission-deals/$id.tsx`)
+additionally refuses to edit a settled deal and hides the bonus, referrer-bonus and donation cards
+on it, closing the one path (`documents.write`'s unconditional edit right) that would otherwise have
+let someone edit a settled deal back into the live pipeline. The commission-deals list hides
+`settled` deals by default (`applyDealsFilter`, `src/data/deals/deals.ts`); the status filter still
+offers it explicitly.
+
+`scripts/db/import-historic-deals.ts` imports a client's spreadsheet (CSV or XLSX): a row with no
+`hub_deal_id` becomes a new `settled` deal, idempotent on `source='historic_import'` +
+`external_id`; a row with a `hub_deal_id` fills in one of the Hub's existing `incomplete` deals
+(never overwriting a value already there) and promotes it to `ready` once
+`dealGrossTotalCentsOf()` confirms every side has a fee and a payer — never to `settled`, since
+these are real deals still waiting for a human to approve them. Dry run by default, `--commit` to
+write, tested end to end on a local database including the case where a side exists with no payer
+yet on an earlier run and only gets its payer on a later one.
+
+## Per-agent reporting (briefing §3.5)
+
+A reporting tab on `/commission-deals` (`AgentReportSection`, gated by the new `deals.report`
+catalogue key, off by default) shows closings, property volume, commission and bonuses up to a
+chosen cut-off date, compared with the same window a year earlier. The figures come from a single
+Postgres function, `agent_commission_report(p_cutoff date)`
+(`supabase/schema/0049_agent_commission_report.sql`), deliberately **not** security definer: it
+inherits whichever of `deals`/`broker_bonuses`' existing row level security applies to the caller,
+so a broker sees only their own row and an administrator with the new `deals.report_all` key sees
+every agent, with no new policy written for either case. Commission is summed over every `deal_sides`
+row of the deal (percent of `purchase_price`, or the fixed amount), the buyer side and the seller side
+both being the agency's own earned commission. A bonus falls into a period by `earned_on`; the window
+is calendar year to date, `date_trunc('year', p_cutoff)` to `p_cutoff`, against the same slice of the
+year before. Verified against seeded fixture data on a local database, including the year-over-year
+window boundary and the exclusion of cancelled deals.
+
+**`settled` deals are excluded, the same as `cancelled`.** The function filtered only `cancelled`
+while `brokerNumbers()` (`src/components/commission/broker-numbers.ts`) already excluded both, so
+the two screens reported different closing counts for the same agent and the same year. The report
+is the one that was wrong: a historic import is entered for statistics, carries no `handled_by` or
+`acquired_by` (`scripts/db/import-historic-deals.ts`), and therefore falls through to
+`property_broker_user_id(property_id)` — the property's **current** CRM broker, who need not be the
+person who sold it. Counting those rows credits today's broker with somebody else's sale and books
+commission that `create_deal_invoices` can never raise, because every writing function is gated to
+other status values. The filter is `d.status not in ('cancelled', 'settled')`, in both
+`0049_agent_commission_report.sql` and the live re-creation in `0059_broker_bonus_counting_rule.sql`.
+A client with no historic import has no settled deals, so no existing figure moves.
+
+**Which bonuses count is a client setting, not an implementer's choice.**
+`bonus_settings.broker_bonus_counts_status` (`supabase/schema/0059_broker_bonus_counting_rule.sql`)
+takes `paid`, `approved_and_paid` or `separate`, and the report reads it through the security-definer
+`broker_bonus_counting_rule()` — `bonus_settings` is readable only to `bonuses.review`/`bonuses.submit`
+holders, which a `deals.report_all` holder need not be, and without the wrapper the invoker-rights
+report would use a different rule depending on who ran it. Under `separate` the summed figure counts
+only `paid` and the approved-but-unpaid amount comes back in `bonuses_approved_current` /
+`bonuses_approved_previous`, which the UI then shows as its own column and tile. Those two columns are
+populated under all three modes so the function's shape is stable; the other two modes simply do not
+render them. The default is `approved_and_paid`, which is what the report did before the setting
+existed, so no existing client's figures move. Because the function gained output columns it is
+dropped and re-created in `0054`, not replaced in `0049`.
+
+The period is still dated by `earned_on`, and that part remains an implementer's choice: briefing §3.5
+names no date, `src/components/commission/broker-numbers.ts:26-29` dates only the paid figure, and the
+payroll CSV (`src/routes/broker-bonuses/index.tsx:115-124`) assigns a period by `created_at` under a
+15th-of-the-month rule. Moving to an approval or payment date is a migration, not a filter change:
+`broker_bonuses` has neither column, and `reviewed_at` is overwritten on every status change
+(`supabase/schema/0018_broker_bonuses.sql:48-51`), so a paid row no longer holds the date it was
+approved.
+
+The year boundary this feature exists for is also where the bonus figure is least trustworthy: the
+`own_job_share` and `company_lead_share` bonuses take `earned_on` from the day the suggestion was
+created, not from the deal — see `docs/BROKER_BONUSES.md`'s "Open" section.
+
+A deal's agent is `coalesce(handled_by, acquired_by, property_broker_user_id(property_id))` —
+`handled_by` first, matching `docs/BROKER_BONUSES.md`'s own existing rule that the notary and
+follow-up bonuses go to whoever handled the sale, with `acquired_by` only mattering as the
+separate 10% lead-referral share when it names someone else. `property_broker_user_id()` is its
+own small `security definer` function so a `deals.report_all` holder without `master_data.read`
+still gets a correct agent for a deal attributed only through the CRM-assigned property broker,
+rather than `properties`' own row level security silently hiding that attribution from them.

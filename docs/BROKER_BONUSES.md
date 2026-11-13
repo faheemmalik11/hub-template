@@ -12,7 +12,8 @@ sellers, see `COMMISSION_INVOICES.md`.)
 ## What is implemented
 
 - **Table** `broker_bonuses`, `supabase/schema/0018_broker_bonuses.sql`: broker (`app_users`), type,
-  `earned_on`, `amount` (> 0), note, status (`submitted`, `approved`, `rejected`, `paid`), reviewer,
+  `earned_on`, `amount` (> 0), note, status (`suggested`, `submitted`, `approved`, `rejected`,
+  `paid` — `suggested` added by `supabase/schema/0022_bonus_suggestions.sql:9-11`), reviewer,
   review time and review note. Types are checked: `notary`, `google_review`, `viewing_new_job`,
   `company_lead_share`, `own_job_share`, `financing_referral`, `other`.
 - **Permissions** in `supabase/catalogue.sql`, all off by default: page `page.broker_bonuses`,
@@ -52,8 +53,9 @@ database and ends with the line that switches it on. Run `deal-details-for-an-ex
   minus the deal's costs minus the 1,500 personnel flat rate), no notary bonus; a lead won by another broker
   than the one who handled it gives that broker 10 %. The notary and follow-up bonuses are due at the notary
   date. The two shares wait until the costs are closed and every commission invoice of the deal is paid.
-- **Settings:** table `bonus_settings` (one row): the amounts, the two percentages, the personnel flat rate and
-  whether the 10 % is taken after costs. Edited under "Regeln" on the bonus screen by whoever reviews.
+- **Settings:** table `bonus_settings` (one row): the amounts, the two percentages, the personnel flat rate,
+  whether the 10 % is taken after costs, and `broker_bonus_counts_status`, which bonuses the per-agent report
+  counts. Edited under "Regeln" on the bonus screen by whoever reviews.
 - **Flow:** on the deal page ("Boni für diesen Verkauf", `src/components/commission/bonus-suggestions-card.tsx`)
   an administrator creates a suggestion. It is a `broker_bonuses` row with status `suggested`, `deal_id` set and
   the calculation as its note, one per deal and type. The broker is notified, confirms it (status `submitted`,
@@ -62,11 +64,26 @@ database and ends with the line that switches it on. Run `deal-details-for-an-ex
   by whoever may edit any deal. A sale opened from the CRM sets both to the CRM's broker.
 - **Assumptions to confirm with the client:** what the 10 % is calculated on (the setting defaults to the
   commission after costs), what happens when nothing is left after the deductions (no suggestion is made),
-  and that a sale from a viewing and an own lead may both apply. The Google bonus is not tied to a sale and
-  stays manual.
+  and that a sale from a viewing and an own lead may both apply. Which bonuses count towards a reporting
+  period is no longer an assumption: `bonus_settings.broker_bonus_counts_status` decides it
+  (`supabase/schema/0059_broker_bonus_counting_rule.sql`), defaulting to `approved_and_paid`, the rule the
+  report already applied. The period is still taken from `earned_on`, which stays an assumption. The Google
+  bonus is not tied to a sale and stays manual.
 
 ## Open
 
 - Without the `bonuses.suggest` switch, bonuses are typed in by the broker and nothing checks the amount.
 - Questions to the client: the rule for "Empfehlung Finanzierung", and whether the notary bonus is
   now 500 euro (the 2025 list shows 300).
+- **The notary bonus is due on the wrong date.** "Suggested from a sale" above sets it at the notary
+  date, and `src/kit/lib/commission/bonuses.ts` writes `earnedOn: facts.notarisedOn` for the notary and
+  follow-up bonuses. The client briefing (§5.1) says the trigger is the invoice being issued to buyer and
+  seller, "not the notary date". Not yet corrected.
+- **The two percentage shares carry a meaningless `earned_on`.** `suggestBonuses` returns
+  `earnedOn: null` for `own_job_share` and `company_lead_share`, because neither is due until the costs
+  are closed and every commission invoice is paid, and
+  `src/components/commission/bonus-suggestions-card.tsx:90` then falls back to the current date. So the
+  stored date is the day somebody pressed the button, not anything about the deal. A deal notarised in
+  December whose commission arrives in January has its closing counted in one reporting year and its
+  bonus in the next, since the per-agent report windows closings on `deals.notarised_on` and bonuses on
+  `earned_on` (`docs/COMMISSION_INVOICES.md`, per-agent reporting).
