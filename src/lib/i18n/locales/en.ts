@@ -2046,6 +2046,9 @@ const en = {
         match: "Match transaction",
         none: "Nothing to do",
       },
+      lexoffice: {
+        notSent: "Not sent to Lexware",
+      },
       nlSearch: {
         titel: "Ask about your invoices",
         desc: "Type a question in your own words, or speak it.",
