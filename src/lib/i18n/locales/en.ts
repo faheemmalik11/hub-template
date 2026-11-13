@@ -5054,6 +5054,7 @@ const en = {
       saving: "Saving …",
       saved: "Saved.",
       saveFailed: "Saving failed.",
+      dueDateNotInCrm: "Saved here, but not sent to the CRM. It stays safe and is sent again later.",
       approve: "Approve",
       approving: "Approving …",
       approved: "Approved.",

@@ -46,7 +46,7 @@ import { EDGE_FUNCTION } from "@/config/edge-functions";
 import { pageTitle } from "@/config/brand";
 import { useAuth } from "@/lib/auth";
 import { sb } from "@/data/client";
-import { errorText, formatDateTime } from "@/lib/data/format";
+import { edgeFunctionErrorText, errorText, formatDateTime } from "@/lib/data/format";
 import { useTranslation } from "@/lib/i18n";
 import { tabSearch, useTabParam } from "@/lib/use-tab-param";
 import { cn } from "@/lib/utils";
@@ -97,6 +97,13 @@ function CommissionDealPage() {
       )}
     </div>
   );
+}
+
+async function pushDueDateToCrm(propertyId: string): Promise<void> {
+  const { error } = await sb.functions.invoke(EDGE_FUNCTION.propstackPaymentDueDatePush, {
+    body: { property_id: propertyId },
+  });
+  if (error) throw new Error(await edgeFunctionErrorText(error));
 }
 
 function DealEditor({ deal }: { deal: Deal }) {
@@ -256,22 +263,24 @@ function DealEditor({ deal }: { deal: Deal }) {
           toast.error(t("commissionDeals.actions.saveFailed"), { description: errorText(error) }),
       },
     );
-    if (dueDateUnsaved && deal.property_id) {
+    const propertyId = deal.property_id;
+    if (dueDateUnsaved && propertyId) {
       updateDueDate.mutate(
         {
           payment_due_date: dueDate.trim() === "" ? null : dueDate,
           payment_due_date_note: dueDateNote.trim() === "" ? null : dueDateNote.trim(),
+          payment_due_date_source: "hub",
         },
         {
           onSuccess: () => {
             setSavedDueDate(dueDate);
             setSavedDueDateNote(dueDateNote);
             if (syncsPaymentDueDate) {
-              sb.functions
-                .invoke(EDGE_FUNCTION.propstackPaymentDueDatePush, {
-                  body: { property_id: deal.property_id },
-                })
-                .catch(() => {});
+              pushDueDateToCrm(propertyId).catch((error: unknown) =>
+                toast.warning(t("commissionDeals.actions.dueDateNotInCrm"), {
+                  description: errorText(error),
+                }),
+              );
             }
           },
           onError: (error) =>

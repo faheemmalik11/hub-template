@@ -165,6 +165,7 @@ export interface Property {
   vat_status: string | null;
   payment_due_date: string | null;
   payment_due_date_note: string | null;
+  payment_due_date_source: "crm" | "hub";
   created_at: string;
   updated_at: string;
   // Archive, not a hard delete: a sold property stays intact for its historical invoices, just out

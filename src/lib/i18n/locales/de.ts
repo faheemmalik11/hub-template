@@ -5227,6 +5227,8 @@ const de = {
       saving: "Wird gespeichert …",
       saved: "Gespeichert.",
       saveFailed: "Speichern ist fehlgeschlagen.",
+      dueDateNotInCrm:
+        "Hier gespeichert, aber nicht ans CRM gesendet. Der Wert bleibt erhalten und wird später erneut gesendet.",
       approve: "Freigeben",
       approving: "Wird freigegeben …",
       approved: "Freigegeben.",

@@ -56,6 +56,12 @@ Deno.serve(async (req) => {
       [PROPSTACK_PAYMENT_DUE_DATE_NOTE_FIELD]: property.payment_due_date_note,
     });
 
+    const { error: markError } = await db
+      .from(TABLE.properties)
+      .update({ payment_due_date_source: "crm" })
+      .eq("id", property.id);
+    if (markError) throw new Error(`could not clear the hub edit marker: ${markError.message}`);
+
     return jsonResponse({ propertyId: property.id, unitId: property.external_id });
   } catch (error) {
     const message = error instanceof Error ? error.message : String(error);
