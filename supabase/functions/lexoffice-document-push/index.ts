@@ -15,6 +15,7 @@ import {
   searchContacts,
   staleClaimFilter,
 } from "../_shared/lexoffice-client.ts";
+import { invoiceWording, taxDefaults, type InvoiceWording } from "../_shared/tenant-config.ts";
 
 // deno-lint-ignore no-explicit-any
 type Db = any;
@@ -191,10 +192,10 @@ async function blobToBase64(blob: Blob): Promise<string> {
   return btoa(binary);
 }
 
-function buildNote(doc: DocumentRow): string {
-  const paymentMethod = doc.payment_method ?? "Überweisung";
+function buildNote(doc: DocumentRow, wording: InvoiceWording): string {
+  const paymentMethod = doc.payment_method ?? wording.defaultPaymentMethod;
   const content = doc.payment_reference ?? doc.service_description ?? doc.note ?? doc.issuer ??
-    "Beleg";
+    wording.documentFallbackLabel;
   return `${paymentMethod} · ${content}`.slice(0, 255);
 }
 
@@ -213,12 +214,13 @@ function canBookAsOpen(doc: DocumentRow): boolean {
 
 // vat_rates.country exists because the same percentage can be valid in one country and not
 // another (its own unique index is (country, rate)); this validation is for domestic documents,
-// so it reads only Germany's own rates, not whatever rate a cross-border supplier added.
+// so it reads only this tenant's own country's rates, not whatever a cross-border supplier added.
 async function activeVatRates(db: Db): Promise<number[]> {
+  const { country } = await taxDefaults();
   const { data, error } = await db
     .from(TABLE.vatRates)
     .select("rate")
-    .eq("country", "DE")
+    .eq("country", country)
     .eq("is_active", true)
     .is("deleted_at", null);
   if (error) throw new Error(`VAT rate lookup failed: ${error.message}`);
@@ -267,11 +269,13 @@ async function refuseReverseChargeRateMismatch(
   );
 }
 
-function buildVoucherPayload(
+async function buildVoucherPayload(
   doc: DocumentRow,
   category: CategoryRow,
   contactId: string,
-): LexofficePurchaseVoucherInput {
+): Promise<LexofficePurchaseVoucherInput> {
+  const tax = await taxDefaults();
+  const wording = await invoiceWording();
   const amountNet = doc.amount_net ?? 0;
   const amountGross = doc.amount_gross ?? amountNet;
   const taxAmount = doc.vat_amount ?? Math.max(0, amountGross - amountNet);
@@ -280,7 +284,7 @@ function buildVoucherPayload(
   const voucherItem: LexofficeVoucherItem = {
     amount: open ? amountNet : amountGross,
     taxAmount,
-    taxRatePercent: doc.vat_rate ?? 19,
+    taxRatePercent: doc.vat_rate ?? tax.defaultVatRate,
     categoryId: category.lexware_category_id as string,
   };
 
@@ -295,7 +299,7 @@ function buildVoucherPayload(
     taxType: open ? "net" : "gross",
     contactId,
     voucherItems: [voucherItem],
-    remark: buildNote(doc),
+    remark: buildNote(doc, wording),
   };
 }
 
@@ -352,7 +356,7 @@ Deno.serve(async (req) => {
     const attachment = stored ? await downloadAttachment(db, stored) : null;
 
     const contactId = await resolveVendorContactId(db, apiKey, supplier);
-    const payload = buildVoucherPayload(doc, category, contactId);
+    const payload = await buildVoucherPayload(doc, category, contactId);
 
     const alreadyThere = await findPurchaseVoucher(
       db,

@@ -71,6 +71,8 @@ export const PERMISSIONS = {
   pageTrash: "page.trash",
   propertiesCrmSync: "properties.crm_sync",
   dealsSubmit: "deals.submit",
+  dealsReport: "deals.report",
+  dealsReportAll: "deals.report_all",
   bonusesSubmit: "bonuses.submit",
   bonusesReview: "bonuses.review",
   bonusesRead: "bonuses.read",
@@ -78,6 +80,7 @@ export const PERMISSIONS = {
   donationsManage: "donations.manage",
   lexofficeSync: "lexoffice.sync",
   lexofficeDocumentSync: "lexoffice.document_sync",
+  lexofficeInvoiceFileFetch: "lexoffice.invoice_file_fetch",
   propstackPaymentDueDateSync: "propstack.payment_due_date_sync",
   pageBankConnections: "page.bank_connections",
   pageDataExport: "page.data_export",
@@ -86,6 +89,7 @@ export const PERMISSIONS = {
   pageDocumentIntakeLog: "page.document_intake_log",
   sourcesSharepoint: "sources.sharepoint",
   documentsVoiceDictation: "documents.voice_dictation",
+  pageInvoiceSettings: "page.invoice_settings",
 
   // Menu groups. Switching one off takes its pages with it.
   moduleOverview: "module.overview",
