@@ -76,6 +76,28 @@ the baseline to an EMPTY database, every time.
 - **A policy is dropped before it is created.** Postgres ORs permissive policies together, so one
   stale `using (true)` makes every scoped policy beside it meaningless.
 
+## A bulk delete can be blocked by more than its own foreign keys
+
+Found writing `0046_purge_demo_data.sql`, one error at a time against real data, not by reading the
+schema first — expect the same if a new bulk delete reaches a table this hasn't touched before.
+
+- **`document_history` refuses every `UPDATE`/`DELETE`/`TRUNCATE`** (`guard_document_history_immutable()`,
+  `0011_functions.sql`) — tamper-proof by design, but it also blocks the ordinary cascade delete off
+  `documents`. Lift it for one statement only (`alter table ... disable/enable trigger
+  trg_guard_document_history_row`), inside the same transaction as the delete, so a failure anywhere
+  else rolls the lift back too.
+- **`supplier_bank_accounts` refuses to delete a supplier's default account**
+  (`refuse_deleting_default_bank_account()`) — real protection against orphaning a live supplier,
+  not relevant when the whole supplier is being removed in the same statement. Same lift-for-one-
+  statement treatment.
+- **A row can be practice/demo data without its own `is_demo` column.** `deals`, `customers` and
+  `outgoing_invoices` are real rows with real `NO ACTION` foreign keys back to a demo property or
+  company; `company_demo_visible()` (`0010_access.sql`) reads the parent's flag for RLS, but nothing
+  marks these rows themselves. A bulk delete of demo data has to walk down to them explicitly or it
+  blocks on the parent.
+
+See `docs/ONBOARDING_PRACTICE_DATA_CLEANUP.md` for the worked example.
+
 ## What must never be hardcoded
 
 These were all found and removed in the rebuild. Do not put them back:
