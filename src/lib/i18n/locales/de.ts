@@ -2587,12 +2587,12 @@ const de = {
         am: "Fällig {{datum}}",
         ueberfaellig: "Fällig {{datum}}, {{tage}} Tage überfällig",
       },
-      ungespeichert: {
+      unsavedChanges: {
         title: "Änderungen verwerfen?",
         // Nennt die Felder: „Bist du sicher?" beantwortet niemand informiert, eine Liste schon.
         body: "{{count}} bearbeitete(s) Feld(er) ist/sind noch nicht gespeichert: {{fields}}. Beim Verlassen gehen diese Eingaben verloren.",
-        weiter: "Weiter bearbeiten",
-        verwerfen: "Änderungen verwerfen",
+        continueEditing: "Weiter bearbeiten",
+        discard: "Änderungen verwerfen",
       },
       notFoundTitle: "Beleg nicht gefunden",
       notFoundBody: "Der Beleg {{nr}} existiert nicht (mehr).",
@@ -4522,7 +4522,15 @@ const de = {
     countryCodeInvalid:
       "Bitte ein Länderkürzel aus zwei Großbuchstaben eintragen, zum Beispiel DE.",
     kindInvalid:
-      "Nur Kleinbuchstaben, Ziffern und Unterstriche, und jede Rechnungsart darf nur einmal vorkommen.",
+      "Bitte nur Kleinbuchstaben, Ziffern und Unterstriche verwenden. Das erste Zeichen muss ein Buchstabe sein.",
+    kindDuplicate:
+      "Diese Rechnungsart steht schon in der Liste. Jede Rechnungsart darf nur einmal vorkommen.",
+    unsavedChanges: {
+      title: "Änderungen verwerfen?",
+      body: "Ihre Änderungen an den Rechnungsvorgaben sind noch nicht gespeichert. Beim Verlassen der Seite gehen sie verloren.",
+      continueEditing: "Weiter bearbeiten",
+      discard: "Änderungen verwerfen",
+    },
     card: {
       tax: {
         title: "Steuer",

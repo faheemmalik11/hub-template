@@ -130,6 +130,12 @@ const nav: NavEntry[] = [
         icon: Receipt,
         permission: PERMISSIONS.pageFileNaming,
       },
+      {
+        labelKey: "nav.invoiceSettings",
+        to: "/invoice-settings",
+        icon: Settings2,
+        permission: PERMISSIONS.pageInvoiceSettings,
+      },
       { labelKey: "nav.mailbox", to: "/inbox", icon: Settings },
     ],
   },
