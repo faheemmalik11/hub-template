@@ -262,9 +262,10 @@ function buildVoucherPayload(
   const amountNet = doc.amount_net ?? 0;
   const amountGross = doc.amount_gross ?? amountNet;
   const taxAmount = doc.vat_amount ?? Math.max(0, amountGross - amountNet);
+  const open = canBookAsOpen(doc);
 
   const voucherItem: LexofficeVoucherItem = {
-    amount: amountNet,
+    amount: open ? amountNet : amountGross,
     taxAmount,
     taxRatePercent: doc.vat_rate ?? 19,
     categoryId: category.lexware_category_id as string,
@@ -272,13 +273,13 @@ function buildVoucherPayload(
 
   return {
     type: "purchaseinvoice",
-    voucherStatus: canBookAsOpen(doc) ? "open" : "unchecked",
+    voucherStatus: open ? "open" : "unchecked",
     voucherNumber: doc.invoice_number ?? doc.id,
     voucherDate: doc.document_date ?? new Date().toISOString().slice(0, 10),
     dueDate: doc.due_date ?? undefined,
     totalGrossAmount: amountGross,
     totalTaxAmount: taxAmount,
-    taxType: "net",
+    taxType: open ? "net" : "gross",
     contactId,
     voucherItems: [voucherItem],
     remark: buildNote(doc),
