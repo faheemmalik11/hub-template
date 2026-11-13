@@ -1267,6 +1267,9 @@ export interface DocumentsListParams {
   // Who private_hold mail is assigned to (app_users.id), or PRIVATE_OWNER_UNASSIGNED. Only ever
   // narrows anything for the rows RLS already lets the caller see.
   privateOwner?: string;
+  // Documents the Lexware handover could not send (lexoffice_sync_error set). Its own axis: a
+  // document can be fully approved and still sit here because Lexware itself rejected it.
+  lexofficeError?: boolean;
   sort: DocumentSortKey;
   dir: "asc" | "desc";
   page: number;
@@ -1683,9 +1686,8 @@ export interface BankSyncLog {
 }
 
 // ---- Outgoing invoices & customers (Briefing Screen 15; migration 0052) ----
-// Originally a LexOffice-backed mirror; LexOffice was removed entirely (migration 0086) — no
-// real this client company ever had an account. 'app' = created directly in the Hub (e.g. /kunden),
-// 'upload' = created alongside an uploaded outgoing invoice
+// 'app' = created directly in the Hub (e.g. /kunden) and, once approved, pushed to Lexware
+// (lexoffice-invoice-push); 'upload' = created alongside an uploaded outgoing invoice
 // (src/lib/api/outgoing-invoice-upload.functions.ts, migration 0085).
 export type CustomerSource = "app" | "upload";
 
@@ -1757,8 +1759,11 @@ export interface OutgoingInvoice {
   created_at: string;
   updated_at: string;
   last_sync_at: string | null;
+  sent_at: string | null;
   accounting_external_id?: string | null;
   lexoffice_sync_requested_at?: string | null;
+  lexoffice_file_fetched_at?: string | null;
+  lexoffice_sync_error?: string | null;
   // Optional PostgREST-embedded relation (select "*, customers(*)").
   customers?: Customer | null;
 }

@@ -871,6 +871,7 @@ function applyDocumentsFilter(query: any, f: DocumentsFilter) {
     if (f.dueFromDate) query = query.gte("due_date", f.dueFromDate);
     if (f.dueToDate) query = query.lte("due_date", f.dueToDate);
   }
+  if (f.lexofficeError) query = query.not("lexoffice_sync_error", "is", null);
   // Only ever meaningful alongside private_hold rows: RLS already keeps every other row's
   // private_owner_user_id out of reach, so this cannot be used to probe who owns what.
   if (f.privateOwner === PRIVATE_OWNER_UNASSIGNED) {
@@ -1604,7 +1605,10 @@ export function useRetryLexofficeDocumentPush(documentId: string) {
       if (result.skipped) throw new Error(result.skipped);
       return result;
     },
-    onSuccess: () => qc.invalidateQueries({ queryKey: ["beleg", documentId] }),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ["beleg", documentId] });
+      invalidateDocumentListQueries(qc);
+    },
   });
 }
 
