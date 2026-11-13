@@ -3,4 +3,5 @@ export {
   useUpdateFilenameSettings,
   useMatchingSettings,
   useUpdateMatchingSettings,
+  useApprovalSettings,
 } from "./settings";

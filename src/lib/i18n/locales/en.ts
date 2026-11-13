@@ -2559,6 +2559,7 @@ const en = {
         commentRequired: "Please add a comment.",
         abbrechen: "Cancel",
         bestaetigen: "Confirm",
+        companyRequiredForFinalApprove: "A company must be assigned before this can be approved.",
         finalApproveLexwareTitle: "Approve and send to Lexware?",
         finalApproveLexwareDesc:
           "This document will be sent to Lexware automatically right after you approve it.",
