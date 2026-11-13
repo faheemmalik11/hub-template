@@ -161,13 +161,26 @@ async function loadDocumentFile(db: Db, documentId: string): Promise<DocumentFil
   return data as DocumentFileRow | null;
 }
 
-function refuseFileLexwareCannotAttach(file: DocumentFileRow): void {
-  if (file.size_bytes === null || file.size_bytes <= LEXWARE_MAX_ATTACHMENT_BYTES) return;
-  const sizeMb = (file.size_bytes / (1024 * 1024)).toFixed(1);
+function refuseOversizedAttachment(sizeBytes: number | null): void {
+  if (sizeBytes === null || sizeBytes <= LEXWARE_MAX_ATTACHMENT_BYTES) return;
+  const sizeMb = (sizeBytes / (1024 * 1024)).toFixed(1);
   throw new Error(
     `the attached file is ${sizeMb} MB, over Lexware's 5 MB attachment limit. ` +
       "Shrink the file (e.g. re-save the PDF at a lower resolution) and try again.",
   );
+}
+
+async function downloadAttachment(
+  db: Db,
+  file: DocumentFileRow,
+): Promise<{ base64: string; filename: string }> {
+  const { data, error } = await db.storage
+    .from(file.storage_bucket as string)
+    .download(file.storage_path as string);
+  if (error) throw new Error(`could not read the stored file: ${error.message}`);
+  const blob = data as Blob;
+  refuseOversizedAttachment(blob.size);
+  return { base64: await blobToBase64(blob), filename: file.filename ?? "document.pdf" };
 }
 
 async function blobToBase64(blob: Blob): Promise<string> {
@@ -329,7 +342,13 @@ Deno.serve(async (req) => {
     await refuseReverseChargeRateMismatch(db, apiKey, doc, category);
 
     const file = await loadDocumentFile(db, doc.id);
-    if (file?.storage_bucket && file?.storage_path) refuseFileLexwareCannotAttach(file);
+    const stored = file?.storage_bucket && file?.storage_path ? file : null;
+    if (stored) refuseOversizedAttachment(stored.size_bytes);
+
+    // Fetched before the voucher exists: size_bytes is not guaranteed present on every row, and
+    // weighing the real bytes only after creating the voucher would leave one behind that can
+    // never carry its own file, however often the push is retried.
+    const attachment = stored ? await downloadAttachment(db, stored) : null;
 
     const contactId = await resolveVendorContactId(db, apiKey, supplier);
     const payload = buildVoucherPayload(doc, category, contactId);
@@ -348,15 +367,8 @@ Deno.serve(async (req) => {
 
     // Attempted even for a found (not just-created) voucher: there is no way to ask Lexware
     // whether it already has a file, and re-attaching is safer than risking one with none at all.
-    if (file?.storage_bucket && file?.storage_path) {
-      const { data: blob, error: downloadError } = await db.storage
-        .from(file.storage_bucket)
-        .download(file.storage_path);
-      if (downloadError) {
-        throw new Error(`could not read the stored file: ${downloadError.message}`);
-      }
-      const base64 = await blobToBase64(blob as Blob);
-      await attachVoucherFile(db, apiKey, created.id, base64, file.filename ?? "document.pdf");
+    if (attachment) {
+      await attachVoucherFile(db, apiKey, created.id, attachment.base64, attachment.filename);
     }
 
     const { error: updateError } = await db
