@@ -776,24 +776,15 @@ const DOCUMENTS_LIST_COLUMNS = [
 
 // Which view a list read should come from.
 //
-// v_documents_review is v_documents_list plus three computed columns, and one of them is expensive:
-// migration 20260909150000 hung invoice_review_state() off the view with CROSS JOIN LATERAL, and a
-// lateral lives in the FROM clause, so Postgres runs it per row even for `select id`. Measured on
-// live data, 50 rows and the same 29 columns: 3.7 s from v_invoices_review against 0.83 s from
-// v_documents_list.
-//
-// Of those three columns the app reads exactly one, `search_text`, and only when there is a text
-// search. So a read with no `q` takes the cheap view, and the expensive one is paid for only by
-// the search that actually needs it. The condition below must stay identical to the one in
-// applyBelegeFilter that touches search_text, or a search will query a column that is not there.
-//
-// Migration 20260910120000 makes the review columns prunable, after which both views cost the
-// same for the column list this file asks for. This split is what makes the list fast before that
-// migration is applied, and it stays correct afterwards.
+// v_documents_review turned out to carry its own `where workflow_status in (...) or review_score >
+// 0 or ...` (0012_views.sql) -- a real row filter, not just extra columns as this function used to
+// assume. Reading it for every search silently hid any already-approved/paid/done document from
+// search results, since those rows fail that filter. v_documents_search has the exact same columns
+// (search_text included) with no row restriction, so that is the one a plain text search needs.
 function listenSource(
   f: DocumentsFilter,
-): typeof TABLE.vDocumentsList | typeof TABLE.vDocumentsReview {
-  return f.q ? TABLE.vDocumentsReview : TABLE.vDocumentsList;
+): typeof TABLE.vDocumentsList | typeof TABLE.vDocumentsSearch {
+  return f.q ? TABLE.vDocumentsSearch : TABLE.vDocumentsList;
 }
 
 // Sort key → view column.

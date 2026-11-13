@@ -28,28 +28,31 @@ export const CARD_FILTER_KEYS = [
 
 export type NextAction = "review" | "approve" | "pay" | "match" | "none";
 
-export function nextAction(row: {
-  status?: string | null;
-  workflow_status?: string | null;
-  paid_at?: string | null;
-  has_confirmed_bank_match?: boolean | null;
-}): NextAction {
+export function nextAction(
+  row: {
+    status?: string | null;
+    workflow_status?: string | null;
+    paid_at?: string | null;
+    has_confirmed_bank_match?: boolean | null;
+  },
+  // True once an external bookkeeping system (Lexware today) owns payment tracking for this
+  // tenant: the Hub never pays or bank-matches an invoice itself any more, so an approved,
+  // unpaid document has nothing left for a person to click here -- it is simply waiting on that
+  // system, the same way the invoice detail page already hides its own pay/match controls.
+  paymentsHandledExternally = false,
+): NextAction {
   // "zu_pruefen", "freigegeben_vorgesetzter" and "freigegeben_assistenz" are the same states
   // under their German names, for a client not yet renamed to English.
   if (row.status === "needs_review" || row.status === "zu_pruefen") return "review";
-  // Only the supervisor step is payable. An invoice approved by the assistant still needs the
-  // final approval, and offering "pay" there leads to a dialog whose button is disabled.
-  if (
-    !row.paid_at &&
-    (row.workflow_status === "approved_final" || row.workflow_status === "freigegeben_vorgesetzter")
-  )
-    return "pay";
+  const isApprovedFinal =
+    row.workflow_status === "approved_final" || row.workflow_status === "freigegeben_vorgesetzter";
+  if (!row.paid_at && isApprovedFinal) return paymentsHandledExternally ? "none" : "pay";
   if (
     !row.paid_at &&
     (row.workflow_status === "approved_first" || row.workflow_status === "freigegeben_assistenz")
   )
     return "approve";
-  if (!row.paid_at && !row.has_confirmed_bank_match) return "match";
+  if (!row.paid_at && !paymentsHandledExternally && !row.has_confirmed_bank_match) return "match";
   return "none";
 }
 
