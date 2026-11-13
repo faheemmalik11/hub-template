@@ -7,6 +7,7 @@ import {
   getVoucherPayment,
   type LexofficePayment,
   lexofficeKey,
+  paidOnFrom,
 } from "../_shared/lexoffice-client.ts";
 
 // deno-lint-ignore no-explicit-any
@@ -190,7 +191,7 @@ async function applyEvent(db: Db, key: DeliveryKey): Promise<string> {
 
   if (payment.voucherStatus === "paid" || payment.voucherStatus === "paidoff") {
     await updateDocument(db, documentId, {
-      paid_at: payment.paymentDate ?? new Date().toISOString(),
+      paid_at: paidOnFrom(payment) ?? new Date().toISOString(),
       paid_source: "lexware",
       lexoffice_open_amount: 0,
     });

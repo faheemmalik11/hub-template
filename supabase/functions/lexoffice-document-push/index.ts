@@ -206,10 +206,22 @@ function hasConfidentFigures(doc: DocumentRow): boolean {
   return Math.abs(expectedGross - doc.amount_gross) < 0.01;
 }
 
-// Lexware books an `open` voucher into its payables, where a missing due date would leave it with
-// no date to chase. Unchecked is the holding pen for exactly that: it reaches Lexware either way.
-function canBookAsOpen(doc: DocumentRow): boolean {
-  return hasConfidentFigures(doc) && doc.due_date !== null;
+function addDays(isoDate: string, days: number): string {
+  const moved = new Date(`${isoDate}T00:00:00Z`);
+  moved.setUTCDate(moved.getUTCDate() + days);
+  return moved.toISOString().slice(0, 10);
+}
+
+function today(): string {
+  return new Date().toISOString().slice(0, 10);
+}
+
+// An open voucher must carry a due date or Lexware refuses to save it later, so one is worked out
+// from the payment term when the document itself does not name it.
+function dueDateFor(doc: DocumentRow, paymentTermDays: number): string {
+  if (doc.due_date) return doc.due_date;
+  const term = Number.isFinite(paymentTermDays) && paymentTermDays >= 0 ? paymentTermDays : 0;
+  return addDays(doc.document_date ?? today(), term);
 }
 
 // vat_rates.country exists because the same percentage can be valid in one country and not
@@ -279,7 +291,7 @@ async function buildVoucherPayload(
   const amountNet = doc.amount_net ?? 0;
   const amountGross = doc.amount_gross ?? amountNet;
   const taxAmount = doc.vat_amount ?? Math.max(0, amountGross - amountNet);
-  const open = canBookAsOpen(doc);
+  const open = hasConfidentFigures(doc);
 
   const voucherItem: LexofficeVoucherItem = {
     amount: open ? amountNet : amountGross,
@@ -292,8 +304,8 @@ async function buildVoucherPayload(
     type: "purchaseinvoice",
     voucherStatus: open ? "open" : "unchecked",
     voucherNumber: doc.invoice_number ?? doc.id,
-    voucherDate: doc.document_date ?? new Date().toISOString().slice(0, 10),
-    dueDate: doc.due_date ?? undefined,
+    voucherDate: doc.document_date ?? today(),
+    dueDate: open ? dueDateFor(doc, tax.paymentTermDays) : doc.due_date ?? undefined,
     totalGrossAmount: amountGross,
     totalTaxAmount: taxAmount,
     taxType: open ? "net" : "gross",

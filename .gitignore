@@ -108,3 +108,7 @@ supabase/functions/deno.lock
 # A client's own briefings, call transcripts and credentials, filed per CLAUDE.md's rule on a new
 # client message — real client specifics, stays on that client's own branch, never shared
 planning/communication/
+
+# Which clients still keep their own deployed repo, and where it lives. A client's name and their
+# private remote, so it is local config per checkout, never shared. See client-repos.example.json
+scripts/client/client-repos.json
