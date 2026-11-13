@@ -2500,11 +2500,11 @@ const en = {
         am: "Due {{datum}}",
         ueberfaellig: "Due {{datum}}, {{tage}} days overdue",
       },
-      ungespeichert: {
+      unsavedChanges: {
         title: "Discard changes?",
         body: "{{count}} edited field(s) have not been saved yet: {{fields}}. Leaving now loses those entries.",
-        weiter: "Keep editing",
-        verwerfen: "Discard changes",
+        continueEditing: "Keep editing",
+        discard: "Discard changes",
       },
       notFoundTitle: "Document not found",
       notFoundBody: "The document {{nr}} does not exist (any more).",
@@ -4365,7 +4365,14 @@ const en = {
     defaultVatRateInvalid: "Please enter a number between 0 and 100.",
     countryCodeInvalid: "Please enter a two-letter country code in capitals, for example DE.",
     kindInvalid:
-      "Lower-case letters, digits and underscores only, and each invoice type may appear once.",
+      "Lower-case letters, digits and underscores only, and the first character must be a letter.",
+    kindDuplicate: "This invoice type is already in the list. Each one may appear only once.",
+    unsavedChanges: {
+      title: "Discard changes?",
+      body: "Your changes to the invoice defaults have not been saved yet. Leaving this page loses them.",
+      continueEditing: "Keep editing",
+      discard: "Discard changes",
+    },
     card: {
       tax: {
         title: "Tax",

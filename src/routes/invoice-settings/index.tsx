@@ -1,9 +1,19 @@
-import { createFileRoute } from "@tanstack/react-router";
+import { createFileRoute, useBlocker } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
 import { Plus, X } from "lucide-react";
 import { toast } from "sonner";
 
 import { NoAccess } from "@/components/layout/no-access";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -73,7 +83,7 @@ function InvoiceSettingsPage() {
           <SettingsForm
             settings={settingsQuery.data}
             kindLabels={labelsQuery.data}
-            canEdit={can(PERMISSIONS.pageInvoiceSettings)}
+            canEdit={can(PERMISSIONS.settingsManage)}
           />
         )}
       </div>
@@ -103,6 +113,7 @@ function SettingsForm({
     settings.document_fallback_label,
   );
   const [labels, setLabels] = useState<InvoiceKindLabel[]>(kindLabels);
+  const [isSaving, setIsSaving] = useState(false);
 
   useEffect(() => {
     setDefaultVatRate(String(settings.default_vat_rate));
@@ -129,20 +140,21 @@ function SettingsForm({
     invoiceUnitName.trim() === "" ||
     defaultPaymentMethod.trim() === "" ||
     documentFallbackLabel.trim() === "";
+  const duplicateKinds = new Set(
+    labels
+      .map((row) => row.kind)
+      .filter((kind, index, all) => all.indexOf(kind) !== index && kind !== ""),
+  );
   const labelsInvalid = labels.some(
-    (row, index) =>
-      !KIND_SHAPE.test(row.kind) ||
-      row.label.trim() === "" ||
-      labels.findIndex((other) => other.kind === row.kind) !== index,
+    (row) => !KIND_SHAPE.test(row.kind) || row.label.trim() === "" || duplicateKinds.has(row.kind),
   );
   const invalid = vatRateInvalid || countryCodeInvalid || textInvalid || labelsInvalid;
 
+  const draftLabelByKind = new Map(labels.map((row) => [row.kind, row.label]));
   const labelsChanged =
-    labels.length !== kindLabels.length ||
-    labels.some((row, index) => {
-      const stored = kindLabels[index];
-      return !stored || stored.kind !== row.kind || stored.label !== row.label;
-    });
+    draftLabelByKind.size !== labels.length ||
+    draftLabelByKind.size !== kindLabels.length ||
+    kindLabels.some((stored) => draftLabelByKind.get(stored.kind) !== stored.label);
   const dirty =
     parsedVatRate !== Number(settings.default_vat_rate) ||
     countryCode !== settings.country_code ||
@@ -152,30 +164,33 @@ function SettingsForm({
     documentFallbackLabel !== settings.document_fallback_label ||
     labelsChanged;
 
-  const saving = updateSettings.isPending || saveKindLabels.isPending;
+  const editingDisabled = !canEdit || isSaving;
 
-  function save() {
-    if (parsedVatRate === null) return;
-    updateSettings.mutate(
-      {
+  const blocker = useBlocker({
+    shouldBlockFn: ({ current, next }) => dirty && current.pathname !== next.pathname,
+    enableBeforeUnload: () => dirty,
+    withResolver: true,
+  });
+
+  async function save() {
+    if (parsedVatRate === null || isSaving) return;
+    setIsSaving(true);
+    try {
+      await updateSettings.mutateAsync({
         default_vat_rate: parsedVatRate,
         country_code: countryCode,
         invoice_fallback_label: invoiceFallbackLabel,
         invoice_unit_name: invoiceUnitName,
         default_payment_method: defaultPaymentMethod,
         document_fallback_label: documentFallbackLabel,
-      },
-      {
-        onSuccess: () =>
-          saveKindLabels.mutate(labels, {
-            onSuccess: () => toast.success(t("invoiceSettings.toast.saved")),
-            onError: (error) =>
-              toast.error(t("invoiceSettings.toast.failed", { error: errorText(error) })),
-          }),
-        onError: (error) =>
-          toast.error(t("invoiceSettings.toast.failed", { error: errorText(error) })),
-      },
-    );
+      });
+      await saveKindLabels.mutateAsync(labels);
+      toast.success(t("invoiceSettings.toast.saved"));
+    } catch (error) {
+      toast.error(t("invoiceSettings.toast.failed", { error: errorText(error) }));
+    } finally {
+      setIsSaving(false);
+    }
   }
 
   return (
@@ -209,7 +224,7 @@ function SettingsForm({
             label={t("invoiceSettings.field.defaultVatRate")}
             value={defaultVatRate}
             onChange={setDefaultVatRate}
-            disabled={!canEdit}
+            disabled={editingDisabled}
             invalid={vatRateInvalid}
             errorText={t("invoiceSettings.defaultVatRateInvalid")}
           />
@@ -217,7 +232,7 @@ function SettingsForm({
             label={t("invoiceSettings.field.countryCode")}
             value={countryCode}
             onChange={(value) => setCountryCode(value.toUpperCase())}
-            disabled={!canEdit}
+            disabled={editingDisabled}
             invalid={countryCodeInvalid}
             errorText={t("invoiceSettings.countryCodeInvalid")}
             maxLength={2}
@@ -235,7 +250,7 @@ function SettingsForm({
             label={t("invoiceSettings.field.invoiceFallbackLabel")}
             value={invoiceFallbackLabel}
             onChange={setInvoiceFallbackLabel}
-            disabled={!canEdit}
+            disabled={editingDisabled}
             invalid={invoiceFallbackLabel.trim() === ""}
             errorText={t("invoiceSettings.textRequired")}
           />
@@ -243,7 +258,7 @@ function SettingsForm({
             label={t("invoiceSettings.field.invoiceUnitName")}
             value={invoiceUnitName}
             onChange={setInvoiceUnitName}
-            disabled={!canEdit}
+            disabled={editingDisabled}
             invalid={invoiceUnitName.trim() === ""}
             errorText={t("invoiceSettings.textRequired")}
           />
@@ -260,7 +275,7 @@ function SettingsForm({
             label={t("invoiceSettings.field.defaultPaymentMethod")}
             value={defaultPaymentMethod}
             onChange={setDefaultPaymentMethod}
-            disabled={!canEdit}
+            disabled={editingDisabled}
             invalid={defaultPaymentMethod.trim() === ""}
             errorText={t("invoiceSettings.textRequired")}
           />
@@ -268,7 +283,7 @@ function SettingsForm({
             label={t("invoiceSettings.field.documentFallbackLabel")}
             value={documentFallbackLabel}
             onChange={setDocumentFallbackLabel}
-            disabled={!canEdit}
+            disabled={editingDisabled}
             invalid={documentFallbackLabel.trim() === ""}
             errorText={t("invoiceSettings.textRequired")}
           />
@@ -285,9 +300,8 @@ function SettingsForm({
             <p className="text-sm text-muted-foreground">{t("invoiceSettings.kindLabels.empty")}</p>
           )}
           {labels.map((row, index) => {
-            const kindInvalid =
-              !KIND_SHAPE.test(row.kind) ||
-              labels.findIndex((other) => other.kind === row.kind) !== index;
+            const kindDuplicated = duplicateKinds.has(row.kind);
+            const kindShapeWrong = !KIND_SHAPE.test(row.kind);
             return (
               <div key={index} className="grid gap-3 sm:grid-cols-[1fr_1fr_auto] sm:items-end">
                 <div className="space-y-1">
@@ -296,8 +310,8 @@ function SettingsForm({
                   </Label>
                   <Input
                     value={row.kind}
-                    disabled={!canEdit}
-                    aria-invalid={kindInvalid}
+                    disabled={editingDisabled}
+                    aria-invalid={kindShapeWrong || kindDuplicated}
                     onChange={(event) =>
                       setLabels(
                         labels.map((one, position) =>
@@ -306,9 +320,11 @@ function SettingsForm({
                       )
                     }
                   />
-                  {kindInvalid && (
+                  {kindShapeWrong ? (
                     <p className="text-xs text-amber-700">{t("invoiceSettings.kindInvalid")}</p>
-                  )}
+                  ) : kindDuplicated ? (
+                    <p className="text-xs text-amber-700">{t("invoiceSettings.kindDuplicate")}</p>
+                  ) : null}
                 </div>
                 <div className="space-y-1">
                   <Label className="text-xs text-muted-foreground">
@@ -316,7 +332,7 @@ function SettingsForm({
                   </Label>
                   <Input
                     value={row.label}
-                    disabled={!canEdit}
+                    disabled={editingDisabled}
                     aria-invalid={row.label.trim() === ""}
                     onChange={(event) =>
                       setLabels(
@@ -334,6 +350,7 @@ function SettingsForm({
                   <Button
                     variant="outline"
                     size="icon"
+                    disabled={editingDisabled}
                     aria-label={t("invoiceSettings.kindLabels.remove")}
                     onClick={() => setLabels(labels.filter((_, position) => position !== index))}
                   >
@@ -346,6 +363,7 @@ function SettingsForm({
           {canEdit && (
             <Button
               variant="outline"
+              disabled={editingDisabled}
               onClick={() => setLabels([...labels, { kind: "", label: "" }])}
             >
               <Plus /> {t("invoiceSettings.kindLabels.add")}
@@ -356,11 +374,38 @@ function SettingsForm({
 
       {canEdit && (
         <div className="flex justify-end">
-          <Button onClick={save} disabled={!dirty || invalid || saving}>
-            {saving ? t("invoiceSettings.saving") : t("invoiceSettings.save")}
+          <Button onClick={save} disabled={!dirty || invalid || isSaving}>
+            {isSaving ? t("invoiceSettings.saving") : t("invoiceSettings.save")}
           </Button>
         </div>
       )}
+
+      <AlertDialog
+        open={blocker.status === "blocked"}
+        onOpenChange={(open) => {
+          if (!open && blocker.status === "blocked") blocker.reset();
+        }}
+      >
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>{t("invoiceSettings.unsavedChanges.title")}</AlertDialogTitle>
+            <AlertDialogDescription>
+              {t("invoiceSettings.unsavedChanges.body")}
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel onClick={() => blocker.status === "blocked" && blocker.reset()}>
+              {t("invoiceSettings.unsavedChanges.continueEditing")}
+            </AlertDialogCancel>
+            <AlertDialogAction
+              onClick={() => blocker.status === "blocked" && blocker.proceed()}
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+            >
+              {t("invoiceSettings.unsavedChanges.discard")}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }

@@ -5129,9 +5129,9 @@ function DocumentDetail({ doc }: { doc: Document }) {
       >
         <AlertDialogContent>
           <AlertDialogHeader>
-            <AlertDialogTitle>{t("documents.detail.ungespeichert.title")}</AlertDialogTitle>
+            <AlertDialogTitle>{t("documents.detail.unsavedChanges.title")}</AlertDialogTitle>
             <AlertDialogDescription>
-              {t("documents.detail.ungespeichert.body", {
+              {t("documents.detail.unsavedChanges.body", {
                 count: changedFields.length,
                 fields: changedFields.join(", "),
               })}
@@ -5139,13 +5139,13 @@ function DocumentDetail({ doc }: { doc: Document }) {
           </AlertDialogHeader>
           <AlertDialogFooter>
             <AlertDialogCancel onClick={nextEdit}>
-              {t("documents.detail.ungespeichert.weiter")}
+              {t("documents.detail.unsavedChanges.continueEditing")}
             </AlertDialogCancel>
             <AlertDialogAction
               onClick={changesDiscard}
               className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
             >
-              {t("documents.detail.ungespeichert.verwerfen")}
+              {t("documents.detail.unsavedChanges.discard")}
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
