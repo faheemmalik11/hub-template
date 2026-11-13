@@ -67,6 +67,8 @@ export const TABLE = {
   handoverRoutes: "handover_routes",
   importedItems: "imported_items",
   ingestExclusions: "ingest_exclusions",
+  invoiceKindLabels: "invoice_kind_labels",
+  invoiceSettings: "invoice_settings",
   manualBookings: "manual_bookings",
   matchingSettings: "matching_settings",
   notificationChannels: "notification_channels",

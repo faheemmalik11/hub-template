@@ -245,6 +245,23 @@ export interface FilenameSettings {
   updated_by: string | null;
 }
 
+export interface InvoiceSettings {
+  id: true;
+  default_vat_rate: number;
+  country_code: string;
+  invoice_fallback_label: string;
+  invoice_unit_name: string;
+  default_payment_method: string;
+  document_fallback_label: string;
+  updated_at: string;
+  updated_by: string | null;
+}
+
+export interface InvoiceKindLabel {
+  kind: string;
+  label: string;
+}
+
 // ---- OPOS whitelist (opos_whitelist_rules; pipeline migration 0018) ----
 // Transactions that can never have a receipt — salaries, tax prepayments, private withdrawals,
 // rebookings, loan installments (Briefing Screen 10). A matching rule parks the transaction in

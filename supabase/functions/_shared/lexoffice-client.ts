@@ -139,6 +139,7 @@ export interface LexofficeInvoiceInput {
   totalPrice: { currency: string };
   taxConditions: { taxType: "net" };
   shippingConditions: { shippingDate: string; shippingType: "service" };
+  paymentConditions?: { paymentTermLabel: string; paymentTermDuration: number };
   contactId?: string;
 }
 
@@ -180,8 +181,10 @@ export async function createInvoice(
   db: Db,
   apiKey: string,
   payload: LexofficeInvoiceInput,
+  finalise = true,
 ): Promise<LexofficeInvoiceResult> {
-  return (await lexofficeFetch(db, apiKey, "/invoices?finalize=true", {
+  const path = finalise ? "/invoices?finalize=true" : "/invoices";
+  return (await lexofficeFetch(db, apiKey, path, {
     method: "POST",
     body: payload,
   })) as LexofficeInvoiceResult;

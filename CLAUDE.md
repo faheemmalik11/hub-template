@@ -165,11 +165,11 @@ The direction is the one the pipeline already reached: one shared codebase, and 
 different is data rather than code. There is no separate package: `src/kit/` holds the shared parts
 and every client carries the whole thing, switching off what they do not use from the panel.
 
-**Open, and it bites a new client on day one:** two migrations hard-code the source Hub's project
-host in a cron job, `20260827130000_notification_dispatch_cron.sql:51` and
-`20260911100000_notify_about_any_record.sql:323`. Applied as they stand, a new client's notifications
-would be posted to another client's Edge Function. That host has to come from a database setting or
-the vault before this template is used for real. Eight further files name the old ref in text only.
+**The source Hub's project ref is out of the code, not out of the prose.** Every `net.http_post`
+now builds its host from the vault — `deployment_secret('project_url')`,
+`supabase/schema/0013_scheduled_jobs.sql` — and no `*.supabase.co` literal is left under
+`supabase/`, `src/` or `scripts/`. Eight files under `docs/` still name the old ref in text. They
+run nothing, but strike the ref when you next edit one, and never paste a host back into code.
 
 ## Language convention (IMPORTANT)
 
