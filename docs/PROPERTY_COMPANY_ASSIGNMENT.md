@@ -12,7 +12,7 @@ resolved the company, it also decided VAT treatment (sale = exempt, rental = lia
 
 That model doesn't fit this Hub. The client's cost-centre workbook lists several properties under
 **two companies at once** with nothing that maps onto a business-line dimension — e.g. Hinterstraße
-20-22 → Infio/this client, Czernyring 42-44 → My Baufi/this client — and `property_assignment` had **0 rows** in
+20-22 → Musterimmobilien/Musterfirma, Czernyring 42-44 → Musterfinanz/Musterfirma — and `property_assignment` had **0 rows** in
 the live DB by design (migration `0077` deliberately left it empty because the workbook's company
 relationships were ambiguous prose, not structured data).
 

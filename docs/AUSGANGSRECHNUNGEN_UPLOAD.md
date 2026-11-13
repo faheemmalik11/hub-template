@@ -2,23 +2,23 @@
 
 ## What was asked
 
-The client was explicit: no LexOffice integration for this client Hub, "no API integration to any
+The client was explicit: no LexOffice integration for the Hub, "no API integration to any
 invoicing tool — neither now nor planned for the initial scope." Outgoing invoices instead
 get created outside the Hub and uploaded manually. The settled decision, recorded in
 `communication/INDEX.md` (thread 4, scope clarification): _"outgoing invoices by manual PDF
 upload into OPOS/reporting."_
 
 An earlier open action in
-`communication/work-log/2026-08-05-a sister Hub-vs-this client-differences.md` had framed this as a
+the 2026-08-05 work-log comparing this Hub with a sister Hub had framed this as a
 **CSV template** the client would need to fill in — that was never actually settled that way
 and is now closed: the client's real requirement was a document upload, not a spreadsheet
 import.
 
 This feature ports a sister Hub's own outgoing-invoice-upload feature (their commit `4c63f5a`,
 "Add outgoing invoice upload feature for companies without LexOffice accounts"), built for
-their own non-LexOffice companies — the same shape fits this client Hub directly, and here it's the
+their own non-LexOffice companies — the same shape fits the Hub directly, and here it's the
 **only** way to create an outgoing invoice at all: unlike a sister Hub (where IMKO still has a
-real LexOffice account), no real this client company has one.
+real LexOffice account), no real client company has one.
 
 **Update (2026-08-06, migration `0086`):** LexOffice was removed from this repo entirely —
 the `/ausgangsrechnungen/neu` LexOffice-backed form, the `/lexoffice-konfiguration` screen,
@@ -62,7 +62,7 @@ dropped `lexoffice_config` table.
   is `source='upload'`.
 - **Schema difference from a sister Hub, handled**: a sister Hub's `companies` table has a
   `tax_number` column (added in a later a sister Hub-only migration) used as a company-matching
-  backstop during extraction. this client Hub's `companies` table has no equivalent column — the
+  backstop during extraction. The Hub's `companies` table has no equivalent column — the
   extraction function here matches on the model's own company-code pick plus a
   normalized-legal-name fallback only, no tax-number step.
 

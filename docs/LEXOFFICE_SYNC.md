@@ -6,11 +6,12 @@ Lexoffice is a destination, not a mirror.
 
 ## What was asked
 
-Van Oepen's outgoing commission invoices are created in the Hub (`create_deal_invoices`,
+Outgoing commission invoices are created in the Hub (`create_deal_invoices`,
 `supabase/schema/0011_functions.sql`), but staff then retype the same data into Lexoffice by hand
-("the exact double-data-entry problem this project exists to remove" — Ayla, 20 Oct 2026 call,
-`planning/communication/2026-10-20/`). Van Oepen upgraded their Lexware plan to XL specifically for
-Public API access (confirmed 2026-11-10: S/M/L don't have it, only XL).
+("the exact double-data-entry problem this project exists to remove" — client call, 20 Oct 2026,
+`planning/communication/2026-10-20/`). Public API access needs the Lexware XL plan (confirmed
+2026-11-10: S/M/L don't have it, only XL), so a client has to be on XL before this feature can be
+switched on for them; which client upgraded for it is on their own branch.
 
 **Important history**: Lexoffice was integrated in this Hub once before, and removed entirely
 (migration `0086`, 2026-08-06) at a different client's explicit request ("no API integration to any
@@ -81,6 +82,58 @@ default rather than a reversal of that decision.
   to include `sent`/`paid`/`cancelled` alongside the upload path's `draft`/`open`/`paidoff`/`voided`
   — both vocabularies share the one `status` column; see Known issues below.
 
+## Taking the invoice number and PDF back into the Hub
+
+Briefing §3.2 also asks for "the number and the PDF" to come back into the Hub once Lexware has
+created and finalised the invoice. Implemented as a second phase of the same push, not a new
+Edge Function:
+
+- **Phase 1** (`createInvoice` → `persistCreated`) writes `accounting_external_id` the moment
+  Lexware confirms the invoice exists, before anything else runs. This closes a real gap: writing
+  it only at the very end (the old behaviour) meant a crash between creation and that final write
+  left the row retryable, and a retry would call `createInvoice` a second time — a duplicate
+  finalised invoice at Lexware. Phase 1 never runs again once `accounting_external_id` is set.
+- **Phase 2** (`fetchNumberAndFile`) reads `voucherNumber`/`voucherStatus` via the existing
+  `getInvoice` call and writes `invoice_number`, `status`, `sent_at`. If the new
+  `lexoffice.invoice_file_fetch` feature flag is live, it also calls the new `getInvoiceFile`
+  (`_shared/lexoffice-client.ts`, extends `lexofficeFetch` with an `arraybuffer` response mode),
+  uploads the bytes to the `outgoing-invoice-files` Storage bucket, and records a row in
+  `outgoing_invoice_files` (`supabase/schema/0047_lexoffice_invoice_file_fetch.sql` adds
+  `lexoffice_file_fetched_at`/`lexoffice_sync_error` to `outgoing_invoices` and a unique index on
+  `outgoing_invoice_files.outgoing_invoice_id`, so a retry upserts instead of duplicating).
+- **Resumable, asymmetrically on purpose**: a row with `accounting_external_id` set but
+  `lexoffice_file_fetched_at` still null re-enters at phase 2 (`claimForFileFetch`) on the next
+  call, which is safe to reclaim after a few minutes (`staleClaimFilter`) since everything phase 2
+  does — `getInvoice`, `getInvoiceFile`, the Storage upload, the `outgoing_invoice_files` upsert —
+  is safely re-runnable. **Phase 1's claim (`claimInvoice`) is never stale-reclaimable.** `createInvoice`
+  has no dedup lookup before it, so a crash in the narrow window between it succeeding and
+  `persistCreated` writing `accounting_external_id` must stay stuck forever (a human clears
+  `lexoffice_sync_requested_at` by hand) rather than let a retry finalize a second, undeletable
+  invoice at Lexware. Any failure in either phase writes `lexoffice_sync_error` (same column name
+  and purpose as `documents`' own), so `LexofficeSyncButton`
+  (`src/routes/outgoing-invoices/index.tsx`) can show a retry affordance — one that, for this one
+  specific stuck-phase-1 case, will keep failing with "not eligible" until someone clears the
+  column, which is the deliberately safe outcome.
+- **Off by default, independently of `lexoffice.sync`**: `lexoffice.invoice_file_fetch` is its own
+  catalogue key, so an existing client already pushing invoices sees no behaviour change until this
+  is switched on separately.
+- **Answered 13.11.2026, against the real Lexware API**: `GET /invoices/{id}/file` does **not** lag.
+  One invocation created the invoice, read back its number and fetched a 120 KB PDF in the same
+  call, `sent_at` 13:37:23.166Z and `lexoffice_file_fetched_at` 13:37:25.723Z — 2.5 seconds, first
+  try, no 404 and no retry. So no polling job is needed, and the resumable error path above stays
+  as the handler for a genuine failure rather than for an expected lag.
+
+Three bugs that only a real call could find, all fixed in the same pass:
+
+- `POST /v1/invoices` **rejects a date-only `voucherDate`** (`400`, "cannot be parsed"), where
+  `POST /v1/vouchers` on the document side accepts one. Hence `lexofficeTimestamp()` in
+  `lexoffice-invoice-push/index.ts`, sending full ISO 8601 for `voucherDate` and `dueDate`.
+- `POST /v1/invoices` **requires `shippingConditions`** (`406`, "must not be null"); the document
+  side has no such field. Sent as `shippingType: "service"` dated to the voucher date.
+- `friendlyLexofficeError` **discarded the reason** for any `406` whose body is not the `IssueList`
+  shape, leaving "rejected for an unknown reason" and nothing to act on. It now falls back to
+  Lexware's own `message` field, which is what made the second bug diagnosable at all.
+
 ## What was explicitly left out
 
 - **No webhook / no payment-status sync back from Lexoffice.** This only pushes; it never listens.
@@ -107,8 +160,22 @@ default rather than a reversal of that decision.
 
 ## Open questions
 
-- Van Oepen's referrer credit-note process (`0033_referrer_credit_notes.sql`) also creates
+- The referrer credit-note process (`0033_referrer_credit_notes.sql`) also creates
   `outgoing_invoices` rows (`kind = 'referral_credit'`). Whether those should also be pushable to
   Lexoffice, or stay Hub-only, hasn't been asked.
-- What VAT rate applies when a deal has none set — currently falls back to the deal's own
-  `vat_rate` column, which itself defaults to 19%.
+
+## Settled: what a client can change without touching code
+
+Four things that used to be literals in the Edge Functions are read from `tenant_settings.config`
+via `_shared/tenant-config.ts`, and a per-record value still wins wherever one exists:
+
+| What | Where it comes from | Default |
+|---|---|---|
+| VAT rate when a document or deal has none | `config.tax.defaultVatRate` | `19` |
+| Country, for the contact, the billing address and the allowed-rate lookup | `config.tax.country` | `DE` |
+| The invoice line's label and unit name | `config.wording` | `Provision` / `Coaching` / `Rechnung`, `Pauschal` |
+| The voucher remark's payment-method fallback | `config.wording` | `Überweisung` |
+
+The defaults live in code rather than being stamped into each client's `config` by a migration, so
+a later change to a default still reaches everyone. `tenantTaxRegime()` existed before this and was
+never called from anywhere, so a client could set a VAT rate and country and nothing read them.

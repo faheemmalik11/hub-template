@@ -3,9 +3,9 @@
 What the Hub (this repo) and book-keeping (`github.com/fabiantscheu-ship-it/book-keeping`,
 `../book-keeping` locally) actually share, how a document gets from a mailbox into `documents`,
 and — the part that keeps getting re-discovered from scratch — where mailbox credentials live and
-why the Hub can never read them. Written up after a live investigation against van Oepen's actual
-project (`qkpkuwvrlhrhigzdbtks`) on 2026-11-10, verified against the real schema and the real code,
-not inferred.
+why the Hub can never read them. Written up after a live investigation against a real client's own
+project on 2026-11-10, verified against the real schema and the real code, not inferred. Which
+project that was is recorded on that client's own branch, not here.
 
 ## Three separate things, not one system
 
@@ -31,9 +31,9 @@ can live.
 
 ## Why the Hub can never browse an IMAP mailbox's folders live
 
-Verified directly against van Oepen's live project — first wrongly assumed the credential wasn't in
-the tenant's own database at all, then found it was, so recording both what's true and how it was
-checked:
+Verified directly against a real client's live project — first wrongly assumed the credential
+wasn't in the tenant's own database at all, then found it was, so recording both what's true and
+how it was checked:
 
 ```
 channels: [{"key":"email_imap","kind":"mailbox","provider":"imap","settings":{}}]
@@ -101,12 +101,13 @@ inbound port a browser app could call: the Hub writes a row into its own databas
 - **`useRunRequests()` degrades silently** if the table doesn't exist yet (`if (error) return {}`) —
   by design, so a client not yet on this migration just never shows the button, rather than erroring.
 
-**Real, verified gap**: `pipeline_run_requests` does **not exist yet on van Oepen's live database** —
-confirmed via `supabase db dump --linked` against `qkpkuwvrlhrhigzdbtks` on 2026-11-10 (the table list
-has `channels`, `channel_folders`, `channel_state`, `pipeline_runs`, `processing_log`,
-`tenant_settings`, `schema_migrations` — no `pipeline_run_requests`, no `package_migrations`). So
-"Run now" does not actually work for van Oepen today, and any new request kind (like "list folders")
-needs the base migration applied first, not just the new one.
+**Real, verified gap**: `pipeline_run_requests` does **not exist on a client database that predates
+this migration** — confirmed via `supabase db dump --linked` against a real client project on
+2026-11-10 (the table list has `channels`, `channel_folders`, `channel_state`, `pipeline_runs`,
+`processing_log`, `tenant_settings`, `schema_migrations` — no `pipeline_run_requests`, no
+`package_migrations`); which client that was, and whether it is still true of them, is on that
+client's own branch. So "Run now" does not actually work on such a database, and any new request
+kind (like "list folders") needs the base migration applied first, not just the new one.
 
 ### How these migrations actually get applied — and the part that is still manual
 

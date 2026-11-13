@@ -19,18 +19,18 @@ missing to fully match the spec.
 > `v_bank_transactions_list`), and **every view in this project was silently
 > bypassing RLS entirely** — a Postgres default (views run as their _owner_, here a
 > superuser, for permission purposes, unless `security_invoker = true` is set; this
-> project's views never had it). A real employee (Anja, granted access to exactly
+> project's views never had it). A real employee (Erika, granted access to exactly
 > one company) was seeing **102 other-company invoices and 1445 other-company bank
 > transactions** — i.e. the two most-used screens in the whole app were not
 > respecting company scoping at all. Confirmed this predates this branch (migration
 > 0046 only ever fixed the tables' own policies, never the views on top of them) and
 > was simply never exercised by a real restricted user until now. Fixed by adding
 > `security_invoker = true` to every view in the project; re-verified live —
-> Anja now sees exactly her granted company's rows (0 leaked), admin still sees
+> Erika now sees exactly her granted company's rows (0 leaked), admin still sees
 > everything (no regression). See §2.1a below for the full write-up.
 >
 > Verified live: migrations 0046–0053 applied to the dev project
-> (`txxqvvpvrylnqbpscmpv`), self-checked (including a real end-to-end RLS test — a
+> (`<dev-project-ref>`), self-checked (including a real end-to-end RLS test — a
 > simulated restricted session correctly saw only its granted company — and a real
 > end-to-end login → set-password → RPC call against the live Auth API), `tsc`/
 > `eslint`/`vite build` all clean. What's **not** built yet: property-level access
@@ -44,7 +44,7 @@ missing to fully match the spec.
 > full detail; both are cross-referenced there and here since they're one underlying
 > fact relevant to both docs.
 >
-> **2026-08-10 — cross-app verification against the a sister Hub Hub sibling app:** this
+> **2026-08-10 — cross-app verification against the sister Hub sibling app:** this
 > app's own RLS was clean (no equivalent of the `auth_read` regression found on
 > a sister Hub — see below), but two gaps surfaced. `apply_assignment_rule_bulk()` was
 > `anon`/`PUBLIC`-executable (not just `authenticated`) on this project too — same
@@ -52,7 +52,7 @@ missing to fully match the spec.
 > `20260810062807_revoke_anon_execute_apply_assignment_rule_bulk.sql`. `/auswertungen` also had
 > no route-level guard (only nav-hidden from the assistant role) — added an
 > `AuswertungenGuard` wrapper matching `TeamGuard`'s pattern. See §2.7 for the full
-> write-up, including what was found and fixed on the a sister Hub side for reference.
+> write-up, including what was found and fixed on the sister Hub side for reference.
 
 ---
 
@@ -63,9 +63,9 @@ missing to fully match the spec.
 | Role                                            | Who                    | May                                                                                                           |
 | ----------------------------------------------- | ---------------------- | ------------------------------------------------------------------------------------------------------------- |
 | **Super admin**                                 | Developer (Fabian)     | Technical operation, AI consumption, all instances. **Not visible to the client.**                            |
-| **Admin / management**                          | Philipp                | See everything. Create employees, assign rights, define the approval path and rules. May skip approval steps. |
+| **Admin / management**                          | Max                    | See everything. Create employees, assign rights, define the approval path and rules. May skip approval steps. |
 | **Supervisor** _(optional, intermediate level)_ | e.g. a department head | Approve what is assigned to them.                                                                             |
-| **Assistant / accounting**                      | Anja                   | Capture receipts, check, assign, set notes, forward to the supervisor.                                        |
+| **Assistant / accounting**                      | Erika                  | Capture receipts, check, assign, set notes, forward to the supervisor.                                        |
 
 ### 1.2 The rules (Screen 17 + Appendix A7)
 
@@ -84,7 +84,7 @@ missing to fully match the spec.
 - **Only management sees the evaluation/BWA** — the assistant does not see it at all.
 - The **grievance being fixed**: today every logged-in user may see everything
   (`using (true)` RLS) — untenable with six companies of real figures.
-- **Default visibility decision** in the appendix: Philipp = all companies, Julia =
+- **Default visibility decision** in the appendix: Max = all companies, Eva =
   only JPGB. This is the anchor for the "no grants recorded" fallback behaviour (see
   §3 below).
 
@@ -125,7 +125,7 @@ missing to fully match the spec.
   - `has_company_access(p_company uuid)` — the core grant check: denies a deactivated
     account outright; treats `p_company is null` as always visible (the catch-all
     "unassigned" bucket must stay visible to every reviewer); treats **no grants
-    recorded for a user as unrestricted** (matches the briefing's "Philipp = all"
+    recorded for a user as unrestricted** (matches the briefing's "Max = all"
     default and avoids locking existing users out the moment the migration lands).
 - `app_users` / `user_company_access`: admin-only read/insert/update RLS policies.
 - `SELECT` policies rewritten to `has_company_access(company_id)` on every
@@ -157,7 +157,7 @@ missing to fully match the spec.
 
 ### 2.1a ⚠️ Views were bypassing RLS entirely (`supabase/migrations/0053_view_security_invoker.sql`)
 
-Reported by a real user: after granting `Anja` (assistant) access to exactly one
+Reported by a real user: after granting `Erika` (assistant) access to exactly one
 company via `/team`, she still saw invoices from every company on the
 Eingangsrechnungen screen.
 
@@ -180,7 +180,7 @@ Eingangsrechnungen screen.
    so `has_company_access()` was never evaluated at all for anyone reading through
    these views. Confirmed via `pg_class`: all 5 views, `relowner = postgres`,
    `reloptions` empty (no `security_invoker`).
-4. Verified live, quantitatively, before the fix: Anja (1 real company grant) saw
+4. Verified live, quantitatively, before the fix: Erika (1 real company grant) saw
    **102 other-company invoices** via `v_invoices_review` and **1445 other-company
    bank transactions** via `v_bank_transactions_list` — the exact view the bank
    reconciliation screen reads. Both of these are the single most-used screens in
@@ -198,7 +198,7 @@ with an actual grant. `v_supplier_duplicates` was included for consistency even
 though `suppliers` isn't company-scoped (`using (true)` policies) — a no-op today,
 kept uniform so a future company-scoped view doesn't have to remember to opt in.
 
-**Re-verified live after the fix:** Anja now sees exactly 1 invoice (her company)
+**Re-verified live after the fix:** Erika now sees exactly 1 invoice (her company)
 and 0 leaked via `v_invoices_review`, 31 bank transactions (her company) and 0
 leaked via `v_bank_transactions_list`. Admin's totals via both views are unchanged
 (138 invoices, 1575 bank transactions) — no regression. `v_trash`'s own total
@@ -216,7 +216,7 @@ Following the view fix (§2.1a), a complete sweep was run to make sure no other
 surface has the same class of leak — not just the two the user happened to hit.
 
 - **All 13 company-scoped tables from migration 0046** tested directly, live, under
-  Anja's real single-company grant (`JPGB`): `invoices`, `outgoing_invoices`,
+  Erika's real single-company grant (`JPGB`): `invoices`, `outgoing_invoices`,
   `bank_transactions` (all three re-confirmed clean after the fix), plus
   `customers`, `bank_accounts`, `manual_bookings`, `approval_rules`,
   `assignment_rules`, `datev_handover_batches`, `datev_routes`,
@@ -228,7 +228,7 @@ surface has the same class of leak — not just the two the user happened to hit
   narrows, not vacuous passes against empty tables. **Update (2026-08-06):**
   LexOffice was removed entirely from this app (see `docs/AUSGANGSRECHNUNGEN_UPLOAD.md`);
   migration `0086` drops both `lexoffice_config` and `lexoffice_sync_log` — the 2 live
-  `lexoffice_config` rows referenced tax/company codes that didn't match any real this client
+  `lexoffice_config` rows referenced tax/company codes that didn't match any real client
   company, a likely cross-client credential that this table drop removes from this
   database (any live-key rotation on the LexOffice/a sister Hub side is outside this repo).
 - **Every `SECURITY DEFINER` function in the schema audited** (bypasses RLS by
@@ -241,7 +241,7 @@ surface has the same class of leak — not just the two the user happened to hit
   `resolve_assignment_rule`, `resolve_approval_rule`, etc.) are all
   `SECURITY INVOKER` (`prosecdef = false`) — they run as the calling user, so they
   inherit RLS automatically rather than needing their own internal check.
-  `invoices_kpis`/`invoices_facets` re-verified live: Anja's KPI total (36 open
+  `invoices_kpis`/`invoices_facets` re-verified live: Erika's KPI total (36 open
   items) and facet lists (property codes, years, months) are both derived only from
   her visible invoices, versus admin's unrestricted total (138) — correctly scoped.
 - **No admin/service-role client used for a read path**: grepped every
@@ -304,8 +304,7 @@ null` (i.e. rules that apply across every company) — with no check that the
   - **`app_users.name` is now a required field**, not optional — every employee needs
     a real display name because it's what shows up as the approver's identity
     elsewhere in the app (see the Approvers-tab integration below). The two bootstrap
-    accounts (Philipp Netz `buchhaltung@netz.immo`, admin; Anja `anja@gmail.com`,
-    assistant) were seeded this way.
+    accounts (one admin, one assistant) were seeded this way.
   - **Editing an employee's email goes through `updateEmployeeProfile`, never a plain
     `app_users` row update.** `app_users.email` is what `has_company_access()`/
     `current_role_name()` match against `auth.jwt() ->> 'email'` — if the DB row
@@ -325,10 +324,10 @@ null` (i.e. rules that apply across every company) — with no check that the
     reactivate first.
     - **Also creates the missing Auth account for rows that never had one.** Some
       `app_users` rows predate `createEmployee` — seeded directly in the DB, e.g. the
-      two bootstrap accounts (`buchhaltung@netz.immo`/admin, `anja@gmail.com`/
-      assistant) — and have `auth_user_id = null`. Live-caught while testing this
-      feature: calling `auth.admin.updateUserById(null, ...)` for such a row fails deep
-      inside `supabase-js` with an opaque `"Expected parameter to be UUID but is not"`.
+      two bootstrap accounts (one admin, one assistant) — and have `auth_user_id = null`.
+      Live-caught while testing this feature: calling `auth.admin.updateUserById(null, ...)`
+      for such a row fails deep inside `supabase-js` with an opaque
+      `"Expected parameter to be UUID but is not"`.
       `resetEmployeePassword` now branches on `auth_user_id`: if set, updates that
       account's password (`auth.admin.updateUserById`); if null, creates a brand-new
       Auth account for the employee's email (`auth.admin.createUser`, same call
@@ -443,7 +442,7 @@ only the direct client-side path was broken. Fixed with `auth_read`/
 to both docs). Verified live: a simulated authenticated insert that previously
 403'd now succeeds.
 
-### 2.4b Full RLS regression pass (this branch, live on `txxqvvpvrylnqbpscmpv`)
+### 2.4b Full RLS regression pass (this branch, live on `<dev-project-ref>`)
 
 Run after 0051 (and `docs/TRASH_AND_DELETE.md`'s 0052) landed, against the real dev
 project, each check going through the actual enforcement path (`set local role
@@ -453,14 +452,14 @@ itself uses per request — not just an application-layer assumption):
 - `is_admin()`/`current_role_name()`/`has_company_access()` verified correct for
   `admin` (sees all 7 companies, `is_admin()=true`) and `assistant` (sees all 7 with
   zero grants recorded — the unrestricted default).
-- **Real temporary grant** on Anja (`assistant`): `IMOS` granted (`can_view=true`),
+- **Real temporary grant** on Erika (`assistant`): `IMOS` granted (`can_view=true`),
   `NOGR` explicitly denied (`can_view=false`) — narrowed her visible company count
   from 7 to exactly 1, `has_company_access` matched both cases precisely, and
   `has_company_access(null)` (the "watch-all" case for an unassigned invoice) stayed
   `true` even while restricted. A **soft-deleted** grant confirmed to not count
   (stays unrestricted). Grant removed immediately after; verified
   `user_company_access` back to 0 rows, matching the pre-test baseline.
-- **Deactivated-user case**, tested against Anja's real account (toggled
+- **Deactivated-user case**, tested against Erika's real account (toggled
   `is_active=false`, tested, reactivated immediately — a fabricated `app_users` test
   row isn't possible, `auth_user_id` has a real FK to `auth.users`): `is_admin()`,
   `has_company_access(null)`, and `has_company_access(<any company>)` all correctly
@@ -496,7 +495,7 @@ forever — the flag was recorded but nothing checked it. Closed:
 - **`auth-gate.tsx`** blocks on this ahead of `AppShell`: `ready → !user → LoginScreen`,
   `ready → user → mustChangePassword → SetNewPasswordScreen`, only then the real app.
   No window where the app is briefly reachable with the temp password still active.
-- **Verified against the live Auth API, not just read through**: logged in as Anja
+- **Verified against the live Auth API, not just read through**: logged in as Erika
   with her real temp password, called `PUT /auth/v1/user` to set a new password, then
   the RPC — confirmed `must_change_password` flipped to `false` in the DB. Her
   temporary password from earlier in this conversation is now **invalid** as a side
@@ -521,10 +520,10 @@ forever — the flag was recorded but nothing checked it. Closed:
   the docs `docs/PROJECT-ROADMAP.md` / `docs/CODEBASE_AUDIT.md` calling this
   "not started" are **stale**.
 
-### 2.7 Cross-app verification against a sister Hub Hub, 2026-08-10 — two shared gaps found and fixed here, one regression found and fixed on a sister Hub only
+### 2.7 Cross-app verification against a sister Hub, 2026-08-10 — two shared gaps found and fixed here, one regression found and fixed on a sister Hub only
 
-The a sister Hub Hub sibling app (`docs/PROJECT-ROADMAP.md`'s lineage, its own Supabase project
-`txxqvvpvrylnqbpscmpv`) has its own copy of this doc and its own roles/access implementation.
+The sibling Hub (`docs/PROJECT-ROADMAP.md`'s lineage, its own Supabase project) has its own
+copy of this doc and its own roles/access implementation.
 Comparing the two live, side by side, surfaced drift in both directions.
 
 - **This app's `companies`/`invoices`/`property_assignment` RLS was confirmed clean** — a sister Hub
@@ -680,7 +679,7 @@ null`, unique where non-null, backfilled by exact case-insensitive name match. S
 
 1. Unify `Approver`/`approval_rules` with `app_users`/`roles` (item 1) — the largest, most spec-relevant remaining gap; touches the approval UI's button visibility logic in `format.ts`/`$nr.tsx`.
 2. Add write-side `has_company_access()` checks table by table, in the order the briefing's screens are used (Screen 1–3 intake first, since that's the highest-traffic write path).
-3. Only then consider property-level grants and a dynamic role hierarchy (items 2, 4) — both are explicitly "when needed" in the briefing, not blocking today's single real customer (Philipp) plus a handful of named employees.
+3. Only then consider property-level grants and a dynamic role hierarchy (items 2, 4) — both are explicitly "when needed" in the briefing, not blocking today's single real customer (Max) plus a handful of named employees.
 
 ---
 
@@ -761,7 +760,7 @@ being withheld. Same change applied on a sister Hub.
 
 ## The two-person rule, and `can_approve`/`can_pay` becoming real (2026-08-28)
 
-Item 5 of `OPEN-TASKS.txt`: "split approving from paying, so Petra approves and Saskia pays,
+Item 5 of `OPEN-TASKS.txt`: "split approving from paying, so Sabine approves and Tanja pays,
 matching the bank's two-person rule."
 
 ### What was already there
@@ -774,7 +773,7 @@ RLS policy. `approvers.payment_handler` ('boss' | 'account*holder') even models 
 ### What was missing
 
 1. **Nothing compared the approver against the payer.** `payment-initiate` never read the approval
-   history before authorising. Demonstrated live on 28.08.2026: acting as Saskia Christ (manager +
+   history before authorising. Demonstrated live on 28.08.2026: acting as Tanja Beispielmann (manager +
    Admin), final-approving invoice `34 2480 0900 0861` and then finding "Jetzt bezahlen" enabled on
    the same screen, seconds later, by the same person.
 2. **`can_book`/`can_approve`/`can_pay` were inert.** Added by `20260812150000`, written by the Team
@@ -812,19 +811,19 @@ Both columns default to false and were false for all 8 users, so switching the g
 a backfill would have locked everyone out of approving and paying on deploy. The migration
 reproduces today's effective permissions exactly: `can_pay` for supervisor/admin/super_admin (the
 roles `requirePaymentRole` already accepted), `can_approve` for everyone wired into `approvers`.
-Result — Andreas, Saskia, Faheem: all three rights; Alexis, Lukas: approve + pay; Petra, Test User,
-Vanessa: approve only.
+Result — Jonas, Tanja, Lars: all three rights; Bernd, Timo: approve + pay; Sabine, Test User,
+Nina: approve only.
 
 ### Verified live, in a rolled-back transaction
 
-Against `xsgbdtdwhrrhoeximeon`, each case going through the real enforcement path
+Against `<project-ref>`, each case going through the real enforcement path
 (`set local role authenticated` + a `request.jwt.claims` email, the same mechanism PostgREST uses):
 
-| Case                                                 | Result                  |
-| ---------------------------------------------------- | ----------------------- |
-| Saskia (the approver) inserts a `payment_orders` row | refused — RLS violation |
-| Alexis (a different supervisor) inserts the same row | allowed                 |
-| Petra (assistant, `can_pay = false`) inserts it      | refused — RLS violation |
+| Case                                                | Result                  |
+| --------------------------------------------------- | ----------------------- |
+| Tanja (the approver) inserts a `payment_orders` row | refused — RLS violation |
+| Bernd (a different supervisor) inserts the same row | allowed                 |
+| Sabine (assistant, `can_pay = false`) inserts it    | refused — RLS violation |
 
 Transaction rolled back; the invoice's `workflow_status`/`approved_by` and the `payment_orders`
 count were re-checked afterwards and are unchanged. `payment-initiate` and `payment-cancel`
@@ -833,8 +832,8 @@ also requires `can_pay`, which the backfill preserves for every role that could 
 
 ### Still open
 
-- **Petra cannot give the final approval.** She is `assistant`, so `nextLegalActions` sends her
-  approval to `freigegeben_assistenz`. The literal "Petra approves, Saskia pays" split needs her
+- **Sabine cannot give the final approval.** She is `assistant`, so `nextLegalActions` sends her
+  approval to `freigegeben_assistenz`. The literal "Sabine approves, Tanja pays" split needs her
   promoted to `supervisor` on the Team screen — a configuration decision, not a code one.
 - **`payment_handler` is still display-only.** With `can_pay` now real, it is either redundant or
   should become the per-rule override of it. Decide and then wire it or drop it; leaving a control
@@ -858,16 +857,16 @@ Every capability and every screen was gated by a hardcoded role string, in nine 
 check and the notification-settings check.
 
 Worst of them was in the data layer: `useEmployees` rewrote an admin's stored capability to `true`
-before the UI saw it, so turning Saskia's Payment switch off wrote `false` to the database and
+before the UI saw it, so turning Tanja's Payment switch off wrote `false` to the database and
 still read back as on. The screen and the database disagreed and the screen won.
 
 ### The model
 
-| Table              | Holds                                                                                                                                                                |
-| ------------------ | -------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `permissions`      | the catalogue — one row per grantable thing                                                                                                                          |
-| `role_permissions` | what a role grants by default. Editable, so a new intermediate level is an admin action, not a migration                                                             |
-| `user_permissions` | per-person override, **either direction**. `granted = false` REVOKES what the role would give — that is what makes "Saskia is an Admin but must not pay" expressible |
+| Table              | Holds                                                                                                                                                               |
+| ------------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `permissions`      | the catalogue — one row per grantable thing                                                                                                                         |
+| `role_permissions` | what a role grants by default. Editable, so a new intermediate level is an admin action, not a migration                                                            |
+| `user_permissions` | per-person override, **either direction**. `granted = false` REVOKES what the role would give — that is what makes "Tanja is an Admin but must not pay" expressible |
 
 Effective = personal override where one exists, otherwise the role default. Resolved once by
 `current_permissions()` and read by everything: the browser (`useAuth().can(key)`), RLS
@@ -909,12 +908,12 @@ re-seeding from scratch.
 
 ### Verified live, in a rolled-back transaction
 
-| Case                                                            | Result  |
-| --------------------------------------------------------------- | ------- |
-| Saskia (the approver) inserts a `payment_orders` row            | refused |
-| Alexis (supervisor, inherits `invoices.pay` from his role)      | allowed |
-| Alexis with `invoices.pay` revoked **for him personally**       | refused |
-| Petra (assistant) granted `invoices.pay` **for her personally** | allowed |
+| Case                                                             | Result  |
+| ---------------------------------------------------------------- | ------- |
+| Tanja (the approver) inserts a `payment_orders` row              | refused |
+| Bernd (supervisor, inherits `invoices.pay` from his role)        | allowed |
+| Bernd with `invoices.pay` revoked **for him personally**         | refused |
+| Sabine (assistant) granted `invoices.pay` **for her personally** | allowed |
 
 The last two are the point: who may pay is now changed on Team & Rollen, never in code.
 Transaction rolled back; the invoice and `payment_orders` re-checked and unchanged afterwards.
@@ -922,7 +921,7 @@ Transaction rolled back; the invoice and `payment_orders` re-checked and unchang
 
 ### Edge cases, verified live (2026-08-28)
 
-Each case run against `xsgbdtdwhrrhoeximeon` through the real enforcement path
+Each case run against `<project-ref>` through the real enforcement path
 (`set local role authenticated` + a `request.jwt.claims` email), inside a rolled-back transaction.
 
 | Case                                                               | Result                                            |
@@ -979,7 +978,7 @@ advisory — the permission model hid the buttons and PostgREST accepted the wri
 `payment_orders` was genuinely protected, because that table's own INSERT policy carries a
 permission clause.
 
-Demonstrated live, as Petra (holds `invoices.approve` and nothing else):
+Demonstrated live, as Sabine (holds `invoices.approve` and nothing else):
 
 ```
 update invoices set workflow_status='freigegeben_vorgesetzter' ...  -> UPDATE 1
@@ -1027,17 +1026,17 @@ korrigieren" action is.
 
 ### Verified live
 
-| Case                                                       | Result                                                |
-| ---------------------------------------------------------- | ----------------------------------------------------- |
-| Petra → `freigegeben_vorgesetzter`                         | refused, "requires the final-approval permission"     |
-| Petra sets `paid_at`                                       | refused, "requires the payment permission"            |
-| Petra changes `assigned_to`                                | refused, "requires the assign permission"             |
-| Petra writes `workflow_status='bezahlt'` with no `paid_at` | refused, "derived from paid_at"                       |
-| Petra → `rueckfrage` (she holds approve)                   | allowed                                               |
-| Petra edits an ordinary field                              | allowed                                               |
-| Alexis → `freigegeben_vorgesetzter` (holds final approval) | allowed                                               |
-| Saskia sets `paid_at` (holds pay)                          | allowed, and the derived `bezahlt` followed correctly |
-| Service role sets both at once                             | allowed — pipeline unaffected                         |
+| Case                                                        | Result                                                |
+| ----------------------------------------------------------- | ----------------------------------------------------- |
+| Sabine → `freigegeben_vorgesetzter`                         | refused, "requires the final-approval permission"     |
+| Sabine sets `paid_at`                                       | refused, "requires the payment permission"            |
+| Sabine changes `assigned_to`                                | refused, "requires the assign permission"             |
+| Sabine writes `workflow_status='bezahlt'` with no `paid_at` | refused, "derived from paid_at"                       |
+| Sabine → `rueckfrage` (she holds approve)                   | allowed                                               |
+| Sabine edits an ordinary field                              | allowed                                               |
+| Bernd → `freigegeben_vorgesetzter` (holds final approval)   | allowed                                               |
+| Tanja sets `paid_at` (holds pay)                            | allowed, and the derived `bezahlt` followed correctly |
+| Service role sets both at once                              | allowed — pipeline unaffected                         |
 
 The manual "bezahlt" switch on the invoice detail is now disabled without `invoices.pay`, so the UI
 refuses before the database has to.

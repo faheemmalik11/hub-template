@@ -5,7 +5,7 @@ payment difference) from `a client meeting note`, plus the settings page they mo
 
 ## What was asked
 
-H6, from Saskia: a payment that is a few cents or a few euros short of the invoice is still that
+H6, from Tanja: a payment that is a few cents or a few euros short of the invoice is still that
 invoice being paid — Skonto, a bank fee taken off the transfer, a rounding difference. Before this,
 the match either fell inside a hard-coded one-cent window or it did not exist at all, and there was
 no way to say "yes, this is the one, here is why the numbers differ".
@@ -38,6 +38,23 @@ and hiding it from non-admins made the matching look arbitrary. The old
 The amount is the heaviest signal at **0.45** of 1.0 (`WEIGHT` in `src/lib/matching/score.ts`;
 reference 0.25, IBAN 0.2, name 0.1, customer number 0.05, plus a 0.03 date bonus). Gates: 0.60 to
 suggest, 0.90 for the top band.
+
+Those three numbers are **fallbacks, not constants**. `DEFAULT_MATCHING_SETTINGS`
+(`src/kit/lib/bank-matching/constants.ts`) is the one place they are written down, and every reader
+derives from it: `AUTO_THRESHOLD`/`CANDIDATE_THRESHOLD` in `src/lib/matching/score.ts` and
+`src/lib/data/matching.ts`, and the no-row fallback in `useMatchingSettings`
+(`src/data/settings/settings.ts`). A client's own row in `matching_settings` wins wherever one
+exists: `MatchScoreBreakdown` (`src/components/bank/match-score.tsx`) bands a score against the
+configured `auto_match_threshold`/`candidate_threshold`, and `LinkConfirmDialog` against the
+configured `amount_tolerance`. The columns hold fractions on the same 0..1 scale as the scorer
+(`supabase/schema/0055_matching_thresholds_are_fractions.sql`), which is what makes reading them
+safe. `supabase/functions/_shared/matching.ts` keeps its own copy of the two gates as default
+parameters only — `bank-sync` reads the real row and passes it in.
+
+Still hard-coded: the server function `runTransactionMatching`
+(`src/lib/api/matching.functions.ts`) calls `runMatching` without settings, so a bulk re-match
+triggered from the Hub uses the fallbacks even when a client has configured otherwise. The nightly
+`bank-sync` Edge Function does not have this problem.
 
 `amountMatch(invoiceGross, transactionAmount, tolerance)` lives in **the kit**
 (`src/kit/lib/bank-matching/`) and returns
@@ -142,6 +159,11 @@ In **manual** matching a difference inside the tolerance does **not** offer "mar
 inside the allowance the invoice already counts as paid, so asking would be asking about a decision
 that has already been made.
 
+A configured `amount_tolerance` of `0.00` means exactly that: every remaining cent becomes a
+question the person has to answer, and nothing is written off silently. The dialog used to floor the
+value at one cent, which quietly turned "amounts must match to the cent" into "amounts may differ by
+a cent"; `0.01` is now only the fallback for when no value has been read at all.
+
 ## Files
 
 | Path | Role |
@@ -154,7 +176,9 @@ that has already been made.
 | `supabase/functions/bank-sync/index.ts` | reads the tolerance from the DB per run |
 | `src/components/bank/match-panel/link-confirm-dialog.tsx` | the two checkboxes and the reason |
 | `src/components/bank/close-remainder.tsx` | the same decision on either detail page, after the fact |
-| `src/kit/lib/bank-matching/` | `amountMatch`, `TOLERANCE_PENALTY`, `normalizeReference`, `hasTransposedDigits` |
+| `src/kit/lib/bank-matching/` | `amountMatch`, `TOLERANCE_PENALTY`, `DEFAULT_MATCHING_SETTINGS`, `normalizeReference`, `hasTransposedDigits` |
+| `src/components/bank/match-score.tsx` | bands a score against the client's configured gates |
+| `src/data/settings/settings.ts` | `useMatchingSettings`, and the fallback when there is no row |
 
 ## Open
 

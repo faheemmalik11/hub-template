@@ -1,14 +1,14 @@
 # Notify someone
 
 Covers meeting item **H11** (`a client meeting note`) and the 11.09.2026 request that
-generalised it. Saskia, at 19:20, describing what Petra does when a payment has no document:
+generalised it. Tanja, at 19:20, describing what Sabine does when a payment has no document:
 *"she has to request it from somebody… Or, what she does today, she makes a list. But then she has
 to maintain that list manually and write down every missing item. That's exactly what we want to
 avoid."*
 
 **Deliberately not an assignment.** No record gains an assignee. A notification is a message:
 nobody holds the record afterwards and there is no second state to clear, which is what makes it
-*replace* Petra's list rather than become another one.
+*replace* Sabine's list rather than become another one.
 
 ## Three parts
 
@@ -135,7 +135,7 @@ is already in the message, and repeating it cost the row the one fact it was mis
 
 Text names *what*, links straight to it, and quotes the note:
 
-> **Faheem Malik** bittet Thinkpad Lenovo, sich **einen Lieferanten** anzusehen. `<Im Hub öffnen>`
+> **Lars Muster** bittet Thinkpad Lenovo, sich **einen Lieferanten** anzusehen. `<Im Hub öffnen>`
 > \> Rechnungsadresse stimmt nicht
 
 Delivery is now immediate, see `NOTIFICATIONS.md`. Measured 0.7s to 1.3s on 11.09.2026, against up
@@ -145,7 +145,7 @@ to 15 minutes before.
 
 **A Hub user who is not in the Slack workspace gets their notification posted in the team channel.**
 `slackUserId` falls back to `config.team_channel` when `users.lookupByEmail` returns
-`users_not_found`, so it is delivered but publicly. Observed for `lukas.oldach@this client.de`.
+`users_not_found`, so it is delivered but publicly. Observed for `timo.beispiel@firma.de`.
 Pre-existing, not introduced here, but it leaks "who was asked what" whenever Hub membership and
 Slack membership differ.
 

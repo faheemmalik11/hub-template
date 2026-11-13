@@ -2,7 +2,7 @@
 
 ## What the client asked for
 
-Saskia, this client meeting 09.09.2026, 10:07 to 13:16. In Pleo the employee already sets the receipt, the
+Tanja, client meeting 09.09.2026, 10:07 to 13:16. In Pleo the employee already sets the receipt, the
 category and the property. The Hub showed none of it, so the same assignment was made twice. At
 13:03: *"almost everything is already available here in Pleo. Then we could completely avoid doing
 the assignments again."* Fabian: *"then we'll pull that data in."*
@@ -19,7 +19,7 @@ on 14.09.2026:
 | Category | `accountId` | 98 percent of rows, 14 distinct values |
 
 Pleo's own documentation calls a tag *"a cost centre ... to associate each expense with a cost
-object"*, which is Saskia's model exactly, and 13 tags sits close to her 15 properties.
+object"*, which is Tanja's model exactly, and 13 tags sits close to her 15 properties.
 
 Three findings that are easy to get wrong:
 
@@ -143,7 +143,7 @@ company, and it means guessing would put spend under the wrong BWA line.
 
 - **The tag scope.** Nothing on the property half can move until the Pleo key can read tag groups.
 - **The mapping itself.** The tags to properties, and the categories to BWA categories, once the
-  names are visible. Needs Saskia to confirm the ambiguous ones. A wider sample shows about 20
+  names are visible. Needs Tanja to confirm the ambiguous ones. A wider sample shows about 20
   distinct tags rather than the 13 first counted, some of them from the retired group.
 - **No screen reads any of this yet.** The transaction detail does not show what Pleo said, and
   nothing suggests the Hub property or category from it.

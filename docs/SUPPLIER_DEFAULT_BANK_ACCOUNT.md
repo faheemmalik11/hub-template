@@ -59,11 +59,11 @@ the arriving row is silently demoted, rather than the merge failing on the uniqu
 
 Run against each live database inside a transaction that was rolled back:
 
-|                  | accounts | marked default | carried in | suppliers with two defaults |
-| ---------------- | -------- | -------------- | ---------- | --------------------------- |
-| this client (this repo) | 135      | 130            | 1          | 0                           |
+|                      | accounts | marked default | carried in | suppliers with two defaults |
+| -------------------- | -------- | -------------- | ---------- | --------------------------- |
+| this Hub (this repo) | 135      | 130            | 1          | 0                           |
 | a sister Hub         | 91       | 83             | 3          | 0                           |
-| another client          | 73       | 58             | 0          | 0                           |
+| another client       | 73       | 58             | 0          | 0                           |
 
 All three also created zero `supplier_iban_history` rows, which is the check that the compacted
 comparison is doing its job.

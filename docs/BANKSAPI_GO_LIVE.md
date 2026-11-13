@@ -11,7 +11,7 @@ still-mock switch, see §3).
 ## 0. Status (verified 2026-08-20): go-live is DONE
 
 Steps 1-3 of §3 have been carried out. Verified directly against project
-`xsgbdtdwhrrhoeximeon`, not inferred from this doc:
+`<project-ref>`, not inferred from this doc:
 
 | Secret                         | Value                        | Set on     |
 | ------------------------------ | ---------------------------- | ---------- |
@@ -20,7 +20,7 @@ Steps 1-3 of §3 have been carried out. Verified directly against project
 | `BANKSAPI_PAYMENT_MODE`        | `mock` (correctly untouched) | 2026-08-06 |
 | `BANKSAPI_ONE_CONNECT_API_KEY` | present (value not readable) | 2026-08-05 |
 
-Method: `supabase secrets list --project-ref xsgbdtdwhrrhoeximeon` returns sha256 digests
+Method: `supabase secrets list --project-ref <project-ref>` returns sha256 digests
 rather than plaintext, so the three mode/env values above were identified by matching those
 digests against the sha256 of each candidate string. The API key's plaintext stays unknown by
 the same mechanism.
@@ -113,13 +113,13 @@ Flip the secret **before** deleting rows, or the next hourly tick recreates them
    ```bash
    supabase secrets set BANKSAPI_MODE=live BANKSAPI_ENV=production \
      BANKSAPI_ONE_CONNECT_API_KEY=<production-key> \
-     --project-ref xsgbdtdwhrrhoeximeon
+     --project-ref <project-ref>
    ```
-   (2026-08-07 correction: this doc originally named `pbwfihepsrxgcytkvqgf` here — that project is
-   actually named "a sister Hub Philipp Netz" in Supabase, unrelated to this Hub. The real this Hub/this client
-   project ref, confirmed from the production pipeline's own `SUPABASE_DB_URL`
-   (`db.xsgbdtdwhrrhoeximeon.supabase.co`), is `xsgbdtdwhrrhoeximeon`. No command was ever actually
-   run against the wrong ref — this was caught before anything executed.)
+   (2026-08-07 correction: this doc originally named a different project's ref here. That
+   project belongs to a sister Hub, unrelated to this one. The real ref was confirmed from the
+   production pipeline's own `SUPABASE_DB_URL` and is the client's own, kept in their `.env` and
+   on their own branch. No command was ever actually run against the wrong ref — this was caught before anything
+   executed.)
    (Leave `BANKSAPI_PAYMENT_MODE` untouched — stays `mock`.)
 3. Delete the demo rows. `bank_connections`, `bank_accounts`, and `bank_transactions` each carry
    an `is_sandbox boolean not null default true` column built for exactly this

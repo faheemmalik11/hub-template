@@ -1,5 +1,5 @@
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
-import { BRAND, pageTitle } from "@/config/brand";
+import { BRAND, brandVars, pageTitle } from "@/config/brand";
 import { useEffect, useMemo, useState } from "react";
 import {
   BellRing,
@@ -667,7 +667,7 @@ function SettingsTab() {
                       </span>
                       <div className="min-w-0 flex-1 space-y-2">
                         <p className="text-sm text-foreground">
-                          {t("settings.channels.slackStep1")}
+                          {t("settings.channels.slackStep1", brandVars())}
                         </p>
                         <Button size="sm" variant="outline" className="shadow-none" asChild>
                           <a href={SLACK_CREATE_URL} target="_blank" rel="noreferrer noopener">

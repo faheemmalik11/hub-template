@@ -13,7 +13,7 @@ verify against the code without re-deriving it), and what is still open.
 > `docs/ROLES_AND_ACCESS.md` point 5). It was built here anyway, ported directly from the sibling
 > `a sister Hub` project (which built the same feature under the same instruction, also ahead of that
 > stated priority) at the developer's explicit request. Not a silent scope addition — flagging it
-> here the same way the a sister Hub doc flagged it there, so the client can be told.
+> here the same way the sister Hub's doc flagged it there, so the client can be told.
 
 ## TL;DR
 
@@ -46,7 +46,7 @@ previously flagged for this screen (see "Access rights" section below).
 | UI                                                     | `src/routes/eingangsrechnungen/index.tsx` — the toolbar's first control (replaces the old debounced full-text `Input`), the mic button next to it, plus the answer/SQL-preview panel below the toolbar                                                                                                                                                                                                                                                                                                                                                                                       |
 | i18n                                                   | `src/lib/i18n/locales/de.ts` / `en.ts` — `belege.list.nlSearch.{placeholder,searching,error,clear,voiceStart,voiceStop,voiceRecording,voiceError}`                                                                                                                                                                                                                                                                                                                                                                                                                                           |
 
-Ported from `/home/faheemmalik/Documents/Projects/a sister Hub` (`nl-retrieval.functions.ts` +
+Ported from the sibling Hub's own checkout (`nl-retrieval.functions.ts` +
 `nl-ask.functions.ts` + migration `20260810151421_invoices_filtered_search.sql`), adapted to
 this Hub's own table/view names (`v_invoices_review`, `companies`, `properties`,
 `bwa_categories`) and its `requireSupabaseAuth`/`OpenAiApiError`/`AppError` conventions, which
@@ -109,7 +109,7 @@ keystroke or on every back/forward navigation. For the same reason, `aiQuery`/th
 in component state, **not** synced into the URL like every other filter here — a bookmarked URL
 would either replay an expensive query on load or show a stale answer it can't cheaply
 regenerate. This is a deliberate deviation from this screen's usual "every control is a URL
-param" convention, carried over unchanged from the a sister Hub original.
+param" convention, carried over unchanged from the sister Hub's original.
 
 ## Access rights (closes a previously-flagged gap)
 
@@ -136,7 +136,7 @@ existing row's own embedding and getting `similarity ≈ 1.0` back for itself). 
 (`runInvoiceRetrieval` + synthesis) was then run against ~8 realistic German questions with real
 OpenAI calls.
 
-**One real bug found and fixed by this testing:** for _"Wie viel haben wir dieses Jahr bei this client
+**One real bug found and fixed by this testing:** for _"Wie viel haben wir dieses Jahr bei Musterfirma
 GmbH für Zinsen bezahlt?"_, `extractIntent()` initially picked `costCategory: 'Zinserträge'`
 (interest **income**) instead of `'Zinsaufwand'` (interest **expense**) — `bwa_categories`
 contains several such opposite-direction near-synonym pairs (`Zinserträge`/`Zinsaufwand`,

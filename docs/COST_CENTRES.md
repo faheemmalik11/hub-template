@@ -2,7 +2,7 @@
 
 ## What the client asked for
 
-Saskia, this client meeting 09.09.2026, 11:12 to 13:03:
+Tanja, client meeting 09.09.2026, 11:12 to 13:03:
 
 > We have all of the properties in the system, but we don't have "overhead costs." For us, the
 > properties are effectively our cost centres. ... At our tax adviser, each property is effectively
@@ -25,7 +25,7 @@ is a positive statement that carries a cost-centre number, and the two must not 
 Not on the property, because the tax adviser's workbook numbers the same building differently in
 each company's books:
 
-| Property | this client | Impuls | My Baufi | Infio |
+| Property | Musterfirma | Musterverwaltung | Musterfinanz | Musterimmobilien |
 |---|---|---|---|---|
 | LU-EKS Ludwigshafen | 6 | 101 | | |
 | LA-HIN Hinterstraße | 2 | | | 2001 |
@@ -35,25 +35,25 @@ Migration 0077 had already reached this conclusion and put the column on `proper
 migration 0083 replaced that table with `property_companies` and the column went with it. This puts
 it back.
 
-The overhead counterpart is `companies.overhead_cost_center`, seeded by 0077: 10000 for this client and
-Infio, 1000 for Impuls, My Baufi and this client Gronau.
+The overhead counterpart is `companies.overhead_cost_center`, seeded by 0077: 10000 for Musterfirma and
+Musterimmobilien, 1000 for Musterverwaltung, Musterfinanz and Musterverwaltung Gronau.
 
 ### Why this migration seeds pairings when 0077 refused to
 
 0077 declined to seed `property_assignment` because its only evidence was column D of the workbook:
-free-text prose naming one or two companies with no role, where "My Baufi" alone sat next to a note
-saying this client rents the office. That column is not a reliable pair.
+free-text prose naming one or two companies with no role, where "Musterfinanz" alone sat next to a note
+saying the client rents the office. That column is not a reliable pair.
 
 The cost-centre NUMBERS are different evidence. Each company's own sheet lists the properties booked
-in that company's accounts, one number per line. A number under Impuls is the tax adviser stating
-that Impuls books that property, which is exactly what a `property_companies` row asserts. 21
+in that company's accounts, one number per line. A number under Musterverwaltung is the tax adviser stating
+that Musterverwaltung books that property, which is exactly what a `property_companies` row asserts. 21
 pairings are seeded from it, and `on conflict do update` only ever fills a number that is still
 null, so a link a person made or corrected keeps its own value.
 
 ### Gemeinkosten on the invoice
 
 `invoices.is_overhead boolean not null default false`, with
-`check (not (is_overhead and property_id is not null))` enforcing Saskia's rule in the database.
+`check (not (is_overhead and property_id is not null))` enforcing Tanja's rule in the database.
 
 A boolean rather than a magic property row: a cost centre that is not a building has no address, no
 VAT status and no company link, so a fake property would need every one of those columns to mean
@@ -134,9 +134,9 @@ pick it up on their own.
 
 ## Editing the numbers (17.09.2026)
 
-Saskia asked on an invoice for Heddesheim (HED-GÄ): *"Was ist hiermit gemeint? Wo kann ich die
+Tanja asked on an invoice for Heddesheim (HED-GÄ): *"Was ist hiermit gemeint? Wo kann ich die
 Kostenstelle auswählen?"* The property is not in the tax adviser's workbook, so neither of its
-pairings (this client, My Baufi) had a number, and "Keine Kostenstelle hinterlegt" read as a field she had
+pairings (Musterfirma, Musterfinanz) had a number, and "Keine Kostenstelle hinterlegt" read as a field she had
 to fill in. Until now nothing in the Hub could set a number; only a migration could.
 
 The number stays out of the invoice on purpose: it is a fact about a property in one company's books,
@@ -193,33 +193,33 @@ missing and links to it:
 `resolveKostenstelle` returns `gesellschaftId` and `verknuepft` for this, so the three cases can be
 told apart.
 
-Gaps at the time of writing (17.09.2026), all needing a number from Saskia or the tax adviser, 14
-live invoices affected: HED-GÄ at this client and at My Baufi (not in the workbook), and FT-KAR, NW-FHS5 and
-NW-WBS at this client (the workbook numbers them only for My Baufi, so the this client link may simply be wrong).
+Gaps at the time of writing (17.09.2026), all needing a number from Tanja or the tax adviser, 14
+live invoices affected: HED-GÄ at Musterfirma and at Musterfinanz (not in the workbook), and FT-KAR, NW-FHS5 and
+NW-WBS at Musterfirma (the workbook numbers them only for Musterfinanz, so the Musterfirma link may simply be wrong).
 
 ## Still open
 
 - **The number does not reach the DATEV export yet.** That is the whole point of it for her ("mainly
   because of the transfer later"), and it is blocked on D1, who exports to DATEV, Pleo or the Hub.
-- **Pleo already holds this assignment.** Saskia at 13:03: *"almost everything is already available
+- **Pleo already holds this assignment.** Tanja at 13:03: *"almost everything is already available
   here in Pleo. Then we could completely avoid doing the assignments again."* `pleo-sync` already
   stores the whole entry in `bank_transactions.raw_data`, including `teamId`, `tags` and
   `accountCode`, so nothing needs fetching. Which of those carries her cost centre has to be read
   off a live row before it can be mapped.
 - **Only 21 pairings have numbers**, the ones the workbook lists. Since 17.09.2026 an admin can add the rest in the Hub (see above).
 - **The seed originally landed 17, not 21** (found 14.09.2026). 20260911250000 joins `properties`
-  with `p.deleted_at is null`, so it skipped the four pairings whose property is archived: IMPV
-  BR-BRE 102, MYBA FT-KAR 1005, ACME FT-RAI 3, ACME FT-WES 7. Three of them carry invoices.
+  with `p.deleted_at is null`, so it skipped the four pairings whose property is archived: MVER
+  BR-BRE 102, MFIN FT-KAR 1005, ACME FT-RAI 3, ACME FT-WES 7. Three of them carry invoices.
   Migration `20260914130000_cost_centre_archived_pairings` fills them, and states why an archived
   property still needs its number: archiving governs what can be chosen next, not what was already
   booked. **A pairing added to the workbook list in future must not inherit that `deleted_at`
   filter** unless the intent really is to skip sold buildings.
 - **Whether sold or ended objects should be archived at all is an open question with the client**
-  (sent to Saskia, 14.09.2026, alongside the Gemeinkosten numbering and whether the list is still
+  (sent to Tanja, 14.09.2026, alongside the Gemeinkosten numbering and whether the list is still
   current). It is what made the gap above visible. A property linked to a company the
   workbook does not pair it with resolves to no number.
 - **The Kostenanalyse still does not show it, on purpose.** `src/features/cost-analysis/` is copied
-  byte-identical across four Hubs (see the header of its `adapter.ts`), and cost centres are this client's
+  byte-identical across four Hubs (see the header of its `adapter.ts`), and cost centres are this Hub's
   concept alone, so a column there would break the other three. The deeper problem is that the
   screen's property filter is not company-scoped: with the company filter on "alle", a property has
   no single number, and printing one would be wrong rather than merely absent. Showing it there

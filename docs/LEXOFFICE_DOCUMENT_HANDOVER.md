@@ -1,7 +1,7 @@
 # Lexware document handover
 
 Pushes an approved incoming document (a purchase invoice/receipt) into Lexware automatically, as a
-purchase voucher, instead of Ayla retyping it there by hand. Companion to
+purchase voucher, instead of staff retyping it there by hand. Companion to
 `docs/LEXOFFICE_SYNC.md` (the outgoing-invoice equivalent) — same credential, same client, same
 atomic-claim pattern, different document type and a different trigger (automatic, not a button).
 
@@ -91,7 +91,7 @@ to Lexware would stay stuck "approved" forever with nothing ever marking it paid
 
 ## Open questions
 
-- Which Lexware posting category each of this client's categories maps to — needs populating once
+- Which Lexware posting category each of the client's categories maps to — needs populating once
   real Lexware access exists, by whoever has it (Fabian/the client), not guessable from here.
 - Live end-to-end verification is blocked until the Lexware XL plan and `LEXOFFICE_API_KEY` exist,
   same blocker as the outgoing-invoice feature.

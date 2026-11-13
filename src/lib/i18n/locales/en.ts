@@ -944,7 +944,7 @@ const en = {
       slackOpenSlack: "Open Slack",
       slackConnected: "Slack is connected",
       slackStep1:
-        "Add this client to your Slack. Press Open Slack below, then do the following on Slack's own site. You need to be allowed to install apps in that workspace.",
+        "Add {{brand}} to your Slack. Press Open Slack below, then do the following on Slack's own site. You need to be allowed to install apps in that workspace.",
       slackStep1a:
         "Pick your workspace, then confirm the summary Slack shows you. Everything in it is filled in already.",
       slackStep1b: "Press Install to Workspace, then Allow.",
@@ -6459,7 +6459,7 @@ const en = {
     area: {
       noneOption: "No area",
       hospitality: "Hospitality",
-      stay_re: "this client RE and projects",
+      stay_re: "Real estate and projects",
       all: "All areas",
     },
     emptyApprovers: "No approvers set up yet.",

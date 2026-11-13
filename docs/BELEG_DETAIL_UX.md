@@ -1,8 +1,8 @@
 # Invoice detail screen — UX improvements
 
-Scope: `src/routes/eingangsrechnungen/$nr.tsx` (4.6k lines on this client; 4.8k a sister Hub, 5.0k another client,
-6.2k another client). Everything below was measured on this client against the live database on 2026-08-25; line
-numbers are this client's and will have drifted in the other three.
+Scope: `src/routes/eingangsrechnungen/$nr.tsx` (4.6k lines on this Hub; 4.8k a sister Hub, 5.0k and 6.2k at two
+further clients). Everything below was measured on this Hub against the live database on 2026-08-25; line
+numbers are this Hub's and will have drifted in the other three.
 
 The complaint that started this: _"too much info which is of no use"_ on landing.
 
@@ -34,7 +34,7 @@ nearly empty, one carrying a payment button that has no business being there.
 
 ## 1. Landing tab: say what to do, show less — **DONE**
 
-Implemented on this client, not yet ported.
+Implemented on this Hub, not yet ported.
 
 ### 1a. Decision banner
 
@@ -109,13 +109,13 @@ it before it can open.
 
 They look like synonyms. They are not. Traced through both mutations:
 
-|                       | Discard (not a document)                                | Not relevant                                                      |
-| --------------------- | ------------------------------------------------------- | ----------------------------------------------------------------- |
-| Writes                | `deleted_at`, `delete_reason: "Verworfen — kein Beleg"` | `not_relevant_at/_by/_note`, `workflow_status = 'nicht_relevant'` |
-| Lands in              | Trash (recoverable)                                     | Drops out of processing                                           |
-| **The source email**  | untouched                                               | **handed back to the mailbox by the pipeline**                    |
-| Shown when            | `status === 'zu_pruefen'` only                          | always                                                            |
-| **Live usage (this client)** | **92**                                                  | **0**                                                             |
+|                           | Discard (not a document)                                | Not relevant                                                      |
+| ------------------------- | ------------------------------------------------------- | ----------------------------------------------------------------- |
+| Writes                    | `deleted_at`, `delete_reason: "Verworfen — kein Beleg"` | `not_relevant_at/_by/_note`, `workflow_status = 'nicht_relevant'` |
+| Lands in                  | Trash (recoverable)                                     | Drops out of processing                                           |
+| **The source email**      | untouched                                               | **handed back to the mailbox by the pipeline**                    |
+| Shown when                | `status === 'zu_pruefen'` only                          | always                                                            |
+| **Live usage (this Hub)** | **92**                                                  | **0**                                                             |
 
 The real distinction is what happens to the _email_: Discard means "this was never a document" and
 keeps it in the trash; Not relevant means "this is a real document but not ours" and returns it to
@@ -209,19 +209,19 @@ Raised, deliberately deferred:
 
 ## Order of work
 
-| #   | Item                                  | Effort           | Blocked on                      |
-| --- | ------------------------------------- | ---------------- | ------------------------------- |
-| 1   | Landing tab (banner + compact fields) | **done on this client** | port to the other three         |
-| 4   | Banner → Overview                     | **done on this client** | port                            |
-| 2   | Header `⋮`                            | **done on this client** | port                            |
-| 3   | Relabel the two discard actions       | **done on this client** | port; merge decision still open |
-| 5   | Payment & reconciliation rebuild      | large            | **not started**                 |
+| #   | Item                                  | Effort               | Blocked on                      |
+| --- | ------------------------------------- | -------------------- | ------------------------------- |
+| 1   | Landing tab (banner + compact fields) | **done on this Hub** | port to the other three         |
+| 4   | Banner → Overview                     | **done on this Hub** | port                            |
+| 2   | Header `⋮`                            | **done on this Hub** | port                            |
+| 3   | Relabel the two discard actions       | **done on this Hub** | port; merge decision still open |
+| 5   | Payment & reconciliation rebuild      | large                | **not started**                 |
 
-this client passes `tsc`, `eslint` and `vite build` after 1–4.
+This Hub passes `tsc`, `eslint` and `vite build` after 1–4.
 
 ## Port status
 
-Items 1–4 are implemented on **this client** only. a sister Hub, another client and another client still have the original
+Items 1–4 are implemented on **this Hub** only. A sister Hub and the two other clients still have the original
 header, landing tab and labels. Item 5 is not started anywhere.
 another client uses `@acc/` path aliases, `errorText` instead of `fehlerText`, and keeps this screen under
 `src/accounting/`.

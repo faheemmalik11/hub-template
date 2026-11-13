@@ -184,7 +184,7 @@ There are **no hard deletes** anywhere — deletion is always soft (audit-proof)
 
 ### Missing migrations / schema files
 
-- **No SQL migrations or schema files exist in the repo.** `supabase/` contains only `config.toml` (project id `pbwfihepsrxgcytkvqgf`).
+- **No SQL migrations or schema files exist in the repo.** `supabase/` contains only `config.toml` (project id `<project-ref>`).
 - Code comments reference `pipeline/db_schema.sql`, `pipeline/prompts/eingangsrechnung.txt`, and "Migration 001" CHECK constraints — **none of these files are in this repo.** The database schema, RLS policies, the `fts` generated column, and the `status`/`workflow_status` CHECK constraints live only in the (external) Supabase project and/or the external pipeline repo. **This is a significant gap: the schema is not version-controlled here.**
 
 ---
@@ -205,7 +205,7 @@ There are **no hard deletes** anywhere — deletion is always soft (audit-proof)
 
 ### Roles / permissions
 
-- **None implemented.** There is no role/permission concept in code. The "approval chain" is a free dropdown any logged-in user can set to any value, and assignment is a fixed two-name list (`ZUWEISBAR = ["Anja Kienbaum", "Philipp Netz"]`, `format.ts:110`). Nothing enforces "only a supervisor may set `beim_vorgesetzten`" etc.
+- **None implemented.** There is no role/permission concept in code. The "approval chain" is a free dropdown any logged-in user can set to any value, and assignment is a fixed two-name list hard-coded as `ZUWEISBAR` in `format.ts:110`. Nothing enforces "only a supervisor may set `beim_vorgesetzten`" etc. **Resolved since:** `ZUWEISBAR` no longer exists in `src/`; the assignable people are real `app_users` rows read through the `chain_people()` RPC (`ChainPerson`, `src/lib/data/types.ts:883`), and roles/permissions are implemented in full; see `docs/ROLES_AND_ACCESS.md`.
 
 ---
 
@@ -325,7 +325,7 @@ All hooks below live in `src/lib/data/queries.ts`.
 
 ## 9. Hard-coded Data
 
-- **Approval / assignee names:** `ZUWEISBAR = ["Anja Kienbaum", "Philipp Netz"]` — `src/lib/data/format.ts:110`. These are the only two people an invoice can be assigned to.
+- **Approval / assignee names:** `ZUWEISBAR`, a two-name array in `src/lib/data/format.ts:110`, was the only set of people an invoice could be assigned to. **No longer true:** `ZUWEISBAR` is gone from `src/`. Assignable people are `app_users` rows served by the `chain_people()` RPC (`ChainPerson`, `src/lib/data/types.ts:883`, migration `20260901160200`); the flat array only survives as a mention in that file's comment at `:867`.
 - **Supabase URL + publishable key:** string literals in `src/integrations/supabase/client.ts:6-7` (also the project id in `supabase/config.toml` and `src/integrations/supabase/auth-middleware`/`client.server` read from env).
 - **Company codes (union type):** `GesellschaftCode = "IMKO" | "IMGM" | "JPGB" | "PNPR" | "NOGR" | "IMOS"` — `src/lib/data/types.ts:5`. (Actual companies still come from the `gesellschaften` table; this union is just a hint.)
 - **Statuses / labels (German):**
@@ -338,7 +338,7 @@ All hooks below live in `src/lib/data/queries.ts`.
 - **Navigation:** `nav[]` (7 routes) — `src/components/layout/app-shell.tsx:20`.
 - **Module tiles** (labels/descriptions/"folgt"/"Stufe 2") — `src/routes/index.tsx:76-137`.
 - **UI scale presets** + localStorage key `hv.ui-scale` — `src/lib/ui-scale.tsx`, `src/components/layout/size-control.tsx`.
-- **Login placeholder email:** `name@wt-digital.de` — `src/components/layout/auth-gate.tsx:93`.
+- **Login placeholder email:** an unrelated company's domain — `src/components/layout/auth-gate.tsx:93`.
 - **Test / fake / demo data:** **None found.** All list/detail data is live from Supabase; the only non-data hard-coding is UI structure, labels, and the two items above (assignee names, company-code union). No mock records, no seed arrays, no `demo`/`mock`/`fixture` files.
 
 ---
@@ -412,7 +412,7 @@ Ordered roughly by severity.
 5. **Status model:** What is the intended relationship between `status` (AI), `workflow_status` (approval), and `bezahlt_am` (paid)? What should the primary status shown in the list be?
 6. **Supplier linking:** Should reviewers be able to attach/change the `lieferant_id` on an invoice in the app, or is that always the pipeline's job?
 7. **Objects:** Should `Objekt` be a real master-data table (with name/address), or stay as free-text `objekt_code` on invoices?
-8. **Roles/approval:** Who may move an invoice to each `workflow_status`? Should assignment names (`Anja Kienbaum`, `Philipp Netz`) come from a users table instead of being hard-coded?
+8. **Roles/approval:** Who may move an invoice to each `workflow_status`? Should the hard-coded assignment names come from a users table instead? (Answered since: yes, `approvers`/`app_users`, see `docs/ROLES_AND_ACCESS.md`.)
 9. **Paid/unpaid:** Is `bezahlt_am` alone the source of truth for "paid", or should it come from bank-transaction matching later? Do we need an "open items / overdue" view in Phase 1?
 10. **Ausgangsrechnungen:** Confirm this is out of scope until the Lexware/sevDesk integration — the current page is a placeholder.
 

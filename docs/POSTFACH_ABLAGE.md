@@ -27,13 +27,13 @@ pipeline itself.
 
 Migrations 0026/0044 built `mail_settings` for Google (Gmail + Google Drive), then removed
 Microsoft support as a product decision for a previous client context. Neither Gmail nor Google
-Drive are used anywhere in this client's actual stack — `pipeline_new/main.py`'s `WIRING` runs
-`MAILBOX_PROVIDER=graph` (Microsoft Graph, `accounting@this client.de`) and `DRIVE_PROVIDER=dropbox`
-(the this clientBelege app folder). Migration `0091_mail_settings_microsoft_dropbox.sql` replaces the
+Drive are used anywhere in the client's actual stack — `pipeline_new/main.py`'s `WIRING` runs
+`MAILBOX_PROVIDER=graph` (Microsoft Graph, `accounting@firma.de`) and `DRIVE_PROVIDER=dropbox`
+(the client's Belege app folder). Migration `0091_mail_settings_microsoft_dropbox.sql` replaces the
 `google` row with two rows, `microsoft` and `dropbox`, and the Hub side was rewritten to match:
 live folder pickers backed by real Graph/Dropbox API calls instead of Google's.
 
-**One wrinkle 0026/0044 didn't have to deal with:** this client's mailbox and filing channels are two
+**One wrinkle 0026/0044 didn't have to deal with:** the client's mailbox and filing channels are two
 _different_ providers, not one provider serving both like Google did. So `mail_settings.provider
 = 'microsoft'` only ever uses that row's `mail_*` columns (its `drive_*` columns stay unused,
 default), and `provider = 'dropbox'` only ever uses `drive_*` (its `mail_*` columns stay unused).
@@ -97,9 +97,9 @@ different processes with different `.env` files, not a shared config:
 
 | Key                                                                             | Hub (`.env`)                                                    | `pipeline_new/.env`       |
 | ------------------------------------------------------------------------------- | --------------------------------------------------------------- | ------------------------- |
-| `GRAPH_TENANT_ID` / `GRAPH_CLIENT_ID` / `GRAPH_CLIENT_SECRET` / `GRAPH_MAILBOX` | ✅                                                              | ✅                        |
-| `DROPBOX_APP_KEY` / `DROPBOX_APP_SECRET`                                        | ✅                                                              | ✅                        |
-| `DROPBOX_REFRESH_TOKEN`                                                         | ❌ blank — blocked on one-time OAuth by `lukas.oldach@this client.de` | ❌ blank, same block      |
+| `GRAPH_TENANT_ID` / `GRAPH_CLIENT_ID` / `GRAPH_CLIENT_SECRET` / `GRAPH_MAILBOX` | ✅                                                               | ✅                         |
+| `DROPBOX_APP_KEY` / `DROPBOX_APP_SECRET`                                        | ✅                                                               | ✅                         |
+| `DROPBOX_REFRESH_TOKEN`                                                         | ❌ blank — blocked on one-time OAuth by `timo.beispiel@firma.de` | ❌ blank, same block       |
 | `DROPBOX_ACCESS_TOKEN`                                                          | optional smoke-test token                                       | optional smoke-test token |
 
 Both `.env` files are gitignored (`*.env`). Until `DROPBOX_REFRESH_TOKEN` (or a smoke-test

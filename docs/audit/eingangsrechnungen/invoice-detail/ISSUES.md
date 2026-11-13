@@ -1,4 +1,4 @@
-# Incoming-invoice detail screen — audit resolution (this client Hub)
+# Incoming-invoice detail screen — audit resolution (the Hub)
 
 The audit itself was carried out on a sister Hub. Its full write-up, including the reasoning behind
 each finding and two findings that were withdrawn after re-testing, lives in the sibling repo at

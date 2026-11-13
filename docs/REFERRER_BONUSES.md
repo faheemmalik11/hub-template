@@ -57,8 +57,8 @@ rather than an assumption.
 - **The 4th-referral-and-beyond amount is a guess at the UI shape, not the client's decision.** The
   field exists and defaults to the tier-3 amount, but nobody has actually confirmed what should
   happen there — ask before assuming the default is right for a referrer's 4th+ sale.
-- Already live for van Oepen as of 2026-11-10: `bonuses.suggest` is enabled and `bonuses.review` is
-  already granted to `admin`/`super_admin`, the same two gates `BonusSuggestionsCard` needs — no
-  further switch required for this client. A different client porting this needs both checked.
+- Two gates, not one: `BonusSuggestionsCard` needs `bonuses.suggest` enabled *and* `bonuses.review`
+  granted to `admin`/`super_admin`. A client that already has both needs no further switch; any
+  client porting this needs both checked. Which clients already have them is on their own branches.
 - Like `donation_settings` before it, the new `bonus_settings` columns have an edit screen from day
   one (reusing the existing dialog) — no "change it with raw SQL until a screen exists" gap here.

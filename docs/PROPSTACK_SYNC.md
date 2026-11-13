@@ -8,8 +8,8 @@ files own which part, and what is still open.
 > receiver for Propstack's `property_created`/`property_updated` events). Both call `syncUnits()` in
 > `supabase/functions/_shared/propstack-client.ts`, so a poll and a webhook upsert a property through
 > the exact same path. Every webhook delivery, successful or not, is logged to `crm_webhook_events`.
-> **Verified live on van Oepen**: both webhooks registered in Propstack, a real edit in the Propstack
-> UI reached the Hub in under 10 seconds with no manual trigger. **Still open**: the live
+> **Verified live on a real client**: both webhooks registered in Propstack, a real edit in the
+> Propstack UI reached the Hub in under 10 seconds with no manual trigger. **Still open**: the live
 > Supabase-dashboard cron job is still hourly, not daily — that's a dashboard setting, not code.
 
 ## What's implemented
@@ -75,7 +75,8 @@ files own which part, and what is still open.
 - **Move the live cron job from hourly to daily.** The actual timer is a job in the Supabase
   dashboard (Integrations → Cron), not code — this repo's preset only records the last result. An
   existing client's dashboard cron job has to be edited by hand; cloning this preset again will not
-  touch it (`on conflict (key) do nothing`). Confirmed still hourly on van Oepen as of 2026-11-10.
+  touch it (`on conflict (key) do nothing`). Confirmed still hourly on a real client project as of
+  2026-11-10; which client, and whether it has since been changed, is on that client's own branch.
 - **True deletes.** Propstack has no `property_deleted` webhook event and the poller only
   upserts/archives, never deletes — a unit genuinely removed from Propstack stays in `properties`
   until someone archives or removes it by hand. Unchanged by this work, called out here so it isn't

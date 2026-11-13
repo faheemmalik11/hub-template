@@ -112,7 +112,7 @@ Other measurements taken at the same time, which move some of the numbers in the
 
 - **28 rules now, not 16.** The seeded set has grown in all three.
 - **a sister Hub holds 0 bank transactions**, so every Treffer there is 0 for that reason alone.
-  this client: 41 hidden of 2759. another client: 12 hidden of 65.
+  This Hub: 41 hidden of 2759. Another client: 12 hidden of 65.
 - **All 21 distinct seed notes are byte-identical across the three databases**, so one translation
   table covers all of them.
 - **No rule in today's seeded set is shadowed by another** (checked by running the rule below over
@@ -131,7 +131,7 @@ decision on demand through the same matcher, and a "Buchungen neu bewerten" butt
 calls it. The hint text no longer names any script, and points at the per-transaction "Wieder
 aufnehmen" action for the single-row case.
 
-Dry-run on this client's live data before shipping, read-only: re-evaluating all 41 currently-hidden rows
+Dry-run on this Hub's live data before shipping, read-only: re-evaluating all 41 currently-hidden rows
 changes 0 of them (correct — every rule is still active and still matches, so the operation is a
 no-op and therefore idempotent). Simulating "Darlehen" being switched off shows all 19 of its
 transactions releasing back to Offene Posten, 0 falling to another rule. That is exactly the
@@ -173,7 +173,7 @@ already accepted term/scope/category/note and simply had no caller.
 in the dialog and on the save button. `useOposTermImpact` counts, live and debounced, how many
 outgoing transactions the term would match, and warns in amber past 20% of the ledger. It is an
 estimate and is labelled "geschätzt": it uses `ilike`, which does not collapse runs of whitespace the
-way `opos_norm()` does. Cross-checked on this client: typing "Darlehen" predicts 19 of 2569 outgoing
+way `opos_norm()` does. Cross-checked on this Hub: typing "Darlehen" predicts 19 of 2569 outgoing
 transactions, which is exactly the hit count the database's own matcher records for that rule.
 Switching the field to "Beliebiges Feld" correctly widens the count (338 → 340 for "202"), which also
 exercises the quoted multi-column `or()` path.
@@ -219,11 +219,11 @@ order is total.
 - `src/lib/i18n/locales/{de,en}.ts`
 
 **Worth knowing about the role gate, checked after applying.** `current_role_name()` is not the same
-function in all three. a sister Hub and this client resolve it from `app_users`/`roles` by JWT e-mail; **another client
+function in all three. A sister Hub and this Hub resolve it from `app_users`/`roles` by JWT e-mail; **another client
 has no `app_users` table at all** and resolves it from `has_role(auth.uid(), …)`, mapping
 `superadmin → super_admin`, `admin → admin`, `team → supervisor`, and _every other authenticated
 user → `assistant`_. It returns the same vocabulary either way, so the policies behave identically,
-and nobody is locked out: another client has 2 superadmin + 4 team accounts that can write, this client 5 of 7.
+and nobody is locked out: another client has 2 superadmin + 4 team accounts that can write, this Hub 5 of 7.
 
 The consequence on another client is worth a decision though: its `buchhaltung`, `zahlung`, `freigabe` and
 `user` roles (9 accounts) all resolve to `assistant` and therefore **cannot** manage whitelist rules.
