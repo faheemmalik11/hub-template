@@ -60,7 +60,10 @@ interface DocumentFileRow {
   storage_bucket: string | null;
   storage_path: string | null;
   filename: string | null;
+  size_bytes: number | null;
 }
+
+const LEXWARE_MAX_ATTACHMENT_BYTES = 5 * 1024 * 1024;
 
 async function claimDocument(db: Db, id: string): Promise<DocumentRow | null> {
   const { data, error } = await db
@@ -146,13 +149,22 @@ async function resolveVendorContactId(
 async function loadDocumentFile(db: Db, documentId: string): Promise<DocumentFileRow | null> {
   const { data, error } = await db
     .from(TABLE.documentFiles)
-    .select("storage_bucket, storage_path, filename")
+    .select("storage_bucket, storage_path, filename, size_bytes")
     .eq("document_id", documentId)
     .eq("role", "original")
     .is("deleted_at", null)
     .maybeSingle();
   if (error) throw new Error(`document file lookup failed: ${error.message}`);
   return data as DocumentFileRow | null;
+}
+
+function refuseFileLexwareCannotAttach(file: DocumentFileRow): void {
+  if (file.size_bytes === null || file.size_bytes <= LEXWARE_MAX_ATTACHMENT_BYTES) return;
+  const sizeMb = (file.size_bytes / (1024 * 1024)).toFixed(1);
+  throw new Error(
+    `the attached file is ${sizeMb} MB, over Lexware's 5 MB attachment limit. ` +
+      "Shrink the file (e.g. re-save the PDF at a lower resolution) and try again.",
+  );
 }
 
 async function blobToBase64(blob: Blob): Promise<string> {
@@ -286,6 +298,10 @@ Deno.serve(async (req) => {
     refuseVatRateTheCategoryCannotCarry(doc, await activeVatRates(db));
 
     const apiKey = await lexofficeKey(db);
+
+    const file = await loadDocumentFile(db, doc.id);
+    if (file?.storage_bucket && file?.storage_path) refuseFileLexwareCannotAttach(file);
+
     const contactId = await resolveVendorContactId(db, apiKey, supplier);
     const payload = buildVoucherPayload(doc, category, contactId);
 
@@ -294,8 +310,7 @@ Deno.serve(async (req) => {
       ? { id: alreadyThere }
       : await createPurchaseVoucher(db, apiKey, payload);
 
-    const file = alreadyThere ? null : await loadDocumentFile(db, doc.id);
-    if (file?.storage_bucket && file?.storage_path) {
+    if (!alreadyThere && file?.storage_bucket && file?.storage_path) {
       const { data: blob, error: downloadError } = await db.storage
         .from(file.storage_bucket)
         .download(file.storage_path);
