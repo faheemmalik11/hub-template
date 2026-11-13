@@ -17,7 +17,7 @@ const WEBHOOK_FEATURE_KEY = "lexoffice.webhook";
 const SECRET_HEADER = "X-Lexware-Webhook-Secret";
 const LEXWARE_API_URL = "https://api.lexware.io/v1";
 const PROFILE_TIMEOUT_MS = 15_000;
-const HANDLED_EVENT_TYPES = ["payment.changed", "invoice.status.changed", "invoice.deleted"];
+const HANDLED_EVENT_TYPES = ["payment.changed", "voucher.changed", "voucher.deleted"];
 const CANCELLED_NOTE = "Lexware shows this voucher as cancelled.";
 const UNIQUE_VIOLATION = "23505";
 
@@ -169,7 +169,7 @@ async function applyEvent(db: Db, key: DeliveryKey): Promise<string> {
   if (!document) return "no matching document";
   const documentId = document.id;
 
-  if (key.eventType === "invoice.deleted") {
+  if (key.eventType === "voucher.deleted") {
     await updateDocument(db, documentId, { lexoffice_sync_error: CANCELLED_NOTE });
     return "cancelled";
   }
