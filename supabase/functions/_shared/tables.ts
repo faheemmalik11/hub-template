@@ -18,6 +18,8 @@ export const TABLE = {
   documentHistory: "document_history",
   documentTransactionMatches: "document_transaction_matches",
   documents: "documents",
+  lexwareOrganization: "lexware_organization",
+  lexwareWebhookEvents: "lexware_webhook_events",
   matchingSettings: "matching_settings",
   notificationChannels: "notification_channels",
   notificationDispatchLog: "notification_dispatch_log",
