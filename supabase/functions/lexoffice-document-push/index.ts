@@ -162,26 +162,40 @@ async function loadDocumentFile(db: Db, documentId: string): Promise<DocumentFil
   return data as DocumentFileRow | null;
 }
 
-function refuseOversizedAttachment(sizeBytes: number | null): void {
-  if (sizeBytes === null || sizeBytes <= LEXWARE_MAX_ATTACHMENT_BYTES) return;
-  const sizeMb = (sizeBytes / (1024 * 1024)).toFixed(1);
-  throw new Error(
-    `The file is ${sizeMb} MB. Lexware only accepts files up to 5 MB. Save the file smaller, ` +
-      "then try again.",
-  );
+function tooLargeForLexware(sizeBytes: number | null): boolean {
+  return sizeBytes !== null && sizeBytes > LEXWARE_MAX_ATTACHMENT_BYTES;
 }
 
+function attachmentTooLargeNote(sizeBytes: number): string {
+  const sizeMb = (sizeBytes / (1024 * 1024)).toFixed(1);
+  return `The document reached Lexware, but the file is ${sizeMb} MB and Lexware only accepts ` +
+    "files up to 5 MB. Add the file there by hand, or save it smaller and send it again.";
+}
+
+interface Attachment {
+  base64: string;
+  filename: string;
+}
+
+// The booking has to reach the tax firm even when its file cannot, so an oversized file is
+// reported against a voucher that was still created rather than stopping the handover.
 async function downloadAttachment(
   db: Db,
   file: DocumentFileRow,
-): Promise<{ base64: string; filename: string }> {
+): Promise<{ attachment: Attachment | null; tooLargeBytes: number | null }> {
+  if (tooLargeForLexware(file.size_bytes)) {
+    return { attachment: null, tooLargeBytes: file.size_bytes };
+  }
   const { data, error } = await db.storage
     .from(file.storage_bucket as string)
     .download(file.storage_path as string);
   if (error) throw new Error(`could not read the stored file: ${error.message}`);
   const blob = data as Blob;
-  refuseOversizedAttachment(blob.size);
-  return { base64: await blobToBase64(blob), filename: file.filename ?? "document.pdf" };
+  if (tooLargeForLexware(blob.size)) return { attachment: null, tooLargeBytes: blob.size };
+  return {
+    attachment: { base64: await blobToBase64(blob), filename: file.filename ?? "document.pdf" },
+    tooLargeBytes: null,
+  };
 }
 
 async function blobToBase64(blob: Blob): Promise<string> {
@@ -263,38 +277,91 @@ function refuseVatRateTheCategoryCannotCarry(doc: DocumentRow, allowed: number[]
 
 // Lexware rejects a nonzero rate on these reverse-charge categories; confirmed live (406
 // invalid_taxamount), not guessed. No field marks this on the category, only the name.
-const REVERSE_CHARGE_CATEGORY_NAME = /§13b|Innergemeinschaftlicher Erwerb/;
+const ZERO_RATE_ONLY_CATEGORY = /Zu prüfen|Durchlaufende Posten|Geldtransit|Privatentnahmen|Privateinlagen/;
+const REVERSE_CHARGE_CATEGORY = /§13b|Innergemeinschaftlicher Erwerb/;
+const RATE_LEXWARE_NEVER_ACCEPTS = 20;
 
-async function refuseReverseChargeRateMismatch(
+interface CategoryRateRule {
+  allowsZeroRateOnly: boolean;
+  isReverseCharge: boolean;
+}
+
+async function categoryRateRule(
+  db: Db,
+  apiKey: string,
+  category: CategoryRow,
+): Promise<{ name: string; rule: CategoryRateRule } | null> {
+  const postingCategories = await listPostingCategories(db, apiKey);
+  const matched = postingCategories.find((one) => one.id === category.lexware_category_id);
+  if (!matched) return null;
+  return {
+    name: matched.name,
+    rule: {
+      allowsZeroRateOnly: ZERO_RATE_ONLY_CATEGORY.test(matched.name),
+      isReverseCharge: REVERSE_CHARGE_CATEGORY.test(matched.name),
+    },
+  };
+}
+
+async function refuseRateTheCategoryRejects(
   db: Db,
   apiKey: string,
   doc: DocumentRow,
   category: CategoryRow,
 ): Promise<void> {
-  if (doc.vat_rate === null || Number(doc.vat_rate) === 0) return;
-  const postingCategories = await listPostingCategories(db, apiKey);
-  const matched = postingCategories.find((one) => one.id === category.lexware_category_id);
-  if (!matched || !REVERSE_CHARGE_CATEGORY_NAME.test(matched.name)) return;
-  throw new Error(
-    `The category "${matched.name}" only allows a VAT rate of 0% in Lexware, but this document ` +
-      `has ${doc.vat_rate}%. Change the category or the rate, then try again.`,
-  );
+  if (doc.vat_rate === null) return;
+  const rate = Number(doc.vat_rate);
+
+  if (rate === RATE_LEXWARE_NEVER_ACCEPTS) {
+    throw new Error(
+      `Lexware does not accept a VAT rate of ${rate}%. Correct the rate on the document, ` +
+        "then try again.",
+    );
+  }
+
+  const found = await categoryRateRule(db, apiKey, category);
+  if (!found) return;
+
+  if (found.rule.allowsZeroRateOnly && rate !== 0) {
+    throw new Error(
+      `The category "${found.name}" only allows a VAT rate of 0%, but this document has ` +
+        `${rate}%. Change the category or the rate, then try again.`,
+    );
+  }
+
+  if (found.rule.isReverseCharge && rate === 0) {
+    throw new Error(
+      `The category "${found.name}" does not allow a VAT rate of 0%. Change the category or ` +
+        "the rate, then try again.",
+    );
+  }
+}
+
+// On a reverse-charge category the buyer accounts for the VAT, so Lexware keeps the normal rate
+// but refuses any tax amount above zero.
+function taxAmountFor(taxAmount: number, isReverseCharge: boolean): number {
+  return isReverseCharge ? 0 : taxAmount;
 }
 
 async function buildVoucherPayload(
   doc: DocumentRow,
   category: CategoryRow,
   contactId: string,
+  isReverseCharge: boolean,
 ): Promise<LexofficePurchaseVoucherInput> {
   const tax = await taxDefaults();
   const wording = await invoiceWording();
   const amountNet = doc.amount_net ?? 0;
   const amountGross = doc.amount_gross ?? amountNet;
-  const taxAmount = doc.vat_amount ?? Math.max(0, amountGross - amountNet);
+  const taxAmount = taxAmountFor(
+    doc.vat_amount ?? Math.max(0, amountGross - amountNet),
+    isReverseCharge,
+  );
+  const grossToSend = isReverseCharge ? amountNet : amountGross;
   const open = hasConfidentFigures(doc);
 
   const voucherItem: LexofficeVoucherItem = {
-    amount: open ? amountNet : amountGross,
+    amount: open ? amountNet : grossToSend,
     taxAmount,
     taxRatePercent: doc.vat_rate ?? tax.defaultVatRate,
     categoryId: category.lexware_category_id as string,
@@ -306,7 +373,7 @@ async function buildVoucherPayload(
     voucherNumber: doc.invoice_number ?? doc.id,
     voucherDate: doc.document_date ?? today(),
     dueDate: open ? dueDateFor(doc, tax.paymentTermDays) : doc.due_date ?? undefined,
-    totalGrossAmount: amountGross,
+    totalGrossAmount: grossToSend,
     totalTaxAmount: taxAmount,
     taxType: open ? "net" : "gross",
     contactId,
@@ -356,19 +423,18 @@ Deno.serve(async (req) => {
     refuseVatRateTheCategoryCannotCarry(doc, await activeVatRates(db));
 
     const apiKey = await lexofficeKey(db);
-    await refuseReverseChargeRateMismatch(db, apiKey, doc, category);
+    await refuseRateTheCategoryRejects(db, apiKey, doc, category);
+    const categoryRule = await categoryRateRule(db, apiKey, category);
+    const isReverseCharge = categoryRule?.rule.isReverseCharge ?? false;
 
     const file = await loadDocumentFile(db, doc.id);
     const stored = file?.storage_bucket && file?.storage_path ? file : null;
-    if (stored) refuseOversizedAttachment(stored.size_bytes);
-
-    // Fetched before the voucher exists: size_bytes is not guaranteed present on every row, and
-    // weighing the real bytes only after creating the voucher would leave one behind that can
-    // never carry its own file, however often the push is retried.
-    const attachment = stored ? await downloadAttachment(db, stored) : null;
+    const { attachment, tooLargeBytes } = stored
+      ? await downloadAttachment(db, stored)
+      : { attachment: null, tooLargeBytes: null };
 
     const contactId = await resolveVendorContactId(db, apiKey, supplier);
-    const payload = await buildVoucherPayload(doc, category, contactId);
+    const payload = await buildVoucherPayload(doc, category, contactId, isReverseCharge);
 
     const alreadyThere = await findPurchaseVoucher(
       db,
@@ -390,7 +456,10 @@ Deno.serve(async (req) => {
 
     const { error: updateError } = await db
       .from(TABLE.documents)
-      .update({ accounting_external_id: created.id, lexoffice_sync_error: null })
+      .update({
+        accounting_external_id: created.id,
+        lexoffice_sync_error: tooLargeBytes === null ? null : attachmentTooLargeNote(tooLargeBytes),
+      })
       .eq("id", doc.id);
     if (updateError) {
       throw new Error(`could not record the Lexware voucher id: ${updateError.message}`);
