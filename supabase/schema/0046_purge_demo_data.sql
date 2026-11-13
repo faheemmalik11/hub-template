@@ -24,7 +24,14 @@ begin
 
   delete from public.documents where is_demo and created_at < v_cutoff;
   delete from public.bank_transactions where is_demo and created_at < v_cutoff;
+
+  -- Same reasoning as document_history above: refuse_deleting_default_bank_account protects a
+  -- real supplier from losing its default account with no replacement, which does not apply when
+  -- the supplier itself is being removed in the same statement.
+  alter table public.supplier_bank_accounts disable trigger trg_refuse_deleting_default_bank_account;
   delete from public.suppliers where is_demo and created_at < v_cutoff;
+  alter table public.supplier_bank_accounts enable trigger trg_refuse_deleting_default_bank_account;
+
   delete from public.properties where is_demo and created_at < v_cutoff;
   delete from public.companies where is_demo and created_at < v_cutoff;
 end;
