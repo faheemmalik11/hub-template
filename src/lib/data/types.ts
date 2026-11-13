@@ -593,6 +593,7 @@ export interface Document {
   accounting_external_id?: string | null;
   lexoffice_sync_requested_at?: string | null;
   lexoffice_sync_error?: string | null;
+  lexoffice_open_amount?: number | null;
 }
 
 // ---- Open items (view v_open_items, migration 20260819210000) ----

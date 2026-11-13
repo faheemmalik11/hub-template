@@ -3177,6 +3177,23 @@ function DocumentDetail({ doc }: { doc: Document }) {
                     </TooltipContent>
                   </Tooltip>
                 )}
+                {lexofficeDocumentSyncOn &&
+                  doc.accounting_external_id &&
+                  !!doc.lexoffice_open_amount &&
+                  doc.lexoffice_open_amount > 0 && (
+                    <Tooltip>
+                      <TooltipTrigger asChild>
+                        <span className="inline-flex items-center gap-1 rounded-md bg-amber-500/10 px-2 py-0.5 text-xs font-medium text-amber-700">
+                          {t("documents.detail.lexoffice.partlyPaid", {
+                            amount: formatEUR(doc.lexoffice_open_amount),
+                          })}
+                        </span>
+                      </TooltipTrigger>
+                      <TooltipContent className="max-w-[18rem]">
+                        {t("documents.detail.lexoffice.partlyPaidHint")}
+                      </TooltipContent>
+                    </Tooltip>
+                  )}
               </div>
             </div>
 

@@ -6,6 +6,7 @@ import {
   createContact,
   createPurchaseVoucher,
   featureIsLive,
+  findPurchaseVoucher,
   friendlyLexofficeError,
   lexofficeKey,
   type LexofficePurchaseVoucherInput,
@@ -154,6 +155,44 @@ function hasConfidentFigures(doc: DocumentRow): boolean {
   return Math.abs(expectedGross - doc.amount_gross) < 0.01;
 }
 
+// Lexware books an `open` voucher into its payables, where a missing due date would leave it with
+// no date to chase. Unchecked is the holding pen for exactly that: it reaches Lexware either way.
+function canBookAsOpen(doc: DocumentRow): boolean {
+  return hasConfidentFigures(doc) && doc.due_date !== null;
+}
+
+async function activeVatRates(db: Db): Promise<number[]> {
+  const { data, error } = await db
+    .from(TABLE.vatRates)
+    .select("rate")
+    .eq("is_active", true)
+    .is("deleted_at", null);
+  if (error) throw new Error(`VAT rate lookup failed: ${error.message}`);
+  return ((data ?? []) as { rate: number }[]).map((row) => Number(row.rate));
+}
+
+function refuseAmountsLexwareCannotBook(doc: DocumentRow): void {
+  const negative = [doc.amount_net, doc.amount_gross, doc.vat_amount].some(
+    (amount) => amount !== null && amount < 0,
+  );
+  if (negative) {
+    throw new Error(
+      "this document has a negative amount, so it is a credit note rather than a purchase " +
+        "invoice. Book it in Lexware by hand.",
+    );
+  }
+}
+
+function refuseVatRateTheCategoryCannotCarry(doc: DocumentRow, allowed: number[]): void {
+  if (doc.vat_rate === null) return;
+  const rate = Number(doc.vat_rate);
+  if (allowed.some((one) => Math.abs(one - rate) < 0.01)) return;
+  throw new Error(
+    `VAT rate ${rate}% is not one this Hub has set up (${allowed.join("%, ")}%). ` +
+      "Correct the rate on the document, or add the rate under master data.",
+  );
+}
+
 function buildVoucherPayload(
   doc: DocumentRow,
   category: CategoryRow,
@@ -172,7 +211,7 @@ function buildVoucherPayload(
 
   return {
     type: "purchaseinvoice",
-    voucherStatus: hasConfidentFigures(doc) ? "open" : "unchecked",
+    voucherStatus: canBookAsOpen(doc) ? "open" : "unchecked",
     voucherNumber: doc.invoice_number ?? doc.id,
     voucherDate: doc.document_date ?? new Date().toISOString().slice(0, 10),
     dueDate: doc.due_date ?? undefined,
@@ -221,13 +260,19 @@ Deno.serve(async (req) => {
       );
     }
 
+    refuseAmountsLexwareCannotBook(doc);
+    refuseVatRateTheCategoryCannotCarry(doc, await activeVatRates(db));
+
     const apiKey = await lexofficeKey(db);
     const contactId = await resolveVendorContactId(db, apiKey, supplier);
     const payload = buildVoucherPayload(doc, category, contactId);
 
-    const created = await createPurchaseVoucher(db, apiKey, payload);
+    const alreadyThere = await findPurchaseVoucher(db, apiKey, payload.voucherNumber, contactId);
+    const created = alreadyThere
+      ? { id: alreadyThere }
+      : await createPurchaseVoucher(db, apiKey, payload);
 
-    const file = await loadDocumentFile(db, doc.id);
+    const file = alreadyThere ? null : await loadDocumentFile(db, doc.id);
     if (file?.storage_bucket && file?.storage_path) {
       const { data: blob, error: downloadError } = await db.storage
         .from(file.storage_bucket)

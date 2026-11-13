@@ -217,6 +217,33 @@ export interface LexofficeVoucherResult {
   resourceUri?: string;
 }
 
+export interface LexofficeVoucherListEntry {
+  id: string;
+  voucherNumber?: string;
+}
+
+// A push that failed after Lexware had already created the voucher leaves the document unsynced,
+// so the retry would raise a second one for the same invoice. Lexware has no uniqueness of its own
+// on a voucher number, so the retry has to look before it writes.
+export async function findPurchaseVoucher(
+  db: Db,
+  apiKey: string,
+  voucherNumber: string,
+  contactId: string,
+): Promise<string | null> {
+  const params = new URLSearchParams({
+    voucherType: "purchaseinvoice",
+    voucherStatus: "open,paid,paidoff,voided,unchecked",
+    contactId,
+    size: "250",
+  });
+  const result = (await lexofficeFetch(db, apiKey, `/voucherlist?${params}`)) as {
+    content?: LexofficeVoucherListEntry[];
+  };
+  const already = (result.content ?? []).find((one) => one.voucherNumber === voucherNumber);
+  return already?.id ?? null;
+}
+
 export async function createPurchaseVoucher(
   db: Db,
   apiKey: string,

@@ -38,6 +38,7 @@ export const TABLE = {
   tenantSettings: "tenant_settings",
   tenantSettingsHistory: "tenant_settings_history",
   userPermissions: "user_permissions",
+  vatRates: "vat_rates",
   vBankTransactionsList: "v_bank_transactions_list",
   vOpenItems: "v_open_items",
 } as const;
