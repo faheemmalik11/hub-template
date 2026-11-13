@@ -71,16 +71,33 @@ function offeringFolders(card: DocumentSource, folderFieldKey: string): Document
   return { ...card, runNowFolders: card.fields.find((field) => field.key === folderFieldKey) };
 }
 
+/**
+ * The pipeline's own note is written for a developer reading a log, not for Ayla reading a
+ * settings screen ("unknown channel 'upload'; available: email_imap, mailbox"). Only the one
+ * pattern actually seen in production is rewritten; anything else from the pipeline already
+ * reads as a plain sentence, so it is shown as it arrives.
+ */
+function friendlyRunRequestNote(
+  note: string | null | undefined,
+  t: Translate,
+): string | null | undefined {
+  if (note && /^unknown channel '[^']+'; available: /.test(note)) {
+    return t("sources.runNowSourceNotSetUp");
+  }
+  return note;
+}
+
 /** What a run somebody asked for is doing, in the shape the source card renders. */
 function runRequestFor(
   card: CardId,
   requests: Record<string, RunRequest> | undefined,
+  t: Translate,
 ): SourceRunRequest | undefined {
   const request = requests?.[PIPELINE_CHANNEL[card]];
   if (!request) return undefined;
   return {
     status: request.status,
-    note: request.note,
+    note: friendlyRunRequestNote(request.note, t),
     processedCount: request.processed_count,
     folderNames: request.folder_names,
   };
@@ -468,7 +485,7 @@ export function useDocumentSourcesAdapter(): DocumentSourcesAdapter {
                       storedFolderNames,
                       runs,
                       actor,
-                      runRequestFor("mail", runRequests),
+                      runRequestFor("mail", runRequests, t),
                       t,
                     ),
                     "mail_source_folders",
@@ -484,14 +501,14 @@ export function useDocumentSourcesAdapter(): DocumentSourcesAdapter {
                       storedFolderNames,
                       runs,
                       actor,
-                      runRequestFor("filing", runRequests),
+                      runRequestFor("filing", runRequests, t),
                       t,
                     ),
                     "drive_source_folders",
                   ),
                 ]
               : []),
-            uploadSource(runs, runRequestFor("upload", runRequests), t),
+            uploadSource(runs, runRequestFor("upload", runRequests, t), t),
           ],
     [
       channelRows,

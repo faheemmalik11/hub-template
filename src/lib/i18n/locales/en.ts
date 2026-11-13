@@ -2196,6 +2196,7 @@ const en = {
       count_one: "{{count}} document",
       count_other: "{{count}} documents",
       updating: "updating …",
+      reading: "Reading the document…",
       col: {
         steller: "Supplier",
         naechsteAktion: "Next action",
@@ -2271,6 +2272,7 @@ const en = {
     },
 
     detail: {
+      readingTitle: "Reading the document…",
       // One-line labels for the approval history and "time per step", worded as the STATE the
       // invoice reached rather than as the name of the event that moved it. Deliberately distinct
       // from `documents.workflow.<status>` (which labels the ladder and the invoice list, where a
@@ -2511,6 +2513,8 @@ const en = {
         pending: "Being sent to Lexware.",
         sent: "Sent to Lexware.",
         openInLexware: "Open in Lexware",
+        partlyPaid: "Partly paid, {{amount}} still open",
+        partlyPaidHint: "Lexware shows part of this invoice as paid. The rest is still open.",
         failed: "Could not be sent to Lexware.",
         retry: "Try again",
         retrying: "Trying again.",
@@ -3702,6 +3706,7 @@ const en = {
     runNowFoundOne: "1 new document",
     runNowFound: "{{count}} new documents",
     runNowFailed: "Could not run",
+    runNowSourceNotSetUp: "This document source is not set up yet. Contact support to add it.",
     runNowDialogTitle: "Run {{source}} now",
     runNowDialogDescription:
       "Read new documents now instead of waiting for the next scheduled run.",

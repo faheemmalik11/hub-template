@@ -2265,6 +2265,7 @@ const de = {
       count_one: "{{count}} Beleg",
       count_other: "{{count}} Belege",
       updating: "aktualisiere …",
+      reading: "Beleg wird gelesen …",
       col: {
         steller: "Lieferant",
         naechsteAktion: "Nächste Aktion",
@@ -2599,6 +2600,9 @@ const de = {
         pending: "Wird an Lexware gesendet.",
         sent: "An Lexware gesendet.",
         openInLexware: "In Lexware öffnen",
+        partlyPaid: "Teilweise bezahlt, {{amount}} noch offen",
+        partlyPaidHint:
+          "Lexware zeigt einen Teil dieser Rechnung als bezahlt. Der Rest ist noch offen.",
         failed: "Konnte nicht an Lexware gesendet werden.",
         retry: "Erneut versuchen",
         retrying: "Wird erneut versucht.",
@@ -3829,6 +3833,8 @@ const de = {
     runNowFoundOne: "1 neuer Beleg",
     runNowFound: "{{count}} neue Belege",
     runNowFailed: "Konnte nicht ausgeführt werden",
+    runNowSourceNotSetUp:
+      "Diese Quelle ist noch nicht eingerichtet. Bitte den Support kontaktieren.",
     runNowDialogTitle: "{{source}} jetzt ausführen",
     runNowDialogDescription:
       "Neue Belege jetzt lesen, statt auf den nächsten geplanten Lauf zu warten.",

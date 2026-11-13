@@ -36,6 +36,7 @@ async function sync(db: Db) {
 
   let markedPaid = 0;
   let voided = 0;
+  let partlyPaid = 0;
   for (const document of documents) {
     const payment = await getVoucherPayment(db, apiKey, document.accounting_external_id);
 
@@ -49,20 +50,29 @@ async function sync(db: Db) {
       continue;
     }
 
-    if (payment.voucherStatus !== "paid" && payment.voucherStatus !== "paidoff") continue;
+    if (payment.voucherStatus !== "paid" && payment.voucherStatus !== "paidoff") {
+      const { error } = await db
+        .from(TABLE.documents)
+        .update({ lexoffice_open_amount: payment.openAmount ?? null })
+        .eq("id", document.id);
+      if (error) throw error;
+      if ((payment.openAmount ?? 0) > 0) partlyPaid += 1;
+      continue;
+    }
 
     const { error } = await db
       .from(TABLE.documents)
       .update({
         paid_at: payment.paymentDate ?? new Date().toISOString(),
         paid_source: "lexware",
+        lexoffice_open_amount: 0,
       })
       .eq("id", document.id);
     if (error) throw error;
     markedPaid += 1;
   }
 
-  return { checked: documents.length, markedPaid, voided };
+  return { checked: documents.length, markedPaid, voided, partlyPaid };
 }
 
 async function syncAndRecord(db: Db) {
@@ -75,7 +85,8 @@ async function syncAndRecord(db: Db) {
         ...finished,
         last_status: "ok",
         last_message:
-          `${result.checked} documents checked, ${result.markedPaid} marked paid, ${result.voided} voided`,
+          `${result.checked} documents checked, ${result.markedPaid} marked paid, ` +
+          `${result.partlyPaid} partly paid, ${result.voided} voided`,
       })
       .eq("key", "lexoffice_payment_sync");
     return { ok: true as const, result };
