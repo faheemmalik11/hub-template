@@ -2234,78 +2234,80 @@ function DocumentDetail({ doc }: { doc: Document }) {
     // this, and it has to be cleared the moment the invoice leaves the approved state -- otherwise
     // a rejected-then-reapproved invoice still names whoever approved it the first time.
     const approvedBy = action.nextStatus === "approved_final" ? (appUserId ?? null) : null;
-    updateDocument.mutate(
-      {
-        // Every remaining action is a plain move along the chain. The one that also cleared
-        // paid_at was 'payment_failed', and nobody marks a payment failed by hand any more.
-        changes: { workflow_status: action.nextStatus, approved_by: approvedBy },
-        activityLog: {
-          type: action.type,
-          text,
-          data: {
-            ...(returnedTo ? { returned_to: returnedTo } : {}),
-            ...(returnedToId ? { recipient_user_id: returnedToId } : {}),
-            // The action and its comment as DATA, next to the German `text` above rather than
-            // instead of it. `text` stays exactly as it was -- it is the audit record and it is
-            // deliberately German -- but it is also the only thing the history list had to render,
-            // so an English reader got a German sentence under an English heading. With the id
-            // stored, the list can translate; rows written before this keep falling back to `text`.
-            action: action.id,
-            // Where it landed. `aktion` says what was clicked; this says what the invoice
-            // BECAME, which is what "Time per step" needs to chain its rows together -- without
-            // it every point was named after its event type, so three corrections in a row read
-            // "Status manually corrected → Status manually corrected → Status manually corrected".
-            nach: action.nextStatus,
-            ...(comment.trim() ? { comment: comment.trim() } : {}),
-            // Who the approval was given AS. `actor` on the history row is the logged-in account,
-            // which is the right thing to hold someone to, but the chain itself is name-based
-            // (useActingAs lets one account act as any approver), so the actor alone never said
-            // which step of the chain a row belonged to. Recording both makes the trail answerable:
-            // who clicked, and in whose place.
-            handelnd_als: actingAs?.name ?? null,
-            // The id, not a coarse tier. The old `handelnd_als_rolle` recorded the approvers
-            // table's assistant/manager label, which was a stale copy of a permission and is gone
-            // with that table; an account reference is what actually identifies the step.
-            handelnd_als_id: actingAs?.id ?? null,
-          },
+    const promise = updateDocument.mutateAsync({
+      // Every remaining action is a plain move along the chain. The one that also cleared
+      // paid_at was 'payment_failed', and nobody marks a payment failed by hand any more.
+      changes: { workflow_status: action.nextStatus, approved_by: approvedBy },
+      activityLog: {
+        type: action.type,
+        text,
+        data: {
+          ...(returnedTo ? { returned_to: returnedTo } : {}),
+          ...(returnedToId ? { recipient_user_id: returnedToId } : {}),
+          // The action and its comment as DATA, next to the German `text` above rather than
+          // instead of it. `text` stays exactly as it was -- it is the audit record and it is
+          // deliberately German -- but it is also the only thing the history list had to render,
+          // so an English reader got a German sentence under an English heading. With the id
+          // stored, the list can translate; rows written before this keep falling back to `text`.
+          action: action.id,
+          // Where it landed. `aktion` says what was clicked; this says what the invoice
+          // BECAME, which is what "Time per step" needs to chain its rows together -- without
+          // it every point was named after its event type, so three corrections in a row read
+          // "Status manually corrected → Status manually corrected → Status manually corrected".
+          nach: action.nextStatus,
+          ...(comment.trim() ? { comment: comment.trim() } : {}),
+          // Who the approval was given AS. `actor` on the history row is the logged-in account,
+          // which is the right thing to hold someone to, but the chain itself is name-based
+          // (useActingAs lets one account act as any approver), so the actor alone never said
+          // which step of the chain a row belonged to. Recording both makes the trail answerable:
+          // who clicked, and in whose place.
+          handelnd_als: actingAs?.name ?? null,
+          // The id, not a coarse tier. The old `handelnd_als_rolle` recorded the approvers
+          // table's assistant/manager label, which was a stale copy of a permission and is gone
+          // with that table; an account reference is what actually identifies the step.
+          handelnd_als_id: actingAs?.id ?? null,
         },
       },
-      {
-        onSuccess: () => {
-          toast.success(
-            t("documents.detail.toast.statusGesetzt", {
-              label: t(`documents.workflow.${action.nextStatus}`),
-            }),
-          );
-          setPendingAction(null);
-          setActionComment("");
-          emitOnboardingEvent({
-            type: "document_status_changed",
-            recordId: doc.id,
-            data: { actionId: action.id, nextStatus: action.nextStatus },
-          });
-          if (action.nextStatus === "approved_final" && lexofficeDocumentSyncOn) {
-            // The push itself runs async, outside this request — this is the one refetch that
-            // lets the sync card resolve to a real answer on its own, the same way it already
-            // does after a manual retry, instead of staying on "pending" until something else
-            // happens to refetch the document.
-            window.setTimeout(() => {
-              void queryClient.invalidateQueries({ queryKey: ["beleg", doc.id] });
-            }, 3000);
-          }
-        },
-        onError: (e) =>
-          toast.error(
-            t("documents.detail.toast.fehlgeschlagen", {
-              error: errorText(e),
-            }),
-          ),
+    });
+
+    // toast.promise tracks the request live (loading → success/error) instead of a single toast
+    // that only ever appears once the request is already done, which read as nothing happening
+    // for however long the save actually took.
+    toast.promise(promise, {
+      loading: t("documents.detail.toast.statusWirdGesetzt"),
+      success: () =>
+        t("documents.detail.toast.statusGesetzt", {
+          label: t(`documents.workflow.${action.nextStatus}`),
+        }),
+      error: (e) => t("documents.detail.toast.fehlgeschlagen", { error: errorText(e) }),
+    });
+
+    promise
+      .then(() => {
+        setPendingAction(null);
+        setActionComment("");
+        emitOnboardingEvent({
+          type: "document_status_changed",
+          recordId: doc.id,
+          data: { actionId: action.id, nextStatus: action.nextStatus },
+        });
+        if (action.nextStatus === "approved_final" && lexofficeDocumentSyncOn) {
+          // The push itself runs async, outside this request — this is the one refetch that
+          // lets the sync card resolve to a real answer on its own, the same way it already
+          // does after a manual retry, instead of staying on "pending" until something else
+          // happens to refetch the document.
+          window.setTimeout(() => {
+            void queryClient.invalidateQueries({ queryKey: ["beleg", doc.id] });
+          }, 3000);
+        }
+      })
+      .catch(() => {
+        // Already reported by toast.promise above; nothing further to do here.
+      })
+      .finally(() => {
         // Released whichever way it went, so a failed action can be retried immediately.
-        onSettled: () => {
-          actionRunning.current = false;
-        },
-      },
-    );
+        actionRunning.current = false;
+      });
   }
 
   function onApprovalAction(action: ApprovalAction) {

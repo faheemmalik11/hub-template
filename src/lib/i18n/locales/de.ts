@@ -3202,6 +3202,7 @@ const de = {
         keineAenderungen: "Keine Änderungen.",
         ungueltigeZahl: 'Ungültige Zahl bei: {{fields}}. Bitte z. B. „1.234,56" eingeben.',
         statusGesetzt: "Status: {{label}}",
+        statusWirdGesetzt: "Wird gespeichert …",
         zugewiesenAn: "Zugewiesen an {{name}}",
         zuweisungEntfernt: "Zuweisung entfernt",
         notizGespeichert: "Notiz gespeichert.",
