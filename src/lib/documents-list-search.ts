@@ -64,6 +64,7 @@ export type DocumentsSearch = {
   toDate?: string;
   privateOwner?: string;
   channel?: string;
+  lexofficeError?: boolean;
 };
 
 export type NormalizedSearch = Required<
@@ -87,6 +88,7 @@ export type NormalizedSearch = Required<
     | "toDate"
     | "privateOwner"
     | "channel"
+    | "lexofficeError"
   >;
 
 export function normalize(s: DocumentsSearch): NormalizedSearch {
@@ -114,6 +116,7 @@ export function normalize(s: DocumentsSearch): NormalizedSearch {
     toDate: s.toDate,
     privateOwner: s.privateOwner,
     channel: s.channel,
+    lexofficeError: s.lexofficeError,
   };
 }
 
@@ -176,6 +179,7 @@ export function validateSearch(input: Record<string, unknown>): DocumentsSearch 
     toDate: str(input.toDate),
     privateOwner: str(input.privateOwner),
     channel: (CHANNEL_VALUES as readonly string[]).includes(channel ?? "") ? channel : undefined,
+    lexofficeError: input.lexofficeError === true ? true : undefined,
   };
 }
 

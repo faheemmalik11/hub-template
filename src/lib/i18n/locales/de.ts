@@ -2100,6 +2100,7 @@ const de = {
         },
         ready_for_payment: { label: "Zahlbereit", desc: "Freigegeben, noch nicht bezahlt" },
         pay_now: { label: "Jetzt zu zahlen", desc: "Fällig, offen, keine Lastschrift" },
+        lexware_error: { label: "Lexware fehlgeschlagen", desc: "Konnte nicht gesendet werden" },
         completed: { label: "Erledigt", desc: "Bezahlt und abgeschlossen" },
       },
       aktion: {
@@ -2605,6 +2606,7 @@ const de = {
         partlyPaidHint:
           "Lexware zeigt einen Teil dieser Rechnung als bezahlt. Der Rest ist noch offen.",
         failed: "Konnte nicht an Lexware gesendet werden.",
+        timedOut: "Das hat zu lange gedauert. Bitte erneut versuchen.",
         retry: "Erneut versuchen",
         retrying: "Wird erneut versucht.",
         retrySuccess: "An Lexware gesendet.",
@@ -4968,6 +4970,23 @@ const de = {
       awaitingReview: "{{count}} noch in Prüfung",
       paid: "Gezahlt {{year}}",
     },
+    report: {
+      title: "Auswertung",
+      subtitle: "Abschlüsse, Volumen, Provision und Boni im Vergleich zum Vorjahr.",
+      cutoff: "Bis",
+      loading: "Wird geladen…",
+      empty: "Kein Makler hat einen beurkundeten Verkauf in einem der beiden Jahre.",
+      tiles: {
+        closings: "Abschlüsse",
+        volume: "Objektvolumen",
+        commission: "Provision",
+        bonuses: "Boni",
+        lastYear: "{{year}}: {{value}}",
+      },
+      table: {
+        agent: "Makler",
+      },
+    },
     title: "Provisionen",
     subtitle:
       "Beurkundete Verkäufe und die Provisionsrechnungen, die daraus entstehen. Versendet wird nichts, bevor es freigegeben ist.",
@@ -4999,6 +5018,7 @@ const de = {
       approved: "Freigegeben",
       invoiced: "Abgerechnet",
       cancelled: "Storniert",
+      settled: "Historisch",
     },
     list: {
       search: "Objekt suchen …",
@@ -6285,6 +6305,9 @@ const de = {
       lexoffice: {
         send: "An Lexoffice senden",
         sent: "An Lexoffice gesendet",
+        pending: "Wird an Lexoffice gesendet.",
+        retry: "Erneut versuchen",
+        timedOut: "Das hat zu lange gedauert. Bitte erneut versuchen.",
         success: "Rechnung an Lexoffice gesendet.",
         failed: "Konnte nicht an Lexoffice gesendet werden: {{error}}",
       },

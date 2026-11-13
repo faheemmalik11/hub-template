@@ -102,6 +102,7 @@ import {
   PaymentBadge,
 } from "@/components/documents/badges";
 import { ErrorState, TableSkeleton } from "@/components/documents/query-states";
+import { LexofficeErrorCell } from "@/components/documents/lexoffice-document-sync-card";
 import { QueueKpiRow } from "@/components/invoice-queue/queue-kpi-row";
 import { NextActionCell } from "@/components/invoice-queue/next-action-cell";
 import { CARD_FILTER_KEYS, QUEUE_CARDS, nextAction } from "@/lib/data/invoice-queue-config";
@@ -375,6 +376,7 @@ function IncomingInvoicesPage() {
     dueToDate: dueBand?.toDate,
     dueUnknown: dueBand?.unknown,
     privateOwner: search.privateOwner,
+    lexofficeError: search.lexofficeError,
   };
   // EVERY filter the list applies goes to the tiles, except `status` -- that one stays out on
   // purpose, so the Erkannt / Zu pruefen tiles keep working as status toggles. `ids` (the AI
@@ -1469,35 +1471,39 @@ function IncomingInvoicesPage() {
                             />
                           </TableCell>
                           <TableCell>
-                            {(() => {
-                              const action = nextAction(b, paymentsHandledExternally);
-                              if (action === "none")
+                            {b.lexoffice_sync_error ? (
+                              <LexofficeErrorCell doc={b} />
+                            ) : (
+                              (() => {
+                                const action = nextAction(b, paymentsHandledExternally);
+                                if (action === "none")
+                                  return (
+                                    <NextActionCell muted label={t("documents.list.aktion.none")} />
+                                  );
+                                // "pay" opens the payment tab straight away instead of the overview, so
+                                // working down the pay list is one click per invoice.
+                                if (action === "pay")
+                                  return (
+                                    <Button
+                                      size="sm"
+                                      className="h-7"
+                                      onClick={(e) => {
+                                        e.stopPropagation();
+                                        navigate({
+                                          to: "/incoming-invoices/$nr",
+                                          params: { nr: b.id },
+                                          search: { ...detailSearch, tab: "zahlung" },
+                                        });
+                                      }}
+                                    >
+                                      {t("documents.list.aktion.pay")}
+                                    </Button>
+                                  );
                                 return (
-                                  <NextActionCell muted label={t("documents.list.aktion.none")} />
+                                  <NextActionCell label={t(`documents.list.aktion.${action}`)} />
                                 );
-                              // "pay" opens the payment tab straight away instead of the overview, so
-                              // working down the pay list is one click per invoice.
-                              if (action === "pay")
-                                return (
-                                  <Button
-                                    size="sm"
-                                    className="h-7"
-                                    onClick={(e) => {
-                                      e.stopPropagation();
-                                      navigate({
-                                        to: "/incoming-invoices/$nr",
-                                        params: { nr: b.id },
-                                        search: { ...detailSearch, tab: "zahlung" },
-                                      });
-                                    }}
-                                  >
-                                    {t("documents.list.aktion.pay")}
-                                  </Button>
-                                );
-                              return (
-                                <NextActionCell label={t(`documents.list.aktion.${action}`)} />
-                              );
-                            })()}
+                              })()
+                            )}
                           </TableCell>
                         </>
                       )}

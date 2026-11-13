@@ -9,9 +9,11 @@ import {
   findPurchaseVoucher,
   friendlyLexofficeError,
   lexofficeKey,
+  listPostingCategories,
   type LexofficePurchaseVoucherInput,
   type LexofficeVoucherItem,
   searchContacts,
+  staleClaimFilter,
 } from "../_shared/lexoffice-client.ts";
 
 // deno-lint-ignore no-explicit-any
@@ -66,14 +68,15 @@ interface DocumentFileRow {
 const LEXWARE_MAX_ATTACHMENT_BYTES = 5 * 1024 * 1024;
 
 async function claimDocument(db: Db, id: string): Promise<DocumentRow | null> {
-  const { data, error } = await db
-    .from(TABLE.documents)
-    .update({ lexoffice_sync_requested_at: new Date().toISOString() })
-    .eq("id", id)
-    .in("workflow_status", ["approved_final", "paid"])
-    .is("accounting_external_id", null)
-    .is("lexoffice_sync_requested_at", null)
-    .is("deleted_at", null)
+  const { data, error } = await staleClaimFilter(
+    db
+      .from(TABLE.documents)
+      .update({ lexoffice_sync_requested_at: new Date().toISOString() })
+      .eq("id", id)
+      .in("workflow_status", ["approved_final", "paid"])
+      .is("accounting_external_id", null)
+      .is("deleted_at", null),
+  )
     .select(
       "id, invoice_number, document_date, due_date, amount_net, amount_gross, vat_rate, vat_amount, currency, payment_method, payment_reference, note, service_description, issuer, supplier_id, category_id, workflow_status, accounting_external_id",
     )
@@ -195,10 +198,14 @@ function canBookAsOpen(doc: DocumentRow): boolean {
   return hasConfidentFigures(doc) && doc.due_date !== null;
 }
 
+// vat_rates.country exists because the same percentage can be valid in one country and not
+// another (its own unique index is (country, rate)); this validation is for domestic documents,
+// so it reads only Germany's own rates, not whatever rate a cross-border supplier added.
 async function activeVatRates(db: Db): Promise<number[]> {
   const { data, error } = await db
     .from(TABLE.vatRates)
     .select("rate")
+    .eq("country", "DE")
     .eq("is_active", true)
     .is("deleted_at", null);
   if (error) throw new Error(`VAT rate lookup failed: ${error.message}`);
@@ -224,6 +231,26 @@ function refuseVatRateTheCategoryCannotCarry(doc: DocumentRow, allowed: number[]
   throw new Error(
     `VAT rate ${rate}% is not one this Hub has set up (${allowed.join("%, ")}%). ` +
       "Correct the rate on the document, or add the rate under master data.",
+  );
+}
+
+// Lexware rejects a nonzero rate on these reverse-charge categories; confirmed live (406
+// invalid_taxamount), not guessed. No field marks this on the category, only the name.
+const REVERSE_CHARGE_CATEGORY_NAME = /§13b|Innergemeinschaftlicher Erwerb/;
+
+async function refuseReverseChargeRateMismatch(
+  db: Db,
+  apiKey: string,
+  doc: DocumentRow,
+  category: CategoryRow,
+): Promise<void> {
+  if (doc.vat_rate === null || Number(doc.vat_rate) === 0) return;
+  const postingCategories = await listPostingCategories(db, apiKey);
+  const matched = postingCategories.find((one) => one.id === category.lexware_category_id);
+  if (!matched || !REVERSE_CHARGE_CATEGORY_NAME.test(matched.name)) return;
+  throw new Error(
+    `"${matched.name}" is a reverse-charge category in Lexware and can only carry a 0% rate, ` +
+      `not ${doc.vat_rate}%. Correct the category or the rate before approving.`,
   );
 }
 
@@ -298,6 +325,7 @@ Deno.serve(async (req) => {
     refuseVatRateTheCategoryCannotCarry(doc, await activeVatRates(db));
 
     const apiKey = await lexofficeKey(db);
+    await refuseReverseChargeRateMismatch(db, apiKey, doc, category);
 
     const file = await loadDocumentFile(db, doc.id);
     if (file?.storage_bucket && file?.storage_path) refuseFileLexwareCannotAttach(file);
@@ -305,12 +333,21 @@ Deno.serve(async (req) => {
     const contactId = await resolveVendorContactId(db, apiKey, supplier);
     const payload = buildVoucherPayload(doc, category, contactId);
 
-    const alreadyThere = await findPurchaseVoucher(db, apiKey, payload.voucherNumber, contactId);
+    const alreadyThere = await findPurchaseVoucher(
+      db,
+      apiKey,
+      payload.voucherNumber,
+      contactId,
+      payload.voucherDate,
+      payload.totalGrossAmount,
+    );
     const created = alreadyThere
       ? { id: alreadyThere }
       : await createPurchaseVoucher(db, apiKey, payload);
 
-    if (!alreadyThere && file?.storage_bucket && file?.storage_path) {
+    // Attempted even for a found (not just-created) voucher: there is no way to ask Lexware
+    // whether it already has a file, and re-attaching is safer than risking one with none at all.
+    if (file?.storage_bucket && file?.storage_path) {
       const { data: blob, error: downloadError } = await db.storage
         .from(file.storage_bucket)
         .download(file.storage_path);

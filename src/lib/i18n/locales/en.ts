@@ -2036,6 +2036,7 @@ const en = {
         },
         ready_for_payment: { label: "Ready to pay", desc: "Approved, not paid yet" },
         pay_now: { label: "To pay now", desc: "Due, unpaid, not a direct debit" },
+        lexware_error: { label: "Lexware failed", desc: "Could not be sent, needs a retry" },
         completed: { label: "Done", desc: "Paid and closed" },
       },
       aktion: {
@@ -2516,6 +2517,7 @@ const en = {
         partlyPaid: "Partly paid, {{amount}} still open",
         partlyPaidHint: "Lexware shows part of this invoice as paid. The rest is still open.",
         failed: "Could not be sent to Lexware.",
+        timedOut: "This took too long. Try again.",
         retry: "Try again",
         retrying: "Trying again.",
         retrySuccess: "Sent to Lexware.",
@@ -4796,6 +4798,23 @@ const en = {
       awaitingReview: "{{count}} still in review",
       paid: "Paid in {{year}}",
     },
+    report: {
+      title: "Reporting",
+      subtitle: "Closings, volume, commission and bonuses, compared with the previous year.",
+      cutoff: "Up to",
+      loading: "Loading…",
+      empty: "No agent has a notarised sale in either year.",
+      tiles: {
+        closings: "Closings",
+        volume: "Property volume",
+        commission: "Commission",
+        bonuses: "Bonuses",
+        lastYear: "{{year}}: {{value}}",
+      },
+      table: {
+        agent: "Agent",
+      },
+    },
     title: "Commissions",
     subtitle:
       "Notarised sales and the commission invoices they produce. Nothing is sent before it is approved.",
@@ -4827,6 +4846,7 @@ const en = {
       approved: "Approved",
       invoiced: "Invoiced",
       cancelled: "Cancelled",
+      settled: "Settled",
     },
     list: {
       search: "Search property …",
@@ -6053,6 +6073,9 @@ const en = {
       lexoffice: {
         send: "Send to Lexoffice",
         sent: "Sent to Lexoffice",
+        pending: "Being sent to Lexoffice.",
+        retry: "Try again",
+        timedOut: "This took too long. Try again.",
         success: "Invoice sent to Lexoffice.",
         failed: "Could not send to Lexoffice: {{error}}",
       },

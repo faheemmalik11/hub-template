@@ -1,5 +1,5 @@
 import type { ComponentType } from "react";
-import { Building2, CheckCircle2, Clock, FileWarning, Wallet } from "lucide-react";
+import { Building2, CheckCircle2, Clock, FileWarning, Wallet, XCircle } from "lucide-react";
 
 import type { QueueTone } from "@/components/invoice-queue/queue-kpi-card";
 import { COMPANY_WITHOUT } from "@/lib/data/format";
@@ -24,6 +24,7 @@ export const CARD_FILTER_KEYS = [
   "payment",
   "paymentType",
   "due",
+  "lexofficeError",
 ] as const;
 
 export type NextAction = "review" | "approve" | "pay" | "match" | "none";
@@ -86,6 +87,13 @@ export const QUEUE_CARDS: QueueCardSpec[] = [
     search: { due: "due_now", payment: "open", paymentType: "transfer" },
     sort: "due",
     dir: "asc",
+  },
+  {
+    key: "lexware_error",
+    tone: "danger",
+    icon: XCircle,
+    to: "/incoming-invoices",
+    search: { lexofficeError: true },
   },
   {
     key: "completed",
