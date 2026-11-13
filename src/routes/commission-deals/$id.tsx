@@ -111,8 +111,9 @@ function DealEditor({ deal }: { deal: Deal }) {
   const { can } = useAuth();
   const mayEditAny = can(PERMISSIONS.documentsWrite);
   const mayEdit =
-    mayEditAny ||
-    (can(PERMISSIONS.dealsSubmit) && (deal.status === "incomplete" || deal.status === "ready"));
+    deal.status !== "settled" &&
+    (mayEditAny ||
+      (can(PERMISSIONS.dealsSubmit) && (deal.status === "incomplete" || deal.status === "ready")));
   const mayApprove = can(PERMISSIONS.invoicesApprove);
   const suggestsBonuses = useFeature(PERMISSIONS.bonusesSuggest) && can(PERMISSIONS.bonusesReview);
   const managesDonations = can(PERMISSIONS.donationsManage);
@@ -524,9 +525,15 @@ function DealEditor({ deal }: { deal: Deal }) {
 
           <DealInvoicesCard deal={deal} />
 
-          {suggestsBonuses && !unsaved && <BonusSuggestionsCard deal={deal} />}
-          {suggestsBonuses && !unsaved && <DealReferrerBonusCard deal={deal} />}
-          {managesDonations && !unsaved && <DealDonationCard deal={deal} />}
+          {suggestsBonuses && !unsaved && deal.status !== "settled" && (
+            <BonusSuggestionsCard deal={deal} />
+          )}
+          {suggestsBonuses && !unsaved && deal.status !== "settled" && (
+            <DealReferrerBonusCard deal={deal} />
+          )}
+          {managesDonations && !unsaved && deal.status !== "settled" && (
+            <DealDonationCard deal={deal} />
+          )}
 
           <div className="flex flex-wrap gap-2">
             {mayEdit && (
@@ -540,19 +547,22 @@ function DealEditor({ deal }: { deal: Deal }) {
                   : t("commissionDeals.actions.save")}
               </Button>
             )}
-            {mayApprove && deal.status !== "approved" && deal.status !== "invoiced" && (
-              <Button
-                className="shadow-none"
-                variant="outline"
-                onClick={runApprove}
-                disabled={approve.isPending || unsaved || deal.status !== "ready"}
-              >
-                <Check className="size-4" />
-                {approve.isPending
-                  ? t("commissionDeals.actions.approving")
-                  : t("commissionDeals.actions.approve")}
-              </Button>
-            )}
+            {mayApprove &&
+              deal.status !== "approved" &&
+              deal.status !== "invoiced" &&
+              deal.status !== "settled" && (
+                <Button
+                  className="shadow-none"
+                  variant="outline"
+                  onClick={runApprove}
+                  disabled={approve.isPending || unsaved || deal.status !== "ready"}
+                >
+                  <Check className="size-4" />
+                  {approve.isPending
+                    ? t("commissionDeals.actions.approving")
+                    : t("commissionDeals.actions.approve")}
+                </Button>
+              )}
             {mayApprove && deal.status === "approved" && result.ok && (
               <Button
                 className="shadow-none"

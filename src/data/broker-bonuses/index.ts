@@ -17,6 +17,7 @@ export type {
   BonusStatus,
   BonusType,
   BrokerBonus,
+  BrokerBonusCountsStatus,
   DealStage,
   ReferrerPayoutTiming,
   ReferrerTierCountsStatus,

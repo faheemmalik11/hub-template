@@ -26,6 +26,7 @@ import { parseDecimal } from "@/components/commission/deal-form";
 import { useBonusSettings, useSaveBonusSettings } from "@/data";
 import type {
   BonusSettings,
+  BrokerBonusCountsStatus,
   DealStage,
   ReferrerPayoutTiming,
   ReferrerTierCountsStatus,
@@ -42,6 +43,7 @@ type NumberKey = Exclude<
   | "referrer_tier_reset"
   | "referrer_tier_scope"
   | "referrer_payout_timing"
+  | "broker_bonus_counts_status"
 >;
 
 const NUMBER_FIELDS: NumberKey[] = [
@@ -61,6 +63,11 @@ const REFERRER_TIER_COUNTS_STATUS_OPTIONS: ReferrerTierCountsStatus[] = DEAL_STA
 const REFERRER_TIER_RESET_OPTIONS: ReferrerTierReset[] = ["yearly", "never"];
 const REFERRER_TIER_SCOPE_OPTIONS: ReferrerTierScope[] = ["per_referrer", "company_wide"];
 const REFERRER_PAYOUT_TIMING_OPTIONS: ReferrerPayoutTiming[] = DEAL_STAGE_OPTIONS;
+const BROKER_BONUS_COUNTS_STATUS_OPTIONS: BrokerBonusCountsStatus[] = [
+  "paid",
+  "approved_and_paid",
+  "separate",
+];
 
 function useRulesOpenParam(): [boolean, (next: boolean) => void] {
   const navigate = useNavigate();
@@ -92,6 +99,7 @@ export function BonusSettingsDialog() {
   const [tierReset, setTierReset] = useState<ReferrerTierReset | null>(null);
   const [tierScope, setTierScope] = useState<ReferrerTierScope | null>(null);
   const [payoutTiming, setPayoutTiming] = useState<ReferrerPayoutTiming | null>(null);
+  const [bonusCountsStatus, setBonusCountsStatus] = useState<BrokerBonusCountsStatus | null>(null);
   const settings = settingsQ.data;
 
   useEffect(() => {
@@ -103,6 +111,7 @@ export function BonusSettingsDialog() {
     setTierReset(null);
     setTierScope(null);
     setPayoutTiming(null);
+    setBonusCountsStatus(null);
   }, [open]);
 
   const valueOf = (key: NumberKey) => typed[key] ?? String(settings?.[key] ?? "").replace(".", ",");
@@ -124,7 +133,8 @@ export function BonusSettingsDialog() {
       (countsStatus !== null && countsStatus !== settings.referrer_tier_counts_status) ||
       (tierReset !== null && tierReset !== settings.referrer_tier_reset) ||
       (tierScope !== null && tierScope !== settings.referrer_tier_scope) ||
-      (payoutTiming !== null && payoutTiming !== settings.referrer_payout_timing));
+      (payoutTiming !== null && payoutTiming !== settings.referrer_payout_timing) ||
+      (bonusCountsStatus !== null && bonusCountsStatus !== settings.broker_bonus_counts_status));
 
   const submit = () => {
     if (!settings) return;
@@ -135,6 +145,7 @@ export function BonusSettingsDialog() {
       referrer_tier_reset: tierReset ?? settings.referrer_tier_reset,
       referrer_tier_scope: tierScope ?? settings.referrer_tier_scope,
       referrer_payout_timing: payoutTiming ?? settings.referrer_payout_timing,
+      broker_bonus_counts_status: bonusCountsStatus ?? settings.broker_bonus_counts_status,
     };
     for (const key of NUMBER_FIELDS) {
       const value = parseDecimal(valueOf(key));
@@ -269,6 +280,25 @@ export function BonusSettingsDialog() {
                     {REFERRER_PAYOUT_TIMING_OPTIONS.map((option) => (
                       <SelectItem key={option} value={option}>
                         {t(`brokerBonuses.settings.dealStage.${option}`)}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+              <div className="space-y-1.5">
+                <Label>{t("brokerBonuses.settings.broker_bonus_counts_status")}</Label>
+                <Select
+                  value={bonusCountsStatus ?? settings?.broker_bonus_counts_status}
+                  onValueChange={(value) => setBonusCountsStatus(value as BrokerBonusCountsStatus)}
+                  disabled={!settings}
+                >
+                  <SelectTrigger>
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {BROKER_BONUS_COUNTS_STATUS_OPTIONS.map((option) => (
+                      <SelectItem key={option} value={option}>
+                        {t(`brokerBonuses.settings.brokerBonusCountsStatus.${option}`)}
                       </SelectItem>
                     ))}
                   </SelectContent>

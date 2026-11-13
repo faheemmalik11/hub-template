@@ -24,6 +24,7 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { EmptyState, ErrorState, TableSkeleton } from "@/components/documents/query-states";
+import { AgentReportSection } from "@/components/commission/agent-report-section";
 import { BrokerNumbersCard } from "@/components/commission/broker-numbers-card";
 import { DealStatusBadge } from "@/components/commission/deal-status-badge";
 import { PropertyPicker } from "@/components/commission/property-picker";
@@ -104,6 +105,7 @@ function CommissionDealsPage() {
       </div>
 
       {can(PERMISSIONS.dealsSubmit) && !can(PERMISSIONS.documentsWrite) && <BrokerNumbersCard />}
+      {can(PERMISSIONS.dealsReport) && <AgentReportSection />}
 
       <div className="mt-6 flex flex-wrap items-end gap-3">
         <div className="relative w-full max-w-sm">

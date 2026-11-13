@@ -13,7 +13,7 @@ export interface BrokerNumbers {
 const yearOf = (isoDate: string) => Number(isoDate.slice(0, 4));
 
 export function brokerNumbers(deals: Deal[], bonuses: BrokerBonus[], year: number): BrokerNumbers {
-  const live = deals.filter((deal) => deal.status !== "cancelled");
+  const live = deals.filter((deal) => deal.status !== "cancelled" && deal.status !== "settled");
   const sumOf = (rows: BrokerBonus[]) => rows.reduce((total, bonus) => total + bonus.amount, 0);
   const withStatus = (status: BrokerBonus["status"]) =>
     bonuses.filter((bonus) => bonus.status === status);
