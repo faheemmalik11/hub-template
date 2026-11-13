@@ -43,7 +43,10 @@ interface DocumentRow {
 interface SupplierRow {
   id: string;
   name: string;
-  address: string | null;
+  vat_id: string | null;
+  email: string | null;
+  phone: string | null;
+  fax: string | null;
   accounting_external_id: string | null;
 }
 
@@ -79,7 +82,7 @@ async function claimDocument(db: Db, id: string): Promise<DocumentRow | null> {
 async function loadSupplier(db: Db, supplierId: string): Promise<SupplierRow> {
   const { data, error } = await db
     .from(TABLE.suppliers)
-    .select("id, name, address, accounting_external_id")
+    .select("id, name, vat_id, email, phone, fax, accounting_external_id")
     .eq("id", supplierId)
     .single();
   if (error) throw new Error(`supplier lookup failed: ${error.message}`);
@@ -96,6 +99,29 @@ async function loadCategory(db: Db, categoryId: string): Promise<CategoryRow> {
   return data as CategoryRow;
 }
 
+// Lexware's contacts API accepts at most one entry per emailAddresses/phoneNumbers category
+// (https://developers.lexware.io/docs/#contacts-endpoint), so a value is sent as a one-item array
+// or left out entirely -- never an empty array, which the API rejects the same as a wrong type.
+function newVendorContactPayload(supplier: SupplierRow): Record<string, unknown> {
+  const emailAddresses = supplier.email ? { business: [supplier.email] } : undefined;
+  const phoneNumbers = supplier.phone || supplier.fax
+    ? {
+      ...(supplier.phone ? { business: [supplier.phone] } : {}),
+      ...(supplier.fax ? { fax: [supplier.fax] } : {}),
+    }
+    : undefined;
+  return {
+    version: 0,
+    roles: { vendor: {} },
+    company: {
+      name: supplier.name,
+      ...(supplier.vat_id ? { vatRegistrationId: supplier.vat_id } : {}),
+    },
+    ...(emailAddresses ? { emailAddresses } : {}),
+    ...(phoneNumbers ? { phoneNumbers } : {}),
+  };
+}
+
 async function resolveVendorContactId(
   db: Db,
   apiKey: string,
@@ -106,11 +132,7 @@ async function resolveVendorContactId(
   const matches = await searchContacts(db, apiKey, supplier.name);
   const existingId = matches[0]?.id;
   const contactId = existingId ??
-    (await createContact(db, apiKey, {
-      version: 0,
-      roles: { vendor: {} },
-      company: { name: supplier.name },
-    })).id;
+    (await createContact(db, apiKey, newVendorContactPayload(supplier))).id;
 
   const { error } = await db
     .from(TABLE.suppliers)
