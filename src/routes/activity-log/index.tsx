@@ -604,12 +604,6 @@ function LogCard({
   );
 }
 
-/**
- * Audit issue #6: the column printed the raw From header, so a cell read
- * `"Linda Spiegelberg | Immobilienverwaltung Walther GmbH & Co. KG" <lsp@immo-walther.de>` next to a
- * bare `buchhaltung@netz-immo.de`, and the column neither wrapped nor truncated — a long display
- * name pushed the layout around. Name and address are now separate lines, both bounded.
- */
 function SenderCell({ sender }: { sender: ParsedSender }) {
   if (!sender.raw) return <>—</>;
   if (sender.name && sender.address) {

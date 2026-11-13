@@ -2590,6 +2590,10 @@ $$;
 -- is refused before any table is ever touched: "new row violates row-level security policy". Insert
 -- only, same as the table policies allow nothing beyond writing a new document in -- overwriting an
 -- existing object is a different operation this does not open.
+insert into storage.buckets (id, name, public)
+values ('documents', 'documents', false), ('outgoing-invoice-files', 'outgoing-invoice-files', false)
+on conflict (id) do nothing;
+
 drop policy if exists documents_bucket_write on storage.objects;
 create policy documents_bucket_write on storage.objects
     for insert to authenticated
@@ -6251,9 +6255,16 @@ declare
   v_party jsonb;
   v_cost jsonb;
   v_position integer;
+  v_current_status text;
 begin
   if p_status not in ('incomplete', 'ready') then
     raise exception 'save_deal: a saved deal is incomplete or ready, not %', p_status
+      using errcode = 'check_violation';
+  end if;
+
+  select status into v_current_status from public.deals where id = p_deal_id;
+  if v_current_status not in ('incomplete', 'ready') then
+    raise exception 'save_deal: deal % is % and can no longer be edited this way', p_deal_id, v_current_status
       using errcode = 'check_violation';
   end if;
 
@@ -6841,6 +6852,7 @@ begin
       update public.documents
          set paid_at     = coalesce(v_paydate::timestamptz, now()),
              paid_source = 'bank_match',
+             lexoffice_open_amount = 0,
              updated_at  = now()
        where id = v_invoice;
 
@@ -10508,10 +10520,11 @@ declare
   v_demo_deal_ids uuid[];
   v_demo_customer_ids uuid[];
 begin
-  -- deals/customers/outgoing_invoices carry no is_demo column of their own (0010_access.sql's
-  -- company_demo_visible() reads the parent's instead), but a practice run creates them tied to a
-  -- demo property/company all the same, and they block deleting that property/company (NO ACTION
-  -- foreign keys) if left behind. Collected once so every statement below agrees on the same set.
+  -- deals/customers/outgoing_invoices/manual_bookings carry no is_demo column of their own
+  -- (0010_access.sql's company_demo_visible() reads the parent's instead), but a practice run
+  -- creates them tied to a demo property/company all the same, and they block deleting that
+  -- property/company (NO ACTION foreign keys) if left behind. Collected once so every statement
+  -- below agrees on the same set.
   select array_agg(d.id) into v_demo_deal_ids
     from public.deals d join public.properties p on p.id = d.property_id
    where p.is_demo and p.created_at < v_cutoff;
@@ -10528,6 +10541,10 @@ begin
   delete from public.deal_parties where customer_id = any (v_demo_customer_ids);
   delete from public.deals where id = any (v_demo_deal_ids);
   delete from public.customers where id = any (v_demo_customer_ids);
+
+  delete from public.manual_bookings mb
+   where exists (select 1 from public.properties p where p.id = mb.property_id and p.is_demo and p.created_at < v_cutoff)
+      or exists (select 1 from public.companies co where co.id = mb.company_id and co.is_demo and co.created_at < v_cutoff);
 
   alter table public.document_history disable trigger trg_guard_document_history_row;
   delete from public.document_history
@@ -10546,6 +10563,12 @@ begin
 
   delete from public.properties where is_demo and created_at < v_cutoff;
   delete from public.companies where is_demo and created_at < v_cutoff;
+exception
+  -- A row this can't reach yet fails loudly to an administrator instead of silently every night.
+  when others then
+    perform public.notify_administrators(
+      'The nightly demo-data cleanup failed: ' || sqlerrm,
+      '/administration', 'purge_stale_demo_data');
 end;
 $$;
 
@@ -10567,5 +10590,856 @@ begin
   end if;
 end
 $$;
+
+commit;
+
+-- ===================================================================== 0047_lexoffice_invoice_file_fetch.sql
+
+begin;
+
+alter table public.outgoing_invoices
+    add column if not exists lexoffice_file_fetched_at timestamptz,
+    add column if not exists lexoffice_sync_error text;
+
+create unique index if not exists outgoing_invoice_files_one_per_invoice
+    on public.outgoing_invoice_files (outgoing_invoice_id);
+
+commit;
+
+-- ===================================================================== 0048_deal_settled_status.sql
+
+-- A historic sale entered for statistics only; approve_deal, create_deal_invoices and save_deal
+-- are all gated to other status values, so none of them can ever touch a settled deal.
+
+begin;
+
+alter table public.deals
+    drop constraint deals_status_known,
+    add constraint deals_status_known
+        check (status in ('incomplete', 'ready', 'approved', 'invoiced', 'cancelled', 'settled'));
+
+commit;
+
+-- ===================================================================== 0049_agent_commission_report.sql
+
+-- deals_read/broker_bonuses_approved_read are gated on documents.read/bonuses.read, which ordinary
+-- staff already hold -- RLS alone would not stop them seeing every agent's figures here just
+-- because they lack deals.report_all. The own-agent-or-report-all check below is this function's
+-- own, deliberate gate, not something left to row level security to enforce incidentally.
+-- property_broker_user_id IS security definer, so a caller without master_data.read still gets a
+-- correct agent_user_id for a deal attributed only through the CRM-assigned property broker.
+
+begin;
+
+create or replace function public.property_broker_user_id(p_property_id uuid) returns uuid
+language sql stable security definer set search_path to 'public'
+as $$
+  select au.id
+    from public.properties p
+    join public.app_users au on au.crm_external_id = p.broker_external_id and au.is_active
+   where p.id = p_property_id;
+$$;
+
+revoke all on function public.property_broker_user_id(uuid) from public, anon;
+grant execute on function public.property_broker_user_id(uuid) to authenticated;
+
+create or replace function public.agent_commission_report(p_cutoff date)
+returns table (
+    agent_user_id uuid,
+    agent_name text,
+    closings_current integer,
+    closings_previous integer,
+    volume_current numeric,
+    volume_previous numeric,
+    commission_current numeric,
+    commission_previous numeric,
+    bonuses_current numeric,
+    bonuses_previous numeric
+)
+language sql stable
+set search_path to 'public'
+as $$
+  with window_bounds as (
+    select p_cutoff as cutoff_current,
+           (p_cutoff - interval '1 year')::date as cutoff_previous,
+           date_trunc('year', p_cutoff)::date as year_start_current,
+           (date_trunc('year', p_cutoff) - interval '1 year')::date as year_start_previous
+  ),
+  -- A deal can carry a buyer side, a seller side, or both (unique(deal_id, side)). Every side that
+  -- exists is the agency's own earned commission on that deal, so all of them count, summed once
+  -- per deal rather than counting the closing twice if both sides belong to the same agent.
+  deal_commission as (
+    select
+      d.id as deal_id,
+      coalesce(d.handled_by, d.acquired_by, public.property_broker_user_id(d.property_id))
+        as agent_user_id,
+      d.notarised_on,
+      d.purchase_price,
+      sum(
+        case
+          when s.fee_kind = 'percent' and s.fee_net_rate is not null and d.purchase_price is not null
+            then d.purchase_price * s.fee_net_rate / 100
+          when s.fee_kind = 'fixed' then s.fee_net_amount
+          else 0
+        end
+      ) as commission_amount
+    from public.deals d
+    join public.deal_sides s on s.deal_id = d.id
+    where d.deleted_at is null
+      and d.status not in ('cancelled', 'settled')
+      and d.notarised_on is not null
+    group by d.id, d.handled_by, d.acquired_by, d.property_id, d.notarised_on, d.purchase_price
+  ),
+  -- An agent qualifies by having a deal OR a bonus inside either window -- a bonus with no deal
+  -- attached (e.g. a Google-review bonus) must not silently drop that agent's whole row, bonus
+  -- figures included.
+  relevant_agents as (
+    select distinct dc.agent_user_id
+      from deal_commission dc, window_bounds wb
+     where dc.agent_user_id is not null
+       and ((dc.notarised_on >= wb.year_start_current and dc.notarised_on <= wb.cutoff_current)
+         or (dc.notarised_on >= wb.year_start_previous and dc.notarised_on <= wb.cutoff_previous))
+    union
+    select distinct b.broker_user_id
+      from public.broker_bonuses b, window_bounds wb
+     where b.status in ('approved', 'paid')
+       and ((b.earned_on >= wb.year_start_current and b.earned_on <= wb.cutoff_current)
+         or (b.earned_on >= wb.year_start_previous and b.earned_on <= wb.cutoff_previous))
+  )
+  select
+    au.id,
+    coalesce(au.name, au.email),
+    count(*) filter (
+      where dc.notarised_on >= wb.year_start_current and dc.notarised_on <= wb.cutoff_current
+    )::integer,
+    count(*) filter (
+      where dc.notarised_on >= wb.year_start_previous and dc.notarised_on <= wb.cutoff_previous
+    )::integer,
+    coalesce(sum(dc.purchase_price) filter (
+      where dc.notarised_on >= wb.year_start_current and dc.notarised_on <= wb.cutoff_current
+    ), 0),
+    coalesce(sum(dc.purchase_price) filter (
+      where dc.notarised_on >= wb.year_start_previous and dc.notarised_on <= wb.cutoff_previous
+    ), 0),
+    coalesce(sum(dc.commission_amount) filter (
+      where dc.notarised_on >= wb.year_start_current and dc.notarised_on <= wb.cutoff_current
+    ), 0),
+    coalesce(sum(dc.commission_amount) filter (
+      where dc.notarised_on >= wb.year_start_previous and dc.notarised_on <= wb.cutoff_previous
+    ), 0),
+    coalesce((
+      select sum(b.amount) from public.broker_bonuses b
+       where b.broker_user_id = au.id and b.status in ('approved', 'paid')
+         and b.earned_on >= date_trunc('year', p_cutoff)::date and b.earned_on <= p_cutoff
+    ), 0),
+    coalesce((
+      select sum(b.amount) from public.broker_bonuses b
+       where b.broker_user_id = au.id and b.status in ('approved', 'paid')
+         and b.earned_on >= (date_trunc('year', p_cutoff) - interval '1 year')::date
+         and b.earned_on <= (p_cutoff - interval '1 year')::date
+    ), 0)
+  from public.app_users au
+  join relevant_agents ra on ra.agent_user_id = au.id
+  cross join window_bounds wb
+  left join deal_commission dc on dc.agent_user_id = au.id
+  where au.id = public.current_app_user_id() or public.has_permission('deals.report_all')
+  group by au.id, au.name, au.email;
+$$;
+
+revoke all on function public.agent_commission_report(date) from public, anon;
+grant execute on function public.agent_commission_report(date) to authenticated;
+
+commit;
+
+-- ===================================================================== 0050_invoices_kpis_search_view.sql
+
+-- invoices_kpis() read unconditionally from v_documents_review, which carries its own
+-- `where workflow_status in (...) or review_score > 0 or traffic_light in (...)` filter
+-- (0012_views.sql) -- the exact mistake documents.ts's listenSource() made for the same reason,
+-- fixed there by reading v_documents_search instead. v_documents_search has the identical column
+-- set (search_text included) with no row restriction, so this function gets the same fix: every
+-- document counts, not only the ones still flagged for a human to look at.
+--
+-- Confirmed live before this fix: of 9 real documents, only 1 matched v_documents_review's filter
+-- -- a clean, fully-paid document with no review flags was silently excluded from every count and
+-- sum this function returns.
+
+begin;
+
+CREATE OR REPLACE FUNCTION public.invoices_kpis(p_q text DEFAULT NULL::text, p_gesellschaft text DEFAULT NULL::text, p_objekt text DEFAULT NULL::text, p_belegart text DEFAULT NULL::text, p_zahlung text DEFAULT NULL::text, p_von date DEFAULT NULL::date, p_bis date DEFAULT NULL::date, p_datev text DEFAULT NULL::text, p_workflow text DEFAULT NULL::text, p_bank_match text DEFAULT NULL::text, p_ampel text DEFAULT NULL::text, p_archiv text DEFAULT NULL::text, p_ids uuid[] DEFAULT NULL::uuid[], p_faellig_von date DEFAULT NULL::date, p_faellig_bis date DEFAULT NULL::date, p_faellig_unbekannt boolean DEFAULT false, p_direct_debit boolean DEFAULT NULL::boolean)
+ RETURNS TABLE(total bigint, erkannt bigint, zu_pruefen bigint, volumen numeric, offen numeric)
+ LANGUAGE sql
+ STABLE
+ SET search_path TO 'public'
+AS $function$
+  select
+    count(*),
+    count(*) filter (where status = 'recognised'),
+    count(*) filter (where status = 'needs_review'),
+    coalesce(sum(amount_gross), 0),
+    coalesce(sum(amount_gross) filter (where paid_at is null), 0)
+  from public.v_documents_search
+  where (p_q is null or search_text like all (
+      select '%' || replace(replace(replace(word, '\', '\\'), '%', '\%'), '_', '\_') || '%'
+      from regexp_split_to_table(lower(p_q), '\s+') as word
+      where word <> ''
+    ))
+    and (
+      p_gesellschaft is null
+      or company_code = p_gesellschaft
+      -- NZO ("Nicht zugeordnet") is the catch-all for unassigned, and the pipeline
+      -- expresses unassigned as NULL rather than by writing the code, so it has to
+      -- match both. Same rule as migration 20260813190000 set for the search RPCs.
+      or (p_gesellschaft = 'NZO' and company_code is null)
+    )
+    and (
+      p_objekt is null
+      or property_code = p_objekt
+      -- The list sends this sentinel for "no property assigned". Properties have no
+      -- catch-all code the way companies have NZO, so the filter is expressed as a
+      -- value the column can never hold.
+      or (p_objekt = '__ohne' and property_code is null)
+    )
+    and (p_belegart is null or document_type = p_belegart)
+    and (
+      p_zahlung is null
+      or (p_zahlung = 'paid' and paid_at is not null)
+      or (p_zahlung = 'open'   and paid_at is null)
+    )
+    and (
+      p_datev is null
+      or (p_datev = 'uebergeben' and handed_over_at is not null)
+      or (p_datev = 'open'      and handed_over_at is null)
+    )
+    and (
+      p_bank_match is null
+      or (p_bank_match = 'vorschlag'  and has_suggested_bank_match and not has_confirmed_bank_match)
+      or (p_bank_match = 'matched' and has_confirmed_bank_match)
+      or (p_bank_match = 'open' and not has_suggested_bank_match and not has_confirmed_bank_match)
+    )
+    and (p_workflow is null or workflow_status = p_workflow)
+    and (p_von is null or document_date >= p_von)
+    and (p_bis is null or document_date <= p_bis)
+    and (case when p_archiv = 'nur' then archived_at is not null else archived_at is null end)
+    and (p_ids is null or id = any(p_ids))
+    and (
+      p_ampel is null
+      or (p_ampel =  'auffaellig' and traffic_light in ('yellow', 'red'))
+      or (p_ampel <> 'auffaellig' and traffic_light = p_ampel)
+    )
+    and (case when p_faellig_unbekannt then due_date is null else true end)
+    and (p_faellig_von is null or due_date >= p_faellig_von)
+    and (p_faellig_bis is null or due_date <= p_faellig_bis)
+    and (p_direct_debit is null or public.is_direct_debit(payment_method) = p_direct_debit)
+    and not_relevant_at is null;
+$function$;
+
+commit;
+
+-- ===================================================================== 0051_lexware_sync_error_queue_card.sql
+
+begin;
+
+CREATE OR REPLACE FUNCTION public.invoice_queue_kpis(p_today date DEFAULT CURRENT_DATE) RETURNS TABLE(key text, count bigint, amount numeric)
+    LANGUAGE sql STABLE
+    SET search_path TO 'public'
+    AS $$
+      with base as (select * from public.documents where true and private_hold = false and deleted_at is null and archived_at is null and not_relevant_at is null)
+      select 'all'::text, count(*), coalesce(sum(amount_gross), 0) from base
+      union all
+      select 'needs_action'::text, count(*), coalesce(sum(amount_gross), 0) from base where status = 'needs_review' and is_invoice = true
+      union all
+      select 'missing_assignment'::text, count(*), coalesce(sum(amount_gross), 0) from base where company_id is null
+      union all
+      select 'ready_for_payment'::text, count(*), coalesce(sum(amount_gross), 0) from base  where workflow_status in ('approved_first', 'approved_final')    and paid_at is null and not public.is_a_reminder(id)
+      union all
+      select 'pay_now'::text, count(*), coalesce(sum(amount_gross), 0) from base where due_date <= p_today and paid_at is null and not public.is_direct_debit(payment_method) and not public.is_a_reminder(id)
+      union all
+      select 'lexware_error'::text, count(*), coalesce(sum(amount_gross), 0) from base where lexoffice_sync_error is not null
+      union all
+      select 'completed'::text, count(*), coalesce(sum(amount_gross), 0) from base where paid_at is not null or workflow_status = 'closed';
+    $$;
+
+commit;
+
+-- ===================================================================== 0052_document_views_pick_up_lexoffice_columns.sql
+
+-- A view built on select d.* freezes its column list when it is created, so the lexoffice_*
+-- columns added to documents afterwards never appeared here and a filter on them failed.
+-- create or replace cannot widen a view, so the three are dropped and rebuilt in order.
+
+begin;
+
+drop view if exists public.v_documents_review;
+drop view if exists public.v_documents_search;
+drop view if exists public.v_documents_list;
+
+create or replace view public.v_documents_list with (security_invoker = true) as
+select d.*,
+       coalesce(s.name, d.issuer) as issuer_sort,
+       -- Every failed check adds its own weight, and low confidence adds a little more. Both come
+       -- from tables, so a client can reorder their own review list without a deploy.
+       (
+         coalesce((
+           select sum(r.weight)
+             from public.review_score_rules r
+            where r.is_active
+              and (r.applies_to_small_amounts or coalesce(d.is_small_amount, false) = false)
+              and d.validation ->> r.check_key = 'false'
+         ), 0)
+         +
+         coalesce((
+           select case
+                    when lowest is null then 0
+                    when lowest < b.low_below then b.low_weight
+                    when lowest < b.medium_below then b.medium_weight
+                    else 0
+                  end
+             from public.review_confidence_bands b
+             cross join lateral (
+               select min(e.value::numeric) as lowest
+                 from jsonb_each_text(coalesce(d.extracted -> b.confidence_key, '{}'::jsonb)) e
+                where e.value ~ '^[0-9.]+$'
+             ) c
+         ), 0)
+       )::integer as review_score,
+       exists (
+         select 1 from public.document_transaction_matches m
+          where m.document_id = d.id and m.status in ('candidate', 'auto')
+       ) as has_suggested_bank_match,
+       exists (
+         select 1 from public.document_transaction_matches m
+          where m.document_id = d.id and m.status = 'confirmed'
+       ) as has_confirmed_bank_match
+  from public.documents d
+  left join public.suppliers s on s.id = d.supplier_id
+ where d.deleted_at is null
+   -- A document that was split into its parts is represented by those parts, not by itself.
+   and coalesce(d.status, '') <> 'split';
+
+create or replace view public.v_documents_search with (security_invoker = true) as
+select l.*,
+       lower(concat_ws(' ',
+           l.issuer,
+           l.invoice_number,
+           l.service_description,
+           l.cost_category,
+           to_char(l.amount_gross, 'FM9999999990.00'),
+           replace(to_char(l.amount_gross, 'FM9999999990.00'), '.', ','),
+           to_char(l.amount_gross, 'FM9,999,999,990.00'),
+           translate(to_char(l.amount_gross, 'FM9,999,999,990.00'), ',.', '.,')
+       )) as search_text
+  from public.v_documents_list l;
+
+create or replace view public.v_documents_review with (security_invoker = true) as
+select *
+  from public.v_documents_search
+ where workflow_status in ('received', 'in_review', 'query')
+    or review_score > 0
+    or traffic_light in ('yellow', 'red');
+
+
+commit;
+
+-- ===================================================================== 0053_payment_due_date_keeps_hub_edits.sql
+
+-- payment_due_date is the one field a person edits here and the CRM also holds. The push to the
+-- CRM can fail, and the sync then wrote the CRM's empty value back over what they typed. Same
+-- shape as bank_transactions.transaction_type_source: 'hub' marks a value the sync must leave
+-- alone, and the push sets it back to 'crm' once the CRM has really accepted it.
+
+begin;
+
+alter table public.properties
+    add column if not exists payment_due_date_source text not null default 'crm';
+
+alter table public.properties
+    drop constraint if exists properties_payment_due_date_source_known;
+
+alter table public.properties
+    add constraint properties_payment_due_date_source_known
+    check (payment_due_date_source in ('crm', 'hub'));
+
+commit;
+
+-- ===================================================================== 0054_broker_bonus_counting_rule.sql
+
+-- agent_commission_report is re-created here rather than edited in 0049: it reads a column this
+-- file introduces, and Postgres will not replace a function whose output columns have changed.
+
+begin;
+
+alter table public.bonus_settings
+    add column if not exists broker_bonus_counts_status text not null default 'approved_and_paid';
+
+alter table public.bonus_settings
+    drop constraint if exists bonus_settings_broker_bonus_counts_status_check;
+
+alter table public.bonus_settings
+    add constraint bonus_settings_broker_bonus_counts_status_check
+        check (broker_bonus_counts_status in ('paid', 'approved_and_paid', 'separate'));
+
+-- bonus_settings is readable only to bonuses.review/bonuses.submit holders, which a deals.report_all
+-- holder need not be, so the invoker-rights report reads the rule through this definer wrapper.
+create or replace function public.broker_bonus_counting_rule() returns text
+language sql stable security definer set search_path to 'public'
+as $$
+  select coalesce((select broker_bonus_counts_status from public.bonus_settings), 'approved_and_paid');
+$$;
+
+revoke all on function public.broker_bonus_counting_rule() from public, anon;
+grant execute on function public.broker_bonus_counting_rule() to authenticated;
+
+drop function if exists public.agent_commission_report(date);
+
+create function public.agent_commission_report(p_cutoff date)
+returns table (
+    agent_user_id uuid,
+    agent_name text,
+    closings_current integer,
+    closings_previous integer,
+    volume_current numeric,
+    volume_previous numeric,
+    commission_current numeric,
+    commission_previous numeric,
+    bonuses_current numeric,
+    bonuses_previous numeric,
+    bonuses_approved_current numeric,
+    bonuses_approved_previous numeric
+)
+language sql stable
+set search_path to 'public'
+as $$
+  with window_bounds as (
+    select p_cutoff as cutoff_current,
+           (p_cutoff - interval '1 year')::date as cutoff_previous,
+           date_trunc('year', p_cutoff)::date as year_start_current,
+           (date_trunc('year', p_cutoff) - interval '1 year')::date as year_start_previous
+  ),
+  bonus_counting as (
+    select public.broker_bonus_counting_rule() as counts_status
+  ),
+  -- A deal can carry a buyer side, a seller side, or both (unique(deal_id, side)). Every side that
+  -- exists is the agency's own earned commission on that deal, so all of them count, summed once
+  -- per deal rather than counting the closing twice if both sides belong to the same agent.
+  deal_commission as (
+    select
+      d.id as deal_id,
+      coalesce(d.handled_by, d.acquired_by, public.property_broker_user_id(d.property_id))
+        as agent_user_id,
+      d.notarised_on,
+      d.purchase_price,
+      sum(
+        case
+          when s.fee_kind = 'percent' and s.fee_net_rate is not null and d.purchase_price is not null
+            then d.purchase_price * s.fee_net_rate / 100
+          when s.fee_kind = 'fixed' then s.fee_net_amount
+          else 0
+        end
+      ) as commission_amount
+    from public.deals d
+    join public.deal_sides s on s.deal_id = d.id
+    where d.deleted_at is null
+      and d.status not in ('cancelled', 'settled')
+      and d.notarised_on is not null
+    group by d.id, d.handled_by, d.acquired_by, d.property_id, d.notarised_on, d.purchase_price
+  ),
+  -- An agent qualifies by having a deal OR a bonus inside either window -- a bonus with no deal
+  -- attached (e.g. a Google-review bonus) must not silently drop that agent's whole row, bonus
+  -- figures included.
+  relevant_agents as (
+    select distinct dc.agent_user_id
+      from deal_commission dc, window_bounds wb
+     where dc.agent_user_id is not null
+       and ((dc.notarised_on >= wb.year_start_current and dc.notarised_on <= wb.cutoff_current)
+         or (dc.notarised_on >= wb.year_start_previous and dc.notarised_on <= wb.cutoff_previous))
+    union
+    select distinct b.broker_user_id
+      from public.broker_bonuses b, window_bounds wb, bonus_counting bc
+     where (case bc.counts_status
+              when 'paid' then b.status = 'paid'
+              else b.status in ('approved', 'paid')
+            end)
+       and ((b.earned_on >= wb.year_start_current and b.earned_on <= wb.cutoff_current)
+         or (b.earned_on >= wb.year_start_previous and b.earned_on <= wb.cutoff_previous))
+  )
+  select
+    au.id,
+    coalesce(au.name, au.email),
+    count(*) filter (
+      where dc.notarised_on >= wb.year_start_current and dc.notarised_on <= wb.cutoff_current
+    )::integer,
+    count(*) filter (
+      where dc.notarised_on >= wb.year_start_previous and dc.notarised_on <= wb.cutoff_previous
+    )::integer,
+    coalesce(sum(dc.purchase_price) filter (
+      where dc.notarised_on >= wb.year_start_current and dc.notarised_on <= wb.cutoff_current
+    ), 0),
+    coalesce(sum(dc.purchase_price) filter (
+      where dc.notarised_on >= wb.year_start_previous and dc.notarised_on <= wb.cutoff_previous
+    ), 0),
+    coalesce(sum(dc.commission_amount) filter (
+      where dc.notarised_on >= wb.year_start_current and dc.notarised_on <= wb.cutoff_current
+    ), 0),
+    coalesce(sum(dc.commission_amount) filter (
+      where dc.notarised_on >= wb.year_start_previous and dc.notarised_on <= wb.cutoff_previous
+    ), 0),
+    coalesce((
+      select sum(b.amount) from public.broker_bonuses b
+       where b.broker_user_id = au.id
+         and (case bc.counts_status
+                when 'approved_and_paid' then b.status in ('approved', 'paid')
+                else b.status = 'paid'
+              end)
+         and b.earned_on >= date_trunc('year', p_cutoff)::date and b.earned_on <= p_cutoff
+    ), 0),
+    coalesce((
+      select sum(b.amount) from public.broker_bonuses b
+       where b.broker_user_id = au.id
+         and (case bc.counts_status
+                when 'approved_and_paid' then b.status in ('approved', 'paid')
+                else b.status = 'paid'
+              end)
+         and b.earned_on >= (date_trunc('year', p_cutoff) - interval '1 year')::date
+         and b.earned_on <= (p_cutoff - interval '1 year')::date
+    ), 0),
+    coalesce((
+      select sum(b.amount) from public.broker_bonuses b
+       where b.broker_user_id = au.id and b.status = 'approved'
+         and b.earned_on >= date_trunc('year', p_cutoff)::date and b.earned_on <= p_cutoff
+    ), 0),
+    coalesce((
+      select sum(b.amount) from public.broker_bonuses b
+       where b.broker_user_id = au.id and b.status = 'approved'
+         and b.earned_on >= (date_trunc('year', p_cutoff) - interval '1 year')::date
+         and b.earned_on <= (p_cutoff - interval '1 year')::date
+    ), 0)
+  from public.app_users au
+  join relevant_agents ra on ra.agent_user_id = au.id
+  cross join window_bounds wb
+  cross join bonus_counting bc
+  left join deal_commission dc on dc.agent_user_id = au.id
+  where au.id = public.current_app_user_id() or public.has_permission('deals.report_all')
+  group by au.id, au.name, au.email, bc.counts_status;
+$$;
+
+revoke all on function public.agent_commission_report(date) from public, anon;
+grant execute on function public.agent_commission_report(date) to authenticated;
+
+commit;
+
+-- ===================================================================== 0054_deal_crm_change_detection.sql
+
+-- A deal is seeded from the CRM once and then completed by a person here, so a plain live
+-- comparison cannot tell a CRM change from a human correction. The snapshot is what the CRM said
+-- when the deal was opened or last acknowledged, so the comparison is CRM-then against CRM-now and
+-- a person's own edits never register as a conflict.
+
+begin;
+
+alter table public.deals
+    add column if not exists crm_snapshot jsonb;
+
+alter table public.deals
+    add column if not exists crm_changes_acknowledged_at timestamptz;
+
+create or replace function public.crm_facts_of(p_property_id uuid) returns jsonb
+    language sql stable set search_path to 'public'
+as $$
+  select jsonb_build_object(
+      'sold_on', p.sold_on,
+      'sold_price', nullif(p.sold_price, 0),
+      'buyer_rate', public.crm_rate(p.crm_data ->> 'external_commission_percentage'),
+      'seller_rate', public.crm_rate(p.crm_data ->> 'internal_commission_percentage'))
+    from public.properties p
+   where p.id = p_property_id;
+$$;
+
+create or replace function public.stamp_deal_crm_snapshot() returns trigger
+    language plpgsql set search_path to 'public'
+as $$
+begin
+  if new.crm_snapshot is null and new.property_id is not null then
+    new.crm_snapshot := public.crm_facts_of(new.property_id);
+  end if;
+  return new;
+end;
+$$;
+
+drop trigger if exists deals_stamp_crm_snapshot on public.deals;
+create trigger deals_stamp_crm_snapshot
+    before insert on public.deals
+    for each row execute function public.stamp_deal_crm_snapshot();
+
+update public.deals
+   set crm_snapshot = public.crm_facts_of(property_id)
+ where crm_snapshot is null
+   and property_id is not null;
+
+create or replace function public.deal_crm_changes(p_deal_id uuid)
+returns table(field text, was text, became text)
+    language sql stable set search_path to 'public'
+as $$
+  with deal as (
+    select d.crm_snapshot as before, public.crm_facts_of(d.property_id) as after
+      from public.deals d
+     where d.id = p_deal_id
+       and d.property_id is not null
+       and d.crm_snapshot is not null
+  )
+  select each_field,
+         nullif(deal.before ->> each_field, ''),
+         nullif(deal.after ->> each_field, '')
+    from deal
+    cross join lateral unnest(array['sold_on', 'sold_price', 'buyer_rate', 'seller_rate'])
+      as each_field
+   where deal.before ->> each_field is distinct from deal.after ->> each_field;
+$$;
+
+revoke execute on function public.crm_facts_of(uuid) from public, anon;
+revoke execute on function public.deal_crm_changes(uuid) from public, anon;
+grant execute on function public.crm_facts_of(uuid) to authenticated, service_role;
+grant execute on function public.deal_crm_changes(uuid) to authenticated, service_role;
+
+create or replace function public.acknowledge_deal_crm_changes(p_deal_id uuid) returns void
+    language plpgsql security definer set search_path to 'public'
+as $$
+begin
+  if not public.owns_deal(p_deal_id) and not public.has_permission('invoices.approve') then
+    raise exception 'not allowed to acknowledge this deal' using errcode = '42501';
+  end if;
+  update public.deals
+     set crm_snapshot = public.crm_facts_of(property_id),
+         crm_changes_acknowledged_at = now()
+   where id = p_deal_id
+     and property_id is not null;
+end;
+$$;
+
+revoke execute on function public.acknowledge_deal_crm_changes(uuid) from public, anon;
+grant execute on function public.acknowledge_deal_crm_changes(uuid) to authenticated;
+
+-- Same guard as 0011_functions.sql, plus the refusal to invoice a deal whose CRM figures moved
+-- after it was approved: the amount on the invoice would no longer be the amount that was agreed.
+CREATE OR REPLACE FUNCTION public.create_deal_invoices(p_deal_id uuid, p_invoices jsonb)
+    RETURNS SETOF public.outgoing_invoices
+    LANGUAGE plpgsql SECURITY INVOKER
+    SET search_path TO 'public'
+    AS $$
+declare
+  v_deal public.deals;
+  v_due_date date;
+  v_item jsonb;
+  v_changed text;
+begin
+  select * into v_deal from public.deals where id = p_deal_id and deleted_at is null;
+  if not found then
+    raise exception 'create_deal_invoices: deal % not found', p_deal_id;
+  end if;
+  if v_deal.status <> 'approved' then
+    raise exception 'create_deal_invoices: deal % is not approved', p_deal_id
+      using errcode = 'check_violation';
+  end if;
+
+  select string_agg(field, ', ' order by field) into v_changed
+    from public.deal_crm_changes(p_deal_id);
+  if v_changed is not null then
+    raise exception 'create_deal_invoices: the CRM changed % since this deal was approved', v_changed
+      using errcode = 'check_violation';
+  end if;
+
+  select p.payment_due_date into v_due_date
+    from public.properties p where p.id = v_deal.property_id;
+
+  for v_item in select * from jsonb_array_elements(p_invoices) loop
+    insert into public.outgoing_invoices (
+      company_id, customer_id, deal_party_id, kind, deal_id,
+      status, invoice_date, due_date, amount_net, amount_gross
+    ) values (
+      v_deal.company_id,
+      (v_item ->> 'customer_id')::uuid,
+      (v_item ->> 'deal_party_id')::uuid,
+      'commission',
+      p_deal_id,
+      'draft',
+      coalesce(v_deal.notarised_on, current_date),
+      v_due_date,
+      (v_item ->> 'amount_net')::numeric,
+      (v_item ->> 'amount_gross')::numeric
+    );
+  end loop;
+
+  update public.deals set status = 'invoiced' where id = p_deal_id;
+
+  return query select * from public.outgoing_invoices
+    where deal_id = p_deal_id and kind = 'commission';
+end;
+$$;
+
+REVOKE ALL ON FUNCTION public.create_deal_invoices(uuid, jsonb) FROM public, anon;
+GRANT EXECUTE ON FUNCTION public.create_deal_invoices(uuid, jsonb) TO authenticated;
+
+commit;
+
+-- ===================================================================== 0055_matching_thresholds_are_fractions.sql
+
+-- The scorer returns 0..1 (_shared/matching.ts), and every reader's own fallback was already a
+-- fraction, but the column defaults shipped as 60.00 and 95.00, so `score < candidate_threshold`
+-- was always true and the nightly sync never wrote a match for anybody.
+
+begin;
+
+update public.matching_settings
+   set candidate_threshold = candidate_threshold / 100
+ where candidate_threshold > 1;
+
+update public.matching_settings
+   set auto_match_threshold = auto_match_threshold / 100
+ where auto_match_threshold > 1;
+
+alter table public.matching_settings
+    alter column candidate_threshold type numeric(4, 3),
+    alter column auto_match_threshold type numeric(4, 3),
+    alter column candidate_threshold set default 0.6,
+    alter column auto_match_threshold set default 0.95;
+
+alter table public.matching_settings
+    drop constraint if exists matching_settings_thresholds_are_fractions;
+
+alter table public.matching_settings
+    add constraint matching_settings_thresholds_are_fractions
+        check (candidate_threshold between 0 and 1 and auto_match_threshold between 0 and 1);
+
+commit;
+
+-- ===================================================================== 0056_invoice_settings.sql
+
+begin;
+
+create table if not exists public.invoice_settings (
+    id boolean primary key default true,
+    default_vat_rate numeric(5, 2) not null default 19,
+    country_code text not null default 'DE',
+    invoice_fallback_label text not null default 'Rechnung',
+    invoice_unit_name text not null default 'Pauschal',
+    default_payment_method text not null default 'Überweisung',
+    document_fallback_label text not null default 'Beleg',
+    updated_at timestamptz not null default now(),
+    updated_by text
+);
+
+alter table public.invoice_settings
+    drop constraint if exists invoice_settings_one_row,
+    drop constraint if exists invoice_settings_default_vat_rate_sane,
+    drop constraint if exists invoice_settings_country_code_shape,
+    drop constraint if exists invoice_settings_labels_present;
+
+alter table public.invoice_settings
+    add constraint invoice_settings_one_row check (id),
+    add constraint invoice_settings_default_vat_rate_sane
+        check (default_vat_rate >= 0 and default_vat_rate <= 100),
+    add constraint invoice_settings_country_code_shape check (country_code ~ '^[A-Z]{2}$'),
+    add constraint invoice_settings_labels_present check (
+        btrim(invoice_fallback_label) <> ''
+        and btrim(invoice_unit_name) <> ''
+        and btrim(default_payment_method) <> ''
+        and btrim(document_fallback_label) <> '');
+
+create table if not exists public.invoice_kind_labels (
+    kind text primary key,
+    label text not null,
+    updated_at timestamptz not null default now(),
+    updated_by text
+);
+
+alter table public.invoice_kind_labels
+    drop constraint if exists invoice_kind_labels_kind_present,
+    drop constraint if exists invoice_kind_labels_label_present;
+
+alter table public.invoice_kind_labels
+    add constraint invoice_kind_labels_kind_present check (kind ~ '^[a-z][a-z0-9_]*$'),
+    add constraint invoice_kind_labels_label_present check (btrim(label) <> '');
+
+drop trigger if exists invoice_settings_touch on public.invoice_settings;
+create trigger invoice_settings_touch before update on public.invoice_settings
+    for each row execute function public.set_updated_at();
+
+drop trigger if exists invoice_kind_labels_touch on public.invoice_kind_labels;
+create trigger invoice_kind_labels_touch before update on public.invoice_kind_labels
+    for each row execute function public.set_updated_at();
+
+insert into public.invoice_settings (id) values (true) on conflict (id) do nothing;
+
+insert into public.invoice_kind_labels (kind, label) values
+    ('commission', 'Provision'),
+    ('coaching', 'Coaching')
+on conflict (kind) do nothing;
+
+alter table public.invoice_settings enable row level security;
+alter table public.invoice_kind_labels enable row level security;
+
+drop policy if exists invoice_settings_read on public.invoice_settings;
+create policy invoice_settings_read on public.invoice_settings
+    for select to authenticated using (public.may_read('documents.read'));
+
+drop policy if exists invoice_settings_write on public.invoice_settings;
+create policy invoice_settings_write on public.invoice_settings
+    for all to authenticated
+    using (public.may_write('settings.manage'))
+    with check (public.may_write('settings.manage'));
+
+drop policy if exists invoice_kind_labels_read on public.invoice_kind_labels;
+create policy invoice_kind_labels_read on public.invoice_kind_labels
+    for select to authenticated using (public.may_read('documents.read'));
+
+drop policy if exists invoice_kind_labels_write on public.invoice_kind_labels;
+create policy invoice_kind_labels_write on public.invoice_kind_labels
+    for all to authenticated
+    using (public.may_write('settings.manage'))
+    with check (public.may_write('settings.manage'));
+
+grant select, update on public.invoice_settings to authenticated;
+grant select, insert, update, delete on public.invoice_kind_labels to authenticated;
+
+commit;
+
+-- ===================================================================== 0057_lexoffice_webhook.sql
+
+begin;
+
+create table if not exists public.lexware_webhook_events (
+    id bigserial primary key,
+    event_type text not null,
+    resource_id text not null,
+    event_date timestamptz,
+    received_at timestamptz not null default now(),
+    outcome text
+);
+
+-- Lexware does not always send an event date, and a plain unique constraint treats two nulls as
+-- different rows, so a replayed delivery without one would be handled twice.
+create unique index if not exists lexware_webhook_events_delivery
+    on public.lexware_webhook_events
+       (event_type, resource_id, coalesce(event_date, 'epoch'::timestamptz));
+
+create index if not exists lexware_webhook_events_received
+    on public.lexware_webhook_events (received_at desc);
+
+-- No policy is added on purpose: only the webhook Edge Function, running as service_role, ever
+-- touches these rows, so every other caller, including a signed-in admin, is correctly refused.
+alter table public.lexware_webhook_events enable row level security;
+
+create table if not exists public.lexware_organization (
+    id boolean primary key default true,
+    organization_id text,
+    fetched_at timestamptz,
+    constraint lexware_organization_single_row check (id)
+);
+
+insert into public.lexware_organization (id) values (true) on conflict (id) do nothing;
+
+-- Same reasoning as above: the webhook reads this row to decide whether a delivery belongs to this
+-- Hub's own Lexware organization, and fills it from /v1/profile the first time.
+alter table public.lexware_organization enable row level security;
 
 commit;

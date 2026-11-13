@@ -24,8 +24,7 @@ import { keepPreviousData, useInfiniteQuery } from "@tanstack/react-query";
 
 // ---- Outgoing invoices & customers (Briefing Screen 15; migration 0052) ----
 // customers/outgoing_invoices postdate the generated Database type, so reads go through the
-// untyped `sb` cast, same as `objekte`. LexOffice was removed entirely (migration 0086) —
-// customers is now a plain local table, same write shape as `suppliers`.
+// untyped `sb` cast, same as `objekte`.
 
 export function useCustomers(companyId?: string) {
   return useQuery({

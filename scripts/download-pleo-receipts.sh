@@ -15,7 +15,7 @@ cd "$(dirname "$0")/.."
 
 BATCH="${1:-50}"
 set -a; source .env; set +a
-URL="https://xsgbdtdwhrrhoeximeon.supabase.co/functions/v1/pleo-receipts?batch=${BATCH}"
+URL="${VITE_SUPABASE_URL%/}/functions/v1/pleo-receipts?batch=${BATCH}"
 
 echo "Downloading Pleo receipts (batch=${BATCH}). Ctrl-C to stop — progress is kept."
 total_files=0

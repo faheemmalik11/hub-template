@@ -9,6 +9,7 @@ type Db = any;
 interface PendingDocumentRow {
   id: string;
   accounting_external_id: string;
+  amount_gross: number | null;
 }
 
 function messageOf(error: unknown): string {
@@ -22,7 +23,7 @@ function messageOf(error: unknown): string {
 async function pendingDocuments(db: Db): Promise<PendingDocumentRow[]> {
   const { data, error } = await db
     .from(TABLE.documents)
-    .select("id, accounting_external_id")
+    .select("id, accounting_external_id, amount_gross")
     .not("accounting_external_id", "is", null)
     .is("paid_at", null)
     .is("deleted_at", null);
@@ -51,12 +52,15 @@ async function sync(db: Db) {
     }
 
     if (payment.voucherStatus !== "paid" && payment.voucherStatus !== "paidoff") {
+      const nothingPaidYet = document.amount_gross !== null &&
+        payment.openAmount !== null &&
+        payment.openAmount >= document.amount_gross - 0.01;
       const { error } = await db
         .from(TABLE.documents)
-        .update({ lexoffice_open_amount: payment.openAmount ?? null })
+        .update({ lexoffice_open_amount: nothingPaidYet ? null : (payment.openAmount ?? null) })
         .eq("id", document.id);
       if (error) throw error;
-      if ((payment.openAmount ?? 0) > 0) partlyPaid += 1;
+      if (!nothingPaidYet && (payment.openAmount ?? 0) > 0) partlyPaid += 1;
       continue;
     }
 

@@ -2382,6 +2382,10 @@ function DocumentDetail({ doc }: { doc: Document }) {
     ? { handelnd_als: actingAs.name ?? null, handelnd_als_id: actingAs.id ?? null }
     : {};
   async function runCorrection(target: WorkflowStatus, reason: string | null) {
+    if (target === "approved_final" && requireCompanyBeforeFinalApprove && !doc.company_id) {
+      toast.error(t("documents.detail.workflow.companyRequiredForFinalApprove"));
+      return;
+    }
     // Before the status moves, not after: if the unlink fails the invoice must not be
     // left claiming it is unpaid while the transaction still points at it.
     if (releasesPaymentLink(wf, target, WORKFLOW_ORDER)) {
@@ -2415,7 +2419,11 @@ function DocumentDetail({ doc }: { doc: Document }) {
 
     const paymentSync =
       targetRank >= paidRank && !doc.paid_at
-        ? { paid_at: new Date().toISOString(), paid_source: "manual" as const }
+        ? {
+            paid_at: new Date().toISOString(),
+            paid_source: "manual" as const,
+            lexoffice_open_amount: 0,
+          }
         : targetRank < paidRank && currentRank >= paidRank
           ? { paid_at: null, paid_source: null }
           : {};
@@ -2546,6 +2554,7 @@ function DocumentDetail({ doc }: { doc: Document }) {
         changes: {
           paid_at: checked ? new Date().toISOString() : null,
           paid_source: checked ? "manual" : null,
+          ...(checked ? { lexoffice_open_amount: 0 } : {}),
           // `already_paid` goes with it. It is the flag saying no company bank transaction can
           // ever settle this, and it is what keeps the invoice out of Offene Posten. Withdrawing
           // the paid mark while leaving the flag standing would send the invoice back to In

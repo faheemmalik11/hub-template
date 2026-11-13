@@ -1,7 +1,3 @@
-// Resolves an audit email (mail_settings.updated_by and friends) to the person's display name
-// and role, so screens can say "Zuletzt geändert von Philipp Netz [Admin]" instead of showing a
-// raw email address. Auth-gated; returns strictly LESS than the email the caller already holds —
-// name and role are the same fields chain_people() exposes to every signed-in user.
 import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
 

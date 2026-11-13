@@ -84,4 +84,60 @@ select u.id, c.id from public.app_users u, public.companies c
  where u.email = 'clerk@example.com' and c.code = 'EX1'
 on conflict do nothing;
 
+-- These stay off for every real client by default (supabase/catalogue.sql). Turned on only here,
+-- for local development, so the commission/reporting screens have something to show.
+insert into public.feature_settings (feature_key, enabled) values
+  ('page.commission_deals', true),
+  ('deals.report', true),
+  ('lexoffice.sync', true),
+  ('lexoffice.invoice_file_fetch', true)
+on conflict (feature_key) do update set enabled = excluded.enabled;
+
+insert into public.customers (company_id, name, is_company, source)
+select c.id, 'Example Buyer', false, 'app'
+  from public.companies c
+ where c.code = 'EX1'
+   and not exists (select 1 from public.customers where name = 'Example Buyer');
+
+-- One deal notarised this year, one last year, so the reporting tab's year-over-year comparison
+-- has both sides to show.
+insert into public.deals (id, company_id, property_id, status, notarised_on, purchase_price, acquired_by, handled_by, source)
+select '00000000-0000-0000-0000-000000000101'::uuid, c.id, p.id, 'invoiced',
+       current_date - 10, 300000, u.id, u.id, 'app'
+  from public.companies c, public.properties p, public.app_users u
+ where c.code = 'EX1' and p.code = 'P1' and u.email = 'owner@example.com'
+   and not exists (select 1 from public.deals where id = '00000000-0000-0000-0000-000000000101'::uuid)
+on conflict (id) do nothing;
+
+insert into public.deals (id, company_id, property_id, status, notarised_on, purchase_price, acquired_by, handled_by, source)
+select '00000000-0000-0000-0000-000000000102'::uuid, c.id, p.id, 'invoiced',
+       current_date - interval '1 year' - interval '5 days', 200000, u.id, u.id, 'app'
+  from public.companies c, public.properties p, public.app_users u
+ where c.code = 'EX1' and p.code = 'P1' and u.email = 'owner@example.com'
+   and not exists (select 1 from public.deals where id = '00000000-0000-0000-0000-000000000102'::uuid)
+on conflict (id) do nothing;
+
+insert into public.deal_sides (deal_id, side, fee_kind, fee_net_rate)
+select d.id, 'seller', 'percent', 3.0
+  from public.deals d
+ where d.id in ('00000000-0000-0000-0000-000000000101'::uuid, '00000000-0000-0000-0000-000000000102'::uuid)
+on conflict (deal_id, side) do nothing;
+
+insert into public.deal_parties (deal_side_id, customer_id, position)
+select s.id, cu.id, 0
+  from public.deal_sides s
+  join public.customers cu on cu.name = 'Example Buyer'
+ where s.deal_id in ('00000000-0000-0000-0000-000000000101'::uuid, '00000000-0000-0000-0000-000000000102'::uuid)
+   and s.side = 'seller'
+on conflict (deal_side_id, customer_id) do nothing;
+
+insert into public.broker_bonuses (broker_user_id, bonus_type, earned_on, amount, status)
+select u.id, 'notary', current_date - 5, 500, 'approved'
+  from public.app_users u
+ where u.email = 'owner@example.com'
+   and not exists (
+     select 1 from public.broker_bonuses b
+      where b.broker_user_id = u.id and b.bonus_type = 'notary' and b.earned_on = current_date - 5
+   );
+
 commit;

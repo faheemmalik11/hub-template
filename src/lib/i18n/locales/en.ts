@@ -878,6 +878,7 @@ const en = {
     documentTypes: "Document types",
     documentIntakeLog: "Intake log",
     fileNaming: "Filename convention",
+    invoiceSettings: "Invoice defaults",
     toOverview: "To overview",
     menu: "Menu",
     myProfile: "My profile",
@@ -1660,6 +1661,7 @@ const en = {
     fileNaming: "File naming",
     inbox: "Inbox & filing",
     incomingInvoices: "Incoming invoices",
+    invoiceSettings: "Invoice defaults",
     manualBookings: "Manual bookings",
     overview: "Overview",
     notifications: "Notifications",
@@ -4347,6 +4349,61 @@ const en = {
       passwordChangeFailed: "The password could not be changed.",
     },
   },
+  invoiceSettings: {
+    title: "Invoice defaults",
+    subtitle:
+      "Which tax rate, which country and which wording are used when an invoice or a receipt goes to the accounting system and the record itself does not say.",
+    readOnlyHint:
+      "Only administrators can change these defaults. Who that is: Administration › Team.",
+    effectHint:
+      "Takes effect from the moment you save. Invoices and receipts already sent stay as they are.",
+    lastChangedBy: "Last changed by {{who}} on {{when}}.",
+    unknown: "unknown",
+    save: "Save",
+    saving: "Saving …",
+    textRequired: "Please enter some text.",
+    defaultVatRateInvalid: "Please enter a number between 0 and 100.",
+    countryCodeInvalid: "Please enter a two-letter country code in capitals, for example DE.",
+    kindInvalid:
+      "Lower-case letters, digits and underscores only, and each invoice type may appear once.",
+    card: {
+      tax: {
+        title: "Tax",
+        desc: "Used when the record carries no tax rate. The country also decides which tax rates are allowed and which country goes on the billing address.",
+      },
+      wording: {
+        title: "Wording on the invoice",
+        desc: "The name of the invoice line and the unit it is given.",
+      },
+      voucherRemark: {
+        title: "Remark on the receipt",
+        desc: "Used when the receipt carries no payment method and no reference.",
+      },
+      kindLabels: {
+        title: "Wording per invoice type",
+        desc: "The name that goes on the invoice. Without an entry the general wording is used.",
+      },
+    },
+    field: {
+      defaultVatRate: "Default tax rate in percent",
+      countryCode: "Country code",
+      invoiceFallbackLabel: "General wording",
+      invoiceUnitName: "Unit",
+      defaultPaymentMethod: "Payment method",
+      documentFallbackLabel: "General receipt wording",
+      kind: "Invoice type",
+      kindLabel: "Wording",
+    },
+    kindLabels: {
+      add: "Add an invoice type",
+      remove: "Remove this invoice type",
+      empty: "No invoice type entered yet.",
+    },
+    toast: {
+      saved: "The invoice defaults have been saved.",
+      failed: "Could not save: {{error}}",
+    },
+  },
   fileNaming: {
     readOnlyHint:
       "Only administrators can change these settings. Who that is: Administration › Team.",
@@ -4724,6 +4781,12 @@ const en = {
         invoiced: "As soon as the invoice to buyer and seller is sent",
         commission_received: "Only once our commission is paid",
       },
+      broker_bonus_counts_status: "Which bonuses the agent report counts",
+      brokerBonusCountsStatus: {
+        paid: "Only bonuses already paid out",
+        approved_and_paid: "Approved and paid-out bonuses together",
+        separate: "Paid-out bonuses, with approved ones shown apart",
+      },
       save: "Save",
       saved: "Saved",
       invalid: "Please enter numbers only.",
@@ -4812,6 +4875,7 @@ const en = {
         volume: "Property volume",
         commission: "Commission",
         bonuses: "Bonuses",
+        bonusesApproved: "Approved, not yet paid out",
         lastYear: "{{year}}: {{value}}",
       },
       table: {
@@ -5257,9 +5321,9 @@ const en = {
     },
     matchScore: {
       confidence: {
-        hoch: "Very likely the right match",
-        mittel: "Probably the right match",
-        niedrig: "Might be the right match",
+        high: "Very likely the right match",
+        medium: "Probably the right match",
+        low: "Might be the right match",
       },
       why: "Why it was suggested:",
       signal: {
@@ -6073,6 +6137,11 @@ const en = {
       viewFile: "View file",
       fileFailed: "The file could not be opened.",
       fileFailedWithError: "The file could not be opened: {{error}}",
+      fileDialog: {
+        title: "Invoice {{number}}",
+        titleDraft: "Invoice (draft)",
+        cannotDisplay: "This file cannot be shown here.",
+      },
       statusFailed: "Status could not be changed: {{error}}",
       lexoffice: {
         send: "Send to Lexoffice",

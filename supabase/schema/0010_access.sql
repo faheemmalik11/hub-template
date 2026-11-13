@@ -183,6 +183,10 @@ $$;
 -- is refused before any table is ever touched: "new row violates row-level security policy". Insert
 -- only, same as the table policies allow nothing beyond writing a new document in -- overwriting an
 -- existing object is a different operation this does not open.
+insert into storage.buckets (id, name, public)
+values ('documents', 'documents', false), ('outgoing-invoice-files', 'outgoing-invoice-files', false)
+on conflict (id) do nothing;
+
 drop policy if exists documents_bucket_write on storage.objects;
 create policy documents_bucket_write on storage.objects
     for insert to authenticated

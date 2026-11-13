@@ -531,7 +531,11 @@ export function useConfirmPaymentFilePaid() {
     mutationFn: async (input: { documentId: string }) => {
       const { error } = await sb
         .from(TABLE.documents)
-        .update({ paid_at: new Date().toISOString(), paid_source: "payment_file" })
+        .update({
+          paid_at: new Date().toISOString(),
+          paid_source: "payment_file",
+          lexoffice_open_amount: 0,
+        })
         .eq("id", input.documentId);
       if (error) throw error;
     },
