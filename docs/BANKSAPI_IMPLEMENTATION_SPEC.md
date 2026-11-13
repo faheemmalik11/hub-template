@@ -4,7 +4,7 @@ _Status: DRAFT for review. No code, no deployment. Compiled 2026-07-03._
 
 ## Purpose & scope
 
-Introduce **bank-transaction reconciliation** into the a sister Hub Hub: import bank accounts
+Introduce **bank-transaction reconciliation** into the sister Hub: import bank accounts
 and transactions via **BANKSapi**, match transactions to receipts (`belege`), surface
 missing receipts and open items, and let a human confirm/reject matches.
 
@@ -24,7 +24,7 @@ match transactions ↔ belege · show missing receipts · manual confirm/reject.
   tokens, or Basic-Auth in the frontend or the client bundle. The browser only calls our own
   Edge Functions (`supabase.functions.invoke`) and reads our own tables (RLS-guarded).
 - **One database.** New tables are added to the existing Supabase project
-  (`pbwfihepsrxgcytkvqgf`); nothing is moved. New objects are **additive and ours** — never
+  (`<project-ref>`); nothing is moved. New objects are **additive and ours** — never
   alter pipeline-owned tables/columns (coordinate with the pipeline owner).
 - **No receipt/transaction contents in logs** (IBANs, amounts, references, mandate refs).
   Logs carry counts + ids only (domain spec principle 9).
@@ -397,9 +397,9 @@ reverts to fixtures without a deploy of app code.
 
 ## Prerequisites & open decisions (confirm before build → live)
 
-1. **Target repo** — this `a sister Hub` repo vs. `living-immo-hub` (Fabian).
+1. **Target repo** — this repo vs. the sibling Hub's own repo (Fabian).
 2. **Supabase admin access** — service_role + rights to run migrations and deploy Edge Functions on
-   `pbwfihepsrxgcytkvqgf`, or coordinate with the pipeline owner.
+   `<project-ref>`, or coordinate with the pipeline owner.
 3. **Manual-match write path** — direct RLS-guarded writes to `beleg_transaction_matches` vs. via an
    Edge Function (§1.7).
 4. **Summary-field naming** — our `abgleich_*` columns vs. adopting the spec's future `zahlungsstatus`

@@ -39,13 +39,13 @@ into `brand.ts`.
 ```ts
 import { BRAND, brandVars, pageTitle } from "@/lib/brand";
 
-pageTitle("Eingangsrechnungen"); // "Eingangsrechnungen — this client Hub"
-pageTitle(); // "this client Hub"
+pageTitle("Eingangsrechnungen"); // "Eingangsrechnungen — the Hub"
+pageTitle(); // "the Hub"
 t("auth.login.subheading", brandVars()); // interpolates {{brand}} / {{product}} / {{domain}}
 ```
 
-`brandVars()` supplies three placeholders: `{{brand}}` (the name, "this client"), `{{product}}`
-(the full product name, "this client Hub") and `{{domain}}` (the mail domain). A locale string
+`brandVars()` supplies three placeholders: `{{brand}}` (the name, "Hub"), `{{product}}`
+(the full product name, "the Hub") and `{{domain}}` (the mail domain). A locale string
 that names the brand must use one of them and pass `brandVars()` at the call site. Never
 spell the name out.
 
@@ -63,8 +63,8 @@ spell the name out.
   `/favicon-32x32.png`, `/favicon-16x16.png`, `/favicon-48x48.png`). None of those files
   ever existed in `public/`, so each page load fired four 404s.
 - **All 35 route files** use `pageTitle("<Seite>")` instead of writing
-  `"<Seite> — this client Hub"` by hand. The dashboard's title was `"this client Hub — Übersicht"`
-  (reversed) and is now `"Übersicht — this client Hub"`, consistent with every other page.
+  `"<Seite> — the Hub"` by hand. The dashboard's title was `"the Hub — Übersicht"`
+  (reversed) and is now `"Übersicht — the Hub"`, consistent with every other page.
   `src/routes/index.tsx` also had its own hardcoded `description`; it reads
   `BRAND.description` now.
 - **All 8 brand mentions in the locale files** interpolate instead: `demo.panelTitleLine1`
@@ -75,20 +75,20 @@ spell the name out.
 - **The DATEV handover email** (`src/lib/api/datev-handover.functions.ts`) uses
   `BRAND.productName` in its body. This one leaves the app: it goes to the tax advisor.
 
-`grep -rni "this client\|this client" src --include=*.ts --include=*.tsx` returns no user-facing hits
+`grep -rni "<brand name>" src --include=*.ts --include=*.tsx` returns no user-facing hits
 outside `brand.ts`. What remains are code comments and two localStorage keys
-(`this client.locale`, `this client:acting-as-changed`), deliberately left, since renaming a storage
+(`hub.locale`, `hub:acting-as-changed`), deliberately left, since renaming a storage
 key would silently discard every user's saved preference.
 
 ## Assets: none of ours
 
 The imported codebase shipped brand assets belonging to **other companies**. All removed:
 
-| File                          | Was actually                                            |
-| ----------------------------- | ------------------------------------------------------- |
-| `public/brand/logo.svg`       | netz.immo (a sister Hub) wordmark, `aria-label="netz.immo"` |
-| `public/brand/logo-white.svg` | same, white variant                                     |
-| `public/brand/og-default.jpg` | **HANSEVEST** logo, an unrelated third company          |
+| File                          | Was actually                                      |
+| ----------------------------- | ------------------------------------------------- |
+| `public/brand/logo.svg`       | a sister Hub's wordmark, down to its `aria-label` |
+| `public/brand/logo-white.svg` | same, white variant                               |
+| `public/brand/og-default.jpg` | an unrelated third company's logo                 |
 
 None were referenced by any component. `og-default.jpg` in particular must not be
 restored: shipping another company's logo as this app's link-preview image is a real
@@ -96,12 +96,12 @@ problem, not a cosmetic one.
 
 ## Open / still to do
 
-- ⚠️ **`public/favicon.ico` is still the netz.immo icon** (teal mountains). It is the only
+- ⚠️ **`public/favicon.ico` is still a sister Hub's icon** (teal mountains). It is the only
   icon in the repo, so it was left in place rather than leaving the browser tab blank.
-  **Replace before go-live.** No this client artwork has ever been supplied by the client. Tracked
+  **Replace before go-live.** No brand artwork has ever been supplied by the client. Tracked
   in `communication/INDEX.md` under "Awaiting client answer", item 11.
 - No `og:image` is emitted, because there is no valid asset for one.
 
 Everything else in the UI is done: nothing outside `brand.ts` spells the brand name out.
-To keep it that way, `grep -rni "this client\|this client" src --include=*.ts --include=*.tsx` should
+To keep it that way, `grep -rni "<brand name>" src --include=*.ts --include=*.tsx` should
 only ever return comments and the two localStorage keys noted above.

@@ -57,7 +57,7 @@ transferred as well. Measured on the day: 24 rows, of which 2 paid and 12 direct
 **`missing_assignment` counts company only, on purpose.** The design's card reads "Missing company
 or property", but `applyBelegeFilter` ANDs its axes and cannot express "company OR property
 missing". A card counting both sent the reader to a list showing a different number (463 vs 270 on
-this client). Company is also the blocking one. If the OR is ever wanted, the list filter needs a
+this Hub). Company is also the blocking one. If the OR is ever wanted, the list filter needs a
 combined sentinel first, and the SQL and the card must move together.
 
 ### Selection behaviour
@@ -139,5 +139,5 @@ The status dropdown stays: the cards cover four of the six status values, and `e
 
 ## 8. Applied where
 
-`20260828180000_invoice_queue_kpis.sql` is applied and recorded on the live this client project
-(`xsgbdtdwhrrhoeximeon`). Nowhere else.
+`20260828180000_invoice_queue_kpis.sql` is applied and recorded on the live project
+(`<project-ref>`). Nowhere else.

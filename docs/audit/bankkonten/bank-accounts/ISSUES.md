@@ -11,7 +11,7 @@ Found via code review (`src/routes/bankkonten/index.tsx`, `src/components/bank/b
 `0059_hub_roles_access_trash.sql`, `20260813150000_super_admin_company_access.sql`) plus a live
 pass against the real dev database through the running app. **Read-only**: no account was created,
 edited, removed or restored, and no sync was triggered. Live state: 12 active accounts across 4
-companies (IMPV, INFI, ACME, STGR), all on two connections to the same bank, plus one removed
+companies (MVER, MIMM, ACME, STGR), all on two connections to the same bank, plus one removed
 account ("Sonstige Darlehen", removed 15.08.2026, reason "Privates Darlehenskonto, gehört nicht in
 die Buchhaltung").
 
@@ -62,7 +62,7 @@ database (12 active accounts across 4 companies, 1 removed — the figures the f
 
 | # | Status | What changed |
 | --- | ----------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------ |
-| 1 | **Won't do** | A Saldo column was built and then removed on request, across all three Hubs. On the a sister Hub Hub the balances proved to be a one-off import (all accounts `connection_id = NULL`, every balance written in a single burst weeks ago, both connections `pending`), so a "Saldo" column would imply a freshness the data does not have. Dropped here too rather than leaving the Hubs inconsistent. |
+| 1 | **Won't do** | A Saldo column was built and then removed on request, across all three Hubs. On the sister Hub the balances proved to be a one-off import (all accounts `connection_id = NULL`, every balance written in a single burst weeks ago, both connections `pending`), so a "Saldo" column would imply a freshness the data does not have. Dropped here too rather than leaving the Hubs inconsistent. |
 | 2 | **Fixed** | The private `formatIban` is deleted; the route uses the shared `formatIBAN` from `format.ts`, which splits on `;` and uppercases. |
 | 3 | **Fixed (UI)** | Names shared by more than one account get a "Name doppelt" badge, computed over the whole set so a collision the filter hides is still flagged. Live this marks 10 of the 12 rows ("Sichteinlagen" ×5, "Sonstige Darlehen" ×5) and leaves "Befristete Einlagen" and "BusinessCard" clean. The badge's tooltip names renaming as the cure and points at `name_is_custom`. |
 | 4 | **Fixed (UI)** | "Keine Gesellschaft" is now an amber warning chip whose tooltip states the actual consequence, the summary carries a counter when any are unassigned, the company filter has an explicit "Keine Gesellschaft" option, and `BankAccountDialog` warns while the field is empty. The `has_company_access(null)` rule itself is deliberately unchanged — the intake queue depends on it. |
@@ -84,9 +84,9 @@ database (12 active accounts across 4 companies, 1 removed — the figures the f
 ### Note on RLS (differs from a sister Hub)
 
 `bank_accounts` here has **only** a SELECT policy — writes go through service-role server functions
-with explicit `checkCompanyAccess`. The a sister Hub Hub's copy of this table had `INSERT`/`UPDATE`
+with explicit `checkCompanyAccess`. The sister Hub's copy of this table had `INSERT`/`UPDATE`
 policies of bare `true`, which combined with `trg_propagate_account_company` into a read escalation
-(see that Hub's finding #12). **this client was never exposed to it**; no migration is needed here.
+(see that Hub's finding #12). **This Hub was never exposed to it**; no migration is needed here.
 Confirmed against `pg_policies` on the live database, not inferred from the migration files.
 
 ### Not done

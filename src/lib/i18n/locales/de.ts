@@ -995,7 +995,7 @@ const de = {
       slackOpenSlack: "Slack öffnen",
       slackConnected: "Slack ist verbunden",
       slackStep1:
-        "this client zu Ihrem Slack hinzufügen. Klicken Sie unten auf Slack öffnen und machen Sie dann bei Slack Folgendes. Sie müssen dort Apps installieren dürfen.",
+        "{{brand}} zu Ihrem Slack hinzufügen. Klicken Sie unten auf Slack öffnen und machen Sie dann bei Slack Folgendes. Sie müssen dort Apps installieren dürfen.",
       slackStep1a:
         "Workspace auswählen und die Zusammenfassung bestätigen, die Slack anzeigt. Alles darin ist schon ausgefüllt.",
       slackStep1b: "Auf Install to Workspace klicken, dann auf Allow.",
@@ -6703,7 +6703,7 @@ const de = {
     area: {
       noneOption: "Kein Bereich",
       hospitality: "Hospitality",
-      stay_re: "this client RE und Projekte",
+      stay_re: "Immobilien und Projekte",
       all: "Alle Bereiche",
     },
     emptyApprovers: "Noch keine Genehmiger angelegt.",

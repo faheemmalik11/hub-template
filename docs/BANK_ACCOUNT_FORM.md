@@ -129,10 +129,10 @@ form.
 
 ## Meeting point 17 — "make it obvious whose account or card each one is"
 
-Saskia, at 34:29: the accounts need better names, and she only knew the card labelled "Business
-Card" was hers because she recognised the transactions. Petra: she thought the Mastercards were
-mixed between Saskia's and Alexis's and asked how she is meant to tell them apart. Fabian: renaming
-is not a problem, and Petra should send back what would read best.
+Tanja, at 34:29: the accounts need better names, and she only knew the card labelled "Business
+Card" was hers because she recognised the transactions. Sabine: she thought the Mastercards were
+mixed between Tanja's and Bernd's and asked how she is meant to tell them apart. Fabian: renaming
+is not a problem, and Sabine should send back what would read best.
 
 Done on our side:
 
@@ -142,15 +142,16 @@ Done on our side:
 - **The account holder is shown under the account name** on the Bankkonten table (desktop and the
   mobile card), but only when it says something the Company column does not. It was already
   searchable and never displayed, and it is the only field that answers "whose is this" — but a
-  column of its own repeated the company on 12 of 13 rows (`IMPULS 1 VV GMBH` next to
-  `Impuls VV GmbH`). `shownHolder()` in `src/routes/bankkonten/index.tsx` compares letters only, so
-  casing, punctuation and the stray `1` in `IMPULS 1 VV GMBH` do not count as a difference, and
+  column of its own repeated the company on 12 of 13 rows (`MUSTERVERWALTUNG 1 GMBH` next to
+  `Musterverwaltung GmbH`). `shownHolder()` in `src/routes/bankkonten/index.tsx` compares letters
+  only, so casing, punctuation and the stray `1` in that holder string do not count as a
+  difference, and
   title-cases a value that arrives in all caps. Live, exactly one row gets a second line:
-  `BusinessCard` → `Dr. Saskia Christ`.
+  `BusinessCard` → `Dr. Tanja Beispielmann`.
 - **Cards are distinguishable in every dropdown.** `kontoLabel` used the last four IBAN digits to
   tell same-named accounts apart, which is empty exactly for a card. It now falls back to the
   holder, and `eindeutigeKontoLabels` does the same before resorting to a uuid slice. The one live
-  card reads `BusinessCard · ACME · DR. SASKIA CHRIST` instead of `BusinessCard`.
+  card reads `BusinessCard · ACME · DR. TANJA BEISPIELMANN` instead of `BusinessCard`.
 - **A duplicate name is flagged** in the table (`DubletteBadge`), which is what makes the ten
   identically-named feed accounts visible as a problem rather than a coincidence.
 
@@ -158,8 +159,8 @@ Still open, and not ours to close:
 
 - **Nobody has renamed anything yet.** All 12 feed accounts still carry the bank's product category
   as their name (`Sichteinlagen` ×5, `Sonstige Darlehen` ×5), `name_is_custom` false on every one.
-  Fabian asked Petra for the naming she wants; that is the outstanding input.
-- **Alexis's and Andi's cards are not connected.** Saskia said she is the only one who has connected
+  Fabian asked Sabine for the naming she wants; that is the outstanding input.
+- **Bernd's and Jonas's cards are not connected.** Tanja said she is the only one who has connected
   anything, and it is undecided whether they connect their own Mastercards or everything moves to
   Pleo. Until then there is exactly one card in the system, so the "which Mastercard is this"
   problem cannot be fully exercised.

@@ -4,7 +4,7 @@ Reference for why this exists, what's actually implemented, and what it delibera
 
 ## What was asked
 
-Found while cleaning up van Oepen's live database (12 Nov 2026 session): `is_demo` rows from the
+Found while cleaning up a real client's live database (12 Nov 2026 session): `is_demo` rows from the
 Onboarding Practice tutorial were sitting in production, never removed. Tracing it: the tutorial
 only discards what it created when someone clicks **Finish** or **Restart** — pausing or just
 navigating away leaves everything behind, by design, so a session can be resumed later. But even
@@ -58,7 +58,7 @@ kind of surprise and check for it the same way: try it against real data before 
 ## What's still open
 
 - **No other `is_demo`-adjacent table has been audited this way.** The three found above were
-  discovered by hitting their errors one at a time against van Oepen's real data, not by tracing
+  discovered by hitting their errors one at a time against a real client's data, not by tracing
   every foreign key in the schema up front. A new practice task that creates a different kind of
   row (tied to a demo company/property but without its own `is_demo` column) will hit the same kind
   of surprise and needs the same treatment added to this function.

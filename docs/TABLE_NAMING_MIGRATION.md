@@ -14,8 +14,8 @@ migration has been written and no database object has changed.
 The panel provisions a tenant database with English names and queries `public.channels`,
 `public.categories` and `public.tenant_settings` by name. It refuses to provision a database
 holding tables it did not create, and stands that refusal down only once one of its own steps is
-recorded in `public.schema_migrations`. this Hub has no such ledger yet (inventory section 9), so
-the panel cannot set this client up at all.
+recorded in `public.schema_migrations`. This Hub has no such ledger yet (inventory section 9), so
+the panel cannot set it up at all.
 
 The pipeline itself does not care. `book-keeping/src/adapters/db/schema_translation.py` wraps the
 connection in a translating cursor, so it runs against either vocabulary.
@@ -49,7 +49,7 @@ The two absent ones are the difference from ANOTHER CLIENT: this Hub has no chan
 runs through `mail_settings` and the `ingest` Edge Function. `config/tenants/this Hub.json` in
 book-keeping sets `storage.channel_config: "channels"`, which
 `composition/registry/channel_config_sources.py` maps from `mail_settings`. **Open question:** how
-the pipeline reads channels for this client, and whether the panel will want the channel tables
+the pipeline reads channels for this Hub, and whether the panel will want the channel tables
 created separately.
 
 ### Columns
@@ -398,7 +398,7 @@ Earlier this doc asked how the pipeline reads channels for this Hub. The branche
 `public.pipeline_runs` shows real work over the last 14 days: the mailbox source processed 43
 documents and the upload source 9, most recently 15.09.2026. So sources are resolving from
 somewhere despite there being no `channels` table, and provisioning the channel tables is not a
-prerequisite for the rename. Worth understanding before the panel is pointed at this client, but
+prerequisite for the rename. Worth understanding before the panel is pointed at this Hub, but
 it does not block the cutover.
 
 ## Step 7: the column gap (measured and cleared)
@@ -603,7 +603,7 @@ during the cutover itself. It should have been done days earlier, in the same pa
 
 - Does `invoice_tags` become `document_tags`? It is this Hub-only and carries the prefix, and the
   pipeline's map does not mention it.
-- How does the pipeline read channels for this client, given `storage.channel_config: "channels"`
+- How does the pipeline read channels for this Hub, given `storage.channel_config: "channels"`
   and no channel tables in the database?
 - What happens to `belege-files` and its 5 file rows.
 - Whether the panel's `updateExistingTables` is the intended route for the column gap rather than a

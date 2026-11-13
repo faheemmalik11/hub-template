@@ -12,7 +12,7 @@ Screen 10, in the client's own words:
 > What is buildable today is a **cost analysis by BWA logic** (level 1): costs grouped by BWA
 > lines, filterable, with drilldown. A real BWA (level 2) additionally needs the **revenue**
 > (from LexOffice, not yet connected) as well as **personnel costs and depreciation** (these never
-> come from the mailbox → Screen 11). **Level 1 must not be called "BWA".** Otherwise Philipp
+> come from the mailbox → Screen 11). **Level 1 must not be called "BWA".** Otherwise Max
 > compares it with his DATEV BWA, finds discrepancies and loses trust in the whole system.
 
 The three build rules "without which every figure is wrong":
@@ -85,7 +85,7 @@ current code before trusting stale specifics.)
   decision ("net/gross switchable ... not hard-wired"). The code hard-codes net
   (`amount_net + vat_nondeductible_amount`), no UI toggle to view gross.
 - **No per-company access scoping.** The briefing says (as "✅ Decided"): _"Visibility is enabled
-  per company (Philipp = all · Julia = only JPGB). Only management sees the evaluation."_
+  per company (Max = all · Eva = only JPGB). Only management sees the evaluation."_
   `useAuth()` computes `allowedCompanyIds` per user, but nothing in `auswertungen/index.tsx` (or
   anywhere else) filters by it — only the assistant-role redirect exists. Any other logged-in
   manager currently sees every company's figures regardless of what they're assigned to.

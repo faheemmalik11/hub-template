@@ -8,7 +8,7 @@ transaction already has, and give one that has none a route to reconciliation.
 Migration `0074` let an `invoice_files` row belong to a `bank_transaction` instead of an invoice — a
 Pleo card purchase has no invoice record, the photographed receipt **is** the document. The sync has
 been downloading and storing those files since 2026-08: **2,145 files across 2,078 transactions** on
-this client (11.09.2026, after a backfill that found the hourly cron had never been asking for them at
+this Hub (11.09.2026, after a backfill that found the hourly cron had never been asking for them at
 all, see `PLEO_RECEIPTS.md`). Nothing in the app ever read them back.
 
 So a transaction that already had its receipt looked exactly like one that had nothing, and the bank

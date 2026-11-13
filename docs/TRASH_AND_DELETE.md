@@ -160,8 +160,8 @@ around it:
     grep); invoices can now only ever be soft-deleted and restored, never purged.
   - **Restore permission (was §3.5):** `restore_record()` now requires `is_admin()`,
     matching `purge_record()` and matching what `/papierkorb`'s admin-only nav
-    placement already implied. Verified live: a simulated `assistant` session
-    (`anja@gmail.com`) gets `insufficient_privilege` calling `restore_record`.
+    placement already implied. Verified live: a simulated `assistant` session gets
+    `insufficient_privilege` calling `restore_record`.
   - **Centralized allow-list (partial, was §3.3):** `trash_eligible_tables()` and
     `trash_purge_eligible_tables()` (the eligible list minus an explicit exclusion
     set — `invoices` here, joined by `approvers` in `20260813110000`) are now the
@@ -185,10 +185,10 @@ around it:
     check alone. Verified live via `has_function_privilege()`: `anon` → `false`,
     `authenticated` → `true`, for all four functions.
   - Verified live end-to-end via simulated JWTs (`set local request.jwt.claims`):
-    admin (`buchhaltung@netz.immo`) soft-deleting and then trying to purge a real
+    an admin session soft-deleting and then trying to purge a real
     invoice gets rejected with `insufficient_privilege`, then successfully restores
     it (transaction rolled back afterward, no live data touched); a non-admin
-    (`anja@gmail.com`) gets rejected calling `restore_record` at all.
+    session gets rejected calling `restore_record` at all.
 
 - **`supabase/migrations/0051_change_history_rls.sql`** — `change_history` had RLS
   **enabled with zero policies**, so every direct client insert into it (via
@@ -264,7 +264,7 @@ check (true)`, per migration 0046's disclosed "write-side RLS deliberately left
   `invoices`. Reachable only by a direct RPC caller — the Papierkorb UI hides the button
   for both tables (`NICHT_PURGEBAR`).
 
-### 2.1a End-to-end verification pass (this branch, live on `txxqvvpvrylnqbpscmpv`)
+### 2.1a End-to-end verification pass (this branch, live on `<dev-project-ref>`)
 
 Following both fixes above, a full DB-level regression pass was run against the live
 dev project (not a local/staging copy) — every check exercised the exact enforcement
@@ -300,19 +300,19 @@ just application-layer assumptions:
   its replacement, follows `property_assignment`'s old precedent instead — admin-
   writable with its own soft-delete UI/hooks, not part of the generic trash system.
 - **`app_users`/`user_company_access`/`companies` write policies hold**: a
-  simulated `assistant` (Anja) session cannot insert a company (`new row violates
+  simulated `assistant` (Erika) session cannot insert a company (`new row violates
 row-level security policy`), cannot deactivate another employee (RLS silently
   filters the `UPDATE` to 0 rows — the _same_ silent-failure class as the two bugs
   above, but here it's the intended behavior, not a bug), and cannot insert her own
   `user_company_access` grant.
-- **Company-access narrowing verified with a real temporary grant**: granting Anja
+- **Company-access narrowing verified with a real temporary grant**: granting Erika
   `IMOS` only (`can_view=true`) and explicitly denying `NOGR` (`can_view=false`)
   correctly narrowed her visible company list from 7 to 1, `has_company_access`
   matched exactly, and `has_company_access(null)` ("watch-all," an unassigned
   receipt) stayed `true` even while restricted. A **soft-deleted** grant (own
   `deleted_at` set) correctly does **not** count, leaving her unrestricted. Grant
   removed immediately after; `user_company_access` confirmed back to 0 rows.
-- **Deactivated-user edge case** verified against Anja's real account (toggled
+- **Deactivated-user edge case** verified against Erika's real account (toggled
   `is_active=false`, tested, immediately reactivated — no fabricated `app_users` row
   was possible since `auth_user_id` has a real FK to `auth.users`): `is_admin()`,
   `has_company_access(null)`, and `has_company_access(<company>)` all correctly

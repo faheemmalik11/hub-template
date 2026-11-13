@@ -38,7 +38,7 @@ Route registration: TanStack Router file-based route
 hardcoded invoice array):
 
 - Client: `src/integrations/supabase/client.ts`
-  - URL: `https://pbwfihepsrxgcytkvqgf.supabase.co`
+  - URL: `https://<project-ref>.supabase.co`
   - Uses the **publishable (anon) key** only — the `service_role` key is never in the browser.
 - Live REST probe (read-only) against the `belege` table:
   - `GET /rest/v1/belege?select=id` → **`HTTP 200`** (table exists, key valid)
@@ -529,11 +529,11 @@ for the same m:n reason as the filter.
 But the approval chain is name-based: `useActingAs` matches the login's display name against
 `approvers.name`, and any account can act as any approver through the "Handeln als" picker. So the
 actor alone never said which step of the chain a row belonged to. An approval clicked by
-`test@test.com` while acting as Petra Kistner was recorded as `test@test.com` and nothing else.
+`test@test.com` while acting as Sabine Beispiel was recorded as `test@test.com` and nothing else.
 
 `runApprovalAction` in `src/routes/eingangsrechnungen/$nr.tsx` now writes `handelnd_als` and
 `handelnd_als_rolle` into the history row's `data` jsonb alongside the existing `returned_to`, and
-the Freigabe-Verlauf list renders it: `test@test.com · handelnd als Petra Kistner · 25. August 2026`.
+the Freigabe-Verlauf list renders it: `test@test.com · handelnd als Sabine Beispiel · 25. August 2026`.
 Additive only, so existing rows (and the `returned_to` reader) are unaffected.
 
 The picker's own label was also wrong: it said "Angemeldet als {{name}}" ("signed in as") for
@@ -550,11 +550,11 @@ The per-rate split was extracted correctly all along and sits in `invoices.tax`
 `UstBadge` now takes an optional `steuer` prop (the `tax` array, available on `Beleg` and therefore
 on every list row too). When more than one rate carries a non-zero net, it renders "USt gemischt"
 with the rates in the tooltip instead of picking one. Single-rate and unknown-rate behaviour is
-unchanged. On this client this affects 66 of 435 active invoices.
+unchanged. On this Hub this affects 66 of 435 active invoices.
 
 ## The Fällig filter and the Apply button (2026-08-28)
 
-Item 4 of `OPEN-TASKS.txt` asks for a "pay today" list Saskia can work through. Rather than a new
+Item 4 of `OPEN-TASKS.txt` asks for a "pay today" list Tanja can work through. Rather than a new
 screen, this list learned to be one: the filter that was missing was the due date.
 
 ### The filter
@@ -573,7 +573,7 @@ screen, this list learned to be one: the filter that was missing was the due dat
   bookmarkable and survives the trip to the detail page and back like every other filter.
 - **Migration**: `20260828120000_invoices_kpis_faellig.sql` adds `p_faellig_von` / `p_faellig_bis` /
   `p_faellig_unbekannt` to `invoices_kpis`, spliced onto the live definition and the old overload
-  dropped — the same shape as `20260815160000`. Applied to `xsgbdtdwhrrhoeximeon` on 28.08.2026.
+  dropped — the same shape as `20260815160000`. Applied to `<project-ref>` on 28.08.2026.
   Also adds a partial index on `invoices(due_date)`.
 
 ### The due date is now on the row

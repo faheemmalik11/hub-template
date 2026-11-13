@@ -13,7 +13,7 @@ automatically instead of being uploaded by hand.
 
 ## The problem, in one paragraph
 
-Petra writes outgoing invoices in DATEV. DATEV emails them to the customer and keeps the PDF.
+Sabine writes outgoing invoices in DATEV. DATEV emails them to the customer and keeps the PDF.
 The Hub never sees them, so when the customer pays, there is a deposit in the bank account
 with no invoice to match it against, and the open-items list is wrong.
 
@@ -21,7 +21,7 @@ DATEV offers no way out: no public API for Auftragswesen next, no BCC or copy-to
 setting, and DATEVconnect's document interface is upload-only. See `docs/NOTIFICATIONS.md`
 style research notes in the meeting transcript of 26.08 at [09:15]–[10:58] and [31:29]–[32:00].
 
-So the only automatic routes are ones where **Petra puts the file somewhere the pipeline
+So the only automatic routes are ones where **Sabine puts the file somewhere the pipeline
 already watches**.
 
 ## What the pipeline does today
@@ -43,7 +43,7 @@ So this is not a flag on an existing row. It is a second write path.
 ## Proposed change
 
 **Route by source folder.** A file arriving in a designated Dropbox folder, say
-`/this client/Ausgangsrechnungen`, is written as an outgoing invoice. Everything else keeps today's
+`/Musterfirma/Ausgangsrechnungen`, is written as an outgoing invoice. Everything else keeps today's
 behaviour.
 
 1. **Config.** Add an outgoing folder path alongside the existing intake settings, so it is
@@ -80,7 +80,7 @@ behaviour.
 
 Ask the client one question: **how many outgoing invoices per month?**
 
-Saskia already hinted at the answer at [31:51]: _"we don't actually issue that many invoices,
+Tanja already hinted at the answer at [31:51]: _"we don't actually issue that many invoices,
 do we? How many do you normally write? It probably isn't worth it right now."_ She said that
 about Lexware, but the same arithmetic applies here. If the answer is a handful, manual upload
 at `/ausgangsrechnungen/hochladen` is the correct engineering decision and this document

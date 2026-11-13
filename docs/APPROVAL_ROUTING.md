@@ -4,19 +4,19 @@
 
 Client requirement (verbatim, given directly by the user in this session — not a written
 client thread): _"Approval routing. In a sister Hub approvals went up a management chain
-(assistant → boss). In this client hub it's routed by area of responsibility instead, each department
-head approves their own area (for example Hospitality, or this client real estate)."_
+(assistant → boss). In this hub it's routed by area of responsibility instead, each department
+head approves their own area (for example Hospitality, or real estate)."_
 
 The client separately supplied the actual department heads
-(`communication/threads/2026-08-04-department-heads-and-approvals/01-inbound-client.md`),
-verbatim:
+(`communication/threads/2026-08-04-department-heads-and-approvals/01-inbound-client.md`). Their
+real names and addresses stay in that thread and on the client's own branch; placeholders here:
 
-| Name            | Email                    | Area of responsibility |
-| --------------- | ------------------------ | ---------------------- |
-| Alexis Gonzalez | alexis.gonzalez@this client.de | Hospitality            |
-| Saskia Christ   | saskia.christ@this client.de   | **All areas**          |
-| Andreas Christ  | andreas.christ@this client.de  | **All areas**          |
-| Lukas Oldach    | lukas.oldach@this client.de    | this client RE and projects   |
+| Name               | Email                       | Area of responsibility      |
+| ------------------ | --------------------------- | --------------------------- |
+| Bernd Musterhoff   | bernd.musterhoff@firma.de   | Hospitality                 |
+| Tanja Beispielmann | tanja.beispielmann@firma.de | **All areas**               |
+| Jonas Beispielmann | jonas.beispielmann@firma.de | **All areas**               |
+| Timo Beispiel      | timo.beispiel@firma.de      | Musterfirma RE and projects |
 
 That thread's own "open questions" section — never answered by the client — is the actual gap
 this feature closes:
@@ -25,9 +25,9 @@ this feature closes:
    `companies` carried one.
 2. **How areas map onto the 5 companies.** The client was explicit: _"areas of responsibility
    are not companies."_
-3. Whether "All areas" (Saskia, Andreas) requires **one** sign-off or **both**.
+3. Whether "All areas" (Tanja, Jonas) requires **one** sign-off or **both**.
 4. Whether amount thresholds apply.
-5. How this relates to Petra/Vanessa's existing accounting pre-check duty.
+5. How this relates to Sabine/Nina's existing accounting pre-check duty.
 
 The user explicitly asked this session to **decide** the area mapping itself, using the
 documents already available, rather than go back to the client with more questions — see the
@@ -37,11 +37,11 @@ documents already available, rather than go back to the client with more questio
 
 - **`supabase/migrations/0048_hub_approval_workflow.sql`** — ported a sister Hub's flat two-step
   named chain (`step_1_approver`/`step_2_approver` on a scoped `approval_rules` row, resolved by
-  `resolve_approval_rule(invoice_id)`) as-is. Its own comment: _"this client's approvers are different
+  `resolve_approval_rule(invoice_id)`) as-is. Its own comment: _"the client's approvers are different
   people (four department heads) and their approval rules are still unspecified ... create them
   via the admin screen rather than inventing them."_ No approvers were ever seeded there, no
   fallback rule existed — every invoice resolved to a NULL chain until this feature.
-- **`supabase/migrations/0078_this client_people.sql`** — already seeded these same 4 people (real
+- **Migration `0078` (the people seed)** — already seeded these same 4 people (real
   emails) into `app_users`, with a free-text `area_of_responsibility` column, **but deliberately
   did not seed them into `approvers`** (used by `/freigabe-regeln`) — its own note #4: _"pointing
   an approval chain at people before the area question is settled would encode a guess."_ Its
@@ -71,18 +71,18 @@ I read the tax advisor's cost-centre workbook in full
 (`communication/threads/2026-08-04-companies-and-cost-centers/assets/kostenstellen-steuerberater-2025-10.xlsx`,
 `Gesamtüberblick` + one sheet per company). It confirms cost centres are 1:1 with properties,
 scoped by owning company — no area dimension there either. But its own per-property notes are
-informative: almost every property is annotated `"this client Mieter"` / `"this client Anmietung"` — **this client
+informative: almost every property is annotated `"Musterfirma Mieter"` / `"Musterfirma Anmietung"` — **the client
 leases and operates units it does not own**, across buildings owned by the other four
 companies. That reads as an operating/hospitality model (tenant-facing, serviced units),
-distinct from the other companies' real-estate-ownership role — reinforced by their names:
-"Baufi" (financing), "VV" (Vermögensverwaltung/asset management), "Immobilien" (real estate).
+distinct from the other companies' real-estate-ownership role — reinforced by their names,
+which say financing, Vermögensverwaltung (asset management) and real estate respectively.
 
 **Decision:**
 
-| `companies.area` | Companies                                                                     |
-| ---------------- | ----------------------------------------------------------------------------- |
-| `hospitality`    | this client GmbH (`ACME`), this client Gronau GmbH (`STGR`)                                 |
-| `stay_re`        | My Baufi AG (`MYBA`), Impuls VV GmbH (`IMPV`), Infio Immobilien GmbH (`INFI`) |
+| `companies.area` | Companies                                                                                |
+| ---------------- | ---------------------------------------------------------------------------------------- |
+| `hospitality`    | Musterfirma GmbH (`ACME`), Musterverwaltung Gronau GmbH (`STGR`)                              |
+| `stay_re`        | Musterfinanz AG (`MFIN`), Musterverwaltung GmbH (`MVER`), Musterimmobilien GmbH (`MIMM`) |
 
 **This is inferred, not stated by the client.** It's stored as a plain, editable column (see
 `/gesellschaften/$id`, "Zuständigkeitsbereich" field) — correcting it later is a one-field edit
@@ -91,7 +91,7 @@ real invoice.**
 
 ### 2. "All areas" resolution
 
-Either Saskia or Andreas alone is sufficient — consistent with how a specific-area head's single
+Either Tanja or Jonas alone is sufficient — consistent with how a specific-area head's single
 sign-off already suffices elsewhere in this design. Not requiring both avoids inventing an
 unstated dual-approval rule the client never asked for.
 
@@ -101,15 +101,16 @@ None were given. `approval_rules.min_amount` (already existed, defaults to 0) st
 for a future per-rule exception, but nothing new here uses it — area-based routing applies
 uniformly regardless of invoice amount.
 
-### 4. Petra/Vanessa — seeded as plain approvers, not modeled further
+### 4. Sabine/Nina — seeded as plain approvers, not modeled further
 
 Migration `0048`'s own fallback-rule seed was written and then commented out, verbatim: _"needs
-real approver names, which this client has not confirmed yet."_ Those names now exist
+real approver names, which the client has not confirmed yet."_ Those names now exist
 (`communication/threads/2026-08-04-companies-and-cost-centers/01-inbound-client.md`, already
-used by `0078` for `user_company_access`). Migration `0087` seeds Petra Kistner and Vanessa Zelt
-into `approvers` (`role='assistant'`, no area) and completes that exact fallback-rule seed —
-one company-wide rule per company, step 1 = whichever of them thread 1 assigned to that company,
-step 2 = auto-resolve by area. This is **not** the same as modeling Petra's stated cross-company
+used by `0078` for `user_company_access`). Migration `0087` seeds those two assistants into
+`approvers` (`role='assistant'`, no area) under their real names, which a new client has to
+replace with their own, and completes that exact fallback-rule seed — one company-wide rule per
+company, step 1 = whichever of them thread 1 assigned to that company,
+step 2 = auto-resolve by area. This is **not** the same as modeling Sabine's stated cross-company
 duty ("mail handling, bank transfers, and preliminary invoice checks FOR ALL COMPANIES" — 0078
 note #3, still open, still unaddressed). It only gives her a plain step-1 slot for the 3
 companies she owns, same shape every other approver already has.
@@ -137,7 +138,7 @@ companies she owns, same shape every other approver already has.
   additive at the SQL level: `nextLegalActions`/`approvalQueryTarget` (`src/lib/data/format.ts`)
   and `$nr.tsx`'s responsible-approver/payment-handoff logic all already read `step_2_approver`
   off the _resolved_ row, never off the raw table — so none of them needed a code change.
-- Seed data: the 4 department heads, Petra/Vanessa, the 5 companies' `area`, and one fallback
+- Seed data: the 4 department heads, Sabine/Nina, the 5 companies' `area`, and one fallback
   `approval_rules` row per company (see "Decision 4" above).
 
 **Not done in this migration, on purpose:**
@@ -149,17 +150,17 @@ companies she owns, same shape every other approver already has.
   status). `/freigabe-regeln`'s nav entry is gated to `ADMIN_ROLES` in the same pass
   (`src/components/layout/app-shell.tsx`), matching how `/team`/`/papierkorb`/`/dateibenennung`
   are already gated.
-- **Inviting Alexis Gonzalez and Lukas Oldach.** Per `0078`, they still have no Supabase-auth
+- **Inviting Bernd Musterhoff and Timo Beispiel.** Per `0078`, they still have no Supabase-auth
   login and no `user_company_access` grants (deliberately — _"granting a guess would be wrong"_).
   This migration makes them a valid **routing target**; they cannot open the app or click approve
-  until invited via `/team` and granted access to their companies (this client GmbH + this client Gronau for
-  Alexis; My Baufi + Impuls VV + Infio for Lukas).
-- Petra's cross-company duty as its own modeled concept (see Decision 4).
+  until invited via `/team` and granted access to their companies (Musterfirma GmbH + Musterverwaltung Gronau for
+  Bernd; Musterfinanz + Musterverwaltung + Musterimmobilien for Timo).
+- Sabine's cross-company duty as its own modeled concept (see Decision 4).
 
 ## Frontend
 
 - **`/freigabe-regeln`, Genehmiger tab**: a combined "Zuständigkeitsbereich" select (Hospitality
-  / this client RE and projects / All areas / — none —) on the approver create/edit dialog, disabled
+  / Musterfirma RE and projects / All areas / — none —) on the approver create/edit dialog, disabled
   (with an explanatory hint) unless the selected employee's role maps to `manager`. Split into
   `area`/`covers_all_areas` only at save time — see `areaLabelKey()` in
   `src/routes/freigabe-regeln/index.tsx`.
@@ -170,7 +171,7 @@ companies she owns, same shape every other approver already has.
 - **`/gesellschaften/$id`**: a "Zuständigkeitsbereich" field, view + edit, using the existing
   `useUpdateGesellschaft` hook (plain additive field, no hook changes needed).
 - **`/eingangsrechnungen/$nr`**: the responsible-approver line now shows the resolved area next
-  to the name (e.g. "Alexis Gonzalez · Hospitality") when the resolved approver is area-routed.
+  to the name (e.g. "Bernd Musterhoff · Hospitality") when the resolved approver is area-routed.
 
 ## ⚠️ Superseded in part: the chain names accounts now (2026-09-01)
 
@@ -280,10 +281,10 @@ Consequences for anything that routes on approvers:
   policies). The migration file's trailing comment has a manual verification snippet to run as
   a real non-admin session.
 - `bun run lint && bun run build`.
-- Not click-tested in a browser. Worth checking once deployed: `/freigabe-regeln` shows Alexis/
-  Lukas/Saskia/Andreas/Petra/Vanessa with the right areas; a new rule defaults its Step 2 to
-  "Automatic"; `/gesellschaften/$id` for this client GmbH shows "Hospitality"; an invoice detail page
-  for a this client GmbH invoice at `freigegeben_assistenz` shows Alexis Gonzalez as the responsible
+- Not click-tested in a browser. Worth checking once deployed: `/freigabe-regeln` shows Bernd/
+  Timo/Tanja/Jonas/Sabine/Nina with the right areas; a new rule defaults its Step 2 to
+  "Automatic"; `/gesellschaften/$id` for Musterfirma GmbH shows "Hospitality"; an invoice detail page
+  for a Musterfirma GmbH invoice at `freigegeben_assistenz` shows Bernd Musterhoff as the responsible
   approver; the `/freigabe-regeln` nav entry only appears for admin/super_admin; a non-admin
   attempting to write to `approvers`/`approval_rules` directly gets rejected by RLS.
 
@@ -292,6 +293,6 @@ Consequences for anything that routes on approvers:
 - ~~`approvers` is a second people-table~~ **Closed 2026-09-01** — see the superseded note above.
 - Client confirmation of the company→area mapping (Decision 1) and the "either one sufficient"
   reading of "All areas" (Decision 2) — both are this session's inference, not settled fact.
-- Inviting Alexis and Lukas via `/team` + granting their `user_company_access`.
-- Petra's cross-company pre-check duty as its own modeled concept (0078 note #3).
+- Inviting Bernd and Timo via `/team` + granting their `user_company_access`.
+- Sabine's cross-company pre-check duty as its own modeled concept (0078 note #3).
 - Amount-threshold-based area routing, if the client ever wants tiered approval by value.

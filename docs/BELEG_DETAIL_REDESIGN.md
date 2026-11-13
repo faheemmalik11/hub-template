@@ -3,7 +3,7 @@
 Everything changed on `/eingangsrechnungen/$nr` and its dependencies, in enough detail to reproduce
 it exactly on another Hub. Written for a Claude Code session picking this up cold.
 
-Reference implementation: **this client** (`this Hub`). Line numbers are this client's at time of writing and
+Reference implementation: **this Hub** (this repo). Line numbers are this Hub's at time of writing and
 will drift; anchors are given as code snippets, not positions.
 
 Path note for **another client**: this screen lives under `src/accounting/`, imports use the `@acc/` alias,
@@ -43,7 +43,7 @@ wrapping a pill wrapping one word, above a row of outline buttons.
 ← Eingangsrechnungen                                                    [⋮]
 
 Yesef Woldu PutzKönig
-136 ⧉ · this client GmbH · 1.199,12 €                        ▲ 96 Tage überfällig
+136 ⧉ · Musterfirma GmbH · 1.199,12 €                        ▲ 96 Tage überfällig
 ✓ Keine Prüfung nötig · 99 % Konfidenz  ○ Noch keine passende Bankbuchung        Fällig 21. Mai 2026
 ────────────────────────────────────────────────────────────────────────
         ↓
@@ -290,7 +290,7 @@ Keeping "zurück ins Postfach" in _Nicht für uns_'s tooltip is load-bearing: it
 distinguishing it from _Kein Beleg_. The two differ solely in what happens to the source email —
 _Kein Beleg_ sets `deleted_at` (trash, recoverable), _Nicht für uns_ sets `not_relevant_at/_by/_note`
 
-- `workflow_status='nicht_relevant'` and has the pipeline hand the email back. On this client: 92 uses vs 0.
+- `workflow_status='nicht_relevant'` and has the pipeline hand the email back. On this Hub: 92 uses vs 0.
 
 ---
 
@@ -340,7 +340,7 @@ const hasSecondStep = !!rule?.step_2_approver;
 const approveNextStatus = hasSecondStep ? "freigegeben_assistenz" : "freigegeben_vorgesetzter";
 ```
 
-Every rule on this client has `step_2_approver` empty, so _every_ approval by _anyone_ — assistants
+Every rule on this Hub has `step_2_approver` empty, so _every_ approval by _anyone_ — assistants
 included — landed on `freigegeben_vorgesetzter`, which is the state that unlocks "Jetzt bezahlen".
 An assistant could put an invoice into the payable state with no supervisor involved.
 
@@ -357,7 +357,7 @@ const istStep2 = !!rule && rule.step_2_approver === actingAs.name;
 if (rule && !istStep1 && !istStep2) return [];
 ```
 
-**No rule resolved is deliberately not a refusal.** Rules are scoped (company only, on this client) with no
+**No rule resolved is deliberately not a refusal.** Rules are scoped (company only, on this Hub) with no
 catch-all, so most invoices match none; refusing there would leave them approvable by nobody. Role
 decides in that case. So: **no company → no rule → any approver may act; company assigned → only the
 rule's named approvers.**
@@ -386,7 +386,7 @@ every column null**, so `data ?? null` never fired and `approvalRuleQ.data` was 
 every invoice matching no rule. Consequences before the fix:
 
 - `if (rule && !istStep1 && !istStep2) return []` refused **every action on every unmatched invoice**
-  (273 on this client).
+  (273 on this Hub).
 - The reason message said "a rule applies and names no approver" when no rule applied.
 - `responsibleApproverName` read `step_1_approver` off a phantom rule.
 
@@ -487,7 +487,7 @@ const pruefGruendeText = useMemo(() => {
 The review box uses `const reviewReasons: string[] = pruefGruendeText;` so the two cannot disagree.
 
 **Why the traffic light was added**: it is a _separate axis_ from `status` (the pipeline's `scoring.py`
-says so explicitly) and `pruefGruende` never read it. On this client, of 361 receipts in review only 58 had a
+says so explicitly) and `pruefGruende` never read it. On this Hub, of 361 receipts in review only 58 had a
 failing validation gate and **zero** had a `decision_reason`. Of the 303 unexplained: 121 `rot`, 18
 `gelb`, 164 `gruen`.
 
@@ -609,7 +609,7 @@ administrator who is not in the `approvers` table could not reach the one tool t
 status. It is now `{(actingAs || istSuperAdmin || eigeneRolle === "admin") && (`. Nothing inside the
 disclosure reads `actingAs`, so this is purely a widening.
 
-### 7.2b Assignment overrides the approval rule (this client only)
+### 7.2b Assignment overrides the approval rule (this Hub only)
 
 `nextLegalActions` gained a fourth parameter, `assignedTo: string | null = null`, passed as
 `beleg.assigned_to`. Defaulted so any caller that does not know about assignment keeps its exact

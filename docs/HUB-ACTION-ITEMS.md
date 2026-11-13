@@ -1,6 +1,6 @@
 # Hub / Front-End — Action Items (my side)
 
-> **Scope:** This is what **I (Faheem)** own — the `a sister Hub` front-end repo (TanStack
+> **Scope:** This is what **I (Lars)** own — the `a sister Hub` front-end repo (TanStack
 > Start + Supabase reads). The ingestion pipeline (Gmail/Drive → OpenAI → Supabase) is the
 > **client's** responsibility and lives outside this repo — see `docs/PIPELINE-OVERVIEW.md`.
 >
@@ -16,7 +16,7 @@ The pipeline (email reading, OCR, AI extraction, GCP realtime worker, mailbox cl
 Supabase, plus wiring the front end to the RAG/voice backend the client already built.
 
 - ⛔ Gmail/Drive ingestion, OCR/AI extraction, dedup — client (`pipeline/`).
-- ⛔ Realtime worker + GCP billing/Cloud Run — client + Philipp.
+- ⛔ Realtime worker + GCP billing/Cloud Run — client + Max.
 - ⛔ Mailbox cleanup (mark read / labels) — client.
 
 ---
@@ -67,8 +67,8 @@ Backend `pipeline/ask.py` exists (text-to-SQL + semantic search + LLM). My work:
 
 ## 4. Coordination / awareness (not my deliverables, but they affect me)
 
-- 🔴 **Realtime worker (auto-ingest)** is blocked on **GCP billing** (Philipp). Until then, data only appears when the client runs the scripts manually — so during demos/testing, **new invoices won't show up on their own.** Plan test data accordingly.
-- 🟡 **Selective Drive ingest** decision (which folders count as incoming invoices) is pending Philipp/Anja. If they reload Drive docs, some existing `belege` IDs may change — don't hardcode against current rows.
+- 🔴 **Realtime worker (auto-ingest)** is blocked on **GCP billing** (Max). Until then, data only appears when the client runs the scripts manually — so during demos/testing, **new invoices won't show up on their own.** Plan test data accordingly.
+- 🟡 **Selective Drive ingest** decision (which folders count as incoming invoices) is pending Max/Erika. If they reload Drive docs, some existing `belege` IDs may change — don't hardcode against current rows.
 - ⛔ **Pipeline `.env` note:** their `service_role` key is invalid and the pipeline writes directly to Postgres. Irrelevant to the front end (I use the anon/publishable key), just noted so I don't rely on `service_role` behavior.
 
 ---

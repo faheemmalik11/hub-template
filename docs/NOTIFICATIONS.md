@@ -7,8 +7,8 @@ Two ways the Hub tells people something needs doing:
 
 Both come from the same list, so a number shown in the bell is the same number sent to Slack.
 
-Asked for in the client meeting of 26.08: Lukas wanted _"the relevant person gets pinged directly
-in a private Slack message"_, Saskia wanted a daily brief in a shared channel so the team can see
+Asked for in the client meeting of 26.08: Timo wanted _"the relevant person gets pinged directly
+in a private Slack message"_, Tanja wanted a daily brief in a shared channel so the team can see
 who still has work, and Fabian asked that the actual notes stay in the Hub.
 
 ---
@@ -88,7 +88,7 @@ Slack is connected to a **test workspace**, posting to the **`#breifing`** chann
 person linked so private messages could be checked. A private message, a daily summary and a
 channel post were all received successfully.
 
-Two things to redo before the team starts using it: connect the real this client workspace, and open the
+Two things to redo before the team starts using it: connect the real client workspace, and open the
 Slack settings on the live site and press Save once, so the links inside Slack messages point at
 the real Hub.
 

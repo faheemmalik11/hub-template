@@ -34,7 +34,7 @@ Three separate defects, all confirmed against the live database:
 
 ## 2. Diagnosis of the client's specific data (2026-08-15)
 
-Read from the live database (`xsgbdtdwhrrhoeximeon`) before anything was changed:
+Read from the live database (`<project-ref>`) before anything was changed:
 
 |              |                                                                                                                                                                                     |
 | ------------ | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
@@ -135,7 +135,7 @@ written, the delete aborts with an exception.
 **Order matters** — the script is step 3 of 3:
 
 1. Apply migration `20260815120000_bank_account_exclusion.sql`.
-2. `supabase functions deploy bank-sync --project-ref xsgbdtdwhrrhoeximeon` — the _deployed_
+2. `supabase functions deploy bank-sync --project-ref <project-ref>` — the _deployed_
    function is what pg_cron runs hourly (`bank-sync-hourly`, migration 0035). Until it carries the
    exclusion check and the product-id de-duplication, the next tick undoes the cleanup.
 3. Run the script.
@@ -197,7 +197,7 @@ no schema change, no backfill.
 
 ## 6. Rollout — done 2026-08-15, verified in production
 
-All three steps ran against `xsgbdtdwhrrhoeximeon` on 2026-08-15, in order, each verified:
+All three steps ran against `<project-ref>` on 2026-08-15, in order, each verified:
 
 1. **Migration applied** — all four columns plus `bank_accounts_excluded_idx` present.
 2. **`bank-sync` deployed**, then triggered manually (run `7be752cf…`): 23 accounts, 0 new

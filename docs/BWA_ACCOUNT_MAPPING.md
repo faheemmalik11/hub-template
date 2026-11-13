@@ -32,7 +32,7 @@ real Postgres instance including the empty-table assumption's failure guard.
   `Combobox` (`FISCAL_YEAR_OPTIONS`, replacing a plain number input that let the mouse scroll
   wheel silently change the year).
 - No business-line dimension anywhere in this repo (`useScopeChips`/`RegelZeile` has no
-  `business_line_id` chip) — this client Hub replaced that model with direct property↔company assignment
+  `business_line_id` chip) — the Hub replaced that model with direct property↔company assignment
   before this feature landed, so there was nothing to port for it.
 
 ## 3. AI-assisted import ("Mit KI importieren") — the ONLY import path
