@@ -4978,6 +4978,7 @@ const de = {
       invalid: "Bitte nur Zahlen eintragen.",
       invalidNumber: "Bitte eine Zahl eintragen.",
       invalidNegative: "Bitte 0 oder mehr eintragen.",
+      invalidPercent: "Bitte eine Zahl von 0 bis 100 eintragen.",
     },
     expandNote: "Notiz ausklappen",
     collapseNote: "Notiz einklappen",
