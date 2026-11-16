@@ -5325,6 +5325,7 @@ const de = {
       shares_do_not_add_up: "{{side}}: Die Anteile ergeben nicht 100 %.",
       discount_negative: "{{side}}: Der Rabatt darf nicht negativ sein.",
       discount_exceeds_fee: "{{side}}: Der Rabatt ist größer als die Provision.",
+      vat_rate_invalid: "Der MwSt.-Satz ist keine gültige Zahl. Bitte prüfen.",
       no_side_pays: "Mindestens eine Seite muss Provision zahlen.",
     },
     actions: {
