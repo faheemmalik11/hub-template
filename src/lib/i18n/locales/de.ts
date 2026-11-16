@@ -5287,7 +5287,7 @@ const de = {
       shareHint: "Anteile leer lassen, dann zahlen alle gleich viel.",
       addPayer: "Person hinzufügen",
       remove: "Entfernen",
-      newCustomerPlaceholder: "Neuer Kunde: Name",
+      newCustomerPlaceholder: "Neuen Kunden hinzufügen: Name",
       createCustomer: "Kunde anlegen",
       customerFailed: "Der Kunde konnte nicht angelegt werden.",
     },
