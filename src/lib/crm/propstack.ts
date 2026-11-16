@@ -2,11 +2,16 @@ export const PROPSTACK_SOURCE = "propstack";
 export const PROPSTACK_API_URL = "https://api.propstack.de/v1";
 export const PROPSTACK_PAGE_SIZE = 100;
 
-// The two custom fields added in PropStack's own interface for the payment due date (Fabian's 11
-// November briefing, §4.2). Keys are fixed once created there; confirmed live against the real
-// PropStack API on 11 November 2026.
+// The two custom fields added in PropStack's own interface for the payment due date. Keys are
+// fixed once created there; confirmed live against the real PropStack API.
 export const PROPSTACK_PAYMENT_DUE_DATE_FIELD = "zahlungsziel";
 export const PROPSTACK_PAYMENT_DUE_DATE_NOTE_FIELD = "zahlungsziel_hinweis";
+
+// PropStack's own web app, not the REST API: confirmed live by opening a real unit there and
+// reading the address bar.
+export function propstackUnitUrl(externalId: string): string {
+  return `https://crm.propstack.de/app/portfolio/properties/${externalId}`;
+}
 
 type LabelledValue<T> = { label?: string | null; value?: T | null } | null | undefined;
 

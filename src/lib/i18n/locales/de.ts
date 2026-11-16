@@ -5333,6 +5333,8 @@ const de = {
       saving: "Wird gespeichert …",
       saved: "Gespeichert.",
       saveFailed: "Speichern ist fehlgeschlagen: {{error}}",
+      openInPropstack: "In PropStack öffnen",
+      savedAndSynced: "Gespeichert und an PropStack gesendet.",
       savedButNotInCrm: "Gespeichert. Noch nicht an PropStack gesendet: {{reason}}",
       approve: "Freigeben",
       approving: "Wird freigegeben …",
