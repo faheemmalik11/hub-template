@@ -1,6 +1,14 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useEffect, useMemo, useState } from "react";
-import { ArrowLeft, Check, ExternalLink, ImageOff, Info, MoreHorizontal } from "lucide-react";
+import {
+  ArrowLeft,
+  Check,
+  ExternalLink,
+  ImageOff,
+  Info,
+  MoreHorizontal,
+  Users,
+} from "lucide-react";
 import { toast } from "sonner";
 
 import { Button } from "@/components/ui/button";
@@ -343,29 +351,29 @@ function DealEditor({ deal }: { deal: Deal }) {
     sequence.finally(() => setIsSaving(false));
   };
 
-  const runApprove = () =>
-    approve.mutate(undefined, {
-      onSuccess: () => toast.success(t("commissionDeals.actions.approved")),
-      onError: (error) =>
-        toast.error(t("commissionDeals.actions.approveFailed"), { description: errorText(error) }),
+  const runApprove = () => {
+    const promise = approve.mutateAsync(undefined);
+    toast.promise(promise, {
+      loading: t("commissionDeals.actions.approving"),
+      success: t("commissionDeals.actions.approved"),
+      error: (error) => t("commissionDeals.actions.approveFailed", { error: errorText(error) }),
     });
+  };
 
   const runCreateInvoices = () => {
     let invoices;
     try {
       invoices = invoiceInputsOf(deal, result);
     } catch (error) {
-      toast.error(t("commissionDeals.actions.createInvoicesFailed"), {
-        description: errorText(error),
-      });
+      toast.error(t("commissionDeals.actions.createInvoicesFailed", { error: errorText(error) }));
       return;
     }
-    createInvoices.mutate(invoices, {
-      onSuccess: () => toast.success(t("commissionDeals.actions.invoicesCreated")),
-      onError: (error) =>
-        toast.error(t("commissionDeals.actions.createInvoicesFailed"), {
-          description: errorText(error),
-        }),
+    const promise = createInvoices.mutateAsync(invoices);
+    toast.promise(promise, {
+      loading: t("commissionDeals.actions.creatingInvoices"),
+      success: t("commissionDeals.actions.invoicesCreated"),
+      error: (error) =>
+        t("commissionDeals.actions.createInvoicesFailed", { error: errorText(error) }),
     });
   };
 
@@ -496,12 +504,7 @@ function DealEditor({ deal }: { deal: Deal }) {
             </Button>
           )}
           {primaryAction === "approve" && (
-            <Button
-              className="shadow-none"
-              variant="outline"
-              onClick={runApprove}
-              disabled={approveDisabled}
-            >
+            <Button className="shadow-none" onClick={runApprove} disabled={approveDisabled}>
               <Check className="size-4" />
               {approve.isPending
                 ? t("commissionDeals.actions.approving")
@@ -573,6 +576,18 @@ function DealEditor({ deal }: { deal: Deal }) {
             when: formatDateTime(deal.approved_at),
           })}
         </div>
+      )}
+
+      {deal.status === "invoiced" && (
+        <p className="mt-4 text-sm text-muted-foreground">
+          {t("commissionDeals.actions.invoicedLexwareNote")}{" "}
+          <Link
+            to="/outgoing-invoices"
+            className="font-medium text-brand-dark underline-offset-4 hover:underline"
+          >
+            {t("commissionDeals.actions.invoicedLexwareNoteLink")}
+          </Link>
+        </p>
       )}
 
       <div className="mt-6 grid gap-6 lg:grid-cols-[minmax(0,1fr)_400px]">
@@ -665,10 +680,15 @@ function DealEditor({ deal }: { deal: Deal }) {
 
               <div className="@container grid gap-4 @lg:grid-cols-2">
                 {SIDES.map((side) => (
-                  <div key={side} className="rounded-lg border border-border/60 p-4">
-                    <h3 className="text-sm font-semibold text-foreground">
-                      {t(`commissionDeals.side.${side}`)}
-                    </h3>
+                  <div key={side} className="rounded-xl border border-border bg-card p-5">
+                    <div className="flex items-center gap-2">
+                      <div className="flex size-7 shrink-0 items-center justify-center rounded-lg bg-brand-tint text-brand">
+                        <Users aria-hidden className="size-4" />
+                      </div>
+                      <h3 className="text-sm font-semibold text-foreground">
+                        {t(`commissionDeals.side.${side}`)}
+                      </h3>
+                    </div>
                     <div className="mt-3">
                       <SideCard
                         side={side}

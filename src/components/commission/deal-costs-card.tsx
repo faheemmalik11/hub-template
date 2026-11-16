@@ -18,6 +18,16 @@ import { parseDecimal, type CostForm } from "./deal-form";
 
 const EMPTY_COST: CostForm = { kind: "city_fee", description: "", amount: "", incurredOn: "" };
 
+function sanitizeAmountInput(raw: string): string {
+  const digitsAndSeparators = raw.replace(/[^0-9.,]/g, "");
+  const separatorIndex = digitsAndSeparators.search(/[.,]/);
+  if (separatorIndex === -1) return digitsAndSeparators;
+  return (
+    digitsAndSeparators.slice(0, separatorIndex + 1) +
+    digitsAndSeparators.slice(separatorIndex + 1).replace(/[.,]/g, "")
+  );
+}
+
 export function DealCostsCard({
   costs,
   onChange,
@@ -31,6 +41,14 @@ export function DealCostsCard({
   const setCost = (index: number, patch: Partial<CostForm>) =>
     onChange(costs.map((cost, i) => (i === index ? { ...cost, ...patch } : cost)));
   const total = costs.reduce((sum, cost) => sum + (parseDecimal(cost.amount) ?? 0), 0);
+  const availableKindOptions = (index: number) => {
+    const chosenByOthers = new Set(
+      costs.flatMap((cost, i) => (i === index || cost.kind === "other" ? [] : [cost.kind])),
+    );
+    return DEAL_COST_KINDS.filter(
+      (kind) => kind === "other" || kind === costs[index]?.kind || !chosenByOthers.has(kind),
+    );
+  };
 
   return (
     <div>
@@ -55,7 +73,7 @@ export function DealCostsCard({
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>
-                {DEAL_COST_KINDS.map((kind) => (
+                {availableKindOptions(index).map((kind) => (
                   <SelectItem key={kind} value={kind}>
                     {t(`commissionDeals.costs.kind.${kind}`)}
                   </SelectItem>
@@ -74,7 +92,9 @@ export function DealCostsCard({
               className="w-28"
               inputMode="decimal"
               value={cost.amount}
-              onChange={(event) => setCost(index, { amount: event.target.value })}
+              onChange={(event) =>
+                setCost(index, { amount: sanitizeAmountInput(event.target.value) })
+              }
               placeholder={t("commissionDeals.costs.amount")}
               aria-label={t("commissionDeals.costs.amount")}
               disabled={disabled}
