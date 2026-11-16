@@ -434,9 +434,9 @@ function DealEditor({ deal }: { deal: Deal }) {
 
           <div className="min-w-0 flex-1 p-5">
             <TabsContent value="sale" className="mt-0">
-              <div className="grid gap-3 sm:grid-cols-3">
+              <div className="@container grid gap-3 @lg:grid-cols-3">
                 {companyOptions.length > 1 && (
-                  <Field className="space-y-1.5 sm:col-span-3">
+                  <Field className="space-y-1.5 @lg:col-span-3">
                     <Label>{t("commissionDeals.sale.company")}</Label>
                     <Combobox
                       value={form.companyId}
@@ -483,7 +483,7 @@ function DealEditor({ deal }: { deal: Deal }) {
                         disabled={!mayEdit}
                       />
                     </Field>
-                    <Field className="space-y-1.5 sm:col-span-2">
+                    <Field className="space-y-1.5 @lg:col-span-2">
                       <Label>{t("commissionDeals.sale.dueDateNote")}</Label>
                       <Input
                         value={dueDateNote}
@@ -494,7 +494,7 @@ function DealEditor({ deal }: { deal: Deal }) {
                     </Field>
                   </>
                 )}
-                <Field className="space-y-1.5 sm:col-span-3">
+                <Field className="space-y-1.5 @lg:col-span-3">
                   <Label>{t("commissionDeals.sale.note")}</Label>
                   <Textarea
                     rows={2}
