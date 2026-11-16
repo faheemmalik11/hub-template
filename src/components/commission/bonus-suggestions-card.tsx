@@ -161,33 +161,7 @@ export function BonusSuggestionsCard({
                       {t("commissionDeals.bonuses.create")}
                     </Button>
                   ) : suggestion.state === "waiting" ? (
-                    <div className="flex flex-col items-end gap-1">
-                      <Badge variant="secondary">
-                        {t("commissionDeals.bonuses.waiting", {
-                          reasons: suggestion.waitingFor
-                            .map((reason) => t(`commissionDeals.bonuses.waitingFor.${reason}`))
-                            .join(", "),
-                        })}
-                      </Badge>
-                      {onJumpToField &&
-                        suggestion.waitingFor
-                          .flatMap((reason) => {
-                            const anchor = ANCHOR_FOR_WAITING_REASON[reason];
-                            return anchor ? [{ reason, anchor }] : [];
-                          })
-                          .map(({ reason, anchor }) => (
-                            <button
-                              key={reason}
-                              type="button"
-                              onClick={() => onJumpToField(anchor.tab, anchor.id)}
-                              className="text-xs font-medium text-brand-dark underline-offset-4 hover:underline"
-                            >
-                              {t("commissionDeals.bonuses.waitingForFix", {
-                                reason: t(`commissionDeals.bonuses.waitingFor.${reason}`),
-                              })}
-                            </button>
-                          ))}
-                    </div>
+                    <Badge variant="secondary">{t("commissionDeals.bonuses.notReady")}</Badge>
                   ) : (
                     <Badge variant="outline">{t("commissionDeals.bonuses.noRemainder")}</Badge>
                   )}
@@ -197,6 +171,30 @@ export function BonusSuggestionsCard({
                 <p className="mt-2 text-xs text-muted-foreground">
                   {breakdownText(suggestion.breakdown)}
                 </p>
+              )}
+              {suggestion.state === "waiting" && (
+                <ul className="mt-2 space-y-1">
+                  {suggestion.waitingFor.map((reason) => {
+                    const anchor = ANCHOR_FOR_WAITING_REASON[reason];
+                    return (
+                      <li
+                        key={reason}
+                        className="flex flex-wrap items-center gap-x-1.5 text-xs text-muted-foreground"
+                      >
+                        <span>• {t(`commissionDeals.bonuses.waitingFor.${reason}`)}</span>
+                        {anchor && onJumpToField && (
+                          <button
+                            type="button"
+                            onClick={() => onJumpToField(anchor.tab, anchor.id)}
+                            className="text-xs font-medium text-brand-dark underline-offset-4 hover:underline"
+                          >
+                            {t("commissionDeals.review.fix")}
+                          </button>
+                        )}
+                      </li>
+                    );
+                  })}
+                </ul>
               )}
             </li>
           );
