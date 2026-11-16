@@ -5108,6 +5108,7 @@ const de = {
         allStatuses: "Alle",
       },
       empty: "Keine Verkäufe für diese Filter.",
+      crmChanged: "Das CRM hat sich geändert, nachdem dieser Verkauf angelegt wurde. Verkauf öffnen und prüfen.",
     },
     back: "Provisionen",
     notFound: "Diesen Verkauf gibt es nicht mehr.",

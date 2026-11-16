@@ -9,6 +9,7 @@ export {
   useDealCrmChanges,
   useDeals,
   useDealsList,
+  useDealsWithCrmChanges,
   useSaveDeal,
 } from "./deals";
 export { useAgentCommissionReport } from "./agent-report";

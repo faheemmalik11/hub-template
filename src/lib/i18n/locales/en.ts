@@ -4933,6 +4933,7 @@ const en = {
         allStatuses: "All",
       },
       empty: "No sales match these filters.",
+      crmChanged: "The CRM changed after this sale was opened. Open the sale to check it.",
     },
     back: "Commissions",
     notFound: "This sale no longer exists.",

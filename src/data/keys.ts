@@ -40,6 +40,7 @@ export const queryKeys = {
     list: (params: unknown) => ["deals", "list", params] as const,
     agentReport: (cutoff: string) => ["deals", "agent-report", cutoff] as const,
     crmChanges: (id: string) => ["deals", id, "crm-changes"] as const,
+    dealsWithCrmChanges: ["deals", "with-crm-changes"] as const,
   },
   categories: { all: ["categories"] as const },
   bank: {

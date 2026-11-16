@@ -360,6 +360,18 @@ export function useDealCrmChanges(dealId: string) {
   });
 }
 
+export function useDealsWithCrmChanges() {
+  return useQuery({
+    queryKey: queryKeys.deals.dealsWithCrmChanges,
+    staleTime: STALE,
+    queryFn: async (): Promise<Set<string>> => {
+      const { data, error } = await sb.rpc("deals_with_crm_changes");
+      if (error) throw error;
+      return new Set((data ?? []).map((row: { deal_id: string }) => row.deal_id));
+    },
+  });
+}
+
 export function useAcknowledgeDealCrmChanges(dealId: string) {
   const qc = useQueryClient();
   return useMutation({
