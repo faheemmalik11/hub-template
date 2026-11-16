@@ -5100,6 +5100,7 @@ const en = {
       percent: "Percent of the price",
       fixed: "Fixed amount",
       rate: "Rate (% net)",
+      ratePlaceholder: "e.g. 2,5",
       amount: "Amount (€ net)",
       discount: "Discount (€ gross)",
       discountReason: "Reason for the discount",

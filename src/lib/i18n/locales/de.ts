@@ -5276,6 +5276,7 @@ const de = {
       percent: "Prozent vom Kaufpreis",
       fixed: "Festbetrag",
       rate: "Satz (% netto)",
+      ratePlaceholder: "z. B. 2,5",
       amount: "Betrag (€ netto)",
       discount: "Rabatt (€ brutto)",
       discountReason: "Grund für den Rabatt",

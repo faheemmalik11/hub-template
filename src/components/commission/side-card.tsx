@@ -109,7 +109,7 @@ export function SideCard({
                   inputMode="decimal"
                   value={value.rate}
                   onChange={(event) => set({ rate: event.target.value })}
-                  placeholder="2,5"
+                  placeholder={t("commissionDeals.side.ratePlaceholder")}
                   disabled={disabled}
                 />
               </Field>
