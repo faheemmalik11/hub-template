@@ -490,7 +490,7 @@ const RowIconAction = forwardRef<
           {children}
         </Button>
       </TooltipTrigger>
-      <TooltipContent>{label}</TooltipContent>
+      <TooltipContent className="max-w-[18rem]">{label}</TooltipContent>
     </Tooltip>
   );
 });
