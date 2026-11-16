@@ -253,6 +253,7 @@ export interface InvoiceSettings {
   invoice_unit_name: string;
   default_payment_method: string;
   document_fallback_label: string;
+  timezone: string;
   updated_at: string;
   updated_by: string | null;
 }

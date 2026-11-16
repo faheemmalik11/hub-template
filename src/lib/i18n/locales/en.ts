@@ -4390,6 +4390,10 @@ const en = {
         title: "Wording per invoice type",
         desc: "The name that goes on the invoice. Without an entry the general wording is used.",
       },
+      timezone: {
+        title: "Time zone",
+        desc: "Used to turn the exact moment a property is marked sold in the CRM into a calendar date for the deal created from it.",
+      },
     },
     field: {
       defaultVatRate: "Default tax rate in percent",
@@ -4400,7 +4404,9 @@ const en = {
       documentFallbackLabel: "General receipt wording",
       kind: "Invoice type",
       kindLabel: "Wording",
+      timezone: "Time zone",
     },
+    timezoneInvalid: "Please enter a time zone name, for example Europe/Berlin.",
     kindLabels: {
       add: "Add an invoice type",
       remove: "Remove this invoice type",

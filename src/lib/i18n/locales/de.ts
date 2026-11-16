@@ -4548,6 +4548,10 @@ const de = {
         title: "Bezeichnung je Rechnungsart",
         desc: "Die Bezeichnung, die auf der Rechnung steht. Ohne Eintrag wird die allgemeine Bezeichnung verwendet.",
       },
+      timezone: {
+        title: "Zeitzone",
+        desc: "Wird verwendet, um den genauen Zeitpunkt, zu dem ein Objekt im CRM als verkauft markiert wird, in ein Kalenderdatum für den daraus entstehenden Deal umzurechnen.",
+      },
     },
     field: {
       defaultVatRate: "Standard-Steuersatz in Prozent",
@@ -4558,7 +4562,9 @@ const de = {
       documentFallbackLabel: "Allgemeine Belegbezeichnung",
       kind: "Rechnungsart",
       kindLabel: "Bezeichnung",
+      timezone: "Zeitzone",
     },
+    timezoneInvalid: "Bitte eine Zeitzone eintragen, zum Beispiel Europe/Berlin.",
     kindLabels: {
       add: "Rechnungsart hinzufügen",
       remove: "Rechnungsart entfernen",
