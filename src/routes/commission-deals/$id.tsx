@@ -116,6 +116,8 @@ function DealEditor({ deal }: { deal: Deal }) {
       (can(PERMISSIONS.dealsSubmit) && (deal.status === "incomplete" || deal.status === "ready")));
   const mayApprove = can(PERMISSIONS.invoicesApprove);
   const suggestsBonuses = useFeature(PERMISSIONS.bonusesSuggest) && can(PERMISSIONS.bonusesReview);
+  const suggestsReferrerBonuses =
+    useFeature(PERMISSIONS.bonusesSuggestReferrer) && can(PERMISSIONS.bonusesReview);
   const managesDonations = can(PERMISSIONS.donationsManage);
   const syncsPaymentDueDate = useFeature(PERMISSIONS.propstackPaymentDueDateSync);
   const [activeTab, setActiveTab] = useTabParam(DEAL_TABS, "sale");
@@ -528,7 +530,7 @@ function DealEditor({ deal }: { deal: Deal }) {
           {suggestsBonuses && !unsaved && deal.status !== "settled" && (
             <BonusSuggestionsCard deal={deal} />
           )}
-          {suggestsBonuses && !unsaved && deal.status !== "settled" && (
+          {suggestsReferrerBonuses && !unsaved && deal.status !== "settled" && (
             <DealReferrerBonusCard deal={deal} />
           )}
           {managesDonations && !unsaved && deal.status !== "settled" && (

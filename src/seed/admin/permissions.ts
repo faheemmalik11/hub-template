@@ -11,6 +11,7 @@ export const permissions: string[] = [
   "bonuses.review",
   "bonuses.submit",
   "bonuses.suggest",
+  "bonuses.suggest_referrer",
   "deals.from_crm",
   "deals.report",
   "deals.report_all",
