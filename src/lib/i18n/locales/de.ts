@@ -5057,7 +5057,7 @@ const de = {
         commission: "Provision",
         bonuses: "Boni",
         bonusesApproved: "Freigegeben, noch nicht ausgezahlt",
-        lastYear: "{{year}}: {{value}}",
+        lastYear: "{{from}} bis {{to}} · {{value}}",
       },
       table: {
         agent: "Makler",

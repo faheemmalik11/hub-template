@@ -4883,7 +4883,7 @@ const en = {
         commission: "Commission",
         bonuses: "Bonuses",
         bonusesApproved: "Approved, not yet paid out",
-        lastYear: "{{year}}: {{value}}",
+        lastYear: "{{from}} to {{to}} · {{value}}",
       },
       table: {
         agent: "Agent",
