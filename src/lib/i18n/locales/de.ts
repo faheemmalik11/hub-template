@@ -4507,16 +4507,16 @@ const de = {
   },
   invoiceSettings: {
     title: "Rechnungsvorgaben",
-    subtitle:
-      "Welcher Steuersatz, welches Land und welche Texte verwendet werden, wenn eine Rechnung oder ein Beleg an die Buchhaltung geht und die Angabe am Vorgang selbst fehlt.",
+    subtitle: "Das sind die Standardwerte für Steuersatz, Land und Texte bei Rechnungen und Belegen.",
     readOnlyHint:
       "Nur Administratoren können diese Vorgaben ändern. Wer das darf, steht unter Verwaltung › Team.",
     effectHint:
-      "Gilt ab dem Speichern. Bereits übertragene Rechnungen und Belege bleiben unverändert.",
+      "Die Änderung gilt nur für neue Rechnungen und Belege, nicht für bereits versendete.",
     lastChangedBy: "Zuletzt geändert von {{who}} am {{when}}.",
     unknown: "unbekannt",
     save: "Speichern",
     saving: "Wird gespeichert …",
+    discard: "Änderungen verwerfen",
     textRequired: "Bitte einen Text eintragen.",
     defaultVatRateInvalid: "Bitte eine Zahl zwischen 0 und 100 eintragen.",
     countryCodeInvalid:
@@ -4564,7 +4564,7 @@ const de = {
       kindLabel: "Bezeichnung",
       timezone: "Zeitzone",
     },
-    timezoneInvalid: "Bitte eine Zeitzone eintragen, zum Beispiel Europe/Berlin.",
+    timezoneInvalid: "Bitte eine Zeitzone auswählen.",
     kindLabels: {
       add: "Rechnungsart hinzufügen",
       remove: "Rechnungsart entfernen",
@@ -5111,6 +5111,10 @@ const de = {
     },
     back: "Provisionen",
     notFound: "Diesen Verkauf gibt es nicht mehr.",
+    tabs: {
+      sale: "Verkaufspreis & Termine",
+      details: "Verkaufszuordnung & Status",
+    },
     sale: {
       title: "Verkauf",
       property: "Objekt",
@@ -5214,6 +5218,7 @@ const de = {
       title: "Das CRM hat sich geändert, nachdem dieser Verkauf angelegt wurde",
       explain: "Bitte vor der Freigabe prüfen. Übernehmen behält den Verkauf so, wie er jetzt ist.",
       wasNow: "vorher {{was}}, jetzt {{became}}",
+      yourInvoice: "Auf der Rechnung steht: {{value}}",
       empty: "leer",
       accept: "Neue Werte übernehmen",
       accepting: "Wird übernommen…",

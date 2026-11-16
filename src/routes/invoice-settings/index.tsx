@@ -16,6 +16,7 @@ import {
 } from "@/components/ui/alert-dialog";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Combobox } from "@/components/ui/combobox";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -35,7 +36,10 @@ import { errorText, formatDateTime, parseDecimalInput } from "@/lib/data/format"
 
 const KIND_SHAPE = /^[a-z][a-z0-9_]*$/;
 const COUNTRY_CODE_SHAPE = /^[A-Z]{2}$/;
-const TIMEZONE_SHAPE = /^[A-Za-z0-9+_-]+(\/[A-Za-z0-9+_-]+)*$/;
+const TIMEZONE_OPTIONS = Intl.supportedValuesOf("timeZone").map((zone) => ({
+  value: zone,
+  label: zone,
+}));
 
 export const Route = createFileRoute("/invoice-settings/")({
   head: () => ({ meta: [{ title: pageTitle("Rechnungsvorgaben") }] }),
@@ -69,7 +73,7 @@ function InvoiceSettingsPage() {
         </p>
       </div>
 
-      <div className="mt-6 max-w-3xl">
+      <div className="mt-6 max-w-4xl">
         {failed ? (
           <ErrorState
             error={failed.error}
@@ -117,7 +121,7 @@ function SettingsForm({
   const [labels, setLabels] = useState<InvoiceKindLabel[]>(kindLabels);
   const [isSaving, setIsSaving] = useState(false);
 
-  useEffect(() => {
+  function resetToSaved() {
     setDefaultVatRate(String(settings.default_vat_rate));
     setCountryCode(settings.country_code);
     setInvoiceFallbackLabel(settings.invoice_fallback_label);
@@ -125,11 +129,10 @@ function SettingsForm({
     setDefaultPaymentMethod(settings.default_payment_method);
     setDocumentFallbackLabel(settings.document_fallback_label);
     setTimezone(settings.timezone);
-  }, [settings]);
-
-  useEffect(() => {
     setLabels(kindLabels);
-  }, [kindLabels]);
+  }
+
+  useEffect(resetToSaved, [settings, kindLabels]);
 
   const parsedVatRate = parseDecimalInput(defaultVatRate);
   const vatRateInvalid =
@@ -143,7 +146,7 @@ function SettingsForm({
     invoiceUnitName.trim() === "" ||
     defaultPaymentMethod.trim() === "" ||
     documentFallbackLabel.trim() === "";
-  const timezoneInvalid = !TIMEZONE_SHAPE.test(timezone);
+  const timezoneInvalid = timezone.trim() === "";
   const duplicateKinds = new Set(
     labels
       .map((row) => row.kind)
@@ -221,98 +224,109 @@ function SettingsForm({
         </p>
       )}
 
-      <Card>
-        <CardHeader>
-          <CardTitle>{t("invoiceSettings.card.tax.title")}</CardTitle>
-          <CardDescription>{t("invoiceSettings.card.tax.desc")}</CardDescription>
-        </CardHeader>
-        <CardContent className="grid gap-4 sm:grid-cols-2">
-          <Field
-            label={t("invoiceSettings.field.defaultVatRate")}
-            value={defaultVatRate}
-            onChange={setDefaultVatRate}
-            disabled={editingDisabled}
-            invalid={vatRateInvalid}
-            errorText={t("invoiceSettings.defaultVatRateInvalid")}
-          />
-          <Field
-            label={t("invoiceSettings.field.countryCode")}
-            value={countryCode}
-            onChange={(value) => setCountryCode(value.toUpperCase())}
-            disabled={editingDisabled}
-            invalid={countryCodeInvalid}
-            errorText={t("invoiceSettings.countryCodeInvalid")}
-            maxLength={2}
-          />
-        </CardContent>
-      </Card>
+      <div className="grid items-start gap-4 lg:grid-cols-2">
+        <Card>
+          <CardHeader>
+            <CardTitle>{t("invoiceSettings.card.tax.title")}</CardTitle>
+            <CardDescription>{t("invoiceSettings.card.tax.desc")}</CardDescription>
+          </CardHeader>
+          <CardContent className="grid gap-4 sm:grid-cols-2">
+            <Field
+              label={t("invoiceSettings.field.defaultVatRate")}
+              value={defaultVatRate}
+              onChange={setDefaultVatRate}
+              disabled={editingDisabled}
+              invalid={vatRateInvalid}
+              errorText={t("invoiceSettings.defaultVatRateInvalid")}
+            />
+            <Field
+              label={t("invoiceSettings.field.countryCode")}
+              value={countryCode}
+              onChange={(value) => setCountryCode(value.toUpperCase())}
+              disabled={editingDisabled}
+              invalid={countryCodeInvalid}
+              errorText={t("invoiceSettings.countryCodeInvalid")}
+              maxLength={2}
+            />
+          </CardContent>
+        </Card>
 
-      <Card>
-        <CardHeader>
-          <CardTitle>{t("invoiceSettings.card.wording.title")}</CardTitle>
-          <CardDescription>{t("invoiceSettings.card.wording.desc")}</CardDescription>
-        </CardHeader>
-        <CardContent className="grid gap-4 sm:grid-cols-2">
-          <Field
-            label={t("invoiceSettings.field.invoiceFallbackLabel")}
-            value={invoiceFallbackLabel}
-            onChange={setInvoiceFallbackLabel}
-            disabled={editingDisabled}
-            invalid={invoiceFallbackLabel.trim() === ""}
-            errorText={t("invoiceSettings.textRequired")}
-          />
-          <Field
-            label={t("invoiceSettings.field.invoiceUnitName")}
-            value={invoiceUnitName}
-            onChange={setInvoiceUnitName}
-            disabled={editingDisabled}
-            invalid={invoiceUnitName.trim() === ""}
-            errorText={t("invoiceSettings.textRequired")}
-          />
-        </CardContent>
-      </Card>
+        <Card>
+          <CardHeader>
+            <CardTitle>{t("invoiceSettings.card.wording.title")}</CardTitle>
+            <CardDescription>{t("invoiceSettings.card.wording.desc")}</CardDescription>
+          </CardHeader>
+          <CardContent className="grid gap-4 sm:grid-cols-2">
+            <Field
+              label={t("invoiceSettings.field.invoiceFallbackLabel")}
+              value={invoiceFallbackLabel}
+              onChange={setInvoiceFallbackLabel}
+              disabled={editingDisabled}
+              invalid={invoiceFallbackLabel.trim() === ""}
+              errorText={t("invoiceSettings.textRequired")}
+            />
+            <Field
+              label={t("invoiceSettings.field.invoiceUnitName")}
+              value={invoiceUnitName}
+              onChange={setInvoiceUnitName}
+              disabled={editingDisabled}
+              invalid={invoiceUnitName.trim() === ""}
+              errorText={t("invoiceSettings.textRequired")}
+            />
+          </CardContent>
+        </Card>
+      </div>
 
-      <Card>
-        <CardHeader>
-          <CardTitle>{t("invoiceSettings.card.voucherRemark.title")}</CardTitle>
-          <CardDescription>{t("invoiceSettings.card.voucherRemark.desc")}</CardDescription>
-        </CardHeader>
-        <CardContent className="grid gap-4 sm:grid-cols-2">
-          <Field
-            label={t("invoiceSettings.field.defaultPaymentMethod")}
-            value={defaultPaymentMethod}
-            onChange={setDefaultPaymentMethod}
-            disabled={editingDisabled}
-            invalid={defaultPaymentMethod.trim() === ""}
-            errorText={t("invoiceSettings.textRequired")}
-          />
-          <Field
-            label={t("invoiceSettings.field.documentFallbackLabel")}
-            value={documentFallbackLabel}
-            onChange={setDocumentFallbackLabel}
-            disabled={editingDisabled}
-            invalid={documentFallbackLabel.trim() === ""}
-            errorText={t("invoiceSettings.textRequired")}
-          />
-        </CardContent>
-      </Card>
+      <div className="grid items-start gap-4 lg:grid-cols-2">
+        <Card>
+          <CardHeader>
+            <CardTitle>{t("invoiceSettings.card.voucherRemark.title")}</CardTitle>
+            <CardDescription>{t("invoiceSettings.card.voucherRemark.desc")}</CardDescription>
+          </CardHeader>
+          <CardContent className="grid gap-4 sm:grid-cols-2">
+            <Field
+              label={t("invoiceSettings.field.defaultPaymentMethod")}
+              value={defaultPaymentMethod}
+              onChange={setDefaultPaymentMethod}
+              disabled={editingDisabled}
+              invalid={defaultPaymentMethod.trim() === ""}
+              errorText={t("invoiceSettings.textRequired")}
+            />
+            <Field
+              label={t("invoiceSettings.field.documentFallbackLabel")}
+              value={documentFallbackLabel}
+              onChange={setDocumentFallbackLabel}
+              disabled={editingDisabled}
+              invalid={documentFallbackLabel.trim() === ""}
+              errorText={t("invoiceSettings.textRequired")}
+            />
+          </CardContent>
+        </Card>
 
-      <Card>
-        <CardHeader>
-          <CardTitle>{t("invoiceSettings.card.timezone.title")}</CardTitle>
-          <CardDescription>{t("invoiceSettings.card.timezone.desc")}</CardDescription>
-        </CardHeader>
-        <CardContent className="grid gap-4 sm:grid-cols-2">
-          <Field
-            label={t("invoiceSettings.field.timezone")}
-            value={timezone}
-            onChange={setTimezone}
-            disabled={editingDisabled}
-            invalid={timezoneInvalid}
-            errorText={t("invoiceSettings.timezoneInvalid")}
-          />
-        </CardContent>
-      </Card>
+        <Card>
+          <CardHeader>
+            <CardTitle>{t("invoiceSettings.card.timezone.title")}</CardTitle>
+            <CardDescription>{t("invoiceSettings.card.timezone.desc")}</CardDescription>
+          </CardHeader>
+          <CardContent>
+            <div className="space-y-1.5">
+              <Label className="text-xs text-muted-foreground">
+                {t("invoiceSettings.field.timezone")}
+              </Label>
+              <Combobox
+                value={timezone}
+                onValueChange={setTimezone}
+                options={TIMEZONE_OPTIONS}
+                disabled={editingDisabled}
+                invalid={timezoneInvalid}
+              />
+              {timezoneInvalid && (
+                <p className="text-xs text-amber-700">{t("invoiceSettings.timezoneInvalid")}</p>
+              )}
+            </div>
+          </CardContent>
+        </Card>
+      </div>
 
       <Card>
         <CardHeader>
@@ -397,7 +411,12 @@ function SettingsForm({
       </Card>
 
       {canEdit && (
-        <div className="flex justify-end">
+        <div className="flex items-center justify-end gap-2">
+          {dirty && (
+            <Button variant="outline" onClick={resetToSaved} disabled={isSaving}>
+              {t("invoiceSettings.discard")}
+            </Button>
+          )}
           <Button onClick={save} disabled={!dirty || invalid || isSaving}>
             {isSaving ? t("invoiceSettings.saving") : t("invoiceSettings.save")}
           </Button>
