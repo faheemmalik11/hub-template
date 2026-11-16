@@ -1,3 +1,8 @@
+import { Award, Building2, Handshake, HandCoins, ShieldCheck } from "lucide-react";
+import type { LucideIcon } from "lucide-react";
+
+import { KpiCard } from "@/components/dashboard/kpi-card";
+import { CHIP } from "@/components/dashboard/stat-tile";
 import type { AgentCommissionReportRow } from "@/data";
 import { formatEUR } from "@/lib/data/format";
 import { useTranslation } from "@/lib/i18n";
@@ -41,7 +46,13 @@ export function AgentReportTiles({
   const numbers = row ?? EMPTY_ROW;
   const prevYear = year - 1;
 
-  const tiles = [
+  const tiles: {
+    label: string;
+    value: string;
+    hint: string;
+    icon: LucideIcon;
+    iconTint: string;
+  }[] = [
     {
       label: t("commissionDeals.report.tiles.closings"),
       value: String(numbers.closings_current),
@@ -49,6 +60,8 @@ export function AgentReportTiles({
         year: prevYear,
         value: numbers.closings_previous,
       }),
+      icon: Handshake,
+      iconTint: CHIP.brand,
     },
     {
       label: t("commissionDeals.report.tiles.volume"),
@@ -57,6 +70,8 @@ export function AgentReportTiles({
         year: prevYear,
         value: formatEUR(numbers.volume_previous),
       }),
+      icon: Building2,
+      iconTint: CHIP.neutral,
     },
     {
       label: t("commissionDeals.report.tiles.commission"),
@@ -65,6 +80,8 @@ export function AgentReportTiles({
         year: prevYear,
         value: formatEUR(numbers.commission_previous),
       }),
+      icon: HandCoins,
+      iconTint: CHIP.brand,
     },
     {
       label: t("commissionDeals.report.tiles.bonuses"),
@@ -73,6 +90,8 @@ export function AgentReportTiles({
         year: prevYear,
         value: formatEUR(numbers.bonuses_previous),
       }),
+      icon: Award,
+      iconTint: CHIP.neutral,
     },
     ...(showApprovedBonuses
       ? [
@@ -83,6 +102,8 @@ export function AgentReportTiles({
               year: prevYear,
               value: formatEUR(numbers.bonuses_approved_previous),
             }),
+            icon: ShieldCheck,
+            iconTint: CHIP.success,
           },
         ]
       : []),
@@ -93,11 +114,19 @@ export function AgentReportTiles({
       className={`grid gap-3 sm:grid-cols-2 ${showApprovedBonuses ? "lg:grid-cols-5" : "lg:grid-cols-4"}`}
     >
       {tiles.map((tile) => (
-        <div key={tile.label} className="h-full rounded-xl border border-border bg-card p-4">
-          <p className="text-xs text-muted-foreground">{tile.label}</p>
-          <p className="mt-1 text-2xl font-semibold tabular-nums text-foreground">{tile.value}</p>
-          <p className="mt-1 text-xs text-muted-foreground">{tile.hint}</p>
-        </div>
+        <KpiCard
+          key={tile.label}
+          icon={tile.icon}
+          iconTint={tile.iconTint}
+          label={tile.label}
+          loading={false}
+          value={tile.value}
+          delta={
+            <span className="text-[13px] font-medium tabular-nums text-muted-foreground">
+              {tile.hint}
+            </span>
+          }
+        />
       ))}
     </div>
   );
