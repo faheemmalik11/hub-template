@@ -139,7 +139,7 @@ export interface LexofficeInvoiceInput {
   totalPrice: { currency: string };
   taxConditions: { taxType: "net" };
   shippingConditions: { shippingDate: string; shippingType: "service" };
-  paymentConditions?: { paymentTermLabel: string; paymentTermDuration: number };
+  paymentConditions?: { paymentTermLabel?: string; paymentTermDuration: number };
   contactId?: string;
 }
 
