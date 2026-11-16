@@ -1,9 +1,17 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
-import { forwardRef, useMemo, useState, type ComponentType, type ReactNode } from "react";
+import {
+  forwardRef,
+  useEffect,
+  useMemo,
+  useState,
+  type ComponentType,
+  type ReactNode,
+} from "react";
 import {
   AlertTriangle,
   CheckCircle2,
   Clock,
+  ExternalLink,
   FileText,
   Loader2,
   Search,
@@ -17,6 +25,7 @@ import { QueueKpiRow } from "@/components/invoice-queue/queue-kpi-row";
 import type { QueueTone } from "@/components/invoice-queue/queue-kpi-card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import { Checkbox } from "@/components/ui/checkbox";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Combobox } from "@/components/ui/combobox";
@@ -117,12 +126,19 @@ function OutgoingInvoicesPage() {
   const [companyId, setCompanyId] = useState(ALL);
   const [status, setStatus] = useState<StatusFilter | typeof ALL>(ALL);
   const [search, setSearch] = useState("");
+  const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
+  const [bulkSending, setBulkSending] = useState(false);
 
   const companiesQ = useCompanies();
   const companies = companiesQ.data ?? [];
   const invoicesQ = useOutgoingInvoices({
     companyId: companyId === ALL ? undefined : companyId,
   });
+  const bulkSync = useSyncInvoiceToLexoffice();
+
+  useEffect(() => {
+    setSelectedIds(new Set());
+  }, [companyId, status, search]);
 
   const filtered = useMemo(() => {
     const q = search.trim().toLowerCase();
@@ -254,6 +270,50 @@ function OutgoingInvoicesPage() {
     { value: "due", label: t("outgoingInvoices.list.col.due") },
   ];
 
+  const pageRowIds = view.pageRows.map((inv) => inv.id);
+  const allOnPageSelected = pageRowIds.length > 0 && pageRowIds.every((id) => selectedIds.has(id));
+  const someOnPageSelected = pageRowIds.some((id) => selectedIds.has(id));
+
+  function toggleAllOnPage() {
+    setSelectedIds((current) => {
+      const next = new Set(current);
+      if (allOnPageSelected) pageRowIds.forEach((id) => next.delete(id));
+      else pageRowIds.forEach((id) => next.add(id));
+      return next;
+    });
+  }
+
+  function toggleRow(id: string) {
+    setSelectedIds((current) => {
+      const next = new Set(current);
+      if (next.has(id)) next.delete(id);
+      else next.add(id);
+      return next;
+    });
+  }
+
+  async function sendSelectedToLexoffice() {
+    const ids = [...selectedIds];
+    setBulkSending(true);
+    let succeeded = 0;
+    let failed = 0;
+    for (const id of ids) {
+      try {
+        await bulkSync.mutateAsync(id);
+        succeeded++;
+      } catch {
+        failed++;
+      }
+    }
+    setBulkSending(false);
+    setSelectedIds(new Set());
+    if (failed === 0) {
+      toast.success(t("outgoingInvoices.list.bulk.sendSuccess", { count: succeeded }));
+    } else {
+      toast.error(t("outgoingInvoices.list.bulk.sendPartial", { succeeded, failed }));
+    }
+  }
+
   return (
     <div>
       <div className="flex flex-wrap items-end justify-between gap-4">
@@ -326,6 +386,22 @@ function OutgoingInvoicesPage() {
         </div>
       </div>
 
+      {selectedIds.size > 0 && (
+        <div className="mt-4 flex items-center justify-between gap-3 rounded-xl border border-border bg-card px-4 py-2.5">
+          <span className="text-sm font-medium text-foreground">
+            {t("outgoingInvoices.list.bulk.selectedCount", { count: selectedIds.size })}
+          </span>
+          <Button size="sm" disabled={bulkSending} onClick={sendSelectedToLexoffice}>
+            {bulkSending ? (
+              <Loader2 className="size-4 animate-spin" />
+            ) : (
+              <Send className="size-4" />
+            )}
+            {t("outgoingInvoices.list.bulk.sendSelected")}
+          </Button>
+        </div>
+      )}
+
       {invoicesQ.isError ? (
         <div className="mt-4">
           <ErrorState error={invoicesQ.error} onRetry={() => invoicesQ.refetch()} />
@@ -342,6 +418,15 @@ function OutgoingInvoicesPage() {
           <Table className="min-w-[1000px]">
             <TableHeader>
               <TableRow className="bg-muted/40">
+                <TableHead className="w-10">
+                  <Checkbox
+                    checked={
+                      someOnPageSelected ? (allOnPageSelected ? true : "indeterminate") : false
+                    }
+                    onCheckedChange={toggleAllOnPage}
+                    aria-label={t("outgoingInvoices.list.bulk.selectAll")}
+                  />
+                </TableHead>
                 <TableHead>{t("outgoingInvoices.list.col.nr")}</TableHead>
                 <TableHead>{t("outgoingInvoices.list.col.customer")}</TableHead>
                 <TableHead>{t("outgoingInvoices.list.col.company")}</TableHead>
@@ -359,6 +444,13 @@ function OutgoingInvoicesPage() {
             <TableBody>
               {view.pageRows.map((inv) => (
                 <TableRow key={inv.id}>
+                  <TableCell>
+                    <Checkbox
+                      checked={selectedIds.has(inv.id)}
+                      onCheckedChange={() => toggleRow(inv.id)}
+                      aria-label={t("outgoingInvoices.list.bulk.selectRow")}
+                    />
+                  </TableCell>
                   <TableCell className="font-medium text-foreground">
                     {inv.invoice_number ?? t("outgoingInvoices.list.draft")}
                   </TableCell>
@@ -399,7 +491,7 @@ function OutgoingInvoicesPage() {
               ))}
               {view.total === 0 && (
                 <TableRow>
-                  <TableCell colSpan={8} className="py-12 text-center text-muted-foreground">
+                  <TableCell colSpan={9} className="py-12 text-center text-muted-foreground">
                     {t("outgoingInvoices.list.empty")}
                   </TableCell>
                 </TableRow>
@@ -591,7 +683,7 @@ function LexofficeSyncButton({ invoice }: { invoice: OutgoingInvoice }) {
         href={lexwareInvoiceUrl(invoice.accounting_external_id)}
         className="text-muted-foreground"
       >
-        <CheckCircle2 className="size-4" />
+        <ExternalLink className="size-4" />
       </RowIconLink>
     );
   }
