@@ -17,6 +17,7 @@ import { DealDonationCard } from "@/components/commission/deal-donation-card";
 import { DealReferrerBonusCard } from "@/components/commission/deal-referrer-bonus-card";
 import { DealCostsCard } from "@/components/commission/deal-costs-card";
 import { DealFactsCard } from "@/components/commission/deal-facts-card";
+import { CrmChangesCard } from "@/components/commission/crm-changes-card";
 import { DealInvoicesCard } from "@/components/commission/deal-invoices-card";
 import { DraftInvoices } from "@/components/commission/draft-invoices";
 import { SideCard } from "@/components/commission/side-card";
@@ -347,6 +348,10 @@ function DealEditor({ deal }: { deal: Deal }) {
           )}
         </p>
       )}
+
+      <div className="mt-4">
+        <CrmChangesCard deal={deal} />
+      </div>
 
       {/* A gentle nudge, not a warning: nothing here blocks saving or approving, and the whole
           point of the payment-due-date rule (briefing §4.3) is "don't chase anyone without a

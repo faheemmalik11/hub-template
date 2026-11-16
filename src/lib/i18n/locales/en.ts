@@ -5030,6 +5030,22 @@ const en = {
         cancelled: "Cancelled",
       },
     },
+    crmChanges: {
+      title: "The CRM changed after this sale was opened",
+      explain: "Check these before approving. Accepting keeps the sale as it is now.",
+      wasNow: "was {{was}}, now {{became}}",
+      empty: "empty",
+      accept: "Accept the new values",
+      accepting: "Accepting…",
+      accepted: "Accepted.",
+      acceptFailed: "That did not work.",
+      field: {
+        sold_on: "Notary date",
+        sold_price: "Purchase price",
+        buyer_rate: "Buyer commission rate",
+        seller_rate: "Seller commission rate",
+      },
+    },
     facts: {
       title: "Sale details",
       ownLead: "Own lead",
