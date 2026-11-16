@@ -88,26 +88,16 @@ export function CrmPropertyList() {
 
   return (
     <div>
-      <div className="mt-2 flex flex-wrap items-start justify-between gap-4">
-        <div>
-          <h1
-            data-tour="properties-header"
-            className="text-2xl font-semibold tracking-tight text-foreground"
-          >
-            {t("properties.list.title")}
-          </h1>
-          <p className="mt-1 max-w-2xl text-sm text-muted-foreground">
-            {t("propertyListings.subtitle")}
-          </p>
-        </div>
-        <div className="flex flex-col items-end gap-1">
-          {can(PERMISSIONS.masterDataWrite) && <SyncPropertiesButton />}
-          <span className="text-xs text-muted-foreground">
-            {lastSyncedAt
-              ? t("propertyListings.lastSynced", { when: formatDateTime(lastSyncedAt) })
-              : t("propertyListings.neverSynced")}
-          </span>
-        </div>
+      <div className="mt-2">
+        <h1
+          data-tour="properties-header"
+          className="text-2xl font-semibold tracking-tight text-foreground"
+        >
+          {t("properties.list.title")}
+        </h1>
+        <p className="mt-1 max-w-2xl text-sm text-muted-foreground">
+          {t("propertyListings.subtitle")}
+        </p>
       </div>
 
       <div data-tour="properties-toolbar" className="mt-6 flex flex-wrap items-center gap-3">
@@ -136,6 +126,14 @@ export function CrmPropertyList() {
         <span className="text-sm text-muted-foreground">
           {t("propertyListings.count", { count: visibleListings.length, total: listings.length })}
         </span>
+        <div className="ml-auto flex flex-col items-end gap-1">
+          {can(PERMISSIONS.masterDataWrite) && <SyncPropertiesButton />}
+          <span className="text-xs text-muted-foreground">
+            {lastSyncedAt
+              ? t("propertyListings.lastSynced", { when: formatDateTime(lastSyncedAt) })
+              : t("propertyListings.neverSynced")}
+          </span>
+        </div>
       </div>
 
       <div data-tour="properties-list" data-focus="list" className="mt-4">
