@@ -38,9 +38,9 @@ export function DealStatusStepper({ status }: { status: DealStatus }) {
               <span
                 className={cn(
                   "flex size-5 shrink-0 items-center justify-center rounded-full border text-[10px] font-medium",
-                  state === "done" && "border-brand-hover bg-brand-hover text-white",
+                  state === "done" && "border-brand bg-brand text-white",
                   state === "current" &&
-                    "border-brand-hover bg-brand-hover text-white ring-2 ring-brand-hover/30 ring-offset-1 ring-offset-background",
+                    "border-brand bg-brand text-white ring-2 ring-brand/30 ring-offset-1 ring-offset-background",
                   state === "upcoming" && "border-border bg-transparent text-muted-foreground",
                 )}
               >
@@ -61,7 +61,7 @@ export function DealStatusStepper({ status }: { status: DealStatus }) {
               <span
                 className={cn(
                   "mx-2 h-px w-6 shrink-0",
-                  state === "done" ? "bg-brand-hover" : "border-t border-dashed border-border",
+                  state === "done" ? "bg-brand" : "border-t border-dashed border-border",
                 )}
               />
             )}
