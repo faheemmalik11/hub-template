@@ -123,9 +123,6 @@ export function CrmPropertyList() {
             ))}
           </SelectContent>
         </Select>
-        <span className="text-sm text-muted-foreground">
-          {t("propertyListings.count", { count: visibleListings.length, total: listings.length })}
-        </span>
         <div className="ml-auto flex flex-col items-end gap-1">
           {can(PERMISSIONS.masterDataWrite) && <SyncPropertiesButton />}
           <span className="text-xs text-muted-foreground">
