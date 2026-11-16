@@ -1,5 +1,6 @@
 import { Combobox, type ComboboxOption } from "@/components/ui/combobox";
 import { Checkbox } from "@/components/ui/checkbox";
+import { Field } from "@/components/ui/feld";
 import { Label } from "@/components/ui/label";
 import { useEmployees } from "@/data";
 import { useTranslation } from "@/lib/i18n";
@@ -44,7 +45,7 @@ export function DealFactsCard({
           </label>
         ))}
       </div>
-      <div className="mt-4 space-y-1.5">
+      <Field className="mt-4 space-y-1.5">
         <Label>{t("commissionDeals.facts.referrer")}</Label>
         <Combobox
           value={form.referrerCustomerId}
@@ -55,7 +56,7 @@ export function DealFactsCard({
           emptyText={t("commissionDeals.side.noCustomers")}
           disabled={disabled}
         />
-      </div>
+      </Field>
     </div>
   );
 }
@@ -76,7 +77,7 @@ function BrokerFields({
     .map((employee) => ({ value: employee.id, label: employee.name ?? employee.email }));
   return (
     <div className="mt-4 grid gap-3 sm:grid-cols-2">
-      <div className="space-y-1.5">
+      <Field className="space-y-1.5">
         <Label>{t("commissionDeals.facts.handledBy")}</Label>
         <Combobox
           value={form.handledBy}
@@ -84,8 +85,8 @@ function BrokerFields({
           options={options}
           disabled={disabled}
         />
-      </div>
-      <div className="space-y-1.5">
+      </Field>
+      <Field className="space-y-1.5">
         <Label>{t("commissionDeals.facts.acquiredBy")}</Label>
         <Combobox
           value={form.acquiredBy}
@@ -93,7 +94,7 @@ function BrokerFields({
           options={options}
           disabled={disabled}
         />
-      </div>
+      </Field>
     </div>
   );
 }
