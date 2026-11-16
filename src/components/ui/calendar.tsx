@@ -3,9 +3,44 @@
 import * as React from "react";
 import { ChevronDownIcon, ChevronLeftIcon, ChevronRightIcon } from "lucide-react";
 import { DayButton, DayPicker, getDefaultClassNames } from "react-day-picker";
+import type { DropdownProps } from "react-day-picker";
 
 import { cn } from "@/lib/utils";
 import { Button, buttonVariants } from "@/components/ui/button";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+
+function CalendarMonthYearDropdown({ options, value, onChange, disabled, ...props }: DropdownProps) {
+  const selected = options?.find((option) => option.value === value);
+  return (
+    <Select
+      value={String(value)}
+      onValueChange={(next) =>
+        onChange?.({ target: { value: next } } as React.ChangeEvent<HTMLSelectElement>)
+      }
+      disabled={disabled}
+    >
+      <SelectTrigger
+        aria-label={props["aria-label"]}
+        className="h-7 w-auto gap-1 border-none bg-transparent px-2 text-sm font-medium shadow-none"
+      >
+        <SelectValue>{selected?.label}</SelectValue>
+      </SelectTrigger>
+      <SelectContent>
+        {options?.map((option) => (
+          <SelectItem key={option.value} value={String(option.value)} disabled={option.disabled}>
+            {option.label}
+          </SelectItem>
+        ))}
+      </SelectContent>
+    </Select>
+  );
+}
 
 function Calendar({
   className,
@@ -127,6 +162,7 @@ function Calendar({
           return <ChevronDownIcon className={cn("size-4", className)} {...props} />;
         },
         DayButton: CalendarDayButton,
+        Dropdown: CalendarMonthYearDropdown,
         WeekNumber: ({ children, ...props }) => {
           return (
             <td {...props}>
