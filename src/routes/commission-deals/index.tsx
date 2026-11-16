@@ -1,6 +1,6 @@
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useEffect, useMemo, useState } from "react";
-import { Plus, Search } from "lucide-react";
+import { AlertTriangle, Plus, Search } from "lucide-react";
 import { toast } from "sonner";
 
 import { Button } from "@/components/ui/button";
@@ -23,6 +23,7 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
+import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import { EmptyState, ErrorState, TableSkeleton } from "@/components/documents/query-states";
 import { AgentReportSection } from "@/components/commission/agent-report-section";
 import { BrokerNumbersCard } from "@/components/commission/broker-numbers-card";
@@ -35,6 +36,7 @@ import {
   useCompanies,
   useCreateDeal,
   useDealsList,
+  useDealsWithCrmChanges,
 } from "@/data";
 import type { DealStatus, PropertyChoice } from "@/data";
 import { PERMISSIONS } from "@/config/permissions";
@@ -78,6 +80,8 @@ function CommissionDealsPage() {
     page,
     pageSize,
   });
+  const crmChangesQ = useDealsWithCrmChanges();
+  const dealsWithCrmChanges = crmChangesQ.data ?? new Set<string>();
   const deals = useMemo(() => dealsQ.data?.rows ?? [], [dealsQ.data]);
   const total = dealsQ.data?.total ?? 0;
   const totalPages = Math.max(1, Math.ceil(total / pageSize));
@@ -168,13 +172,28 @@ function CommissionDealsPage() {
                     return (
                       <TableRow key={deal.id}>
                         <TableCell>
-                          <Link
-                            to="/commission-deals/$id"
-                            params={{ id: deal.id }}
-                            className="font-medium text-foreground hover:underline"
-                          >
-                            {deal.property?.name ?? deal.property_label ?? "—"}
-                          </Link>
+                          <div className="flex items-center gap-1.5">
+                            <Link
+                              to="/commission-deals/$id"
+                              params={{ id: deal.id }}
+                              className="font-medium text-foreground hover:underline"
+                            >
+                              {deal.property?.name ?? deal.property_label ?? "—"}
+                            </Link>
+                            {dealsWithCrmChanges.has(deal.id) && (
+                              <Tooltip>
+                                <TooltipTrigger asChild>
+                                  <AlertTriangle
+                                    aria-label={t("commissionDeals.list.crmChanged")}
+                                    className="size-4 shrink-0 text-destructive"
+                                  />
+                                </TooltipTrigger>
+                                <TooltipContent>
+                                  {t("commissionDeals.list.crmChanged")}
+                                </TooltipContent>
+                              </Tooltip>
+                            )}
+                          </div>
                         </TableCell>
                         <TableCell className="text-sm">
                           {deal.notarised_on ? formatDate(deal.notarised_on) : "—"}

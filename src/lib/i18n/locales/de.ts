@@ -5058,10 +5058,15 @@ const de = {
       empty: "Kein Makler hat einen beurkundeten Verkauf in einem der beiden Jahre.",
       tiles: {
         closings: "Abschlüsse",
+        closingsInfo: "Die Anzahl der Verkäufe mit einem Notartermin in diesem Zeitraum. Ein Verkauf ohne Notartermin zählt noch nicht.",
         volume: "Objektvolumen",
+        volumeInfo: "Der gesamte Kaufpreis aller Verkäufe, die bei Abschlüsse gezählt werden.",
         commission: "Provision",
+        commissionInfo: "Die gesamte Provision aus allen Verkäufen, die bei Abschlüsse gezählt werden.",
         bonuses: "Boni",
+        bonusesInfo: "Die gesamten Boni, die in diesem Zeitraum freigegeben oder ausgezahlt wurden.",
         bonusesApproved: "Freigegeben, noch nicht ausgezahlt",
+        bonusesApprovedInfo: "Boni, die freigegeben, aber noch nicht ausgezahlt wurden.",
         lastYear: "{{from}} bis {{to}} · {{value}}",
       },
       table: {
@@ -5108,6 +5113,7 @@ const de = {
         allStatuses: "Alle",
       },
       empty: "Keine Verkäufe für diese Filter.",
+      crmChanged: "Das CRM hat sich geändert, nachdem dieser Verkauf angelegt wurde. Verkauf öffnen und prüfen.",
     },
     back: "Provisionen",
     notFound: "Diesen Verkauf gibt es nicht mehr.",

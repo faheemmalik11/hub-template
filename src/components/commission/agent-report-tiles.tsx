@@ -1,11 +1,23 @@
-import { Award, Building2, Handshake, HandCoins, ShieldCheck } from "lucide-react";
+import { Award, Building2, Handshake, HandCoins, Info, ShieldCheck } from "lucide-react";
 import type { LucideIcon } from "lucide-react";
 
 import { KpiCard } from "@/components/dashboard/kpi-card";
 import { CHIP } from "@/components/dashboard/stat-tile";
+import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import type { AgentCommissionReportRow } from "@/data";
 import { formatDate, formatEUR } from "@/lib/data/format";
 import { useTranslation } from "@/lib/i18n";
+
+function TileInfo({ text }: { text: string }) {
+  return (
+    <Tooltip>
+      <TooltipTrigger asChild>
+        <Info aria-label={text} className="size-3.5 shrink-0 text-muted-foreground" />
+      </TooltipTrigger>
+      <TooltipContent className="max-w-64">{text}</TooltipContent>
+    </Tooltip>
+  );
+}
 
 const EMPTY_ROW: Pick<
   AgentCommissionReportRow,
@@ -67,6 +79,7 @@ export function AgentReportTiles({
 
   const tiles: {
     label: string;
+    info: string;
     value: string;
     hint: string;
     icon: LucideIcon;
@@ -74,6 +87,7 @@ export function AgentReportTiles({
   }[] = [
     {
       label: t("commissionDeals.report.tiles.closings"),
+      info: t("commissionDeals.report.tiles.closingsInfo"),
       value: String(numbers.closings_current),
       hint: lastYearHint(numbers.closings_previous),
       icon: Handshake,
@@ -81,6 +95,7 @@ export function AgentReportTiles({
     },
     {
       label: t("commissionDeals.report.tiles.volume"),
+      info: t("commissionDeals.report.tiles.volumeInfo"),
       value: formatEUR(numbers.volume_current),
       hint: lastYearHint(formatEUR(numbers.volume_previous)),
       icon: Building2,
@@ -88,6 +103,7 @@ export function AgentReportTiles({
     },
     {
       label: t("commissionDeals.report.tiles.commission"),
+      info: t("commissionDeals.report.tiles.commissionInfo"),
       value: formatEUR(numbers.commission_current),
       hint: lastYearHint(formatEUR(numbers.commission_previous)),
       icon: HandCoins,
@@ -95,6 +111,7 @@ export function AgentReportTiles({
     },
     {
       label: t("commissionDeals.report.tiles.bonuses"),
+      info: t("commissionDeals.report.tiles.bonusesInfo"),
       value: formatEUR(numbers.bonuses_current),
       hint: lastYearHint(formatEUR(numbers.bonuses_previous)),
       icon: Award,
@@ -104,6 +121,7 @@ export function AgentReportTiles({
       ? [
           {
             label: t("commissionDeals.report.tiles.bonusesApproved"),
+            info: t("commissionDeals.report.tiles.bonusesApprovedInfo"),
             value: formatEUR(numbers.bonuses_approved_current),
             hint: lastYearHint(formatEUR(numbers.bonuses_approved_previous)),
             icon: ShieldCheck,
@@ -125,6 +143,7 @@ export function AgentReportTiles({
           label={tile.label}
           loading={false}
           value={tile.value}
+          headerRight={<TileInfo text={tile.info} />}
           delta={
             <span className="text-[13px] font-medium tabular-nums text-muted-foreground">
               {tile.hint}
