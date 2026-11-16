@@ -231,6 +231,46 @@ describe("shares", () => {
     });
   });
 
+  test("a discount exactly equal to the fee is refused, same as one that is larger", () => {
+    const result = calculateSideCommission({
+      side: "buyer",
+      purchasePriceCents: 10_000_00,
+      fee: { kind: "percent", netRatePercent: 3 },
+      payers: [{ key: "a", discountGrossCents: 357_00 }],
+      vatRatePercent: VAT,
+    });
+    assert.deepEqual(result, {
+      ok: false,
+      problems: [{ side: "buyer", problem: "discount_exceeds_fee" }],
+    });
+  });
+
+  test("a VAT rate at or below -100% is refused instead of dividing by zero", () => {
+    const atTheLimit = calculateSideCommission({
+      side: "seller",
+      purchasePriceCents: 10_000_00,
+      fee: { kind: "percent", netRatePercent: 3 },
+      payers: [{ key: "a" }],
+      vatRatePercent: -100,
+    });
+    assert.deepEqual(atTheLimit, {
+      ok: false,
+      problems: [{ side: "seller", problem: "vat_rate_invalid" }],
+    });
+
+    const belowTheLimit = calculateSideCommission({
+      side: "seller",
+      purchasePriceCents: 10_000_00,
+      fee: { kind: "percent", netRatePercent: 3 },
+      payers: [{ key: "a" }],
+      vatRatePercent: -150,
+    });
+    assert.deepEqual(belowTheLimit, {
+      ok: false,
+      problems: [{ side: "seller", problem: "vat_rate_invalid" }],
+    });
+  });
+
   test("odd cents go to the largest remainder and the parts add up", () => {
     const parts = splitByShares(100_01, [100 / 3, 100 / 3, 100 / 3]);
     assert.equal(

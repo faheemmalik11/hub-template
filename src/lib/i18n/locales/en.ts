@@ -5149,6 +5149,7 @@ const en = {
       shares_do_not_add_up: "{{side}}: the shares do not add up to 100 %.",
       discount_negative: "{{side}}: the discount cannot be negative.",
       discount_exceeds_fee: "{{side}}: the discount is larger than the commission.",
+      vat_rate_invalid: "The VAT rate is not a usable number. Please check it.",
       no_side_pays: "At least one side has to pay commission.",
     },
     actions: {

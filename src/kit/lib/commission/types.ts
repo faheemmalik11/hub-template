@@ -50,6 +50,7 @@ export type CommissionProblem =
   | "shares_do_not_add_up"
   | "discount_negative"
   | "discount_exceeds_fee"
+  | "vat_rate_invalid"
   | "no_side_pays";
 
 export interface SideProblem {

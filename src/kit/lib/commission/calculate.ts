@@ -61,6 +61,7 @@ export function calculateSideCommission(input: SideCommissionInput): CommissionR
   const problems: SideProblem[] = [];
   const report = (problem: SideProblem["problem"]) => problems.push({ side: input.side, problem });
 
+  if (input.vatRatePercent <= -100) report("vat_rate_invalid");
   if (!input.fee) report("fee_missing");
   if (input.fee?.kind === "percent" && input.purchasePriceCents === null) {
     report("purchase_price_missing");
