@@ -1,4 +1,5 @@
 import { useMemo, useState } from "react";
+import { ImageOff } from "lucide-react";
 
 import { FactList, type Fact } from "@/components/records/fact-list";
 import { Input } from "@/components/ui/input";
@@ -41,6 +42,34 @@ function FieldValue({ field }: { field: CrmField }) {
   );
 }
 
+function coverPhotoUrl(data: Record<string, unknown> | null | undefined): string | null {
+  const images = data?.images;
+  if (!Array.isArray(images) || images.length === 0) return null;
+  const first = images[0] as Record<string, unknown> | null;
+  const url = first?.medium_url;
+  return typeof url === "string" && url ? url : null;
+}
+
+function CoverPhoto({ url }: { url: string | null }) {
+  const [failed, setFailed] = useState(false);
+  if (!url || failed) {
+    return (
+      <div className="flex h-40 w-full items-center justify-center rounded-lg bg-muted text-muted-foreground">
+        <ImageOff className="size-6" />
+      </div>
+    );
+  }
+  return (
+    <img
+      src={url}
+      alt=""
+      loading="lazy"
+      onError={() => setFailed(true)}
+      className="h-40 w-full rounded-lg object-cover"
+    />
+  );
+}
+
 function useCrmSource(propertyCode: string) {
   const { can } = useAuth();
   const enabled = can(PERMISSIONS.propertiesCrmSync);
@@ -55,7 +84,7 @@ function useCrmSource(propertyCode: string) {
 
 export function CrmFactsCard({ propertyCode }: { propertyCode: string }) {
   const { t } = useTranslation();
-  const { enabled, listing } = useCrmSource(propertyCode);
+  const { enabled, listing, data } = useCrmSource(propertyCode);
   if (!enabled || !listing) return null;
 
   const owners = listing.parties.filter((party) => party.role === "owner").length;
@@ -104,6 +133,9 @@ export function CrmFactsCard({ propertyCode }: { propertyCode: string }) {
         <span className="text-xs text-muted-foreground">
           {t("propertyListings.lastSynced", { when: formatDateTime(listing.crm_synced_at) })}
         </span>
+      </div>
+      <div className="mt-4">
+        <CoverPhoto url={coverPhotoUrl(data)} />
       </div>
       <FactList facts={facts} columns={2} className="mt-4" />
     </section>
