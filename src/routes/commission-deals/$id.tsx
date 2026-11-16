@@ -1,6 +1,6 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useEffect, useMemo, useState } from "react";
-import { ArrowLeft, Check, ImageOff, Info } from "lucide-react";
+import { ArrowLeft, Check, ExternalLink, ImageOff, Info } from "lucide-react";
 import { toast } from "sonner";
 
 import { Button } from "@/components/ui/button";
@@ -49,6 +49,7 @@ import { EDGE_FUNCTION } from "@/config/edge-functions";
 import { pageTitle } from "@/config/brand";
 import { useAuth } from "@/lib/auth";
 import { sb } from "@/data/client";
+import { propstackUnitUrl } from "@/lib/crm/propstack";
 import { edgeFunctionErrorText, errorText, formatDateTime } from "@/lib/data/format";
 import { useTranslation } from "@/lib/i18n";
 import { tabSearch, useTabParam } from "@/lib/use-tab-param";
@@ -310,10 +311,13 @@ function DealEditor({ deal }: { deal: Deal }) {
     setIsSaving(true);
     toast.promise(sequence, {
       loading: t("commissionDeals.actions.saving"),
-      success: (outcome) =>
-        outcome.pushedToCrm === false
-          ? t("commissionDeals.actions.savedButNotInCrm", { reason: outcome.reason })
-          : t("commissionDeals.actions.saved"),
+      success: (outcome) => {
+        if (outcome.pushedToCrm === true) return t("commissionDeals.actions.savedAndSynced");
+        if (outcome.pushedToCrm === false) {
+          return t("commissionDeals.actions.savedButNotInCrm", { reason: outcome.reason });
+        }
+        return t("commissionDeals.actions.saved");
+      },
       error: (error) => t("commissionDeals.actions.saveFailed", { error: errorText(error) }),
     });
     sequence.finally(() => setIsSaving(false));
@@ -353,6 +357,18 @@ function DealEditor({ deal }: { deal: Deal }) {
           {deal.property?.name ?? deal.property_label ?? t("commissionDeals.sale.title")}
         </h1>
         <DealStatusBadge status={deal.status} />
+        {deal.property?.external_id && (
+          <a
+            href={propstackUnitUrl(deal.property.external_id)}
+            target="_blank"
+            rel="noreferrer"
+            title={t("commissionDeals.actions.openInPropstack")}
+            className="inline-flex items-center gap-1 rounded-md bg-brand/10 px-2 py-0.5 text-xs font-medium text-brand transition hover:brightness-95"
+          >
+            {t("commissionDeals.actions.openInPropstack")}
+            <ExternalLink className="size-3" />
+          </a>
+        )}
         {unsaved && (
           <span className="text-sm text-muted-foreground">
             {t("commissionDeals.actions.unsaved")}
@@ -477,11 +493,7 @@ function DealEditor({ deal }: { deal: Deal }) {
                   <>
                     <Field id="field-due-date" className="space-y-1.5">
                       <Label>{t("commissionDeals.sale.dueDate")}</Label>
-                      <DatePicker
-                        value={dueDate}
-                        onChange={setDueDate}
-                        disabled={!mayEdit}
-                      />
+                      <DatePicker value={dueDate} onChange={setDueDate} disabled={!mayEdit} />
                     </Field>
                     <Field className="space-y-1.5 @lg:col-span-2">
                       <Label>{t("commissionDeals.sale.dueDateNote")}</Label>
@@ -568,14 +580,8 @@ function DealEditor({ deal }: { deal: Deal }) {
 
           <div className="flex flex-wrap gap-2">
             {mayEdit && (
-              <Button
-                className="shadow-none"
-                onClick={runSave}
-                disabled={isSaving || !unsaved}
-              >
-                {isSaving
-                  ? t("commissionDeals.actions.saving")
-                  : t("commissionDeals.actions.save")}
+              <Button className="shadow-none" onClick={runSave} disabled={isSaving || !unsaved}>
+                {isSaving ? t("commissionDeals.actions.saving") : t("commissionDeals.actions.save")}
               </Button>
             )}
             {mayApprove &&

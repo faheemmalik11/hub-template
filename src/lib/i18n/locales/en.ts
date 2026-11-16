@@ -5157,6 +5157,8 @@ const en = {
       saving: "Saving …",
       saved: "Saved.",
       saveFailed: "Saving failed: {{error}}",
+      openInPropstack: "Open in PropStack",
+      savedAndSynced: "Saved and sent to PropStack.",
       savedButNotInCrm: "Saved. Not yet sent to PropStack: {{reason}}",
       approve: "Approve",
       approving: "Approving …",

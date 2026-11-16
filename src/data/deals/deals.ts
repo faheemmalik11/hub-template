@@ -76,6 +76,7 @@ export interface Deal {
   property: {
     code: string;
     name: string;
+    external_id: string | null;
     payment_due_date: string | null;
     payment_due_date_note: string | null;
     cover_image_url: string | null;
@@ -130,7 +131,7 @@ const DEAL_SELECT =
   `id, company_id, property_id, property_label, status, notarised_on, purchase_price, vat_rate, ` +
   `note, acquired_by, handled_by, own_lead, from_viewing, referrer_customer_id, costs_closed_at, ` +
   `ready_for_bookkeeping_at, approved_at, created_at, ` +
-  `property:${TABLE.properties}(code, name, payment_due_date, payment_due_date_note, ` +
+  `property:${TABLE.properties}(code, name, external_id, payment_due_date, payment_due_date_note, ` +
   `cover_image_url:crm_data->images->0->>medium_url), ` +
   `deal_sides:${TABLE.dealSides}(id, side, fee_kind, fee_net_rate, fee_net_amount, ` +
   `deal_parties:${TABLE.dealParties}(id, customer_id, share_percent, discount_gross, ` +
