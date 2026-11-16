@@ -4883,10 +4883,15 @@ const en = {
       empty: "No agent has a notarised sale in either year.",
       tiles: {
         closings: "Closings",
+        closingsInfo: "The number of sales with a notary date in this time. A sale with no notary date yet is not counted.",
         volume: "Property volume",
+        volumeInfo: "The total purchase price of every sale counted in Closings.",
         commission: "Commission",
+        commissionInfo: "The total commission earned from every sale counted in Closings.",
         bonuses: "Bonuses",
+        bonusesInfo: "The total bonuses approved or paid out in this time.",
         bonusesApproved: "Approved, not yet paid out",
+        bonusesApprovedInfo: "Bonuses that have been approved but not paid out yet.",
         lastYear: "{{from}} to {{to}} · {{value}}",
       },
       table: {
