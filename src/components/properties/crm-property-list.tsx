@@ -1,6 +1,6 @@
 import { Link } from "@tanstack/react-router";
 import { useMemo, useState } from "react";
-import { Search } from "lucide-react";
+import { ImageOff, Search } from "lucide-react";
 
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
@@ -168,6 +168,26 @@ export function CrmPropertyList() {
   );
 }
 
+function PropertyThumbnail({ url, alt }: { url: string | null; alt: string }) {
+  const [failed, setFailed] = useState(false);
+  if (!url || failed) {
+    return (
+      <div className="flex size-10 items-center justify-center rounded-md bg-muted text-muted-foreground">
+        <ImageOff className="size-4" />
+      </div>
+    );
+  }
+  return (
+    <img
+      src={url}
+      alt={alt}
+      loading="lazy"
+      onError={() => setFailed(true)}
+      className="size-10 rounded-md object-cover"
+    />
+  );
+}
+
 function ListingsTable({ listings }: { listings: ListedProperty[] }) {
   const { t } = useTranslation();
   return (
@@ -175,6 +195,7 @@ function ListingsTable({ listings }: { listings: ListedProperty[] }) {
       <Table>
         <TableHeader>
           <TableRow>
+            <TableHead className="w-16" />
             <TableHead>{t("propertyListings.columns.property")}</TableHead>
             <TableHead>{t("propertyListings.columns.status")}</TableHead>
             <TableHead>{t("propertyListings.columns.type")}</TableHead>
@@ -187,6 +208,9 @@ function ListingsTable({ listings }: { listings: ListedProperty[] }) {
         <TableBody>
           {listings.map((listing) => (
             <TableRow key={listing.id}>
+              <TableCell>
+                <PropertyThumbnail url={listing.cover_image_url} alt={listing.name} />
+              </TableCell>
               <TableCell>
                 <Link
                   to="/properties/$code"

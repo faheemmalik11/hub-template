@@ -28,12 +28,14 @@ export interface ListedProperty {
   archived_in_crm: boolean;
   crm_updated_at: string | null;
   crm_synced_at: string | null;
+  cover_image_url: string | null;
 }
 
 const LISTED_COLUMNS =
   "id, code, name, address, external_id, crm_status, marketing_type, property_type, usage_type, " +
   "asking_price, sold_price, sold_on, living_space, plot_area, room_count, commission_note, " +
-  "broker_name, broker_email, parties, archived_in_crm, crm_updated_at, crm_synced_at";
+  "broker_name, broker_email, parties, archived_in_crm, crm_updated_at, crm_synced_at, " +
+  "cover_image_url:crm_data->images->0->>small_thumb_url";
 
 export function usePropertyListings({ enabled = true }: { enabled?: boolean } = {}) {
   return useQuery({
