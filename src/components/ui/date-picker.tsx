@@ -3,7 +3,7 @@ import { CalendarIcon, X } from "lucide-react";
 import { de as deLocale, enUS } from "date-fns/locale";
 
 import { Calendar } from "@/components/ui/calendar";
-import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { Popover, PopoverAnchor, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { useTranslation } from "@/lib/i18n";
 import { cn } from "@/lib/utils";
 import { useFieldId } from "@/components/ui/feld-context";
@@ -107,99 +107,101 @@ export function DatePicker({
   const endYear = Math.max(now + 10, ...years);
 
   return (
-    <div
-      className={cn(
-        "flex h-9 w-full items-center gap-1 rounded-md border border-input bg-transparent pl-3 pr-1",
-        "focus-within:ring-1 focus-within:ring-ring",
-        invalid && "border-destructive focus-within:ring-destructive/30",
-        disabled && "cursor-not-allowed opacity-50",
-        className,
-      )}
-    >
-      <input
-        id={id ?? fieldId ?? undefined}
-        type="text"
-        inputMode="numeric"
-        autoComplete="off"
-        disabled={disabled}
-        aria-invalid={invalid}
-        aria-label={ariaLabel}
-        value={text}
-        placeholder={placeholder ?? formatHint(english)}
-        onFocus={() => {
-          types.current = true;
-        }}
-        onChange={(e) => setText(e.target.value)}
-        onBlur={(e) => {
-          types.current = false;
-          commit(e.target.value);
-        }}
-        onKeyDown={(e) => {
-          if (e.key === "Enter") {
-            e.preventDefault();
-            commit(text);
-          }
-          if (e.key === "Escape") {
-            setText(isoToInput(value, english));
-          }
-        }}
-        className="min-w-0 flex-1 bg-transparent text-sm outline-none placeholder:text-muted-foreground disabled:cursor-not-allowed"
-      />
-
-      {clearable && !!value && !disabled && (
-        <button
-          type="button"
-          aria-label={t("common.date.clear")}
-          title={t("common.date.clear")}
-          onClick={() => {
-            onChange("");
-            setText("");
-          }}
-          className="shrink-0 rounded p-1 text-muted-foreground transition-colors hover:bg-muted hover:text-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
+    <Popover open={open} onOpenChange={setOpen}>
+      <PopoverAnchor asChild>
+        <div
+          className={cn(
+            "flex h-9 w-full items-center gap-1 rounded-md border border-input bg-transparent pl-3 pr-1",
+            "focus-within:ring-1 focus-within:ring-ring",
+            invalid && "border-destructive focus-within:ring-destructive/30",
+            disabled && "cursor-not-allowed opacity-50",
+            className,
+          )}
         >
-          <X className="size-3.5" />
-        </button>
-      )}
-
-      <Popover open={open} onOpenChange={setOpen}>
-        <PopoverTrigger asChild>
-          <button
-            type="button"
+          <input
+            id={id ?? fieldId ?? undefined}
+            type="text"
+            inputMode="numeric"
+            autoComplete="off"
             disabled={disabled}
-            aria-label={t("common.date.openCalendar")}
-            title={t("common.date.openCalendar")}
-            className="shrink-0 rounded p-1 text-muted-foreground transition-colors hover:bg-muted hover:text-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:cursor-not-allowed"
-          >
-            <CalendarIcon className="size-4" />
-          </button>
-        </PopoverTrigger>
-        <PopoverContent align="start" className="w-auto p-0">
-          <Calendar
-            mode="single"
-            selected={selected}
-            defaultMonth={selected ?? new Date()}
-            // Month and year as dropdowns rather than one arrow at a time: entering a date from last
-            // year meant twelve clicks otherwise.
-            captionLayout="dropdown"
-            startMonth={new Date(startYear, 0)}
-            endMonth={new Date(endYear, 11)}
-            locale={english ? enUS : deLocale}
-            disabled={[
-              ...(isoToDate(min ?? "") ? [{ before: isoToDate(min ?? "")! }] : []),
-              ...(isoToDate(max ?? "") ? [{ after: isoToDate(max ?? "")! }] : []),
-            ]}
-            onSelect={(d) => {
-              if (!d) return;
-              const iso = dateToIso(d);
-              onChange(iso);
-              setText(isoToInput(iso, english));
-              setOpen(false);
+            aria-invalid={invalid}
+            aria-label={ariaLabel}
+            value={text}
+            placeholder={placeholder ?? formatHint(english)}
+            onFocus={() => {
+              types.current = true;
             }}
-            autoFocus
+            onChange={(e) => setText(e.target.value)}
+            onBlur={(e) => {
+              types.current = false;
+              commit(e.target.value);
+            }}
+            onKeyDown={(e) => {
+              if (e.key === "Enter") {
+                e.preventDefault();
+                commit(text);
+              }
+              if (e.key === "Escape") {
+                setText(isoToInput(value, english));
+              }
+            }}
+            className="min-w-0 flex-1 bg-transparent text-sm outline-none placeholder:text-muted-foreground disabled:cursor-not-allowed"
           />
-        </PopoverContent>
-      </Popover>
-    </div>
+
+          {clearable && !!value && !disabled && (
+            <button
+              type="button"
+              aria-label={t("common.date.clear")}
+              title={t("common.date.clear")}
+              onClick={() => {
+                onChange("");
+                setText("");
+              }}
+              className="shrink-0 rounded p-1 text-muted-foreground transition-colors hover:bg-muted hover:text-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
+            >
+              <X className="size-3.5" />
+            </button>
+          )}
+
+          <PopoverTrigger asChild>
+            <button
+              type="button"
+              disabled={disabled}
+              aria-label={t("common.date.openCalendar")}
+              title={t("common.date.openCalendar")}
+              className="shrink-0 rounded p-1 text-muted-foreground transition-colors hover:bg-muted hover:text-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:cursor-not-allowed"
+            >
+              <CalendarIcon className="size-4" />
+            </button>
+          </PopoverTrigger>
+        </div>
+      </PopoverAnchor>
+      <PopoverContent align="start" className="w-auto p-0">
+        <Calendar
+          mode="single"
+          selected={selected}
+          defaultMonth={selected ?? new Date()}
+          // Month and year as dropdowns rather than one arrow at a time: entering a date from last
+          // year meant twelve clicks otherwise.
+          captionLayout="dropdown"
+          startMonth={new Date(startYear, 0)}
+          endMonth={new Date(endYear, 11)}
+          locale={english ? enUS : deLocale}
+          disabled={[
+            ...(isoToDate(min ?? "") ? [{ before: isoToDate(min ?? "")! }] : []),
+            ...(isoToDate(max ?? "") ? [{ after: isoToDate(max ?? "")! }] : []),
+          ]}
+          onSelect={(d) => {
+            if (!d) return;
+            const iso = dateToIso(d);
+            onChange(iso);
+            setText(isoToInput(iso, english));
+            setOpen(false);
+          }}
+          autoFocus
+        />
+      </PopoverContent>
+    </Popover>
   );
 }
 
