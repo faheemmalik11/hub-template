@@ -9,15 +9,16 @@ import { cn } from "@/lib/utils";
 export type IsoDay = string;
 
 export type DateRangePickerLabels = {
-  /** Shown on the trigger while nothing is chosen. */
-  placeholder: string;
-  reset: string;
-  apply: string;
+  /** Shown on the trigger while nothing is chosen. Unused in single mode. */
+  placeholder?: string;
+  /** Unused in single mode: a single pick commits immediately, nothing to reset or apply. */
+  reset?: string;
+  apply?: string;
   /** Named for screen readers, and the tooltip on the month arrows. */
   previousMonth: string;
   nextMonth: string;
-  /** Told to the reader while only one end has been picked. */
-  pickSecond: string;
+  /** Told to the reader while only one end has been picked. Unused in single mode. */
+  pickSecond?: string;
 };
 
 /**
@@ -108,6 +109,8 @@ export function DateRangeCalendar({
   locale,
   open,
   footerExtra,
+  single = false,
+  maxDate,
 }: {
   from: IsoDay;
   to: IsoDay;
@@ -118,8 +121,14 @@ export function DateRangeCalendar({
   open: boolean;
   /** Rendered at the left of the button row, e.g. a "back to presets" link. */
   footerExtra?: ReactNode;
+  /** One date rather than a range: a click commits and closes immediately, with no draft step and
+   *  no Apply/Reset row. `from` and `to` are both read and written as the same day. */
+  single?: boolean;
+  /** ISO bound: days after this are not selectable. */
+  maxDate?: IsoDay;
 }) {
-  // The range being drawn, which is not the applied one until Apply is pressed.
+  // The range being drawn, which is not the applied one until Apply is pressed. Unused in single
+  // mode, where a click applies straight away.
   const [draftFromDate, setDraftFromDate] = useState<Date | null>(null);
   const [draftToDate, setDraftToDate] = useState<Date | null>(null);
   const [month, setMonth] = useState(() => monthStart(parse(from) ?? new Date()));
@@ -134,10 +143,16 @@ export function DateRangeCalendar({
 
   const appliedFromDate = parse(from);
   const appliedToDate = parse(to);
-  // While a range is being drawn it is what the grid shows; otherwise the applied one is.
-  const showsFromDate = draftFromDate ?? (draftToDate ? null : appliedFromDate);
-  const showsToDate = draftToDate ?? (draftFromDate ? null : appliedToDate);
-  const halfDone = !!draftFromDate !== !!draftToDate;
+  // While a range is being drawn it is what the grid shows; otherwise the applied one is. A single
+  // pick has no draft step, so it always shows the applied day.
+  const showsFromDate = single
+    ? appliedFromDate
+    : (draftFromDate ?? (draftToDate ? null : appliedFromDate));
+  const showsToDate = single
+    ? appliedFromDate
+    : (draftToDate ?? (draftFromDate ? null : appliedToDate));
+  const halfDone = !single && !!draftFromDate !== !!draftToDate;
+  const maxTag = useMemo(() => parse(maxDate ?? ""), [maxDate]);
 
   const days = useMemo(() => rasterFor(month), [month]);
   const weekdays = useMemo(() => weekdayNames(locale), [locale]);
@@ -147,6 +162,10 @@ export function DateRangeCalendar({
   );
 
   function choose(tag: Date) {
+    if (single) {
+      onApply(iso(tag), iso(tag));
+      return;
+    }
     // First click anchors, second completes. Ordered here so either end may be clicked first.
     if (!draftFromDate || draftToDate) {
       setDraftFromDate(tag);
@@ -203,17 +222,20 @@ export function DateRangeCalendar({
           const start = sameTag(tag, showsFromDate);
           const end = sameTag(tag, showsToDate);
           const between =
-            !!showsFromDate && !!showsToDate && tag > showsFromDate && tag < showsToDate;
+            !single && !!showsFromDate && !!showsToDate && tag > showsFromDate && tag < showsToDate;
           const rand = start || end;
+          const blocked = !!maxTag && tag > maxTag;
           return (
             <button
               key={tag.toISOString()}
               type="button"
+              disabled={blocked}
               onClick={() => choose(tag)}
               className={cn(
-                "flex h-8 w-8 cursor-pointer items-center justify-center rounded-md text-sm transition-colors",
+                "flex h-8 w-8 items-center justify-center rounded-md text-sm transition-colors",
+                blocked ? "cursor-not-allowed text-muted-foreground/40" : "cursor-pointer",
                 !imMonth && "text-muted-foreground/40",
-                imMonth && !rand && !between && "hover:bg-accent",
+                imMonth && !rand && !between && !blocked && "hover:bg-accent",
                 between && "bg-accent text-accent-foreground",
                 rand && "bg-primary font-medium text-primary-foreground",
                 today(tag) && !rand && "ring-1 ring-inset ring-border",
@@ -226,31 +248,36 @@ export function DateRangeCalendar({
         })}
       </div>
 
-      {/* Says what the second click is for, so a half-drawn range does not look like a dead
-            Apply button. */}
-      <p className="mt-2 min-h-[1.25rem] text-xs text-muted-foreground">
-        {halfDone ? labels.pickSecond : null}
-      </p>
+      {!single && (
+        <>
+          {/* Says what the second click is for, so a half-drawn range does not look like a dead
+                Apply button. */}
+          <p className="mt-2 min-h-[1.25rem] text-xs text-muted-foreground">
+            {halfDone ? labels.pickSecond : null}
+          </p>
 
-      <div className="mt-1 flex items-center justify-between gap-2">
-        <div>{footerExtra}</div>
-        <div className="flex gap-2">
-          <Button type="button" variant="ghost" size="sm" onClick={() => onApply("", "")}>
-            {labels.reset}
-          </Button>
-          <Button
-            type="button"
-            size="sm"
-            disabled={!canApply}
-            onClick={() => {
-              if (!draftFromDate || !draftToDate) return;
-              onApply(iso(draftFromDate), iso(draftToDate));
-            }}
-          >
-            {labels.apply}
-          </Button>
-        </div>
-      </div>
+          <div className="mt-1 flex items-center justify-between gap-2">
+            <div>{footerExtra}</div>
+            <div className="flex gap-2">
+              <Button type="button" variant="ghost" size="sm" onClick={() => onApply("", "")}>
+                {labels.reset}
+              </Button>
+              <Button
+                type="button"
+                size="sm"
+                disabled={!canApply}
+                onClick={() => {
+                  if (!draftFromDate || !draftToDate) return;
+                  onApply(iso(draftFromDate), iso(draftToDate));
+                }}
+              >
+                {labels.apply}
+              </Button>
+            </div>
+          </div>
+        </>
+      )}
+      {single && footerExtra && <div className="mt-1">{footerExtra}</div>}
     </div>
   );
 }

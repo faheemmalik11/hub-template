@@ -1,13 +1,63 @@
 import { useState } from "react";
+import { CalendarDays } from "lucide-react";
 
-import { DatePicker } from "@/components/ui/date-picker";
+import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { DateRangeCalendar } from "@/components/data-table/date-range-picker";
 import { AgentReportTable } from "@/components/commission/agent-report-table";
 import { AgentReportTiles } from "@/components/commission/agent-report-tiles";
 import { useAgentCommissionReport, useBonusSettings } from "@/data";
 import { PERMISSIONS } from "@/config/permissions";
 import { useAuth } from "@/lib/auth";
 import { useTranslation } from "@/lib/i18n";
+import { dateLocale, formatDate } from "@/lib/data/format";
+
+function CutoffDatePicker({
+  value,
+  onChange,
+  max,
+}: {
+  value: string;
+  onChange: (value: string) => void;
+  max: string;
+}) {
+  const { t } = useTranslation();
+  const [open, setOpen] = useState(false);
+  return (
+    <Popover open={open} onOpenChange={setOpen}>
+      <PopoverTrigger asChild>
+        <Button
+          type="button"
+          variant="outline"
+          aria-label={`${t("commissionDeals.report.cutoff")}: ${formatDate(value)}`}
+          className="h-9 w-full justify-start gap-2 font-normal"
+        >
+          <CalendarDays className="size-4 shrink-0 text-muted-foreground" />
+          <span className="tabular-nums">{formatDate(value)}</span>
+        </Button>
+      </PopoverTrigger>
+      <PopoverContent align="start" className="w-auto p-3">
+        <DateRangeCalendar
+          single
+          open={open}
+          from={value}
+          to={value}
+          maxDate={max}
+          locale={dateLocale()}
+          labels={{
+            previousMonth: t("documents.list.filter.monatZurueck"),
+            nextMonth: t("documents.list.filter.monatVor"),
+          }}
+          onApply={(selected) => {
+            onChange(selected);
+            setOpen(false);
+          }}
+        />
+      </PopoverContent>
+    </Popover>
+  );
+}
 
 function todayIso(): string {
   return new Date().toISOString().slice(0, 10);
@@ -73,7 +123,7 @@ export function AgentReportSection() {
           <Label className="text-xs text-muted-foreground">
             {t("commissionDeals.report.cutoff")}
           </Label>
-          <DatePicker value={cutoff} onChange={setCutoff} max={todayIso()} clearable={false} />
+          <CutoffDatePicker value={cutoff} onChange={setCutoff} max={todayIso()} />
         </div>
       </div>
 

@@ -24,7 +24,9 @@ export function KpiCard({
   icon: LucideIcon;
   iconTint: string;
   label: string;
-  to: string;
+  /** Omit when the tile has no screen of its own to land on: the card keeps its look, just without
+   *  the click-through overlay. */
+  to?: string;
   loading: boolean;
   value: ReactNode;
   delta?: ReactNode;
@@ -39,11 +41,13 @@ export function KpiCard({
         className,
       )}
     >
-      <Link
-        to={to}
-        aria-label={label}
-        className="absolute inset-0 rounded-xl focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
-      />
+      {to && (
+        <Link
+          to={to}
+          aria-label={label}
+          className="absolute inset-0 rounded-xl focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+        />
+      )}
       <div className="flex items-center justify-between gap-2">
         <span className="flex min-w-0 items-center gap-2">
           <span
