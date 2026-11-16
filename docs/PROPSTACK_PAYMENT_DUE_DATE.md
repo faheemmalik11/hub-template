@@ -48,11 +48,17 @@ the real keys (`zahlungsziel`, `zahlungsziel_hinweis`) are known and don't need 
    matching the briefing's "without a date: do not dun" rule exactly (the existing
    `set_expected_payment_on()` trigger from `0023_expected_payment.sql` already only derives its own
    "expected payment" date when `due_date is null`, so this needed no further change there).
-   `lexoffice-invoice-push`'s `buildInvoicePayload` now passes that `due_date` through as Lexware's
-   own `dueDate` field (added to `LexofficeInvoiceInput`, previously never set). Verified inside a
-   rolled-back transaction against two real deals: one where the property has a due date (the
-   invoice correctly got that date), one where it doesn't (the invoice's `due_date` correctly stayed
-   `null`) — nothing persisted either way.
+
+   Lexware has no direct due-date field on an invoice — confirmed against Lexware's own API docs and
+   Living Immo's working code — it derives one from `paymentConditions.paymentTermDuration` (days
+   from the voucher date) plus a required `paymentTermLabel`. `lexoffice-invoice-push`'s
+   `buildInvoicePayload` converts the due date into that day count when one is known. When it is
+   not known yet, `paymentConditions` is omitted entirely rather than falling back to a default term
+   — confirmed live: before this fix the fallback was the tenant's generic `payment_term_days`
+   (14), so an invoice with no real due date still got a maturity 14 days out and would have shown
+   as overdue in Lexware, which is exactly the "do not dun" case the briefing rules out. With
+   `paymentConditions` omitted, Lexware applies its own organisation-level default instead of one
+   the Hub invented, and nothing here marks it as due on a date nobody actually knows.
 3. **Two-way sync** (§4.4), explicitly modelled on Living Immo, not designed fresh: a prompt in the
    Hub when a property is missing the realised price, sale date, or either commission rate (pointing
    at it, with a link to the property), and a write-back to PropStack the moment a value is added
