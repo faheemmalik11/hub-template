@@ -5143,13 +5143,14 @@ const de = {
     },
     bonuses: {
       title: "Boni für diesen Verkauf",
-      hint: "Diese Boni werden automatisch aus diesem Verkauf berechnet. Sobald ein Bonus bereit ist, auf <strong>Diesen Bonus vorschlagen</strong> klicken, um ihn an den Makler zu schicken. Der Makler bestätigt ihn, danach prüft und genehmigt ein Vorgesetzter ihn.",
+      hint: "Diese Boni werden automatisch aus diesem Verkauf berechnet. Fehlt bei einem Bonus noch etwas, steht dort eine graue Nachricht, was fehlt. Ist ein Bonus bereit, steht dort stattdessen der Knopf <strong>Diesen Bonus vorschlagen</strong>. Ein Klick darauf schickt den Bonus zur Bestätigung an den Makler, danach prüft und genehmigt ein Vorgesetzter ihn.",
       none: "Für diesen Verkauf entsteht kein Bonus.",
       create: "Diesen Bonus vorschlagen",
       created: "Angelegt",
       failed: "Der Vorschlag konnte nicht angelegt werden.",
       nobody: "Noch kein Makler gewählt",
       waiting: "Noch nicht bereit: {{reasons}}",
+      waitingForFix: "Dort hingehen: {{reason}}",
       noRemainder: "Nach Abzug von Kosten und Gebühren bleibt nichts übrig.",
       waitingFor: {
         notarisation: "der Verkauf braucht einen Notartermin",

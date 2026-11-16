@@ -27,9 +27,13 @@ export function DealFactsCard({
   return (
     <div>
       {assignsBrokers && <BrokerFields form={form} onChange={onChange} disabled={disabled} />}
-      <div className="mt-4 grid gap-3 sm:grid-cols-2">
+      <div className="@container mt-4 grid gap-3 @md:grid-cols-2">
         {FLAGS.map((flag) => (
-          <label key={flag} className="flex items-start gap-2 text-sm text-foreground">
+          <label
+            key={flag}
+            id={`field-${flag === "costsClosed" ? "costs-closed" : flag}`}
+            className="flex items-start gap-2 text-sm text-foreground"
+          >
             <Checkbox
               className="mt-0.5"
               checked={form[flag]}
@@ -76,8 +80,8 @@ function BrokerFields({
     .filter((employee) => employee.is_active)
     .map((employee) => ({ value: employee.id, label: employee.name ?? employee.email }));
   return (
-    <div className="mt-4 grid gap-3 sm:grid-cols-2">
-      <Field className="space-y-1.5">
+    <div className="@container mt-4 grid gap-3 @md:grid-cols-2">
+      <Field id="field-handled-by" className="space-y-1.5">
         <Label>{t("commissionDeals.facts.handledBy")}</Label>
         <Combobox
           value={form.handledBy}

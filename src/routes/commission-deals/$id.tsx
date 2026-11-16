@@ -569,7 +569,7 @@ function DealEditor({ deal }: { deal: Deal }) {
           <DealInvoicesCard deal={deal} />
 
           {suggestsBonuses && !unsaved && deal.status !== "settled" && (
-            <BonusSuggestionsCard deal={deal} />
+            <BonusSuggestionsCard deal={deal} onJumpToField={jumpToAnchor} />
           )}
           {suggestsReferrerBonuses && !unsaved && deal.status !== "settled" && (
             <DealReferrerBonusCard deal={deal} />

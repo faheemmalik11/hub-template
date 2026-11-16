@@ -19,12 +19,25 @@ import {
 } from "@/kit/lib/commission/bonuses";
 import { errorText, formatEUR } from "@/lib/data/format";
 import { Trans, useTranslation } from "@/lib/i18n";
+import type { BonusWaitingFor } from "@/kit/lib/commission/bonuses";
 
 function cents(euros: number): number {
   return Math.round(euros * 100);
 }
 
-export function BonusSuggestionsCard({ deal }: { deal: Deal }) {
+const ANCHOR_FOR_WAITING_REASON: Partial<Record<BonusWaitingFor, { tab: string; id: string }>> = {
+  broker: { tab: "details", id: "field-handled-by" },
+  notarisation: { tab: "sale", id: "field-notarised-on" },
+  costs_closed: { tab: "details", id: "field-costs-closed" },
+};
+
+export function BonusSuggestionsCard({
+  deal,
+  onJumpToField,
+}: {
+  deal: Deal;
+  onJumpToField?: (tab: string, id: string) => void;
+}) {
   const { t } = useTranslation();
   const settingsQ = useBonusSettings();
   const existingQ = useDealBonuses(deal.id);
@@ -148,13 +161,33 @@ export function BonusSuggestionsCard({ deal }: { deal: Deal }) {
                       {t("commissionDeals.bonuses.create")}
                     </Button>
                   ) : suggestion.state === "waiting" ? (
-                    <Badge variant="secondary">
-                      {t("commissionDeals.bonuses.waiting", {
-                        reasons: suggestion.waitingFor
-                          .map((reason) => t(`commissionDeals.bonuses.waitingFor.${reason}`))
-                          .join(", "),
-                      })}
-                    </Badge>
+                    <div className="flex flex-col items-end gap-1">
+                      <Badge variant="secondary">
+                        {t("commissionDeals.bonuses.waiting", {
+                          reasons: suggestion.waitingFor
+                            .map((reason) => t(`commissionDeals.bonuses.waitingFor.${reason}`))
+                            .join(", "),
+                        })}
+                      </Badge>
+                      {onJumpToField &&
+                        suggestion.waitingFor
+                          .flatMap((reason) => {
+                            const anchor = ANCHOR_FOR_WAITING_REASON[reason];
+                            return anchor ? [{ reason, anchor }] : [];
+                          })
+                          .map(({ reason, anchor }) => (
+                            <button
+                              key={reason}
+                              type="button"
+                              onClick={() => onJumpToField(anchor.tab, anchor.id)}
+                              className="text-xs font-medium text-brand-dark underline-offset-4 hover:underline"
+                            >
+                              {t("commissionDeals.bonuses.waitingForFix", {
+                                reason: t(`commissionDeals.bonuses.waitingFor.${reason}`),
+                              })}
+                            </button>
+                          ))}
+                    </div>
                   ) : (
                     <Badge variant="outline">{t("commissionDeals.bonuses.noRemainder")}</Badge>
                   )}
