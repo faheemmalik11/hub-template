@@ -4968,14 +4968,13 @@ const en = {
     },
     bonuses: {
       title: "Bonuses for this sale",
-      hint: "These bonuses are calculated automatically from this sale. A bonus that is still missing something shows a grey message explaining what. A bonus that is ready shows a <strong>Suggest this bonus</strong> button instead. Clicking it sends the bonus to the broker to confirm, then a manager reviews and approves it.",
+      hint: "Calculated automatically from this sale. A ready bonus shows a <strong>Suggest this bonus</strong> button.",
       none: "This sale does not earn a bonus.",
       create: "Suggest this bonus",
       created: "Created",
       failed: "The suggestion could not be created.",
       nobody: "No broker chosen yet",
-      waiting: "Not ready yet: {{reasons}}",
-      waitingForFix: "Go fix: {{reason}}",
+      notReady: "Not ready yet",
       noRemainder: "There is nothing left to pay after costs and fees are subtracted.",
       waitingFor: {
         notarisation: "the sale needs a notary date",
