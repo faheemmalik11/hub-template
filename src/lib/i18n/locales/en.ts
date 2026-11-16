@@ -4665,8 +4665,8 @@ const en = {
   propertyListings: {
     subtitle:
       "Every property comes from Propstack. A sync fetches the current state and changes nothing in Propstack itself.",
-    syncNow: "Sync now",
-    syncing: "Syncing …",
+    syncNow: "Sync properties",
+    syncing: "Syncing properties …",
     synced_one: "{{count}} property synced, {{created}} of them new.",
     synced_other: "{{count}} properties synced, {{created}} of them new.",
     syncFailed: "The sync with the CRM failed.",
@@ -4674,11 +4674,10 @@ const en = {
     neverSynced: "Never synced",
     searchPlaceholder: "Search property, address or broker",
     allStatuses: "All statuses",
-    count: "{{count}} of {{total}}",
     archived: "Archived",
     soldOn: "sold {{date}}",
     emptyTitle: "No properties from the CRM yet",
-    emptyHint: '"Sync now" fetches the properties from Propstack.',
+    emptyHint: '"Sync properties" fetches the properties from Propstack.',
     allFields: {
       title: "All other fields",
       subtitle:

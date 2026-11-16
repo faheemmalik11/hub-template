@@ -4837,8 +4837,8 @@ const de = {
   propertyListings: {
     subtitle:
       "Alle Objekte kommen aus Propstack. Ein Abgleich holt den aktuellen Stand, an Propstack selbst ändert er nichts.",
-    syncNow: "Jetzt abgleichen",
-    syncing: "Wird abgeglichen …",
+    syncNow: "Objekte abgleichen",
+    syncing: "Objekte werden abgeglichen …",
     synced_one: "{{count}} Objekt abgeglichen, davon {{created}} neu.",
     synced_other: "{{count}} Objekte abgeglichen, davon {{created}} neu.",
     syncFailed: "Der Abgleich mit dem CRM ist fehlgeschlagen.",
@@ -4846,11 +4846,10 @@ const de = {
     neverSynced: "Noch nie abgeglichen",
     searchPlaceholder: "Objekt, Adresse oder Makler suchen",
     allStatuses: "Alle Status",
-    count: "{{count}} von {{total}}",
     archived: "Archiviert",
     soldOn: "verkauft {{date}}",
     emptyTitle: "Noch keine Objekte aus dem CRM",
-    emptyHint: "Mit „Jetzt abgleichen“ werden die Objekte aus Propstack geholt.",
+    emptyHint: "Mit „Objekte abgleichen“ werden die Objekte aus Propstack geholt.",
     allFields: {
       title: "Alle weiteren Felder",
       subtitle:
