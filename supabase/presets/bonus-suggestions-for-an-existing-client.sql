@@ -120,6 +120,29 @@ select r.id, 'bonuses.suggest' from public.roles r where r.administers
 on conflict do nothing;
 commit;
 
--- To switch it on:
+-- Referrer-tier suggestion and its credit note, on a switch of its own: see supabase/catalogue.sql
+-- for why it is separate from bonuses.suggest above.
+begin;
+insert into public.permissions (key, kind, parent_key, category, label_de, label_en, description_de, description_en, default_enabled, sort_order) values
+  ('bonuses.suggest_referrer', 'section', 'page.broker_bonuses', 'documents',
+   'Tippgeber-Boni aus Verkäufen vorschlagen', 'Suggest referrer bonuses from sales',
+   'Automatische Stufen-Vorschläge und Gutschriften für Tippgeber. Erst einschalten, wenn die Werte vom Kunden bestätigt sind.',
+   'Automatic tier suggestions and credit notes for referrers. Switch on only once the client has confirmed the values.',
+   false, 945)
+on conflict (key) do update
+   set kind = excluded.kind, parent_key = excluded.parent_key, category = excluded.category,
+       label_de = excluded.label_de, label_en = excluded.label_en,
+       description_de = excluded.description_de, description_en = excluded.description_en,
+       default_enabled = excluded.default_enabled, sort_order = excluded.sort_order;
+
+insert into public.role_permissions (role_id, permission_key)
+select r.id, 'bonuses.suggest_referrer' from public.roles r where r.administers
+on conflict do nothing;
+commit;
+
+-- To switch bonuses.suggest on:
 -- insert into public.feature_settings (feature_key, enabled) values ('bonuses.suggest', true)
+--   on conflict (feature_key) do update set enabled = true, updated_at = now();
+-- To switch bonuses.suggest_referrer on, separately, once the referrer figures are confirmed:
+-- insert into public.feature_settings (feature_key, enabled) values ('bonuses.suggest_referrer', true)
 --   on conflict (feature_key) do update set enabled = true, updated_at = now();

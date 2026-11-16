@@ -77,6 +77,7 @@ export const PERMISSIONS = {
   bonusesReview: "bonuses.review",
   bonusesRead: "bonuses.read",
   bonusesSuggest: "bonuses.suggest",
+  bonusesSuggestReferrer: "bonuses.suggest_referrer",
   donationsManage: "donations.manage",
   lexofficeSync: "lexoffice.sync",
   lexofficeDocumentSync: "lexoffice.document_sync",
