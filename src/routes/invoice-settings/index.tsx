@@ -35,6 +35,7 @@ import { errorText, formatDateTime, parseDecimalInput } from "@/lib/data/format"
 
 const KIND_SHAPE = /^[a-z][a-z0-9_]*$/;
 const COUNTRY_CODE_SHAPE = /^[A-Z]{2}$/;
+const TIMEZONE_SHAPE = /^[A-Za-z0-9+_-]+(\/[A-Za-z0-9+_-]+)*$/;
 
 export const Route = createFileRoute("/invoice-settings/")({
   head: () => ({ meta: [{ title: pageTitle("Rechnungsvorgaben") }] }),
@@ -112,6 +113,7 @@ function SettingsForm({
   const [documentFallbackLabel, setDocumentFallbackLabel] = useState(
     settings.document_fallback_label,
   );
+  const [timezone, setTimezone] = useState(settings.timezone);
   const [labels, setLabels] = useState<InvoiceKindLabel[]>(kindLabels);
   const [isSaving, setIsSaving] = useState(false);
 
@@ -122,6 +124,7 @@ function SettingsForm({
     setInvoiceUnitName(settings.invoice_unit_name);
     setDefaultPaymentMethod(settings.default_payment_method);
     setDocumentFallbackLabel(settings.document_fallback_label);
+    setTimezone(settings.timezone);
   }, [settings]);
 
   useEffect(() => {
@@ -140,6 +143,7 @@ function SettingsForm({
     invoiceUnitName.trim() === "" ||
     defaultPaymentMethod.trim() === "" ||
     documentFallbackLabel.trim() === "";
+  const timezoneInvalid = !TIMEZONE_SHAPE.test(timezone);
   const duplicateKinds = new Set(
     labels
       .map((row) => row.kind)
@@ -148,7 +152,8 @@ function SettingsForm({
   const labelsInvalid = labels.some(
     (row) => !KIND_SHAPE.test(row.kind) || row.label.trim() === "" || duplicateKinds.has(row.kind),
   );
-  const invalid = vatRateInvalid || countryCodeInvalid || textInvalid || labelsInvalid;
+  const invalid =
+    vatRateInvalid || countryCodeInvalid || textInvalid || timezoneInvalid || labelsInvalid;
 
   const draftLabelByKind = new Map(labels.map((row) => [row.kind, row.label]));
   const labelsChanged =
@@ -162,6 +167,7 @@ function SettingsForm({
     invoiceUnitName !== settings.invoice_unit_name ||
     defaultPaymentMethod !== settings.default_payment_method ||
     documentFallbackLabel !== settings.document_fallback_label ||
+    timezone !== settings.timezone ||
     labelsChanged;
 
   const editingDisabled = !canEdit || isSaving;
@@ -183,6 +189,7 @@ function SettingsForm({
         invoice_unit_name: invoiceUnitName,
         default_payment_method: defaultPaymentMethod,
         document_fallback_label: documentFallbackLabel,
+        timezone,
       });
       await saveKindLabels.mutateAsync(labels);
       toast.success(t("invoiceSettings.toast.saved"));
@@ -286,6 +293,23 @@ function SettingsForm({
             disabled={editingDisabled}
             invalid={documentFallbackLabel.trim() === ""}
             errorText={t("invoiceSettings.textRequired")}
+          />
+        </CardContent>
+      </Card>
+
+      <Card>
+        <CardHeader>
+          <CardTitle>{t("invoiceSettings.card.timezone.title")}</CardTitle>
+          <CardDescription>{t("invoiceSettings.card.timezone.desc")}</CardDescription>
+        </CardHeader>
+        <CardContent className="grid gap-4 sm:grid-cols-2">
+          <Field
+            label={t("invoiceSettings.field.timezone")}
+            value={timezone}
+            onChange={setTimezone}
+            disabled={editingDisabled}
+            invalid={timezoneInvalid}
+            errorText={t("invoiceSettings.timezoneInvalid")}
           />
         </CardContent>
       </Card>
