@@ -55,8 +55,8 @@ import { cn } from "@/lib/utils";
 const DEAL_TABS = ["sale", "details", "costs", "buyer", "seller"] as const;
 
 const DEAL_TAB_LABEL_KEY: Record<(typeof DEAL_TABS)[number], string> = {
-  sale: "commissionDeals.sale.title",
-  details: "commissionDeals.facts.title",
+  sale: "commissionDeals.tabs.sale",
+  details: "commissionDeals.tabs.details",
   costs: "commissionDeals.costs.title",
   buyer: "commissionDeals.side.buyer",
   seller: "commissionDeals.side.seller",

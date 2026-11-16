@@ -1,6 +1,7 @@
 import { Plus, Trash2 } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
+import { DatePicker } from "@/components/ui/date-picker";
 import { Input } from "@/components/ui/input";
 import {
   Select,
@@ -78,12 +79,11 @@ export function DealCostsCard({
               aria-label={t("commissionDeals.costs.amount")}
               disabled={disabled}
             />
-            <Input
+            <DatePicker
               className="w-40"
-              type="date"
               value={cost.incurredOn}
-              onChange={(event) => setCost(index, { incurredOn: event.target.value })}
-              aria-label={t("commissionDeals.costs.date")}
+              onChange={(value) => setCost(index, { incurredOn: value })}
+              ariaLabel={t("commissionDeals.costs.date")}
               disabled={disabled}
             />
             <Button
