@@ -77,6 +77,7 @@ import {
 } from "@/lib/data/format";
 import { ErrorState, TableSkeleton } from "@/components/documents/query-states";
 import { CompanyChip } from "@/components/documents/badges";
+import { propstackUnitUrl } from "@/lib/crm/propstack";
 import { PdfPane } from "@/components/documents/pdf-pane";
 import { cn } from "@/lib/utils";
 import { SortControl } from "@/components/data-table/sort-control";
@@ -429,6 +430,7 @@ function OutgoingInvoicesPage() {
                 </TableHead>
                 <TableHead>{t("outgoingInvoices.list.col.nr")}</TableHead>
                 <TableHead>{t("outgoingInvoices.list.col.customer")}</TableHead>
+                <TableHead>{t("outgoingInvoices.list.col.property")}</TableHead>
                 <TableHead>{t("outgoingInvoices.list.col.company")}</TableHead>
                 <TableHead>{t("outgoingInvoices.list.col.date")}</TableHead>
                 <TableHead>{t("outgoingInvoices.list.col.due")}</TableHead>
@@ -456,6 +458,9 @@ function OutgoingInvoicesPage() {
                   </TableCell>
                   <TableCell className="text-sm text-foreground">
                     {inv.customers?.name ?? "—"}
+                  </TableCell>
+                  <TableCell className="text-sm">
+                    <PropertyCell deal={inv.deal ?? null} />
                   </TableCell>
                   <TableCell>
                     <CompanyChip
@@ -491,7 +496,7 @@ function OutgoingInvoicesPage() {
               ))}
               {view.total === 0 && (
                 <TableRow>
-                  <TableCell colSpan={9} className="py-12 text-center text-muted-foreground">
+                  <TableCell colSpan={10} className="py-12 text-center text-muted-foreground">
                     {t("outgoingInvoices.list.empty")}
                   </TableCell>
                 </TableRow>
@@ -655,6 +660,41 @@ function RowIconLink({
 // and reading the address bar.
 function lexwareInvoiceUrl(id: string): string {
   return `https://app.lexware.de/vouchers#!/VoucherList//Invoice/${id}`;
+}
+
+function PropertyCell({
+  deal,
+}: {
+  deal: {
+    id: string;
+    property_label: string | null;
+    property: { external_id: string | null } | null;
+  } | null;
+}) {
+  const { t } = useTranslation();
+
+  if (!deal) return <span className="text-muted-foreground">-</span>;
+
+  return (
+    <div className="flex items-center gap-1">
+      <Link
+        to="/commission-deals/$id"
+        params={{ id: deal.id }}
+        className="truncate text-foreground underline-offset-2 hover:underline"
+      >
+        {deal.property_label ?? t("outgoingInvoices.list.property.untitled")}
+      </Link>
+      {deal.property?.external_id ? (
+        <RowIconLink
+          label={t("outgoingInvoices.list.property.openInPropstack")}
+          href={propstackUnitUrl(deal.property.external_id)}
+          className="size-7 text-muted-foreground"
+        >
+          <ExternalLink className="size-3.5" />
+        </RowIconLink>
+      ) : null}
+    </div>
+  );
 }
 
 function LexofficeSyncButton({ invoice }: { invoice: OutgoingInvoice }) {

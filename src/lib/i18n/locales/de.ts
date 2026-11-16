@@ -6466,12 +6466,17 @@ const de = {
       col: {
         nr: "Nr.",
         customer: "Kunde",
+        property: "Immobilie",
         company: "Gesellschaft",
         date: "Datum",
         due: "Fällig",
         amount: "Betrag",
         status: "Status",
         actions: "Aktionen",
+      },
+      property: {
+        untitled: "Keine Immobilie hinterlegt",
+        openInPropstack: "In PropStack öffnen",
       },
       delete: {
         button: "Löschen",
