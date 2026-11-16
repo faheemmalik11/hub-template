@@ -4943,8 +4943,24 @@ const en = {
     back: "Commissions",
     notFound: "This sale no longer exists.",
     tabs: {
-      sale: "Sale price & dates",
-      details: "Sale ownership & status",
+      dealDetails: "Deal Details",
+      ownership: "Ownership & Status",
+      calculation: "Calculation",
+      invoices: "Invoices",
+    },
+    overview: {
+      title: "Commission Overview",
+      buyerCommission: "Buyer Commission",
+      sellerCommission: "Seller Commission",
+      total: "Total Commission",
+      valid: "No calculation issues. The commission is valid and can be invoiced.",
+      invalid: "There are {{count}} problems with this calculation. Open the Calculation tab to fix them.",
+    },
+    info: {
+      title: "Deal Information",
+      edit: "Edit",
+      yes: "Yes",
+      no: "No",
     },
     sale: {
       title: "Sale",
@@ -5129,6 +5145,8 @@ const en = {
       vatLine: "Net {{net}}, VAT {{vat}}",
       sum: "All invoices together",
       unknownCustomer: "Unknown customer",
+      viewPreview: "View Preview",
+      notReady: "This deal can't be previewed yet. Fix the problems in the Calculation tab first.",
     },
     invoices: {
       title: "Invoices",
@@ -5167,11 +5185,12 @@ const en = {
       approveFailed: "The approval failed.",
       unsaved: "Not saved",
       saveFirst: "Save first, then approve.",
-      approvedNote: "Approved on {{when}}. Any change withdraws the approval.",
+      approvedNote: "This deal was approved by {{name}} on {{when}}.",
       createInvoices: "Create invoices",
       creatingInvoices: "Creating invoices …",
       invoicesCreated: "Invoices created.",
       createInvoicesFailed: "Creating the invoices failed.",
+      more: "More",
     },
   },
   bankSettings: {
@@ -6208,6 +6227,7 @@ const en = {
         due: "Due",
         amount: "Amount",
         status: "Status",
+        actions: "Actions",
       },
       delete: {
         button: "Delete",
