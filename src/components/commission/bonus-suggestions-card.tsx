@@ -18,7 +18,7 @@ import {
   type BonusSuggestion,
 } from "@/kit/lib/commission/bonuses";
 import { errorText, formatEUR } from "@/lib/data/format";
-import { useTranslation } from "@/lib/i18n";
+import { Trans, useTranslation } from "@/lib/i18n";
 
 function cents(euros: number): number {
   return Math.round(euros * 100);
@@ -105,7 +105,12 @@ export function BonusSuggestionsCard({ deal }: { deal: Deal }) {
       <h2 className="text-base font-semibold text-foreground">
         {t("commissionDeals.bonuses.title")}
       </h2>
-      <p className="mt-1 text-xs text-muted-foreground">{t("commissionDeals.bonuses.hint")}</p>
+      <p className="mt-1 text-xs text-muted-foreground">
+        <Trans
+          i18nKey="commissionDeals.bonuses.hint"
+          components={{ strong: <strong className="font-semibold text-foreground" /> }}
+        />
+      </p>
       {suggestions.length === 0 && (
         <p className="mt-3 text-sm text-muted-foreground">{t("commissionDeals.bonuses.none")}</p>
       )}
@@ -114,7 +119,7 @@ export function BonusSuggestionsCard({ deal }: { deal: Deal }) {
           const done = existing.get(suggestion.type as BonusType);
           return (
             <li key={suggestion.type} className="rounded-lg border border-border/60 p-3">
-              <div className="flex flex-wrap items-center justify-between gap-2">
+              <div className="flex flex-wrap items-start justify-between gap-2">
                 <div className="min-w-0">
                   <div className="text-sm font-medium">
                     {t(`brokerBonuses.types.${suggestion.type}`)}

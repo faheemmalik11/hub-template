@@ -5143,7 +5143,7 @@ const de = {
     },
     bonuses: {
       title: "Boni für diesen Verkauf",
-      hint: "Diese Boni werden automatisch aus diesem Verkauf berechnet. Mit „Diesen Bonus vorschlagen“ geht der Bonus an den Makler. Der Makler bestätigt ihn, danach prüft und genehmigt ein Vorgesetzter ihn.",
+      hint: "Diese Boni werden automatisch aus diesem Verkauf berechnet. Sobald ein Bonus bereit ist, auf <strong>Diesen Bonus vorschlagen</strong> klicken, um ihn an den Makler zu schicken. Der Makler bestätigt ihn, danach prüft und genehmigt ein Vorgesetzter ihn.",
       none: "Für diesen Verkauf entsteht kein Bonus.",
       create: "Diesen Bonus vorschlagen",
       created: "Angelegt",
