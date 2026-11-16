@@ -246,6 +246,16 @@ function lexofficeTimestamp(date: string | null): string {
   return date ? new Date(`${date}T00:00:00Z`).toISOString() : new Date().toISOString();
 }
 
+// Lexware has no field for an outright due date on an invoice: it derives one from
+// paymentConditions.paymentTermDuration (days from the voucher date), and silently falls back to
+// the organisation's own default term if that is left out.
+function paymentTermDays(dueDate: string): number {
+  const today = new Date();
+  const todayUtc = Date.UTC(today.getUTCFullYear(), today.getUTCMonth(), today.getUTCDate());
+  const due = new Date(`${dueDate}T00:00:00Z`).getTime();
+  return Math.max(Math.round((due - todayUtc) / 86_400_000), 0);
+}
+
 async function buildInvoicePayload(
   invoice: OutgoingInvoiceRow,
   customer: CustomerRow,
@@ -262,10 +272,13 @@ async function buildInvoicePayload(
   const description = property ? `${label}: ${property.name}` : label;
 
   const voucherDate = lexofficeTimestamp(null);
+  const days = invoice.due_date ? paymentTermDays(invoice.due_date) : null;
 
   return {
     voucherDate,
-    dueDate: invoice.due_date ? lexofficeTimestamp(invoice.due_date) : undefined,
+    paymentConditions: days !== null
+      ? { paymentTermLabel: `Zahlbar innerhalb von ${days} Tagen, ohne Abzug.`, paymentTermDuration: days }
+      : undefined,
     shippingConditions: { shippingDate: voucherDate, shippingType: "service" },
     address: buildAddress(customer, contactId, tax.country),
     lineItems: [
