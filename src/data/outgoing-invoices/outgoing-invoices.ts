@@ -178,7 +178,11 @@ export function useOutgoingInvoices(filter?: OutgoingInvoiceFilter) {
       return fetchAllRows<OutgoingInvoice>((from, to, withCount) => {
         let query = sb
           .from(TABLE.outgoingInvoices)
-          .select(`*, ${TABLE.customers}(*)`, withCount ? { count: "exact" } : undefined)
+          .select(
+            `*, ${TABLE.customers}(*), ` +
+              `deal:${TABLE.deals}(id, property_label, property:${TABLE.properties}(external_id))`,
+            withCount ? { count: "exact" } : undefined,
+          )
           .is("deleted_at", null);
         if (filter?.companyId) query = query.eq("company_id", filter.companyId);
         if (filter?.customerId) query = query.eq("customer_id", filter.customerId);

@@ -6231,12 +6231,17 @@ const en = {
       col: {
         nr: "No.",
         customer: "Customer",
+        property: "Property",
         company: "Company",
         date: "Date",
         due: "Due",
         amount: "Amount",
         status: "Status",
         actions: "Actions",
+      },
+      property: {
+        untitled: "No property set",
+        openInPropstack: "Open in PropStack",
       },
       delete: {
         button: "Delete",

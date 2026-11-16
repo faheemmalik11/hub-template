@@ -1785,6 +1785,12 @@ export interface OutgoingInvoice {
   lexoffice_sync_error?: string | null;
   // Optional PostgREST-embedded relation (select "*, customers(*)").
   customers?: Customer | null;
+  // Optional PostgREST-embedded relation (select "*, deal:deals(...)").
+  deal?: {
+    id: string;
+    property_label: string | null;
+    property: { external_id: string | null } | null;
+  } | null;
 }
 
 // One stored file per uploaded outgoing invoice — table `outgoing_invoice_files` (migration 0085).
