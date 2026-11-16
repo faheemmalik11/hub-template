@@ -5150,6 +5150,7 @@ const de = {
       failed: "Der Vorschlag konnte nicht angelegt werden.",
       nobody: "Noch kein Makler gewählt",
       waiting: "Noch nicht bereit: {{reasons}}",
+      waitingForFix: "Dort hingehen: {{reason}}",
       noRemainder: "Nach Abzug von Kosten und Gebühren bleibt nichts übrig.",
       waitingFor: {
         notarisation: "der Verkauf braucht einen Notartermin",

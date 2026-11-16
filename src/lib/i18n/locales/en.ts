@@ -4975,6 +4975,7 @@ const en = {
       failed: "The suggestion could not be created.",
       nobody: "No broker chosen yet",
       waiting: "Not ready yet: {{reasons}}",
+      waitingForFix: "Go fix: {{reason}}",
       noRemainder: "There is nothing left to pay after costs and fees are subtracted.",
       waitingFor: {
         notarisation: "the sale needs a notary date",
