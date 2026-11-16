@@ -46,6 +46,14 @@ export function SideCard({
     set({
       parties: value.parties.map((party, i) => (i === index ? { ...party, ...patch } : party)),
     });
+  const availableCustomerOptions = (index: number) => {
+    const chosenByOthers = new Set(
+      value.parties.flatMap((party, i) => (i === index ? [] : party.customerId ? [party.customerId] : [])),
+    );
+    return customerOptions.filter((option) => !chosenByOthers.has(option.value));
+  };
+  const lastPartyHasNoCustomer =
+    value.parties.length > 0 && !value.parties[value.parties.length - 1].customerId;
 
   const addNewCustomer = async () => {
     const name = newCustomerName.trim();
@@ -129,7 +137,7 @@ export function SideCard({
                       className="flex-1"
                       value={party.customerId || null}
                       onValueChange={(customerId) => setParty(index, { customerId })}
-                      options={customerOptions}
+                      options={availableCustomerOptions(index)}
                       placeholder={t("commissionDeals.side.payerPlaceholder")}
                       searchPlaceholder={t("commissionDeals.side.payerSearch")}
                       emptyText={t("commissionDeals.side.noCustomers")}
@@ -182,7 +190,7 @@ export function SideCard({
                 variant="outline"
                 size="sm"
                 onClick={() => set({ parties: [...value.parties, EMPTY_PARTY] })}
-                disabled={disabled}
+                disabled={disabled || lastPartyHasNoCustomer}
               >
                 <Plus className="size-4" /> {t("commissionDeals.side.addPayer")}
               </Button>
