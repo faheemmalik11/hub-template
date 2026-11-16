@@ -58,6 +58,18 @@ const NUMBER_FIELDS: NumberKey[] = [
   "referrer_tier4plus_amount",
 ];
 
+const PERCENT_FIELDS: NumberKey[] = ["own_lead_share_percent", "company_lead_share_percent"];
+
+function sanitizeAmountInput(raw: string): string {
+  const digitsAndSeparators = raw.replace(/[^0-9.,]/g, "");
+  const separatorIndex = digitsAndSeparators.search(/[.,]/);
+  if (separatorIndex === -1) return digitsAndSeparators;
+  return (
+    digitsAndSeparators.slice(0, separatorIndex + 1) +
+    digitsAndSeparators.slice(separatorIndex + 1).replace(/[.,]/g, "")
+  );
+}
+
 const DEAL_STAGE_OPTIONS: DealStage[] = ["notarised", "invoiced", "commission_received"];
 const REFERRER_TIER_COUNTS_STATUS_OPTIONS: ReferrerTierCountsStatus[] = DEAL_STAGE_OPTIONS;
 const REFERRER_TIER_RESET_OPTIONS: ReferrerTierReset[] = ["yearly", "never"];
@@ -120,11 +132,14 @@ export function BonusSettingsDialog() {
     const parsed = parseDecimal(valueOf(key));
     if (parsed === null) return t("brokerBonuses.settings.invalidNumber");
     if (parsed < 0) return t("brokerBonuses.settings.invalidNegative");
+    if (PERCENT_FIELDS.includes(key) && parsed > 100) {
+      return t("brokerBonuses.settings.invalidPercent");
+    }
     return null;
   };
   const hasErrors = NUMBER_FIELDS.some((key) => {
     const parsed = parseDecimal(valueOf(key));
-    return parsed === null || parsed < 0;
+    return parsed === null || parsed < 0 || (PERCENT_FIELDS.includes(key) && parsed > 100);
   });
   const isDirty =
     !!settings &&
@@ -149,7 +164,7 @@ export function BonusSettingsDialog() {
     };
     for (const key of NUMBER_FIELDS) {
       const value = parseDecimal(valueOf(key));
-      if (value === null || value < 0) {
+      if (value === null || value < 0 || (PERCENT_FIELDS.includes(key) && value > 100)) {
         setTouched((current) => ({ ...current, [key]: true }));
         return toast.error(t("brokerBonuses.settings.invalid"));
       }
@@ -188,7 +203,9 @@ export function BonusSettingsDialog() {
                     <Input
                       inputMode="decimal"
                       value={valueOf(key)}
-                      onChange={(event) => setTyped({ ...typed, [key]: event.target.value })}
+                      onChange={(event) =>
+                        setTyped({ ...typed, [key]: sanitizeAmountInput(event.target.value) })
+                      }
                       onBlur={() => setTouched((current) => ({ ...current, [key]: true }))}
                       aria-invalid={error ? true : undefined}
                       className={error ? "border-destructive" : undefined}

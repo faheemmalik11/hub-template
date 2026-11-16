@@ -4803,6 +4803,7 @@ const en = {
       invalid: "Please enter numbers only.",
       invalidNumber: "Please enter a number.",
       invalidNegative: "Please enter 0 or more.",
+      invalidPercent: "Must be a number from 0 to 100.",
     },
     expandNote: "Show the whole note",
     collapseNote: "Collapse the note",
