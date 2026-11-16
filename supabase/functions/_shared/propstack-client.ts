@@ -65,15 +65,19 @@ async function propstackFetch(
   return response;
 }
 
-export async function fetchUnitPage(apiKey: string, page: number): Promise<PropstackUnitPage> {
+export async function fetchUnitPage(
+  apiKey: string,
+  page: number,
+  sort: { by: string; order: "asc" | "desc" } = { by: "id", order: "asc" },
+): Promise<PropstackUnitPage> {
   const params = new URLSearchParams({
     expand: "1",
     with_meta: "1",
     archived: "-1",
     per: String(PROPSTACK_PAGE_SIZE),
     page: String(page),
-    sort_by: "id",
-    order: "asc",
+    sort_by: sort.by,
+    order: sort.order,
   });
   const response = await propstackFetch(apiKey, `/units?${params}`);
   return (await response.json()) as PropstackUnitPage;
