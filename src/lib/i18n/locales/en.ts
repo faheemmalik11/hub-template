@@ -4351,16 +4351,15 @@ const en = {
   },
   invoiceSettings: {
     title: "Invoice defaults",
-    subtitle:
-      "Which tax rate, which country and which wording are used when an invoice or a receipt goes to the accounting system and the record itself does not say.",
+    subtitle: "These are the default tax rate, country and wording for invoices and receipts.",
     readOnlyHint:
       "Only administrators can change these defaults. Who that is: Administration › Team.",
-    effectHint:
-      "Takes effect from the moment you save. Invoices and receipts already sent stay as they are.",
+    effectHint: "Changes apply only to new invoices and receipts, not to ones you already sent.",
     lastChangedBy: "Last changed by {{who}} on {{when}}.",
     unknown: "unknown",
     save: "Save",
     saving: "Saving …",
+    discard: "Discard changes",
     textRequired: "Please enter some text.",
     defaultVatRateInvalid: "Please enter a number between 0 and 100.",
     countryCodeInvalid: "Please enter a two-letter country code in capitals, for example DE.",
@@ -4406,7 +4405,7 @@ const en = {
       kindLabel: "Wording",
       timezone: "Time zone",
     },
-    timezoneInvalid: "Please enter a time zone name, for example Europe/Berlin.",
+    timezoneInvalid: "Please select a time zone.",
     kindLabels: {
       add: "Add an invoice type",
       remove: "Remove this invoice type",
@@ -4937,6 +4936,10 @@ const en = {
     },
     back: "Commissions",
     notFound: "This sale no longer exists.",
+    tabs: {
+      sale: "Sale price & dates",
+      details: "Sale ownership & status",
+    },
     sale: {
       title: "Sale",
       property: "Property",
@@ -5039,6 +5042,7 @@ const en = {
       title: "The CRM changed after this sale was opened",
       explain: "Check these before approving. Accepting keeps the sale as it is now.",
       wasNow: "was {{was}}, now {{became}}",
+      yourInvoice: "Your invoice is set to: {{value}}",
       empty: "empty",
       accept: "Accept the new values",
       accepting: "Accepting…",
