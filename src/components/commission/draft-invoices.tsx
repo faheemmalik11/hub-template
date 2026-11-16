@@ -1,3 +1,5 @@
+import { AlertTriangle } from "lucide-react";
+
 import type { CommissionProblem, CommissionResult, CommissionSide } from "@/kit/lib/commission";
 import { formatEUR } from "@/lib/data/format";
 import { useTranslation } from "@/lib/i18n";
@@ -36,32 +38,42 @@ export function DraftInvoices({
 
   if (!result.ok) {
     return (
-      <div className="rounded-lg border border-dashed border-border p-4">
-        <h3 className="text-sm font-medium text-foreground">
-          {t("commissionDeals.problems.title")}
-        </h3>
-        <ul className="mt-2 space-y-1.5 text-sm text-muted-foreground">
-          {result.problems.map((problem, index) => (
-            <li key={index} className="flex flex-wrap items-center gap-x-1.5">
-              <span>
-                •{" "}
-                {t(`commissionDeals.problems.${problem.problem}`, { side: sideName(problem.side) })}
-              </span>
-              {problem.side && onJumpToField && (
-                <button
-                  type="button"
-                  onClick={() => {
-                    const target = anchorForProblem(problem.side!, problem.problem);
-                    onJumpToField(target.tab, target.id);
-                  }}
-                  className="text-xs font-medium text-brand-dark underline-offset-4 hover:underline"
+      <div className="rounded-lg border border-destructive/40 bg-destructive/5 px-3 py-2">
+        <div className="flex items-start gap-2">
+          <AlertTriangle aria-hidden className="mt-0.5 size-4 shrink-0 text-destructive" />
+          <div className="min-w-0 flex-1">
+            <p className="text-sm font-medium text-foreground">
+              {t("commissionDeals.problems.title")}
+            </p>
+            <ul className="mt-2 space-y-1">
+              {result.problems.map((problem, index) => (
+                <li
+                  key={index}
+                  className="flex flex-wrap items-center gap-x-1.5 text-xs text-muted-foreground"
                 >
-                  {t("commissionDeals.review.fix")}
-                </button>
-              )}
-            </li>
-          ))}
-        </ul>
+                  <span>
+                    •{" "}
+                    {t(`commissionDeals.problems.${problem.problem}`, {
+                      side: sideName(problem.side),
+                    })}
+                  </span>
+                  {problem.side && onJumpToField && (
+                    <button
+                      type="button"
+                      onClick={() => {
+                        const target = anchorForProblem(problem.side!, problem.problem);
+                        onJumpToField(target.tab, target.id);
+                      }}
+                      className="text-xs font-medium text-brand-dark underline-offset-4 hover:underline"
+                    >
+                      {t("commissionDeals.review.fix")}
+                    </button>
+                  )}
+                </li>
+              ))}
+            </ul>
+          </div>
+        </div>
       </div>
     );
   }
