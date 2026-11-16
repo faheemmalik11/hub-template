@@ -1,11 +1,18 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useEffect, useMemo, useState } from "react";
-import { ArrowLeft, Check, ExternalLink, ImageOff, Info } from "lucide-react";
+import { ArrowLeft, Check, ExternalLink, ImageOff, Info, MoreHorizontal } from "lucide-react";
 import { toast } from "sonner";
 
 import { Button } from "@/components/ui/button";
 import { Combobox, type ComboboxOption } from "@/components/ui/combobox";
 import { DatePicker } from "@/components/ui/date-picker";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 import { Field } from "@/components/ui/feld";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -13,15 +20,18 @@ import { Textarea } from "@/components/ui/textarea";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import type { ReviewLine } from "@/kit/ui";
 import { ErrorState, TableSkeleton } from "@/components/documents/query-states";
-import { DealStatusBadge } from "@/components/commission/deal-status-badge";
+import { DealStatusStepper } from "@/components/commission/deal-status-stepper";
 import { BonusSuggestionsCard } from "@/components/commission/bonus-suggestions-card";
+import { DealCommissionOverviewCard } from "@/components/commission/deal-commission-overview-card";
 import { DealDonationCard } from "@/components/commission/deal-donation-card";
 import { DealReferrerBonusCard } from "@/components/commission/deal-referrer-bonus-card";
 import { DealCostsCard } from "@/components/commission/deal-costs-card";
 import { DealFactsCard } from "@/components/commission/deal-facts-card";
+import { DealInfoSummaryCard } from "@/components/commission/deal-info-summary-card";
 import { CrmChangesCard } from "@/components/commission/crm-changes-card";
 import { DealInvoicesCard } from "@/components/commission/deal-invoices-card";
 import { DraftInvoices } from "@/components/commission/draft-invoices";
+import { DraftInvoicePreviewTeaser } from "@/components/commission/draft-invoice-preview-teaser";
 import { SideCard } from "@/components/commission/side-card";
 import { useShellLeafLabel } from "@/kit/components/shell";
 import {
@@ -39,6 +49,7 @@ import {
   useCreateDealInvoices,
   useCustomers,
   useDeal,
+  useEmployees,
   useSaveDeal,
   useUpdateProperty,
 } from "@/data";
@@ -55,14 +66,13 @@ import { useTranslation } from "@/lib/i18n";
 import { tabSearch, useTabParam } from "@/lib/use-tab-param";
 import { cn } from "@/lib/utils";
 
-const DEAL_TABS = ["sale", "details", "costs", "buyer", "seller"] as const;
+const DEAL_TABS = ["dealDetails", "ownership", "calculation", "invoices"] as const;
 
 const DEAL_TAB_LABEL_KEY: Record<(typeof DEAL_TABS)[number], string> = {
-  sale: "commissionDeals.tabs.sale",
-  details: "commissionDeals.tabs.details",
-  costs: "commissionDeals.costs.title",
-  buyer: "commissionDeals.side.buyer",
-  seller: "commissionDeals.side.seller",
+  dealDetails: "commissionDeals.tabs.dealDetails",
+  ownership: "commissionDeals.tabs.ownership",
+  calculation: "commissionDeals.tabs.calculation",
+  invoices: "commissionDeals.tabs.invoices",
 };
 
 export const Route = createFileRoute("/commission-deals/$id")({
@@ -144,7 +154,7 @@ function DealEditor({ deal }: { deal: Deal }) {
     useFeature(PERMISSIONS.bonusesSuggestReferrer) && can(PERMISSIONS.bonusesReview);
   const managesDonations = can(PERMISSIONS.donationsManage);
   const syncsPaymentDueDate = useFeature(PERMISSIONS.propstackPaymentDueDateSync);
-  const [activeTab, setActiveTab] = useTabParam(DEAL_TABS, "sale");
+  const [activeTab, setActiveTab] = useTabParam(DEAL_TABS, "dealDetails");
   const [form, setForm] = useState<DealForm>(() => dealFormOf(deal));
   const [savedForm, setSavedForm] = useState(() => JSON.stringify(dealFormOf(deal)));
   const [dueDate, setDueDate] = useState(deal.property?.payment_due_date ?? "");
@@ -156,6 +166,7 @@ function DealEditor({ deal }: { deal: Deal }) {
   const [isSaving, setIsSaving] = useState(false);
   const customersQ = useCustomers();
   const companiesQ = useCompanies();
+  const employeesQ = useEmployees();
   const createCustomer = useCreateCustomer();
   const save = useSaveDeal(deal.id);
   const approve = useApproveDeal(deal.id);
@@ -181,14 +192,14 @@ function DealEditor({ deal }: { deal: Deal }) {
       lines.push({
         field: "purchase_price",
         text: t("commissionDeals.review.missingPrice"),
-        target: { tab: "sale", anchor: "field-purchase-price" },
+        target: { tab: "dealDetails", anchor: "field-purchase-price" },
       });
     }
     if (deal.notarised_on === null) {
       lines.push({
         field: "notarised_on",
         text: t("commissionDeals.review.missingNotarisedOn"),
-        target: { tab: "sale", anchor: "field-notarised-on" },
+        target: { tab: "dealDetails", anchor: "field-notarised-on" },
       });
     }
     for (const side of SIDES) {
@@ -203,7 +214,7 @@ function DealEditor({ deal }: { deal: Deal }) {
           field: `${side}_fee`,
           title: t(`commissionDeals.side.${side}`),
           text: t("commissionDeals.review.missingFee"),
-          target: { tab: side, anchor: `side-${side}-fee` },
+          target: { tab: "dealDetails", anchor: `side-${side}-fee` },
         });
       }
     }
@@ -211,7 +222,7 @@ function DealEditor({ deal }: { deal: Deal }) {
       lines.push({
         field: "payment_due_date",
         text: t("commissionDeals.review.missingDueDate"),
-        target: { tab: "sale", anchor: "field-due-date" },
+        target: { tab: "dealDetails", anchor: "field-due-date" },
       });
     }
     return lines;
@@ -260,6 +271,10 @@ function DealEditor({ deal }: { deal: Deal }) {
   );
   const customerName = (customerId: string) =>
     customersQ.data?.find((customer) => customer.id === customerId)?.name;
+  const employeeName = (userId: string | null) =>
+    employeesQ.data?.find((employee) => employee.id === userId)?.name ??
+    employeesQ.data?.find((employee) => employee.id === userId)?.email ??
+    t("commissionDeals.bonuses.nobody");
   const companyOptions = useMemo<ComboboxOption[]>(
     () =>
       (companiesQ.data ?? []).map((company) => ({
@@ -354,45 +369,160 @@ function DealEditor({ deal }: { deal: Deal }) {
     });
   };
 
+  const showSave = mayEdit;
+  const showApprove =
+    mayApprove &&
+    deal.status !== "approved" &&
+    deal.status !== "invoiced" &&
+    deal.status !== "settled";
+  const showCreateInvoices = mayApprove && deal.status === "approved" && result.ok;
+  const saveDisabled = isSaving || !unsaved;
+  const approveDisabled = approve.isPending || unsaved || deal.status !== "ready";
+  const createInvoicesDisabled = createInvoices.isPending;
+
+  const primaryAction =
+    unsaved && showSave
+      ? "save"
+      : showCreateInvoices
+        ? "createInvoices"
+        : showApprove
+          ? "approve"
+          : showSave
+            ? "save"
+            : null;
+  const secondaryActions = (["save", "approve", "createInvoices"] as const).filter(
+    (action) =>
+      action !== primaryAction &&
+      ((action === "save" && showSave) ||
+        (action === "approve" && showApprove) ||
+        (action === "createInvoices" && showCreateInvoices)),
+  );
+  const hasPropstackLink = !!deal.property?.external_id;
+  const showMoreMenu = secondaryActions.length > 0 || hasPropstackLink;
+
   return (
     <>
-      <div className="mt-3 flex flex-wrap items-center gap-3">
-        <DealPropertyThumbnail url={deal.property?.cover_image_url ?? null} />
-        <h1 className="text-2xl font-semibold tracking-tight text-foreground">
-          {deal.property?.name ?? deal.property_label ?? t("commissionDeals.sale.title")}
-        </h1>
-        <DealStatusBadge status={deal.status} />
-        {deal.property?.external_id && (
-          <a
-            href={propstackUnitUrl(deal.property.external_id)}
-            target="_blank"
-            rel="noreferrer"
-            title={t("commissionDeals.actions.openInPropstack")}
-            className="inline-flex items-center gap-1 rounded-md bg-brand/10 px-2 py-0.5 text-xs font-medium text-brand transition hover:brightness-95"
-          >
-            {t("commissionDeals.actions.openInPropstack")}
-            <ExternalLink className="size-3" />
-          </a>
-        )}
-        {unsaved && (
-          <span className="text-sm text-muted-foreground">
-            {t("commissionDeals.actions.unsaved")}
-          </span>
-        )}
-      </div>
-      {deal.property_label && (
-        <p className="mt-1 text-sm text-muted-foreground">
-          {deal.property ? (
-            <Link
-              to="/properties/$code"
-              params={{ code: deal.property.code }}
-              className="hover:underline"
-            >
-              {deal.property_label}
-            </Link>
-          ) : (
-            deal.property_label
+      <div className="mt-3 flex flex-wrap items-start justify-between gap-4">
+        <div className="flex flex-wrap items-center gap-3">
+          <DealPropertyThumbnail url={deal.property?.cover_image_url ?? null} />
+          <div>
+            <h1 className="text-2xl font-semibold tracking-tight text-foreground">
+              {deal.property?.name ?? deal.property_label ?? t("commissionDeals.sale.title")}
+            </h1>
+            {deal.property_label && (
+              <p className="text-sm text-muted-foreground">
+                {deal.property ? (
+                  <Link
+                    to="/properties/$code"
+                    params={{ code: deal.property.code }}
+                    className="hover:underline"
+                  >
+                    {deal.property_label}
+                  </Link>
+                ) : (
+                  deal.property_label
+                )}
+              </p>
+            )}
+          </div>
+        </div>
+        <div className="flex flex-wrap items-center gap-3">
+          <DealStatusStepper status={deal.status} />
+          {unsaved && (
+            <span className="text-sm text-muted-foreground">
+              {t("commissionDeals.actions.unsaved")}
+            </span>
           )}
+          {showMoreMenu && (
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button variant="outline" className="shadow-none">
+                  <MoreHorizontal className="size-4" />
+                  {t("commissionDeals.actions.more")}
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent
+                align="end"
+                className="w-auto min-w-48 [&_[role=menuitem]]:whitespace-nowrap"
+              >
+                {secondaryActions.includes("save") && (
+                  <DropdownMenuItem
+                    className="cursor-pointer"
+                    disabled={saveDisabled}
+                    onSelect={runSave}
+                  >
+                    {t("commissionDeals.actions.save")}
+                  </DropdownMenuItem>
+                )}
+                {secondaryActions.includes("approve") && (
+                  <DropdownMenuItem
+                    className="cursor-pointer"
+                    disabled={approveDisabled}
+                    onSelect={runApprove}
+                  >
+                    <Check className="size-4" /> {t("commissionDeals.actions.approve")}
+                  </DropdownMenuItem>
+                )}
+                {secondaryActions.includes("createInvoices") && (
+                  <DropdownMenuItem
+                    className="cursor-pointer"
+                    disabled={createInvoicesDisabled}
+                    onSelect={runCreateInvoices}
+                  >
+                    <Check className="size-4" /> {t("commissionDeals.actions.createInvoices")}
+                  </DropdownMenuItem>
+                )}
+                {secondaryActions.length > 0 && hasPropstackLink && <DropdownMenuSeparator />}
+                {hasPropstackLink && deal.property?.external_id && (
+                  <DropdownMenuItem asChild className="cursor-pointer">
+                    <a
+                      href={propstackUnitUrl(deal.property.external_id)}
+                      target="_blank"
+                      rel="noreferrer"
+                    >
+                      <ExternalLink className="size-4" />{" "}
+                      {t("commissionDeals.actions.openInPropstack")}
+                    </a>
+                  </DropdownMenuItem>
+                )}
+              </DropdownMenuContent>
+            </DropdownMenu>
+          )}
+          {primaryAction === "save" && (
+            <Button className="shadow-none" onClick={runSave} disabled={saveDisabled}>
+              {isSaving ? t("commissionDeals.actions.saving") : t("commissionDeals.actions.save")}
+            </Button>
+          )}
+          {primaryAction === "approve" && (
+            <Button
+              className="shadow-none"
+              variant="outline"
+              onClick={runApprove}
+              disabled={approveDisabled}
+            >
+              <Check className="size-4" />
+              {approve.isPending
+                ? t("commissionDeals.actions.approving")
+                : t("commissionDeals.actions.approve")}
+            </Button>
+          )}
+          {primaryAction === "createInvoices" && (
+            <Button
+              className="shadow-none"
+              onClick={runCreateInvoices}
+              disabled={createInvoicesDisabled}
+            >
+              <Check className="size-4" />
+              {createInvoices.isPending
+                ? t("commissionDeals.actions.creatingInvoices")
+                : t("commissionDeals.actions.createInvoices")}
+            </Button>
+          )}
+        </div>
+      </div>
+      {unsaved && deal.status !== "approved" && mayApprove && result.ok && (
+        <p className="mt-2 text-right text-xs text-muted-foreground">
+          {t("commissionDeals.actions.saveFirst")}
         </p>
       )}
 
@@ -434,6 +564,15 @@ function DealEditor({ deal }: { deal: Deal }) {
         </div>
       )}
 
+      {deal.status === "approved" && deal.approved_at && (
+        <div className="mt-4 rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-900">
+          {t("commissionDeals.actions.approvedNote", {
+            name: employeeName(deal.approved_by),
+            when: formatDateTime(deal.approved_at),
+          })}
+        </div>
+      )}
+
       <div className="mt-6 grid gap-6 lg:grid-cols-[minmax(0,1fr)_400px]">
         <Tabs
           value={activeTab}
@@ -454,7 +593,7 @@ function DealEditor({ deal }: { deal: Deal }) {
           </TabsList>
 
           <div className="min-w-0 flex-1 p-5">
-            <TabsContent value="sale" className="mt-0">
+            <TabsContent value="dealDetails" className="mt-0 space-y-6">
               <div className="@container grid gap-3 @lg:grid-cols-3">
                 {companyOptions.length > 1 && (
                   <Field className="space-y-1.5 @lg:col-span-3">
@@ -521,9 +660,38 @@ function DealEditor({ deal }: { deal: Deal }) {
                   />
                 </Field>
               </div>
+
+              <div className="@container grid gap-4 @lg:grid-cols-2">
+                {SIDES.map((side) => (
+                  <div key={side} className="rounded-lg border border-border/60 p-4">
+                    <h3 className="text-sm font-semibold text-foreground">
+                      {t(`commissionDeals.side.${side}`)}
+                    </h3>
+                    <div className="mt-3">
+                      <SideCard
+                        side={side}
+                        value={form[side]}
+                        onChange={(next) => set({ [side]: next })}
+                        customerOptions={customerOptions}
+                        createCustomer={addCustomer}
+                        disabled={!mayEdit}
+                      />
+                    </div>
+                  </div>
+                ))}
+              </div>
+
+              <div className="@container grid gap-4 @lg:grid-cols-2">
+                <DraftInvoicePreviewTeaser
+                  result={result}
+                  customerName={customerName}
+                  onViewPreview={() => setActiveTab("calculation")}
+                />
+                <DealInfoSummaryCard deal={deal} onEdit={() => setActiveTab("ownership")} />
+              </div>
             </TabsContent>
 
-            <TabsContent value="details" className="mt-0">
+            <TabsContent value="ownership" className="mt-0">
               <DealFactsCard
                 form={form}
                 onChange={set}
@@ -533,46 +701,37 @@ function DealEditor({ deal }: { deal: Deal }) {
               />
             </TabsContent>
 
-            <TabsContent value="costs" className="mt-0">
+            <TabsContent value="calculation" className="mt-0 space-y-6">
               <DealCostsCard
                 costs={form.costs}
                 onChange={(costs) => set({ costs })}
                 disabled={!mayEdit}
               />
+              <div>
+                <h2 className="text-base font-semibold text-foreground">
+                  {t("commissionDeals.drafts.title")}
+                </h2>
+                <p className="mt-1 text-xs text-muted-foreground">
+                  {t("commissionDeals.drafts.hint")}
+                </p>
+                <div className="mt-4">
+                  <DraftInvoices
+                    result={result}
+                    customerName={customerName}
+                    onJumpToField={jumpToAnchor}
+                  />
+                </div>
+              </div>
             </TabsContent>
 
-            {SIDES.map((side) => (
-              <TabsContent key={side} value={side} className="mt-0">
-                <SideCard
-                  side={side}
-                  value={form[side]}
-                  onChange={(next) => set({ [side]: next })}
-                  customerOptions={customerOptions}
-                  createCustomer={addCustomer}
-                  disabled={!mayEdit}
-                />
-              </TabsContent>
-            ))}
+            <TabsContent value="invoices" className="mt-0">
+              <DealInvoicesCard deal={deal} />
+            </TabsContent>
           </div>
         </Tabs>
 
         <aside className="space-y-4 lg:sticky lg:top-4 lg:self-start">
-          <section className="rounded-xl border border-border bg-card p-5">
-            <h2 className="text-base font-semibold text-foreground">
-              {t("commissionDeals.drafts.title")}
-            </h2>
-            <p className="mt-1 text-xs text-muted-foreground">{t("commissionDeals.drafts.hint")}</p>
-            <div className="mt-4">
-              <DraftInvoices
-                result={result}
-                customerName={customerName}
-                onJumpToField={jumpToAnchor}
-              />
-            </div>
-          </section>
-
-          <DealInvoicesCard deal={deal} />
-
+          <DealCommissionOverviewCard result={result} />
           {suggestsBonuses && !unsaved && deal.status !== "settled" && (
             <BonusSuggestionsCard deal={deal} onJumpToField={jumpToAnchor} />
           )}
@@ -581,54 +740,6 @@ function DealEditor({ deal }: { deal: Deal }) {
           )}
           {managesDonations && !unsaved && deal.status !== "settled" && (
             <DealDonationCard deal={deal} />
-          )}
-
-          <div className="flex flex-wrap gap-2">
-            {mayEdit && (
-              <Button className="shadow-none" onClick={runSave} disabled={isSaving || !unsaved}>
-                {isSaving ? t("commissionDeals.actions.saving") : t("commissionDeals.actions.save")}
-              </Button>
-            )}
-            {mayApprove &&
-              deal.status !== "approved" &&
-              deal.status !== "invoiced" &&
-              deal.status !== "settled" && (
-                <Button
-                  className="shadow-none"
-                  variant="outline"
-                  onClick={runApprove}
-                  disabled={approve.isPending || unsaved || deal.status !== "ready"}
-                >
-                  <Check className="size-4" />
-                  {approve.isPending
-                    ? t("commissionDeals.actions.approving")
-                    : t("commissionDeals.actions.approve")}
-                </Button>
-              )}
-            {mayApprove && deal.status === "approved" && result.ok && (
-              <Button
-                className="shadow-none"
-                onClick={runCreateInvoices}
-                disabled={createInvoices.isPending}
-              >
-                <Check className="size-4" />
-                {createInvoices.isPending
-                  ? t("commissionDeals.actions.creatingInvoices")
-                  : t("commissionDeals.actions.createInvoices")}
-              </Button>
-            )}
-          </div>
-          {unsaved && deal.status !== "approved" && mayApprove && result.ok && (
-            <p className="text-xs text-muted-foreground">
-              {t("commissionDeals.actions.saveFirst")}
-            </p>
-          )}
-          {deal.status === "approved" && deal.approved_at && (
-            <p className="text-xs text-muted-foreground">
-              {t("commissionDeals.actions.approvedNote", {
-                when: formatDateTime(deal.approved_at),
-              })}
-            </p>
           )}
         </aside>
       </div>

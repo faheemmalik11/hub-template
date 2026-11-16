@@ -14,11 +14,12 @@ function anchorForProblem(
   side: CommissionSide,
   problem: CommissionProblem,
 ): { tab: string; id: string } {
-  if (problem === "purchase_price_missing") return { tab: "sale", id: "field-purchase-price" };
+  if (problem === "purchase_price_missing")
+    return { tab: "dealDetails", id: "field-purchase-price" };
   if (problem === "fee_missing" || problem === "fee_not_positive") {
-    return { tab: side, id: `side-${side}-fee` };
+    return { tab: "dealDetails", id: `side-${side}-fee` };
   }
-  return { tab: side, id: `side-${side}-payers` };
+  return { tab: "dealDetails", id: `side-${side}-payers` };
 }
 
 export function DraftInvoices({

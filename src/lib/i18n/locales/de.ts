@@ -5118,8 +5118,24 @@ const de = {
     back: "Provisionen",
     notFound: "Diesen Verkauf gibt es nicht mehr.",
     tabs: {
-      sale: "Verkaufspreis & Termine",
-      details: "Verkaufszuordnung & Status",
+      dealDetails: "Verkaufsdetails",
+      ownership: "Status & Beteiligte",
+      calculation: "Berechnung",
+      invoices: "Rechnungen",
+    },
+    overview: {
+      title: "Provisionsübersicht",
+      buyerCommission: "Käuferprovision",
+      sellerCommission: "Verkäuferprovision",
+      total: "Gesamtprovision",
+      valid: "Es gibt keine Probleme bei der Berechnung. Die Provision ist gültig und kann abgerechnet werden.",
+      invalid: "Es gibt {{count}} Probleme bei dieser Berechnung. Öffnen Sie den Tab Berechnung, um sie zu beheben.",
+    },
+    info: {
+      title: "Informationen zum Geschäft",
+      edit: "Bearbeiten",
+      yes: "Ja",
+      no: "Nein",
     },
     sale: {
       title: "Verkauf",
@@ -5305,6 +5321,8 @@ const de = {
       vatLine: "Netto {{net}}, USt {{vat}}",
       sum: "Summe aller Rechnungen",
       unknownCustomer: "Unbekannter Kunde",
+      viewPreview: "Vorschau ansehen",
+      notReady: "Für dieses Geschäft gibt es noch keine Vorschau. Beheben Sie zuerst die Probleme im Tab Berechnung.",
     },
     invoices: {
       title: "Rechnungen",
@@ -5343,11 +5361,12 @@ const de = {
       approveFailed: "Die Freigabe ist fehlgeschlagen.",
       unsaved: "Nicht gespeichert",
       saveFirst: "Erst speichern, dann freigeben.",
-      approvedNote: "Freigegeben am {{when}}. Jede Änderung hebt die Freigabe auf.",
+      approvedNote: "Dieses Geschäft wurde am {{when}} von {{name}} freigegeben.",
       createInvoices: "Rechnungen erstellen",
       creatingInvoices: "Rechnungen werden erstellt …",
       invoicesCreated: "Rechnungen erstellt.",
       createInvoicesFailed: "Die Rechnungen konnten nicht erstellt werden.",
+      more: "Mehr",
     },
   },
   bankSettings: {
@@ -6443,6 +6462,7 @@ const de = {
         due: "Fällig",
         amount: "Betrag",
         status: "Status",
+        actions: "Aktionen",
       },
       delete: {
         button: "Löschen",
