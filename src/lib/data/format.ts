@@ -622,6 +622,14 @@ export const DEAL_STATUS_META: Record<string, { cls: string }> = {
   settled: { cls: "bg-slate-100 text-slate-700 border-transparent" },
 };
 
+export const OUTGOING_INVOICE_EFFECTIVE_STATUS_META: Record<string, { cls: string }> = {
+  draft: { cls: "bg-muted text-muted-foreground border-transparent" },
+  open: { cls: "bg-amber-100 text-amber-800 border-transparent" },
+  overdue: { cls: "bg-red-100 text-red-800 border-transparent" },
+  paid: { cls: "bg-emerald-100 text-emerald-800 border-transparent" },
+  voided: { cls: "bg-slate-100 text-slate-700 border-transparent" },
+};
+
 // ---- Field provenance (migration 0025; label text via i18n key `documents.quelle.<value>`) ----
 // Deliberately ranked by authority rather than by field: a human decision is the strongest and
 // gets the strongest colour, a rule is settled but automatic, and the AI is a suggestion. The

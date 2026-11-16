@@ -31,7 +31,7 @@ export function TablePagination({
 }) {
   const { t } = useTranslation();
   return (
-    <div className="mt-4 flex flex-col gap-3 border-t border-border pt-4 sm:flex-row sm:items-center sm:justify-between">
+    <div className="mt-4 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
       <div className="flex flex-wrap items-center gap-2 text-sm text-foreground">
         <span className="font-medium">{t("common.pagination.perPage")}</span>
         <Combobox

@@ -6442,6 +6442,7 @@ const de = {
       lexoffice: {
         send: "An Lexoffice senden",
         sent: "An Lexoffice gesendet",
+        openInLexware: "In Lexware öffnen",
         pending: "Wird an Lexoffice gesendet.",
         retry: "Erneut versuchen",
         timedOut: "Das hat zu lange gedauert. Bitte erneut versuchen.",

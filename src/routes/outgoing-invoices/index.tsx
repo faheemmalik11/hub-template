@@ -15,6 +15,7 @@ import { toast } from "sonner";
 
 import { QueueKpiRow } from "@/components/invoice-queue/queue-kpi-row";
 import type { QueueTone } from "@/components/invoice-queue/queue-kpi-card";
+import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -59,7 +60,12 @@ import {
 import { useFeature } from "@/data/use-feature";
 import { PERMISSIONS } from "@/config/permissions";
 import { lexofficeSyncIsStuck } from "@/lib/lexoffice-sync";
-import { errorText, formatDate, formatEUR } from "@/lib/data/format";
+import {
+  errorText,
+  formatDate,
+  formatEUR,
+  OUTGOING_INVOICE_EFFECTIVE_STATUS_META,
+} from "@/lib/data/format";
 import { ErrorState, TableSkeleton } from "@/components/documents/query-states";
 import { CompanyChip } from "@/components/documents/badges";
 import { PdfPane } from "@/components/documents/pdf-pane";
@@ -270,15 +276,6 @@ function OutgoingInvoicesPage() {
         <QueueKpiRow className="mt-6" cards={queueCards} loading={invoicesQ.isLoading} />
       </div>
 
-      {/* The total is not a filter, so it is a line rather than a card: a fourth card would be
-          active on every fresh page and read as a filter nobody applied. */}
-      <p className="mt-2 text-xs text-muted-foreground">
-        {t("outgoingInvoices.list.kpi.volumeLine", {
-          count: metrics.total,
-          total: formatEUR(metrics.volume),
-        })}
-      </p>
-
       <div className="mt-6 flex flex-wrap items-end gap-3" data-tour="outgoing-filters">
         <div className="relative w-full max-w-sm">
           <Search className="absolute left-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
@@ -354,7 +351,9 @@ function OutgoingInvoicesPage() {
                   {t("outgoingInvoices.list.col.amount")}
                 </TableHead>
                 <TableHead>{t("outgoingInvoices.list.col.status")}</TableHead>
-                <TableHead className="w-[132px]" />
+                <TableHead className="w-[132px] text-right">
+                  {t("outgoingInvoices.list.col.actions")}
+                </TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
@@ -438,6 +437,21 @@ function OutgoingStatusCell({ invoice }: { invoice: OutgoingInvoice }) {
   const { t } = useTranslation();
   const setStatus = useSetUploadedOutgoingInvoiceStatus();
 
+  if (invoice.source !== "upload") {
+    const effective = effectiveStatus(invoice.status, paymentDueOn(invoice));
+    return (
+      <Badge
+        variant="outline"
+        className={cn(
+          "whitespace-nowrap font-medium",
+          OUTGOING_INVOICE_EFFECTIVE_STATUS_META[effective]?.cls,
+        )}
+      >
+        {t(`outgoingInvoices.status.${effective}`)}
+      </Badge>
+    );
+  }
+
   return (
     <Select
       value={invoice.status}
@@ -516,6 +530,41 @@ function RowIconStatus({
   );
 }
 
+function RowIconLink({
+  label,
+  href,
+  className,
+  children,
+}: {
+  label: string;
+  href: string;
+  className?: string;
+  children: ReactNode;
+}) {
+  return (
+    <Tooltip>
+      <TooltipTrigger asChild>
+        <a
+          href={href}
+          target="_blank"
+          rel="noreferrer"
+          aria-label={label}
+          className={cn(ROW_ICON_BOX, "rounded-md transition hover:bg-muted", className)}
+        >
+          {children}
+        </a>
+      </TooltipTrigger>
+      <TooltipContent className="max-w-[18rem]">{label}</TooltipContent>
+    </Tooltip>
+  );
+}
+
+// Lexware's own web app, not the REST API: confirmed live by opening a real sales invoice there
+// and reading the address bar.
+function lexwareInvoiceUrl(id: string): string {
+  return `https://app.lexware.de/vouchers#!/VoucherList//Invoice/${id}`;
+}
+
 function LexofficeSyncButton({ invoice }: { invoice: OutgoingInvoice }) {
   const { t } = useTranslation();
   const canSync = useFeature(PERMISSIONS.lexofficeSync);
@@ -537,12 +586,13 @@ function LexofficeSyncButton({ invoice }: { invoice: OutgoingInvoice }) {
 
   if (invoice.accounting_external_id && fileDone && !invoice.lexoffice_sync_error) {
     return (
-      <RowIconStatus
-        label={t("outgoingInvoices.list.lexoffice.sent")}
+      <RowIconLink
+        label={t("outgoingInvoices.list.lexoffice.openInLexware")}
+        href={lexwareInvoiceUrl(invoice.accounting_external_id)}
         className="text-muted-foreground"
       >
         <CheckCircle2 className="size-4" />
-      </RowIconStatus>
+      </RowIconLink>
     );
   }
 
