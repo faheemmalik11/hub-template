@@ -37,7 +37,7 @@ function CutoffDatePicker({
           <span className="tabular-nums">{formatDate(value)}</span>
         </Button>
       </PopoverTrigger>
-      <PopoverContent align="start" className="w-auto p-3">
+      <PopoverContent align="end" className="w-auto p-3">
         <DateRangeCalendar
           single
           open={open}
@@ -133,14 +133,18 @@ export function AgentReportSection() {
         <div className="mt-4 space-y-6">
           <AgentReportTiles
             row={rows.length > 0 ? grandTotal : null}
-            year={year}
+            cutoff={cutoff}
             showApprovedBonuses={showApprovedBonuses}
           />
           <AgentReportTable rows={rows} year={year} showApprovedBonuses={showApprovedBonuses} />
         </div>
       ) : (
         <div className="mt-4">
-          <AgentReportTiles row={ownRow} year={year} showApprovedBonuses={showApprovedBonuses} />
+          <AgentReportTiles
+            row={ownRow}
+            cutoff={cutoff}
+            showApprovedBonuses={showApprovedBonuses}
+          />
         </div>
       )}
     </section>

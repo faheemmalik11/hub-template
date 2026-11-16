@@ -4,7 +4,7 @@ import type { LucideIcon } from "lucide-react";
 import { KpiCard } from "@/components/dashboard/kpi-card";
 import { CHIP } from "@/components/dashboard/stat-tile";
 import type { AgentCommissionReportRow } from "@/data";
-import { formatEUR } from "@/lib/data/format";
+import { formatDate, formatEUR } from "@/lib/data/format";
 import { useTranslation } from "@/lib/i18n";
 
 const EMPTY_ROW: Pick<
@@ -32,19 +32,38 @@ const EMPTY_ROW: Pick<
   bonuses_approved_previous: 0,
 };
 
+function previousYearRange(cutoff: string): { from: string; to: string } {
+  const [cutoffYear, cutoffMonth, cutoffDay] = cutoff.split("-").map(Number);
+  const previousYear = cutoffYear - 1;
+  const from = `${previousYear}-01-01`;
+  // Date(previousYear, 1, 29) rolls over to March 1 when previousYear isn't a leap year.
+  const isFeb29OfNonLeapPreviousYear =
+    cutoffMonth === 2 && cutoffDay === 29 && new Date(previousYear, 1, 29).getMonth() !== 1;
+  const to = isFeb29OfNonLeapPreviousYear
+    ? `${previousYear}-02-28`
+    : `${previousYear}-${String(cutoffMonth).padStart(2, "0")}-${String(cutoffDay).padStart(2, "0")}`;
+  return { from, to };
+}
+
 // row=null renders the grand total across every agent instead of one agent's own figures.
 export function AgentReportTiles({
   row,
-  year,
+  cutoff,
   showApprovedBonuses,
 }: {
   row: AgentCommissionReportRow | null;
-  year: number;
+  cutoff: string;
   showApprovedBonuses: boolean;
 }) {
   const { t } = useTranslation();
   const numbers = row ?? EMPTY_ROW;
-  const prevYear = year - 1;
+  const { from: previousYearStart, to: previousYearEnd } = previousYearRange(cutoff);
+  const lastYearHint = (value: string | number) =>
+    t("commissionDeals.report.tiles.lastYear", {
+      from: formatDate(previousYearStart),
+      to: formatDate(previousYearEnd),
+      value,
+    });
 
   const tiles: {
     label: string;
@@ -56,40 +75,28 @@ export function AgentReportTiles({
     {
       label: t("commissionDeals.report.tiles.closings"),
       value: String(numbers.closings_current),
-      hint: t("commissionDeals.report.tiles.lastYear", {
-        year: prevYear,
-        value: numbers.closings_previous,
-      }),
+      hint: lastYearHint(numbers.closings_previous),
       icon: Handshake,
       iconTint: CHIP.brand,
     },
     {
       label: t("commissionDeals.report.tiles.volume"),
       value: formatEUR(numbers.volume_current),
-      hint: t("commissionDeals.report.tiles.lastYear", {
-        year: prevYear,
-        value: formatEUR(numbers.volume_previous),
-      }),
+      hint: lastYearHint(formatEUR(numbers.volume_previous)),
       icon: Building2,
       iconTint: CHIP.neutral,
     },
     {
       label: t("commissionDeals.report.tiles.commission"),
       value: formatEUR(numbers.commission_current),
-      hint: t("commissionDeals.report.tiles.lastYear", {
-        year: prevYear,
-        value: formatEUR(numbers.commission_previous),
-      }),
+      hint: lastYearHint(formatEUR(numbers.commission_previous)),
       icon: HandCoins,
       iconTint: CHIP.brand,
     },
     {
       label: t("commissionDeals.report.tiles.bonuses"),
       value: formatEUR(numbers.bonuses_current),
-      hint: t("commissionDeals.report.tiles.lastYear", {
-        year: prevYear,
-        value: formatEUR(numbers.bonuses_previous),
-      }),
+      hint: lastYearHint(formatEUR(numbers.bonuses_previous)),
       icon: Award,
       iconTint: CHIP.neutral,
     },
@@ -98,10 +105,7 @@ export function AgentReportTiles({
           {
             label: t("commissionDeals.report.tiles.bonusesApproved"),
             value: formatEUR(numbers.bonuses_approved_current),
-            hint: t("commissionDeals.report.tiles.lastYear", {
-              year: prevYear,
-              value: formatEUR(numbers.bonuses_approved_previous),
-            }),
+            hint: lastYearHint(formatEUR(numbers.bonuses_approved_previous)),
             icon: ShieldCheck,
             iconTint: CHIP.success,
           },
