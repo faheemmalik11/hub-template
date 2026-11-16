@@ -1,6 +1,6 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useEffect, useMemo, useState } from "react";
-import { ArrowLeft, Check, Info } from "lucide-react";
+import { ArrowLeft, Check, ImageOff, Info } from "lucide-react";
 import { toast } from "sonner";
 
 import { Button } from "@/components/ui/button";
@@ -97,6 +97,26 @@ function CommissionDealPage() {
         <DealEditor deal={dealQ.data} />
       )}
     </div>
+  );
+}
+
+function DealPropertyThumbnail({ url }: { url: string | null }) {
+  const [failed, setFailed] = useState(false);
+  if (!url || failed) {
+    return (
+      <div className="flex size-10 shrink-0 items-center justify-center rounded-md bg-muted text-muted-foreground">
+        <ImageOff className="size-4" />
+      </div>
+    );
+  }
+  return (
+    <img
+      src={url}
+      alt=""
+      loading="lazy"
+      onError={() => setFailed(true)}
+      className="size-10 shrink-0 rounded-md object-cover"
+    />
   );
 }
 
@@ -323,6 +343,7 @@ function DealEditor({ deal }: { deal: Deal }) {
   return (
     <>
       <div className="mt-3 flex flex-wrap items-center gap-3">
+        <DealPropertyThumbnail url={deal.property?.cover_image_url ?? null} />
         <h1 className="text-2xl font-semibold tracking-tight text-foreground">
           {deal.property?.name ?? deal.property_label ?? t("commissionDeals.sale.title")}
         </h1>
