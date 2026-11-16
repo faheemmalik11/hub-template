@@ -5205,6 +5205,22 @@ const de = {
         cancelled: "Abgesagt",
       },
     },
+    crmChanges: {
+      title: "Das CRM hat sich geändert, nachdem dieser Verkauf angelegt wurde",
+      explain: "Bitte vor der Freigabe prüfen. Übernehmen behält den Verkauf so, wie er jetzt ist.",
+      wasNow: "vorher {{was}}, jetzt {{became}}",
+      empty: "leer",
+      accept: "Neue Werte übernehmen",
+      accepting: "Wird übernommen…",
+      accepted: "Übernommen.",
+      acceptFailed: "Das hat nicht geklappt.",
+      field: {
+        sold_on: "Notartermin",
+        sold_price: "Kaufpreis",
+        buyer_rate: "Käufer-Provisionssatz",
+        seller_rate: "Verkäufer-Provisionssatz",
+      },
+    },
     facts: {
       title: "Angaben zum Verkauf",
       ownLead: "Eigener Lead",
