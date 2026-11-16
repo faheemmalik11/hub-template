@@ -5332,9 +5332,8 @@ const de = {
       save: "Speichern",
       saving: "Wird gespeichert …",
       saved: "Gespeichert.",
-      saveFailed: "Speichern ist fehlgeschlagen.",
-      dueDateNotInCrm:
-        "Hier gespeichert, aber nicht ans CRM gesendet. Der Wert bleibt erhalten und wird später erneut gesendet.",
+      saveFailed: "Speichern ist fehlgeschlagen: {{error}}",
+      savedButNotInCrm: "Gespeichert. Noch nicht an PropStack gesendet: {{reason}}",
       approve: "Freigeben",
       approving: "Wird freigegeben …",
       approved: "Freigegeben.",

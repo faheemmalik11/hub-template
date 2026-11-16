@@ -152,6 +152,7 @@ function DealEditor({ deal }: { deal: Deal }) {
   const [savedDueDateNote, setSavedDueDateNote] = useState(
     deal.property?.payment_due_date_note ?? "",
   );
+  const [isSaving, setIsSaving] = useState(false);
   const customersQ = useCustomers();
   const companiesQ = useCompanies();
   const createCustomer = useCreateCustomer();
@@ -281,39 +282,41 @@ function DealEditor({ deal }: { deal: Deal }) {
   };
 
   const runSave = () => {
-    save.mutate(
-      { ...saveInputOf(form), complete: result.ok },
-      {
-        onSuccess: () => toast.success(t("commissionDeals.actions.saved")),
-        onError: (error) =>
-          toast.error(t("commissionDeals.actions.saveFailed"), { description: errorText(error) }),
-      },
-    );
     const propertyId = deal.property_id;
-    if (dueDateUnsaved && propertyId) {
-      updateDueDate.mutate(
-        {
-          payment_due_date: dueDate.trim() === "" ? null : dueDate,
-          payment_due_date_note: dueDateNote.trim() === "" ? null : dueDateNote.trim(),
-          payment_due_date_source: "hub",
-        },
-        {
-          onSuccess: () => {
-            setSavedDueDate(dueDate);
-            setSavedDueDateNote(dueDateNote);
-            if (syncsPaymentDueDate) {
-              pushDueDateToCrm(propertyId).catch((error: unknown) =>
-                toast.warning(t("commissionDeals.actions.dueDateNotInCrm"), {
-                  description: errorText(error),
-                }),
-              );
-            }
-          },
-          onError: (error) =>
-            toast.error(t("commissionDeals.actions.saveFailed"), { description: errorText(error) }),
-        },
-      );
-    }
+    const needsDueDateSave = dueDateUnsaved && !!propertyId;
+
+    const sequence = (async () => {
+      await save.mutateAsync({ ...saveInputOf(form), complete: result.ok });
+      if (!needsDueDateSave) return { pushedToCrm: null as boolean | null, reason: "" };
+
+      await updateDueDate.mutateAsync({
+        payment_due_date: dueDate.trim() === "" ? null : dueDate,
+        payment_due_date_note: dueDateNote.trim() === "" ? null : dueDateNote.trim(),
+        payment_due_date_source: "hub",
+      });
+      setSavedDueDate(dueDate);
+      setSavedDueDateNote(dueDateNote);
+
+      if (!syncsPaymentDueDate) return { pushedToCrm: null as boolean | null, reason: "" };
+      try {
+        await pushDueDateToCrm(propertyId);
+        return { pushedToCrm: true, reason: "" };
+      } catch (error) {
+        const reason = error instanceof Error ? error.message : String(error);
+        return { pushedToCrm: false, reason };
+      }
+    })();
+
+    setIsSaving(true);
+    toast.promise(sequence, {
+      loading: t("commissionDeals.actions.saving"),
+      success: (outcome) =>
+        outcome.pushedToCrm === false
+          ? t("commissionDeals.actions.savedButNotInCrm", { reason: outcome.reason })
+          : t("commissionDeals.actions.saved"),
+      error: (error) => t("commissionDeals.actions.saveFailed", { error: errorText(error) }),
+    });
+    sequence.finally(() => setIsSaving(false));
   };
 
   const runApprove = () =>
@@ -568,9 +571,9 @@ function DealEditor({ deal }: { deal: Deal }) {
               <Button
                 className="shadow-none"
                 onClick={runSave}
-                disabled={save.isPending || !unsaved}
+                disabled={isSaving || !unsaved}
               >
-                {save.isPending
+                {isSaving
                   ? t("commissionDeals.actions.saving")
                   : t("commissionDeals.actions.save")}
               </Button>
