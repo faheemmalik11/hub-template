@@ -4968,7 +4968,7 @@ const en = {
     },
     bonuses: {
       title: "Bonuses for this sale",
-      hint: "These bonuses are calculated automatically from this sale. Once a bonus is ready, click <strong>Suggest this bonus</strong> to send it to the broker. The broker confirms it, then a manager reviews and approves it.",
+      hint: "These bonuses are calculated automatically from this sale. A bonus that is still missing something shows a grey message explaining what. A bonus that is ready shows a <strong>Suggest this bonus</strong> button instead. Clicking it sends the bonus to the broker to confirm, then a manager reviews and approves it.",
       none: "This sale does not earn a bonus.",
       create: "Suggest this bonus",
       created: "Created",
