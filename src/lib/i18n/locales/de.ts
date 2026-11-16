@@ -6449,6 +6449,14 @@ const de = {
         success: "Rechnung an Lexoffice gesendet.",
         failed: "Konnte nicht an Lexoffice gesendet werden: {{error}}",
       },
+      bulk: {
+        selectAll: "Alle Zeilen auf dieser Seite auswählen",
+        selectRow: "Diese Zeile auswählen",
+        selectedCount: "{{count}} ausgewählt",
+        sendSelected: "An Lexoffice senden",
+        sendSuccess: "{{count}} Rechnungen an Lexoffice gesendet.",
+        sendPartial: "{{succeeded}} gesendet, {{failed}} konnten nicht gesendet werden.",
+      },
       filter: {
         company: "Gesellschaft",
         allCompanies: "Alle Gesellschaften",

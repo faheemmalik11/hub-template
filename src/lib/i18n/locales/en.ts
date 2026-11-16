@@ -6214,6 +6214,14 @@ const en = {
         success: "Invoice sent to Lexoffice.",
         failed: "Could not send to Lexoffice: {{error}}",
       },
+      bulk: {
+        selectAll: "Select all rows on this page",
+        selectRow: "Select this row",
+        selectedCount: "{{count}} selected",
+        sendSelected: "Send to Lexoffice",
+        sendSuccess: "Sent {{count}} invoices to Lexoffice.",
+        sendPartial: "Sent {{succeeded}}, {{failed}} could not be sent.",
+      },
       filter: {
         company: "Company",
         allCompanies: "All companies",
