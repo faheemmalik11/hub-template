@@ -1,3 +1,5 @@
+import { FileText } from "lucide-react";
+
 import { useEmployees } from "@/data";
 import type { Deal } from "@/data";
 import { useTranslation } from "@/lib/i18n";
@@ -15,9 +17,14 @@ export function DealInfoSummaryCard({ deal, onEdit }: { deal: Deal; onEdit?: () 
   return (
     <section className="rounded-xl border border-border bg-card p-5">
       <div className="flex items-start justify-between gap-2">
-        <h2 className="text-base font-semibold text-foreground">
-          {t("commissionDeals.info.title")}
-        </h2>
+        <div className="flex items-center gap-2">
+          <div className="flex size-7 shrink-0 items-center justify-center rounded-lg bg-brand-tint text-brand">
+            <FileText aria-hidden className="size-4" />
+          </div>
+          <h2 className="text-base font-semibold text-foreground">
+            {t("commissionDeals.info.title")}
+          </h2>
+        </div>
         {onEdit && (
           <button
             type="button"
@@ -34,9 +41,7 @@ export function DealInfoSummaryCard({ deal, onEdit }: { deal: Deal; onEdit?: () 
           <dd className="text-muted-foreground">{yesNo(deal.own_lead)}</dd>
         </div>
         <div className="flex flex-wrap items-baseline gap-x-2 text-sm">
-          <dt className="font-medium text-foreground">
-            {t("commissionDeals.facts.fromViewing")}
-          </dt>
+          <dt className="font-medium text-foreground">{t("commissionDeals.facts.fromViewing")}</dt>
           <dd className="text-muted-foreground">{yesNo(deal.from_viewing)}</dd>
         </div>
         <div className="flex flex-wrap items-baseline gap-x-2 text-sm">
@@ -48,9 +53,7 @@ export function DealInfoSummaryCard({ deal, onEdit }: { deal: Deal; onEdit?: () 
           <dd className="text-muted-foreground">{nameOf(deal.acquired_by)}</dd>
         </div>
         <div className="flex flex-wrap items-baseline gap-x-2 text-sm">
-          <dt className="font-medium text-foreground">
-            {t("commissionDeals.facts.costsClosed")}
-          </dt>
+          <dt className="font-medium text-foreground">{t("commissionDeals.facts.costsClosed")}</dt>
           <dd className="text-muted-foreground">{yesNo(deal.costs_closed_at !== null)}</dd>
         </div>
       </dl>

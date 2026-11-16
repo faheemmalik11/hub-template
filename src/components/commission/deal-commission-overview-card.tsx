@@ -1,4 +1,4 @@
-import { CheckCircle2 } from "lucide-react";
+import { Calculator, CheckCircle2 } from "lucide-react";
 
 import type { CommissionResult } from "@/kit/lib/commission";
 import { formatEUR } from "@/lib/data/format";
@@ -10,9 +10,14 @@ export function DealCommissionOverviewCard({ result }: { result: CommissionResul
   if (!result.ok) {
     return (
       <section className="rounded-xl border border-border bg-card p-5">
-        <h2 className="text-base font-semibold text-foreground">
-          {t("commissionDeals.overview.title")}
-        </h2>
+        <div className="flex items-center gap-2">
+          <div className="flex size-7 shrink-0 items-center justify-center rounded-lg bg-brand-tint text-brand">
+            <Calculator aria-hidden className="size-4" />
+          </div>
+          <h2 className="text-base font-semibold text-foreground">
+            {t("commissionDeals.overview.title")}
+          </h2>
+        </div>
         <div className="mt-3 rounded-lg border border-destructive/40 bg-destructive/5 px-3 py-2 text-sm text-destructive">
           {t("commissionDeals.overview.invalid", { count: result.problems.length })}
         </div>
@@ -30,14 +35,17 @@ export function DealCommissionOverviewCard({ result }: { result: CommissionResul
 
   return (
     <section className="rounded-xl border border-border bg-card p-5">
-      <h2 className="text-base font-semibold text-foreground">
-        {t("commissionDeals.overview.title")}
-      </h2>
+      <div className="flex items-center gap-2">
+        <div className="flex size-7 shrink-0 items-center justify-center rounded-lg bg-brand-tint text-brand">
+          <Calculator aria-hidden className="size-4" />
+        </div>
+        <h2 className="text-base font-semibold text-foreground">
+          {t("commissionDeals.overview.title")}
+        </h2>
+      </div>
       <dl className="mt-3 space-y-1 text-sm tabular-nums">
         <div className="flex justify-between">
-          <dt className="text-muted-foreground">
-            {t("commissionDeals.overview.buyerCommission")}
-          </dt>
+          <dt className="text-muted-foreground">{t("commissionDeals.overview.buyerCommission")}</dt>
           <dd>{formatEUR(buyerNetCents / 100)}</dd>
         </div>
         <div className="flex justify-between">

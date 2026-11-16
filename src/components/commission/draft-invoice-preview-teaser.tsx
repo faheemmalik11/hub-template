@@ -2,7 +2,7 @@ import type { CommissionResult } from "@/kit/lib/commission";
 import { Button } from "@/components/ui/button";
 import { formatEUR } from "@/lib/data/format";
 import { useTranslation } from "@/lib/i18n";
-import { ExternalLink } from "lucide-react";
+import { ExternalLink, FileText } from "lucide-react";
 
 function euros(cents: number): string {
   return formatEUR(cents / 100);
@@ -24,7 +24,14 @@ export function DraftInvoicePreviewTeaser({
   return (
     <section className="rounded-xl border border-border bg-card p-5">
       <div className="flex items-center justify-between gap-2">
-        <h3 className="text-sm font-medium text-foreground">{t("commissionDeals.drafts.title")}</h3>
+        <div className="flex items-center gap-2">
+          <div className="flex size-7 shrink-0 items-center justify-center rounded-lg bg-brand-tint text-brand">
+            <FileText aria-hidden className="size-4" />
+          </div>
+          <h3 className="text-sm font-medium text-foreground">
+            {t("commissionDeals.drafts.title")}
+          </h3>
+        </div>
         <Button variant="outline" size="sm" onClick={onViewPreview}>
           <ExternalLink className="size-3.5" />
           {t("commissionDeals.drafts.viewPreview")}

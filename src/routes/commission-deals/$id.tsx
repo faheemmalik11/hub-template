@@ -402,30 +402,30 @@ function DealEditor({ deal }: { deal: Deal }) {
 
   return (
     <>
-      <div className="mt-3 flex flex-wrap items-start justify-between gap-4">
-        <div className="flex flex-wrap items-center gap-3">
-          <DealPropertyThumbnail url={deal.property?.cover_image_url ?? null} />
-          <div>
-            <h1 className="text-2xl font-semibold tracking-tight text-foreground">
-              {deal.property?.name ?? deal.property_label ?? t("commissionDeals.sale.title")}
-            </h1>
-            {deal.property_label && (
-              <p className="text-sm text-muted-foreground">
-                {deal.property ? (
-                  <Link
-                    to="/properties/$code"
-                    params={{ code: deal.property.code }}
-                    className="hover:underline"
-                  >
-                    {deal.property_label}
-                  </Link>
-                ) : (
-                  deal.property_label
-                )}
-              </p>
-            )}
-          </div>
+      <div className="mt-3 flex flex-wrap items-center gap-3">
+        <DealPropertyThumbnail url={deal.property?.cover_image_url ?? null} />
+        <div>
+          <h1 className="text-2xl font-semibold tracking-tight text-foreground">
+            {deal.property?.name ?? deal.property_label ?? t("commissionDeals.sale.title")}
+          </h1>
+          {deal.property_label && (
+            <p className="text-sm text-muted-foreground">
+              {deal.property ? (
+                <Link
+                  to="/properties/$code"
+                  params={{ code: deal.property.code }}
+                  className="hover:underline"
+                >
+                  {deal.property_label}
+                </Link>
+              ) : (
+                deal.property_label
+              )}
+            </p>
+          )}
         </div>
+      </div>
+      <div className="mt-4 flex flex-wrap items-center justify-between gap-3">
         <div className="flex flex-wrap items-center gap-3">
           <DealStatusStepper status={deal.status} />
           {unsaved && (
@@ -433,6 +433,8 @@ function DealEditor({ deal }: { deal: Deal }) {
               {t("commissionDeals.actions.unsaved")}
             </span>
           )}
+        </div>
+        <div className="flex flex-wrap items-center gap-3">
           {showMoreMenu && (
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
