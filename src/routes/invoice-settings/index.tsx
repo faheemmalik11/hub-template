@@ -224,8 +224,8 @@ function SettingsForm({
         </p>
       )}
 
-      <div className="grid items-start gap-4 lg:grid-cols-2">
-        <Card>
+      <div className="grid gap-4 lg:grid-cols-2">
+        <Card className="flex flex-col shadow-none">
           <CardHeader>
             <CardTitle>{t("invoiceSettings.card.tax.title")}</CardTitle>
             <CardDescription>{t("invoiceSettings.card.tax.desc")}</CardDescription>
@@ -251,7 +251,7 @@ function SettingsForm({
           </CardContent>
         </Card>
 
-        <Card>
+        <Card className="flex flex-col shadow-none">
           <CardHeader>
             <CardTitle>{t("invoiceSettings.card.wording.title")}</CardTitle>
             <CardDescription>{t("invoiceSettings.card.wording.desc")}</CardDescription>
@@ -277,8 +277,8 @@ function SettingsForm({
         </Card>
       </div>
 
-      <div className="grid items-start gap-4 lg:grid-cols-2">
-        <Card>
+      <div className="grid gap-4 lg:grid-cols-2">
+        <Card className="flex flex-col shadow-none">
           <CardHeader>
             <CardTitle>{t("invoiceSettings.card.voucherRemark.title")}</CardTitle>
             <CardDescription>{t("invoiceSettings.card.voucherRemark.desc")}</CardDescription>
@@ -303,7 +303,7 @@ function SettingsForm({
           </CardContent>
         </Card>
 
-        <Card>
+        <Card className="flex flex-col shadow-none">
           <CardHeader>
             <CardTitle>{t("invoiceSettings.card.timezone.title")}</CardTitle>
             <CardDescription>{t("invoiceSettings.card.timezone.desc")}</CardDescription>
@@ -328,7 +328,7 @@ function SettingsForm({
         </Card>
       </div>
 
-      <Card>
+      <Card className="flex flex-col shadow-none">
         <CardHeader>
           <CardTitle>{t("invoiceSettings.card.kindLabels.title")}</CardTitle>
           <CardDescription>{t("invoiceSettings.card.kindLabels.desc")}</CardDescription>
