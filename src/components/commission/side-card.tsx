@@ -4,6 +4,7 @@ import { toast } from "sonner";
 
 import { Button } from "@/components/ui/button";
 import { Combobox, type ComboboxOption } from "@/components/ui/combobox";
+import { Field } from "@/components/ui/feld";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import {
@@ -77,7 +78,7 @@ export function SideCard({
       {value.enabled && (
         <div className="mt-4 space-y-4">
           <div id={`side-${side}-fee`} className="grid gap-3 sm:grid-cols-2">
-            <div className="space-y-1.5">
+            <Field className="space-y-1.5">
               <Label>{t("commissionDeals.side.feeKind")}</Label>
               <Select
                 value={value.feeKind}
@@ -92,9 +93,9 @@ export function SideCard({
                   <SelectItem value="fixed">{t("commissionDeals.side.fixed")}</SelectItem>
                 </SelectContent>
               </Select>
-            </div>
+            </Field>
             {value.feeKind === "percent" ? (
-              <div className="space-y-1.5">
+              <Field className="space-y-1.5">
                 <Label>{t("commissionDeals.side.rate")}</Label>
                 <Input
                   inputMode="decimal"
@@ -103,9 +104,9 @@ export function SideCard({
                   placeholder="2,5"
                   disabled={disabled}
                 />
-              </div>
+              </Field>
             ) : (
-              <div className="space-y-1.5">
+              <Field className="space-y-1.5">
                 <Label>{t("commissionDeals.side.amount")}</Label>
                 <Input
                   inputMode="decimal"
@@ -113,7 +114,7 @@ export function SideCard({
                   onChange={(event) => set({ amount: event.target.value })}
                   disabled={disabled}
                 />
-              </div>
+              </Field>
             )}
           </div>
 

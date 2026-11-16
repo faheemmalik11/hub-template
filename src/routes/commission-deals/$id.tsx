@@ -5,6 +5,8 @@ import { toast } from "sonner";
 
 import { Button } from "@/components/ui/button";
 import { Combobox, type ComboboxOption } from "@/components/ui/combobox";
+import { DatePicker } from "@/components/ui/date-picker";
+import { Field } from "@/components/ui/feld";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
@@ -431,7 +433,7 @@ function DealEditor({ deal }: { deal: Deal }) {
             <TabsContent value="sale" className="mt-0">
               <div className="grid gap-3 sm:grid-cols-3">
                 {companyOptions.length > 1 && (
-                  <div className="space-y-1.5 sm:col-span-3">
+                  <Field className="space-y-1.5 sm:col-span-3">
                     <Label>{t("commissionDeals.sale.company")}</Label>
                     <Combobox
                       value={form.companyId}
@@ -439,18 +441,17 @@ function DealEditor({ deal }: { deal: Deal }) {
                       options={companyOptions}
                       disabled={!mayEdit}
                     />
-                  </div>
+                  </Field>
                 )}
-                <div id="field-notarised-on" className="space-y-1.5">
+                <Field id="field-notarised-on" className="space-y-1.5">
                   <Label>{t("commissionDeals.sale.notarisedOn")}</Label>
-                  <Input
-                    type="date"
+                  <DatePicker
                     value={form.notarisedOn}
-                    onChange={(event) => set({ notarisedOn: event.target.value })}
+                    onChange={(value) => set({ notarisedOn: value })}
                     disabled={!mayEdit}
                   />
-                </div>
-                <div id="field-purchase-price" className="space-y-1.5">
+                </Field>
+                <Field id="field-purchase-price" className="space-y-1.5">
                   <Label>{t("commissionDeals.sale.price")}</Label>
                   <Input
                     inputMode="decimal"
@@ -459,8 +460,8 @@ function DealEditor({ deal }: { deal: Deal }) {
                     placeholder="610.000"
                     disabled={!mayEdit}
                   />
-                </div>
-                <div className="space-y-1.5">
+                </Field>
+                <Field className="space-y-1.5">
                   <Label>{t("commissionDeals.sale.vat")}</Label>
                   <Input
                     inputMode="decimal"
@@ -468,19 +469,18 @@ function DealEditor({ deal }: { deal: Deal }) {
                     onChange={(event) => set({ vatRate: event.target.value })}
                     disabled={!mayEdit}
                   />
-                </div>
+                </Field>
                 {deal.property_id && (
                   <>
-                    <div id="field-due-date" className="space-y-1.5">
+                    <Field id="field-due-date" className="space-y-1.5">
                       <Label>{t("commissionDeals.sale.dueDate")}</Label>
-                      <Input
-                        type="date"
+                      <DatePicker
                         value={dueDate}
-                        onChange={(event) => setDueDate(event.target.value)}
+                        onChange={setDueDate}
                         disabled={!mayEdit}
                       />
-                    </div>
-                    <div className="space-y-1.5 sm:col-span-2">
+                    </Field>
+                    <Field className="space-y-1.5 sm:col-span-2">
                       <Label>{t("commissionDeals.sale.dueDateNote")}</Label>
                       <Input
                         value={dueDateNote}
@@ -488,10 +488,10 @@ function DealEditor({ deal }: { deal: Deal }) {
                         placeholder={t("commissionDeals.sale.dueDateNotePlaceholder")}
                         disabled={!mayEdit}
                       />
-                    </div>
+                    </Field>
                   </>
                 )}
-                <div className="space-y-1.5 sm:col-span-3">
+                <Field className="space-y-1.5 sm:col-span-3">
                   <Label>{t("commissionDeals.sale.note")}</Label>
                   <Textarea
                     rows={2}
@@ -499,7 +499,7 @@ function DealEditor({ deal }: { deal: Deal }) {
                     onChange={(event) => set({ note: event.target.value })}
                     disabled={!mayEdit}
                   />
-                </div>
+                </Field>
               </div>
             </TabsContent>
 
