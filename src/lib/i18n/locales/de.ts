@@ -5216,7 +5216,7 @@ const de = {
     },
     crmChanges: {
       title: "Das CRM hat sich geändert, nachdem dieser Verkauf angelegt wurde",
-      explain: "Bitte vor der Freigabe prüfen. Übernehmen behält den Verkauf so, wie er jetzt ist.",
+      explain: "Bitte vor der Freigabe prüfen. Übernehmen trägt diese neuen Werte in die Rechnung ein.",
       wasNow: "vorher {{was}}, jetzt {{became}}",
       yourInvoice: "Auf der Rechnung steht: {{value}}",
       empty: "leer",

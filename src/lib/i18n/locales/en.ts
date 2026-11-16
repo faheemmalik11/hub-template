@@ -5040,7 +5040,7 @@ const en = {
     },
     crmChanges: {
       title: "The CRM changed after this sale was opened",
-      explain: "Check these before approving. Accepting keeps the sale as it is now.",
+      explain: "Check these before approving. Accepting copies these new values into your invoice.",
       wasNow: "was {{was}}, now {{became}}",
       yourInvoice: "Your invoice is set to: {{value}}",
       empty: "empty",
