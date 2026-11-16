@@ -270,11 +270,14 @@ async function buildInvoicePayload(
   const description = property ? `${label}: ${property.name}` : label;
 
   const voucherDate = lexofficeTimestamp(null);
-  const days = invoice.due_date ? paymentTermDays(invoice.due_date) : null;
+  const days = invoice.due_date ? paymentTermDays(invoice.due_date) : tax.paymentTermDays;
 
   return {
     voucherDate,
-    paymentConditions: days !== null ? { paymentTermDuration: days } : undefined,
+    paymentConditions: {
+      paymentTermDuration: days,
+      paymentTermLabel: wording.paymentTermLabelTemplate.replace("{{days}}", String(days)),
+    },
     shippingConditions: { shippingDate: voucherDate, shippingType: "service" },
     address: buildAddress(customer, contactId, tax.country),
     lineItems: [
