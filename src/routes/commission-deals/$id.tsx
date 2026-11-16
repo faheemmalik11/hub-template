@@ -285,18 +285,23 @@ function DealEditor({ deal }: { deal: Deal }) {
   const runSave = () => {
     const propertyId = deal.property_id;
     const needsDueDateSave = dueDateUnsaved && !!propertyId;
+    // Captured now, synchronously: `await save.mutateAsync` below gives the deal query time to
+    // refetch and re-render, which resets the dueDate/dueDateNote state via the effect watching
+    // `deal` — reading the state again after that await would send whatever it was reset to.
+    const dueDateToSave = dueDate;
+    const dueDateNoteToSave = dueDateNote;
 
     const sequence = (async () => {
       await save.mutateAsync({ ...saveInputOf(form), complete: result.ok });
       if (!needsDueDateSave) return { pushedToCrm: null as boolean | null, reason: "" };
 
       await updateDueDate.mutateAsync({
-        payment_due_date: dueDate.trim() === "" ? null : dueDate,
-        payment_due_date_note: dueDateNote.trim() === "" ? null : dueDateNote.trim(),
+        payment_due_date: dueDateToSave.trim() === "" ? null : dueDateToSave,
+        payment_due_date_note: dueDateNoteToSave.trim() === "" ? null : dueDateNoteToSave.trim(),
         payment_due_date_source: "hub",
       });
-      setSavedDueDate(dueDate);
-      setSavedDueDateNote(dueDateNote);
+      setSavedDueDate(dueDateToSave);
+      setSavedDueDateNote(dueDateNoteToSave);
 
       if (!syncsPaymentDueDate) return { pushedToCrm: null as boolean | null, reason: "" };
       try {
