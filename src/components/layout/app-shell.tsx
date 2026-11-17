@@ -203,7 +203,12 @@ const nav: NavEntry[] = [
     items: [
       { labelKey: "nav.vatRules", to: "/vat-rules", icon: Percent },
       { labelKey: "nav.vatReserve", to: "/vat-reserve", icon: PiggyBank },
-      { labelKey: "nav.datevHandover", to: "/datev-handover", icon: FileText },
+      {
+        labelKey: "nav.datevHandover",
+        to: "/datev-handover",
+        icon: FileText,
+        permission: PERMISSIONS.pageHandover,
+      },
     ],
   },
   {

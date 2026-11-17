@@ -85,6 +85,23 @@ Nothing changes in the app until it runs: the UI offers a third address, and `se
 rejects `'other'` on a database still carrying the two-value CHECK. The migration is idempotent and
 seeds nothing — the real addresses are confidential and are entered by a human through this screen.
 
+## Who may see it
+
+The nav item (`nav.datevHandover` in `src/components/layout/app-shell.tsx`) and the `/datev-handover`
+route itself (`DatevHandoverGuard` in `src/routes/datev-handover/index.tsx`) both gate on
+`PERMISSIONS.pageHandover` (`page.handover`, `src/config/permissions.ts`,
+`supabase/catalogue.sql`). This is the one existing key for this screen, not a new one: the route
+guard already checked it, the nav item simply did not, so a client who switched the page off in
+their own `feature_settings` still saw it offered in the sidebar. The "datev" step on the setup
+checklist (`src/lib/checklist-config.ts`) follows the same key, mirroring how the "bank" step there
+checks `PERMISSIONS.pageBankConnections`.
+
+`page.handover` ships `default_enabled = true` and is granted to every role by default (the
+blanket page/module/section grant in `supabase/catalogue.sql`, which excludes only
+`page.team`/`page.bank_connections`/`page.activity_log`/`page.trash`) — unchanged behaviour for
+every existing client. Turning it off for one client is a `feature_settings` row in their own
+database, not a code or catalogue change.
+
 ## Open / deliberately not done
 
 - **The send transport moved from Gmail to Microsoft Graph (2026-08-20).** It was previously
