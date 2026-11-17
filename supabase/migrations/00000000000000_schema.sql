@@ -11817,3 +11817,176 @@ revoke execute on function public.create_deals_for_sold_properties(text[]) from 
 grant execute on function public.create_deals_for_sold_properties(text[]) to service_role;
 
 commit;
+
+-- ===================================================================== 0064_acknowledge_crm_changes_applies_them.sql
+
+begin;
+
+create or replace function public.acknowledge_deal_crm_changes(p_deal_id uuid) returns void
+    language plpgsql security definer set search_path to 'public'
+as $$
+declare
+  v_deal public.deals;
+  v_change record;
+begin
+  if not public.owns_deal(p_deal_id) and not public.has_permission('invoices.approve') then
+    raise exception 'not allowed to acknowledge this deal' using errcode = '42501';
+  end if;
+
+  select * into v_deal from public.deals where id = p_deal_id and property_id is not null;
+  if not found then
+    return;
+  end if;
+
+  for v_change in select * from public.deal_crm_changes(p_deal_id) loop
+    if v_change.field = 'sold_on' then
+      update public.deals set notarised_on = nullif(v_change.became, '')::date
+       where id = p_deal_id;
+    elsif v_change.field = 'sold_price' then
+      update public.deals set purchase_price = nullif(v_change.became, '')::numeric
+       where id = p_deal_id;
+    elsif v_change.field in ('buyer_rate', 'seller_rate') then
+      update public.deal_sides
+         set fee_net_rate = public.crm_net_rate(nullif(v_change.became, '')::numeric, v_deal.vat_rate)
+       where deal_id = p_deal_id
+         and side = (case v_change.field when 'buyer_rate' then 'buyer' else 'seller' end)
+         and fee_kind = 'percent';
+    end if;
+  end loop;
+
+  update public.deals
+     set crm_snapshot = public.crm_facts_of(property_id),
+         crm_changes_acknowledged_at = now()
+   where id = p_deal_id
+     and property_id is not null;
+end;
+$$;
+
+revoke execute on function public.acknowledge_deal_crm_changes(uuid) from public, anon;
+grant execute on function public.acknowledge_deal_crm_changes(uuid) to authenticated;
+
+commit;
+
+-- ===================================================================== 0065_deals_with_crm_changes.sql
+
+begin;
+
+create or replace function public.deals_with_crm_changes() returns table(deal_id uuid)
+    language sql stable set search_path to 'public'
+as $$
+  select d.id
+    from public.deals d
+    join public.properties p on p.id = d.property_id
+   where d.deleted_at is null
+     and d.crm_snapshot is not null
+     and d.crm_snapshot is distinct from public.crm_facts_of(p.id)
+$$;
+
+revoke execute on function public.deals_with_crm_changes() from public, anon;
+grant execute on function public.deals_with_crm_changes() to authenticated;
+
+commit;
+
+-- ===================================================================== 0066_invoice_payment_term_label.sql
+
+begin;
+
+alter table public.invoice_settings
+    add column if not exists payment_term_label_template text not null
+        default 'Zahlbar innerhalb von {{days}} Tagen, ohne Abzug.';
+
+alter table public.invoice_settings
+    drop constraint if exists invoice_settings_payment_term_label_template_present,
+    drop constraint if exists invoice_settings_payment_term_label_template_has_days;
+
+alter table public.invoice_settings
+    add constraint invoice_settings_payment_term_label_template_present
+        check (btrim(payment_term_label_template) <> ''),
+    add constraint invoice_settings_payment_term_label_template_has_days
+        check (payment_term_label_template like '%{{days}}%');
+
+commit;
+
+-- ===================================================================== 0067_company_lead_bonus_no_cost_deduction.sql
+
+-- bonus_settings is a singleton (single_row boolean primary key default true check (single_row)),
+-- so correcting the one existing row alongside the default is safe and keeps every deployment that
+-- ever runs this schema in the right state, not only the one caught with the wrong value today.
+
+begin;
+
+alter table public.bonus_settings alter column company_lead_deducts_costs set default false;
+
+update public.bonus_settings
+   set company_lead_deducts_costs = false
+ where company_lead_deducts_costs;
+
+commit;
+
+-- ===================================================================== 0068_commission_invoice_payment_tracking.sql
+
+-- Mirrors documents.paid_at/paid_source (0011_functions.sql's advance_workflow_on_payment and
+-- lexoffice-payment-sync already use that pair for incoming invoices). Commission invoices
+-- (outgoing_invoices, kind = 'commission') have no equivalent today: status can already hold
+-- 'paid', but nothing records when or from where, so a Lexware-driven payment sync has nowhere to
+-- write that down and deal_stage_reached('commission_received') has no timestamp to report either.
+
+begin;
+
+alter table public.outgoing_invoices
+    add column if not exists paid_at timestamptz,
+    add column if not exists paid_source text;
+
+commit;
+
+-- ===================================================================== 0069_broker_bonus_payout_gate.sql
+
+-- Mark-paid had no stage gate at all before this, the same gap mark_referrer_bonus_paid closed for
+-- referrer bonuses in 0043_referrer_bonus_stage_timing.sql: any approved bonus could be marked paid
+-- the moment it was approved, regardless of whether the deal had actually reached the stage its
+-- bonus type is due at. An RPC, not a plain update, so the check runs where it cannot be skipped.
+--
+-- Unlike referrer bonuses, the two triggers here are fixed per bonus type rather than configurable
+-- in bonus_settings: the flat notary/follow-up bonuses are due once the deal is invoiced, the
+-- percentage-share bonuses (company-lead, own-lead) only once every commission invoice on the deal
+-- is paid. Bonus types with no deal_id (google_review, other, financing_referral, predating the
+-- deal_id column added in 0022_bonus_suggestions.sql) have no stage to check and are left alone.
+
+begin;
+
+create or replace function public.mark_broker_bonus_paid(p_bonus_id uuid) returns void
+language plpgsql security invoker set search_path to 'public'
+as $$
+declare
+  v_bonus public.broker_bonuses;
+  v_stage text;
+begin
+  select * into v_bonus from public.broker_bonuses where id = p_bonus_id;
+  if not found then
+    raise exception 'mark_broker_bonus_paid: bonus % not found', p_bonus_id;
+  end if;
+  if v_bonus.status <> 'approved' then
+    raise exception 'mark_broker_bonus_paid: bonus % is not approved', p_bonus_id
+      using errcode = 'check_violation';
+  end if;
+
+  if v_bonus.deal_id is not null then
+    v_stage := case v_bonus.bonus_type
+      when 'company_lead_share' then 'commission_received'
+      when 'own_job_share' then 'commission_received'
+      else 'invoiced'
+    end;
+    if not public.deal_stage_reached(v_bonus.deal_id, v_stage) then
+      raise exception 'mark_broker_bonus_paid: deal % has not reached the % stage yet',
+        v_bonus.deal_id, v_stage using errcode = 'check_violation';
+    end if;
+  end if;
+
+  update public.broker_bonuses set status = 'paid' where id = p_bonus_id;
+end;
+$$;
+
+revoke execute on function public.mark_broker_bonus_paid(uuid) from public, anon;
+grant execute on function public.mark_broker_bonus_paid(uuid) to authenticated;
+
+commit;
