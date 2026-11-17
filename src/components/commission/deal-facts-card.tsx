@@ -8,7 +8,7 @@ import type { DealForm } from "./deal-form";
 
 type FlagKey = "ownLead" | "fromViewing" | "costsClosed" | "readyForBookkeeping";
 
-const FLAGS: FlagKey[] = ["ownLead", "fromViewing", "costsClosed", "readyForBookkeeping"];
+const BONUS_FLAGS: FlagKey[] = ["ownLead", "fromViewing", "costsClosed"];
 
 export function DealFactsCard({
   form,
@@ -30,51 +30,57 @@ export function DealFactsCard({
   const leadOwnerIsAnotherBroker =
     !form.ownLead && form.acquiredBy !== null && form.acquiredBy !== handler;
   const costsClosedHasNoEffect = !form.ownLead && !leadOwnerIsAnotherBroker;
+
+  const renderFlag = (flag: FlagKey) => (
+    <label
+      key={flag}
+      id={`field-${flag === "costsClosed" ? "costs-closed" : flag}`}
+      className="flex items-start gap-2 text-sm text-foreground"
+    >
+      <Checkbox
+        className="mt-0.5"
+        checked={form[flag]}
+        onCheckedChange={(checked) => onChange({ [flag]: checked === true })}
+        disabled={disabled}
+      />
+      <span className="block space-y-0.5">
+        <span className="block font-medium">{t(`commissionDeals.facts.${flag}`)}</span>
+        <span className="block text-xs text-muted-foreground">
+          {flag === "readyForBookkeeping" ? (
+            <Trans
+              i18nKey="commissionDeals.facts.readyForBookkeepingHint"
+              components={{ strong: <strong className="font-semibold text-foreground" /> }}
+            />
+          ) : (
+            t(`commissionDeals.facts.${flag}Hint`)
+          )}
+        </span>
+        {flag === "costsClosed" && onJumpToField && (
+          <button
+            type="button"
+            onClick={() => onJumpToField("calculation", "deal-costs-section")}
+            className="block text-xs font-medium text-brand-dark underline-offset-4 hover:underline"
+          >
+            {t("commissionDeals.facts.viewCostList")}
+          </button>
+        )}
+        {flag === "costsClosed" && costsClosedHasNoEffect && (
+          <span className="block text-xs text-muted-foreground">
+            {t("commissionDeals.facts.costsClosedNoEffectHint")}
+          </span>
+        )}
+      </span>
+    </label>
+  );
+
   return (
     <div>
       {assignsBrokers && <BrokerFields form={form} onChange={onChange} disabled={disabled} />}
-      <div className="@container mt-4 grid gap-3 @md:grid-cols-2">
-        {FLAGS.map((flag) => (
-          <label
-            key={flag}
-            id={`field-${flag === "costsClosed" ? "costs-closed" : flag}`}
-            className="flex items-start gap-2 text-sm text-foreground"
-          >
-            <Checkbox
-              className="mt-0.5"
-              checked={form[flag]}
-              onCheckedChange={(checked) => onChange({ [flag]: checked === true })}
-              disabled={disabled}
-            />
-            <span>
-              {t(`commissionDeals.facts.${flag}`)}
-              <span className="block text-xs text-muted-foreground">
-                {flag === "readyForBookkeeping" ? (
-                  <Trans
-                    i18nKey="commissionDeals.facts.readyForBookkeepingHint"
-                    components={{ strong: <strong className="font-semibold text-foreground" /> }}
-                  />
-                ) : (
-                  t(`commissionDeals.facts.${flag}Hint`)
-                )}
-              </span>
-              {flag === "costsClosed" && onJumpToField && (
-                <button
-                  type="button"
-                  onClick={() => onJumpToField("calculation", "deal-costs-section")}
-                  className="mt-1 block text-xs font-medium text-brand-dark underline-offset-4 hover:underline"
-                >
-                  {t("commissionDeals.facts.viewCostList")}
-                </button>
-              )}
-              {flag === "costsClosed" && costsClosedHasNoEffect && (
-                <span className="block text-xs text-muted-foreground">
-                  {t("commissionDeals.facts.costsClosedNoEffectHint")}
-                </span>
-              )}
-            </span>
-          </label>
-        ))}
+      <div className="@container mt-4">
+        <div className="grid gap-3 @md:grid-cols-2">{BONUS_FLAGS.map(renderFlag)}</div>
+        <div className="mt-3 border-t border-border/60 pt-3">
+          {renderFlag("readyForBookkeeping")}
+        </div>
       </div>
       <Field className="mt-4 space-y-1.5">
         <Label>{t("commissionDeals.facts.referrer")}</Label>
@@ -107,6 +113,11 @@ function BrokerFields({
   const options: ComboboxOption[] = (employeesQ.data ?? [])
     .filter((employee) => employee.is_active)
     .map((employee) => ({ value: employee.id, label: employee.name ?? employee.email }));
+  const acquiredByHint = form.ownLead
+    ? t("commissionDeals.facts.acquiredByDisabledHint")
+    : !form.handledBy
+      ? t("commissionDeals.facts.acquiredByNeedsHandlerHint")
+      : null;
   return (
     <div className="@container mt-4 grid gap-3 @md:grid-cols-2">
       <Field id="field-handled-by" className="space-y-1.5">
@@ -120,20 +131,7 @@ function BrokerFields({
         />
       </Field>
       <Field className="space-y-1.5">
-        <Label>
-          {t("commissionDeals.facts.acquiredBy")}
-          {form.ownLead ? (
-            <span className="ml-2 text-xs text-muted-foreground">
-              {t("commissionDeals.facts.acquiredByDisabledHint")}
-            </span>
-          ) : (
-            !form.handledBy && (
-              <span className="ml-2 text-xs text-muted-foreground">
-                {t("commissionDeals.facts.acquiredByNeedsHandlerHint")}
-              </span>
-            )
-          )}
-        </Label>
+        <Label>{t("commissionDeals.facts.acquiredBy")}</Label>
         <Combobox
           value={form.acquiredBy}
           onValueChange={(acquiredBy) => onChange({ acquiredBy })}
@@ -141,6 +139,7 @@ function BrokerFields({
           disabled={disabled || form.ownLead}
           clearable
         />
+        {acquiredByHint && <p className="text-xs text-muted-foreground">{acquiredByHint}</p>}
       </Field>
     </div>
   );
