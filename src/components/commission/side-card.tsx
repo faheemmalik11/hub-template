@@ -94,8 +94,22 @@ export function SideCard({
   };
   const lastPartyHasNoCustomer =
     value.parties.length > 0 && !value.parties[value.parties.length - 1].customerId;
-  const removeParty = (index: number) =>
-    set({ parties: value.parties.filter((_, i) => i !== index) });
+  const addParty = () => {
+    const added = [...value.parties, EMPTY_PARTY];
+    const parties =
+      added.length === 1
+        ? added.map((party) => ({ ...party, share: "100" }))
+        : added.length === 2
+          ? added.map((party) => ({ ...party, share: "" }))
+          : added;
+    set({ parties });
+  };
+  const removeParty = (index: number) => {
+    const remaining = value.parties.filter((_, i) => i !== index);
+    const parties =
+      remaining.length === 1 ? remaining.map((party) => ({ ...party, share: "100" })) : remaining;
+    set({ parties });
+  };
 
   const createPayerCustomer = async (index: number, name: string) => {
     setCreatingIndex(index);
@@ -237,8 +251,13 @@ export function SideCard({
                           className={cn(
                             shareInvalid && "border-destructive focus-visible:ring-destructive/30",
                           )}
-                          disabled={disabled}
+                          disabled={disabled || value.parties.length <= 1}
                         />
+                        {shareInvalid && (
+                          <p className="mt-1 text-xs text-destructive">
+                            {t("commissionDeals.side.shareInvalidMultiple")}
+                          </p>
+                        )}
                       </TableCell>
                       <TableCell className="align-top">
                         <Input
@@ -327,8 +346,13 @@ export function SideCard({
                         className={cn(
                           shareInvalid && "border-destructive focus-visible:ring-destructive/30",
                         )}
-                        disabled={disabled}
+                        disabled={disabled || value.parties.length <= 1}
                       />
+                      {shareInvalid && (
+                        <p className="text-xs text-destructive">
+                          {t("commissionDeals.side.shareInvalidMultiple")}
+                        </p>
+                      )}
                     </div>
                     <div className="space-y-1">
                       <Label className="text-xs text-muted-foreground">
@@ -370,7 +394,7 @@ export function SideCard({
                 className="shadow-none"
                 variant="outline"
                 size="sm"
-                onClick={() => set({ parties: [...value.parties, EMPTY_PARTY] })}
+                onClick={addParty}
                 disabled={disabled || lastPartyHasNoCustomer}
               >
                 <Plus className="size-4" /> {t("commissionDeals.side.addPayer")}

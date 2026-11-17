@@ -5181,6 +5181,8 @@ const en = {
       splitTitle: "How is the commission split?",
       shareHint:
         "Leave shares empty to split equally. Otherwise, enter shares for everyone, totalling 100%.",
+      shareInvalidMultiple:
+        "All shares on this side must add up to 100%, with none at 0% or below.",
       addPayer: "Add customer",
       fullCustomerLink: "Add a customer with full details",
       remove: "Remove",
@@ -5229,8 +5231,7 @@ const en = {
       no_payers: "{{side}}: no one has been added to pay yet.",
       duplicate_payer: "{{side}}: one person is listed twice.",
       shares_incomplete: "{{side}}: either everyone has a share or nobody does.",
-      shares_do_not_add_up:
-        "{{side}}: the shares are invalid. Either they don't add up to 100%, or one of the shares is 0% or less.",
+      shares_do_not_add_up: "{{side}}: all shares must add up to 100%.",
       discount_negative: "{{side}}: the discount cannot be negative.",
       discount_exceeds_fee:
         "{{side}}: one person's discount on this side is larger than their individual share of the commission.",
@@ -6240,7 +6241,9 @@ const en = {
 
   outgoingInvoices: {
     title: "Outgoing invoices (Income)",
-    subtitle: "Outgoing invoices are uploaded manually and read out automatically.",
+    subtitle:
+      "Outgoing invoices come from approved sales or are uploaded manually and read out automatically.",
+    subtitleGeneratedOnly: "Outgoing invoices are created automatically from approved sales.",
     status: {
       draft: "Draft",
       open: "Open",

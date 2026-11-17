@@ -5370,6 +5370,8 @@ const de = {
       splitTitle: "Wie wird die Provision aufgeteilt?",
       shareHint:
         "Lassen Sie die Anteile leer, um die Provision gleichmäßig aufzuteilen. Geben Sie andernfalls für alle einen Anteil ein, der insgesamt 100 % ergibt.",
+      shareInvalidMultiple:
+        "Alle Anteile auf dieser Seite müssen zusammen 100 % ergeben, keiner davon 0 % oder weniger.",
       addPayer: "Kunde hinzufügen",
       fullCustomerLink: "Kunde mit allen Details anlegen",
       remove: "Entfernen",
@@ -5418,8 +5420,7 @@ const de = {
       no_payers: "{{side}}: Es ist noch niemand eingetragen, der zahlt.",
       duplicate_payer: "{{side}}: Eine Person steht doppelt in der Liste.",
       shares_incomplete: "{{side}}: Entweder haben alle einen Anteil oder keiner.",
-      shares_do_not_add_up:
-        "{{side}}: Die Anteile sind ungültig. Entweder ergeben sie nicht 100 %, oder einer der Anteile ist 0 % oder weniger.",
+      shares_do_not_add_up: "{{side}}: Alle Anteile müssen zusammen 100 % ergeben.",
       discount_negative: "{{side}}: Der Rabatt darf nicht negativ sein.",
       discount_exceeds_fee:
         "{{side}}: Der Rabatt für eine Person auf dieser Seite ist größer als deren Anteil an der Provision.",
@@ -6487,7 +6488,9 @@ const de = {
   // Outgoing invoices (Ausgangsrechnungen) — placeholder page.
   outgoingInvoices: {
     title: "Ausgangsrechnungen (Einnahmen)",
-    subtitle: "Ausgangsrechnungen werden manuell hochgeladen und automatisch ausgelesen.",
+    subtitle:
+      "Ausgangsrechnungen entstehen aus genehmigten Verkäufen oder werden manuell hochgeladen und automatisch ausgelesen.",
+    subtitleGeneratedOnly: "Ausgangsrechnungen entstehen automatisch aus genehmigten Verkäufen.",
     status: {
       draft: "Entwurf",
       open: "Offen",
