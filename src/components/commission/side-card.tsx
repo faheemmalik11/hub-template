@@ -93,7 +93,7 @@ export function SideCard({
     <div>
       <div className="flex items-center justify-end gap-3">
         <label className="flex items-center gap-2 text-sm text-muted-foreground">
-          {t("commissionDeals.side.pays")}
+          {t(`commissionDeals.side.${side}`)} {t("commissionDeals.side.pays")}
           <Switch
             checked={value.enabled}
             onCheckedChange={(enabled) => set({ enabled })}
@@ -120,6 +120,9 @@ export function SideCard({
                   <SelectItem value="fixed">{t("commissionDeals.side.fixed")}</SelectItem>
                 </SelectContent>
               </Select>
+              <p className="text-xs text-muted-foreground">
+                {t("commissionDeals.side.feeKindHint")}
+              </p>
             </Field>
             {value.feeKind === "percent" ? (
               <Field className="space-y-1.5">
@@ -147,9 +150,13 @@ export function SideCard({
 
           <div id={`side-${side}-payers`} className="@container">
             <Label>{t("commissionDeals.side.payers")}</Label>
+            <p className="text-xs text-muted-foreground">{t("commissionDeals.side.payersHint")}</p>
             <p className="text-xs text-muted-foreground">{t("commissionDeals.side.shareHint")}</p>
             <p className="text-xs text-muted-foreground">
               {t("commissionDeals.side.discountHint")}
+            </p>
+            <p className="text-xs text-muted-foreground">
+              {t("commissionDeals.side.discountReasonHint")}
             </p>
 
             <div className="mt-2 hidden @lg:block">

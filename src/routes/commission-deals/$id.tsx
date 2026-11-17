@@ -727,6 +727,9 @@ function DealEditor({ deal }: { deal: Deal }) {
                     onChange={(value) => set({ notarisedOn: value })}
                     disabled={!mayEdit}
                   />
+                  <p className="text-xs text-muted-foreground">
+                    {t("commissionDeals.sale.notarisedOnHint")}
+                  </p>
                 </Field>
                 <Field id="field-purchase-price" className="space-y-1.5">
                   <Label>{t("commissionDeals.sale.price")}</Label>
@@ -739,6 +742,9 @@ function DealEditor({ deal }: { deal: Deal }) {
                     placeholder="610.000"
                     disabled={!mayEdit}
                   />
+                  <p className="text-xs text-muted-foreground">
+                    {t("commissionDeals.sale.priceHint")}
+                  </p>
                 </Field>
                 <Field id="field-vat" className="space-y-1.5">
                   <Label>{t("commissionDeals.sale.vat")}</Label>
@@ -757,6 +763,9 @@ function DealEditor({ deal }: { deal: Deal }) {
                     <Field id="field-due-date" className="space-y-1.5">
                       <Label>{t("commissionDeals.sale.dueDate")}</Label>
                       <DatePicker value={dueDate} onChange={setDueDate} disabled={!mayEdit} />
+                      <p className="text-xs text-muted-foreground">
+                        {t("commissionDeals.sale.dueDateHint")}
+                      </p>
                       {dueDateNote.trim() !== "" && dueDate.trim() === "" && (
                         <p className="text-xs text-muted-foreground">
                           {t("commissionDeals.sale.dueDateRedundantHint")}
@@ -771,6 +780,9 @@ function DealEditor({ deal }: { deal: Deal }) {
                         placeholder={t("commissionDeals.sale.dueDateNotePlaceholder")}
                         disabled={!mayEdit}
                       />
+                      <p className="text-xs text-muted-foreground">
+                        {t("commissionDeals.sale.dueDateNoteHint")}
+                      </p>
                       {dueDate.trim() !== "" && (
                         <p className="text-xs text-muted-foreground">
                           {t("commissionDeals.sale.dueDateNoteRedundantHint")}
@@ -787,6 +799,9 @@ function DealEditor({ deal }: { deal: Deal }) {
                     onChange={(event) => set({ note: event.target.value })}
                     disabled={!mayEdit}
                   />
+                  <p className="text-xs text-muted-foreground">
+                    {t("commissionDeals.sale.noteHint")}
+                  </p>
                 </Field>
               </div>
 
