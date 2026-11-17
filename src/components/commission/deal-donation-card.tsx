@@ -15,6 +15,16 @@ import type { Deal } from "@/data";
 import { errorText, formatEUR } from "@/lib/data/format";
 import { useTranslation } from "@/lib/i18n";
 
+function sanitizeAmountInput(raw: string): string {
+  const digitsAndSeparators = raw.replace(/[^0-9.,]/g, "");
+  const separatorIndex = digitsAndSeparators.search(/[.,]/);
+  if (separatorIndex === -1) return digitsAndSeparators;
+  return (
+    digitsAndSeparators.slice(0, separatorIndex + 1) +
+    digitsAndSeparators.slice(separatorIndex + 1).replace(/[.,]/g, "")
+  );
+}
+
 export function DealDonationCard({ deal }: { deal: Deal }) {
   const { t } = useTranslation();
   const settingsQ = useDonationSettings();
@@ -81,7 +91,7 @@ export function DealDonationCard({ deal }: { deal: Deal }) {
               className="w-32"
               inputMode="decimal"
               value={amount || String(settingsQ.data.donation_amount)}
-              onChange={(event) => setAmount(event.target.value)}
+              onChange={(event) => setAmount(sanitizeAmountInput(event.target.value))}
               placeholder={t("commissionDeals.donation.amount")}
               aria-label={t("commissionDeals.donation.amount")}
             />
@@ -132,9 +142,7 @@ export function DealDonationCard({ deal }: { deal: Deal }) {
               </div>
             </div>
             <div className="text-right">
-              <div className="text-sm font-semibold tabular-nums">
-                {formatEUR(donation.amount)}
-              </div>
+              <div className="text-sm font-semibold tabular-nums">{formatEUR(donation.amount)}</div>
               <Badge variant={donation.status === "paid" ? "outline" : "secondary"}>
                 {t(`commissionDeals.donation.status.${donation.status}`)}
               </Badge>
