@@ -84,7 +84,7 @@ Deno.serve(async (req) => {
 
     const apiKey = await propstackKey(db);
     await updateUnitFields(apiKey, property.external_id, {
-      sold_price: deal.purchase_price,
+      sold_price: deal.purchase_price === null ? null : { value: deal.purchase_price },
       sold_date: deal.notarised_on,
       external_commission_percentage: buyerRate,
       internal_commission_percentage: sellerRate,
