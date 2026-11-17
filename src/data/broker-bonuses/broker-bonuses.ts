@@ -109,6 +109,17 @@ export function useReviewBrokerBonus() {
   });
 }
 
+export function useMarkBrokerBonusPaid() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async (id: string) => {
+      const { error } = await sb.rpc("mark_broker_bonus_paid", { p_bonus_id: id });
+      if (error) throw error;
+    },
+    onSuccess: () => qc.invalidateQueries({ queryKey: queryKeys.brokerBonuses.all }),
+  });
+}
+
 export function useConfirmSuggestedBonus() {
   const qc = useQueryClient();
   return useMutation({
@@ -235,32 +246,12 @@ export function useDealCommissionPaid(dealId: string, enabled = true) {
     enabled,
     staleTime: STALE,
     queryFn: async (): Promise<boolean> => {
-      const { data: parties, error: partiesError } = await sb
-        .from(TABLE.dealParties)
-        .select(`id, ${TABLE.dealSides}!inner(deal_id)`)
-        .eq(`${TABLE.dealSides}.deal_id`, dealId);
-      if (partiesError) throw partiesError;
-      const people = (parties ?? []) as Array<{ id: string }>;
-      if (people.length === 0) return false;
-      const { data: invoices, error } = await sb
-        .from(TABLE.outgoingInvoices)
-        .select("deal_party_id, status")
-        .in(
-          "deal_party_id",
-          people.map((party) => party.id),
-        )
-        .is("deleted_at", null)
-        .neq("status", "cancelled");
+      const { data, error } = await sb.rpc("deal_stage_reached", {
+        p_deal_id: dealId,
+        p_stage: "commission_received",
+      });
       if (error) throw error;
-      const paid = new Set(
-        ((invoices ?? []) as Array<{ deal_party_id: string | null; status: string }>)
-          .filter((invoice) => invoice.status === "paid" && invoice.deal_party_id)
-          .map((invoice) => invoice.deal_party_id),
-      );
-      const open = ((invoices ?? []) as Array<{ status: string }>).some(
-        (invoice) => invoice.status !== "paid",
-      );
-      return !open && people.every((party) => paid.has(party.id));
+      return data as boolean;
     },
   });
 }

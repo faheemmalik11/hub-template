@@ -85,6 +85,33 @@ default rather than a reversal of that decision.
   to include `sent`/`paid`/`cancelled` alongside the upload path's `draft`/`open`/`paidoff`/`voided`
   — both vocabularies share the one `status` column; see Known issues below.
 
+## Reading payment status back (§5.1 — commission bonuses need it)
+
+Built for `broker_bonuses`' percentage-share bonuses (`docs/BROKER_BONUSES.md`): they're only due
+once "the commission has reached van Oepen", and that has to mean something real, not a client-side
+guess. A sibling of `documents`' own `lexoffice-payment-sync` makes it real:
+
+- **Edge Function** `lexoffice-commission-payment-sync`
+  (`supabase/functions/lexoffice-commission-payment-sync/index.ts`). Candidates: `outgoing_invoices`
+  where `kind = 'commission'`, has an `accounting_external_id`, not already `status = 'paid'`,
+  `deleted_at is null`. Per invoice, asks Lexware's `GET /payments/{id}` (via the same
+  `getVoucherPayment`/`paidOnFrom` helpers `lexoffice-payment-sync` already uses) and, once Lexware
+  confirms it's settled, writes `status = 'paid', paid_at, paid_source = 'lexware'` in one update —
+  the same two new columns `supabase/schema/0068_commission_invoice_payment_tracking.sql` adds,
+  mirroring `documents.paid_at`/`paid_source`.
+- **Per-row isolated, on purpose, unlike the existing `documents` sync.** `lexoffice-payment-sync`'s
+  loop has no try/catch around each invoice — one API error there `throw`s straight out of the loop,
+  so every document after the failing one silently never gets checked that run. The new function
+  wraps each row and keeps going on an isolated failure, only aborting the whole run early if the
+  failure is an auth-class one (`"Lexoffice refused the API key"`), since that would fail identically
+  for every remaining row anyway.
+- **Scheduled job** `lexoffice_commission_payment_sync`, every 15 minutes, `enabled: false` by
+  default — a separate row from `lexoffice_payment_sync` rather than folding into it, so the two
+  Lexware syncs report success/failure independently and can be turned on one at a time.
+- **Known, accepted limitation**, same as `documents`: once a row's `paid_at` is set it's never
+  re-checked, so a payment Lexware later reverses wouldn't be noticed automatically — matches the
+  existing incoming-invoice sync's own limitation, not a new one.
+
 ## Taking the invoice number and PDF back into the Hub
 
 Briefing §3.2 also asks for "the number and the PDF" to come back into the Hub once Lexware has
@@ -139,8 +166,6 @@ Three bugs that only a real call could find, all fixed in the same pass:
 
 ## What was explicitly left out
 
-- **No webhook / no payment-status sync back from Lexoffice.** This only pushes; it never listens.
-  A later feature if the client wants it — a different scope, chosen deliberately over this one.
 - **No bulk contact sync.** Contacts resolve lazily, one at a time, only when an invoice is pushed.
 - **No change to `create_deal_invoices` itself.** The automatic push (above) reacts to the row it
   inserts; the function's own logic — what gets created, and how — is untouched.

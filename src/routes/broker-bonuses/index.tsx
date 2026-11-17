@@ -40,6 +40,7 @@ import {
   useBrokerBonuses,
   useConfirmSuggestedBonus,
   useDeleteBrokerBonus,
+  useMarkBrokerBonusPaid,
   useReviewBrokerBonus,
   useSubmitBrokerBonus,
   type BonusStatus,
@@ -106,7 +107,7 @@ function BrokerBonusesPage() {
   });
   const paginationLabels = usePaginationLabels();
   const [reviewing, setReviewing] = useState<BrokerBonus | null>(null);
-  const markPaid = useReviewBrokerBonus();
+  const markPaid = useMarkBrokerBonusPaid();
   const remove = useDeleteBrokerBonus();
   const confirmSuggested = useConfirmSuggestedBonus();
   const suggestsBonuses = useFeature(PERMISSIONS.bonusesSuggest);
@@ -256,15 +257,12 @@ function BrokerBonusesPage() {
                               variant="outline"
                               disabled={markPaid.isPending}
                               onClick={() =>
-                                markPaid.mutate(
-                                  { id: bonus.id, status: "paid" },
-                                  {
-                                    onError: (error) =>
-                                      toast.error(t("brokerBonuses.failed"), {
-                                        description: errorText(error),
-                                      }),
-                                  },
-                                )
+                                markPaid.mutate(bonus.id, {
+                                  onError: (error) =>
+                                    toast.error(t("brokerBonuses.failed"), {
+                                      description: errorText(error),
+                                    }),
+                                })
                               }
                             >
                               {t("brokerBonuses.markPaid")}

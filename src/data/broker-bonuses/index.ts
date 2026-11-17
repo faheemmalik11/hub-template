@@ -7,6 +7,7 @@ export {
   useDealBonuses,
   useDealCommissionPaid,
   useDeleteBrokerBonus,
+  useMarkBrokerBonusPaid,
   useReviewBrokerBonus,
   useSaveBonusSettings,
   useSubmitBrokerBonus,

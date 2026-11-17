@@ -51,11 +51,34 @@ database and ends with the line that switches it on. Run `deal-details-for-an-ex
   deal. Rules: notary bonus 500 for the person who handled the sale, unless the sale is an own lead;
   follow-up 500 when the sale came from a viewing; own lead gives 50 % of (net commission after discounts
   minus the deal's costs minus the 1,500 personnel flat rate), no notary bonus; a lead won by another broker
-  than the one who handled it gives that broker 10 %. The notary and follow-up bonuses are due at the notary
-  date. The two shares wait until the costs are closed and every commission invoice of the deal is paid.
+  than the one who handled it gives that broker 10 % of the commission, costs not deducted
+  (`bonus_settings.company_lead_deducts_costs`, corrected to `false` by
+  `supabase/schema/0067_company_lead_bonus_no_cost_deduction.sql` — the own-lead share always deducts
+  costs, hardcoded, never controlled by this flag). The notary and follow-up bonuses become a ready
+  suggestion once the deal is invoiced (`deals.status = 'invoiced'`). The two shares wait until every
+  commission invoice of the deal is paid — `useDealCommissionPaid` asks
+  `deal_stage_reached(deal_id, 'commission_received')` (`supabase/schema/0043_referrer_bonus_stage_timing.sql`),
+  the same SQL function the mark-paid gate below uses, so the suggestion gate and the payout gate can never
+  disagree.
 - **Settings:** table `bonus_settings` (one row): the amounts, the two percentages, the personnel flat rate,
-  whether the 10 % is taken after costs, and `broker_bonus_counts_status`, which bonuses the per-agent report
-  counts. Edited under "Regeln" on the bonus screen by whoever reviews.
+  whether the 10 % is taken after costs (now `false`), and `broker_bonus_counts_status`, which bonuses the
+  per-agent report counts. Edited under "Regeln" on the bonus screen by whoever reviews.
+- **Payout gate:** marking an approved bonus paid calls the RPC `mark_broker_bonus_paid`
+  (`supabase/schema/0069_broker_bonus_payout_gate.sql`), not a plain update — it raises rather than
+  succeeding if the bonus isn't `approved`, or if its deal hasn't reached the stage that bonus type is due
+  at (`invoiced` for notary/follow-up, `commission_received` for the two percentage shares; bonus types with
+  no `deal_id` skip the check). `useMarkBrokerBonusPaid` (`src/data/broker-bonuses/broker-bonuses.ts`) calls
+  it; the "Als bezahlt markieren" button on `/broker-bonuses` no longer goes through the generic
+  `useReviewBrokerBonus` update the way approve/reject still do. This is the same pattern
+  `mark_referrer_bonus_paid` already uses for referrer bonuses, extended here rather than left as the one
+  bonus type with no server-side check on its paid transition.
+- **Commission-invoice payment sync:** `commission_received` depends on `outgoing_invoices.status = 'paid'`
+  actually being set for commission invoices, which nothing did before this. The Edge Function
+  `lexoffice-commission-payment-sync` (a sibling of `lexoffice-payment-sync`, which does the equivalent for
+  incoming invoices) reads payment status back from Lexware for every commission invoice with a Lexware id
+  and not yet paid, and marks it `paid` with `paid_at`/`paid_source` once Lexware confirms it is settled.
+  Scheduled job `lexoffice_commission_payment_sync`, every 15 minutes, off by default like every new job
+  here. See `docs/LEXOFFICE_SYNC.md`.
 - **Flow:** on the deal page ("Boni für diesen Verkauf", `src/components/commission/bonus-suggestions-card.tsx`)
   an administrator creates a suggestion. It is a `broker_bonuses` row with status `suggested`, `deal_id` set and
   the calculation as its note, one per deal and type. The broker is notified, confirms it (status `submitted`,
@@ -74,11 +97,11 @@ database and ends with the line that switches it on. Run `deal-details-for-an-ex
 
 - Without the `bonuses.suggest` switch, bonuses are typed in by the broker and nothing checks the amount.
 - Questions to the client: the rule for "Empfehlung Finanzierung", and whether the notary bonus is
-  now 500 euro (the 2025 list shows 300).
-- **The notary bonus is due on the wrong date.** "Suggested from a sale" above sets it at the notary
-  date, and `src/kit/lib/commission/bonuses.ts` writes `earnedOn: facts.notarisedOn` for the notary and
-  follow-up bonuses. The client briefing (§5.1) says the trigger is the invoice being issued to buyer and
-  seller, "not the notary date". Not yet corrected.
+  now 500 euro (the 2025 list shows 300) — §5.2, separate from the §5.1 corrections below.
+- **§5.1's two corrections are both done**, confirmed against the briefing, not assumed: the cost
+  deduction direction (company lead without, own lead with) and the two payout triggers (notary bonus
+  due on invoice issue, percentage shares due once Lexware confirms the commission invoice paid) — see
+  "Suggested from a sale" above, "Payout gate" and "Commission-invoice payment sync".
 - **The two percentage shares carry a meaningless `earned_on`.** `suggestBonuses` returns
   `earnedOn: null` for `own_job_share` and `company_lead_share`, because neither is due until the costs
   are closed and every commission invoice is paid, and
