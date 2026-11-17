@@ -17,6 +17,23 @@ function messageOf(error: unknown): string {
   return String(error);
 }
 
+// Errors this integration throws itself read fine as-is (matches the house style, e.g. "Propstack
+// refused the API key"). Anything else reaching here is an unclassified error -- a raw Postgres
+// message, a network failure, a timeout -- and must not be forwarded verbatim to the person who
+// clicked "sync now".
+const KNOWN_SYNC_FAILURE_MESSAGES = [
+  /^Propstack refused the API key$/,
+  /^Propstack answered \d+$/,
+  /^PROPSTACK_API_KEY is not stored in the admin panel$/,
+  /^TENANT_SECRET_KEY is not set as a secret of this function$/,
+  /^Propstack returned more pages than expected$/,
+];
+
+function publicFailureMessage(message: string): string {
+  if (KNOWN_SYNC_FAILURE_MESSAGES.some((pattern) => pattern.test(message))) return message;
+  return "Der CRM-Abgleich ist fehlgeschlagen.";
+}
+
 async function fetchAllUnits(apiKey: string): Promise<PropstackUnit[]> {
   const unitsById = new Map<number, PropstackUnit>();
   for (let page = 1; page <= MAX_PAGES; page++) {
@@ -126,7 +143,7 @@ async function syncAndRecord(db: Db, full: boolean) {
       .eq("key", "propstack_sync");
     if (before?.last_status !== "failed") {
       await db.rpc("notify_administrators", {
-        p_note: `Der CRM-Abgleich ist fehlgeschlagen: ${message.slice(0, 200)}`,
+        p_note: "Der CRM-Abgleich ist fehlgeschlagen.",
         p_path: "/properties",
         p_source: "sync",
       });
@@ -144,7 +161,7 @@ Deno.serve(async (request) => {
     const outcome = await syncAndRecord(db, full);
     return outcome.ok
       ? jsonResponse(outcome.result)
-      : jsonResponse({ error: outcome.message }, 500);
+      : jsonResponse({ error: publicFailureMessage(outcome.message) }, 500);
   }
   EdgeRuntime.waitUntil(syncAndRecord(db, full));
   return jsonResponse({ started: true }, 202);

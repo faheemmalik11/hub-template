@@ -387,24 +387,48 @@ interface LexofficeIssue {
   source?: string;
 }
 
-/**
- * Lexware's own 406 body is a developer-facing validation report, not something to show on
- * screen as-is. Named field + the reader's own next step, falling back to a plain sentence when
- * the body is not this shape (a network error, a timeout, Lexoffice's own 401/403/429 messages,
- * all already plain English from lexofficeFetch above).
- */
-export function friendlyLexofficeError(raw: string): string {
-  const match = raw.match(/^Lexoffice answered 406: (.+)$/s);
-  if (!match) return raw;
+// Lexware's own 406/422 body is a developer-facing validation report, not something to show on
+// screen as-is. Named field + the reader's own next step, falling back to a plain sentence when
+// the body carries no usable field names.
+function rejectedDocumentMessage(body: string): string {
   try {
-    const body = JSON.parse(match[1]) as { IssueList?: LexofficeIssue[]; message?: string };
-    const fields = (body.IssueList ?? [])
+    const parsed = JSON.parse(body) as { IssueList?: LexofficeIssue[]; message?: string };
+    const fields = (parsed.IssueList ?? [])
       .map((issue) => (issue.source ? readableFieldName(issue.source) : null))
       .filter((label): label is string => label !== null);
     if (fields.length > 0) return `Lexware rejected this document. Please check ${fields.join(", ")}.`;
-    if (body.message) return `Lexware rejected this document: ${body.message}`;
+    if (parsed.message) return `Lexware rejected this document: ${parsed.message}`;
     return "Lexware rejected this document for an unknown reason.";
   } catch {
     return "Lexware rejected this document for an unknown reason.";
   }
+}
+
+/**
+ * Turns the raw string lexofficeFetch throws with (`Lexoffice answered ${status}: ${body}` for
+ * every non-ok, non-401/403/429 response, already-plain English for the handful it throws
+ * directly) into a short sentence a non-technical reader can act on. Never echoes the raw body
+ * back — a status this function has no specific wording for still gets a generic fallback
+ * sentence, never the JSON/text Lexware sent.
+ */
+export function friendlyLexofficeError(raw: string): string {
+  const match = raw.match(/^Lexoffice answered (\d+): (.+)$/s);
+  if (!match) return raw;
+  const status = Number(match[1]);
+  const body = match[2];
+
+  if (status === 406 || status === 422) return rejectedDocumentMessage(body);
+  if (status === 400) {
+    return "Lexware could not accept this document because of an invalid value. Please check the document and try again.";
+  }
+  if (status === 404) {
+    return "Lexware could not find something this document refers to, such as the vendor or an earlier voucher. Please check the linked record.";
+  }
+  if (status === 409) {
+    return "Lexware already has a matching entry for this document. Please check Lexware before sending it again.";
+  }
+  if (status >= 500) {
+    return "Lexware is temporarily unavailable. Please try again in a few minutes.";
+  }
+  return "Lexware rejected this document for an unknown reason.";
 }

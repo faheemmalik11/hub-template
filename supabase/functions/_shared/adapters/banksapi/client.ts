@@ -246,6 +246,20 @@ function mapBulkTransferMessages(
   return { status: "pending" };
 }
 
+// A failed payment call's message ends up in payment_orders.status_reason, which is shown
+// directly to the business user initiating the transfer (invoice toast + timeline entry) --
+// unlike every other BANKSapi error in this file, it must never carry BANKSapi's raw response
+// body. Mirrors the status-aware wording friendlyLexofficeError() already uses for Lexware.
+function banksapiPaymentFailureMessage(action: string, status: number): string {
+  if (status === 429 || status >= 500) {
+    return "BANKSapi is temporarily unavailable. Please try again in a few minutes.";
+  }
+  if (status === 401 || status === 403) {
+    return `BANKSapi rejected the request to ${action} (${status}).`;
+  }
+  return `BANKSapi could not ${action} (${status}).`;
+}
+
 // ---------------------------------------------------------------------------
 // Live payment implementation (docs/BANKSAPI_PAYMENT_INITIATION.md, 2026-08-05 update).
 // Uses POST /customer/v2/payment/bulk-transfer (a single-element transferDetails[] even
@@ -271,9 +285,7 @@ function livePaymentWrapper(): BanksapiPaymentWrapper {
     });
     const raw = await res.text();
     if (!res.ok) {
-      throw new Error(
-        `BANKSapi ONE/Connect token request failed (${res.status}): ${raw.slice(0, 300)}`,
-      );
+      throw new Error(banksapiPaymentFailureMessage("issue a payment token", res.status));
     }
     const json = JSON.parse(raw);
     if (!json.access_token) throw new Error("BANKSapi token response missing access_token");
@@ -337,8 +349,7 @@ function livePaymentWrapper(): BanksapiPaymentWrapper {
       });
 
       if (res.status !== 451) {
-        const detail = (await res.text().catch(() => "")).slice(0, 500);
-        throw new Error(`BANKSapi bulk-transfer failed (${res.status}): ${detail}`);
+        throw new Error(banksapiPaymentFailureMessage("submit the payment", res.status));
       }
 
       const location = res.headers.get("Location") ?? res.headers.get("Content-Location");
@@ -368,7 +379,7 @@ function livePaymentWrapper(): BanksapiPaymentWrapper {
       });
       const raw = await res.text();
       if (!res.ok)
-        throw new Error(`BANKSapi payment status failed (${res.status}): ${raw.slice(0, 300)}`);
+        throw new Error(banksapiPaymentFailureMessage("check the payment status", res.status));
       if (!raw || raw.trim() === "") return { status: "pending" };
       const body = JSON.parse(raw) as BulkTransferResultRaw & {
         messages?: BulkTransferMessageRaw[];
