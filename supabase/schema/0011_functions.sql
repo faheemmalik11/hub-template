@@ -3406,11 +3406,15 @@ begin
   end if;
 
   select status into v_current_status from public.deals where id = p_deal_id;
-  if v_current_status not in ('incomplete', 'ready', 'approved') then
+  if v_current_status not in ('incomplete', 'ready', 'approved', 'invoiced') then
     raise exception 'save_deal: deal % is % and can no longer be edited this way', p_deal_id, v_current_status
       using errcode = 'check_violation';
   end if;
 
+  -- Once invoiced, deal_sides/deal_parties are left untouched below (outgoing_invoices already
+  -- references those exact rows), and status/approval stay as they are rather than being
+  -- recomputed from p_status — but the deal's own facts (ownership, costs_closed, the note) and
+  -- the cost list still save normally, since those have no bearing on what was already invoiced.
   update public.deals
      set company_id = nullif(p_deal->>'company_id', '')::uuid,
          notarised_on = nullif(p_deal->>'notarised_on', '')::date,
@@ -3426,39 +3430,41 @@ begin
                                 then coalesce(costs_closed_at, now()) end,
          ready_for_bookkeeping_at = case when coalesce((p_deal->>'ready_for_bookkeeping')::boolean, false)
                                          then coalesce(ready_for_bookkeeping_at, now()) end,
-         status = p_status,
-         approved_by = null,
-         approved_at = null
+         status = case when v_current_status = 'invoiced' then status else p_status end,
+         approved_by = case when v_current_status = 'invoiced' then approved_by else null end,
+         approved_at = case when v_current_status = 'invoiced' then approved_at else null end
    where id = p_deal_id and deleted_at is null;
   if not found then
     raise exception 'save_deal: deal % not found', p_deal_id using errcode = 'no_data_found';
   end if;
 
-  delete from public.deal_sides
-   where deal_id = p_deal_id
-     and side not in (select value->>'side' from jsonb_array_elements(p_sides));
+  if v_current_status <> 'invoiced' then
+    delete from public.deal_sides
+     where deal_id = p_deal_id
+       and side not in (select value->>'side' from jsonb_array_elements(p_sides));
 
-  for v_side in select value from jsonb_array_elements(p_sides) loop
-    insert into public.deal_sides (deal_id, side, fee_kind, fee_net_rate, fee_net_amount)
-    values (p_deal_id, v_side->>'side', v_side->>'fee_kind', (v_side->>'fee_net_rate')::numeric,
-            (v_side->>'fee_net_amount')::numeric)
-    on conflict (deal_id, side) do update
-       set fee_kind = excluded.fee_kind,
-           fee_net_rate = excluded.fee_net_rate,
-           fee_net_amount = excluded.fee_net_amount
-    returning id into v_side_id;
+    for v_side in select value from jsonb_array_elements(p_sides) loop
+      insert into public.deal_sides (deal_id, side, fee_kind, fee_net_rate, fee_net_amount)
+      values (p_deal_id, v_side->>'side', v_side->>'fee_kind', (v_side->>'fee_net_rate')::numeric,
+              (v_side->>'fee_net_amount')::numeric)
+      on conflict (deal_id, side) do update
+         set fee_kind = excluded.fee_kind,
+             fee_net_rate = excluded.fee_net_rate,
+             fee_net_amount = excluded.fee_net_amount
+      returning id into v_side_id;
 
-    delete from public.deal_parties where deal_side_id = v_side_id;
-    v_position := 0;
-    for v_party in select value from jsonb_array_elements(coalesce(v_side->'parties', '[]'::jsonb)) loop
-      insert into public.deal_parties
-          (deal_side_id, customer_id, share_percent, discount_gross, discount_reason, position)
-      values (v_side_id, (v_party->>'customer_id')::uuid, (v_party->>'share_percent')::numeric,
-              coalesce((v_party->>'discount_gross')::numeric, 0),
-              nullif(v_party->>'discount_reason', ''), v_position);
-      v_position := v_position + 1;
+      delete from public.deal_parties where deal_side_id = v_side_id;
+      v_position := 0;
+      for v_party in select value from jsonb_array_elements(coalesce(v_side->'parties', '[]'::jsonb)) loop
+        insert into public.deal_parties
+            (deal_side_id, customer_id, share_percent, discount_gross, discount_reason, position)
+        values (v_side_id, (v_party->>'customer_id')::uuid, (v_party->>'share_percent')::numeric,
+                coalesce((v_party->>'discount_gross')::numeric, 0),
+                nullif(v_party->>'discount_reason', ''), v_position);
+        v_position := v_position + 1;
+      end loop;
     end loop;
-  end loop;
+  end if;
 
   delete from public.deal_costs where deal_id = p_deal_id;
   for v_cost in select value from jsonb_array_elements(coalesce(p_costs, '[]'::jsonb)) loop

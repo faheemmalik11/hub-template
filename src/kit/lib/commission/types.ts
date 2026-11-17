@@ -51,7 +51,8 @@ export type CommissionProblem =
   | "discount_negative"
   | "discount_exceeds_fee"
   | "vat_rate_invalid"
-  | "no_side_pays";
+  | "no_side_pays"
+  | "notarised_on_missing";
 
 export interface SideProblem {
   side: CommissionSide | null;

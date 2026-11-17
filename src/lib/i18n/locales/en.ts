@@ -5015,8 +5015,6 @@ const en = {
     review: {
       title: "What still needs to be completed?",
       fix: "Go to field",
-      missingPrice: "Enter the purchase price",
-      missingNotarisedOn: "Enter the notary date",
       missingFee: "Commission rate or amount is missing",
       missingDueDate: "Enter a payment due date or explain when payment is expected",
     },
@@ -5234,6 +5232,7 @@ const en = {
     problems: {
       title: "Still missing",
       purchase_price_missing: "Enter the purchase price to calculate this commission.",
+      notarised_on_missing: "Enter the notary date before this deal can be approved.",
       fee_missing: "{{side}}: the commission is missing.",
       fee_not_positive: "{{side}}: the commission must be more than zero.",
       no_payers: "{{side}}: no one has been added to pay yet.",

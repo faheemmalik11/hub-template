@@ -159,12 +159,18 @@ export function calculateDealForm(form: DealForm): CommissionResult {
             }),
         }
       : undefined;
-  return calculateDealCommission({
+  const result = calculateDealCommission({
     purchasePriceCents: cents(parseDecimal(form.purchasePrice)),
     vatRatePercent: parseDecimal(form.vatRate) ?? 19,
     buyer: sideInput(form.buyer),
     seller: sideInput(form.seller),
   });
+
+  if (form.notarisedOn.trim() === "") {
+    const problems = [...result.problems, { side: null, problem: "notarised_on_missing" as const }];
+    return { ...result, ok: false, problems };
+  }
+  return result;
 }
 
 function costInputsOf(form: DealForm): DealCostInput[] {
