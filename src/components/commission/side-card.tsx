@@ -253,11 +253,6 @@ export function SideCard({
                           )}
                           disabled={disabled || value.parties.length <= 1}
                         />
-                        {shareInvalid && (
-                          <p className="mt-1 text-xs text-destructive">
-                            {t("commissionDeals.side.shareInvalidMultiple")}
-                          </p>
-                        )}
                       </TableCell>
                       <TableCell className="align-top">
                         <Input
@@ -295,6 +290,13 @@ export function SideCard({
                       </TableCell>
                     </TableRow>
                   ))}
+                  {shareInvalid && (
+                    <TableRow>
+                      <TableCell colSpan={5} className="text-xs text-destructive">
+                        {t("commissionDeals.side.shareInvalidMultiple")}
+                      </TableCell>
+                    </TableRow>
+                  )}
                 </TableBody>
               </Table>
             </div>
@@ -348,11 +350,6 @@ export function SideCard({
                         )}
                         disabled={disabled || value.parties.length <= 1}
                       />
-                      {shareInvalid && (
-                        <p className="text-xs text-destructive">
-                          {t("commissionDeals.side.shareInvalidMultiple")}
-                        </p>
-                      )}
                     </div>
                     <div className="space-y-1">
                       <Label className="text-xs text-muted-foreground">
@@ -387,6 +384,11 @@ export function SideCard({
                   </div>
                 </div>
               ))}
+              {shareInvalid && (
+                <p className="text-xs text-destructive">
+                  {t("commissionDeals.side.shareInvalidMultiple")}
+                </p>
+              )}
             </div>
 
             <div className="mt-2 flex flex-wrap items-center gap-3 px-2">

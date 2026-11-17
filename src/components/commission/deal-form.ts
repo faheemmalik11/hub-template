@@ -86,6 +86,7 @@ function emptySide(enabled: boolean): SideForm {
 
 function sideFormOf(side: DealSide | undefined): SideForm {
   if (!side) return emptySide(false);
+  const soleParty = side.deal_parties.length === 1;
   return {
     enabled: true,
     feeKind: side.fee_kind,
@@ -93,7 +94,7 @@ function sideFormOf(side: DealSide | undefined): SideForm {
     amount: formatDecimal(side.fee_net_amount),
     parties: side.deal_parties.map((party) => ({
       customerId: party.customer_id,
-      share: formatDecimal(party.share_percent),
+      share: soleParty ? "100" : formatDecimal(party.share_percent),
       discount: party.discount_gross ? formatDecimal(party.discount_gross) : "",
       discountReason: party.discount_reason ?? "",
     })),
