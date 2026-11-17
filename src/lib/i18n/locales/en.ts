@@ -5093,6 +5093,8 @@ const en = {
       createCreditNote: "Create credit note",
       creditNoteCreated: "Credit note created.",
       creditNoteNote: "A credit note for this payout is listed under Invoices.",
+      creditNoteDisabled:
+        "Credit notes are turned off for now. They don't reach Lexware yet, so creating one would leave a draft that never gets sent.",
       status: {
         suggested: "Suggested",
         paid: "Paid",

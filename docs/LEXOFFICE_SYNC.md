@@ -194,8 +194,11 @@ Three bugs that only a real call could find, all fixed in the same pass:
 ## Open questions
 
 - The referrer credit-note process (`0033_referrer_credit_notes.sql`) also creates
-  `outgoing_invoices` rows (`kind = 'referral_credit'`). Whether those should also be pushable to
-  Lexoffice, or stay Hub-only, hasn't been asked.
+  `outgoing_invoices` rows (`kind = 'referral_credit'`), which this trigger's `WHEN` clause
+  explicitly excludes (`kind = 'commission'` only), so those rows are never pushed and sit as a
+  stale `draft` forever. Creation is switched off in the UI until this is fixed; see
+  `docs/REFERRER_CREDIT_NOTES.md` for the root cause and the two candidate fixes, not yet decided
+  between.
 
 ## Settled: what a client can change without touching code
 

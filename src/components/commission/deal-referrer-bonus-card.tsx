@@ -48,6 +48,8 @@ function dealStageReached(deal: Deal, invoices: OutgoingInvoice[], stage: DealSt
   );
 }
 
+const CREDIT_NOTE_CREATION_ENABLED = false;
+
 export function DealReferrerBonusCard({ deal }: { deal: Deal }) {
   const { t } = useTranslation();
   const referrerCustomerId = deal.referrer_customer_id;
@@ -211,7 +213,7 @@ export function DealReferrerBonusCard({ deal }: { deal: Deal }) {
             <div className="mt-3">
               <Button
                 size="sm"
-                disabled={createCreditNote.isPending}
+                disabled={!CREDIT_NOTE_CREATION_ENABLED || createCreditNote.isPending}
                 onClick={() =>
                   createCreditNote.mutate(bonus.id, {
                     onSuccess: () =>
@@ -225,6 +227,11 @@ export function DealReferrerBonusCard({ deal }: { deal: Deal }) {
               >
                 {t("commissionDeals.referrerBonus.createCreditNote")}
               </Button>
+              {!CREDIT_NOTE_CREATION_ENABLED && (
+                <p className="mt-1.5 text-xs text-muted-foreground">
+                  {t("commissionDeals.referrerBonus.creditNoteDisabled")}
+                </p>
+              )}
             </div>
           )}
           {bonus.status === "paid" && creditNote && (
