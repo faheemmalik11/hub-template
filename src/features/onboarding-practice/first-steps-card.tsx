@@ -8,7 +8,7 @@ import { useTranslation } from "@/lib/i18n";
 import { cn } from "@/lib/utils";
 
 import {
-  FIRST_STEPS_TASKS,
+  firstStepsTasks,
   resolveFirstStepsEntries,
   shouldShowFirstSteps,
   type FirstStepsEntry,
@@ -17,17 +17,17 @@ import { isPracticeCompleted, readPracticeProgress } from "@/kit/onboarding/prac
 
 export function FirstStepsCard({ alwaysShow = false }: { alwaysShow?: boolean }) {
   const { t } = useTranslation();
-  const { appUserId } = useAuth();
+  const { appUserId, can } = useAuth();
   const [entries, setEntries] = useState<FirstStepsEntry[] | null>(null);
 
   useEffect(() => {
     setEntries(
-      resolveFirstStepsEntries(FIRST_STEPS_TASKS, (taskId) => {
+      resolveFirstStepsEntries(firstStepsTasks(can), (taskId) => {
         if (isPracticeCompleted(taskId, appUserId)) return "completed";
         return readPracticeProgress(taskId, appUserId) ? "started" : "new";
       }),
     );
-  }, [appUserId]);
+  }, [appUserId, can]);
 
   if (!entries || (!alwaysShow && !shouldShowFirstSteps(entries))) return null;
 

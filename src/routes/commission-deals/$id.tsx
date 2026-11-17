@@ -37,6 +37,7 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import type { ReviewLine } from "@/kit/ui";
+import { useEmitOnboardingEvent } from "@/kit/components/onboarding";
 import { ErrorState, TableSkeleton } from "@/components/documents/query-states";
 import { DealStatusStepper } from "@/components/commission/deal-status-stepper";
 import { BonusSuggestionsCard } from "@/components/commission/bonus-suggestions-card";
@@ -178,6 +179,7 @@ async function pushDealValuesToCrm(dealId: string): Promise<void> {
 function DealEditor({ deal }: { deal: Deal }) {
   const { t } = useTranslation();
   const { can } = useAuth();
+  const emitOnboardingEvent = useEmitOnboardingEvent();
   const mayEditAny = can(PERMISSIONS.documentsWrite);
   const mayEdit =
     deal.status !== "settled" &&
@@ -228,6 +230,15 @@ function DealEditor({ deal }: { deal: Deal }) {
   }, [deal]);
 
   const result = useMemo(() => calculateDealForm(form), [form]);
+  useEffect(() => {
+    if (result.ok)
+      emitOnboardingEvent({ type: "commission_deal_financials_ready", recordId: deal.id });
+  }, [result.ok, deal.id, emitOnboardingEvent]);
+  useEffect(() => {
+    if (!form.ownLead && form.handledBy && form.acquiredBy && form.acquiredBy !== form.handledBy) {
+      emitOnboardingEvent({ type: "commission_deal_ownership_split", recordId: deal.id });
+    }
+  }, [form.ownLead, form.handledBy, form.acquiredBy, deal.id, emitOnboardingEvent]);
   const sideShareInvalid = (side: CommissionSide) =>
     !result.ok &&
     result.problems.some(
@@ -358,6 +369,11 @@ function DealEditor({ deal }: { deal: Deal }) {
 
     const sequence = (async () => {
       await save.mutateAsync({ ...saveInputOf(form), complete: result.ok });
+      emitOnboardingEvent({
+        type: "commission_deal_saved",
+        recordId: deal.id,
+        data: { ready: result.ok },
+      });
 
       let pushedToCrm: boolean | null = null;
       let reason = "";
@@ -418,6 +434,11 @@ function DealEditor({ deal }: { deal: Deal }) {
 
   const runApprove = () => {
     const promise = approve.mutateAsync(undefined);
+    promise
+      .then(() => emitOnboardingEvent({ type: "commission_deal_approved", recordId: deal.id }))
+      .catch(() => {
+        // Already reported by toast.promise below; nothing further to do here.
+      });
     toast.promise(promise, {
       loading: t("commissionDeals.actions.approving"),
       success: t("commissionDeals.actions.approved"),
@@ -434,6 +455,13 @@ function DealEditor({ deal }: { deal: Deal }) {
       return;
     }
     const promise = createInvoices.mutateAsync(invoices);
+    promise
+      .then(() =>
+        emitOnboardingEvent({ type: "commission_deal_invoices_created", recordId: deal.id }),
+      )
+      .catch(() => {
+        // Already reported by toast.promise below; nothing further to do here.
+      });
     toast.promise(promise, {
       loading: t("commissionDeals.actions.creatingInvoices"),
       success: t("commissionDeals.actions.invoicesCreated"),
@@ -524,6 +552,7 @@ function DealEditor({ deal }: { deal: Deal }) {
               >
                 {secondaryActions.includes("save") && (
                   <DropdownMenuItem
+                    data-tour="commission-save"
                     className="cursor-pointer"
                     disabled={saveDisabled}
                     onSelect={runSave}
@@ -533,6 +562,7 @@ function DealEditor({ deal }: { deal: Deal }) {
                 )}
                 {secondaryActions.includes("approve") && (
                   <DropdownMenuItem
+                    data-tour="commission-approve"
                     className="cursor-pointer"
                     disabled={approveDisabled}
                     onSelect={runApprove}
@@ -542,6 +572,7 @@ function DealEditor({ deal }: { deal: Deal }) {
                 )}
                 {secondaryActions.includes("createInvoices") && (
                   <DropdownMenuItem
+                    data-tour="commission-create-invoices"
                     className="cursor-pointer"
                     disabled={createInvoicesDisabled}
                     onSelect={() => setCreateInvoicesConfirmOpen(true)}
@@ -566,12 +597,22 @@ function DealEditor({ deal }: { deal: Deal }) {
             </DropdownMenu>
           )}
           {primaryAction === "save" && (
-            <Button className="shadow-none" onClick={runSave} disabled={saveDisabled}>
+            <Button
+              data-tour="commission-save"
+              className="shadow-none"
+              onClick={runSave}
+              disabled={saveDisabled}
+            >
               {isSaving ? t("commissionDeals.actions.saving") : t("commissionDeals.actions.save")}
             </Button>
           )}
           {primaryAction === "approve" && (
-            <Button className="shadow-none" onClick={runApprove} disabled={approveDisabled}>
+            <Button
+              data-tour="commission-approve"
+              className="shadow-none"
+              onClick={runApprove}
+              disabled={approveDisabled}
+            >
               <Check className="size-4" />
               {approve.isPending
                 ? t("commissionDeals.actions.approving")
@@ -580,6 +621,7 @@ function DealEditor({ deal }: { deal: Deal }) {
           )}
           {primaryAction === "createInvoices" && (
             <Button
+              data-tour="commission-create-invoices"
               className="shadow-none"
               onClick={() => setCreateInvoicesConfirmOpen(true)}
               disabled={createInvoicesDisabled}
@@ -690,7 +732,15 @@ function DealEditor({ deal }: { deal: Deal }) {
       <div className="mt-6 grid gap-6 lg:grid-cols-[minmax(0,1fr)_400px]">
         <Tabs
           value={activeTab}
-          onValueChange={setActiveTab}
+          onValueChange={(tab) => {
+            setActiveTab(tab);
+            if (tab === "calculation") {
+              emitOnboardingEvent({
+                type: "commission_deal_calculation_viewed",
+                recordId: deal.id,
+              });
+            }
+          }}
           orientation="vertical"
           className="rounded-xl border border-border bg-card lg:flex"
         >
@@ -699,6 +749,7 @@ function DealEditor({ deal }: { deal: Deal }) {
               <TabsTrigger
                 key={tab}
                 value={tab}
+                data-tour={tab === "calculation" ? "commission-calculation-tab" : undefined}
                 className="w-full justify-start rounded-lg px-3 py-2 text-sm font-medium text-muted-foreground data-[state=active]:bg-brand-tint data-[state=active]:text-brand-dark data-[state=active]:shadow-none"
               >
                 {t(DEAL_TAB_LABEL_KEY[tab])}
@@ -721,7 +772,11 @@ function DealEditor({ deal }: { deal: Deal }) {
                     />
                   </Field>
                 )}
-                <Field id="field-notarised-on" className="space-y-1.5">
+                <Field
+                  id="field-notarised-on"
+                  data-tour="commission-notarised-on"
+                  className="space-y-1.5"
+                >
                   <Label>{t("commissionDeals.sale.notarisedOn")}</Label>
                   <DatePicker
                     value={form.notarisedOn}
@@ -732,7 +787,11 @@ function DealEditor({ deal }: { deal: Deal }) {
                     {t("commissionDeals.sale.notarisedOnHint")}
                   </p>
                 </Field>
-                <Field id="field-purchase-price" className="space-y-1.5">
+                <Field
+                  id="field-purchase-price"
+                  data-tour="commission-purchase-price"
+                  className="space-y-1.5"
+                >
                   <Label>{t("commissionDeals.sale.price")}</Label>
                   <Input
                     inputMode="decimal"
@@ -812,7 +871,11 @@ function DealEditor({ deal }: { deal: Deal }) {
 
               <div className="@container grid gap-4 @lg:grid-cols-2">
                 {SIDES.map((side) => (
-                  <div key={side} className="rounded-xl border border-border bg-card p-5">
+                  <div
+                    key={side}
+                    data-tour={side === "buyer" ? "commission-side-buyer" : undefined}
+                    className="rounded-xl border border-border bg-card p-5"
+                  >
                     <div className="flex items-center gap-2">
                       <div className="flex size-7 shrink-0 items-center justify-center rounded-lg bg-brand-tint text-brand">
                         <Users aria-hidden className="size-4" />

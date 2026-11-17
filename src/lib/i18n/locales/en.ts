@@ -1395,6 +1395,56 @@ const en = {
       markPaidHelp: "In real use, you would check your bank statement first.",
       restartHint: 'Stuck? Use "{{button}}" in the steps panel to get fresh practice data.',
     },
+    commissionDeal: {
+      startTitle: "Practice: record a sale and its commission",
+      startIntro:
+        "You create a practice sale, fill in its details, approve it and create its commission invoices.",
+      progressLost:
+        "The practice data for this sale no longer exists. The practice starts from the beginning.",
+      taskTitle: "Record a sale and settle its commission",
+      taskGoal:
+        "Learn how to create a sale, set its commission, approve it and create the invoices.",
+      pageCommission: "Commissions",
+      groupCreate: "Create",
+      groupDetails: "Details",
+      groupOwnership: "Ownership",
+      groupApprove: "Approve",
+      openDealInstruction: 'Click "New sale".',
+      openDealOutcome:
+        "This is how every sale starts in the Hub: create it first, then fill it in step by step.",
+      pickPropertyInstruction: "Pick the practice property. Its code ends in -P1.",
+      pickPropertyOutcome:
+        "Every sale belongs to exactly one property. The invoices later hang off this.",
+      pickPropertyHelp: 'Search for "Musterstrasse 12" or for the code DEMO-.',
+      createDealInstruction: "Create the sale.",
+      createDealOutcome:
+        "The sale now exists, but it is still incomplete. Next you fill in its details.",
+      financialsInstruction:
+        "Enter the notary date and the purchase price. Then set the buyer side's commission and pick TEST Buyer as the paying party.",
+      financialsOutcome:
+        "A sale can only be approved once it has a notary date, a purchase price and one fully filled-in commission side.",
+      financialsHelp: "Switch off the seller side if only the buyer side pays.",
+      viewCalculationInstruction: 'Open the "Calculation" tab.',
+      viewCalculationOutcome:
+        "This shows the full commission math: each side's fee, VAT, and the total, line by line.",
+      viewCalculationHelp: "This is the same breakdown the created invoices will use.",
+      saveDetailsInstruction: 'Click "Save".',
+      saveDetailsOutcome: "The sale is now complete and ready to be approved.",
+      ownershipInstruction:
+        'Open the "Ownership & Status" tab. Set "Handled by" and "Lead won by" to two different people.',
+      ownershipOutcome:
+        "Because the person who won the lead is not the same as the one handling it, the company-lead bonus applies later, on top of the notary bonus.",
+      ownershipHelp: 'Leave "Own lead" switched off while you do this.',
+      saveOwnershipInstruction: "Save the changes again.",
+      saveOwnershipOutcome: "Only once saved is the sale ready to be approved again.",
+      approveInstruction: 'Click "Approve deal".',
+      approveOutcome: "Approving fixes the commission, so the invoices can now be created.",
+      createInvoicesInstruction: 'Click "Create invoices".',
+      createInvoicesOutcome:
+        "The invoices now exist, and the notary bonus becomes visible in the bonus overview.",
+      createInvoicesHelp: "In the practice, no invoice is ever really sent to Lexware or a bank.",
+      restartHint: 'Stuck? Use "{{button}}" in the steps panel to get fresh practice data.',
+    },
   },
   home: {
     priority: {
@@ -1418,6 +1468,11 @@ const en = {
         title: "Build a payment file",
         description:
           "Pick an invoice, build the payment file, download it and confirm it is paid (about 10 minutes).",
+      },
+      commissionDeal: {
+        title: "Record a sale and its commission",
+        description:
+          "Create a sale, fill in its details, approve it and see the commission invoices and bonus (about 10 minutes).",
       },
       action: {
         new: "Start the practice",

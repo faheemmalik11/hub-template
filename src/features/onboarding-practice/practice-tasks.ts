@@ -1,6 +1,7 @@
 import type { OnboardingTask } from "@/kit/onboarding";
 import { PERMISSIONS, type PermissionKey } from "@/config/permissions";
 
+import { buildCommissionDealPracticeTask } from "./commission-deal-practice-task";
 import { buildPracticeInvoiceTask, type PracticeTranslate } from "./practice-invoice-task";
 import {
   buildPaymentFilePracticeTask,
@@ -18,6 +19,7 @@ export function buildPracticeTasks(
     buildPracticeInvoiceTask(t),
     buildStopCasesPracticeTask(t),
     buildPaymentFilePracticeTask(t),
+    buildCommissionDealPracticeTask(t),
   ].filter((task) => task.id !== PAYMENT_FILE_PRACTICE_TASK_ID || can(PERMISSIONS.pagePaymentFile));
 }
 
