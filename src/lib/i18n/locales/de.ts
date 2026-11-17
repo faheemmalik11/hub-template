@@ -5128,8 +5128,6 @@ const de = {
       readyHint: "Alle Angaben sind vollständig. Genehmigen Sie diesen Verkauf, um fortzufahren.",
       approvedHint:
         "Dieser Verkauf ist genehmigt. Erstellen Sie die Rechnungen, sobald Sie bereit sind, den Kunden zu belasten.",
-      invoicedHint:
-        "Die Rechnungen wurden erstellt und versendet. Hier ist keine weitere Aktion nötig.",
     },
     list: {
       search: "Objekt suchen …",
@@ -5421,8 +5419,7 @@ const de = {
     problems: {
       title: "Was noch fehlt",
       purchase_price_missing: "Geben Sie den Kaufpreis ein, um diese Provision zu berechnen.",
-      notarised_on_missing:
-        "Geben Sie den Notartermin ein, bevor dieser Verkauf genehmigt werden kann.",
+      notarised_on_missing: "Geben Sie den Notartermin für diesen Verkauf ein.",
       fee_missing: "{{side}}: Die Provision fehlt.",
       fee_not_positive: "{{side}}: Die Provision muss größer als null sein.",
       no_payers: "{{side}}: Es ist noch niemand eingetragen, der zahlt.",
