@@ -1,5 +1,6 @@
 import type { CommissionResult } from "@/kit/lib/commission";
 import { Button } from "@/components/ui/button";
+import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import { formatEUR } from "@/lib/data/format";
 import { useTranslation } from "@/lib/i18n";
 import { ExternalLink, FileText } from "lucide-react";
@@ -37,13 +38,27 @@ export function DraftInvoicePreviewTeaser({
             {t("commissionDeals.draftsSummary.title")}
           </h3>
         </div>
-        <Button variant="outline" size="sm" onClick={onViewPreview}>
-          <ExternalLink className="size-3.5" />
-          {t("commissionDeals.drafts.viewPreview")}
-        </Button>
+        {first ? (
+          <Button variant="outline" size="sm" onClick={onViewPreview}>
+            <ExternalLink className="size-3.5" />
+            {t("commissionDeals.drafts.viewPreview")}
+          </Button>
+        ) : (
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <span>
+                <Button variant="outline" size="sm" disabled>
+                  <ExternalLink className="size-3.5" />
+                  {t("commissionDeals.drafts.viewPreview")}
+                </Button>
+              </span>
+            </TooltipTrigger>
+            <TooltipContent>{t("commissionDeals.drafts.notReady")}</TooltipContent>
+          </Tooltip>
+        )}
       </div>
       <p className="text-xs text-muted-foreground">{t("commissionDeals.drafts.hint")}</p>
-      {first ? (
+      {first && (
         <div className="mt-3 space-y-1 text-sm tabular-nums">
           <div className="flex items-baseline justify-between gap-2">
             <span className="font-medium text-foreground">
@@ -69,8 +84,6 @@ export function DraftInvoicePreviewTeaser({
             </div>
           )}
         </div>
-      ) : (
-        <p className="mt-3 text-sm text-muted-foreground">{t("commissionDeals.drafts.notReady")}</p>
       )}
     </section>
   );
