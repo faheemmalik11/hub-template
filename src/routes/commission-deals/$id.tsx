@@ -158,6 +158,13 @@ async function pushDueDateToCrm(propertyId: string): Promise<void> {
   if (error) throw new Error(await edgeFunctionErrorText(error));
 }
 
+async function pushDealValuesToCrm(dealId: string): Promise<void> {
+  const { error } = await sb.functions.invoke(EDGE_FUNCTION.propstackDealValuesPush, {
+    body: { deal_id: dealId },
+  });
+  if (error) throw new Error(await edgeFunctionErrorText(error));
+}
+
 function DealEditor({ deal }: { deal: Deal }) {
   const { t } = useTranslation();
   const { can } = useAuth();
@@ -172,6 +179,7 @@ function DealEditor({ deal }: { deal: Deal }) {
     useFeature(PERMISSIONS.bonusesSuggestReferrer) && can(PERMISSIONS.bonusesReview);
   const managesDonations = can(PERMISSIONS.donationsManage);
   const syncsPaymentDueDate = useFeature(PERMISSIONS.propstackPaymentDueDateSync);
+  const syncsDealValues = useFeature(PERMISSIONS.propstackDealValuesSync);
   const [activeTab, setActiveTab] = useTabParam(DEAL_TABS, "dealDetails");
   const [form, setForm] = useState<DealForm>(() => dealFormOf(deal));
   const [savedForm, setSavedForm] = useState(() => JSON.stringify(dealFormOf(deal)));
@@ -205,6 +213,17 @@ function DealEditor({ deal }: { deal: Deal }) {
   const result = useMemo(() => calculateDealForm(form), [form]);
   const dueDateUnsaved = dueDate !== savedDueDate || dueDateNote !== savedDueDateNote;
   const unsaved = JSON.stringify(form) !== savedForm || dueDateUnsaved;
+  const dealValuesUnsaved = useMemo(() => {
+    const saved = JSON.parse(savedForm) as DealForm;
+    return (
+      form.notarisedOn !== saved.notarisedOn ||
+      form.purchasePrice !== saved.purchasePrice ||
+      form.buyer.feeKind !== saved.buyer.feeKind ||
+      form.buyer.rate !== saved.buyer.rate ||
+      form.seller.feeKind !== saved.seller.feeKind ||
+      form.seller.rate !== saved.seller.rate
+    );
+  }, [form, savedForm]);
   const reviewLines = useMemo<ReviewLine[]>(() => {
     const lines: ReviewLine[] = [];
     if (deal.purchase_price === null) {
@@ -319,6 +338,8 @@ function DealEditor({ deal }: { deal: Deal }) {
   const runSave = () => {
     const propertyId = deal.property_id;
     const needsDueDateSave = dueDateUnsaved && !!propertyId;
+    const needsDealValuesPush =
+      dealValuesUnsaved && syncsDealValues && !!deal.property?.external_id;
     // Captured now, synchronously: `await save.mutateAsync` below gives the deal query time to
     // refetch and re-render, which resets the dueDate/dueDateNote state via the effect watching
     // `deal` — reading the state again after that await would send whatever it was reset to.
@@ -327,24 +348,42 @@ function DealEditor({ deal }: { deal: Deal }) {
 
     const sequence = (async () => {
       await save.mutateAsync({ ...saveInputOf(form), complete: result.ok });
-      if (!needsDueDateSave) return { pushedToCrm: null as boolean | null, reason: "" };
 
-      await updateDueDate.mutateAsync({
-        payment_due_date: dueDateToSave.trim() === "" ? null : dueDateToSave,
-        payment_due_date_note: dueDateNoteToSave.trim() === "" ? null : dueDateNoteToSave.trim(),
-        payment_due_date_source: "hub",
-      });
-      setSavedDueDate(dueDateToSave);
-      setSavedDueDateNote(dueDateNoteToSave);
+      let pushedToCrm: boolean | null = null;
+      let reason = "";
 
-      if (!syncsPaymentDueDate) return { pushedToCrm: null as boolean | null, reason: "" };
-      try {
-        await pushDueDateToCrm(propertyId);
-        return { pushedToCrm: true, reason: "" };
-      } catch (error) {
-        const reason = error instanceof Error ? error.message : String(error);
-        return { pushedToCrm: false, reason };
+      if (needsDueDateSave) {
+        await updateDueDate.mutateAsync({
+          payment_due_date: dueDateToSave.trim() === "" ? null : dueDateToSave,
+          payment_due_date_note: dueDateNoteToSave.trim() === "" ? null : dueDateNoteToSave.trim(),
+          payment_due_date_source: "hub",
+        });
+        setSavedDueDate(dueDateToSave);
+        setSavedDueDateNote(dueDateNoteToSave);
+
+        if (syncsPaymentDueDate) {
+          try {
+            await pushDueDateToCrm(propertyId);
+            pushedToCrm = true;
+          } catch (error) {
+            pushedToCrm = false;
+            reason = error instanceof Error ? error.message : String(error);
+          }
+        }
       }
+
+      if (needsDealValuesPush) {
+        try {
+          await pushDealValuesToCrm(deal.id);
+          if (pushedToCrm !== false) pushedToCrm = true;
+        } catch (error) {
+          const dealValuesReason = error instanceof Error ? error.message : String(error);
+          pushedToCrm = false;
+          reason = reason ? `${reason}; ${dealValuesReason}` : dealValuesReason;
+        }
+      }
+
+      return { pushedToCrm, reason };
     })();
 
     setIsSaving(true);
