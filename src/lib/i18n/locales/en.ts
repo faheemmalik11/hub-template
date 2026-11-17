@@ -4924,6 +4924,8 @@ const en = {
       create: "Create",
       cancel: "Cancel",
       failed: "The sale could not be created.",
+      propertyHasActiveDeal: "This property already has an active commission deal.",
+      openExistingDeal: "Open the existing deal",
     },
     emptyTitle: "No sales yet",
     emptyHint: '"New sale" records a notarised sale.',

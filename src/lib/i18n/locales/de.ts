@@ -5102,6 +5102,8 @@ const de = {
       create: "Anlegen",
       cancel: "Abbrechen",
       failed: "Der Verkauf konnte nicht angelegt werden.",
+      propertyHasActiveDeal: "Für dieses Objekt gibt es bereits einen laufenden Verkauf.",
+      openExistingDeal: "Laufenden Verkauf öffnen",
     },
     emptyTitle: "Noch keine Verkäufe",
     emptyHint: "Mit „Neuer Verkauf“ legen Sie einen beurkundeten Verkauf an.",

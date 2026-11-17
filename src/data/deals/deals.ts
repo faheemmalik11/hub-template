@@ -284,6 +284,31 @@ export function useDeal(id: string) {
   });
 }
 
+export interface ActivePropertyDeal {
+  id: string;
+  status: DealStatus;
+}
+
+export function useActiveDealForProperty(propertyId: string | null) {
+  return useQuery({
+    queryKey: queryKeys.deals.activeForProperty(propertyId ?? ""),
+    staleTime: STALE,
+    enabled: !!propertyId,
+    queryFn: async (): Promise<ActivePropertyDeal | null> => {
+      const { data, error } = await sb
+        .from(TABLE.deals)
+        .select("id, status")
+        .eq("property_id", propertyId as string)
+        .is("deleted_at", null)
+        .not("status", "in", "(cancelled,settled)")
+        .limit(1)
+        .maybeSingle();
+      if (error) throw error;
+      return data as ActivePropertyDeal | null;
+    },
+  });
+}
+
 export function useCreateDeal() {
   const qc = useQueryClient();
   return useMutation({

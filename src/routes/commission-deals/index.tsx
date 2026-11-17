@@ -33,6 +33,7 @@ import { dealGrossTotalCentsOf } from "@/components/commission/deal-form";
 import {
   DEAL_STATUSES,
   propertyChoiceTitle,
+  useActiveDealForProperty,
   useCompanies,
   useCreateDeal,
   useDealsList,
@@ -262,9 +263,11 @@ function NewDealDialog() {
   const [property, setProperty] = useState<PropertyChoice | null>(null);
   const companiesQ = useCompanies();
   const createDeal = useCreateDeal();
+  const activeDealQ = useActiveDealForProperty(property?.id ?? null);
+  const activeDeal = activeDealQ.data ?? null;
 
   const create = () => {
-    if (!property) return;
+    if (!property || activeDeal) return;
     createDeal.mutate(
       {
         propertyId: property.id,
@@ -299,11 +302,31 @@ function NewDealDialog() {
             <Label>{t("commissionDeals.newDialog.property")}</Label>
             <PropertyPicker value={property} onChange={setProperty} />
           </div>
+          {activeDeal && (
+            <div className="rounded-lg border border-destructive/40 bg-destructive/5 px-3 py-2">
+              <div className="flex items-start gap-2">
+                <AlertTriangle aria-hidden className="mt-0.5 size-4 shrink-0 text-destructive" />
+                <div className="min-w-0 flex-1">
+                  <p className="text-sm font-medium text-foreground">
+                    {t("commissionDeals.newDialog.propertyHasActiveDeal")}
+                  </p>
+                  <Link
+                    to="/commission-deals/$id"
+                    params={{ id: activeDeal.id }}
+                    className="text-sm font-medium text-destructive hover:underline"
+                    onClick={() => setOpen(false)}
+                  >
+                    {t("commissionDeals.newDialog.openExistingDeal")}
+                  </Link>
+                </div>
+              </div>
+            </div>
+          )}
           <DialogFooter>
             <Button variant="outline" onClick={() => setOpen(false)}>
               {t("commissionDeals.newDialog.cancel")}
             </Button>
-            <Button onClick={create} disabled={!property || createDeal.isPending}>
+            <Button onClick={create} disabled={!property || !!activeDeal || createDeal.isPending}>
               {t("commissionDeals.newDialog.create")}
             </Button>
           </DialogFooter>
