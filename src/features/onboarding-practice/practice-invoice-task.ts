@@ -5,15 +5,15 @@ export const PRACTICE_INVOICE_TASK_ID = "process-an-invoice";
 export const PRACTICE_INVOICE_SAMPLE_FILENAME = "sample-invoice.pdf";
 
 export const PRACTICE_INVOICE = {
-  issuer: "Gartenbau Möller",
-  invoiceNumber: "2026-1043",
-  documentDate: "2026-10-23",
-  dueDate: "2026-11-06",
-  amountNet: 410,
+  issuer: "Vattenfall Energievertrieb GmbH",
+  invoiceNumber: "RE-2026-0914",
+  documentDate: "2026-09-14",
+  dueDate: "2026-09-28",
+  amountNet: 210.08,
   vatRate: 19,
-  vatAmount: 77.9,
-  correctAmountGross: 487.9,
-  wronglyExtractedAmountGross: 478.9,
+  vatAmount: 39.92,
+  correctAmountGross: 250.0,
+  wronglyExtractedAmountGross: 240.0,
 } as const;
 
 export function practiceInvoiceAmountIsWrong(amountGross: number | null | undefined): boolean {
