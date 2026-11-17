@@ -1731,9 +1731,10 @@ export function isOverdue(
  * because for constraint violations that is usually the part naming the actual column.
  */
 const TECHNICAL_ERROR_PATTERN =
-  /\bBANKSapi\b|\bPleo\b|\bPropstack\b|\b[A-Z][A-Z0-9]*(?:_[A-Z0-9]+)+\b|is not stored in the admin panel|is not set as a secret|no team channel configured|Edge Function returned a non-2xx status code/;
+  /\bBANKSapi\b|\bPleo\b|\bPropstack\b|\b[A-Z][A-Z0-9]*(?:_[A-Z0-9]+)+\b|is not stored in the admin panel|is not set as a secret|no team channel configured|Edge Function returned a non-2xx status code|violates foreign key constraint|violates check constraint|violates unique constraint/;
 const PERMISSION_DENIED_PATTERN =
   /does not have the '.*?' permission|no caller identity on the request|account is not active/i;
+const DEAL_LOCKED_PATTERN = /save_deal: deal .* can no longer be edited this way/;
 
 function rawErrorText(e: unknown): string {
   if (e == null) return "Unbekannter Fehler";
@@ -1767,6 +1768,9 @@ export function errorText(e: unknown): string {
   if (PERMISSION_DENIED_PATTERN.test(raw)) {
     console.error("errorText: hid a permission key from the user —", raw);
     return i18n.t("errors.noPermission");
+  }
+  if (DEAL_LOCKED_PATTERN.test(raw)) {
+    return i18n.t("errors.dealLocked");
   }
   if (TECHNICAL_ERROR_PATTERN.test(raw)) {
     console.error("errorText: hid technical detail from the user —", raw);

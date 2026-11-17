@@ -8586,6 +8586,8 @@ const de = {
     serviceNotConfigured:
       "Diese Funktion ist gerade nicht verfügbar. Bitte versuchen Sie es später erneut.",
     noPermission: "Dafür fehlt Ihnen die Berechtigung.",
+    dealLocked:
+      "Dieser Verkauf kann nicht mehr bearbeitet werden. Es wurden bereits Rechnungen dafür erstellt.",
   },
 
   paymentFile: {
