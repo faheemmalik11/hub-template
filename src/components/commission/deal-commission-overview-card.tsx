@@ -10,6 +10,7 @@ function anchorForProblem(
 ): { tab: string; id: string } {
   if (problem === "purchase_price_missing")
     return { tab: "dealDetails", id: "field-purchase-price" };
+  if (problem === "vat_rate_invalid") return { tab: "dealDetails", id: "field-vat" };
   if (problem === "fee_missing" || problem === "fee_not_positive") {
     return { tab: "dealDetails", id: `side-${side}-fee` };
   }

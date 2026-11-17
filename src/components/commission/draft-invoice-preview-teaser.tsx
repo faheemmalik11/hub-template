@@ -19,7 +19,12 @@ export function DraftInvoicePreviewTeaser({
 }) {
   const { t } = useTranslation();
 
-  const invoice = result.ok && result.invoices.length > 0 ? result.invoices[0] : null;
+  const invoices = result.ok ? result.invoices : [];
+  const first = invoices[0] ?? null;
+  const totalGrossCents = invoices.reduce((sum, invoice) => sum + invoice.totalGrossCents, 0);
+  const totalNetCents = invoices.reduce((sum, invoice) => sum + invoice.totalNetCents, 0);
+  const totalVatCents = invoices.reduce((sum, invoice) => sum + invoice.totalVatCents, 0);
+  const moreCount = invoices.length - 1;
 
   return (
     <section className="rounded-xl border border-border bg-card p-5">
@@ -29,7 +34,7 @@ export function DraftInvoicePreviewTeaser({
             <FileText aria-hidden className="size-4" />
           </div>
           <h3 className="text-sm font-medium text-foreground">
-            {t("commissionDeals.drafts.title")}
+            {t("commissionDeals.draftsSummary.title")}
           </h3>
         </div>
         <Button variant="outline" size="sm" onClick={onViewPreview}>
@@ -38,26 +43,31 @@ export function DraftInvoicePreviewTeaser({
         </Button>
       </div>
       <p className="text-xs text-muted-foreground">{t("commissionDeals.drafts.hint")}</p>
-      {invoice ? (
+      {first ? (
         <div className="mt-3 space-y-1 text-sm tabular-nums">
           <div className="flex items-baseline justify-between gap-2">
             <span className="font-medium text-foreground">
-              {customerName(invoice.payerKey) ?? t("commissionDeals.drafts.unknownCustomer")}
+              {customerName(first.payerKey) ?? t("commissionDeals.drafts.unknownCustomer")}
             </span>
             <span className="text-xs text-muted-foreground">
-              {t(`commissionDeals.side.${invoice.side}`)}
+              {t(`commissionDeals.side.${first.side}`)}
             </span>
           </div>
           <div className="flex justify-between font-semibold text-foreground">
             <span>{t("commissionDeals.drafts.total")}</span>
-            <span>{euros(invoice.totalGrossCents)}</span>
+            <span>{euros(totalGrossCents)}</span>
           </div>
           <div className="text-right text-xs text-muted-foreground">
             {t("commissionDeals.drafts.vatLine", {
-              net: euros(invoice.totalNetCents),
-              vat: euros(invoice.totalVatCents),
+              net: euros(totalNetCents),
+              vat: euros(totalVatCents),
             })}
           </div>
+          {moreCount > 0 && (
+            <div className="text-right text-xs text-muted-foreground">
+              {t("commissionDeals.draftsSummary.moreCount", { count: moreCount })}
+            </div>
+          )}
         </div>
       ) : (
         <p className="mt-3 text-sm text-muted-foreground">{t("commissionDeals.drafts.notReady")}</p>

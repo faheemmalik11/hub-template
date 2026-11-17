@@ -1,4 +1,4 @@
-import { AlertTriangle } from "lucide-react";
+import { AlertTriangle, CheckCircle2 } from "lucide-react";
 
 import type { CommissionProblem, CommissionResult, CommissionSide } from "@/kit/lib/commission";
 import { formatEUR } from "@/lib/data/format";
@@ -18,6 +18,7 @@ function anchorForProblem(
 ): { tab: string; id: string } {
   if (problem === "purchase_price_missing")
     return { tab: "dealDetails", id: "field-purchase-price" };
+  if (problem === "vat_rate_invalid") return { tab: "dealDetails", id: "field-vat" };
   if (problem === "fee_missing" || problem === "fee_not_positive") {
     return { tab: "dealDetails", id: `side-${side}-fee` };
   }
@@ -81,6 +82,10 @@ export function DraftInvoices({
   const sum = result.invoices.reduce((total, invoice) => total + invoice.totalGrossCents, 0);
   return (
     <div className="space-y-3">
+      <div className="flex items-center gap-1.5 rounded-lg bg-emerald-100 px-3 py-2 text-sm text-emerald-800">
+        <CheckCircle2 aria-hidden className="size-4 shrink-0" />
+        {t("commissionDeals.drafts.valid")}
+      </div>
       {result.invoices.map((invoice) => (
         <article
           key={`${invoice.side}-${invoice.payerKey}`}

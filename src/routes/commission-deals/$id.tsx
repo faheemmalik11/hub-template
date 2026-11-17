@@ -45,7 +45,6 @@ import { DealDonationCard } from "@/components/commission/deal-donation-card";
 import { DealReferrerBonusCard } from "@/components/commission/deal-referrer-bonus-card";
 import { DealCostsCard } from "@/components/commission/deal-costs-card";
 import { DealFactsCard } from "@/components/commission/deal-facts-card";
-import { DealInfoSummaryCard } from "@/components/commission/deal-info-summary-card";
 import { CrmChangesCard } from "@/components/commission/crm-changes-card";
 import { DealInvoicesCard } from "@/components/commission/deal-invoices-card";
 import { DraftInvoices } from "@/components/commission/draft-invoices";
@@ -452,7 +451,7 @@ function DealEditor({ deal }: { deal: Deal }) {
   const showCreateInvoices = mayApprove && deal.status === "approved" && result.ok;
   const saveDisabled = isSaving || !unsaved;
   const approveDisabled = isSaving || approve.isPending || unsaved || deal.status !== "ready";
-  const createInvoicesDisabled = isSaving || createInvoices.isPending;
+  const createInvoicesDisabled = isSaving || createInvoices.isPending || unsaved;
 
   const primaryAction =
     deal.status === "incomplete" && showSave
@@ -618,9 +617,14 @@ function DealEditor({ deal }: { deal: Deal }) {
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
-      {unsaved && deal.status !== "approved" && mayApprove && result.ok && (
+      {unsaved && mayApprove && result.ok && deal.status !== "approved" && (
         <p className="mt-2 text-right text-xs text-muted-foreground">
           {t("commissionDeals.actions.saveFirst")}
+        </p>
+      )}
+      {unsaved && mayApprove && result.ok && deal.status === "approved" && (
+        <p className="mt-2 text-right text-xs text-muted-foreground">
+          {t("commissionDeals.actions.saveFirstBeforeInvoices")}
         </p>
       )}
 
@@ -736,7 +740,7 @@ function DealEditor({ deal }: { deal: Deal }) {
                     disabled={!mayEdit}
                   />
                 </Field>
-                <Field className="space-y-1.5">
+                <Field id="field-vat" className="space-y-1.5">
                   <Label>{t("commissionDeals.sale.vat")}</Label>
                   <Input
                     inputMode="decimal"
@@ -744,6 +748,9 @@ function DealEditor({ deal }: { deal: Deal }) {
                     onChange={(event) => set({ vatRate: sanitizeAmountInput(event.target.value) })}
                     disabled={!mayEdit}
                   />
+                  <p className="text-xs text-muted-foreground">
+                    {t("commissionDeals.sale.vatHint")}
+                  </p>
                 </Field>
                 {deal.property_id && (
                   <>
@@ -808,14 +815,11 @@ function DealEditor({ deal }: { deal: Deal }) {
                 ))}
               </div>
 
-              <div className="@container grid gap-4 @lg:grid-cols-2">
-                <DraftInvoicePreviewTeaser
-                  result={result}
-                  customerName={customerName}
-                  onViewPreview={() => setActiveTab("calculation")}
-                />
-                <DealInfoSummaryCard deal={deal} onEdit={() => setActiveTab("ownership")} />
-              </div>
+              <DraftInvoicePreviewTeaser
+                result={result}
+                customerName={customerName}
+                onViewPreview={() => setActiveTab("calculation")}
+              />
             </TabsContent>
 
             <TabsContent value="ownership" className="mt-0">
@@ -825,6 +829,7 @@ function DealEditor({ deal }: { deal: Deal }) {
                 customerOptions={customerOptions}
                 disabled={!mayEdit}
                 assignsBrokers={mayEditAny}
+                onJumpToField={jumpToAnchor}
               />
             </TabsContent>
 
@@ -833,6 +838,8 @@ function DealEditor({ deal }: { deal: Deal }) {
                 costs={form.costs}
                 onChange={(costs) => set({ costs })}
                 disabled={!mayEdit}
+                costsClosed={form.costsClosed}
+                onJumpToField={jumpToAnchor}
               />
               {seesCommission && (
                 <div>

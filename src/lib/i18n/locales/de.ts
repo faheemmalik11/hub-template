@@ -5166,10 +5166,13 @@ const de = {
       vat: "USt (%)",
       note: "Notiz",
       dueDate: "Zahlungsziel",
-      dueDateRedundantHint: "Nicht nötig – der Hinweis oben erklärt die Verzögerung bereits.",
+      dueDateRedundantHint:
+        "Nicht nötig — Sie müssen nur eines von beidem ausfüllen: Zahlungsziel oder die Notiz dazu.",
       dueDateNote: "Zahlungsziel, Hinweis",
-      dueDateNoteRedundantHint: "Nicht nötig – es ist bereits ein Zahlungsziel eingetragen.",
+      dueDateNoteRedundantHint:
+        "Nicht nötig — Sie müssen nur eines von beidem ausfüllen: Zahlungsziel oder die Notiz dazu.",
       dueDateNotePlaceholder: "z. B. sofort nach Eintragung",
+      vatHint: "Leer oder ein ungültiger Wert wird automatisch als 19 % behandelt, ohne Hinweis.",
     },
     review: {
       title: "Was hier noch fehlt",
@@ -5182,7 +5185,6 @@ const de = {
     bonuses: {
       title: "Boni für diesen Verkauf",
       hint: "Wird automatisch aus diesem Verkauf berechnet. Ist ein Bonus bereit, zeigt er den Knopf <strong>Diesen Bonus vorschlagen</strong>.",
-      none: "Für diesen Verkauf entsteht kein Bonus.",
       create: "Diesen Bonus vorschlagen",
       created: "Angelegt",
       failed: "Der Vorschlag konnte nicht angelegt werden.",
@@ -5193,14 +5195,14 @@ const de = {
         invoices_created: "die Provisionsrechnungen müssen erst erstellt werden",
         broker: "es muss noch ein Makler gewählt werden",
         commission: "die Provision muss erst berechnet werden können",
-        costs_closed: "alle Kosten für diesen Verkauf müssen erst eingetragen werden",
+        costs_closed: 'Betreut von muss zuerst „Kosten abgeschlossen" bestätigen',
         invoices_paid: "die Provisionsrechnungen müssen erst bezahlt werden",
       },
       line: {
         commission_net: "Provision netto: {{amount}}",
         costs: "Kosten: {{amount}}",
         personnel_flat: "Feste Bürokosten: {{amount}}",
-        share: "Dein Anteil ({{percent}} %): {{amount}}",
+        share: "Anteil ({{percent}} %): {{amount}}",
         fixed: "Dieser Bonus ist ein fester Betrag: {{amount}}",
       },
     },
@@ -5280,27 +5282,34 @@ const de = {
       title: "Angaben zum Verkauf",
       ownLead: "Eigener Lead",
       ownLeadHint:
-        "Anhaken, wenn der Makler diesen Kunden selbst gefunden hat. Nicht anhaken, wenn der Kunde über eine Immobilien-Website kam.",
+        "Anhaken, wenn Betreut von diesen Kunden selbst gefunden hat, ohne separate Lead-Quelle. Das ändert, wie der Bonus für diesen Verkauf berechnet wird — nicht nur einen Teilbetrag.",
       fromViewing: "Aus Besichtigung",
       fromViewingHint:
         "Anhaken, wenn der Käufer den Makler zuerst bei der Besichtigung eines anderen Objekts getroffen hat und später dieses Objekt gekauft hat.",
       costsClosed: "Kosten abgeschlossen",
       costsClosedHint:
-        "Anhaken, wenn alle Kosten für diesen Verkauf eingetragen sind und nichts fehlt.",
-      costsClosedNoEffectHint: "Das hat keine Auswirkung auf den Notarbonus für diesen Verkauf.",
+        "Persönliche Bestätigung, dass für diesen Verkauf keine weiteren Kosten mehr dazukommen. Das System prüft das nicht gegen die Kostenliste im Tab Berechnung — Sie bestätigen es von Hand.",
+      viewCostList: "Kostenliste ansehen",
+      costsClosedNoEffectHint:
+        "Das wirkt sich nur auf den Zeitpunkt der Auszahlung bei Lead-basierten Boni aus. Auf den Notarbonus und den Besichtigungs-Folgebonus für diesen Verkauf hat es keine Auswirkung.",
       readyForBookkeeping: "Bereit für die Buchhaltung",
       readyForBookkeepingHint:
-        "Ein Hinweis für die Buchhaltung, dass dieser Verkauf geprüft wurde. Das ändert sonst nichts.",
+        "Nur eine interne Notiz für die Buchhaltung. Hat <strong>keine</strong> Auswirkung auf Berechnung, Freigabe oder Boni dieses Verkaufs.",
       handledBy: "Betreut von",
       acquiredBy: "Lead gewonnen von",
       acquiredByDisabledHint: "Wird nicht verwendet, solange Eigener Lead angehakt ist.",
       acquiredByNeedsHandlerHint:
-        "Wirkt sich erst aus, wenn bei Betreut von auch jemand anderes eingetragen ist.",
-      referrer: "Empfohlen von",
+        "Wirkt sich nur aus, wenn Betreut von eine andere Person ist als hier. Ist Betreut von leer, wird diese Angabe ignoriert.",
+      referrer: "Empfohlen von (Kunde)",
       referrerPlaceholder: "Kein Empfehler",
     },
     costs: {
       title: "Kosten",
+      disclaimer:
+        "Diese Kosten wirken sich nur auf Bonuszahlungen aus, nicht auf die Provisionsrechnung.",
+      closedBadge: "Abgeschlossen",
+      openBadge: "Offen",
+      changeStatus: "Status ändern",
       hint: "Was die Agentur für diesen Verkauf selbst bezahlt hat. Die Bonusberechnung zieht es von der Provision ab.",
       total: "Summe {{total}}",
       add: "Kosten hinzufügen",
@@ -5325,7 +5334,9 @@ const de = {
       rate: "Satz (% netto)",
       ratePlaceholder: "z. B. 2,5",
       amount: "Betrag (€ netto)",
-      discount: "Rabatt (€)",
+      discount: "Rabatt (€ brutto, pro Person)",
+      discountHint:
+        "Wird direkt vom Rechnungsbetrag dieser Person abgezogen, nach USt. Ändert den Satz/Betrag oben nicht.",
       discountReason: "Grund",
       payers: "Wer zahlt",
       customer: "Kunde",
@@ -5333,7 +5344,8 @@ const de = {
       payerSearch: "Kunde suchen",
       noCustomers: "Kein Kunde gefunden. Geben Sie einen Namen ein, um einen anzulegen.",
       share: "Anteil %",
-      shareHint: "Anteile leer lassen, dann zahlen alle gleich viel.",
+      shareHint:
+        "Anteile leer lassen, dann zahlen alle gleich viel. Wird ein Anteil eingetragen, müssen alle Anteile zusammen 100 % ergeben, und jeder einzelne muss größer als 0 % sein.",
       addPayer: "Person hinzufügen",
       fullCustomerLink: "Kunde mit allen Details anlegen",
       remove: "Entfernen",
@@ -5357,6 +5369,11 @@ const de = {
       viewPreview: "Vorschau ansehen",
       notReady:
         "Für dieses Geschäft gibt es noch keine Vorschau. Beheben Sie zuerst die Probleme im Tab Berechnung.",
+      valid: "Alle Angaben vollständig — diese Entwurfssumme kann in Rechnung gestellt werden.",
+    },
+    draftsSummary: {
+      title: "Rechnungsvorschau",
+      moreCount: "+ {{count}} weitere",
     },
     invoices: {
       title: "Rechnungen",
@@ -5366,19 +5383,23 @@ const de = {
       saveNumber: "Speichern",
       numberFailed: "Die Rechnungsnummer konnte nicht gespeichert werden.",
       unknownCustomer: "Unbekannter Kunde",
+      empty:
+        "Noch keine Rechnungen. Rechnungen werden erstellt, sobald der Verkauf genehmigt und der Rechnungslauf gestartet wurde.",
     },
     problems: {
       title: "Was noch fehlt",
-      purchase_price_missing: "Der Kaufpreis fehlt.",
+      purchase_price_missing: "{{side}}: Der Kaufpreis fehlt.",
       fee_missing: "{{side}}: Die Provision fehlt.",
       fee_not_positive: "{{side}}: Die Provision muss größer als null sein.",
       no_payers: "{{side}}: Es ist noch niemand eingetragen, der zahlt.",
       duplicate_payer: "{{side}}: Eine Person steht doppelt in der Liste.",
       shares_incomplete: "{{side}}: Entweder haben alle einen Anteil oder keiner.",
-      shares_do_not_add_up: "{{side}}: Die Anteile ergeben nicht 100 %.",
+      shares_do_not_add_up:
+        "{{side}}: Die Anteile sind ungültig — entweder ergeben sie nicht 100 %, oder einer der Anteile ist 0 % oder weniger.",
       discount_negative: "{{side}}: Der Rabatt darf nicht negativ sein.",
-      discount_exceeds_fee: "{{side}}: Der Rabatt ist größer als die Provision.",
-      vat_rate_invalid: "Der MwSt.-Satz ist keine gültige Zahl. Bitte prüfen.",
+      discount_exceeds_fee:
+        "{{side}}: Der Rabatt für eine Person auf dieser Seite ist größer als deren Anteil an der Provision.",
+      vat_rate_invalid: "{{side}}: Der MwSt.-Satz ist keine gültige Zahl. Bitte prüfen.",
       no_side_pays: "Mindestens eine Seite muss Provision zahlen.",
     },
     actions: {
@@ -5396,6 +5417,7 @@ const de = {
       approveFailed: "Die Freigabe ist fehlgeschlagen: {{error}}",
       unsaved: "Nicht gespeichert",
       saveFirst: "Erst speichern, dann freigeben.",
+      saveFirstBeforeInvoices: "Speichern Sie Ihre Änderungen, bevor Sie Rechnungen erstellen.",
       approvedNote: "Dieses Geschäft wurde am {{when}} von {{name}} freigegeben.",
       createInvoices: "Rechnungen erstellen",
       creatingInvoices: "Rechnungen werden erstellt …",
