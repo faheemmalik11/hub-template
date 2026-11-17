@@ -3406,7 +3406,7 @@ begin
   end if;
 
   select status into v_current_status from public.deals where id = p_deal_id;
-  if v_current_status not in ('incomplete', 'ready') then
+  if v_current_status not in ('incomplete', 'ready', 'approved') then
     raise exception 'save_deal: deal % is % and can no longer be edited this way', p_deal_id, v_current_status
       using errcode = 'check_violation';
   end if;

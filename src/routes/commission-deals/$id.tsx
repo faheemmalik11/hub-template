@@ -181,6 +181,8 @@ function DealEditor({ deal }: { deal: Deal }) {
   const mayEditAny = can(PERMISSIONS.documentsWrite);
   const mayEdit =
     deal.status !== "settled" &&
+    deal.status !== "invoiced" &&
+    deal.status !== "cancelled" &&
     (mayEditAny ||
       (can(PERMISSIONS.dealsSubmit) && (deal.status === "incomplete" || deal.status === "ready")));
   const mayApprove = can(PERMISSIONS.invoicesApprove);
