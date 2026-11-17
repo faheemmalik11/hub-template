@@ -124,9 +124,6 @@ export function BonusSuggestionsCard({
           components={{ strong: <strong className="font-semibold text-foreground" /> }}
         />
       </p>
-      {suggestions.length === 0 && (
-        <p className="mt-3 text-sm text-muted-foreground">{t("commissionDeals.bonuses.none")}</p>
-      )}
       <ul className="mt-3 space-y-3">
         {suggestions.map((suggestion) => {
           const done = existing.get(suggestion.type as BonusType);

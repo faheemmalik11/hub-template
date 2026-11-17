@@ -1,5 +1,6 @@
 import { Plus, Trash2 } from "lucide-react";
 
+import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { DatePicker } from "@/components/ui/date-picker";
 import { Input } from "@/components/ui/input";
@@ -32,10 +33,14 @@ export function DealCostsCard({
   costs,
   onChange,
   disabled,
+  costsClosed,
+  onJumpToField,
 }: {
   costs: CostForm[];
   onChange: (next: CostForm[]) => void;
   disabled: boolean;
+  costsClosed?: boolean;
+  onJumpToField?: (tab: string, id: string) => void;
 }) {
   const { t } = useTranslation();
   const setCost = (index: number, patch: Partial<CostForm>) =>
@@ -52,7 +57,34 @@ export function DealCostsCard({
 
   return (
     <div>
-      <div className="flex items-baseline justify-between gap-3">
+      <div className="flex flex-wrap items-start justify-between gap-3">
+        <div>
+          <h2 className="text-base font-semibold text-foreground">
+            {t("commissionDeals.costs.title")}
+          </h2>
+          <p className="mt-1 text-xs text-muted-foreground">
+            {t("commissionDeals.costs.disclaimer")}
+          </p>
+        </div>
+        <div className="flex items-center gap-2">
+          <Badge variant={costsClosed ? "secondary" : "outline"}>
+            {t(
+              costsClosed ? "commissionDeals.costs.closedBadge" : "commissionDeals.costs.openBadge",
+            )}
+          </Badge>
+          {onJumpToField && (
+            <button
+              type="button"
+              onClick={() => onJumpToField("ownership", "field-costs-closed")}
+              className="text-xs font-medium text-brand-dark underline-offset-4 hover:underline"
+            >
+              {t("commissionDeals.costs.changeStatus")}
+            </button>
+          )}
+        </div>
+      </div>
+
+      <div className="mt-3 flex items-baseline justify-between gap-3">
         <p className="text-xs text-muted-foreground">{t("commissionDeals.costs.hint")}</p>
         {costs.length > 0 && (
           <span className="text-sm tabular-nums text-muted-foreground">

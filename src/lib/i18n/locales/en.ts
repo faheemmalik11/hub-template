@@ -4986,10 +4986,13 @@ const en = {
       vat: "VAT (%)",
       note: "Note",
       dueDate: "Payment due date",
-      dueDateRedundantHint: "Not required — the note above already explains the delay.",
+      dueDateRedundantHint:
+        "Not required — you only need to fill in one of the two: the due date or its note.",
       dueDateNote: "Payment due date, note",
-      dueDateNoteRedundantHint: "Not needed — a payment due date is already set.",
+      dueDateNoteRedundantHint:
+        "Not required — you only need to fill in one of the two: the due date or its note.",
       dueDateNotePlaceholder: "e.g. as soon as possible after registration",
+      vatHint: "Left blank or unreadable, this silently becomes 19% with no warning.",
     },
     review: {
       title: "What's still missing here",
@@ -5002,7 +5005,6 @@ const en = {
     bonuses: {
       title: "Bonuses for this sale",
       hint: "Calculated automatically from this sale. A ready bonus shows a <strong>Suggest this bonus</strong> button.",
-      none: "This sale does not earn a bonus.",
       create: "Suggest this bonus",
       created: "Created",
       failed: "The suggestion could not be created.",
@@ -5013,14 +5015,14 @@ const en = {
         invoices_created: "the commission invoices need to be created first",
         broker: "a broker needs to be chosen",
         commission: "the commission amount needs to be calculated first",
-        costs_closed: "all costs for this sale need to be entered",
+        costs_closed: 'Handled by needs to confirm "Costs closed" first',
         invoices_paid: "the commission invoices need to be paid first",
       },
       line: {
         commission_net: "Net commission: {{amount}}",
         costs: "Costs: {{amount}}",
         personnel_flat: "Fixed office fee: {{amount}}",
-        share: "Your share ({{percent}} %): {{amount}}",
+        share: "Share ({{percent}} %): {{amount}}",
         fixed: "This bonus is a fixed amount: {{amount}}",
       },
     },
@@ -5098,26 +5100,33 @@ const en = {
       title: "Sale details",
       ownLead: "Own lead",
       ownLeadHint:
-        "Check this if the agent found this customer. Leave it unchecked if the customer came from a property website.",
+        "Check this if Handled by found this customer themselves, with no separate lead source. This switches how the whole bonus for this sale is calculated — not just one part of it.",
       fromViewing: "From a viewing",
       fromViewingHint:
         "Check this if the buyer first met the agent at a viewing of a different property, and later bought this one.",
       costsClosed: "Costs closed",
       costsClosedHint:
-        "Check this when all costs for this sale have been entered, with nothing missing.",
-      costsClosedNoEffectHint: "This has no effect on the notary bonus for this sale.",
+        "Your own confirmation that no more costs will come in for this sale. The system does not check this against the itemized cost list on the Calculation tab — you are confirming it by hand.",
+      viewCostList: "View cost list",
+      costsClosedNoEffectHint:
+        "This only affects the payout timing of lead-based bonuses. It has no effect on the notary bonus or the viewing follow-up bonus for this sale.",
       readyForBookkeeping: "Ready for bookkeeping",
       readyForBookkeepingHint:
-        "A note for the bookkeeping team that this sale has been checked. It does not change anything else.",
+        "An internal note for bookkeeping only. It has <strong>no</strong> effect on this sale's calculation, approval, or bonuses.",
       handledBy: "Handled by",
       acquiredBy: "Lead won by",
       acquiredByDisabledHint: "Not used while Own lead is checked.",
-      acquiredByNeedsHandlerHint: "Only matters once Handled by is also set to someone else.",
-      referrer: "Referred by",
+      acquiredByNeedsHandlerHint:
+        "Only matters if Handled by is a different person than this one. If Handled by is left empty, this field is ignored.",
+      referrer: "Referred by (customer)",
       referrerPlaceholder: "No referrer",
     },
     costs: {
       title: "Costs",
+      disclaimer: "These costs only affect bonus payouts, not the commission invoice.",
+      closedBadge: "Closed",
+      openBadge: "Open",
+      changeStatus: "Change status",
       hint: "What the agency paid itself for this sale. The bonus calculation takes it off the commission.",
       total: "Total {{total}}",
       add: "Add cost",
@@ -5142,7 +5151,9 @@ const en = {
       rate: "Rate (% net)",
       ratePlaceholder: "e.g. 2,5",
       amount: "Amount (€ net)",
-      discount: "Discount (€)",
+      discount: "Discount (€ gross, per person)",
+      discountHint:
+        "Subtracted directly from this person's invoice total, after VAT. Does not change the rate/amount above.",
       discountReason: "Reason",
       payers: "Who pays",
       customer: "Customer",
@@ -5150,7 +5161,8 @@ const en = {
       payerSearch: "Search customers",
       noCustomers: "No customer found. Type a name to create one.",
       share: "Share %",
-      shareHint: "Leave the shares empty and everyone pays the same.",
+      shareHint:
+        "Leave the shares empty and everyone pays the same. If you enter any share, every share must be filled in, add up to 100%, and each one must be greater than 0%.",
       addPayer: "Add a person",
       fullCustomerLink: "Add a customer with full details",
       remove: "Remove",
@@ -5173,6 +5185,11 @@ const en = {
       unknownCustomer: "Unknown customer",
       viewPreview: "View Preview",
       notReady: "This deal can't be previewed yet. Fix the problems in the Calculation tab first.",
+      valid: "All information is complete — these draft invoices are ready to be created.",
+    },
+    draftsSummary: {
+      title: "Invoice preview",
+      moreCount: "+ {{count}} more",
     },
     invoices: {
       title: "Invoices",
@@ -5182,19 +5199,23 @@ const en = {
       saveNumber: "Save",
       numberFailed: "Saving the invoice number failed.",
       unknownCustomer: "Unknown customer",
+      empty:
+        "No invoices yet. Invoices are created once the sale is approved and invoicing is started.",
     },
     problems: {
       title: "Still missing",
-      purchase_price_missing: "The purchase price is missing.",
+      purchase_price_missing: "{{side}}: the purchase price is missing.",
       fee_missing: "{{side}}: the commission is missing.",
       fee_not_positive: "{{side}}: the commission must be more than zero.",
       no_payers: "{{side}}: nobody who pays has been added yet.",
       duplicate_payer: "{{side}}: one person is listed twice.",
       shares_incomplete: "{{side}}: either everyone has a share or nobody does.",
-      shares_do_not_add_up: "{{side}}: the shares do not add up to 100 %.",
+      shares_do_not_add_up:
+        "{{side}}: the shares are invalid — either they don't add up to 100%, or one of the shares is 0% or less.",
       discount_negative: "{{side}}: the discount cannot be negative.",
-      discount_exceeds_fee: "{{side}}: the discount is larger than the commission.",
-      vat_rate_invalid: "The VAT rate is not a usable number. Please check it.",
+      discount_exceeds_fee:
+        "{{side}}: one person's discount on this side is larger than their individual share of the commission.",
+      vat_rate_invalid: "{{side}}: the VAT rate is not a usable number. Please check it.",
       no_side_pays: "At least one side has to pay commission.",
     },
     actions: {
@@ -5212,6 +5233,7 @@ const en = {
       approveFailed: "The approval failed: {{error}}",
       unsaved: "Not saved",
       saveFirst: "Save first, then approve.",
+      saveFirstBeforeInvoices: "Save your changes before creating invoices.",
       approvedNote: "This deal was approved by {{name}} on {{when}}.",
       createInvoices: "Create invoices",
       creatingInvoices: "Creating invoices …",

@@ -3,7 +3,7 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { Field } from "@/components/ui/feld";
 import { Label } from "@/components/ui/label";
 import { useEmployees } from "@/data";
-import { useTranslation } from "@/lib/i18n";
+import { Trans, useTranslation } from "@/lib/i18n";
 import type { DealForm } from "./deal-form";
 
 type FlagKey = "ownLead" | "fromViewing" | "costsClosed" | "readyForBookkeeping";
@@ -16,12 +16,14 @@ export function DealFactsCard({
   customerOptions,
   disabled,
   assignsBrokers,
+  onJumpToField,
 }: {
   form: DealForm;
   onChange: (patch: Partial<DealForm>) => void;
   customerOptions: ComboboxOption[];
   disabled: boolean;
   assignsBrokers: boolean;
+  onJumpToField?: (tab: string, id: string) => void;
 }) {
   const { t } = useTranslation();
   const handler = form.handledBy ?? form.acquiredBy;
@@ -47,8 +49,24 @@ export function DealFactsCard({
             <span>
               {t(`commissionDeals.facts.${flag}`)}
               <span className="block text-xs text-muted-foreground">
-                {t(`commissionDeals.facts.${flag}Hint`)}
+                {flag === "readyForBookkeeping" ? (
+                  <Trans
+                    i18nKey="commissionDeals.facts.readyForBookkeepingHint"
+                    components={{ strong: <strong className="font-semibold text-foreground" /> }}
+                  />
+                ) : (
+                  t(`commissionDeals.facts.${flag}Hint`)
+                )}
               </span>
+              {flag === "costsClosed" && onJumpToField && (
+                <button
+                  type="button"
+                  onClick={() => onJumpToField("calculation", "deal-costs-section")}
+                  className="mt-1 block text-xs font-medium text-brand-dark underline-offset-4 hover:underline"
+                >
+                  {t("commissionDeals.facts.viewCostList")}
+                </button>
+              )}
               {flag === "costsClosed" && costsClosedHasNoEffect && (
                 <span className="block text-xs text-muted-foreground">
                   {t("commissionDeals.facts.costsClosedNoEffectHint")}

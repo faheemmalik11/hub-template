@@ -148,6 +148,9 @@ export function SideCard({
           <div id={`side-${side}-payers`} className="@container">
             <Label>{t("commissionDeals.side.payers")}</Label>
             <p className="text-xs text-muted-foreground">{t("commissionDeals.side.shareHint")}</p>
+            <p className="text-xs text-muted-foreground">
+              {t("commissionDeals.side.discountHint")}
+            </p>
 
             <div className="mt-2 hidden @lg:block">
               <Table>

@@ -6,6 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Skeleton } from "@/components/ui/skeleton";
 import { OutgoingStatusBadge } from "@/components/documents/badges";
+import { EmptyState } from "@/components/documents/query-states";
 import { useOutgoingInvoices, useSetOutgoingInvoiceNumber } from "@/data";
 import type { Deal } from "@/data";
 import { errorText, formatEUR } from "@/lib/data/format";
@@ -67,7 +68,18 @@ export function DealInvoicesCard({ deal }: { deal: Deal }) {
   }
 
   const invoices = invoicesQ.data ?? [];
-  if (invoices.length === 0) return null;
+  if (invoices.length === 0) {
+    return (
+      <section className="rounded-xl border border-border bg-card p-5">
+        <h2 className="text-base font-semibold text-foreground">
+          {t("commissionDeals.invoices.title")}
+        </h2>
+        <div className="mt-3">
+          <EmptyState title={t("commissionDeals.invoices.empty")} />
+        </div>
+      </section>
+    );
+  }
 
   return (
     <section className="rounded-xl border border-border bg-card p-5">
