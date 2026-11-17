@@ -5190,7 +5190,7 @@ const de = {
       notReady: "Noch nicht bereit",
       noRemainder: "Nach Abzug von Kosten und Gebühren bleibt nichts übrig.",
       waitingFor: {
-        notarisation: "der Verkauf braucht einen Notartermin",
+        invoices_created: "die Provisionsrechnungen müssen erst erstellt werden",
         broker: "es muss noch ein Makler gewählt werden",
         commission: "die Provision muss erst berechnet werden können",
         costs_closed: "alle Kosten für diesen Verkauf müssen erst eingetragen werden",
@@ -5287,11 +5287,15 @@ const de = {
       costsClosed: "Kosten abgeschlossen",
       costsClosedHint:
         "Anhaken, wenn alle Kosten für diesen Verkauf eingetragen sind und nichts fehlt.",
+      costsClosedNoEffectHint: "Das hat keine Auswirkung auf den Notarbonus für diesen Verkauf.",
       readyForBookkeeping: "Bereit für die Buchhaltung",
       readyForBookkeepingHint:
         "Ein Hinweis für die Buchhaltung, dass dieser Verkauf geprüft wurde. Das ändert sonst nichts.",
       handledBy: "Betreut von",
       acquiredBy: "Lead gewonnen von",
+      acquiredByDisabledHint: "Wird nicht verwendet, solange Eigener Lead angehakt ist.",
+      acquiredByNeedsHandlerHint:
+        "Wirkt sich erst aus, wenn bei Betreut von auch jemand anderes eingetragen ist.",
       referrer: "Empfohlen von",
       referrerPlaceholder: "Kein Empfehler",
     },

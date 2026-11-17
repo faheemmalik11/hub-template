@@ -5010,7 +5010,7 @@ const en = {
       notReady: "Not ready yet",
       noRemainder: "There is nothing left to pay after costs and fees are subtracted.",
       waitingFor: {
-        notarisation: "the sale needs a notary date",
+        invoices_created: "the commission invoices need to be created first",
         broker: "a broker needs to be chosen",
         commission: "the commission amount needs to be calculated first",
         costs_closed: "all costs for this sale need to be entered",
@@ -5105,11 +5105,14 @@ const en = {
       costsClosed: "Costs closed",
       costsClosedHint:
         "Check this when all costs for this sale have been entered, with nothing missing.",
+      costsClosedNoEffectHint: "This has no effect on the notary bonus for this sale.",
       readyForBookkeeping: "Ready for bookkeeping",
       readyForBookkeepingHint:
         "A note for the bookkeeping team that this sale has been checked. It does not change anything else.",
       handledBy: "Handled by",
       acquiredBy: "Lead won by",
+      acquiredByDisabledHint: "Not used while Own lead is checked.",
+      acquiredByNeedsHandlerHint: "Only matters once Handled by is also set to someone else.",
       referrer: "Referred by",
       referrerPlaceholder: "No referrer",
     },

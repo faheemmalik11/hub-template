@@ -24,6 +24,10 @@ export function DealFactsCard({
   assignsBrokers: boolean;
 }) {
   const { t } = useTranslation();
+  const handler = form.handledBy ?? form.acquiredBy;
+  const leadOwnerIsAnotherBroker =
+    !form.ownLead && form.acquiredBy !== null && form.acquiredBy !== handler;
+  const costsClosedHasNoEffect = !form.ownLead && !leadOwnerIsAnotherBroker;
   return (
     <div>
       {assignsBrokers && <BrokerFields form={form} onChange={onChange} disabled={disabled} />}
@@ -45,6 +49,11 @@ export function DealFactsCard({
               <span className="block text-xs text-muted-foreground">
                 {t(`commissionDeals.facts.${flag}Hint`)}
               </span>
+              {flag === "costsClosed" && costsClosedHasNoEffect && (
+                <span className="block text-xs text-muted-foreground">
+                  {t("commissionDeals.facts.costsClosedNoEffectHint")}
+                </span>
+              )}
             </span>
           </label>
         ))}
@@ -91,12 +100,25 @@ function BrokerFields({
         />
       </Field>
       <Field className="space-y-1.5">
-        <Label>{t("commissionDeals.facts.acquiredBy")}</Label>
+        <Label>
+          {t("commissionDeals.facts.acquiredBy")}
+          {form.ownLead ? (
+            <span className="ml-2 text-xs text-muted-foreground">
+              {t("commissionDeals.facts.acquiredByDisabledHint")}
+            </span>
+          ) : (
+            !form.handledBy && (
+              <span className="ml-2 text-xs text-muted-foreground">
+                {t("commissionDeals.facts.acquiredByNeedsHandlerHint")}
+              </span>
+            )
+          )}
+        </Label>
         <Combobox
           value={form.acquiredBy}
           onValueChange={(acquiredBy) => onChange({ acquiredBy })}
           options={options}
-          disabled={disabled}
+          disabled={disabled || form.ownLead}
         />
       </Field>
     </div>
