@@ -1,6 +1,6 @@
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useEffect, useMemo, useState } from "react";
-import { AlertTriangle, Plus, Search } from "lucide-react";
+import { AlertTriangle, Loader2, Plus, Search } from "lucide-react";
 import { toast } from "sonner";
 
 import { Button } from "@/components/ui/button";
@@ -327,6 +327,7 @@ function NewDealDialog() {
               {t("commissionDeals.newDialog.cancel")}
             </Button>
             <Button onClick={create} disabled={!property || !!activeDeal || createDeal.isPending}>
+              {createDeal.isPending && <Loader2 className="size-4 animate-spin" />}
               {t("commissionDeals.newDialog.create")}
             </Button>
           </DialogFooter>
