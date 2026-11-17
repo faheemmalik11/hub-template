@@ -63,9 +63,6 @@ export function calculateSideCommission(input: SideCommissionInput): CommissionR
 
   if (input.vatRatePercent <= -100) report("vat_rate_invalid");
   if (!input.fee) report("fee_missing");
-  if (input.fee?.kind === "percent" && input.purchasePriceCents === null) {
-    report("purchase_price_missing");
-  }
   if (input.payers.length === 0) report("no_payers");
   if (new Set(input.payers.map((payer) => payer.key)).size !== input.payers.length) {
     report("duplicate_payer");
@@ -134,6 +131,12 @@ export function calculateDealCommission(deal: DealCommissionInput): CommissionRe
   if (sides.length === 0) return { ok: false, problems: [{ side: null, problem: "no_side_pays" }] };
 
   const problems = sides.flatMap((result) => (result.ok ? [] : result.problems));
+  const hasPercentFeeSide = (["buyer", "seller"] as const).some(
+    (side) => deal[side]?.fee?.kind === "percent",
+  );
+  if (deal.purchasePriceCents === null && hasPercentFeeSide) {
+    problems.push({ side: null, problem: "purchase_price_missing" });
+  }
   if (problems.length > 0) return { ok: false, problems };
   return { ok: true, invoices: sides.flatMap((result) => (result.ok ? result.invoices : [])) };
 }

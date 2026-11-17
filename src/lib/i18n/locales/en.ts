@@ -4944,6 +4944,11 @@ const en = {
       invoiced: "Invoices created",
       cancelled: "Cancelled",
       settled: "Settled",
+      incompleteHint: "Fill in the required deal details to move this to Ready for approval.",
+      readyHint: "Everything is filled in. Approve this deal to continue.",
+      approvedHint:
+        "This deal is approved. Create invoices when you are ready to bill the customer.",
+      invoicedHint: "Invoices have been created and sent. No further action is needed here.",
     },
     list: {
       search: "Search property …",
@@ -5218,7 +5223,7 @@ const en = {
     },
     problems: {
       title: "Still missing",
-      purchase_price_missing: "{{side}}: enter the purchase price to calculate this commission.",
+      purchase_price_missing: "Enter the purchase price to calculate this commission.",
       fee_missing: "{{side}}: the commission is missing.",
       fee_not_positive: "{{side}}: the commission must be more than zero.",
       no_payers: "{{side}}: no one has been added to pay yet.",
