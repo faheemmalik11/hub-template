@@ -5132,7 +5132,7 @@ const en = {
       customer: "Customer",
       payerPlaceholder: "Choose a customer",
       payerSearch: "Search customers",
-      noCustomers: "No customer found.",
+      noCustomers: "No customer found. Type a name to create one.",
       share: "Share %",
       shareHint: "Leave the shares empty and everyone pays the same.",
       addPayer: "Add a person",
