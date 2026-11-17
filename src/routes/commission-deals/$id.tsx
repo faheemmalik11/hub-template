@@ -246,20 +246,6 @@ function DealEditor({ deal }: { deal: Deal }) {
   }, [form, savedForm]);
   const reviewLines = useMemo<ReviewLine[]>(() => {
     const lines: ReviewLine[] = [];
-    if (deal.purchase_price === null) {
-      lines.push({
-        field: "purchase_price",
-        text: t("commissionDeals.review.missingPrice"),
-        target: { tab: "dealDetails", anchor: "field-purchase-price" },
-      });
-    }
-    if (deal.notarised_on === null) {
-      lines.push({
-        field: "notarised_on",
-        text: t("commissionDeals.review.missingNotarisedOn"),
-        target: { tab: "dealDetails", anchor: "field-notarised-on" },
-      });
-    }
     for (const side of SIDES) {
       const dealSide = deal.deal_sides.find((s) => s.side === side);
       const missing =

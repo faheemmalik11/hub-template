@@ -5197,8 +5197,6 @@ const de = {
     review: {
       title: "Was muss noch ausgefüllt werden?",
       fix: "Zum Feld springen",
-      missingPrice: "Kaufpreis eingeben",
-      missingNotarisedOn: "Notartermin eingeben",
       missingFee: "Provisionssatz oder -betrag fehlt",
       missingDueDate: "Zahlungsziel eingeben oder erklären, wann die Zahlung erwartet wird",
     },
@@ -5423,6 +5421,8 @@ const de = {
     problems: {
       title: "Was noch fehlt",
       purchase_price_missing: "Geben Sie den Kaufpreis ein, um diese Provision zu berechnen.",
+      notarised_on_missing:
+        "Geben Sie den Notartermin ein, bevor dieser Verkauf genehmigt werden kann.",
       fee_missing: "{{side}}: Die Provision fehlt.",
       fee_not_positive: "{{side}}: Die Provision muss größer als null sein.",
       no_payers: "{{side}}: Es ist noch niemand eingetragen, der zahlt.",
