@@ -4973,6 +4973,9 @@ const en = {
       buyerCommission: "Buyer Commission",
       sellerCommission: "Seller Commission",
       total: "Total Commission",
+      net: "Net",
+      vat: "VAT",
+      gross: "Gross",
       valid: "No calculation issues. The commission is valid and can be invoiced.",
       invalid:
         "There are {{count}} issues to resolve before invoices can be created. Open Calculation to review them.",
@@ -5178,6 +5181,7 @@ const en = {
       payerSearch: "Search customers",
       noCustomers: "No customer found. Type a name to create one.",
       share: "Share %",
+      shareLockedTooltip: "Locked at 100% because only one person is paying.",
       splitTitle: "How is the commission split?",
       shareHint:
         "Leave shares empty to split equally. Otherwise, enter shares for everyone, totalling 100%.",

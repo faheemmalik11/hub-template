@@ -8,7 +8,7 @@ const VAT = 19;
 
 function invoicesOf(result: CommissionResult) {
   assert.equal(result.ok, true, JSON.stringify(result));
-  return result.ok ? result.invoices : [];
+  return result.invoices;
 }
 
 function totals(result: CommissionResult) {
@@ -150,6 +150,7 @@ describe("deal", () => {
     assert.deepEqual(calculateDealCommission({ purchasePriceCents: 1_00, vatRatePercent: VAT }), {
       ok: false,
       problems: [{ side: null, problem: "no_side_pays" }],
+      invoices: [],
     });
   });
 
@@ -167,6 +168,7 @@ describe("deal", () => {
         { side: "seller", problem: "fee_missing" },
         { side: null, problem: "purchase_price_missing" },
       ],
+      invoices: [],
     });
   });
 
@@ -180,6 +182,7 @@ describe("deal", () => {
     assert.deepEqual(result, {
       ok: false,
       problems: [{ side: null, problem: "purchase_price_missing" }],
+      invoices: [],
     });
   });
 
@@ -190,6 +193,39 @@ describe("deal", () => {
       seller: { fee: { kind: "fixed", netAmountCents: 5_000_00 }, payers: [{ key: "a" }] },
     });
     assert.equal(result.ok, true);
+    assert.equal(result.invoices.length, 1);
+  });
+
+  test("a side's own share problem does not discard the other side's valid invoices", () => {
+    const result = calculateDealCommission({
+      purchasePriceCents: 610_000_00,
+      vatRatePercent: VAT,
+      buyer: {
+        fee: { kind: "percent", netRatePercent: 3 },
+        payers: [
+          { key: "b1", sharePercent: 60 },
+          { key: "b2", sharePercent: 30 },
+        ],
+      },
+      seller: { fee: { kind: "percent", netRatePercent: 2 }, payers: [{ key: "s1" }] },
+    });
+    assert.deepEqual(result.problems, [{ side: "buyer", problem: "shares_do_not_add_up" }]);
+    assert.equal(result.ok, false);
+    assert.equal(result.invoices.length, 1);
+    assert.equal(result.invoices[0].side, "seller");
+    assert.equal(result.invoices[0].payerKey, "s1");
+  });
+
+  test("a percent-fee side blocked by a missing price leaves a fixed-fee side's invoices intact", () => {
+    const result = calculateDealCommission({
+      purchasePriceCents: null,
+      vatRatePercent: VAT,
+      buyer: { fee: { kind: "percent", netRatePercent: 3 }, payers: [{ key: "b1" }] },
+      seller: { fee: { kind: "fixed", netAmountCents: 5_000_00 }, payers: [{ key: "s1" }] },
+    });
+    assert.deepEqual(result.problems, [{ side: null, problem: "purchase_price_missing" }]);
+    assert.equal(result.invoices.length, 1);
+    assert.equal(result.invoices[0].side, "seller");
   });
 });
 
@@ -205,6 +241,7 @@ describe("shares", () => {
     assert.deepEqual(result, {
       ok: false,
       problems: [{ side: "seller", problem: "shares_incomplete" }],
+      invoices: [],
     });
   });
 
@@ -236,6 +273,7 @@ describe("shares", () => {
     assert.deepEqual(result, {
       ok: false,
       problems: [{ side: "seller", problem: "shares_do_not_add_up" }],
+      invoices: [],
     });
   });
 
@@ -250,6 +288,7 @@ describe("shares", () => {
     assert.deepEqual(result, {
       ok: false,
       problems: [{ side: "buyer", problem: "discount_exceeds_fee" }],
+      invoices: [],
     });
   });
 
@@ -264,6 +303,7 @@ describe("shares", () => {
     assert.deepEqual(result, {
       ok: false,
       problems: [{ side: "buyer", problem: "discount_exceeds_fee" }],
+      invoices: [],
     });
   });
 
@@ -278,6 +318,7 @@ describe("shares", () => {
     assert.deepEqual(atTheLimit, {
       ok: false,
       problems: [{ side: "seller", problem: "vat_rate_invalid" }],
+      invoices: [],
     });
 
     const belowTheLimit = calculateSideCommission({
@@ -290,6 +331,7 @@ describe("shares", () => {
     assert.deepEqual(belowTheLimit, {
       ok: false,
       problems: [{ side: "seller", problem: "vat_rate_invalid" }],
+      invoices: [],
     });
   });
 

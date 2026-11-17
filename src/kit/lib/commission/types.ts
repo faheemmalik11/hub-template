@@ -58,5 +58,9 @@ export interface SideProblem {
   problem: CommissionProblem;
 }
 
-export type CommissionResult =
-  { ok: true; invoices: CommissionInvoiceDraft[] } | { ok: false; problems: SideProblem[] };
+// `invoices` is partial: a side with its own problem, or blocked by a missing deal-level value, contributes none.
+export interface CommissionResult {
+  ok: boolean;
+  problems: SideProblem[];
+  invoices: CommissionInvoiceDraft[];
+}

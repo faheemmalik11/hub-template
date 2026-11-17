@@ -1,6 +1,11 @@
 import { Calculator, CheckCircle2 } from "lucide-react";
 
-import type { CommissionProblem, CommissionResult, CommissionSide } from "@/kit/lib/commission";
+import type {
+  CommissionInvoiceDraft,
+  CommissionProblem,
+  CommissionResult,
+  CommissionSide,
+} from "@/kit/lib/commission";
 import { formatEUR } from "@/lib/data/format";
 import { useTranslation } from "@/lib/i18n";
 
@@ -17,6 +22,29 @@ function anchorForProblem(
   return { tab: "dealDetails", id: `side-${side}-payers` };
 }
 
+const UNKNOWN_FIGURE = "—";
+
+function figuresOf(invoices: CommissionInvoiceDraft[], hasProblems: boolean) {
+  if (invoices.length === 0) {
+    return hasProblems
+      ? { net: UNKNOWN_FIGURE, vat: UNKNOWN_FIGURE, gross: UNKNOWN_FIGURE }
+      : { net: formatEUR(0), vat: formatEUR(0), gross: formatEUR(0) };
+  }
+  const cents = invoices.reduce(
+    (sum, invoice) => ({
+      net: sum.net + invoice.totalNetCents,
+      vat: sum.vat + invoice.totalVatCents,
+      gross: sum.gross + invoice.totalGrossCents,
+    }),
+    { net: 0, vat: 0, gross: 0 },
+  );
+  return {
+    net: formatEUR(cents.net / 100),
+    vat: formatEUR(cents.vat / 100),
+    gross: formatEUR(cents.gross / 100),
+  };
+}
+
 export function DealCommissionOverviewCard({
   result,
   onJumpToField,
@@ -26,27 +54,82 @@ export function DealCommissionOverviewCard({
 }) {
   const { t } = useTranslation();
   const sideName = (side: CommissionSide | null) => (side ? t(`commissionDeals.side.${side}`) : "");
+  const hasProblems = result.problems.length > 0;
 
-  if (!result.ok) {
-    return (
-      <section className="rounded-xl border border-border bg-card p-5">
-        <div className="flex items-center gap-2">
-          <div className="flex size-7 shrink-0 items-center justify-center rounded-lg bg-brand-tint text-brand">
-            <Calculator aria-hidden className="size-4" />
-          </div>
-          <h2 className="text-base font-semibold text-foreground">
-            {t("commissionDeals.overview.title")}
-          </h2>
+  const invoicesOfSide = (side: CommissionSide) =>
+    result.invoices.filter((invoice) => invoice.side === side);
+  const buyer = figuresOf(invoicesOfSide("buyer"), hasProblems);
+  const seller = figuresOf(invoicesOfSide("seller"), hasProblems);
+  const total = figuresOf(result.invoices, hasProblems);
+
+  return (
+    <section className="rounded-xl border border-border bg-card p-5">
+      <div className="flex items-center gap-2">
+        <div className="flex size-7 shrink-0 items-center justify-center rounded-lg bg-brand-tint text-brand">
+          <Calculator aria-hidden className="size-4" />
         </div>
-        <div className="mt-3 rounded-lg border border-destructive/40 bg-destructive/5 px-3 py-2 text-sm text-destructive">
-          <p className="font-medium">
+        <h2 className="text-base font-semibold text-foreground">
+          {t("commissionDeals.overview.title")}
+        </h2>
+      </div>
+
+      <div className="mt-3 overflow-x-auto">
+        <table className="w-full text-sm tabular-nums">
+          <thead>
+            <tr>
+              <th />
+              <th className="pb-1 text-right text-xs font-normal text-muted-foreground">
+                {t("commissionDeals.overview.net")}
+              </th>
+              <th className="pb-1 text-right text-xs font-normal text-muted-foreground">
+                {t("commissionDeals.overview.vat")}
+              </th>
+              <th className="pb-1 text-right text-xs font-normal text-muted-foreground">
+                {t("commissionDeals.overview.gross")}
+              </th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td className="py-1 text-muted-foreground">
+                {t("commissionDeals.overview.buyerCommission")}
+              </td>
+              <td className="py-1 text-right text-xs text-muted-foreground">{buyer.net}</td>
+              <td className="py-1 text-right text-xs text-muted-foreground">{buyer.vat}</td>
+              <td className="py-1 text-right font-medium text-foreground">{buyer.gross}</td>
+            </tr>
+            <tr>
+              <td className="py-1 text-muted-foreground">
+                {t("commissionDeals.overview.sellerCommission")}
+              </td>
+              <td className="py-1 text-right text-xs text-muted-foreground">{seller.net}</td>
+              <td className="py-1 text-right text-xs text-muted-foreground">{seller.vat}</td>
+              <td className="py-1 text-right font-medium text-foreground">{seller.gross}</td>
+            </tr>
+            <tr className="border-t border-border">
+              <td className="pt-2 font-semibold text-brand-dark">
+                {t("commissionDeals.overview.total")}
+              </td>
+              <td className="pt-2 text-right text-xs text-muted-foreground">{total.net}</td>
+              <td className="pt-2 text-right text-xs text-muted-foreground">{total.vat}</td>
+              <td className="pt-2 text-right text-lg font-semibold text-brand-dark">
+                {total.gross}
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+
+      {hasProblems ? (
+        <div className="mt-3 rounded-lg border border-destructive/30 bg-destructive/5 px-3 py-2">
+          <p className="text-xs font-medium text-destructive">
             {t("commissionDeals.overview.invalid", { count: result.problems.length })}
           </p>
-          <ul className="mt-2 space-y-1">
+          <ul className="mt-1.5 space-y-1">
             {result.problems.map((problem, index) => (
               <li
                 key={index}
-                className="flex flex-wrap items-center gap-x-1.5 text-xs text-destructive"
+                className="flex flex-wrap items-center gap-x-1.5 text-xs text-muted-foreground"
               >
                 <span>
                   •{" "}
@@ -71,48 +154,12 @@ export function DealCommissionOverviewCard({
             ))}
           </ul>
         </div>
-      </section>
-    );
-  }
-
-  const buyerNetCents = result.invoices
-    .filter((invoice) => invoice.side === "buyer")
-    .reduce((sum, invoice) => sum + invoice.totalNetCents, 0);
-  const sellerNetCents = result.invoices
-    .filter((invoice) => invoice.side === "seller")
-    .reduce((sum, invoice) => sum + invoice.totalNetCents, 0);
-  const totalNetCents = buyerNetCents + sellerNetCents;
-
-  return (
-    <section className="rounded-xl border border-border bg-card p-5">
-      <div className="flex items-center gap-2">
-        <div className="flex size-7 shrink-0 items-center justify-center rounded-lg bg-brand-tint text-brand">
-          <Calculator aria-hidden className="size-4" />
+      ) : (
+        <div className="mt-3 flex items-center gap-1.5 text-xs text-emerald-700">
+          <CheckCircle2 aria-hidden className="size-3.5 shrink-0" />
+          {t("commissionDeals.overview.valid")}
         </div>
-        <h2 className="text-base font-semibold text-foreground">
-          {t("commissionDeals.overview.title")}
-        </h2>
-      </div>
-      <dl className="mt-3 space-y-1 text-sm tabular-nums">
-        <div className="flex justify-between">
-          <dt className="text-muted-foreground">{t("commissionDeals.overview.buyerCommission")}</dt>
-          <dd>{formatEUR(buyerNetCents / 100)}</dd>
-        </div>
-        <div className="flex justify-between">
-          <dt className="text-muted-foreground">
-            {t("commissionDeals.overview.sellerCommission")}
-          </dt>
-          <dd>{formatEUR(sellerNetCents / 100)}</dd>
-        </div>
-        <div className="mt-2 flex justify-between border-t border-border pt-2 text-lg font-semibold text-brand-dark">
-          <dt>{t("commissionDeals.overview.total")}</dt>
-          <dd>{formatEUR(totalNetCents / 100)}</dd>
-        </div>
-      </dl>
-      <div className="mt-3 flex items-center gap-1.5 rounded-lg bg-emerald-100 px-3 py-2 text-sm text-emerald-800">
-        <CheckCircle2 aria-hidden className="size-4 shrink-0" />
-        {t("commissionDeals.overview.valid")}
-      </div>
+      )}
     </section>
   );
 }
