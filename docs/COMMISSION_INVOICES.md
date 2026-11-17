@@ -176,6 +176,26 @@ these are real deals still waiting for a human to approve them. Dry run by defau
 write, tested end to end on a local database including the case where a side exists with no payer
 yet on an earlier run and only gets its payer on a later one.
 
+## Who may see commission amounts
+
+A role that may open `page.commission_deals` sees the deal, but not necessarily what it is worth.
+The amount itself — `DealCommissionOverviewCard` (the sticky summary beside the editor),
+`DraftInvoices` (the per-payer draft invoice amounts in the Berechnung tab), and the Commission
+column on the `/commission-deals` list — is gated behind a further action key, `deals.commission_read`
+(`src/config/permissions.ts`, `supabase/catalogue.sql`). Lacking it hides the card and the drafts
+tab entirely rather than showing a blank or masked figure, and the list drops the column rather than
+rendering an empty cell, matching how the rest of this screen gates a whole section
+(`BonusSuggestionsCard`, `AgentReportSection`) rather than a single value inside one.
+
+Granted by default to every administering role and, by name, to `supervisor`, `broker`, `assistant`,
+`tax_advisor` and `managing_director` — the roles `supabase/presets/estate-agency-roles.sql` creates
+plus the generic template roles, so a client built from either preset keeps seeing the figures it
+already saw before this key existed. Not granted to a role built to book the figures rather than earn
+or approve them: a client that re-grants `page.commission_deals` to a bookkeeping-only role, so that
+role can open deals for bookkeeping purposes, does not also get commission visibility for free just
+because it can now reach the page. An admin can still grant it to any role on the Rollen tab; nothing
+here prevents that, it only decides what a fresh client starts with.
+
 ## Per-agent reporting (briefing §3.5)
 
 A reporting tab on `/commission-deals` (`AgentReportSection`, gated by the new `deals.report`
