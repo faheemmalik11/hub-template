@@ -93,8 +93,11 @@ export function NotificationBell({
                 search={item.link.search as never}
                 onClick={() => onItemClick?.(item)}
               >
-                <span className="min-w-0 flex-1 truncate text-sm" title={item.label}>
-                  {item.label}
+                <span
+                  className="min-w-0 flex-1 truncate text-sm"
+                  title={item.message ?? item.label}
+                >
+                  {item.message ?? item.label}
                 </span>
                 <span
                   className={cn(
