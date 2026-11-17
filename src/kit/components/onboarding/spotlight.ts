@@ -192,7 +192,14 @@ export function stickyBarBottomAboveSpotlight(overlayRoot: HTMLElement | null): 
     while (node && node !== document.body) {
       const position = getComputedStyle(node).position;
       if (position === "sticky" || position === "fixed") {
-        return Math.ceil(node.getBoundingClientRect().bottom);
+        const rect = node.getBoundingClientRect();
+        // A full-screen backdrop (a modal's own overlay) is fixed too, but it isn't a bar
+        // sitting above the content, so it must not be read as one.
+        if (rect.top <= area.top && rect.bottom >= area.top + area.height) {
+          node = node.parentElement;
+          continue;
+        }
+        return Math.ceil(rect.bottom);
       }
       node = node.parentElement;
     }
