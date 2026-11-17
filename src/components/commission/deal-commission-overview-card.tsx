@@ -58,10 +58,14 @@ export function DealCommissionOverviewCard({
   result,
   customerName,
   onJumpToField,
+  invoiced,
 }: {
   result: CommissionResult;
   customerName: (customerId: string) => string | undefined;
   onJumpToField?: (tab: string, id: string) => void;
+  /** Once invoices already exist, "valid/invalid for creating invoices" no longer means
+   *  anything — that already happened. Shows the figures only, no problems/valid messaging. */
+  invoiced?: boolean;
 }) {
   const { t } = useTranslation();
   const sideName = (side: CommissionSide | null) => (side ? t(`commissionDeals.side.${side}`) : "");
@@ -162,7 +166,7 @@ export function DealCommissionOverviewCard({
         </table>
       </div>
 
-      {hasProblems ? (
+      {invoiced ? null : hasProblems ? (
         <div className="mt-3 rounded-lg border border-destructive/30 bg-destructive/5 px-3 py-2">
           <p className="text-xs font-medium text-destructive">
             {t("commissionDeals.overview.invalid", { count: result.problems.length })}

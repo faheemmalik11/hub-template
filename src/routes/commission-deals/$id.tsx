@@ -875,6 +875,7 @@ function DealEditor({ deal }: { deal: Deal }) {
                       result={result}
                       customerName={customerName}
                       onJumpToField={mayEditFinancials ? jumpToAnchor : undefined}
+                      invoiced={deal.status === "invoiced"}
                     />
                   </div>
                 </div>
@@ -893,6 +894,7 @@ function DealEditor({ deal }: { deal: Deal }) {
               result={result}
               customerName={customerName}
               onJumpToField={mayEditFinancials ? jumpToAnchor : undefined}
+              invoiced={deal.status === "invoiced"}
             />
           )}
           {suggestsBonuses && !unsaved && deal.status !== "settled" && (
