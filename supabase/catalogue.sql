@@ -266,6 +266,19 @@ on conflict (key) do update
        description_de = excluded.description_de, description_en = excluded.description_en,
        default_enabled = excluded.default_enabled, sort_order = excluded.sort_order;
 
+-- What a deal is worth, shown to a role that already opens deals but should not see what they earn
+-- the agency or the agent. On wherever the page itself is, since it narrows an existing screen
+-- rather than switching on a new one.
+insert into public.permissions (key, kind, parent_key, category, label_de, label_en, description_de, description_en, sort_order) values
+  ('deals.commission_read', 'action', 'page.commission_deals', 'documents', 'Provisionsbeträge sehen', 'See commission amounts',
+   'Die Provisions- und Gewinnzahlen eines Verkaufs sehen, nicht nur die übrigen Angaben.',
+   'See the commission and profit figures on a deal, not only its other details.', 936)
+on conflict (key) do update
+   set kind = excluded.kind, parent_key = excluded.parent_key, category = excluded.category,
+       label_de = excluded.label_de, label_en = excluded.label_en,
+       description_de = excluded.description_de, description_en = excluded.description_en,
+       sort_order = excluded.sort_order;
+
 -- -------------------------------------------------------------- the actions
 --
 -- The ten area capabilities the schema's own policies ask for are declared here, because a policy
@@ -348,7 +361,7 @@ select r.id, k
           'master_data.read', 'master_data.write',
           'bank.read', 'bank.write', 'payments.write',
           'rules.write', 'settings.manage', 'bonuses.review', 'bonuses.suggest',
-          'deals.report_all']
+          'deals.report_all', 'deals.commission_read']
         when r.name = 'supervisor' then array[
           'documents.read', 'documents.write',
           'invoices.approve', 'invoices.approve_final',
@@ -360,6 +373,14 @@ select r.id, k
     )
   ) as caps(k)
  where exists (select 1 from public.permissions p where p.key = caps.k)
+on conflict do nothing;
+
+-- Every other role that already works deals directly keeps seeing what they are worth; a role built
+-- to book the figures rather than earn or approve them does not get this by name.
+insert into public.role_permissions (role_id, permission_key)
+select r.id, 'deals.commission_read' from public.roles r
+ where not r.administers
+   and r.name in ('supervisor', 'broker', 'assistant', 'tax_advisor', 'managing_director')
 on conflict do nothing;
 
 

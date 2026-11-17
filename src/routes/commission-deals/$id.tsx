@@ -178,6 +178,7 @@ function DealEditor({ deal }: { deal: Deal }) {
   const suggestsReferrerBonuses =
     useFeature(PERMISSIONS.bonusesSuggestReferrer) && can(PERMISSIONS.bonusesReview);
   const managesDonations = can(PERMISSIONS.donationsManage);
+  const seesCommission = can(PERMISSIONS.dealsCommissionRead);
   const syncsPaymentDueDate = useFeature(PERMISSIONS.propstackPaymentDueDateSync);
   const syncsDealValues = useFeature(PERMISSIONS.propstackDealValuesSync);
   const [activeTab, setActiveTab] = useTabParam(DEAL_TABS, "dealDetails");
@@ -806,21 +807,23 @@ function DealEditor({ deal }: { deal: Deal }) {
                 onChange={(costs) => set({ costs })}
                 disabled={!mayEdit}
               />
-              <div>
-                <h2 className="text-base font-semibold text-foreground">
-                  {t("commissionDeals.drafts.title")}
-                </h2>
-                <p className="mt-1 text-xs text-muted-foreground">
-                  {t("commissionDeals.drafts.hint")}
-                </p>
-                <div className="mt-4">
-                  <DraftInvoices
-                    result={result}
-                    customerName={customerName}
-                    onJumpToField={jumpToAnchor}
-                  />
+              {seesCommission && (
+                <div>
+                  <h2 className="text-base font-semibold text-foreground">
+                    {t("commissionDeals.drafts.title")}
+                  </h2>
+                  <p className="mt-1 text-xs text-muted-foreground">
+                    {t("commissionDeals.drafts.hint")}
+                  </p>
+                  <div className="mt-4">
+                    <DraftInvoices
+                      result={result}
+                      customerName={customerName}
+                      onJumpToField={jumpToAnchor}
+                    />
+                  </div>
                 </div>
-              </div>
+              )}
             </TabsContent>
 
             <TabsContent value="invoices" className="mt-0">
@@ -830,7 +833,9 @@ function DealEditor({ deal }: { deal: Deal }) {
         </Tabs>
 
         <aside className="space-y-4 lg:sticky lg:top-4 lg:self-start">
-          <DealCommissionOverviewCard result={result} onJumpToField={jumpToAnchor} />
+          {seesCommission && (
+            <DealCommissionOverviewCard result={result} onJumpToField={jumpToAnchor} />
+          )}
           {suggestsBonuses && !unsaved && deal.status !== "settled" && (
             <BonusSuggestionsCard deal={deal} onJumpToField={jumpToAnchor} />
           )}
