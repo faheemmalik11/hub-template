@@ -1,11 +1,30 @@
 import { Calculator, CheckCircle2 } from "lucide-react";
 
-import type { CommissionResult } from "@/kit/lib/commission";
+import type { CommissionProblem, CommissionResult, CommissionSide } from "@/kit/lib/commission";
 import { formatEUR } from "@/lib/data/format";
 import { useTranslation } from "@/lib/i18n";
 
-export function DealCommissionOverviewCard({ result }: { result: CommissionResult }) {
+function anchorForProblem(
+  side: CommissionSide,
+  problem: CommissionProblem,
+): { tab: string; id: string } {
+  if (problem === "purchase_price_missing")
+    return { tab: "dealDetails", id: "field-purchase-price" };
+  if (problem === "fee_missing" || problem === "fee_not_positive") {
+    return { tab: "dealDetails", id: `side-${side}-fee` };
+  }
+  return { tab: "dealDetails", id: `side-${side}-payers` };
+}
+
+export function DealCommissionOverviewCard({
+  result,
+  onJumpToField,
+}: {
+  result: CommissionResult;
+  onJumpToField?: (tab: string, id: string) => void;
+}) {
   const { t } = useTranslation();
+  const sideName = (side: CommissionSide | null) => (side ? t(`commissionDeals.side.${side}`) : "");
 
   if (!result.ok) {
     return (
@@ -19,7 +38,36 @@ export function DealCommissionOverviewCard({ result }: { result: CommissionResul
           </h2>
         </div>
         <div className="mt-3 rounded-lg border border-destructive/40 bg-destructive/5 px-3 py-2 text-sm text-destructive">
-          {t("commissionDeals.overview.invalid", { count: result.problems.length })}
+          <p className="font-medium">
+            {t("commissionDeals.overview.invalid", { count: result.problems.length })}
+          </p>
+          <ul className="mt-2 space-y-1">
+            {result.problems.map((problem, index) => (
+              <li
+                key={index}
+                className="flex flex-wrap items-center gap-x-1.5 text-xs text-destructive"
+              >
+                <span>
+                  •{" "}
+                  {t(`commissionDeals.problems.${problem.problem}`, {
+                    side: sideName(problem.side),
+                  })}
+                </span>
+                {problem.side && onJumpToField && (
+                  <button
+                    type="button"
+                    onClick={() => {
+                      const target = anchorForProblem(problem.side!, problem.problem);
+                      onJumpToField(target.tab, target.id);
+                    }}
+                    className="text-xs font-medium text-brand-dark underline-offset-4 hover:underline"
+                  >
+                    {t("commissionDeals.review.fix")}
+                  </button>
+                )}
+              </li>
+            ))}
+          </ul>
         </div>
       </section>
     );

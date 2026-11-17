@@ -439,15 +439,17 @@ function DealEditor({ deal }: { deal: Deal }) {
   const createInvoicesDisabled = createInvoices.isPending;
 
   const primaryAction =
-    unsaved && showSave
+    deal.status === "incomplete" && showSave
       ? "save"
-      : showCreateInvoices
-        ? "createInvoices"
-        : showApprove
-          ? "approve"
-          : showSave
-            ? "save"
-            : null;
+      : unsaved && showSave
+        ? "save"
+        : showCreateInvoices
+          ? "createInvoices"
+          : showApprove
+            ? "approve"
+            : showSave
+              ? "save"
+              : null;
   const secondaryActions = (["save", "approve", "createInvoices"] as const).filter(
     (action) =>
       action !== primaryAction &&
@@ -828,7 +830,7 @@ function DealEditor({ deal }: { deal: Deal }) {
         </Tabs>
 
         <aside className="space-y-4 lg:sticky lg:top-4 lg:self-start">
-          <DealCommissionOverviewCard result={result} />
+          <DealCommissionOverviewCard result={result} onJumpToField={jumpToAnchor} />
           {suggestsBonuses && !unsaved && deal.status !== "settled" && (
             <BonusSuggestionsCard deal={deal} onJumpToField={jumpToAnchor} />
           )}
