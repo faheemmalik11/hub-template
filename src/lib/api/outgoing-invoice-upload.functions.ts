@@ -15,6 +15,8 @@ import { z } from "zod";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 import { AppError, ValidationError } from "./errors";
 import { OUTGOING_INVOICE_UPLOAD_MIME } from "./outgoing-invoice-shared";
+import { PERMISSIONS } from "@/config/permissions";
+import { requirePermission } from "./require-permission";
 import { TABLE } from "@/config/tables";
 
 const STORAGE_BUCKET = BUCKET.outgoingInvoices;
@@ -114,6 +116,13 @@ export const createUploadedOutgoingInvoice = createServerFn({ method: "POST" })
       "hub";
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
     const db = supabaseAdmin as Db;
+
+    await requirePermission(
+      db,
+      actor,
+      PERMISSIONS.outgoingInvoicesUpload,
+      "You may not upload outgoing invoices",
+    );
 
     const { data: company, error: companyError } = await db
       .from(TABLE.companies)

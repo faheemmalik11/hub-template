@@ -83,6 +83,7 @@ export const PERMISSIONS = {
   lexofficeSync: "lexoffice.sync",
   lexofficeDocumentSync: "lexoffice.document_sync",
   lexofficeInvoiceFileFetch: "lexoffice.invoice_file_fetch",
+  outgoingInvoicesUpload: "outgoing_invoices.upload",
   propstackPaymentDueDateSync: "propstack.payment_due_date_sync",
   propstackDealValuesSync: "propstack.deal_values_sync",
   pageBankConnections: "page.bank_connections",

@@ -124,6 +124,7 @@ function matchesToSearch(inv: OutgoingInvoice, q: string): boolean {
 
 function OutgoingInvoicesPage() {
   const { t } = useTranslation();
+  const canUpload = useFeature(PERMISSIONS.outgoingInvoicesUpload);
   const [companyId, setCompanyId] = useState(ALL);
   const [status, setStatus] = useState<StatusFilter | typeof ALL>(ALL);
   const [search, setSearch] = useState("");
@@ -326,11 +327,13 @@ function OutgoingInvoicesPage() {
             {t("outgoingInvoices.subtitle", brandVars())}
           </p>
         </div>
-        <Button asChild className="gap-2" data-tour="outgoing-actions">
-          <Link to="/outgoing-invoices/upload">
-            <UploadCloud className="size-4" /> {t("outgoingInvoices.upload.button")}
-          </Link>
-        </Button>
+        {canUpload && (
+          <Button asChild className="gap-2" data-tour="outgoing-actions">
+            <Link to="/outgoing-invoices/upload">
+              <UploadCloud className="size-4" /> {t("outgoingInvoices.upload.button")}
+            </Link>
+          </Button>
+        )}
       </div>
 
       <div data-tour="outgoing-queue">
