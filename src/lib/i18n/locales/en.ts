@@ -1620,6 +1620,7 @@ const en = {
       placeholder: "Select …",
       search: "Search …",
       empty: "No results.",
+      createNew: "Create “{{name}}” as a new customer",
     },
     multiCombobox: {
       countSelected: "{{count}} selected",
@@ -5128,6 +5129,7 @@ const en = {
       discount: "Discount (€)",
       discountReason: "Reason",
       payers: "Who pays",
+      customer: "Customer",
       payerPlaceholder: "Choose a customer",
       payerSearch: "Search customers",
       noCustomers: "No customer found.",

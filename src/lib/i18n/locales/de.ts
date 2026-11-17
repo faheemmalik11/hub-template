@@ -722,6 +722,7 @@ const de = {
       placeholder: "Auswählen …",
       search: "Suchen …",
       empty: "Kein Eintrag gefunden.",
+      createNew: "„{{name}}“ als neuen Kunden anlegen",
     },
     multiCombobox: {
       countSelected: "{{count}} ausgewählt",
@@ -5310,6 +5311,7 @@ const de = {
       discount: "Rabatt (€)",
       discountReason: "Grund",
       payers: "Wer zahlt",
+      customer: "Kunde",
       payerPlaceholder: "Kunde wählen",
       payerSearch: "Kunde suchen",
       noCustomers: "Kein Kunde gefunden.",
