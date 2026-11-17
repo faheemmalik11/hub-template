@@ -30,15 +30,19 @@ export function DraftInvoices({
   result,
   customerName,
   onJumpToField,
+  invoiced,
 }: {
   result: CommissionResult;
   customerName: (customerId: string) => string | undefined;
   onJumpToField?: (tab: string, id: string) => void;
+  /** Once invoices already exist, there's nothing left to validate before creating them — show
+   *  the invoice list as a historical record instead of a validation problems box. */
+  invoiced?: boolean;
 }) {
   const { t } = useTranslation();
   const sideName = (side: CommissionSide | null) => (side ? t(`commissionDeals.side.${side}`) : "");
 
-  if (!result.ok) {
+  if (!result.ok && !invoiced) {
     return (
       <div className="rounded-lg border border-destructive/40 bg-destructive/5 px-3 py-2">
         <div className="flex items-start gap-2">
@@ -86,10 +90,12 @@ export function DraftInvoices({
   const sum = result.invoices.reduce((total, invoice) => total + invoice.totalGrossCents, 0);
   return (
     <div className="space-y-3">
-      <div className="flex items-center gap-1.5 rounded-lg bg-emerald-100 px-3 py-2 text-sm text-emerald-800">
-        <CheckCircle2 aria-hidden className="size-4 shrink-0" />
-        {t("commissionDeals.drafts.valid")}
-      </div>
+      {!invoiced && (
+        <div className="flex items-center gap-1.5 rounded-lg bg-emerald-100 px-3 py-2 text-sm text-emerald-800">
+          <CheckCircle2 aria-hidden className="size-4 shrink-0" />
+          {t("commissionDeals.drafts.valid")}
+        </div>
+      )}
       {result.invoices.map((invoice) => (
         <article
           key={`${invoice.side}-${invoice.payerKey}`}
