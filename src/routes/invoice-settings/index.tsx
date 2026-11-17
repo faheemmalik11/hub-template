@@ -16,6 +16,7 @@ import {
 } from "@/components/ui/alert-dialog";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Checkbox } from "@/components/ui/checkbox";
 import { Combobox } from "@/components/ui/combobox";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -33,6 +34,16 @@ import { useTranslation } from "@/lib/i18n";
 import type { InvoiceKindLabel, InvoiceSettings } from "@/lib/data/types";
 import { pageTitle } from "@/config/brand";
 import { errorText, formatDateTime, parseDecimalInput } from "@/lib/data/format";
+
+function sanitizeAmountInput(raw: string): string {
+  const digitsAndSeparators = raw.replace(/[^0-9.,]/g, "");
+  const separatorIndex = digitsAndSeparators.search(/[.,]/);
+  if (separatorIndex === -1) return digitsAndSeparators;
+  return (
+    digitsAndSeparators.slice(0, separatorIndex + 1) +
+    digitsAndSeparators.slice(separatorIndex + 1).replace(/[.,]/g, "")
+  );
+}
 
 const KIND_SHAPE = /^[a-z][a-z0-9_]*$/;
 const COUNTRY_CODE_SHAPE = /^[A-Z]{2}$/;
@@ -118,6 +129,8 @@ function SettingsForm({
     settings.document_fallback_label,
   );
   const [timezone, setTimezone] = useState(settings.timezone);
+  const [paymentTermDays, setPaymentTermDays] = useState(String(settings.payment_term_days));
+  const [finaliseInLexware, setFinaliseInLexware] = useState(settings.finalise_in_lexware);
   const [labels, setLabels] = useState<InvoiceKindLabel[]>(kindLabels);
   const [isSaving, setIsSaving] = useState(false);
 
@@ -129,6 +142,8 @@ function SettingsForm({
     setDefaultPaymentMethod(settings.default_payment_method);
     setDocumentFallbackLabel(settings.document_fallback_label);
     setTimezone(settings.timezone);
+    setPaymentTermDays(String(settings.payment_term_days));
+    setFinaliseInLexware(settings.finalise_in_lexware);
     setLabels(kindLabels);
   }
 
@@ -141,6 +156,13 @@ function SettingsForm({
     parsedVatRate < 0 ||
     parsedVatRate > 100;
   const countryCodeInvalid = !COUNTRY_CODE_SHAPE.test(countryCode);
+  const parsedPaymentTermDays = parseDecimalInput(paymentTermDays);
+  const paymentTermDaysInvalid =
+    parsedPaymentTermDays === null ||
+    Number.isNaN(parsedPaymentTermDays) ||
+    !Number.isInteger(parsedPaymentTermDays) ||
+    parsedPaymentTermDays < 0 ||
+    parsedPaymentTermDays > 365;
   const textInvalid =
     invoiceFallbackLabel.trim() === "" ||
     invoiceUnitName.trim() === "" ||
@@ -156,7 +178,12 @@ function SettingsForm({
     (row) => !KIND_SHAPE.test(row.kind) || row.label.trim() === "" || duplicateKinds.has(row.kind),
   );
   const invalid =
-    vatRateInvalid || countryCodeInvalid || textInvalid || timezoneInvalid || labelsInvalid;
+    vatRateInvalid ||
+    countryCodeInvalid ||
+    paymentTermDaysInvalid ||
+    textInvalid ||
+    timezoneInvalid ||
+    labelsInvalid;
 
   const draftLabelByKind = new Map(labels.map((row) => [row.kind, row.label]));
   const labelsChanged =
@@ -171,6 +198,8 @@ function SettingsForm({
     defaultPaymentMethod !== settings.default_payment_method ||
     documentFallbackLabel !== settings.document_fallback_label ||
     timezone !== settings.timezone ||
+    parsedPaymentTermDays !== Number(settings.payment_term_days) ||
+    finaliseInLexware !== settings.finalise_in_lexware ||
     labelsChanged;
 
   const editingDisabled = !canEdit || isSaving;
@@ -182,7 +211,7 @@ function SettingsForm({
   });
 
   async function save() {
-    if (parsedVatRate === null || isSaving) return;
+    if (parsedVatRate === null || parsedPaymentTermDays === null || isSaving) return;
     setIsSaving(true);
     try {
       await updateSettings.mutateAsync({
@@ -193,6 +222,8 @@ function SettingsForm({
         default_payment_method: defaultPaymentMethod,
         document_fallback_label: documentFallbackLabel,
         timezone,
+        payment_term_days: parsedPaymentTermDays,
+        finalise_in_lexware: finaliseInLexware,
       });
       await saveKindLabels.mutateAsync(labels);
       toast.success(t("invoiceSettings.toast.saved"));
@@ -234,7 +265,7 @@ function SettingsForm({
             <Field
               label={t("invoiceSettings.field.defaultVatRate")}
               value={defaultVatRate}
-              onChange={setDefaultVatRate}
+              onChange={(value) => setDefaultVatRate(sanitizeAmountInput(value))}
               disabled={editingDisabled}
               invalid={vatRateInvalid}
               errorText={t("invoiceSettings.defaultVatRateInvalid")}
@@ -324,6 +355,39 @@ function SettingsForm({
                 <p className="text-xs text-amber-700">{t("invoiceSettings.timezoneInvalid")}</p>
               )}
             </div>
+          </CardContent>
+        </Card>
+      </div>
+
+      <div className="grid gap-4 lg:grid-cols-2">
+        <Card className="flex flex-col shadow-none">
+          <CardHeader>
+            <CardTitle>{t("invoiceSettings.card.lexware.title")}</CardTitle>
+            <CardDescription>{t("invoiceSettings.card.lexware.desc")}</CardDescription>
+          </CardHeader>
+          <CardContent className="grid gap-4 sm:grid-cols-2">
+            <Field
+              label={t("invoiceSettings.field.paymentTermDays")}
+              value={paymentTermDays}
+              onChange={(value) => setPaymentTermDays(sanitizeAmountInput(value))}
+              disabled={editingDisabled}
+              invalid={paymentTermDaysInvalid}
+              errorText={t("invoiceSettings.paymentTermDaysInvalid")}
+            />
+            <label className="flex items-start gap-2 text-sm sm:col-span-2">
+              <Checkbox
+                className="mt-0.5"
+                checked={finaliseInLexware}
+                onCheckedChange={(checked) => setFinaliseInLexware(checked === true)}
+                disabled={editingDisabled}
+              />
+              <span>
+                {t("invoiceSettings.field.finaliseInLexware")}
+                <span className="block text-xs text-muted-foreground">
+                  {t("invoiceSettings.finaliseInLexwareHint")}
+                </span>
+              </span>
+            </label>
           </CardContent>
         </Card>
       </div>
