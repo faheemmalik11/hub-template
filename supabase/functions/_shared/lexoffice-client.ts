@@ -351,6 +351,114 @@ export async function getVoucherPayment(
   return (await lexofficeFetch(db, apiKey, `/payments/${voucherId}`)) as LexofficePayment;
 }
 
+export function isLexofficeNotFound(error: unknown): boolean {
+  const message = error instanceof Error ? error.message : String(error);
+  return message.includes("Lexoffice answered 404");
+}
+
+// The one place that decides what a Lexware payment status means for a row, used by both
+// lexoffice-payment-sync (polling, documents and commission invoices) and lexoffice-webhook
+// (real-time, same two tables) -- so a voucher reaching "paid" is applied identically regardless
+// of which path noticed it first, instead of two near-duplicate branches drifting apart over time.
+export type PayableTable = "documents" | "outgoing_invoices";
+
+export interface PayableRecord {
+  table: PayableTable;
+  id: string;
+  amountGross: number | null;
+}
+
+// documents is checked first since it is the far more common case (every incoming invoice), then
+// outgoing_invoices restricted to kind = 'commission' -- the only outgoing_invoices rows Lexware
+// ever carries a voucher id for.
+export async function payableRecordFor(
+  db: Db,
+  accountingExternalId: string,
+): Promise<PayableRecord | null> {
+  const { data: documents, error: documentsError } = await db
+    .from(TABLE.documents)
+    .select("id, amount_gross")
+    .eq("accounting_external_id", accountingExternalId)
+    .is("deleted_at", null)
+    .limit(1);
+  if (documentsError) throw documentsError;
+  const document = (documents as { id: string; amount_gross: number | null }[])[0];
+  if (document) return { table: "documents", id: document.id, amountGross: document.amount_gross };
+
+  const { data: invoices, error: invoicesError } = await db
+    .from(TABLE.outgoingInvoices)
+    .select("id, amount_gross")
+    .eq("accounting_external_id", accountingExternalId)
+    .eq("kind", "commission")
+    .is("deleted_at", null)
+    .limit(1);
+  if (invoicesError) throw invoicesError;
+  const invoice = (invoices as { id: string; amount_gross: number | null }[])[0];
+  if (invoice) return { table: "outgoing_invoices", id: invoice.id, amountGross: invoice.amount_gross };
+
+  return null;
+}
+
+function openAmountToStore(amountGross: number | null, openAmount: number | null): number | null {
+  if (openAmount === null) return null;
+  if (amountGross !== null && openAmount >= amountGross - 0.01) return null;
+  return openAmount;
+}
+
+export type LexwarePaymentOutcome = "paid" | "voided" | "open";
+
+export async function applyLexwarePayment(
+  db: Db,
+  apiKey: string,
+  record: PayableRecord,
+  accountingExternalId: string,
+): Promise<LexwarePaymentOutcome> {
+  const table = record.table === "documents" ? TABLE.documents : TABLE.outgoingInvoices;
+
+  let payment: LexofficePayment;
+  try {
+    payment = await getVoucherPayment(db, apiKey, accountingExternalId);
+  } catch (error) {
+    if (!isLexofficeNotFound(error)) throw error;
+    const { error: updateError } = await db
+      .from(table)
+      .update({ lexoffice_sync_error: "Lexware shows this voucher as voided (cancelled)." })
+      .eq("id", record.id);
+    if (updateError) throw updateError;
+    return "voided";
+  }
+
+  if (payment.voucherStatus === "voided") {
+    const { error } = await db
+      .from(table)
+      .update({ lexoffice_sync_error: "Lexware shows this voucher as voided (cancelled)." })
+      .eq("id", record.id);
+    if (error) throw error;
+    return "voided";
+  }
+
+  if (payment.voucherStatus !== "paid" && payment.voucherStatus !== "paidoff") {
+    if (record.table === "documents") {
+      const { error } = await db
+        .from(table)
+        .update({ lexoffice_open_amount: openAmountToStore(record.amountGross, payment.openAmount ?? null) })
+        .eq("id", record.id);
+      if (error) throw error;
+    }
+    return "open";
+  }
+
+  const patch: Record<string, unknown> = {
+    paid_at: paidOnFrom(payment) ?? new Date().toISOString(),
+    paid_source: "lexware",
+  };
+  if (record.table === "documents") patch.lexoffice_open_amount = 0;
+  else patch.status = "paid";
+  const { error } = await db.from(table).update(patch).eq("id", record.id);
+  if (error) throw error;
+  return "paid";
+}
+
 const VOUCHER_STATUS_MAP: Record<LexofficeInvoice["voucherStatus"], string> = {
   draft: "draft",
   open: "sent",

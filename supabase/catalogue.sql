@@ -403,9 +403,7 @@ insert into public.scheduled_jobs (key, edge_function, schedule, enabled, descri
   ('payment_due_date_reminder', 'payment-due-date-reminder', '0 6 * * *', false,
    'Reminds administrators about a deal whose property still has no payment due date, six weeks after the notary date. Daily at 6am.'),
   ('lexoffice_payment_sync', 'lexoffice-payment-sync', '*/15 * * * *', false,
-   'Reads payment status back from Lexware and marks a document paid once it is settled there. Every fifteen minutes.'),
-  ('lexoffice_commission_payment_sync', 'lexoffice-commission-payment-sync', '*/15 * * * *', false,
-   'Reads payment status back from Lexware and marks a commission invoice paid once it is settled there, the same way lexoffice_payment_sync does for incoming invoices. Every fifteen minutes.')
+   'Reads payment status back from Lexware and marks a document or commission invoice paid once it is settled there. Every fifteen minutes.')
 on conflict (key) do update
    set edge_function = excluded.edge_function,
        description = excluded.description;

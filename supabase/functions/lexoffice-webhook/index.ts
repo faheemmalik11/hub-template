@@ -3,11 +3,10 @@ import { jsonResponse } from "../_shared/cors.ts";
 import { TABLE } from "../_shared/tables.ts";
 import { looksSealed, openSealed } from "../_shared/sealed.ts";
 import {
+  applyLexwarePayment,
   featureIsLive,
-  getVoucherPayment,
-  type LexofficePayment,
   lexofficeKey,
-  paidOnFrom,
+  payableRecordFor,
 } from "../_shared/lexoffice-client.ts";
 
 // deno-lint-ignore no-explicit-any
@@ -132,75 +131,27 @@ async function settle(db: Db, deliveryId: number, outcome: string): Promise<void
   if (error) console.error("lexoffice-webhook: could not record the outcome:", error.message);
 }
 
-interface SyncedDocument {
-  id: string;
-  amount_gross: number | null;
-}
-
-async function documentFor(db: Db, resourceId: string): Promise<SyncedDocument | null> {
-  const { data, error } = await db
-    .from(TABLE.documents)
-    .select("id, amount_gross")
-    .eq("accounting_external_id", resourceId)
-    .is("deleted_at", null)
-    .limit(1);
-  if (error) throw error;
-  return (data as SyncedDocument[])[0] ?? null;
-}
-
-// Mirrors lexoffice-payment-sync: a voucher nobody has paid yet reports its whole gross as open,
-// and storing that would read as a part payment in the UI.
-function openAmountToStore(document: SyncedDocument, openAmount: number | null): number | null {
-  if (openAmount === null) return null;
-  if (document.amount_gross !== null && openAmount >= document.amount_gross - 0.01) return null;
-  return openAmount;
-}
-
-async function updateDocument(db: Db, documentId: string, patch: Record<string, unknown>): Promise<void> {
-  const { error } = await db.from(TABLE.documents).update(patch).eq("id", documentId);
+async function markCancelled(db: Db, table: string, id: string): Promise<void> {
+  const { error } = await db.from(table).update({ lexoffice_sync_error: CANCELLED_NOTE }).eq("id", id);
   if (error) throw error;
 }
 
-function isNotFound(error: unknown): boolean {
-  return messageOf(error).includes("Lexoffice answered 404");
-}
-
+// Covers both documents (incoming invoices) and outgoing_invoices (commission invoices) -- the
+// same record lookup and payment decision the polling lexoffice-payment-sync uses, so a webhook
+// delivery and the next cron run can never disagree about what a voucher's status means.
 async function applyEvent(db: Db, key: DeliveryKey): Promise<string> {
-  const document = await documentFor(db, key.resourceId);
-  if (!document) return "no matching document";
-  const documentId = document.id;
+  const record = await payableRecordFor(db, key.resourceId);
+  if (!record) return "no matching record";
+  const table = record.table === "documents" ? TABLE.documents : TABLE.outgoingInvoices;
 
   if (key.eventType === "voucher.deleted") {
-    await updateDocument(db, documentId, { lexoffice_sync_error: CANCELLED_NOTE });
+    await markCancelled(db, table, record.id);
     return "cancelled";
   }
 
-  let payment: LexofficePayment;
-  try {
-    payment = await getVoucherPayment(db, await lexofficeKey(db), key.resourceId);
-  } catch (error) {
-    if (!isNotFound(error)) throw error;
-    await updateDocument(db, documentId, { lexoffice_sync_error: CANCELLED_NOTE });
-    return "cancelled";
-  }
-
-  if (payment.voucherStatus === "voided") {
-    await updateDocument(db, documentId, { lexoffice_sync_error: CANCELLED_NOTE });
-    return "cancelled";
-  }
-
-  if (payment.voucherStatus === "paid" || payment.voucherStatus === "paidoff") {
-    await updateDocument(db, documentId, {
-      paid_at: paidOnFrom(payment) ?? new Date().toISOString(),
-      paid_source: "lexware",
-      lexoffice_open_amount: 0,
-    });
-    return "paid";
-  }
-
-  await updateDocument(db, documentId, {
-    lexoffice_open_amount: openAmountToStore(document, payment.openAmount ?? null),
-  });
+  const outcome = await applyLexwarePayment(db, await lexofficeKey(db), record, key.resourceId);
+  if (outcome === "voided") return "cancelled";
+  if (outcome === "paid") return "paid";
   return "open amount updated";
 }
 

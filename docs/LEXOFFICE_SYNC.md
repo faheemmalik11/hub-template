@@ -89,28 +89,33 @@ default rather than a reversal of that decision.
 
 Built for `broker_bonuses`' percentage-share bonuses (`docs/BROKER_BONUSES.md`): they're only due
 once "the commission has reached van Oepen", and that has to mean something real, not a client-side
-guess. A sibling of `documents`' own `lexoffice-payment-sync` makes it real:
+guess. `documents` (incoming invoices) already had this; commission invoices did not. Rather than a
+second, near-duplicate sync, both tables now go through the same code:
 
-- **Edge Function** `lexoffice-commission-payment-sync`
-  (`supabase/functions/lexoffice-commission-payment-sync/index.ts`). Candidates: `outgoing_invoices`
-  where `kind = 'commission'`, has an `accounting_external_id`, not already `status = 'paid'`,
-  `deleted_at is null`. Per invoice, asks Lexware's `GET /payments/{id}` (via the same
-  `getVoucherPayment`/`paidOnFrom` helpers `lexoffice-payment-sync` already uses) and, once Lexware
-  confirms it's settled, writes `status = 'paid', paid_at, paid_source = 'lexware'` in one update —
-  the same two new columns `supabase/schema/0068_commission_invoice_payment_tracking.sql` adds,
-  mirroring `documents.paid_at`/`paid_source`.
-- **Per-row isolated, on purpose, unlike the existing `documents` sync.** `lexoffice-payment-sync`'s
-  loop has no try/catch around each invoice — one API error there `throw`s straight out of the loop,
-  so every document after the failing one silently never gets checked that run. The new function
-  wraps each row and keeps going on an isolated failure, only aborting the whole run early if the
-  failure is an auth-class one (`"Lexoffice refused the API key"`), since that would fail identically
-  for every remaining row anyway.
-- **Scheduled job** `lexoffice_commission_payment_sync`, every 15 minutes, `enabled: false` by
-  default — a separate row from `lexoffice_payment_sync` rather than folding into it, so the two
-  Lexware syncs report success/failure independently and can be turned on one at a time.
-- **Known, accepted limitation**, same as `documents`: once a row's `paid_at` is set it's never
-  re-checked, so a payment Lexware later reverses wouldn't be noticed automatically — matches the
-  existing incoming-invoice sync's own limitation, not a new one.
+- **One shared decision**, `applyLexwarePayment` (`_shared/lexoffice-client.ts`): given a row (either
+  table) and its Lexware voucher id, asks `GET /payments/{id}` and applies the result — voided,
+  still open, or paid, with `paid_at`/`paid_source = 'lexware'` written on the paid branch. This is
+  the one place "what does this Lexware status mean for a row" is decided, so the polling sync and
+  the webhook can never disagree about it. `payableRecordFor` is the matching lookup: given a
+  Lexware id, checks `documents` first, then `outgoing_invoices` restricted to `kind = 'commission'`
+  (the only outgoing rows that ever carry one).
+- **`lexoffice-payment-sync`** (the existing cron, unchanged name/schedule) now checks both
+  `documents` and `outgoing_invoices` candidates in the same run, reusing the shared decision above.
+  Commission invoices get the same two new columns `documents` already had —
+  `supabase/schema/0068_commission_invoice_payment_tracking.sql` adds `paid_at`/`paid_source` to
+  `outgoing_invoices`.
+- **Per-row isolated, fixed while touching this.** The loop used to have no try/catch around each
+  row — one API error `throw`s straight out, so every row after the failing one silently never gets
+  checked that run. Now each row is isolated and the run keeps going, only aborting early on an
+  auth-class failure (`"Lexoffice refused the API key"`), since that would fail identically for
+  every remaining row anyway.
+- **`lexoffice-webhook`** (the real-time path) gained the same coverage: its lookup checks both
+  tables too, through the same `payableRecordFor`/`applyLexwarePayment` pair, so a commission invoice
+  paid in Lexware is picked up immediately rather than waiting for the next 15-minute cron tick —
+  previously it silently dropped any event for a commission invoice, since it only ever checked
+  `documents`.
+- **Known, accepted limitation**, same for both tables: once a row's `paid_at` is set it's never
+  re-checked, so a payment Lexware later reverses wouldn't be noticed automatically.
 
 ## Taking the invoice number and PDF back into the Hub
 
