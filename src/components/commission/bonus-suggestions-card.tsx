@@ -87,6 +87,9 @@ export function BonusSuggestionsCard({
       )
       .join(" · ");
 
+  // A suggestion reaching "ready" never creates its broker_bonuses row by itself -- someone still
+  // has to press Create. Deliberate: management keeps approving every bonus suggestion by hand,
+  // not a missing automation.
   const createOne = (suggestion: BonusSuggestion) => {
     if (
       suggestion.state !== "ready" ||
