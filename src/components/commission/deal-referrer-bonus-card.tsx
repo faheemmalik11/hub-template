@@ -21,6 +21,16 @@ import { errorText, formatEUR } from "@/lib/data/format";
 import type { OutgoingInvoice } from "@/lib/data/types";
 import { useTranslation } from "@/lib/i18n";
 
+function sanitizeAmountInput(raw: string): string {
+  const digitsAndSeparators = raw.replace(/[^0-9.,]/g, "");
+  const separatorIndex = digitsAndSeparators.search(/[.,]/);
+  if (separatorIndex === -1) return digitsAndSeparators;
+  return (
+    digitsAndSeparators.slice(0, separatorIndex + 1) +
+    digitsAndSeparators.slice(separatorIndex + 1).replace(/[.,]/g, "")
+  );
+}
+
 function tierAmountOf(settings: BonusSettings, tier: number): number {
   if (tier <= 1) return settings.referrer_tier1_amount;
   if (tier === 2) return settings.referrer_tier2_amount;
@@ -103,7 +113,7 @@ export function DealReferrerBonusCard({ deal }: { deal: Deal }) {
               className="w-32"
               inputMode="decimal"
               value={amount || String(suggestedAmount)}
-              onChange={(event) => setAmount(event.target.value)}
+              onChange={(event) => setAmount(sanitizeAmountInput(event.target.value))}
               placeholder={t("commissionDeals.referrerBonus.amount")}
               aria-label={t("commissionDeals.referrerBonus.amount")}
             />

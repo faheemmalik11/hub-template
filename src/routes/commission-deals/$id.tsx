@@ -84,6 +84,16 @@ import { useTranslation } from "@/lib/i18n";
 import { tabSearch, useTabParam } from "@/lib/use-tab-param";
 import { cn } from "@/lib/utils";
 
+function sanitizeAmountInput(raw: string): string {
+  const digitsAndSeparators = raw.replace(/[^0-9.,]/g, "");
+  const separatorIndex = digitsAndSeparators.search(/[.,]/);
+  if (separatorIndex === -1) return digitsAndSeparators;
+  return (
+    digitsAndSeparators.slice(0, separatorIndex + 1) +
+    digitsAndSeparators.slice(separatorIndex + 1).replace(/[.,]/g, "")
+  );
+}
+
 const DEAL_TABS = ["dealDetails", "ownership", "calculation", "invoices"] as const;
 
 const DEAL_TAB_LABEL_KEY: Record<(typeof DEAL_TABS)[number], string> = {
@@ -387,9 +397,14 @@ function DealEditor({ deal }: { deal: Deal }) {
       return { pushedToCrm, reason };
     })();
 
+    const willSyncToCrm = (needsDueDateSave && syncsPaymentDueDate) || needsDealValuesPush;
     setIsSaving(true);
     toast.promise(sequence, {
-      loading: t("commissionDeals.actions.saving"),
+      loading: t(
+        willSyncToCrm
+          ? "commissionDeals.actions.savingAndSyncing"
+          : "commissionDeals.actions.saving",
+      ),
       success: (outcome) => {
         if (outcome.pushedToCrm === true) return t("commissionDeals.actions.savedAndSynced");
         if (outcome.pushedToCrm === false) {
@@ -436,8 +451,8 @@ function DealEditor({ deal }: { deal: Deal }) {
     deal.status !== "settled";
   const showCreateInvoices = mayApprove && deal.status === "approved" && result.ok;
   const saveDisabled = isSaving || !unsaved;
-  const approveDisabled = approve.isPending || unsaved || deal.status !== "ready";
-  const createInvoicesDisabled = createInvoices.isPending;
+  const approveDisabled = isSaving || approve.isPending || unsaved || deal.status !== "ready";
+  const createInvoicesDisabled = isSaving || createInvoices.isPending;
 
   const primaryAction =
     deal.status === "incomplete" && showSave
@@ -714,7 +729,9 @@ function DealEditor({ deal }: { deal: Deal }) {
                   <Input
                     inputMode="decimal"
                     value={form.purchasePrice}
-                    onChange={(event) => set({ purchasePrice: event.target.value })}
+                    onChange={(event) =>
+                      set({ purchasePrice: sanitizeAmountInput(event.target.value) })
+                    }
                     placeholder="610.000"
                     disabled={!mayEdit}
                   />
@@ -724,7 +741,7 @@ function DealEditor({ deal }: { deal: Deal }) {
                   <Input
                     inputMode="decimal"
                     value={form.vatRate}
-                    onChange={(event) => set({ vatRate: event.target.value })}
+                    onChange={(event) => set({ vatRate: sanitizeAmountInput(event.target.value) })}
                     disabled={!mayEdit}
                   />
                 </Field>
@@ -733,6 +750,11 @@ function DealEditor({ deal }: { deal: Deal }) {
                     <Field id="field-due-date" className="space-y-1.5">
                       <Label>{t("commissionDeals.sale.dueDate")}</Label>
                       <DatePicker value={dueDate} onChange={setDueDate} disabled={!mayEdit} />
+                      {dueDateNote.trim() !== "" && dueDate.trim() === "" && (
+                        <p className="text-xs text-muted-foreground">
+                          {t("commissionDeals.sale.dueDateRedundantHint")}
+                        </p>
+                      )}
                     </Field>
                     <Field className="space-y-1.5 @lg:col-span-2">
                       <Label>{t("commissionDeals.sale.dueDateNote")}</Label>
@@ -742,6 +764,11 @@ function DealEditor({ deal }: { deal: Deal }) {
                         placeholder={t("commissionDeals.sale.dueDateNotePlaceholder")}
                         disabled={!mayEdit}
                       />
+                      {dueDate.trim() !== "" && (
+                        <p className="text-xs text-muted-foreground">
+                          {t("commissionDeals.sale.dueDateNoteRedundantHint")}
+                        </p>
+                      )}
                     </Field>
                   </>
                 )}

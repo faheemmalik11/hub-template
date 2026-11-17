@@ -5314,7 +5314,7 @@ const de = {
       customer: "Kunde",
       payerPlaceholder: "Kunde wählen",
       payerSearch: "Kunde suchen",
-      noCustomers: "Kein Kunde gefunden.",
+      noCustomers: "Kein Kunde gefunden. Geben Sie einen Namen ein, um einen anzulegen.",
       share: "Anteil %",
       shareHint: "Anteile leer lassen, dann zahlen alle gleich viel.",
       addPayer: "Person hinzufügen",
