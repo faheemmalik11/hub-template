@@ -181,10 +181,14 @@ function DealEditor({ deal }: { deal: Deal }) {
   const mayEditAny = can(PERMISSIONS.documentsWrite);
   const mayEdit =
     deal.status !== "settled" &&
-    deal.status !== "invoiced" &&
     deal.status !== "cancelled" &&
     (mayEditAny ||
       (can(PERMISSIONS.dealsSubmit) && (deal.status === "incomplete" || deal.status === "ready")));
+  // The money side of the deal (price, VAT, fee rates, payers, shares, discounts) is locked once
+  // invoiced, because real invoices already reference that exact data. Ownership facts and the
+  // cost list stay editable after invoicing — costs_closed in particular is meant to be ticked
+  // once invoicing is already done, as part of the bonus payout workflow.
+  const mayEditFinancials = mayEdit && deal.status !== "invoiced";
   const mayApprove = can(PERMISSIONS.invoicesApprove);
   const suggestsBonuses = useFeature(PERMISSIONS.bonusesSuggest) && can(PERMISSIONS.bonusesReview);
   const suggestsReferrerBonuses =
@@ -646,7 +650,7 @@ function DealEditor({ deal }: { deal: Deal }) {
                 >
                   {line.title && <span className="font-medium text-foreground">{line.title}:</span>}
                   <span>{line.text}</span>
-                  {line.target && (
+                  {line.target && mayEditFinancials && (
                     <button
                       type="button"
                       onClick={() => jumpToAnchor(line.target!.tab, line.target!.anchor)}
@@ -712,7 +716,7 @@ function DealEditor({ deal }: { deal: Deal }) {
                       value={form.companyId}
                       onValueChange={(companyId) => set({ companyId })}
                       options={companyOptions}
-                      disabled={!mayEdit}
+                      disabled={!mayEditFinancials}
                       clearable
                     />
                   </Field>
@@ -722,7 +726,7 @@ function DealEditor({ deal }: { deal: Deal }) {
                   <DatePicker
                     value={form.notarisedOn}
                     onChange={(value) => set({ notarisedOn: value })}
-                    disabled={!mayEdit}
+                    disabled={!mayEditFinancials}
                   />
                   <p className="text-xs text-muted-foreground">
                     {t("commissionDeals.sale.notarisedOnHint")}
@@ -737,7 +741,7 @@ function DealEditor({ deal }: { deal: Deal }) {
                       set({ purchasePrice: sanitizeAmountInput(event.target.value) })
                     }
                     placeholder="610.000"
-                    disabled={!mayEdit}
+                    disabled={!mayEditFinancials}
                   />
                   <p className="text-xs text-muted-foreground">
                     {t("commissionDeals.sale.priceHint")}
@@ -749,7 +753,7 @@ function DealEditor({ deal }: { deal: Deal }) {
                     inputMode="decimal"
                     value={form.vatRate}
                     onChange={(event) => set({ vatRate: sanitizeAmountInput(event.target.value) })}
-                    disabled={!mayEdit}
+                    disabled={!mayEditFinancials}
                   />
                   <p className="text-xs text-muted-foreground">
                     {t("commissionDeals.sale.vatHint")}
@@ -759,7 +763,11 @@ function DealEditor({ deal }: { deal: Deal }) {
                   <>
                     <Field id="field-due-date" className="space-y-1.5">
                       <Label>{t("commissionDeals.sale.dueDate")}</Label>
-                      <DatePicker value={dueDate} onChange={setDueDate} disabled={!mayEdit} />
+                      <DatePicker
+                        value={dueDate}
+                        onChange={setDueDate}
+                        disabled={!mayEditFinancials}
+                      />
                       <p className="text-xs text-muted-foreground">
                         {t("commissionDeals.sale.dueDateHint")}
                       </p>
@@ -775,7 +783,7 @@ function DealEditor({ deal }: { deal: Deal }) {
                         value={dueDateNote}
                         onChange={(event) => setDueDateNote(event.target.value)}
                         placeholder={t("commissionDeals.sale.dueDateNotePlaceholder")}
-                        disabled={!mayEdit}
+                        disabled={!mayEditFinancials}
                       />
                       <p className="text-xs text-muted-foreground">
                         {t("commissionDeals.sale.dueDateNoteHint")}
@@ -794,7 +802,7 @@ function DealEditor({ deal }: { deal: Deal }) {
                     rows={2}
                     value={form.note}
                     onChange={(event) => set({ note: event.target.value })}
-                    disabled={!mayEdit}
+                    disabled={!mayEditFinancials}
                   />
                   <p className="text-xs text-muted-foreground">
                     {t("commissionDeals.sale.noteHint")}
@@ -820,7 +828,7 @@ function DealEditor({ deal }: { deal: Deal }) {
                         onChange={(next) => set({ [side]: next })}
                         customerOptions={customerOptions}
                         createCustomer={addCustomer}
-                        disabled={!mayEdit}
+                        disabled={!mayEditFinancials}
                         shareInvalid={sideShareInvalid(side)}
                       />
                     </div>
@@ -866,7 +874,7 @@ function DealEditor({ deal }: { deal: Deal }) {
                     <DraftInvoices
                       result={result}
                       customerName={customerName}
-                      onJumpToField={jumpToAnchor}
+                      onJumpToField={mayEditFinancials ? jumpToAnchor : undefined}
                     />
                   </div>
                 </div>
@@ -884,7 +892,7 @@ function DealEditor({ deal }: { deal: Deal }) {
             <DealCommissionOverviewCard
               result={result}
               customerName={customerName}
-              onJumpToField={jumpToAnchor}
+              onJumpToField={mayEditFinancials ? jumpToAnchor : undefined}
             />
           )}
           {suggestsBonuses && !unsaved && deal.status !== "settled" && (
