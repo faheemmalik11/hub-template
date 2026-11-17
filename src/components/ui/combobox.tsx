@@ -1,7 +1,7 @@
 "use client";
 
 import * as React from "react";
-import { Check, ChevronsUpDown } from "lucide-react";
+import { Check, ChevronsUpDown, Plus } from "lucide-react";
 
 import { cn } from "@/lib/utils";
 import { useTranslation } from "@/lib/i18n";
@@ -51,6 +51,7 @@ export function Combobox({
   contentClassName,
   id,
   ariaLabel,
+  onCreateNew,
 }: {
   value: string | null | undefined;
   onValueChange: (value: string) => void;
@@ -72,6 +73,12 @@ export function Combobox({
    * is announced as an unnamed combobox, which is the very thing the `id` note above is about.
    */
   ariaLabel?: string;
+  /**
+   * Optional. When set, a search term matching no existing option's label (case-insensitive,
+   * trimmed) adds one extra row at the bottom of the list that calls this with the typed term.
+   * Left off, the dropdown behaves exactly as it always has.
+   */
+  onCreateNew?: (name: string) => void;
 }) {
   const { t } = useTranslation();
   const [open, setOpen] = React.useState(false);
@@ -108,6 +115,15 @@ export function Combobox({
     : "";
   // Drive cmdk's highlight so the list opens scrolled to the current selection (empty = top of list).
   const [highlighted, setHighlighted] = React.useState(selectedValue);
+  // Lifted so onCreateNew can see what the user actually typed. PopoverContent unmounts on close,
+  // which would otherwise clear this on its own — reset explicitly on open so a stale term from a
+  // previous visit never lingers, same reasoning as resetting `highlighted` above.
+  const [searchTerm, setSearchTerm] = React.useState("");
+  const trimmedSearchTerm = searchTerm.trim();
+  const hasMatchingOption = options.some(
+    (opt) => opt.label.trim().toLowerCase() === trimmedSearchTerm.toLowerCase(),
+  );
+  const showCreateNew = Boolean(onCreateNew) && trimmedSearchTerm !== "" && !hasMatchingOption;
 
   return (
     <Popover
@@ -115,7 +131,10 @@ export function Combobox({
       modal={inDialog}
       onOpenChange={(o) => {
         setOpen(o);
-        if (o) setHighlighted(selectedValue);
+        if (o) {
+          setHighlighted(selectedValue);
+          setSearchTerm("");
+        }
       }}
     >
       <PopoverTrigger asChild>
@@ -154,7 +173,11 @@ export function Combobox({
             itemValue.toLowerCase().includes(search.toLowerCase()) ? 1 : 0
           }
         >
-          <CommandInput placeholder={searchPlaceholder ?? t("common.combobox.search")} />
+          <CommandInput
+            value={searchTerm}
+            onValueChange={setSearchTerm}
+            placeholder={searchPlaceholder ?? t("common.combobox.search")}
+          />
           {/* scroll-py leaves breathing room so the highlighted item isn't flush against an edge
               when cmdk scrolls it into view on open. */}
           <CommandList className="scroll-py-3">
@@ -191,6 +214,22 @@ export function Combobox({
                 </span>
               </CommandItem>
             ))}
+            {showCreateNew && (
+              <CommandItem
+                // Matches the current search so cmdk's own filter never hides this row.
+                value={searchTerm}
+                onSelect={() => {
+                  onCreateNew?.(trimmedSearchTerm);
+                  setOpen(false);
+                }}
+                className="cursor-pointer"
+              >
+                <Plus className="size-4 shrink-0" />
+                <span className="min-w-0">
+                  {t("common.combobox.createNew", { name: trimmedSearchTerm })}
+                </span>
+              </CommandItem>
+            )}
           </CommandList>
         </Command>
       </PopoverContent>

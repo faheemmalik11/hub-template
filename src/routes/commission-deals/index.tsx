@@ -93,6 +93,8 @@ function CommissionDealsPage() {
   );
   const filtering = search !== "" || status !== ALL_STATUSES;
   const paginationLabels = usePaginationLabels();
+  const seesCommission = can(PERMISSIONS.dealsCommissionRead);
+  const columnCount = seesCommission ? 5 : 4;
 
   return (
     <div>
@@ -160,9 +162,11 @@ function CommissionDealsPage() {
                     <TableHead className="text-right">
                       {t("commissionDeals.columns.price")}
                     </TableHead>
-                    <TableHead className="text-right">
-                      {t("commissionDeals.columns.commission")}
-                    </TableHead>
+                    {seesCommission && (
+                      <TableHead className="text-right">
+                        {t("commissionDeals.columns.commission")}
+                      </TableHead>
+                    )}
                     <TableHead>{t("commissionDeals.columns.status")}</TableHead>
                   </TableRow>
                 </TableHeader>
@@ -201,11 +205,13 @@ function CommissionDealsPage() {
                         <TableCell className="text-right tabular-nums">
                           {deal.purchase_price === null ? "—" : formatEUR(deal.purchase_price)}
                         </TableCell>
-                        <TableCell className="text-right tabular-nums">
-                          {dealTotal === null || dealTotal === undefined
-                            ? "—"
-                            : formatEUR(dealTotal / 100)}
-                        </TableCell>
+                        {seesCommission && (
+                          <TableCell className="text-right tabular-nums">
+                            {dealTotal === null || dealTotal === undefined
+                              ? "—"
+                              : formatEUR(dealTotal / 100)}
+                          </TableCell>
+                        )}
                         <TableCell>
                           <DealStatusBadge status={deal.status} />
                         </TableCell>
@@ -214,7 +220,10 @@ function CommissionDealsPage() {
                   })}
                   {total === 0 && (
                     <TableRow>
-                      <TableCell colSpan={5} className="py-12 text-center text-muted-foreground">
+                      <TableCell
+                        colSpan={columnCount}
+                        className="py-12 text-center text-muted-foreground"
+                      >
                         {t("commissionDeals.list.empty")}
                       </TableCell>
                     </TableRow>

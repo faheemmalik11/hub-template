@@ -73,6 +73,7 @@ export const PERMISSIONS = {
   dealsSubmit: "deals.submit",
   dealsReport: "deals.report",
   dealsReportAll: "deals.report_all",
+  dealsCommissionRead: "deals.commission_read",
   bonusesSubmit: "bonuses.submit",
   bonusesReview: "bonuses.review",
   bonusesRead: "bonuses.read",

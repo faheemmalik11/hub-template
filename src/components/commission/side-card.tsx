@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Plus, Trash2, UserPlus } from "lucide-react";
+import { Plus, Trash2 } from "lucide-react";
 import { toast } from "sonner";
 
 import { Button } from "@/components/ui/button";
@@ -15,6 +15,14 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Switch } from "@/components/ui/switch";
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table";
 import type { FeeKind } from "@/data";
 import type { CommissionSide } from "@/kit/lib/commission";
 import { errorText } from "@/lib/data/format";
@@ -39,8 +47,7 @@ export function SideCard({
   disabled: boolean;
 }) {
   const { t } = useTranslation();
-  const [newCustomerName, setNewCustomerName] = useState("");
-  const [creating, setCreating] = useState(false);
+  const [creatingIndex, setCreatingIndex] = useState<number | null>(null);
   const set = (patch: Partial<SideForm>) => onChange({ ...value, ...patch });
   const setParty = (index: number, patch: Partial<SideForm["parties"][number]>) =>
     set({
@@ -48,25 +55,26 @@ export function SideCard({
     });
   const availableCustomerOptions = (index: number) => {
     const chosenByOthers = new Set(
-      value.parties.flatMap((party, i) => (i === index ? [] : party.customerId ? [party.customerId] : [])),
+      value.parties.flatMap((party, i) =>
+        i === index ? [] : party.customerId ? [party.customerId] : [],
+      ),
     );
     return customerOptions.filter((option) => !chosenByOthers.has(option.value));
   };
   const lastPartyHasNoCustomer =
     value.parties.length > 0 && !value.parties[value.parties.length - 1].customerId;
+  const removeParty = (index: number) =>
+    set({ parties: value.parties.filter((_, i) => i !== index) });
 
-  const addNewCustomer = async () => {
-    const name = newCustomerName.trim();
-    if (!name) return;
-    setCreating(true);
+  const createPayerCustomer = async (index: number, name: string) => {
+    setCreatingIndex(index);
     try {
       const customerId = await createCustomer(name);
-      set({ parties: [...value.parties, { ...EMPTY_PARTY, customerId }] });
-      setNewCustomerName("");
+      setParty(index, { customerId });
     } catch (error) {
       toast.error(t("commissionDeals.side.customerFailed"), { description: errorText(error) });
     } finally {
-      setCreating(false);
+      setCreatingIndex(null);
     }
   };
 
@@ -126,54 +134,144 @@ export function SideCard({
             )}
           </div>
 
-          <div id={`side-${side}-payers`}>
+          <div id={`side-${side}-payers`} className="@container">
             <Label>{t("commissionDeals.side.payers")}</Label>
             <p className="text-xs text-muted-foreground">{t("commissionDeals.side.shareHint")}</p>
-            <div className="mt-2 space-y-2">
+
+            <div className="mt-2 hidden @lg:block">
+              <Table>
+                <TableHeader>
+                  <TableRow className="bg-muted/40">
+                    <TableHead>{t("commissionDeals.side.customer")}</TableHead>
+                    <TableHead className="w-24">{t("commissionDeals.side.share")}</TableHead>
+                    <TableHead className="w-28">{t("commissionDeals.side.discount")}</TableHead>
+                    <TableHead>{t("commissionDeals.side.discountReason")}</TableHead>
+                    <TableHead className="w-9" />
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {value.parties.map((party, index) => (
+                    <TableRow key={index}>
+                      <TableCell className="align-top">
+                        <Combobox
+                          value={party.customerId || null}
+                          onValueChange={(customerId) => setParty(index, { customerId })}
+                          options={availableCustomerOptions(index)}
+                          placeholder={t("commissionDeals.side.payerPlaceholder")}
+                          searchPlaceholder={t("commissionDeals.side.payerSearch")}
+                          emptyText={t("commissionDeals.side.noCustomers")}
+                          onCreateNew={(name) => createPayerCustomer(index, name)}
+                          disabled={disabled || creatingIndex === index}
+                        />
+                      </TableCell>
+                      <TableCell className="align-top">
+                        <Input
+                          inputMode="decimal"
+                          value={party.share}
+                          onChange={(event) => setParty(index, { share: event.target.value })}
+                          placeholder={t("commissionDeals.side.share")}
+                          aria-label={t("commissionDeals.side.share")}
+                          disabled={disabled}
+                        />
+                      </TableCell>
+                      <TableCell className="align-top">
+                        <Input
+                          inputMode="decimal"
+                          value={party.discount}
+                          onChange={(event) => setParty(index, { discount: event.target.value })}
+                          placeholder={t("commissionDeals.side.discount")}
+                          aria-label={t("commissionDeals.side.discount")}
+                          disabled={disabled}
+                        />
+                      </TableCell>
+                      <TableCell className="align-top">
+                        <Input
+                          value={party.discountReason}
+                          onChange={(event) =>
+                            setParty(index, { discountReason: event.target.value })
+                          }
+                          placeholder={t("commissionDeals.side.discountReason")}
+                          aria-label={t("commissionDeals.side.discountReason")}
+                          disabled={disabled || !party.discount.trim()}
+                        />
+                      </TableCell>
+                      <TableCell className="align-top">
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          onClick={() => removeParty(index)}
+                          aria-label={t("commissionDeals.side.remove")}
+                          disabled={disabled}
+                        >
+                          <Trash2 className="size-4" />
+                        </Button>
+                      </TableCell>
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
+            </div>
+
+            <div className="mt-2 space-y-2 @lg:hidden">
               {value.parties.map((party, index) => (
                 <div key={index} className="space-y-2 rounded-lg border border-border/60 p-2">
-                  <div className="flex items-center gap-2">
-                    <Combobox
-                      className="flex-1"
-                      value={party.customerId || null}
-                      onValueChange={(customerId) => setParty(index, { customerId })}
-                      options={availableCustomerOptions(index)}
-                      placeholder={t("commissionDeals.side.payerPlaceholder")}
-                      searchPlaceholder={t("commissionDeals.side.payerSearch")}
-                      emptyText={t("commissionDeals.side.noCustomers")}
-                      disabled={disabled}
-                    />
-                    <Input
-                      className="w-24"
-                      inputMode="decimal"
-                      value={party.share}
-                      onChange={(event) => setParty(index, { share: event.target.value })}
-                      placeholder={t("commissionDeals.side.share")}
-                      aria-label={t("commissionDeals.side.share")}
-                      disabled={disabled}
-                    />
+                  <div className="flex items-center justify-between gap-2">
+                    <Label className="text-xs text-muted-foreground">
+                      {t("commissionDeals.side.customer")}
+                    </Label>
                     <Button
                       variant="ghost"
                       size="icon"
-                      onClick={() => set({ parties: value.parties.filter((_, i) => i !== index) })}
+                      onClick={() => removeParty(index)}
                       aria-label={t("commissionDeals.side.remove")}
                       disabled={disabled}
                     >
                       <Trash2 className="size-4" />
                     </Button>
                   </div>
-                  <div className="flex gap-2">
+                  <Combobox
+                    value={party.customerId || null}
+                    onValueChange={(customerId) => setParty(index, { customerId })}
+                    options={availableCustomerOptions(index)}
+                    placeholder={t("commissionDeals.side.payerPlaceholder")}
+                    searchPlaceholder={t("commissionDeals.side.payerSearch")}
+                    emptyText={t("commissionDeals.side.noCustomers")}
+                    onCreateNew={(name) => createPayerCustomer(index, name)}
+                    disabled={disabled || creatingIndex === index}
+                  />
+                  <div className="grid grid-cols-2 gap-2">
+                    <div className="space-y-1">
+                      <Label className="text-xs text-muted-foreground">
+                        {t("commissionDeals.side.share")}
+                      </Label>
+                      <Input
+                        inputMode="decimal"
+                        value={party.share}
+                        onChange={(event) => setParty(index, { share: event.target.value })}
+                        placeholder={t("commissionDeals.side.share")}
+                        aria-label={t("commissionDeals.side.share")}
+                        disabled={disabled}
+                      />
+                    </div>
+                    <div className="space-y-1">
+                      <Label className="text-xs text-muted-foreground">
+                        {t("commissionDeals.side.discount")}
+                      </Label>
+                      <Input
+                        inputMode="decimal"
+                        value={party.discount}
+                        onChange={(event) => setParty(index, { discount: event.target.value })}
+                        placeholder={t("commissionDeals.side.discount")}
+                        aria-label={t("commissionDeals.side.discount")}
+                        disabled={disabled}
+                      />
+                    </div>
+                  </div>
+                  <div className="space-y-1">
+                    <Label className="text-xs text-muted-foreground">
+                      {t("commissionDeals.side.discountReason")}
+                    </Label>
                     <Input
-                      className="w-40"
-                      inputMode="decimal"
-                      value={party.discount}
-                      onChange={(event) => setParty(index, { discount: event.target.value })}
-                      placeholder={t("commissionDeals.side.discount")}
-                      aria-label={t("commissionDeals.side.discount")}
-                      disabled={disabled}
-                    />
-                    <Input
-                      className="flex-1"
                       value={party.discountReason}
                       onChange={(event) => setParty(index, { discountReason: event.target.value })}
                       placeholder={t("commissionDeals.side.discountReason")}
@@ -184,7 +282,8 @@ export function SideCard({
                 </div>
               ))}
             </div>
-            <div className="mt-2 flex flex-wrap gap-2">
+
+            <div className="mt-2">
               <Button
                 className="shadow-none"
                 variant="outline"
@@ -194,25 +293,6 @@ export function SideCard({
               >
                 <Plus className="size-4" /> {t("commissionDeals.side.addPayer")}
               </Button>
-              <div className="flex flex-1 gap-2">
-                <Input
-                  className="h-9 min-w-40 flex-1"
-                  value={newCustomerName}
-                  onChange={(event) => setNewCustomerName(event.target.value)}
-                  onKeyDown={(event) => event.key === "Enter" && addNewCustomer()}
-                  placeholder={t("commissionDeals.side.newCustomerPlaceholder")}
-                  disabled={disabled}
-                />
-                <Button
-                  className="shadow-none"
-                  variant="outline"
-                  size="sm"
-                  onClick={addNewCustomer}
-                  disabled={disabled || creating || !newCustomerName.trim()}
-                >
-                  <UserPlus className="size-4" /> {t("commissionDeals.side.createCustomer")}
-                </Button>
-              </div>
             </div>
           </div>
         </div>
