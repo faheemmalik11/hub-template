@@ -893,7 +893,11 @@ function DealEditor({ deal }: { deal: Deal }) {
 
         <aside className="space-y-4 lg:sticky lg:top-4 lg:self-start">
           {seesCommission && (
-            <DealCommissionOverviewCard result={result} onJumpToField={jumpToAnchor} />
+            <DealCommissionOverviewCard
+              result={result}
+              customerName={customerName}
+              onJumpToField={jumpToAnchor}
+            />
           )}
           {suggestsBonuses && !unsaved && deal.status !== "settled" && (
             <BonusSuggestionsCard deal={deal} onJumpToField={jumpToAnchor} />

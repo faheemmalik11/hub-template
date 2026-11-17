@@ -24,6 +24,14 @@ function anchorForProblem(
 
 const UNKNOWN_FIGURE = "—";
 
+function euros(cents: number): string {
+  return formatEUR(cents / 100);
+}
+
+function percent(value: number): string {
+  return value.toLocaleString("de-DE", { maximumFractionDigits: 3 });
+}
+
 function figuresOf(invoices: CommissionInvoiceDraft[], hasProblems: boolean) {
   if (invoices.length === 0) {
     return hasProblems
@@ -47,9 +55,11 @@ function figuresOf(invoices: CommissionInvoiceDraft[], hasProblems: boolean) {
 
 export function DealCommissionOverviewCard({
   result,
+  customerName,
   onJumpToField,
 }: {
   result: CommissionResult;
+  customerName: (customerId: string) => string | undefined;
   onJumpToField?: (tab: string, id: string) => void;
 }) {
   const { t } = useTranslation();
@@ -58,9 +68,38 @@ export function DealCommissionOverviewCard({
 
   const invoicesOfSide = (side: CommissionSide) =>
     result.invoices.filter((invoice) => invoice.side === side);
-  const buyer = figuresOf(invoicesOfSide("buyer"), hasProblems);
-  const seller = figuresOf(invoicesOfSide("seller"), hasProblems);
+  const buyerInvoices = invoicesOfSide("buyer");
+  const sellerInvoices = invoicesOfSide("seller");
+  const buyer = figuresOf(buyerInvoices, hasProblems);
+  const seller = figuresOf(sellerInvoices, hasProblems);
   const total = figuresOf(result.invoices, hasProblems);
+
+  const payerRows = (invoices: CommissionInvoiceDraft[]) =>
+    invoices.length > 1 &&
+    invoices.map((invoice) => (
+      <tr key={`${invoice.side}-${invoice.payerKey}`}>
+        <td className="py-1.5 pl-4 align-top text-xs leading-snug text-muted-foreground">
+          <span>
+            {customerName(invoice.payerKey) ?? t("commissionDeals.drafts.unknownCustomer")}
+          </span>{" "}
+          <span className="tabular-nums">
+            {t("commissionDeals.overview.payerShare", { share: percent(invoice.sharePercent) })}
+          </span>
+          {invoice.discountGrossCents > 0 && (
+            <div className="tabular-nums text-muted-foreground/70">
+              {t("commissionDeals.overview.payerDiscount", {
+                amount: `−${euros(invoice.discountGrossCents)}`,
+              })}
+            </div>
+          )}
+        </td>
+        <td />
+        <td />
+        <td className="py-1.5 text-right align-top text-xs leading-snug text-muted-foreground tabular-nums">
+          {euros(invoice.totalGrossCents)}
+        </td>
+      </tr>
+    ));
 
   return (
     <section className="rounded-xl border border-border bg-card p-5">
@@ -98,6 +137,7 @@ export function DealCommissionOverviewCard({
               <td className="py-1 text-right text-xs text-muted-foreground">{buyer.vat}</td>
               <td className="py-1 text-right font-medium text-foreground">{buyer.gross}</td>
             </tr>
+            {payerRows(buyerInvoices)}
             <tr>
               <td className="py-1 text-muted-foreground">
                 {t("commissionDeals.overview.sellerCommission")}
@@ -106,6 +146,7 @@ export function DealCommissionOverviewCard({
               <td className="py-1 text-right text-xs text-muted-foreground">{seller.vat}</td>
               <td className="py-1 text-right font-medium text-foreground">{seller.gross}</td>
             </tr>
+            {payerRows(sellerInvoices)}
             <tr className="border-t border-border">
               <td className="pt-2 font-semibold text-brand-dark">
                 {t("commissionDeals.overview.total")}
