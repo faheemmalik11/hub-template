@@ -111,6 +111,19 @@ export async function updateUnitCustomFields(
   });
 }
 
+// Plain top-level unit attributes (sold_price, sold_date, the commission percentages), not custom
+// fields -- no partial_custom_fields wrapper, unlike updateUnitCustomFields above.
+export async function updateUnitFields(
+  apiKey: string,
+  id: number | string,
+  fields: Record<string, unknown>,
+): Promise<void> {
+  await propstackFetch(apiKey, `/units/${id}`, {
+    method: "PUT",
+    body: { property: fields },
+  });
+}
+
 interface HubEditedDueDate {
   external_id: string;
   payment_due_date: string | null;
