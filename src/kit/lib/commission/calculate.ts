@@ -79,7 +79,7 @@ export function calculateSideCommission(input: SideCommissionInput): CommissionR
   if (netCents !== null && netCents <= 0) report("fee_not_positive");
 
   if (problems.length > 0 || netCents === null || !Array.isArray(shares)) {
-    return { ok: false, problems };
+    return { ok: false, problems, invoices: [] };
   }
 
   const netRatePercent = input.fee?.kind === "percent" ? input.fee.netRatePercent : null;
@@ -109,9 +109,13 @@ export function calculateSideCommission(input: SideCommissionInput): CommissionR
   });
 
   if (invoices.some((invoice) => invoice.totalGrossCents <= 0)) {
-    return { ok: false, problems: [{ side: input.side, problem: "discount_exceeds_fee" }] };
+    return {
+      ok: false,
+      problems: [{ side: input.side, problem: "discount_exceeds_fee" }],
+      invoices: [],
+    };
   }
-  return { ok: true, invoices };
+  return { ok: true, problems: [], invoices };
 }
 
 export function calculateDealCommission(deal: DealCommissionInput): CommissionResult {
@@ -128,15 +132,18 @@ export function calculateDealCommission(deal: DealCommissionInput): CommissionRe
     ];
   });
 
-  if (sides.length === 0) return { ok: false, problems: [{ side: null, problem: "no_side_pays" }] };
+  if (sides.length === 0) {
+    return { ok: false, problems: [{ side: null, problem: "no_side_pays" }], invoices: [] };
+  }
 
-  const problems = sides.flatMap((result) => (result.ok ? [] : result.problems));
+  const problems = sides.flatMap((result) => result.problems);
   const hasPercentFeeSide = (["buyer", "seller"] as const).some(
     (side) => deal[side]?.fee?.kind === "percent",
   );
   if (deal.purchasePriceCents === null && hasPercentFeeSide) {
     problems.push({ side: null, problem: "purchase_price_missing" });
   }
-  if (problems.length > 0) return { ok: false, problems };
-  return { ok: true, invoices: sides.flatMap((result) => (result.ok ? result.invoices : [])) };
+
+  const invoices = sides.flatMap((result) => result.invoices);
+  return { ok: problems.length === 0, problems, invoices };
 }

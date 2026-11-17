@@ -5154,6 +5154,9 @@ const de = {
       buyerCommission: "Käuferprovision",
       sellerCommission: "Verkäuferprovision",
       total: "Gesamtprovision",
+      net: "Netto",
+      vat: "USt",
+      gross: "Brutto",
       valid:
         "Es gibt keine Probleme bei der Berechnung. Die Provision ist gültig und kann abgerechnet werden.",
       invalid:
@@ -5367,6 +5370,7 @@ const de = {
       payerSearch: "Kunde suchen",
       noCustomers: "Kein Kunde gefunden. Geben Sie einen Namen ein, um einen anzulegen.",
       share: "Anteil %",
+      shareLockedTooltip: "Auf 100 % festgelegt, da nur eine Person zahlt.",
       splitTitle: "Wie wird die Provision aufgeteilt?",
       shareHint:
         "Lassen Sie die Anteile leer, um die Provision gleichmäßig aufzuteilen. Geben Sie andernfalls für alle einen Anteil ein, der insgesamt 100 % ergibt.",

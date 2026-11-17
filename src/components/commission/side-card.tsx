@@ -44,16 +44,18 @@ function sanitizeAmountInput(raw: string): string {
   );
 }
 
-function DiscountLabel({ text, tooltip }: { text: string; tooltip: string }) {
+function FieldLabel({ text, tooltip }: { text: string; tooltip?: string }) {
   return (
     <span className="inline-flex items-center gap-1">
       {text}
-      <Tooltip>
-        <TooltipTrigger asChild>
-          <Info aria-label={tooltip} className="size-3.5 shrink-0 text-muted-foreground" />
-        </TooltipTrigger>
-        <TooltipContent className="max-w-64">{tooltip}</TooltipContent>
-      </Tooltip>
+      {tooltip && (
+        <Tooltip>
+          <TooltipTrigger asChild>
+            <Info aria-label={tooltip} className="size-3.5 shrink-0 text-muted-foreground" />
+          </TooltipTrigger>
+          <TooltipContent className="max-w-64">{tooltip}</TooltipContent>
+        </Tooltip>
+      )}
     </span>
   );
 }
@@ -206,10 +208,17 @@ export function SideCard({
                       {t("commissionDeals.side.customer")}
                     </TableHead>
                     <TableHead className="w-20 whitespace-nowrap">
-                      {t("commissionDeals.side.share")}
+                      <FieldLabel
+                        text={t("commissionDeals.side.share")}
+                        tooltip={
+                          value.parties.length <= 1
+                            ? t("commissionDeals.side.shareLockedTooltip")
+                            : undefined
+                        }
+                      />
                     </TableHead>
                     <TableHead className="w-36 whitespace-nowrap">
-                      <DiscountLabel
+                      <FieldLabel
                         text={t("commissionDeals.side.discount")}
                         tooltip={t("commissionDeals.side.discountTooltip")}
                       />
@@ -334,7 +343,14 @@ export function SideCard({
                   <div className="grid grid-cols-2 gap-2">
                     <div className="space-y-1">
                       <Label className="text-xs text-muted-foreground">
-                        {t("commissionDeals.side.share")}
+                        <FieldLabel
+                          text={t("commissionDeals.side.share")}
+                          tooltip={
+                            value.parties.length <= 1
+                              ? t("commissionDeals.side.shareLockedTooltip")
+                              : undefined
+                          }
+                        />
                       </Label>
                       <Input
                         inputMode="decimal"
@@ -353,7 +369,7 @@ export function SideCard({
                     </div>
                     <div className="space-y-1">
                       <Label className="text-xs text-muted-foreground">
-                        <DiscountLabel
+                        <FieldLabel
                           text={t("commissionDeals.side.discount")}
                           tooltip={t("commissionDeals.side.discountTooltip")}
                         />
