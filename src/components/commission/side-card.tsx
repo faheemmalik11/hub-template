@@ -127,7 +127,7 @@ export function SideCard({
                 <Input
                   inputMode="decimal"
                   value={value.rate}
-                  onChange={(event) => set({ rate: event.target.value })}
+                  onChange={(event) => set({ rate: sanitizeAmountInput(event.target.value) })}
                   placeholder={t("commissionDeals.side.ratePlaceholder")}
                   disabled={disabled}
                 />
@@ -138,7 +138,7 @@ export function SideCard({
                 <Input
                   inputMode="decimal"
                   value={value.amount}
-                  onChange={(event) => set({ amount: event.target.value })}
+                  onChange={(event) => set({ amount: sanitizeAmountInput(event.target.value) })}
                   disabled={disabled}
                 />
               </Field>
