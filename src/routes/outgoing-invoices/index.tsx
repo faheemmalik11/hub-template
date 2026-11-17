@@ -324,7 +324,10 @@ function OutgoingInvoicesPage() {
             {t("outgoingInvoices.title")}
           </h1>
           <p className="mt-1 text-sm text-muted-foreground">
-            {t("outgoingInvoices.subtitle", brandVars())}
+            {t(
+              canUpload ? "outgoingInvoices.subtitle" : "outgoingInvoices.subtitleGeneratedOnly",
+              brandVars(),
+            )}
           </p>
         </div>
         {canUpload && (
