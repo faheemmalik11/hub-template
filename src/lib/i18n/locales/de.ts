@@ -5318,6 +5318,7 @@ const de = {
       share: "Anteil %",
       shareHint: "Anteile leer lassen, dann zahlen alle gleich viel.",
       addPayer: "Person hinzufügen",
+      fullCustomerLink: "Kunde mit allen Details anlegen",
       remove: "Entfernen",
       newCustomerPlaceholder: "Name des neuen Kunden",
       createCustomer: "Kunde anlegen",

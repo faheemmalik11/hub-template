@@ -5136,6 +5136,7 @@ const en = {
       share: "Share %",
       shareHint: "Leave the shares empty and everyone pays the same.",
       addPayer: "Add a person",
+      fullCustomerLink: "Add a customer with full details",
       remove: "Remove",
       newCustomerPlaceholder: "New customer name",
       createCustomer: "Create customer",
