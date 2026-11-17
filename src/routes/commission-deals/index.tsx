@@ -24,6 +24,7 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
+import { useEmitOnboardingEvent } from "@/kit/components/onboarding";
 import { EmptyState, ErrorState, TableSkeleton } from "@/components/documents/query-states";
 import { AgentReportSection } from "@/components/commission/agent-report-section";
 import { BrokerNumbersCard } from "@/components/commission/broker-numbers-card";
@@ -259,6 +260,7 @@ function NewDealDialog() {
   const { t } = useTranslation();
   const navigate = useNavigate();
   const { can } = useAuth();
+  const emitOnboardingEvent = useEmitOnboardingEvent();
   const [open, setOpen] = useState(false);
   const [property, setProperty] = useState<PropertyChoice | null>(null);
   const companiesQ = useCompanies();
@@ -279,6 +281,7 @@ function NewDealDialog() {
         onSuccess: (id) => {
           setOpen(false);
           setProperty(null);
+          emitOnboardingEvent({ type: "commission_deal_created", recordId: id });
           navigate({ to: "/commission-deals/$id", params: { id } });
         },
         onError: (error) =>
@@ -289,7 +292,13 @@ function NewDealDialog() {
 
   return (
     <>
-      <Button onClick={() => setOpen(true)}>
+      <Button
+        data-tour="commission-new-deal"
+        onClick={() => {
+          emitOnboardingEvent({ type: "commission_deal_dialog_opened", recordId: "" });
+          setOpen(true);
+        }}
+      >
         <Plus /> {t("commissionDeals.newDeal")}
       </Button>
       <Dialog open={open} onOpenChange={setOpen}>
@@ -298,9 +307,15 @@ function NewDealDialog() {
             <DialogTitle>{t("commissionDeals.newDialog.title")}</DialogTitle>
             <DialogDescription>{t("commissionDeals.newDialog.desc")}</DialogDescription>
           </DialogHeader>
-          <div className="space-y-2">
+          <div className="space-y-2" data-tour="commission-property-picker">
             <Label>{t("commissionDeals.newDialog.property")}</Label>
-            <PropertyPicker value={property} onChange={setProperty} />
+            <PropertyPicker
+              value={property}
+              onChange={(next) => {
+                setProperty(next);
+                emitOnboardingEvent({ type: "commission_deal_property_picked", recordId: next.id });
+              }}
+            />
           </div>
           {activeDeal && (
             <div className="rounded-lg border border-destructive/40 bg-destructive/5 px-3 py-2">
@@ -326,7 +341,11 @@ function NewDealDialog() {
             <Button variant="outline" onClick={() => setOpen(false)}>
               {t("commissionDeals.newDialog.cancel")}
             </Button>
-            <Button onClick={create} disabled={!property || !!activeDeal || createDeal.isPending}>
+            <Button
+              data-tour="commission-create-deal"
+              onClick={create}
+              disabled={!property || !!activeDeal || createDeal.isPending}
+            >
               {createDeal.isPending && <Loader2 className="size-4 animate-spin" />}
               {t("commissionDeals.newDialog.create")}
             </Button>

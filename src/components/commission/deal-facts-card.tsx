@@ -120,7 +120,7 @@ function BrokerFields({
       : null;
   return (
     <div className="@container mt-4 grid gap-3 @md:grid-cols-2">
-      <Field id="field-handled-by" className="space-y-1.5">
+      <Field id="field-handled-by" data-tour="commission-handled-by" className="space-y-1.5">
         <Label>{t("commissionDeals.facts.handledBy")}</Label>
         <Combobox
           value={form.handledBy}
@@ -130,7 +130,7 @@ function BrokerFields({
           clearable
         />
       </Field>
-      <Field className="space-y-1.5">
+      <Field data-tour="commission-acquired-by" className="space-y-1.5">
         <Label>{t("commissionDeals.facts.acquiredBy")}</Label>
         <Combobox
           value={form.acquiredBy}

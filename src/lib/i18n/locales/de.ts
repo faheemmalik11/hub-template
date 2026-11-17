@@ -1460,6 +1460,59 @@ const de = {
       restartHint:
         "Hängen Sie fest? Mit „{{button}}“ im Schrittfenster erhalten Sie frische Übungsdaten.",
     },
+    commissionDeal: {
+      startTitle: "Übung: einen Verkauf samt Provision abrechnen",
+      startIntro:
+        "Sie legen einen Übungsverkauf an, füllen die Eckdaten aus, geben ihn frei und erstellen die Provisionsrechnungen.",
+      progressLost:
+        "Die Übungsdaten für diesen Verkauf gibt es nicht mehr. Die Übung beginnt von vorn.",
+      taskTitle: "Einen Verkauf anlegen und abrechnen",
+      taskGoal:
+        "Lernen Sie, wie Sie einen Verkauf anlegen, die Provision festlegen, ihn freigeben und die Rechnungen erstellen.",
+      pageCommission: "Provisionen",
+      groupCreate: "Anlegen",
+      groupDetails: "Eckdaten",
+      groupOwnership: "Zuständigkeit",
+      groupApprove: "Freigeben",
+      openDealInstruction: "Klicken Sie auf „Neuer Verkauf“.",
+      openDealOutcome:
+        "So beginnt jeder Verkauf im Hub: erst anlegen, dann Schritt für Schritt ausfüllen.",
+      pickPropertyInstruction: "Wählen Sie das Übungsobjekt. Sein Kürzel endet auf -P1.",
+      pickPropertyOutcome:
+        "Jeder Verkauf gehört zu genau einem Objekt. Daran hängen später die Rechnungen.",
+      pickPropertyHelp: "Suchen Sie nach „Musterstrasse 12“ oder nach dem Kürzel DEMO-.",
+      createDealInstruction: "Legen Sie den Verkauf an.",
+      createDealOutcome:
+        "Der Verkauf existiert jetzt, ist aber noch unvollständig. Als Nächstes füllen Sie die Eckdaten aus.",
+      financialsInstruction:
+        "Tragen Sie Notartermin und Kaufpreis ein. Legen Sie außerdem die Provision der Käuferseite fest und wählen Sie TEST Buyer als zahlende Partei.",
+      financialsOutcome:
+        "Erst mit Notartermin, Kaufpreis und einer vollständig ausgefüllten Provisionsseite kann der Verkauf freigegeben werden.",
+      financialsHelp: "Schalten Sie die Verkäuferseite aus, wenn nur die Käuferseite zahlt.",
+      viewCalculationInstruction: "Öffnen Sie den Tab „Berechnung“.",
+      viewCalculationOutcome:
+        "Hier sehen Sie die vollständige Provisionsrechnung: Gebühr je Seite, Steuer und Summe, Zeile für Zeile.",
+      viewCalculationHelp: "Das ist dieselbe Aufstellung, die die erstellten Rechnungen verwenden.",
+      saveDetailsInstruction: "Klicken Sie auf „Speichern“.",
+      saveDetailsOutcome: "Der Verkauf ist jetzt vollständig und bereit zur Freigabe.",
+      ownershipInstruction:
+        "Öffnen Sie den Reiter „Status & Beteiligte“. Tragen Sie bei „Betreut von“ und „Lead gewonnen von“ zwei unterschiedliche Personen ein.",
+      ownershipOutcome:
+        "Weil die Person, die den Lead gewonnen hat, nicht dieselbe ist wie die betreuende Person, entsteht später neben dem Notarbonus auch der Unternehmens-Lead-Bonus.",
+      ownershipHelp: "Lassen Sie dabei den Haken bei „Eigener Lead“ ausgeschaltet.",
+      saveOwnershipInstruction: "Speichern Sie die Änderungen noch einmal.",
+      saveOwnershipOutcome: "Erst nach dem Speichern ist der Verkauf wieder bereit zur Freigabe.",
+      approveInstruction: "Klicken Sie auf „Verkauf genehmigen“.",
+      approveOutcome:
+        "Mit der Freigabe steht die Provision fest, und die Rechnungen können erstellt werden.",
+      createInvoicesInstruction: "Klicken Sie auf „Rechnungen erstellen“.",
+      createInvoicesOutcome:
+        "Die Rechnungen sind jetzt angelegt, und der Notarbonus wird in der Bonus-Übersicht sichtbar.",
+      createInvoicesHelp:
+        "In der Übung wird keine Rechnung wirklich an Lexware oder eine Bank übertragen.",
+      restartHint:
+        "Hängen Sie fest? Mit „{{button}}“ im Schrittfenster erhalten Sie frische Übungsdaten.",
+    },
   },
   home: {
     priority: {
@@ -1484,6 +1537,11 @@ const de = {
         title: "Eine Zahlungsdatei erstellen",
         description:
           "Wählen Sie eine Rechnung aus, erstellen Sie die Zahlungsdatei, laden Sie sie herunter und bestätigen Sie die Zahlung (ca. 10 Minuten).",
+      },
+      commissionDeal: {
+        title: "Einen Verkauf samt Provision abrechnen",
+        description:
+          "Legen Sie einen Verkauf an, füllen Sie die Angaben aus, geben Sie ihn frei und sehen Sie die Provisionsrechnungen und den Bonus (ca. 10 Minuten).",
       },
       action: {
         new: "Übung starten",
