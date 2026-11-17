@@ -29,6 +29,7 @@ import type { FeeKind } from "@/data";
 import type { CommissionSide } from "@/kit/lib/commission";
 import { errorText } from "@/lib/data/format";
 import { useTranslation } from "@/lib/i18n";
+import { cn } from "@/lib/utils";
 import type { PartyForm, SideForm } from "./deal-form";
 
 const EMPTY_PARTY: PartyForm = { customerId: "", share: "", discount: "", discountReason: "" };
@@ -64,6 +65,7 @@ export function SideCard({
   customerOptions,
   createCustomer,
   disabled,
+  shareInvalid,
 }: {
   side: CommissionSide;
   value: SideForm;
@@ -71,6 +73,9 @@ export function SideCard({
   customerOptions: ComboboxOption[];
   createCustomer: (name: string) => Promise<string>;
   disabled: boolean;
+  /** Draws every payer's Share % input in the error colour, for a side whose shares don't sum to
+   *  100 (or are still incomplete). Persistent, unlike the "Go to field" scroll-and-flash. */
+  shareInvalid?: boolean;
 }) {
   const { t } = useTranslation();
   const [creatingIndex, setCreatingIndex] = useState<number | null>(null);
@@ -183,7 +188,7 @@ export function SideCard({
               <Table>
                 <TableHeader>
                   <TableRow className="bg-muted/40">
-                    <TableHead className="w-full whitespace-nowrap">
+                    <TableHead className="w-48 whitespace-nowrap">
                       {t("commissionDeals.side.customer")}
                     </TableHead>
                     <TableHead className="w-20 whitespace-nowrap">
@@ -195,7 +200,7 @@ export function SideCard({
                         tooltip={t("commissionDeals.side.discountTooltip")}
                       />
                     </TableHead>
-                    <TableHead className="w-40 whitespace-nowrap">
+                    <TableHead className="w-full whitespace-nowrap">
                       {t("commissionDeals.side.discountReason")}
                     </TableHead>
                     <TableHead className="w-9 whitespace-nowrap" />
@@ -207,13 +212,16 @@ export function SideCard({
                       <TableCell className="align-top">
                         <Combobox
                           value={party.customerId || null}
-                          onValueChange={(customerId) => setParty(index, { customerId })}
+                          onValueChange={(customerId) =>
+                            setParty(index, { customerId: customerId ?? "" })
+                          }
                           options={availableCustomerOptions(index)}
                           placeholder={t("commissionDeals.side.payerPlaceholder")}
                           searchPlaceholder={t("commissionDeals.side.payerSearch")}
                           emptyText={t("commissionDeals.side.noCustomers")}
                           onCreateNew={(name) => createPayerCustomer(index, name)}
                           disabled={disabled || creatingIndex === index}
+                          clearable
                         />
                       </TableCell>
                       <TableCell className="align-top">
@@ -225,6 +233,10 @@ export function SideCard({
                           }
                           placeholder={t("commissionDeals.side.share")}
                           aria-label={t("commissionDeals.side.share")}
+                          aria-invalid={shareInvalid}
+                          className={cn(
+                            shareInvalid && "border-destructive focus-visible:ring-destructive/30",
+                          )}
                           disabled={disabled}
                         />
                       </TableCell>
@@ -287,13 +299,16 @@ export function SideCard({
                   </div>
                   <Combobox
                     value={party.customerId || null}
-                    onValueChange={(customerId) => setParty(index, { customerId })}
+                    onValueChange={(customerId) =>
+                      setParty(index, { customerId: customerId ?? "" })
+                    }
                     options={availableCustomerOptions(index)}
                     placeholder={t("commissionDeals.side.payerPlaceholder")}
                     searchPlaceholder={t("commissionDeals.side.payerSearch")}
                     emptyText={t("commissionDeals.side.noCustomers")}
                     onCreateNew={(name) => createPayerCustomer(index, name)}
                     disabled={disabled || creatingIndex === index}
+                    clearable
                   />
                   <div className="grid grid-cols-2 gap-2">
                     <div className="space-y-1">
@@ -308,6 +323,10 @@ export function SideCard({
                         }
                         placeholder={t("commissionDeals.side.share")}
                         aria-label={t("commissionDeals.side.share")}
+                        aria-invalid={shareInvalid}
+                        className={cn(
+                          shareInvalid && "border-destructive focus-visible:ring-destructive/30",
+                        )}
                         disabled={disabled}
                       />
                     </div>

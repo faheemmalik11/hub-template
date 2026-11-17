@@ -59,6 +59,7 @@ import {
   saveInputOf,
   type DealForm,
 } from "@/components/commission/deal-form";
+import type { CommissionSide } from "@/kit/lib/commission";
 import {
   useApproveDeal,
   useCompanies,
@@ -221,6 +222,13 @@ function DealEditor({ deal }: { deal: Deal }) {
   }, [deal]);
 
   const result = useMemo(() => calculateDealForm(form), [form]);
+  const sideShareInvalid = (side: CommissionSide) =>
+    !result.ok &&
+    result.problems.some(
+      (problem) =>
+        problem.side === side &&
+        (problem.problem === "shares_do_not_add_up" || problem.problem === "shares_incomplete"),
+    );
   const dueDateUnsaved = dueDate !== savedDueDate || dueDateNote !== savedDueDateNote;
   const unsaved = JSON.stringify(form) !== savedForm || dueDateUnsaved;
   const dealValuesUnsaved = useMemo(() => {
@@ -500,8 +508,8 @@ function DealEditor({ deal }: { deal: Deal }) {
           )}
         </div>
       </div>
-      <div className="mt-4 flex flex-wrap items-center justify-between gap-3">
-        <div className="flex flex-wrap items-center gap-3">
+      <div className="mt-4 flex flex-wrap items-start justify-between gap-3">
+        <div className="flex flex-wrap items-start gap-3">
           <DealStatusStepper status={deal.status} />
           {unsaved && (
             <span className="text-sm text-muted-foreground">
@@ -717,6 +725,7 @@ function DealEditor({ deal }: { deal: Deal }) {
                       onValueChange={(companyId) => set({ companyId })}
                       options={companyOptions}
                       disabled={!mayEdit}
+                      clearable
                     />
                   </Field>
                 )}
@@ -824,6 +833,7 @@ function DealEditor({ deal }: { deal: Deal }) {
                         customerOptions={customerOptions}
                         createCustomer={addCustomer}
                         disabled={!mayEdit}
+                        shareInvalid={sideShareInvalid(side)}
                       />
                     </div>
                   </div>

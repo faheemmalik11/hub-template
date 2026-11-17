@@ -723,6 +723,7 @@ const de = {
       search: "Suchen …",
       empty: "Kein Eintrag gefunden.",
       createNew: "„{{name}}“ als neuen Kunden anlegen",
+      clear: "Auswahl entfernen",
     },
     multiCombobox: {
       countSelected: "{{count}} ausgewählt",
