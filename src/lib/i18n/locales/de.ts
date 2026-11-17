@@ -5161,6 +5161,8 @@ const de = {
         "Es gibt keine Probleme bei der Berechnung. Die Provision ist gültig und kann abgerechnet werden.",
       invalid:
         "Es gibt {{count}} offene Punkte, die vor der Rechnungserstellung gelöst werden müssen. Öffnen Sie Berechnung, um sie zu prüfen.",
+      payerShare: "({{share}} %)",
+      payerDiscount: "{{amount}} Rabatt",
     },
     info: {
       title: "Informationen zum Geschäft",

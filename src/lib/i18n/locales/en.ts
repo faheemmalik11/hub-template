@@ -4979,6 +4979,8 @@ const en = {
       valid: "No calculation issues. The commission is valid and can be invoiced.",
       invalid:
         "There are {{count}} issues to resolve before invoices can be created. Open Calculation to review them.",
+      payerShare: "({{share}} %)",
+      payerDiscount: "{{amount}} discount",
     },
     info: {
       title: "Deal Information",
