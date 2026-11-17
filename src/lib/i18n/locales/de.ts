@@ -6655,7 +6655,7 @@ const de = {
     subtitle:
       "Personalkosten, Abschreibungen und Steuern: Posten ohne Beleg und ohne Banktransaktion, die von Hand erfasst werden.",
     allCompanies: "Alle Gesellschaften",
-    hint: "Manuelle Buchungen fließen gleichberechtigt in die Auswertung ein: derselbe Gesamtbetrag wie bei den Belegen, nicht nur ein Anhängsel. Die gewählte BWA-Zeile/Kategorie entscheidet, wo die Buchung landet: nur „Materialaufwand / Wareneinsatz“ wirkt sich auf den Rohertrag aus, alles andere (Personal, Raumkosten, Kfz, Sonstige Kosten, …) erscheint erst weiter unten, im vorläufigen Ergebnis.",
+    hint: "Eine manuelle Buchung zählt genauso wie ein normaler Beleg, in derselben Summe. Die Kategorie, die Sie wählen, entscheidet, wo sie erscheint: Material und Waren wirkt sich auf den Rohertrag aus. Jede andere Kategorie, zum Beispiel Personalkosten oder Kfz-Kosten, wirkt sich auf das Betriebsergebnis aus.",
     noProperty: "Kein Objekt",
     openEnded: "offenes Ende",
     search: "Notiz, Kategorie, Objekt oder Gesellschaft suchen …",

@@ -37,7 +37,7 @@ depreciation never arrive via mailbox or bank match at all.
   materials/goods, then _stops_; Operating Gross Profit adds Other operating income on top. Every
   line below Operating Gross Profit (Personnel, Occupancy, Business taxes, Insurance, Vehicle,
   Advertising/travel, Cost of goods sold, Depreciation, Repair/maintenance, Other costs) is
-  invisible to Gross Profit — a booking there moves Preliminary Result but not Gross Profit. This
+  invisible to Gross Profit — a booking there moves Operating Result but not Gross Profit. This
   is not a bug; it's the exact same behavior DATEV's own BWA has.
 - `supabase/migrations/0043_hub_bwa_categories.sql` — seeds `bwa_categories`: ~20 coarse
   categories (each with a `code` that `BWA_SKELETON` keys on, e.g. `COGS_MATERIAL`) and ~90 fine
