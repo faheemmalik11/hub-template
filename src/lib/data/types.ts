@@ -254,6 +254,8 @@ export interface InvoiceSettings {
   default_payment_method: string;
   document_fallback_label: string;
   timezone: string;
+  payment_term_days: number;
+  finalise_in_lexware: boolean;
   updated_at: string;
   updated_by: string | null;
 }
