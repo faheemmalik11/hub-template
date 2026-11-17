@@ -12,8 +12,8 @@ const placeholders = {
 
 describe("practiceInvoiceAmountIsWrong", () => {
   it("is wrong until the amount is corrected", () => {
-    expect(practiceInvoiceAmountIsWrong(478.9)).toBe(true);
-    expect(practiceInvoiceAmountIsWrong(487.9)).toBe(false);
+    expect(practiceInvoiceAmountIsWrong(240.0)).toBe(true);
+    expect(practiceInvoiceAmountIsWrong(250.0)).toBe(false);
     expect(practiceInvoiceAmountIsWrong(null)).toBe(false);
   });
 });
