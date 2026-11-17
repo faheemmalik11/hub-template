@@ -5,7 +5,7 @@ import { formatEUR } from "@/lib/data/format";
 import { useTranslation } from "@/lib/i18n";
 
 function anchorForProblem(
-  side: CommissionSide,
+  side: CommissionSide | null,
   problem: CommissionProblem,
 ): { tab: string; id: string } {
   if (problem === "purchase_price_missing")
@@ -54,18 +54,19 @@ export function DealCommissionOverviewCard({
                     side: sideName(problem.side),
                   })}
                 </span>
-                {problem.side && onJumpToField && (
-                  <button
-                    type="button"
-                    onClick={() => {
-                      const target = anchorForProblem(problem.side!, problem.problem);
-                      onJumpToField(target.tab, target.id);
-                    }}
-                    className="text-xs font-medium text-brand-dark underline-offset-4 hover:underline"
-                  >
-                    {t("commissionDeals.review.fix")}
-                  </button>
-                )}
+                {(problem.side !== null || problem.problem === "purchase_price_missing") &&
+                  onJumpToField && (
+                    <button
+                      type="button"
+                      onClick={() => {
+                        const target = anchorForProblem(problem.side, problem.problem);
+                        onJumpToField(target.tab, target.id);
+                      }}
+                      className="text-xs font-medium text-brand-dark underline-offset-4 hover:underline"
+                    >
+                      {t("commissionDeals.review.fix")}
+                    </button>
+                  )}
               </li>
             ))}
           </ul>

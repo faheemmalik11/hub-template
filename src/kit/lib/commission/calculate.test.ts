@@ -163,11 +163,33 @@ describe("deal", () => {
     assert.deepEqual(result, {
       ok: false,
       problems: [
-        { side: "buyer", problem: "purchase_price_missing" },
         { side: "buyer", problem: "no_payers" },
         { side: "seller", problem: "fee_missing" },
+        { side: null, problem: "purchase_price_missing" },
       ],
     });
+  });
+
+  test("a missing purchase price is reported once, not once per percent-fee side", () => {
+    const result = calculateDealCommission({
+      purchasePriceCents: null,
+      vatRatePercent: VAT,
+      buyer: { fee: { kind: "percent", netRatePercent: 3 }, payers: [{ key: "b1" }] },
+      seller: { fee: { kind: "percent", netRatePercent: 2 }, payers: [{ key: "s1" }] },
+    });
+    assert.deepEqual(result, {
+      ok: false,
+      problems: [{ side: null, problem: "purchase_price_missing" }],
+    });
+  });
+
+  test("a missing purchase price is not reported when no enabled side is percent-fee", () => {
+    const result = calculateDealCommission({
+      purchasePriceCents: null,
+      vatRatePercent: VAT,
+      seller: { fee: { kind: "fixed", netAmountCents: 5_000_00 }, payers: [{ key: "a" }] },
+    });
+    assert.equal(result.ok, true);
   });
 });
 
