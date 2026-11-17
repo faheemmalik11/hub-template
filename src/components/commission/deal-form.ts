@@ -107,7 +107,7 @@ export function dealFormOf(deal: Deal): DealForm {
     companyId: deal.company_id,
     notarisedOn: deal.notarised_on ?? "",
     purchasePrice: formatDecimal(deal.purchase_price),
-    vatRate: formatDecimal(deal.vat_rate),
+    vatRate: formatDecimal(deal.vat_rate) || "19",
     note: deal.note ?? "",
     acquiredBy: deal.acquired_by,
     handledBy: deal.handled_by,

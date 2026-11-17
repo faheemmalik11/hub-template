@@ -5023,8 +5023,8 @@ const de = {
       notary: "Notarbonus",
       google_review: "Google-Bewertung",
       viewing_new_job: "Neuer Auftrag aus Besichtigung",
-      company_lead_share: "10 % Anteil (Firmenlead)",
-      own_job_share: "50 % Anteil (eigener Auftrag)",
+      company_lead_share: "Anteil (Firmenlead)",
+      own_job_share: "Anteil (eigener Auftrag)",
       financing_referral: "Empfehlung Finanzierung",
       other: "Sonstiges",
     },
@@ -5116,10 +5116,10 @@ const de = {
       status: "Status",
     },
     status: {
-      incomplete: "Unvollständig",
-      ready: "Bereit zur Freigabe",
+      incomplete: "Angaben fehlen",
+      ready: "Bereit zur Genehmigung",
       approved: "Freigegeben",
-      invoiced: "Abgerechnet",
+      invoiced: "Rechnungen erstellt",
       cancelled: "Storniert",
       settled: "Historisch",
     },
@@ -5142,14 +5142,14 @@ const de = {
       invoices: "Rechnungen",
     },
     overview: {
-      title: "Provisionsübersicht",
+      title: "Provisionsberechnung",
       buyerCommission: "Käuferprovision",
       sellerCommission: "Verkäuferprovision",
       total: "Gesamtprovision",
       valid:
         "Es gibt keine Probleme bei der Berechnung. Die Provision ist gültig und kann abgerechnet werden.",
       invalid:
-        "Es gibt {{count}} Probleme bei dieser Berechnung. Öffnen Sie den Tab Berechnung, um sie zu beheben.",
+        "Es gibt {{count}} offene Punkte, die vor der Rechnungserstellung gelöst werden müssen. Öffnen Sie Berechnung, um sie zu prüfen.",
     },
     info: {
       title: "Informationen zum Geschäft",
@@ -5162,41 +5162,55 @@ const de = {
       property: "Objekt",
       company: "Gesellschaft",
       notarisedOn: "Notartermin",
+      notarisedOnHint: "Datum der notariellen Beurkundung.",
       price: "Kaufpreis (€)",
-      vat: "USt (%)",
+      priceHint: "Vereinbarter Gesamtkaufpreis der Immobilie.",
+      vat: "USt.-Satz (%)",
       note: "Notiz",
+      noteHint: "Zusätzliche Informationen zu diesem Verkauf.",
       dueDate: "Zahlungsziel",
+      dueDateHint: "Wann soll die Provision bezahlt werden?",
       dueDateRedundantHint:
-        "Nicht nötig — Sie müssen nur eines von beidem ausfüllen: Zahlungsziel oder die Notiz dazu.",
-      dueDateNote: "Zahlungsziel, Hinweis",
+        "Nicht nötig. Sie müssen nur eines von beidem ausfüllen: Zahlungsziel oder die Notiz dazu.",
+      dueDateNote: "Hinweis zum Zahlungsziel",
+      dueDateNoteHint:
+        "Wenn Sie das genaue Datum nicht kennen, erklären Sie, wann die Zahlung erwartet wird. Beispiel: Sobald die Eintragung im Grundbuch abgeschlossen ist.",
       dueDateNoteRedundantHint:
-        "Nicht nötig — Sie müssen nur eines von beidem ausfüllen: Zahlungsziel oder die Notiz dazu.",
+        "Nicht nötig. Sie müssen nur eines von beidem ausfüllen: Zahlungsziel oder die Notiz dazu.",
       dueDateNotePlaceholder: "z. B. sofort nach Eintragung",
-      vatHint: "Leer oder ein ungültiger Wert wird automatisch als 19 % behandelt, ohne Hinweis.",
+      vatHint:
+        "Mehrwertsteuer, die auf die Provision aufgeschlagen wird. Leer oder ein ungültiger Wert wird automatisch als 19 % behandelt.",
     },
     review: {
-      title: "Was hier noch fehlt",
-      fix: "Beheben",
-      missingPrice: "Kaufpreis fehlt",
-      missingNotarisedOn: "Notartermin fehlt",
+      title: "Was muss noch ausgefüllt werden?",
+      fix: "Zum Feld springen",
+      missingPrice: "Kaufpreis eingeben",
+      missingNotarisedOn: "Notartermin eingeben",
       missingFee: "Provisionssatz oder -betrag fehlt",
-      missingDueDate: "Zahlungsziel fehlt, und es gibt auch keinen Hinweis dazu",
+      missingDueDate: "Zahlungsziel eingeben oder erklären, wann die Zahlung erwartet wird",
     },
     bonuses: {
       title: "Boni für diesen Verkauf",
-      hint: "Wird automatisch aus diesem Verkauf berechnet. Ist ein Bonus bereit, zeigt er den Knopf <strong>Diesen Bonus vorschlagen</strong>.",
-      create: "Diesen Bonus vorschlagen",
+      hint: "Boni werden automatisch anhand des Verkaufs und der beteiligten Personen berechnet.",
+      create: "Diesen Bonus erstellen",
+      createHint: "Prüfen Sie den Bonus und erstellen Sie ihn zur Auszahlung.",
       created: "Angelegt",
       failed: "Der Vorschlag konnte nicht angelegt werden.",
       nobody: "Noch kein Makler gewählt",
       notReady: "Noch nicht bereit",
       noRemainder: "Nach Abzug von Kosten und Gebühren bleibt nichts übrig.",
+      waitingForTitle: "Warum ist dieser Bonus noch nicht bereit?",
       waitingFor: {
-        invoices_created: "die Provisionsrechnungen müssen erst erstellt werden",
-        broker: "es muss noch ein Makler gewählt werden",
-        commission: "die Provision muss erst berechnet werden können",
-        costs_closed: 'Betreut von muss zuerst „Kosten abgeschlossen" bestätigen',
-        invoices_paid: "die Provisionsrechnungen müssen erst bezahlt werden",
+        invoices_created:
+          "Die Provisionsrechnungen müssen zuerst erstellt werden, bevor dieser Bonus vorgeschlagen werden kann.",
+        broker:
+          "Es muss zuerst ein Makler gewählt werden, bevor dieser Bonus vorgeschlagen werden kann.",
+        commission:
+          "Die Provision muss zuerst berechnet werden, bevor dieser Bonus vorgeschlagen werden kann.",
+        costs_closed:
+          'Betreut von muss zuerst „Kosten abgeschlossen" bestätigen, bevor dieser Bonus vorgeschlagen werden kann.',
+        invoices_paid:
+          "Die Provisionsrechnungen müssen zuerst bezahlt werden, bevor dieser Bonus vorgeschlagen werden kann.",
       },
       line: {
         commission_net: "Provision netto: {{amount}}",
@@ -5263,9 +5277,9 @@ const de = {
     crmChanges: {
       title: "Das CRM hat sich geändert, nachdem dieser Verkauf angelegt wurde",
       explain:
-        "Bitte vor der Freigabe prüfen. Übernehmen trägt diese neuen Werte in die Rechnung ein.",
+        "Bitte vor der Freigabe prüfen. Übernehmen trägt diese neuen Werte in die Berechnung dieses Verkaufs ein.",
       wasNow: "vorher {{was}}, jetzt {{became}}",
-      yourInvoice: "Auf der Rechnung steht: {{value}}",
+      yourInvoice: "Dieser Wert wird verwendet: {{value}}",
       empty: "leer",
       accept: "Neue Werte übernehmen",
       accepting: "Wird übernommen…",
@@ -5282,13 +5296,13 @@ const de = {
       title: "Angaben zum Verkauf",
       ownLead: "Eigener Lead",
       ownLeadHint:
-        "Anhaken, wenn Betreut von diesen Kunden selbst gefunden hat, ohne separate Lead-Quelle. Das ändert, wie der Bonus für diesen Verkauf berechnet wird — nicht nur einen Teilbetrag.",
+        "Anhaken, wenn Betreut von diesen Kunden selbst gefunden hat, ohne separate Lead-Quelle. Das ändert, wie der Bonus für diesen Verkauf berechnet wird. Der ganze Bonus ändert sich dadurch, nicht nur ein Teilbetrag.",
       fromViewing: "Aus Besichtigung",
       fromViewingHint:
         "Anhaken, wenn der Käufer den Makler zuerst bei der Besichtigung eines anderen Objekts getroffen hat und später dieses Objekt gekauft hat.",
       costsClosed: "Kosten abgeschlossen",
       costsClosedHint:
-        "Persönliche Bestätigung, dass für diesen Verkauf keine weiteren Kosten mehr dazukommen. Das System prüft das nicht gegen die Kostenliste im Tab Berechnung — Sie bestätigen es von Hand.",
+        "Persönliche Bestätigung, dass für diesen Verkauf keine weiteren Kosten mehr dazukommen. Das System prüft das nicht gegen die Kostenliste im Tab Berechnung. Sie bestätigen es von Hand.",
       viewCostList: "Kostenliste ansehen",
       costsClosedNoEffectHint:
         "Das wirkt sich nur auf den Zeitpunkt der Auszahlung bei Lead-basierten Boni aus. Auf den Notarbonus und den Besichtigungs-Folgebonus für diesen Verkauf hat es keine Auswirkung.",
@@ -5327,26 +5341,29 @@ const de = {
     side: {
       buyer: "Käufer",
       seller: "Verkäufer",
-      pays: "Zahlt Provision",
-      feeKind: "Provision",
-      percent: "Prozent vom Kaufpreis",
+      pays: "zahlt Provision",
+      feeKind: "Provisionsberechnung",
+      feeKindHint: "Wie soll die Provision berechnet werden?",
+      percent: "Prozentsatz vom Kaufpreis",
       fixed: "Festbetrag",
-      rate: "Satz (% netto)",
+      rate: "Provisionssatz (% vor USt.)",
       ratePlaceholder: "z. B. 2,5",
       amount: "Betrag (€ netto)",
-      discount: "Rabatt (€ brutto, pro Person)",
+      discount: "Rechnungsrabatt (€ inkl. USt., pro Kunde)",
       discountHint:
-        "Wird direkt vom Rechnungsbetrag dieser Person abgezogen, nach USt. Ändert den Satz/Betrag oben nicht.",
+        "Dieser Betrag wird vom Rechnungsbetrag dieses Kunden abgezogen, nachdem die USt. hinzugerechnet wurde. Der Provisionssatz oder -betrag oben ändert sich dadurch nicht.",
       discountReason: "Grund",
-      payers: "Wer zahlt",
+      discountReasonHint: "Warum erhält dieser Kunde einen Rabatt?",
+      payers: "Wer erhält eine Rechnung?",
+      payersHint: "Fügen Sie die Kunden hinzu, die diese Provision bezahlen.",
       customer: "Kunde",
       payerPlaceholder: "Kunde wählen",
       payerSearch: "Kunde suchen",
       noCustomers: "Kein Kunde gefunden. Geben Sie einen Namen ein, um einen anzulegen.",
       share: "Anteil %",
       shareHint:
-        "Anteile leer lassen, dann zahlen alle gleich viel. Wird ein Anteil eingetragen, müssen alle Anteile zusammen 100 % ergeben, und jeder einzelne muss größer als 0 % sein.",
-      addPayer: "Person hinzufügen",
+        "Wie wird die Provision aufgeteilt? Anteile leer lassen, dann zahlen alle gleich viel. Wird ein Anteil eingetragen, müssen alle Anteile zusammen 100 % ergeben, und jeder einzelne muss größer als 0 % sein.",
+      addPayer: "Kunde hinzufügen",
       fullCustomerLink: "Kunde mit allen Details anlegen",
       remove: "Entfernen",
       newCustomerPlaceholder: "Name des neuen Kunden",
@@ -5355,7 +5372,7 @@ const de = {
     },
     drafts: {
       title: "Rechnungsentwürfe",
-      hint: "So würden die Rechnungen aussehen. Erstellt oder versendet wird noch nichts.",
+      hint: "Prüfen Sie, wie die Rechnungen aussehen werden, bevor Sie sie erstellen. Es wurden noch keine Rechnungen erstellt.",
       line: "Maklerprovision",
       rate: "{{rate}} % Maklerprovision (inkl. MwSt.)",
       fixed: "Festbetrag",
@@ -5366,13 +5383,13 @@ const de = {
       vatLine: "Netto {{net}}, USt {{vat}}",
       sum: "Summe aller Rechnungen",
       unknownCustomer: "Unbekannter Kunde",
-      viewPreview: "Vorschau ansehen",
+      viewPreview: "Rechnungen ansehen",
       notReady:
-        "Für dieses Geschäft gibt es noch keine Vorschau. Beheben Sie zuerst die Probleme im Tab Berechnung.",
-      valid: "Alle Angaben vollständig — diese Entwurfssumme kann in Rechnung gestellt werden.",
+        "Die Rechnungsvorschau ist noch nicht verfügbar. Füllen Sie zuerst die offenen Punkte im Tab Berechnung aus.",
+      valid: "Alle Angaben sind vollständig. Diese Entwurfssumme kann in Rechnung gestellt werden.",
     },
     draftsSummary: {
-      title: "Rechnungsvorschau",
+      title: "Vorschau der Rechnungen",
       moreCount: "+ {{count}} weitere",
     },
     invoices: {
@@ -5388,14 +5405,15 @@ const de = {
     },
     problems: {
       title: "Was noch fehlt",
-      purchase_price_missing: "{{side}}: Der Kaufpreis fehlt.",
+      purchase_price_missing:
+        "{{side}}: Geben Sie den Kaufpreis ein, um diese Provision zu berechnen.",
       fee_missing: "{{side}}: Die Provision fehlt.",
       fee_not_positive: "{{side}}: Die Provision muss größer als null sein.",
       no_payers: "{{side}}: Es ist noch niemand eingetragen, der zahlt.",
       duplicate_payer: "{{side}}: Eine Person steht doppelt in der Liste.",
       shares_incomplete: "{{side}}: Entweder haben alle einen Anteil oder keiner.",
       shares_do_not_add_up:
-        "{{side}}: Die Anteile sind ungültig — entweder ergeben sie nicht 100 %, oder einer der Anteile ist 0 % oder weniger.",
+        "{{side}}: Die Anteile sind ungültig. Entweder ergeben sie nicht 100 %, oder einer der Anteile ist 0 % oder weniger.",
       discount_negative: "{{side}}: Der Rabatt darf nicht negativ sein.",
       discount_exceeds_fee:
         "{{side}}: Der Rabatt für eine Person auf dieser Seite ist größer als deren Anteil an der Provision.",
@@ -5411,7 +5429,7 @@ const de = {
       openInPropstack: "In PropStack öffnen",
       savedAndSynced: "Gespeichert und an PropStack gesendet.",
       savedButNotInCrm: "Gespeichert. Noch nicht an PropStack gesendet: {{reason}}",
-      approve: "Freigeben",
+      approve: "Verkauf genehmigen",
       approving: "Wird freigegeben …",
       approved: "Freigegeben.",
       approveFailed: "Die Freigabe ist fehlgeschlagen: {{error}}",
@@ -5428,10 +5446,10 @@ const de = {
       invoicedLexwareNoteLink: "Ausgangsrechnungen",
       createInvoicesConfirmTitle: "Rechnungen erstellen?",
       createInvoicesConfirmDesc:
-        "Dies erstellt die Rechnungen und sendet sie sofort an Lexware, ohne weiteren Schritt. Sobald eine Rechnung in Lexware existiert, kann sie nicht mehr gelöscht werden — nur storniert, und das bleibt dort für immer sichtbar. Prüfen Sie die Zahlen, bevor Sie fortfahren.",
+        "Dies erstellt die Rechnungen und sendet sie sofort an Lexware, ohne weiteren Schritt. Sobald eine Rechnung in Lexware existiert, kann sie nicht mehr gelöscht werden. Sie kann nur noch storniert werden, und das bleibt dort für immer sichtbar. Prüfen Sie die Zahlen, bevor Sie fortfahren.",
       createInvoicesConfirmCancel: "Noch nicht",
       createInvoicesConfirmAction: "Rechnungen erstellen",
-      more: "Mehr",
+      more: "Weitere Aktionen",
     },
   },
   bankSettings: {

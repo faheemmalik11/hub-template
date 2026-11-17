@@ -18,7 +18,7 @@ import {
   type BonusSuggestion,
 } from "@/kit/lib/commission/bonuses";
 import { errorText, formatEUR } from "@/lib/data/format";
-import { Trans, useTranslation } from "@/lib/i18n";
+import { useTranslation } from "@/lib/i18n";
 import type { BonusWaitingFor } from "@/kit/lib/commission/bonuses";
 
 function cents(euros: number): number {
@@ -118,12 +118,7 @@ export function BonusSuggestionsCard({
       <h2 className="text-base font-semibold text-foreground">
         {t("commissionDeals.bonuses.title")}
       </h2>
-      <p className="mt-1 text-xs text-muted-foreground">
-        <Trans
-          i18nKey="commissionDeals.bonuses.hint"
-          components={{ strong: <strong className="font-semibold text-foreground" /> }}
-        />
-      </p>
+      <p className="mt-1 text-xs text-muted-foreground">{t("commissionDeals.bonuses.hint")}</p>
       <ul className="mt-3 space-y-3">
         {suggestions.map((suggestion) => {
           const done = existing.get(suggestion.type as BonusType);
@@ -150,13 +145,18 @@ export function BonusSuggestionsCard({
                       {t(`brokerBonuses.status.${done.status}`)}
                     </Badge>
                   ) : suggestion.state === "ready" ? (
-                    <Button
-                      size="sm"
-                      disabled={create.isPending}
-                      onClick={() => createOne(suggestion)}
-                    >
-                      {t("commissionDeals.bonuses.create")}
-                    </Button>
+                    <div>
+                      <Button
+                        size="sm"
+                        disabled={create.isPending}
+                        onClick={() => createOne(suggestion)}
+                      >
+                        {t("commissionDeals.bonuses.create")}
+                      </Button>
+                      <p className="mt-1 text-xs text-muted-foreground">
+                        {t("commissionDeals.bonuses.createHint")}
+                      </p>
+                    </div>
                   ) : suggestion.state === "waiting" ? (
                     <Badge variant="secondary">{t("commissionDeals.bonuses.notReady")}</Badge>
                   ) : (
@@ -170,28 +170,33 @@ export function BonusSuggestionsCard({
                 </p>
               )}
               {suggestion.state === "waiting" && (
-                <ul className="mt-2 space-y-1">
-                  {suggestion.waitingFor.map((reason) => {
-                    const anchor = ANCHOR_FOR_WAITING_REASON[reason];
-                    return (
-                      <li
-                        key={reason}
-                        className="flex flex-wrap items-center gap-x-1.5 text-xs text-muted-foreground"
-                      >
-                        <span>• {t(`commissionDeals.bonuses.waitingFor.${reason}`)}</span>
-                        {anchor && onJumpToField && (
-                          <button
-                            type="button"
-                            onClick={() => onJumpToField(anchor.tab, anchor.id)}
-                            className="text-xs font-medium text-brand-dark underline-offset-4 hover:underline"
-                          >
-                            {t("commissionDeals.review.fix")}
-                          </button>
-                        )}
-                      </li>
-                    );
-                  })}
-                </ul>
+                <div className="mt-2">
+                  <p className="text-xs font-medium text-foreground">
+                    {t("commissionDeals.bonuses.waitingForTitle")}
+                  </p>
+                  <ul className="mt-1 space-y-1">
+                    {suggestion.waitingFor.map((reason) => {
+                      const anchor = ANCHOR_FOR_WAITING_REASON[reason];
+                      return (
+                        <li
+                          key={reason}
+                          className="flex flex-wrap items-center gap-x-1.5 text-xs text-muted-foreground"
+                        >
+                          <span>• {t(`commissionDeals.bonuses.waitingFor.${reason}`)}</span>
+                          {anchor && onJumpToField && (
+                            <button
+                              type="button"
+                              onClick={() => onJumpToField(anchor.tab, anchor.id)}
+                              className="text-xs font-medium text-brand-dark underline-offset-4 hover:underline"
+                            >
+                              {t("commissionDeals.review.fix")}
+                            </button>
+                          )}
+                        </li>
+                      );
+                    })}
+                  </ul>
+                </div>
               )}
             </li>
           );
