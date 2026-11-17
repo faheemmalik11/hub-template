@@ -5384,6 +5384,7 @@ const de = {
     actions: {
       save: "Speichern",
       saving: "Wird gespeichert …",
+      savingAndSyncing: "Wird gespeichert und an PropStack gesendet …",
       saved: "Gespeichert.",
       saveFailed: "Speichern ist fehlgeschlagen: {{error}}",
       openInPropstack: "In PropStack öffnen",

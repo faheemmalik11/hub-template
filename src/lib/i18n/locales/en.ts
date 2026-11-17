@@ -5200,6 +5200,7 @@ const en = {
     actions: {
       save: "Save",
       saving: "Saving …",
+      savingAndSyncing: "Saving and sending to PropStack …",
       saved: "Saved.",
       saveFailed: "Saving failed: {{error}}",
       openInPropstack: "Open in PropStack",

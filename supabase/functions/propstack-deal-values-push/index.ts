@@ -12,7 +12,6 @@ const PERMISSION = "propstack.deal_values_sync";
 
 interface DealRow {
   id: string;
-  purchase_price: number | null;
   notarised_on: string | null;
   property_id: string | null;
 }
@@ -30,7 +29,7 @@ interface PropertyRow {
 async function loadDeal(db: Db, dealId: string): Promise<DealRow | null> {
   const { data, error } = await db
     .from(TABLE.deals)
-    .select("id, purchase_price, notarised_on, property_id")
+    .select("id, notarised_on, property_id")
     .eq("id", dealId)
     .maybeSingle();
   if (error) throw new Error(`deal lookup failed: ${error.message}`);
@@ -83,8 +82,10 @@ Deno.serve(async (req) => {
     const sellerRate = sides.find((side) => side.side === "seller")?.fee_net_rate ?? null;
 
     const apiKey = await propstackKey(db);
+    // The realised price has no write path: PropStack's API rejects or silently drops
+    // sold_price, and its own "price" field is the asking price, a different number PropStack
+    // sets itself once a sale closes, confirmed against a real PropStack account, not assumed.
     await updateUnitFields(apiKey, property.external_id, {
-      sold_price: deal.purchase_price === null ? null : { value: deal.purchase_price },
       sold_date: deal.notarised_on,
       external_commission_percentage: buyerRate,
       internal_commission_percentage: sellerRate,
