@@ -1,5 +1,6 @@
 import { useState } from "react";
-import { Plus, Trash2 } from "lucide-react";
+import { Link } from "@tanstack/react-router";
+import { ExternalLink, Plus, Trash2 } from "lucide-react";
 import { toast } from "sonner";
 
 import { Button } from "@/components/ui/button";
@@ -30,6 +31,16 @@ import { useTranslation } from "@/lib/i18n";
 import type { PartyForm, SideForm } from "./deal-form";
 
 const EMPTY_PARTY: PartyForm = { customerId: "", share: "", discount: "", discountReason: "" };
+
+function sanitizeAmountInput(raw: string): string {
+  const digitsAndSeparators = raw.replace(/[^0-9.,]/g, "");
+  const separatorIndex = digitsAndSeparators.search(/[.,]/);
+  if (separatorIndex === -1) return digitsAndSeparators;
+  return (
+    digitsAndSeparators.slice(0, separatorIndex + 1) +
+    digitsAndSeparators.slice(separatorIndex + 1).replace(/[.,]/g, "")
+  );
+}
 
 export function SideCard({
   side,
@@ -168,7 +179,9 @@ export function SideCard({
                         <Input
                           inputMode="decimal"
                           value={party.share}
-                          onChange={(event) => setParty(index, { share: event.target.value })}
+                          onChange={(event) =>
+                            setParty(index, { share: sanitizeAmountInput(event.target.value) })
+                          }
                           placeholder={t("commissionDeals.side.share")}
                           aria-label={t("commissionDeals.side.share")}
                           disabled={disabled}
@@ -178,7 +191,9 @@ export function SideCard({
                         <Input
                           inputMode="decimal"
                           value={party.discount}
-                          onChange={(event) => setParty(index, { discount: event.target.value })}
+                          onChange={(event) =>
+                            setParty(index, { discount: sanitizeAmountInput(event.target.value) })
+                          }
                           placeholder={t("commissionDeals.side.discount")}
                           aria-label={t("commissionDeals.side.discount")}
                           disabled={disabled}
@@ -247,7 +262,9 @@ export function SideCard({
                       <Input
                         inputMode="decimal"
                         value={party.share}
-                        onChange={(event) => setParty(index, { share: event.target.value })}
+                        onChange={(event) =>
+                          setParty(index, { share: sanitizeAmountInput(event.target.value) })
+                        }
                         placeholder={t("commissionDeals.side.share")}
                         aria-label={t("commissionDeals.side.share")}
                         disabled={disabled}
@@ -260,7 +277,9 @@ export function SideCard({
                       <Input
                         inputMode="decimal"
                         value={party.discount}
-                        onChange={(event) => setParty(index, { discount: event.target.value })}
+                        onChange={(event) =>
+                          setParty(index, { discount: sanitizeAmountInput(event.target.value) })
+                        }
                         placeholder={t("commissionDeals.side.discount")}
                         aria-label={t("commissionDeals.side.discount")}
                         disabled={disabled}
@@ -283,7 +302,7 @@ export function SideCard({
               ))}
             </div>
 
-            <div className="mt-2">
+            <div className="mt-2 flex flex-wrap items-center gap-3">
               <Button
                 className="shadow-none"
                 variant="outline"
@@ -292,6 +311,11 @@ export function SideCard({
                 disabled={disabled || lastPartyHasNoCustomer}
               >
                 <Plus className="size-4" /> {t("commissionDeals.side.addPayer")}
+              </Button>
+              <Button variant="link" size="sm" className="h-auto p-0" asChild>
+                <Link to="/customers" target="_blank" rel="noreferrer">
+                  <ExternalLink className="size-4" /> {t("commissionDeals.side.fullCustomerLink")}
+                </Link>
               </Button>
             </div>
           </div>
