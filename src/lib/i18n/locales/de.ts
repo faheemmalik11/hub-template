@@ -5281,6 +5281,8 @@ const de = {
       createCreditNote: "Gutschrift erstellen",
       creditNoteCreated: "Gutschrift erstellt.",
       creditNoteNote: "Eine Gutschrift für diese Auszahlung steht unter Rechnungen.",
+      creditNoteDisabled:
+        "Gutschriften sind aktuell deaktiviert. Sie erreichen Lexware noch nicht, daher würde eine erstellte Gutschrift als Entwurf hängen bleiben.",
       status: {
         suggested: "Vorgeschlagen",
         paid: "Ausgezahlt",
