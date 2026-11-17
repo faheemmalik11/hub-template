@@ -6407,7 +6407,7 @@ const en = {
     subtitle:
       "Personnel costs, depreciation and taxes: items with no receipt and no bank transaction, entered by hand.",
     allCompanies: "All companies",
-    hint: 'Manual bookings flow into the evaluation on equal footing, in the same combined total as the receipts, not as an appendage. The BWA line/category you pick decides exactly where it lands: only "Cost of materials / goods" affects Gross Profit, everything else (Personnel, Occupancy, Vehicle, Other costs, …) only shows further down, in Preliminary Result.',
+    hint: "A manual booking counts the same as a normal receipt, in the same total. The category you choose decides where it appears: Materials & goods changes Gross profit. Every other category, like Personnel costs or Vehicle costs, changes Operating result instead.",
     noProperty: "No property",
     openEnded: "open-ended",
     search: "Search note, category, property or company …",
