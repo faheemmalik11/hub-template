@@ -70,9 +70,11 @@ export function DealStatusStepper({ status }: { status: DealStatus }) {
           );
         })}
       </div>
-      <p className="mt-1.5 text-xs text-muted-foreground">
-        {t(`commissionDeals.status.${status}Hint`)}
-      </p>
+      {status !== "invoiced" && (
+        <p className="mt-1.5 text-xs text-muted-foreground">
+          {t(`commissionDeals.status.${status}Hint`)}
+        </p>
+      )}
     </div>
   );
 }

@@ -4949,7 +4949,6 @@ const en = {
       readyHint: "Everything is filled in. Approve this deal to continue.",
       approvedHint:
         "This deal is approved. Create invoices when you are ready to bill the customer.",
-      invoicedHint: "Invoices have been created and sent. No further action is needed here.",
     },
     list: {
       search: "Search property …",
@@ -5232,7 +5231,7 @@ const en = {
     problems: {
       title: "Still missing",
       purchase_price_missing: "Enter the purchase price to calculate this commission.",
-      notarised_on_missing: "Enter the notary date before this deal can be approved.",
+      notarised_on_missing: "Enter the notary date for this sale.",
       fee_missing: "{{side}}: the commission is missing.",
       fee_not_positive: "{{side}}: the commission must be more than zero.",
       no_payers: "{{side}}: no one has been added to pay yet.",
