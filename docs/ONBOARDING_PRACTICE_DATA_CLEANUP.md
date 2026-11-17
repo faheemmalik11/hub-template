@@ -55,6 +55,25 @@ kind of surprise and check for it the same way: try it against real data before 
    them, and their own non-cascading children (`broker_bonuses`, `deal_donations`,
    `deal_referrer_bonuses`, `deal_parties`), before touching companies/properties/suppliers.
 
+## The payment-file practice task is gated by `page.payment_file`
+
+A separate, small fix (not part of the purge above): `buildPracticeTasks` in
+`src/features/onboarding-practice/practice-tasks.ts` used to include
+`buildPaymentFilePracticeTask(t)` unconditionally, so a client with the real `/payment-file` page
+switched off (`PERMISSIONS.pagePaymentFile`, off by default — see `supabase/catalogue.sql`'s
+`page.payment_file` row) still got offered a practice task for a page they do not have.
+
+`buildPracticeTasks`/`findPracticeTask` now take a second argument, `can: (permission:
+PermissionKey) => boolean`, and filter the payment-file task
+(`task.id !== PAYMENT_FILE_PRACTICE_TASK_ID || can(PERMISSIONS.pagePaymentFile)`). The only caller,
+`OnboardingPracticeRunner` in `src/features/onboarding-practice/onboarding-practice-runner.tsx`,
+already sits inside `AuthProvider` and now reads `can` from `useAuth()` itself to pass through — no
+restructuring needed, since `useAuth()` is a plain context hook callable from any component.
+
+Out of scope for this fix: `FIRST_STEPS_TASKS` in `first-steps-tasks.ts` lists the same payment-file
+card unconditionally for the "first steps" home-screen widget, with no permission check either. Same
+gap, not fixed here.
+
 ## What's still open
 
 - **No other `is_demo`-adjacent table has been audited this way.** The three found above were

@@ -121,7 +121,7 @@ export const CHECKLIST_STEPS: ChecklistStepConfig[] = [
   },
   {
     key: "datev",
-    visible: (d) => !d.errors.datev,
+    visible: (d) => d.can(PERMISSIONS.pageHandover) && !d.errors.datev,
     evaluate: (d) => {
       const enabledIds = new Set(
         d.datevRoutes

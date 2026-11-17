@@ -442,9 +442,10 @@ function ActivePracticeTask({ task }: { task: OnboardingTask }) {
 export function OnboardingPracticeRunner() {
   const { activeTaskId } = useOnboardingPractice();
   const { t } = useTranslation();
+  const { can } = useAuth();
   const task = useMemo(
-    () => (activeTaskId ? findPracticeTask(activeTaskId, t) : null),
-    [activeTaskId, t],
+    () => (activeTaskId ? findPracticeTask(activeTaskId, t, can) : null),
+    [activeTaskId, t, can],
   );
   if (!task) return null;
   return <ActivePracticeTask key={task.id} task={task} />;
