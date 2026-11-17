@@ -4364,6 +4364,9 @@ const en = {
     textRequired: "Please enter some text.",
     defaultVatRateInvalid: "Please enter a number between 0 and 100.",
     countryCodeInvalid: "Please enter a two-letter country code in capitals, for example DE.",
+    paymentTermDaysInvalid: "Please enter a whole number between 0 and 365.",
+    finaliseInLexwareHint:
+      "Off: the invoice is left as a draft in Lexware for someone to check and release there.",
     kindInvalid:
       "Lower-case letters, digits and underscores only, and the first character must be a letter.",
     kindDuplicate: "This invoice type is already in the list. Each one may appear only once.",
@@ -4394,6 +4397,10 @@ const en = {
         title: "Time zone",
         desc: "Used to turn the exact moment a property is marked sold in the CRM into a calendar date for the deal created from it.",
       },
+      lexware: {
+        title: "Lexware handover",
+        desc: "Payment term and behavior when a new invoice is created in Lexware.",
+      },
     },
     field: {
       defaultVatRate: "Default tax rate in percent",
@@ -4405,6 +4412,8 @@ const en = {
       kind: "Invoice type",
       kindLabel: "Wording",
       timezone: "Time zone",
+      paymentTermDays: "Payment term (days)",
+      finaliseInLexware: "Finalize the invoice in Lexware",
     },
     timezoneInvalid: "Please select a time zone.",
     kindLabels: {

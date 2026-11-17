@@ -4523,6 +4523,9 @@ const de = {
     defaultVatRateInvalid: "Bitte eine Zahl zwischen 0 und 100 eintragen.",
     countryCodeInvalid:
       "Bitte ein Länderkürzel aus zwei Großbuchstaben eintragen, zum Beispiel DE.",
+    paymentTermDaysInvalid: "Bitte eine ganze Zahl zwischen 0 und 365 eintragen.",
+    finaliseInLexwareHint:
+      "Aus: Die Rechnung bleibt in Lexware als Entwurf stehen, bis jemand sie dort prüft und freigibt.",
     kindInvalid:
       "Bitte nur Kleinbuchstaben, Ziffern und Unterstriche verwenden. Das erste Zeichen muss ein Buchstabe sein.",
     kindDuplicate:
@@ -4554,6 +4557,10 @@ const de = {
         title: "Zeitzone",
         desc: "Wird verwendet, um den genauen Zeitpunkt, zu dem ein Objekt im CRM als verkauft markiert wird, in ein Kalenderdatum für den daraus entstehenden Deal umzurechnen.",
       },
+      lexware: {
+        title: "Übergabe an Lexware",
+        desc: "Zahlungsfrist und Verhalten beim Anlegen einer neuen Rechnung in Lexware.",
+      },
     },
     field: {
       defaultVatRate: "Standard-Steuersatz in Prozent",
@@ -4565,6 +4572,8 @@ const de = {
       kind: "Rechnungsart",
       kindLabel: "Bezeichnung",
       timezone: "Zeitzone",
+      paymentTermDays: "Zahlungsfrist in Tagen",
+      finaliseInLexware: "Rechnung in Lexware abschließen",
     },
     timezoneInvalid: "Bitte eine Zeitzone auswählen.",
     kindLabels: {

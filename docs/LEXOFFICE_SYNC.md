@@ -45,9 +45,12 @@ default rather than a reversal of that decision.
   3. Builds a single synthesized line item from the invoice's own `amount_net`/`amount_gross` and
      the deal's `vat_rate` and property name — `outgoing_invoices.line_items` is never populated by
      `create_deal_invoices` today, so this function doesn't rely on it being there.
-  4. Creates the invoice (finalized), reads back the real `voucherStatus`, and records
-     `accounting_external_id` (the Lexoffice invoice id — already an existing generic column, no new
-     id column needed) and the mapped `status` on the row.
+  4. Creates the invoice — finalized unless `invoice_settings.finalise_in_lexware` is turned off
+     (`supabase/schema/0058_invoice_handover_choices.sql`; read via `taxDefaults().finaliseInLexware`
+     in `_shared/tenant-config.ts` and passed as `createInvoice`'s `finalise` argument), in which case
+     it is left as a draft in Lexware for someone to check and release there — reads back the real
+     `voucherStatus`, and records `accounting_external_id` (the Lexoffice invoice id — already an
+     existing generic column, no new id column needed) and the mapped `status` on the row.
 - **Migration** `supabase/schema/0034_lexoffice_sync.sql`: one new column,
   `outgoing_invoices.lexoffice_sync_requested_at timestamptz` — the claim lock in step 1 above. No
   other schema change; `customers.accounting_external_id` and

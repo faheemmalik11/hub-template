@@ -332,8 +332,9 @@ Deno.serve(async (req) => {
       const apiKey = await lexofficeKey(db);
       const contactId = await resolveContactId(db, apiKey, customer);
       const payload = await buildInvoicePayload(invoice, customer, deal, contactId);
+      const { finaliseInLexware } = await taxDefaults();
 
-      const created = await createInvoice(db, apiKey, payload);
+      const created = await createInvoice(db, apiKey, payload, finaliseInLexware);
       await persistCreated(db, invoice.id, created.id);
       await fetchNumberAndFile(db, apiKey, invoice.id, created.id);
 
