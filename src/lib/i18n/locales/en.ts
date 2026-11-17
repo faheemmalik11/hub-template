@@ -4975,7 +4975,9 @@ const en = {
       vat: "VAT (%)",
       note: "Note",
       dueDate: "Payment due date",
+      dueDateRedundantHint: "Not required — the note above already explains the delay.",
       dueDateNote: "Payment due date, note",
+      dueDateNoteRedundantHint: "Not needed — a payment due date is already set.",
       dueDateNotePlaceholder: "e.g. as soon as possible after registration",
     },
     review: {

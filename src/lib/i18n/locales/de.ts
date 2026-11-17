@@ -5155,7 +5155,9 @@ const de = {
       vat: "USt (%)",
       note: "Notiz",
       dueDate: "Zahlungsziel",
+      dueDateRedundantHint: "Nicht nötig – der Hinweis oben erklärt die Verzögerung bereits.",
       dueDateNote: "Zahlungsziel, Hinweis",
+      dueDateNoteRedundantHint: "Nicht nötig – es ist bereits ein Zahlungsziel eingetragen.",
       dueDateNotePlaceholder: "z. B. sofort nach Eintragung",
     },
     review: {
