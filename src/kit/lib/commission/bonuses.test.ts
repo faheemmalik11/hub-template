@@ -15,6 +15,7 @@ const settings: BonusRuleSettings = {
 
 const facts: BonusDealFacts = {
   notarisedOn: "2026-09-08",
+  invoicesCreated: true,
   ownLead: false,
   fromViewing: false,
   handledBy: "broker-1",
@@ -38,9 +39,9 @@ describe("bonus suggestions", () => {
     assert.equal(bonus.brokerUserId, "broker-1");
   });
 
-  test("the notary bonus waits for the notary date", () => {
-    const [bonus] = suggestBonuses({ ...facts, notarisedOn: null }, settings);
-    assert.deepEqual(bonus.state === "waiting" && bonus.waitingFor, ["notarisation"]);
+  test("the notary bonus waits for the commission invoices to be created", () => {
+    const [bonus] = suggestBonuses({ ...facts, invoicesCreated: false }, settings);
+    assert.deepEqual(bonus.state === "waiting" && bonus.waitingFor, ["invoices_created"]);
   });
 
   test("an own lead earns half of what is left, and no notary bonus", () => {

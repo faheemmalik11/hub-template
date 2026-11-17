@@ -12,6 +12,7 @@ export interface BonusRuleSettings {
 
 export interface BonusDealFacts {
   notarisedOn: string | null;
+  invoicesCreated: boolean;
   ownLead: boolean;
   fromViewing: boolean;
   handledBy: string | null;
@@ -23,7 +24,7 @@ export interface BonusDealFacts {
 }
 
 export type BonusWaitingFor =
-  "notarisation" | "broker" | "commission" | "costs_closed" | "invoices_paid";
+  "invoices_created" | "broker" | "commission" | "costs_closed" | "invoices_paid";
 
 export type BonusSuggestion = {
   type: SuggestedBonusType;
@@ -69,8 +70,7 @@ export function suggestBonuses(
   facts: BonusDealFacts,
   settings: BonusRuleSettings,
 ): BonusSuggestion[] {
-  const notarised = facts.notarisedOn !== null;
-  const atNotarisation: BonusWaitingFor[] = notarised ? [] : ["notarisation"];
+  const atInvoicesCreated: BonusWaitingFor[] = facts.invoicesCreated ? [] : ["invoices_created"];
   const result: BonusSuggestion[] = [];
   const handler = facts.handledBy ?? facts.acquiredBy;
 
@@ -123,7 +123,7 @@ export function suggestBonuses(
           amountCents: settings.notaryAmountCents,
           breakdown: [{ label: "fixed", cents: settings.notaryAmountCents }],
         },
-        atNotarisation,
+        atInvoicesCreated,
       ),
     );
   }
@@ -138,7 +138,7 @@ export function suggestBonuses(
           amountCents: settings.followUpAmountCents,
           breakdown: [{ label: "fixed", cents: settings.followUpAmountCents }],
         },
-        atNotarisation,
+        atInvoicesCreated,
       ),
     );
   }

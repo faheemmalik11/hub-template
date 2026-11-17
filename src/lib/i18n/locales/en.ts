@@ -4364,6 +4364,9 @@ const en = {
     textRequired: "Please enter some text.",
     defaultVatRateInvalid: "Please enter a number between 0 and 100.",
     countryCodeInvalid: "Please enter a two-letter country code in capitals, for example DE.",
+    paymentTermDaysInvalid: "Please enter a whole number between 0 and 365.",
+    finaliseInLexwareHint:
+      "Off: the invoice is left as a draft in Lexware for someone to check and release there.",
     kindInvalid:
       "Lower-case letters, digits and underscores only, and the first character must be a letter.",
     kindDuplicate: "This invoice type is already in the list. Each one may appear only once.",
@@ -4394,6 +4397,10 @@ const en = {
         title: "Time zone",
         desc: "Used to turn the exact moment a property is marked sold in the CRM into a calendar date for the deal created from it.",
       },
+      lexware: {
+        title: "Lexware handover",
+        desc: "Payment term and behavior when a new invoice is created in Lexware.",
+      },
     },
     field: {
       defaultVatRate: "Default tax rate in percent",
@@ -4405,6 +4412,8 @@ const en = {
       kind: "Invoice type",
       kindLabel: "Wording",
       timezone: "Time zone",
+      paymentTermDays: "Payment term (days)",
+      finaliseInLexware: "Finalize the invoice in Lexware",
     },
     timezoneInvalid: "Please select a time zone.",
     kindLabels: {
@@ -4915,6 +4924,8 @@ const en = {
       create: "Create",
       cancel: "Cancel",
       failed: "The sale could not be created.",
+      propertyHasActiveDeal: "This property already has an active commission deal.",
+      openExistingDeal: "Open the existing deal",
     },
     emptyTitle: "No sales yet",
     emptyHint: '"New sale" records a notarised sale.',
@@ -4975,7 +4986,9 @@ const en = {
       vat: "VAT (%)",
       note: "Note",
       dueDate: "Payment due date",
+      dueDateRedundantHint: "Not required — the note above already explains the delay.",
       dueDateNote: "Payment due date, note",
+      dueDateNoteRedundantHint: "Not needed — a payment due date is already set.",
       dueDateNotePlaceholder: "e.g. as soon as possible after registration",
     },
     review: {
@@ -4997,7 +5010,7 @@ const en = {
       notReady: "Not ready yet",
       noRemainder: "There is nothing left to pay after costs and fees are subtracted.",
       waitingFor: {
-        notarisation: "the sale needs a notary date",
+        invoices_created: "the commission invoices need to be created first",
         broker: "a broker needs to be chosen",
         commission: "the commission amount needs to be calculated first",
         costs_closed: "all costs for this sale need to be entered",
@@ -5092,11 +5105,14 @@ const en = {
       costsClosed: "Costs closed",
       costsClosedHint:
         "Check this when all costs for this sale have been entered, with nothing missing.",
+      costsClosedNoEffectHint: "This has no effect on the notary bonus for this sale.",
       readyForBookkeeping: "Ready for bookkeeping",
       readyForBookkeepingHint:
         "A note for the bookkeeping team that this sale has been checked. It does not change anything else.",
       handledBy: "Handled by",
       acquiredBy: "Lead won by",
+      acquiredByDisabledHint: "Not used while Own lead is checked.",
+      acquiredByNeedsHandlerHint: "Only matters once Handled by is also set to someone else.",
       referrer: "Referred by",
       referrerPlaceholder: "No referrer",
     },
@@ -5136,6 +5152,7 @@ const en = {
       share: "Share %",
       shareHint: "Leave the shares empty and everyone pays the same.",
       addPayer: "Add a person",
+      fullCustomerLink: "Add a customer with full details",
       remove: "Remove",
       newCustomerPlaceholder: "New customer name",
       createCustomer: "Create customer",
@@ -5183,6 +5200,7 @@ const en = {
     actions: {
       save: "Save",
       saving: "Saving …",
+      savingAndSyncing: "Saving and sending to PropStack …",
       saved: "Saved.",
       saveFailed: "Saving failed: {{error}}",
       openInPropstack: "Open in PropStack",

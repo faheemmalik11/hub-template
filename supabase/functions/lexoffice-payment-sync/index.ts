@@ -107,7 +107,7 @@ async function syncAndRecord(db: Db) {
       .eq("key", "lexoffice_payment_sync");
     if (before?.last_status !== "failed") {
       await db.rpc("notify_administrators", {
-        p_note: `Der Lexware-Zahlungsabgleich ist fehlgeschlagen: ${message.slice(0, 200)}`,
+        p_note: "Der Lexware-Zahlungsabgleich ist fehlgeschlagen.",
         p_path: "/incoming-invoices",
         p_source: "sync",
       });

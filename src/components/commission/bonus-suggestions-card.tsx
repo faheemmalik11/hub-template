@@ -27,7 +27,6 @@ function cents(euros: number): number {
 
 const ANCHOR_FOR_WAITING_REASON: Partial<Record<BonusWaitingFor, { tab: string; id: string }>> = {
   broker: { tab: "ownership", id: "field-handled-by" },
-  notarisation: { tab: "dealDetails", id: "field-notarised-on" },
   costs_closed: { tab: "ownership", id: "field-costs-closed" },
 };
 
@@ -58,6 +57,7 @@ export function BonusSuggestionsCard({
   const suggestions = suggestBonuses(
     {
       notarisedOn: deal.notarised_on,
+      invoicesCreated: deal.status === "invoiced",
       ownLead: deal.own_lead,
       fromViewing: deal.from_viewing,
       handledBy: deal.handled_by,

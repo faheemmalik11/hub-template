@@ -66,6 +66,21 @@ the real keys (`zahlungsziel`, `zahlungsziel_hinweis`) are known and don't need 
    this — confirmed no outbound PropStack write exists, and no auto-detecting "missing field"
    banner exists either (`NOTIFY_SOMEONE` is person-initiated, not auto-detected).
 
+## §4.3 live-tested checklist, 16 November 2026
+
+Walked through all four pieces of §4.3 directly in the Hub UI, against the real PropStack and
+Lexware accounts, with disposable test deals ("TEST Buyer"/"TEST Seller", removed afterward):
+
+1. **Field visible on the deal, independent of billing** — confirmed: Payment due date and Payment
+   due date, note sit on the Deal Details tab itself, next to the notary date.
+2. **With a date, Lexware's term matches** — confirmed: Hub due date 12/02/2026 produced Lexware
+   maturity "Dec 2, 2026" exactly.
+3. **Without a date, no invented term** — found broken first (Lexware showed a 14-day maturity with
+   no due date set at all), fixed as described above, deployed, then re-tested: a fresh no-date
+   invoice now shows Lexware's own 7-day organisation default instead, confirming the fix.
+4. **Six-week admin reminder** — **not tested.** `payment_due_date_reminder` is still off and has
+   never fired against a real deal. Still open.
+
 ## Status
 
 **The six-week notary reminder (§4.3) is built and does not need to wait** — it only needed the new

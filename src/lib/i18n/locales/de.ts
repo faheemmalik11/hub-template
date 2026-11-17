@@ -4523,6 +4523,9 @@ const de = {
     defaultVatRateInvalid: "Bitte eine Zahl zwischen 0 und 100 eintragen.",
     countryCodeInvalid:
       "Bitte ein Länderkürzel aus zwei Großbuchstaben eintragen, zum Beispiel DE.",
+    paymentTermDaysInvalid: "Bitte eine ganze Zahl zwischen 0 und 365 eintragen.",
+    finaliseInLexwareHint:
+      "Aus: Die Rechnung bleibt in Lexware als Entwurf stehen, bis jemand sie dort prüft und freigibt.",
     kindInvalid:
       "Bitte nur Kleinbuchstaben, Ziffern und Unterstriche verwenden. Das erste Zeichen muss ein Buchstabe sein.",
     kindDuplicate:
@@ -4554,6 +4557,10 @@ const de = {
         title: "Zeitzone",
         desc: "Wird verwendet, um den genauen Zeitpunkt, zu dem ein Objekt im CRM als verkauft markiert wird, in ein Kalenderdatum für den daraus entstehenden Deal umzurechnen.",
       },
+      lexware: {
+        title: "Übergabe an Lexware",
+        desc: "Zahlungsfrist und Verhalten beim Anlegen einer neuen Rechnung in Lexware.",
+      },
     },
     field: {
       defaultVatRate: "Standard-Steuersatz in Prozent",
@@ -4565,6 +4572,8 @@ const de = {
       kind: "Rechnungsart",
       kindLabel: "Bezeichnung",
       timezone: "Zeitzone",
+      paymentTermDays: "Zahlungsfrist in Tagen",
+      finaliseInLexware: "Rechnung in Lexware abschließen",
     },
     timezoneInvalid: "Bitte eine Zeitzone auswählen.",
     kindLabels: {
@@ -5093,6 +5102,8 @@ const de = {
       create: "Anlegen",
       cancel: "Abbrechen",
       failed: "Der Verkauf konnte nicht angelegt werden.",
+      propertyHasActiveDeal: "Für dieses Objekt gibt es bereits einen laufenden Verkauf.",
+      openExistingDeal: "Laufenden Verkauf öffnen",
     },
     emptyTitle: "Noch keine Verkäufe",
     emptyHint: "Mit „Neuer Verkauf“ legen Sie einen beurkundeten Verkauf an.",
@@ -5155,7 +5166,9 @@ const de = {
       vat: "USt (%)",
       note: "Notiz",
       dueDate: "Zahlungsziel",
+      dueDateRedundantHint: "Nicht nötig – der Hinweis oben erklärt die Verzögerung bereits.",
       dueDateNote: "Zahlungsziel, Hinweis",
+      dueDateNoteRedundantHint: "Nicht nötig – es ist bereits ein Zahlungsziel eingetragen.",
       dueDateNotePlaceholder: "z. B. sofort nach Eintragung",
     },
     review: {
@@ -5177,7 +5190,7 @@ const de = {
       notReady: "Noch nicht bereit",
       noRemainder: "Nach Abzug von Kosten und Gebühren bleibt nichts übrig.",
       waitingFor: {
-        notarisation: "der Verkauf braucht einen Notartermin",
+        invoices_created: "die Provisionsrechnungen müssen erst erstellt werden",
         broker: "es muss noch ein Makler gewählt werden",
         commission: "die Provision muss erst berechnet werden können",
         costs_closed: "alle Kosten für diesen Verkauf müssen erst eingetragen werden",
@@ -5274,11 +5287,15 @@ const de = {
       costsClosed: "Kosten abgeschlossen",
       costsClosedHint:
         "Anhaken, wenn alle Kosten für diesen Verkauf eingetragen sind und nichts fehlt.",
+      costsClosedNoEffectHint: "Das hat keine Auswirkung auf den Notarbonus für diesen Verkauf.",
       readyForBookkeeping: "Bereit für die Buchhaltung",
       readyForBookkeepingHint:
         "Ein Hinweis für die Buchhaltung, dass dieser Verkauf geprüft wurde. Das ändert sonst nichts.",
       handledBy: "Betreut von",
       acquiredBy: "Lead gewonnen von",
+      acquiredByDisabledHint: "Wird nicht verwendet, solange Eigener Lead angehakt ist.",
+      acquiredByNeedsHandlerHint:
+        "Wirkt sich erst aus, wenn bei Betreut von auch jemand anderes eingetragen ist.",
       referrer: "Empfohlen von",
       referrerPlaceholder: "Kein Empfehler",
     },
@@ -5318,6 +5335,7 @@ const de = {
       share: "Anteil %",
       shareHint: "Anteile leer lassen, dann zahlen alle gleich viel.",
       addPayer: "Person hinzufügen",
+      fullCustomerLink: "Kunde mit allen Details anlegen",
       remove: "Entfernen",
       newCustomerPlaceholder: "Name des neuen Kunden",
       createCustomer: "Kunde anlegen",
@@ -5366,6 +5384,7 @@ const de = {
     actions: {
       save: "Speichern",
       saving: "Wird gespeichert …",
+      savingAndSyncing: "Wird gespeichert und an PropStack gesendet …",
       saved: "Gespeichert.",
       saveFailed: "Speichern ist fehlgeschlagen: {{error}}",
       openInPropstack: "In PropStack öffnen",
