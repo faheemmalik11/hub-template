@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { Link } from "@tanstack/react-router";
-import { ExternalLink, Plus, Trash2 } from "lucide-react";
+import { ExternalLink, Info, Plus, Trash2 } from "lucide-react";
 import { toast } from "sonner";
 
 import { Button } from "@/components/ui/button";
@@ -24,6 +24,7 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
+import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import type { FeeKind } from "@/data";
 import type { CommissionSide } from "@/kit/lib/commission";
 import { errorText } from "@/lib/data/format";
@@ -39,6 +40,20 @@ function sanitizeAmountInput(raw: string): string {
   return (
     digitsAndSeparators.slice(0, separatorIndex + 1) +
     digitsAndSeparators.slice(separatorIndex + 1).replace(/[.,]/g, "")
+  );
+}
+
+function DiscountLabel({ text, tooltip }: { text: string; tooltip: string }) {
+  return (
+    <span className="inline-flex items-center gap-1">
+      {text}
+      <Tooltip>
+        <TooltipTrigger asChild>
+          <Info aria-label={tooltip} className="size-3.5 shrink-0 text-muted-foreground" />
+        </TooltipTrigger>
+        <TooltipContent className="max-w-64">{tooltip}</TooltipContent>
+      </Tooltip>
+    </span>
   );
 }
 
@@ -149,25 +164,41 @@ export function SideCard({
           </div>
 
           <div id={`side-${side}-payers`} className="@container">
-            <Label>{t("commissionDeals.side.payers")}</Label>
-            <p className="text-xs text-muted-foreground">{t("commissionDeals.side.payersHint")}</p>
-            <p className="text-xs text-muted-foreground">{t("commissionDeals.side.shareHint")}</p>
-            <p className="text-xs text-muted-foreground">
-              {t("commissionDeals.side.discountHint")}
-            </p>
-            <p className="text-xs text-muted-foreground">
-              {t("commissionDeals.side.discountReasonHint")}
-            </p>
+            <div className="space-y-3">
+              <div className="space-y-0.5">
+                <Label>{t("commissionDeals.side.whoPaysTitle")}</Label>
+                <p className="text-xs text-muted-foreground">
+                  {t("commissionDeals.side.whoPaysHint")}
+                </p>
+              </div>
+              <div className="space-y-0.5">
+                <Label>{t("commissionDeals.side.splitTitle")}</Label>
+                <p className="text-xs text-muted-foreground">
+                  {t("commissionDeals.side.shareHint")}
+                </p>
+              </div>
+            </div>
 
             <div className="mt-2 hidden @lg:block">
               <Table>
                 <TableHeader>
                   <TableRow className="bg-muted/40">
-                    <TableHead>{t("commissionDeals.side.customer")}</TableHead>
-                    <TableHead className="w-24">{t("commissionDeals.side.share")}</TableHead>
-                    <TableHead className="w-28">{t("commissionDeals.side.discount")}</TableHead>
-                    <TableHead>{t("commissionDeals.side.discountReason")}</TableHead>
-                    <TableHead className="w-9" />
+                    <TableHead className="w-full whitespace-nowrap">
+                      {t("commissionDeals.side.customer")}
+                    </TableHead>
+                    <TableHead className="w-20 whitespace-nowrap">
+                      {t("commissionDeals.side.share")}
+                    </TableHead>
+                    <TableHead className="w-36 whitespace-nowrap">
+                      <DiscountLabel
+                        text={t("commissionDeals.side.discount")}
+                        tooltip={t("commissionDeals.side.discountTooltip")}
+                      />
+                    </TableHead>
+                    <TableHead className="w-40 whitespace-nowrap">
+                      {t("commissionDeals.side.discountReason")}
+                    </TableHead>
+                    <TableHead className="w-9 whitespace-nowrap" />
                   </TableRow>
                 </TableHeader>
                 <TableBody>
@@ -282,7 +313,10 @@ export function SideCard({
                     </div>
                     <div className="space-y-1">
                       <Label className="text-xs text-muted-foreground">
-                        {t("commissionDeals.side.discount")}
+                        <DiscountLabel
+                          text={t("commissionDeals.side.discount")}
+                          tooltip={t("commissionDeals.side.discountTooltip")}
+                        />
                       </Label>
                       <Input
                         inputMode="decimal"
@@ -312,7 +346,7 @@ export function SideCard({
               ))}
             </div>
 
-            <div className="mt-2 flex flex-wrap items-center gap-3">
+            <div className="mt-2 flex flex-wrap items-center gap-3 px-2">
               <Button
                 className="shadow-none"
                 variant="outline"
