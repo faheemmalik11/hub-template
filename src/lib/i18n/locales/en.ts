@@ -4884,7 +4884,8 @@ const en = {
       empty: "No agent has a notarised sale in either year.",
       tiles: {
         closings: "Closings",
-        closingsInfo: "The number of sales with a notary date in this time. A sale with no notary date yet is not counted.",
+        closingsInfo:
+          "The number of sales with a notary date in this time. A sale with no notary date yet is not counted.",
         volume: "Property volume",
         volumeInfo: "The total purchase price of every sale counted in Closings.",
         commission: "Commission",
@@ -4955,7 +4956,8 @@ const en = {
       sellerCommission: "Seller Commission",
       total: "Total Commission",
       valid: "No calculation issues. The commission is valid and can be invoiced.",
-      invalid: "There are {{count}} problems with this calculation. Open the Calculation tab to fix them.",
+      invalid:
+        "There are {{count}} problems with this calculation. Open the Calculation tab to fix them.",
     },
     info: {
       title: "Deal Information",
@@ -5081,13 +5083,17 @@ const en = {
     facts: {
       title: "Sale details",
       ownLead: "Own lead",
-      ownLeadHint: "Check this if the agent found this customer. Leave it unchecked if the customer came from a property website.",
+      ownLeadHint:
+        "Check this if the agent found this customer. Leave it unchecked if the customer came from a property website.",
       fromViewing: "From a viewing",
-      fromViewingHint: "Check this if the buyer first met the agent at a viewing of a different property, and later bought this one.",
+      fromViewingHint:
+        "Check this if the buyer first met the agent at a viewing of a different property, and later bought this one.",
       costsClosed: "Costs closed",
-      costsClosedHint: "Check this when all costs for this sale have been entered, with nothing missing.",
+      costsClosedHint:
+        "Check this when all costs for this sale have been entered, with nothing missing.",
       readyForBookkeeping: "Ready for bookkeeping",
-      readyForBookkeepingHint: "A note for the bookkeeping team that this sale has been checked. It does not change anything else.",
+      readyForBookkeepingHint:
+        "A note for the bookkeeping team that this sale has been checked. It does not change anything else.",
       handledBy: "Handled by",
       acquiredBy: "Lead won by",
       referrer: "Referred by",
@@ -5191,8 +5197,14 @@ const en = {
       creatingInvoices: "Creating invoices …",
       invoicesCreated: "Invoices created.",
       createInvoicesFailed: "Creating the invoices failed: {{error}}",
-      invoicedLexwareNote: "Invoices are created. Sending them to Lexware happens on the",
+      invoicedLexwareNote:
+        "Invoices were created and sent to Lexware automatically. Check their status on the",
       invoicedLexwareNoteLink: "Outgoing Invoices page",
+      createInvoicesConfirmTitle: "Create invoices?",
+      createInvoicesConfirmDesc:
+        "This creates the invoices and sends them to Lexware right away, with no extra step. Once an invoice exists in Lexware, it cannot be deleted — only cancelled, which stays visible there forever. Make sure the numbers are correct before you continue.",
+      createInvoicesConfirmCancel: "Not yet",
+      createInvoicesConfirmAction: "Create invoices",
       more: "More",
     },
   },

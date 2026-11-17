@@ -11,6 +11,16 @@ import {
 } from "lucide-react";
 import { toast } from "sonner";
 
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 import { Button } from "@/components/ui/button";
 import { Combobox, type ComboboxOption } from "@/components/ui/combobox";
 import { DatePicker } from "@/components/ui/date-picker";
@@ -172,6 +182,7 @@ function DealEditor({ deal }: { deal: Deal }) {
     deal.property?.payment_due_date_note ?? "",
   );
   const [isSaving, setIsSaving] = useState(false);
+  const [createInvoicesConfirmOpen, setCreateInvoicesConfirmOpen] = useState(false);
   const customersQ = useCustomers();
   const companiesQ = useCompanies();
   const employeesQ = useEmployees();
@@ -477,7 +488,7 @@ function DealEditor({ deal }: { deal: Deal }) {
                   <DropdownMenuItem
                     className="cursor-pointer"
                     disabled={createInvoicesDisabled}
-                    onSelect={runCreateInvoices}
+                    onSelect={() => setCreateInvoicesConfirmOpen(true)}
                   >
                     <Check className="size-4" /> {t("commissionDeals.actions.createInvoices")}
                   </DropdownMenuItem>
@@ -514,7 +525,7 @@ function DealEditor({ deal }: { deal: Deal }) {
           {primaryAction === "createInvoices" && (
             <Button
               className="shadow-none"
-              onClick={runCreateInvoices}
+              onClick={() => setCreateInvoicesConfirmOpen(true)}
               disabled={createInvoicesDisabled}
             >
               <Check className="size-4" />
@@ -525,6 +536,31 @@ function DealEditor({ deal }: { deal: Deal }) {
           )}
         </div>
       </div>
+      <AlertDialog open={createInvoicesConfirmOpen} onOpenChange={setCreateInvoicesConfirmOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>
+              {t("commissionDeals.actions.createInvoicesConfirmTitle")}
+            </AlertDialogTitle>
+            <AlertDialogDescription>
+              {t("commissionDeals.actions.createInvoicesConfirmDesc")}
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>
+              {t("commissionDeals.actions.createInvoicesConfirmCancel")}
+            </AlertDialogCancel>
+            <AlertDialogAction
+              onClick={() => {
+                setCreateInvoicesConfirmOpen(false);
+                runCreateInvoices();
+              }}
+            >
+              {t("commissionDeals.actions.createInvoicesConfirmAction")}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
       {unsaved && deal.status !== "approved" && mayApprove && result.ok && (
         <p className="mt-2 text-right text-xs text-muted-foreground">
           {t("commissionDeals.actions.saveFirst")}

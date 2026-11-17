@@ -4507,7 +4507,8 @@ const de = {
   },
   invoiceSettings: {
     title: "Rechnungsvorgaben",
-    subtitle: "Das sind die Standardwerte für Steuersatz, Land und Texte bei Rechnungen und Belegen.",
+    subtitle:
+      "Das sind die Standardwerte für Steuersatz, Land und Texte bei Rechnungen und Belegen.",
     readOnlyHint:
       "Nur Administratoren können diese Vorgaben ändern. Wer das darf, steht unter Verwaltung › Team.",
     effectHint:
@@ -5059,13 +5060,16 @@ const de = {
       empty: "Kein Makler hat einen beurkundeten Verkauf in einem der beiden Jahre.",
       tiles: {
         closings: "Abschlüsse",
-        closingsInfo: "Die Anzahl der Verkäufe mit einem Notartermin in diesem Zeitraum. Ein Verkauf ohne Notartermin zählt noch nicht.",
+        closingsInfo:
+          "Die Anzahl der Verkäufe mit einem Notartermin in diesem Zeitraum. Ein Verkauf ohne Notartermin zählt noch nicht.",
         volume: "Objektvolumen",
         volumeInfo: "Der gesamte Kaufpreis aller Verkäufe, die bei Abschlüsse gezählt werden.",
         commission: "Provision",
-        commissionInfo: "Die gesamte Provision aus allen Verkäufen, die bei Abschlüsse gezählt werden.",
+        commissionInfo:
+          "Die gesamte Provision aus allen Verkäufen, die bei Abschlüsse gezählt werden.",
         bonuses: "Boni",
-        bonusesInfo: "Die gesamten Boni, die in diesem Zeitraum freigegeben oder ausgezahlt wurden.",
+        bonusesInfo:
+          "Die gesamten Boni, die in diesem Zeitraum freigegeben oder ausgezahlt wurden.",
         bonusesApproved: "Freigegeben, noch nicht ausgezahlt",
         bonusesApprovedInfo: "Boni, die freigegeben, aber noch nicht ausgezahlt wurden.",
         lastYear: "{{from}} bis {{to}} · {{value}}",
@@ -5114,7 +5118,8 @@ const de = {
         allStatuses: "Alle",
       },
       empty: "Keine Verkäufe für diese Filter.",
-      crmChanged: "Das CRM hat sich geändert, nachdem dieser Verkauf angelegt wurde. Verkauf öffnen und prüfen.",
+      crmChanged:
+        "Das CRM hat sich geändert, nachdem dieser Verkauf angelegt wurde. Verkauf öffnen und prüfen.",
     },
     back: "Provisionen",
     notFound: "Diesen Verkauf gibt es nicht mehr.",
@@ -5129,8 +5134,10 @@ const de = {
       buyerCommission: "Käuferprovision",
       sellerCommission: "Verkäuferprovision",
       total: "Gesamtprovision",
-      valid: "Es gibt keine Probleme bei der Berechnung. Die Provision ist gültig und kann abgerechnet werden.",
-      invalid: "Es gibt {{count}} Probleme bei dieser Berechnung. Öffnen Sie den Tab Berechnung, um sie zu beheben.",
+      valid:
+        "Es gibt keine Probleme bei der Berechnung. Die Provision ist gültig und kann abgerechnet werden.",
+      invalid:
+        "Es gibt {{count}} Probleme bei dieser Berechnung. Öffnen Sie den Tab Berechnung, um sie zu beheben.",
     },
     info: {
       title: "Informationen zum Geschäft",
@@ -5239,7 +5246,8 @@ const de = {
     },
     crmChanges: {
       title: "Das CRM hat sich geändert, nachdem dieser Verkauf angelegt wurde",
-      explain: "Bitte vor der Freigabe prüfen. Übernehmen trägt diese neuen Werte in die Rechnung ein.",
+      explain:
+        "Bitte vor der Freigabe prüfen. Übernehmen trägt diese neuen Werte in die Rechnung ein.",
       wasNow: "vorher {{was}}, jetzt {{became}}",
       yourInvoice: "Auf der Rechnung steht: {{value}}",
       empty: "leer",
@@ -5257,13 +5265,17 @@ const de = {
     facts: {
       title: "Angaben zum Verkauf",
       ownLead: "Eigener Lead",
-      ownLeadHint: "Anhaken, wenn der Makler diesen Kunden selbst gefunden hat. Nicht anhaken, wenn der Kunde über eine Immobilien-Website kam.",
+      ownLeadHint:
+        "Anhaken, wenn der Makler diesen Kunden selbst gefunden hat. Nicht anhaken, wenn der Kunde über eine Immobilien-Website kam.",
       fromViewing: "Aus Besichtigung",
-      fromViewingHint: "Anhaken, wenn der Käufer den Makler zuerst bei der Besichtigung eines anderen Objekts getroffen hat und später dieses Objekt gekauft hat.",
+      fromViewingHint:
+        "Anhaken, wenn der Käufer den Makler zuerst bei der Besichtigung eines anderen Objekts getroffen hat und später dieses Objekt gekauft hat.",
       costsClosed: "Kosten abgeschlossen",
-      costsClosedHint: "Anhaken, wenn alle Kosten für diesen Verkauf eingetragen sind und nichts fehlt.",
+      costsClosedHint:
+        "Anhaken, wenn alle Kosten für diesen Verkauf eingetragen sind und nichts fehlt.",
       readyForBookkeeping: "Bereit für die Buchhaltung",
-      readyForBookkeepingHint: "Ein Hinweis für die Buchhaltung, dass dieser Verkauf geprüft wurde. Das ändert sonst nichts.",
+      readyForBookkeepingHint:
+        "Ein Hinweis für die Buchhaltung, dass dieser Verkauf geprüft wurde. Das ändert sonst nichts.",
       handledBy: "Betreut von",
       acquiredBy: "Lead gewonnen von",
       referrer: "Empfohlen von",
@@ -5323,7 +5335,8 @@ const de = {
       sum: "Summe aller Rechnungen",
       unknownCustomer: "Unbekannter Kunde",
       viewPreview: "Vorschau ansehen",
-      notReady: "Für dieses Geschäft gibt es noch keine Vorschau. Beheben Sie zuerst die Probleme im Tab Berechnung.",
+      notReady:
+        "Für dieses Geschäft gibt es noch keine Vorschau. Beheben Sie zuerst die Probleme im Tab Berechnung.",
     },
     invoices: {
       title: "Rechnungen",
@@ -5367,8 +5380,14 @@ const de = {
       creatingInvoices: "Rechnungen werden erstellt …",
       invoicesCreated: "Rechnungen erstellt.",
       createInvoicesFailed: "Die Rechnungen konnten nicht erstellt werden: {{error}}",
-      invoicedLexwareNote: "Die Rechnungen sind erstellt. Der Versand an Lexware passiert auf der Seite",
+      invoicedLexwareNote:
+        "Die Rechnungen wurden automatisch erstellt und an Lexware gesendet. Den Status finden Sie auf der Seite",
       invoicedLexwareNoteLink: "Ausgangsrechnungen",
+      createInvoicesConfirmTitle: "Rechnungen erstellen?",
+      createInvoicesConfirmDesc:
+        "Dies erstellt die Rechnungen und sendet sie sofort an Lexware, ohne weiteren Schritt. Sobald eine Rechnung in Lexware existiert, kann sie nicht mehr gelöscht werden — nur storniert, und das bleibt dort für immer sichtbar. Prüfen Sie die Zahlen, bevor Sie fortfahren.",
+      createInvoicesConfirmCancel: "Noch nicht",
+      createInvoicesConfirmAction: "Rechnungen erstellen",
       more: "Mehr",
     },
   },
