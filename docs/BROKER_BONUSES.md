@@ -73,12 +73,11 @@ database and ends with the line that switches it on. Run `deal-details-for-an-ex
   `mark_referrer_bonus_paid` already uses for referrer bonuses, extended here rather than left as the one
   bonus type with no server-side check on its paid transition.
 - **Commission-invoice payment sync:** `commission_received` depends on `outgoing_invoices.status = 'paid'`
-  actually being set for commission invoices, which nothing did before this. The Edge Function
-  `lexoffice-commission-payment-sync` (a sibling of `lexoffice-payment-sync`, which does the equivalent for
-  incoming invoices) reads payment status back from Lexware for every commission invoice with a Lexware id
-  and not yet paid, and marks it `paid` with `paid_at`/`paid_source` once Lexware confirms it is settled.
-  Scheduled job `lexoffice_commission_payment_sync`, every 15 minutes, off by default like every new job
-  here. See `docs/LEXOFFICE_SYNC.md`.
+  actually being set for commission invoices, which nothing did before this. `lexoffice-payment-sync`
+  (the same job that already reads payment status back from Lexware for incoming invoices) and
+  `lexoffice-webhook` (the real-time path) were both extended to also cover commission invoices, through
+  one shared decision in `_shared/lexoffice-client.ts` rather than a second, separate sync. See
+  `docs/LEXOFFICE_SYNC.md`.
 - **Flow:** on the deal page ("Boni für diesen Verkauf", `src/components/commission/bonus-suggestions-card.tsx`)
   an administrator creates a suggestion. It is a `broker_bonuses` row with status `suggested`, `deal_id` set and
   the calculation as its note, one per deal and type. The broker is notified, confirms it (status `submitted`,
