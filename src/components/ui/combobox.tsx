@@ -1,7 +1,7 @@
 "use client";
 
 import * as React from "react";
-import { Check, ChevronsUpDown, Plus } from "lucide-react";
+import { Check, ChevronsUpDown, Plus, X } from "lucide-react";
 
 import { cn } from "@/lib/utils";
 import { useTranslation } from "@/lib/i18n";
@@ -38,23 +38,8 @@ export interface ComboboxOption {
  * to the top of the list and always in view while options scroll. One component, one place to
  * change dropdown behaviour app-wide.
  */
-export function Combobox({
-  value,
-  onValueChange,
-  options,
-  placeholder,
-  searchPlaceholder,
-  emptyText,
-  disabled,
-  invalid,
-  className,
-  contentClassName,
-  id,
-  ariaLabel,
-  onCreateNew,
-}: {
+type ComboboxSharedProps = {
   value: string | null | undefined;
-  onValueChange: (value: string) => void;
   options: ComboboxOption[];
   placeholder?: string;
   searchPlaceholder?: string;
@@ -79,7 +64,38 @@ export function Combobox({
    * Left off, the dropdown behaves exactly as it always has.
    */
   onCreateNew?: (name: string) => void;
-}) {
+};
+
+type ComboboxChangeProps =
+  | {
+      /** Left off (the default): no clear control, exactly today's behaviour. */
+      clearable?: false;
+      onValueChange: (value: string) => void;
+    }
+  | {
+      /** Opt in to a clear ("x") control next to a selected value, disabled's own trigger. */
+      clearable: true;
+      /** Called with `null` from the clear control, alongside a chosen option's value otherwise. */
+      onValueChange: (value: string | null) => void;
+    };
+
+export function Combobox(props: ComboboxSharedProps & ComboboxChangeProps) {
+  const {
+    value,
+    onValueChange,
+    options,
+    placeholder,
+    searchPlaceholder,
+    emptyText,
+    disabled,
+    invalid,
+    className,
+    contentClassName,
+    id,
+    ariaLabel,
+    onCreateNew,
+    clearable,
+  } = props;
   const { t } = useTranslation();
   const [open, setOpen] = React.useState(false);
   // The trigger IS the control here, so it carries the id the sibling Label points at. Without it
@@ -124,6 +140,7 @@ export function Combobox({
     (opt) => opt.label.trim().toLowerCase() === trimmedSearchTerm.toLowerCase(),
   );
   const showCreateNew = Boolean(onCreateNew) && trimmedSearchTerm !== "" && !hasMatchingOption;
+  const showClear = Boolean(clearable) && selected !== null && !disabled;
 
   return (
     <Popover
@@ -137,31 +154,48 @@ export function Combobox({
         }
       }}
     >
-      <PopoverTrigger asChild>
-        <Button
-          ref={triggerRef}
-          id={id ?? fieldId ?? undefined}
-          type="button"
-          variant="outline"
-          role="combobox"
-          aria-label={ariaLabel}
-          aria-expanded={open}
-          aria-invalid={invalid}
-          disabled={disabled}
-          title={selected ? selected.label : undefined}
-          className={cn(
-            "h-9 w-full cursor-pointer justify-between whitespace-nowrap px-3 py-2 text-left font-normal shadow-none",
-            !selected && "text-muted-foreground",
-            invalid && "border-destructive focus-visible:ring-destructive/30",
-            className,
-          )}
-        >
-          <span className="min-w-0 truncate">
-            {selected ? selected.label : (placeholder ?? t("common.combobox.placeholder"))}
-          </span>
-          <ChevronsUpDown className="ml-2 size-4 shrink-0 opacity-50" />
-        </Button>
-      </PopoverTrigger>
+      <div className="relative">
+        <PopoverTrigger asChild>
+          <Button
+            ref={triggerRef}
+            id={id ?? fieldId ?? undefined}
+            type="button"
+            variant="outline"
+            role="combobox"
+            aria-label={ariaLabel}
+            aria-expanded={open}
+            aria-invalid={invalid}
+            disabled={disabled}
+            title={selected ? selected.label : undefined}
+            className={cn(
+              "h-9 w-full cursor-pointer justify-between whitespace-nowrap px-3 py-2 text-left font-normal shadow-none",
+              !selected && "text-muted-foreground",
+              invalid && "border-destructive focus-visible:ring-destructive/30",
+              showClear && "pr-8",
+              className,
+            )}
+          >
+            <span className="min-w-0 truncate">
+              {selected ? selected.label : (placeholder ?? t("common.combobox.placeholder"))}
+            </span>
+            <ChevronsUpDown className="ml-2 size-4 shrink-0 opacity-50" />
+          </Button>
+        </PopoverTrigger>
+        {showClear && (
+          <button
+            type="button"
+            onClick={(event) => {
+              event.stopPropagation();
+              (onValueChange as (value: string | null) => void)(null);
+            }}
+            aria-label={t("common.combobox.clear")}
+            title={t("common.combobox.clear")}
+            className="absolute right-2 top-1/2 -translate-y-1/2 rounded-sm p-0.5 text-muted-foreground hover:text-foreground"
+          >
+            <X className="size-3.5" />
+          </button>
+        )}
+      </div>
       <PopoverContent
         align="start"
         className={cn("w-[var(--radix-popover-trigger-width)] p-0", contentClassName)}

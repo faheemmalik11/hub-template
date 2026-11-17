@@ -1621,6 +1621,7 @@ const en = {
       search: "Search …",
       empty: "No results.",
       createNew: "Create “{{name}}” as a new customer",
+      clear: "Clear",
     },
     multiCombobox: {
       countSelected: "{{count}} selected",

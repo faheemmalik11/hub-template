@@ -86,6 +86,7 @@ export function DealFactsCard({
           searchPlaceholder={t("commissionDeals.side.payerSearch")}
           emptyText={t("commissionDeals.side.noCustomers")}
           disabled={disabled}
+          clearable
         />
       </Field>
     </div>
@@ -115,6 +116,7 @@ function BrokerFields({
           onValueChange={(handledBy) => onChange({ handledBy })}
           options={options}
           disabled={disabled}
+          clearable
         />
       </Field>
       <Field className="space-y-1.5">
@@ -137,6 +139,7 @@ function BrokerFields({
           onValueChange={(acquiredBy) => onChange({ acquiredBy })}
           options={options}
           disabled={disabled || form.ownLead}
+          clearable
         />
       </Field>
     </div>
