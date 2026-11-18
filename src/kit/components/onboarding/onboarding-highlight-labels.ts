@@ -3,6 +3,7 @@ export interface OnboardingHighlightLabels {
   waiting: string;
   outcomeTitle: string;
   nextButton: string;
+  backButton: string;
   goToPage: (pageLabel: string) => string;
   goToPageButton: string;
   scrollToTarget: string;
@@ -15,6 +16,7 @@ export const englishOnboardingHighlightLabels: OnboardingHighlightLabels = {
   waiting: "Do this now",
   outcomeTitle: "What happens next",
   nextButton: "Next",
+  backButton: "Back",
   goToPage: (pageLabel) => `This step happens on the ${pageLabel} page.`,
   goToPageButton: "Go there",
   scrollToTarget: "It is further down this page.",

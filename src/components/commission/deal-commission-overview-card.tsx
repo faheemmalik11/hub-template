@@ -2,26 +2,13 @@ import { Calculator, CheckCircle2 } from "lucide-react";
 
 import type {
   CommissionInvoiceDraft,
-  CommissionProblem,
   CommissionResult,
   CommissionSide,
 } from "@/kit/lib/commission";
 import { formatEUR } from "@/lib/data/format";
 import { useTranslation } from "@/lib/i18n";
-
-function anchorForProblem(
-  side: CommissionSide | null,
-  problem: CommissionProblem,
-): { tab: string; id: string } {
-  if (problem === "purchase_price_missing")
-    return { tab: "dealDetails", id: "field-purchase-price" };
-  if (problem === "notarised_on_missing") return { tab: "dealDetails", id: "field-notarised-on" };
-  if (problem === "vat_rate_invalid") return { tab: "dealDetails", id: "field-vat" };
-  if (problem === "fee_missing" || problem === "fee_not_positive") {
-    return { tab: "dealDetails", id: `side-${side}-fee` };
-  }
-  return { tab: "dealDetails", id: `side-${side}-payers` };
-}
+import { CommissionProblemList } from "./commission-problem-list";
+import type { DealTab } from "./deal-tabs";
 
 const UNKNOWN_FIGURE = "—";
 
@@ -62,13 +49,12 @@ export function DealCommissionOverviewCard({
 }: {
   result: CommissionResult;
   customerName: (customerId: string) => string | undefined;
-  onJumpToField?: (tab: string, id: string) => void;
+  onJumpToField?: (tab: DealTab, id: string) => void;
   /** Once invoices already exist, "valid/invalid for creating invoices" no longer means
    *  anything — that already happened. Shows the figures only, no problems/valid messaging. */
   invoiced?: boolean;
 }) {
   const { t } = useTranslation();
-  const sideName = (side: CommissionSide | null) => (side ? t(`commissionDeals.side.${side}`) : "");
   const hasProblems = result.problems.length > 0;
 
   const invoicesOfSide = (side: CommissionSide) =>
@@ -171,36 +157,11 @@ export function DealCommissionOverviewCard({
           <p className="text-xs font-medium text-destructive">
             {t("commissionDeals.overview.invalid", { count: result.problems.length })}
           </p>
-          <ul className="mt-1.5 space-y-1">
-            {result.problems.map((problem, index) => (
-              <li
-                key={index}
-                className="flex flex-wrap items-center gap-x-1.5 text-xs text-muted-foreground"
-              >
-                <span>
-                  •{" "}
-                  {t(`commissionDeals.problems.${problem.problem}`, {
-                    side: sideName(problem.side),
-                  })}
-                </span>
-                {(problem.side !== null ||
-                  problem.problem === "purchase_price_missing" ||
-                  problem.problem === "notarised_on_missing") &&
-                  onJumpToField && (
-                    <button
-                      type="button"
-                      onClick={() => {
-                        const target = anchorForProblem(problem.side, problem.problem);
-                        onJumpToField(target.tab, target.id);
-                      }}
-                      className="text-xs font-medium text-brand-dark underline-offset-4 hover:underline"
-                    >
-                      {t("commissionDeals.review.fix")}
-                    </button>
-                  )}
-              </li>
-            ))}
-          </ul>
+          <CommissionProblemList
+            problems={result.problems}
+            onJumpToField={onJumpToField}
+            className="mt-1.5"
+          />
         </div>
       ) : (
         <div className="mt-3 flex items-center gap-1.5 text-xs text-emerald-700">

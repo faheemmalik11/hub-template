@@ -91,6 +91,7 @@ function ActivePracticeTask({ task }: { task: OnboardingTask }) {
     waiting: t("onboarding.practice.waiting"),
     outcomeTitle: t("onboarding.practice.outcomeTitle"),
     nextButton: t("onboarding.practice.panelNext"),
+    backButton: t("onboarding.practice.panelBack"),
     goToPage: (page: string) => t("onboarding.practice.goToPage", { page }),
     goToPageButton: t("onboarding.practice.goToPageButton"),
     scrollToTarget: t("onboarding.practice.scrollToTarget"),

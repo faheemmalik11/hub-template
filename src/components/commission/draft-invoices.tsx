@@ -1,8 +1,10 @@
 import { AlertTriangle, CheckCircle2 } from "lucide-react";
 
-import type { CommissionProblem, CommissionResult, CommissionSide } from "@/kit/lib/commission";
+import type { CommissionResult, CommissionSide } from "@/kit/lib/commission";
 import { formatEUR } from "@/lib/data/format";
 import { useTranslation } from "@/lib/i18n";
+import { CommissionProblemList } from "./commission-problem-list";
+import type { DealTab } from "./deal-tabs";
 
 function euros(cents: number): string {
   return formatEUR(cents / 100);
@@ -10,20 +12,6 @@ function euros(cents: number): string {
 
 function percent(value: number): string {
   return value.toLocaleString("de-DE", { maximumFractionDigits: 3 });
-}
-
-function anchorForProblem(
-  side: CommissionSide | null,
-  problem: CommissionProblem,
-): { tab: string; id: string } {
-  if (problem === "purchase_price_missing")
-    return { tab: "dealDetails", id: "field-purchase-price" };
-  if (problem === "notarised_on_missing") return { tab: "dealDetails", id: "field-notarised-on" };
-  if (problem === "vat_rate_invalid") return { tab: "dealDetails", id: "field-vat" };
-  if (problem === "fee_missing" || problem === "fee_not_positive") {
-    return { tab: "dealDetails", id: `side-${side}-fee` };
-  }
-  return { tab: "dealDetails", id: `side-${side}-payers` };
 }
 
 export function DraftInvoices({
@@ -34,7 +22,7 @@ export function DraftInvoices({
 }: {
   result: CommissionResult;
   customerName: (customerId: string) => string | undefined;
-  onJumpToField?: (tab: string, id: string) => void;
+  onJumpToField?: (tab: DealTab, id: string) => void;
   /** Once invoices already exist, there's nothing left to validate before creating them — show
    *  the invoice list as a historical record instead of a validation problems box. */
   invoiced?: boolean;
@@ -51,36 +39,11 @@ export function DraftInvoices({
             <p className="text-sm font-medium text-foreground">
               {t("commissionDeals.problems.title")}
             </p>
-            <ul className="mt-2 space-y-1">
-              {result.problems.map((problem, index) => (
-                <li
-                  key={index}
-                  className="flex flex-wrap items-center gap-x-1.5 text-xs text-muted-foreground"
-                >
-                  <span>
-                    •{" "}
-                    {t(`commissionDeals.problems.${problem.problem}`, {
-                      side: sideName(problem.side),
-                    })}
-                  </span>
-                  {(problem.side !== null ||
-                    problem.problem === "purchase_price_missing" ||
-                    problem.problem === "notarised_on_missing") &&
-                    onJumpToField && (
-                      <button
-                        type="button"
-                        onClick={() => {
-                          const target = anchorForProblem(problem.side, problem.problem);
-                          onJumpToField(target.tab, target.id);
-                        }}
-                        className="text-xs font-medium text-brand-dark underline-offset-4 hover:underline"
-                      >
-                        {t("commissionDeals.review.fix")}
-                      </button>
-                    )}
-                </li>
-              ))}
-            </ul>
+            <CommissionProblemList
+              problems={result.problems}
+              onJumpToField={onJumpToField}
+              className="mt-2"
+            />
           </div>
         </div>
       </div>

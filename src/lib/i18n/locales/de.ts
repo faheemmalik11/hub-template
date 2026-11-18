@@ -1237,6 +1237,7 @@ const de = {
     progress: "Ihr Fortschritt",
     practice: {
       panelNext: "Nächster Schritt",
+      panelBack: "Zurück",
       panelFinishStep: "Fertig",
       panelReset: "Von vorn beginnen",
       panelFinished: "Geschafft! Sie haben alle Schritte abgeschlossen.",

@@ -11,6 +11,9 @@ export interface OnboardingLearningCardProps {
   labels: OnboardingHighlightLabels;
   showHelp: boolean;
   onCompleteInfoStep: () => void;
+  onNext: () => void;
+  onBack: () => void;
+  canGoBack: boolean;
   pathname: string;
 }
 
@@ -21,6 +24,9 @@ export function OnboardingLearningCard({
   labels,
   showHelp,
   onCompleteInfoStep,
+  onNext,
+  onBack,
+  canGoBack,
   pathname,
 }: OnboardingLearningCardProps) {
   const showSampleFile =
@@ -60,22 +66,51 @@ export function OnboardingLearningCard({
         </div>
       )}
       {step.type === "info" ? (
-        <div className="mt-3 flex justify-end">
+        <div className="mt-3 flex items-center justify-end gap-1.5">
+          <Button
+            type="button"
+            variant="ghost"
+            onClick={onBack}
+            disabled={!canGoBack}
+            className="h-6 rounded-full bg-muted px-2.5 text-[11px] font-semibold text-muted-foreground hover:bg-muted/70 sm:h-7 sm:text-xs"
+          >
+            {labels.backButton}
+          </Button>
           <Button
             type="button"
             onClick={onCompleteInfoStep}
-            className="h-7 rounded-lg bg-[var(--onboarding-accent,var(--primary))] px-3.5 text-[12px] sm:h-8 sm:px-5 sm:text-sm"
+            className="h-6 rounded-full bg-[var(--onboarding-accent,var(--primary))] px-2.5 text-[11px] font-semibold text-primary-foreground hover:opacity-90 sm:h-7 sm:text-xs"
           >
             {labels.nextButton}
           </Button>
         </div>
       ) : (
-        <div className="mt-3 flex items-center gap-1.5 text-[12px] font-medium text-[var(--onboarding-accent,var(--primary))] sm:text-sm">
-          <span className="relative flex size-2">
-            <span className="absolute inline-flex size-full animate-ping rounded-full bg-[var(--onboarding-accent,var(--primary))] opacity-75" />
-            <span className="relative inline-flex size-2 rounded-full bg-[var(--onboarding-accent,var(--primary))]" />
-          </span>
-          {labels.waiting}
+        <div className="mt-3 flex items-center justify-between gap-1.5">
+          <div className="flex items-center gap-1.5 text-[12px] font-medium text-[var(--onboarding-accent,var(--primary))] sm:text-sm">
+            <span className="relative flex size-2">
+              <span className="absolute inline-flex size-full animate-ping rounded-full bg-[var(--onboarding-accent,var(--primary))] opacity-75" />
+              <span className="relative inline-flex size-2 rounded-full bg-[var(--onboarding-accent,var(--primary))]" />
+            </span>
+            {labels.waiting}
+          </div>
+          <div className="flex items-center gap-1.5">
+            <Button
+              type="button"
+              variant="ghost"
+              onClick={onBack}
+              disabled={!canGoBack}
+              className="h-6 rounded-full bg-muted px-2.5 text-[11px] font-semibold text-muted-foreground hover:bg-muted/70 sm:h-7 sm:text-xs"
+            >
+              {labels.backButton}
+            </Button>
+            <Button
+              type="button"
+              onClick={onNext}
+              className="h-6 rounded-full bg-[var(--onboarding-accent,var(--primary))] px-2.5 text-[11px] font-semibold text-primary-foreground hover:opacity-90 sm:h-7 sm:text-xs"
+            >
+              {labels.nextButton}
+            </Button>
+          </div>
         </div>
       )}
     </div>

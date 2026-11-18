@@ -13,6 +13,9 @@ export interface OnboardingTaskRunner {
   isFinished: boolean;
   showHelp: boolean;
   completeInfoStep: () => void;
+  goNext: () => void;
+  goBack: () => void;
+  canGoBack: boolean;
   restart: () => void;
 }
 
@@ -51,6 +54,15 @@ export function useOnboardingTaskRunner(
     if (!isFinished && currentStep.type === "info") advanceFrom(currentStepIndex);
   }, [isFinished, currentStep, currentStepIndex, advanceFrom]);
 
+  const goNext = useCallback(() => {
+    if (!isFinished) advanceFrom(currentStepIndex);
+  }, [isFinished, currentStepIndex, advanceFrom]);
+
+  const goBack = useCallback(() => {
+    setCurrentStepIndex((index) => Math.max(0, index - 1));
+    setHelpStepIndex(null);
+  }, []);
+
   const restart = useCallback(() => {
     setCurrentStepIndex(0);
     setHelpStepIndex(null);
@@ -72,6 +84,9 @@ export function useOnboardingTaskRunner(
     isFinished,
     showHelp: helpStepIndex === currentStepIndex,
     completeInfoStep,
+    goNext,
+    goBack,
+    canGoBack: currentStepIndex > 0,
     restart,
   };
 }

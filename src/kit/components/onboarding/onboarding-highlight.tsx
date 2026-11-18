@@ -35,7 +35,16 @@ export function OnboardingHighlight({
   pathname,
   labels = englishOnboardingHighlightLabels,
 }: OnboardingHighlightProps) {
-  const { currentStep, currentStepIndex, task, isFinished, completeInfoStep } = runner;
+  const {
+    currentStep,
+    currentStepIndex,
+    task,
+    isFinished,
+    completeInfoStep,
+    goNext,
+    goBack,
+    canGoBack,
+  } = runner;
   const target = isFinished ? null : currentStep.target;
   const stepPath = isFinished ? null : (currentStep.path ?? null);
   const { rect, visibleArea, onWrongPage, targetOffScreen } = useOnboardingTargetTracking(
@@ -113,6 +122,9 @@ export function OnboardingHighlight({
       labels={labels}
       showHelp={runner.showHelp}
       onCompleteInfoStep={completeInfoStep}
+      onNext={goNext}
+      onBack={goBack}
+      canGoBack={canGoBack}
       pathname={pathname}
     />
   );
