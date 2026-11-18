@@ -6,10 +6,12 @@ also reach PropStack, and the Hub should point out when any of them is still mis
 
 ## What the briefing asked for, and what's actually implemented
 
-1. **A prompt about unmaintained fields.** Already built before this feature — `reviewLines` in
-   `src/routes/commission-deals/$id.tsx` already flags a missing `purchase_price`, a missing
-   `notarised_on`, or a missing fee on either side, each with a "Fix" link jumping to the field.
-   Nothing added for this.
+1. **A prompt about unmaintained fields.** Still open, and narrower in the code than this doc
+   claimed until 18.11.2026. `reviewLines` in `src/routes/commission-deals/$id.tsx` flags exactly
+   two things: a missing fee on either side, and a missing payment due date. There is no
+   `purchase_price` or `notarised_on` check anywhere in `src/`. `purchase_price` genuinely can be
+   null, so the realised-price half of this item is unbuilt. `notarised_on` cannot be null in
+   practice, because the view coalesces `sold_on` to `became_sold_at`.
 2. **Writing back to PropStack as soon as a value is added or corrected in the Hub.** New, and only
    three of the four fields actually work — see Status below:
    - `supabase/functions/_shared/propstack-client.ts`'s `updateUnitFields()` — a sibling to the
