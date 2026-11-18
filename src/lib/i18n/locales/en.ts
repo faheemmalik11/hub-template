@@ -1433,6 +1433,9 @@ const en = {
       buyerRateHelp: "Switch off the seller side if only the buyer side pays.",
       buyerPayerInstruction: "Pick TEST Buyer as the paying party.",
       buyerPayerOutcome: "A commission side also needs at least one party who actually pays it.",
+      resolveSellerInstruction: 'Switch off "Seller pays commission".',
+      resolveSellerOutcome:
+        "Only the buyer side is set up in this practice. A commission side with no fee and no payer blocks saving, so the seller side needs to be switched off.",
       viewCalculationInstruction: 'Open the "Calculation" tab.',
       viewCalculationOutcome:
         "This shows the full commission math: each side's fee, VAT, and the total, line by line.",

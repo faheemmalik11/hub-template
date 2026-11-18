@@ -5,6 +5,7 @@ import type { PracticeTranslate } from "./practice-invoice-task";
 export const COMMISSION_DEAL_PRACTICE_TASK_ID = "commission-deal";
 
 const COMMISSION_DEALS_PATH = "/commission-deals";
+const COMMISSION_DEAL_DETAIL_PATH = "/commission-deals/{dealId}";
 
 export function buildCommissionDealPracticeTask(t: PracticeTranslate): OnboardingTask {
   const text = (key: string) => t(`onboarding.commissionDeal.${key}`);
@@ -51,6 +52,7 @@ export function buildCommissionDealPracticeTask(t: PracticeTranslate): Onboardin
         target: "commission-create-deal",
         path: COMMISSION_DEALS_PATH,
         pageLabel: pageCommission,
+        irreversible: true,
         completionCondition: { eventType: "commission_deal_created" },
       },
       {
@@ -62,6 +64,9 @@ export function buildCommissionDealPracticeTask(t: PracticeTranslate): Onboardin
         expectedOutcome: text("notaryDateOutcome"),
         target: "commission-notarised-on",
         placement: "top",
+        path: COMMISSION_DEAL_DETAIL_PATH,
+        pageLabel: pageCommission,
+        requiresNextClick: true,
         completionCondition: { eventType: "commission_deal_notary_date_set" },
       },
       {
@@ -73,6 +78,9 @@ export function buildCommissionDealPracticeTask(t: PracticeTranslate): Onboardin
         expectedOutcome: text("purchasePriceOutcome"),
         target: "commission-purchase-price",
         placement: "top",
+        path: COMMISSION_DEAL_DETAIL_PATH,
+        pageLabel: pageCommission,
+        requiresNextClick: true,
         completionCondition: { eventType: "commission_deal_purchase_price_set" },
       },
       {
@@ -85,6 +93,9 @@ export function buildCommissionDealPracticeTask(t: PracticeTranslate): Onboardin
         helpText: text("buyerRateHelp"),
         target: "commission-buyer-rate",
         placement: "top",
+        path: COMMISSION_DEAL_DETAIL_PATH,
+        pageLabel: pageCommission,
+        requiresNextClick: true,
         completionCondition: { eventType: "commission_deal_buyer_rate_set" },
       },
       {
@@ -96,7 +107,22 @@ export function buildCommissionDealPracticeTask(t: PracticeTranslate): Onboardin
         expectedOutcome: text("buyerPayerOutcome"),
         target: "commission-buyer-payer",
         placement: "top",
+        path: COMMISSION_DEAL_DETAIL_PATH,
+        pageLabel: pageCommission,
         completionCondition: { eventType: "commission_deal_buyer_payer_set" },
+      },
+      {
+        id: "commission-resolve-seller",
+        group: text("groupDetails"),
+        type: "check",
+        role: "preparer",
+        instruction: text("resolveSellerInstruction"),
+        expectedOutcome: text("resolveSellerOutcome"),
+        target: "commission-seller-toggle",
+        placement: "top",
+        path: COMMISSION_DEAL_DETAIL_PATH,
+        pageLabel: pageCommission,
+        completionCondition: { eventType: "commission_deal_financials_valid" },
       },
       {
         id: "commission-view-calculation",
@@ -107,6 +133,8 @@ export function buildCommissionDealPracticeTask(t: PracticeTranslate): Onboardin
         expectedOutcome: text("viewCalculationOutcome"),
         helpText: text("viewCalculationHelp"),
         target: "commission-calculation-tab",
+        path: COMMISSION_DEAL_DETAIL_PATH,
+        pageLabel: pageCommission,
         completionCondition: { eventType: "commission_deal_calculation_viewed" },
       },
       {
@@ -117,6 +145,8 @@ export function buildCommissionDealPracticeTask(t: PracticeTranslate): Onboardin
         instruction: text("saveDetailsInstruction"),
         expectedOutcome: text("saveDetailsOutcome"),
         target: "commission-save",
+        path: COMMISSION_DEAL_DETAIL_PATH,
+        pageLabel: pageCommission,
         completionCondition: { eventType: "commission_deal_saved", data: { ready: true } },
       },
       {
@@ -129,6 +159,8 @@ export function buildCommissionDealPracticeTask(t: PracticeTranslate): Onboardin
         helpText: text("ownershipHelp"),
         target: "commission-handled-by|commission-acquired-by",
         placement: "top",
+        path: COMMISSION_DEAL_DETAIL_PATH,
+        pageLabel: pageCommission,
         completionCondition: { eventType: "commission_deal_ownership_split" },
       },
       {
@@ -139,6 +171,8 @@ export function buildCommissionDealPracticeTask(t: PracticeTranslate): Onboardin
         instruction: text("saveOwnershipInstruction"),
         expectedOutcome: text("saveOwnershipOutcome"),
         target: "commission-save",
+        path: COMMISSION_DEAL_DETAIL_PATH,
+        pageLabel: pageCommission,
         completionCondition: { eventType: "commission_deal_saved", data: { ready: true } },
       },
       {
@@ -149,6 +183,9 @@ export function buildCommissionDealPracticeTask(t: PracticeTranslate): Onboardin
         instruction: text("approveInstruction"),
         expectedOutcome: text("approveOutcome"),
         target: "commission-approve",
+        path: COMMISSION_DEAL_DETAIL_PATH,
+        pageLabel: pageCommission,
+        irreversible: true,
         completionCondition: { eventType: "commission_deal_approved" },
       },
       {
@@ -160,6 +197,8 @@ export function buildCommissionDealPracticeTask(t: PracticeTranslate): Onboardin
         expectedOutcome: text("createInvoicesOutcome"),
         helpText: text("createInvoicesHelp"),
         target: "commission-create-invoices",
+        path: COMMISSION_DEAL_DETAIL_PATH,
+        pageLabel: pageCommission,
         completionCondition: { eventType: "commission_deal_invoices_created" },
       },
     ],

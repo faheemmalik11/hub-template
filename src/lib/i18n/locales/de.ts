@@ -1505,6 +1505,9 @@ const de = {
       buyerPayerInstruction: "Wählen Sie TEST Buyer als zahlende Partei.",
       buyerPayerOutcome:
         "Eine Provisionsseite braucht außerdem mindestens eine Partei, die sie tatsächlich zahlt.",
+      resolveSellerInstruction: "Schalten Sie „Verkäufer zahlt Provision“ aus.",
+      resolveSellerOutcome:
+        "In dieser Übung ist nur die Käuferseite eingerichtet. Eine Provisionsseite ohne Gebühr und ohne zahlende Partei blockiert das Speichern, daher muss die Verkäuferseite ausgeschaltet werden.",
       viewCalculationInstruction: "Öffnen Sie den Tab „Berechnung“.",
       viewCalculationOutcome:
         "Hier sehen Sie die vollständige Provisionsrechnung: Gebühr je Seite, Steuer und Summe, Zeile für Zeile.",

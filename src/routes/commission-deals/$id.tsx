@@ -268,6 +268,10 @@ function DealEditor({ deal }: { deal: Deal }) {
     if (form.notarisedOn.trim() !== "")
       emitOnboardingEvent({ type: "commission_deal_notary_date_set", recordId: deal.id });
   }, [form.notarisedOn, deal.id, emitOnboardingEvent]);
+  useEffect(() => {
+    if (result.ok)
+      emitOnboardingEvent({ type: "commission_deal_financials_valid", recordId: deal.id });
+  }, [result.ok, deal.id, emitOnboardingEvent]);
   const onPurchasePriceBlur = () => {
     if (parseDecimal(form.purchasePrice) !== null)
       emitOnboardingEvent({ type: "commission_deal_purchase_price_set", recordId: deal.id });
