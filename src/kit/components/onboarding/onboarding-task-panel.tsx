@@ -12,6 +12,7 @@ import {
 import { OnboardingStepList } from "./onboarding-step-list";
 import { SampleFileChip } from "./sample-file-chip";
 import type { OnboardingStep, OnboardingStepStatus } from "@/kit/onboarding";
+import { resolvedStepPath } from "@/kit/onboarding/resolve-practice-task";
 import type { OnboardingTaskRunner } from "./use-onboarding-task-runner";
 import { useOnboardingTargetTracking } from "./use-onboarding-target-tracking";
 
@@ -54,7 +55,7 @@ export function OnboardingTaskPanel({
     runner;
   const completedCount = stepStatuses.filter((status) => status === "done").length;
   const target = isFinished ? null : currentStep.target;
-  const stepPath = isFinished ? null : (currentStep.path ?? null);
+  const stepPath = isFinished ? null : resolvedStepPath(currentStep.path);
   const { onWrongPage, targetOffScreen } = useOnboardingTargetTracking(target, stepPath, pathname);
   const renderStepExtra = (step: OnboardingStep, _index: number, status: OnboardingStepStatus) => {
     if (status !== "active" || !step.sampleFileUrl || !labels.sampleFileButton) return null;

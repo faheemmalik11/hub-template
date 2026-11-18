@@ -40,6 +40,7 @@ import { usePaymentRight } from "@/lib/payment-right";
 import { PERMISSIONS } from "@/config/permissions";
 import { useTranslation } from "@/lib/i18n";
 
+import { COMMISSION_DEAL_PRACTICE_TASK_ID } from "./commission-deal-practice-task";
 import { discardPracticeDocuments } from "./find-live-practice-documents";
 import { demoCompanyAndPropertyCodes } from "./practice-placeholder-values";
 import {
@@ -50,6 +51,7 @@ import {
 } from "./practice-step-skip";
 import { findPracticeTask } from "./practice-tasks";
 import { seededRecordValues, taskSeedsItsOwnRecords } from "./practice-seeded-records";
+import { seedCommissionDealPracticeData } from "./seed-commission-deal-practice-data";
 import { seedStopCasesPracticeData } from "./seed-stop-cases-practice-data";
 import { advancePracticeDocumentAsStandIn } from "./practice-approval.functions";
 
@@ -120,12 +122,16 @@ function ActivePracticeTask({ task }: { task: OnboardingTask }) {
   const [lastUploadedId, setLastUploadedId] = useState<string | null>(
     storedProgress?.uploadedIds.at(-1) ?? null,
   );
+  const [lastCreatedDealId, setLastCreatedDealId] = useState<string | null>(null);
   useEffect(() => {
     if (!events) return;
     return events.subscribe((event) => {
       if (event.type === "document_uploaded") {
         uploadedDocumentIds.current.push(event.recordId);
         setLastUploadedId(event.recordId);
+      }
+      if (event.type === "commission_deal_created") {
+        setLastCreatedDealId(event.recordId);
       }
     });
   }, [events]);
@@ -165,7 +171,11 @@ function ActivePracticeTask({ task }: { task: OnboardingTask }) {
         task,
         {
           lastUploadedId,
-          values: { ...demoCompanyAndPropertyCodes(appUserId), ...seededRecordIds },
+          values: {
+            ...demoCompanyAndPropertyCodes(appUserId),
+            ...seededRecordIds,
+            ...(lastCreatedDealId ? { dealId: lastCreatedDealId } : {}),
+          },
         },
         {
           userRoles,
@@ -177,7 +187,7 @@ function ActivePracticeTask({ task }: { task: OnboardingTask }) {
           },
         },
       ),
-    [task, lastUploadedId, seededRecordIds, appUserId, userRoles.join(","), t],
+    [task, lastUploadedId, lastCreatedDealId, seededRecordIds, appUserId, userRoles.join(","), t],
   );
   const runner = useOnboardingTaskRunner(resolvedTask, {
     initialStepIndex: storedProgress?.stepIndex ?? 0,
@@ -259,6 +269,12 @@ function ActivePracticeTask({ task }: { task: OnboardingTask }) {
   const restartTask = async () => {
     setRestarting(true);
     try {
+      if (task.id === COMMISSION_DEAL_PRACTICE_TASK_ID) {
+        await seedCommissionDealPracticeData();
+        setLastCreatedDealId(null);
+        await queryClient.invalidateQueries();
+        return;
+      }
       if (!taskSeedsItsOwnRecords(task.id)) {
         await discardUploadedDocuments();
         return;

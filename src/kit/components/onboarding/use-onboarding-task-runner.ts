@@ -1,4 +1,4 @@
-import { useCallback, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 
 import type { OnboardingStep, OnboardingStepStatus, OnboardingTask } from "@/kit/onboarding";
 
@@ -16,6 +16,7 @@ export interface OnboardingTaskRunner {
   goNext: () => void;
   goBack: () => void;
   canGoBack: boolean;
+  canGoNext: boolean;
   restart: () => void;
 }
 
@@ -29,8 +30,22 @@ export function useOnboardingTaskRunner(
 ): OnboardingTaskRunner {
   const [currentStepIndex, setCurrentStepIndex] = useState(options?.initialStepIndex ?? 0);
   const [helpStepIndex, setHelpStepIndex] = useState<number | null>(null);
+  const [stepsReadyToAdvance, setStepsReadyToAdvance] = useState<Set<number>>(new Set());
+  const [furthestIndexReached, setFurthestIndexReached] = useState(currentStepIndex);
   const isFinished = currentStepIndex >= task.steps.length;
   const currentStep = task.steps[currentStepIndex] ?? task.steps[task.steps.length - 1];
+
+  const backFloor = useMemo(() => {
+    let floor = 0;
+    for (let index = 0; index < Math.min(furthestIndexReached, task.steps.length); index++) {
+      if (task.steps[index].irreversible) floor = index + 1;
+    }
+    return floor;
+  }, [task.steps, furthestIndexReached]);
+
+  useEffect(() => {
+    setFurthestIndexReached((furthest) => Math.max(furthest, currentStepIndex));
+  }, [currentStepIndex]);
 
   const advanceFrom = useCallback(
     (fromIndex: number) => {
@@ -43,7 +58,10 @@ export function useOnboardingTaskRunner(
 
   useOnboardingCompletion(
     !isFinished && currentStep.type !== "info" ? currentStep.completionCondition : null,
-    () => advanceFrom(currentStepIndex),
+    () => {
+      setStepsReadyToAdvance((steps) => new Set(steps).add(currentStepIndex));
+      if (!currentStep.requiresNextClick) advanceFrom(currentStepIndex);
+    },
   );
   useOnboardingWrongAttempt(
     !isFinished && currentStep.type !== "info" ? currentStep.completionCondition : null,
@@ -54,18 +72,26 @@ export function useOnboardingTaskRunner(
     if (!isFinished && currentStep.type === "info") advanceFrom(currentStepIndex);
   }, [isFinished, currentStep, currentStepIndex, advanceFrom]);
 
+  const canGoNext =
+    isFinished ||
+    currentStep.type === "info" ||
+    !currentStep.completionCondition ||
+    stepsReadyToAdvance.has(currentStepIndex);
+
   const goNext = useCallback(() => {
-    if (!isFinished) advanceFrom(currentStepIndex);
-  }, [isFinished, currentStepIndex, advanceFrom]);
+    if (!isFinished && canGoNext) advanceFrom(currentStepIndex);
+  }, [isFinished, canGoNext, currentStepIndex, advanceFrom]);
 
   const goBack = useCallback(() => {
-    setCurrentStepIndex((index) => Math.max(0, index - 1));
+    setCurrentStepIndex((index) => Math.max(backFloor, index - 1));
     setHelpStepIndex(null);
-  }, []);
+  }, [backFloor]);
 
   const restart = useCallback(() => {
     setCurrentStepIndex(0);
     setHelpStepIndex(null);
+    setStepsReadyToAdvance(new Set());
+    setFurthestIndexReached(0);
   }, []);
 
   const stepStatuses = useMemo<OnboardingStepStatus[]>(
@@ -86,7 +112,8 @@ export function useOnboardingTaskRunner(
     completeInfoStep,
     goNext,
     goBack,
-    canGoBack: currentStepIndex > 0,
+    canGoBack: currentStepIndex > backFloor,
+    canGoNext,
     restart,
   };
 }

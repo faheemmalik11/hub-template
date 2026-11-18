@@ -33,14 +33,25 @@ const DialogOverlay = React.forwardRef<
 ));
 DialogOverlay.displayName = DialogPrimitive.Overlay.displayName;
 
+// The onboarding highlight card floats outside this dialog's DOM, so clicking it reads as an outside click otherwise.
+function keepOpenForOnboardingCard(event: Event) {
+  if (event.target instanceof Element && event.target.closest("[data-onboarding-card]")) {
+    event.preventDefault();
+  }
+}
+
 const DialogContent = React.forwardRef<
   React.ElementRef<typeof DialogPrimitive.Content>,
   React.ComponentPropsWithoutRef<typeof DialogPrimitive.Content>
->(({ className, children, ...props }, ref) => (
+>(({ className, children, onPointerDownOutside, ...props }, ref) => (
   <DialogPortal>
     <DialogOverlay />
     <DialogPrimitive.Content
       ref={ref}
+      onPointerDownOutside={(event) => {
+        keepOpenForOnboardingCard(event);
+        onPointerDownOutside?.(event);
+      }}
       className={cn(
         // grid-cols-[minmax(0,1fr)], not the plain implicit column `grid` alone: a grid item's
         // default min-width is `auto` (its own content's min-content size), not 0. Any dialog

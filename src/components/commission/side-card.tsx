@@ -133,6 +133,7 @@ export function SideCard({
         <label className="flex items-center gap-2 text-sm text-muted-foreground">
           {t(`commissionDeals.side.${side}`)} {t("commissionDeals.side.pays")}
           <Switch
+            data-tour={side === "seller" ? "commission-seller-toggle" : undefined}
             checked={value.enabled}
             onCheckedChange={(enabled) => set({ enabled })}
             disabled={disabled}
