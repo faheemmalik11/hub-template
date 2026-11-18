@@ -5086,6 +5086,7 @@ const en = {
     },
     review: {
       title: "What still needs to be completed?",
+      notBlockingTitle: "Still to complete. This does not block invoicing.",
       fix: "Go to field",
       missingFee: "Commission rate or amount is missing",
       missingDueDate: "Enter a payment due date or explain when payment is expected",

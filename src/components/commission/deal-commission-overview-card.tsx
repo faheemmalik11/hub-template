@@ -5,9 +5,10 @@ import type {
   CommissionResult,
   CommissionSide,
 } from "@/kit/lib/commission";
+import type { ReviewLine } from "@/kit/ui";
 import { formatEUR } from "@/lib/data/format";
 import { useTranslation } from "@/lib/i18n";
-import { CommissionProblemList } from "./commission-problem-list";
+import { CommissionProblemList, CommissionReviewLineList } from "./commission-problem-list";
 import type { DealTab } from "./deal-tabs";
 
 const UNKNOWN_FIGURE = "—";
@@ -46,6 +47,7 @@ export function DealCommissionOverviewCard({
   customerName,
   onJumpToField,
   invoiced,
+  reviewLines = [],
 }: {
   result: CommissionResult;
   customerName: (customerId: string) => string | undefined;
@@ -53,6 +55,9 @@ export function DealCommissionOverviewCard({
   /** Once invoices already exist, "valid/invalid for creating invoices" no longer means
    *  anything — that already happened. Shows the figures only, no problems/valid messaging. */
   invoiced?: boolean;
+  /** Nothing here blocks invoicing. The caller passes only the lines whose field it will let the
+   *  reader edit, so a line never appears without a working way to act on it. */
+  reviewLines?: readonly ReviewLine[];
 }) {
   const { t } = useTranslation();
   const hasProblems = result.problems.length > 0;
@@ -167,6 +172,19 @@ export function DealCommissionOverviewCard({
         <div className="mt-3 flex items-center gap-1.5 text-xs text-emerald-700">
           <CheckCircle2 aria-hidden className="size-3.5 shrink-0" />
           {t("commissionDeals.overview.valid")}
+        </div>
+      )}
+
+      {reviewLines.length > 0 && (
+        <div className="mt-3 border-t border-border pt-3">
+          <p className="text-xs font-medium text-muted-foreground">
+            {t("commissionDeals.review.notBlockingTitle")}
+          </p>
+          <CommissionReviewLineList
+            lines={reviewLines}
+            onJumpToField={onJumpToField}
+            className="mt-1.5"
+          />
         </div>
       )}
     </section>

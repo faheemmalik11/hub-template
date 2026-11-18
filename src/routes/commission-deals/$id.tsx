@@ -106,6 +106,8 @@ const DEAL_TAB_LABEL_KEY: Record<DealTab, string> = {
   invoices: "commissionDeals.tabs.invoices",
 };
 
+const EMPTY_REVIEW_LINES: readonly ReviewLine[] = [];
+
 export const Route = createFileRoute("/commission-deals/$id")({
   head: () => ({ meta: [{ title: pageTitle("Provision") }] }),
   staticData: { titleKey: "commission" },
@@ -272,17 +274,17 @@ function DealEditor({ deal }: { deal: Deal }) {
     if (result.ok)
       emitOnboardingEvent({ type: "commission_deal_financials_valid", recordId: deal.id });
   }, [result.ok, deal.id, emitOnboardingEvent]);
-  const onPurchasePriceBlur = () => {
+  useEffect(() => {
     if (parseDecimal(form.purchasePrice) !== null)
       emitOnboardingEvent({ type: "commission_deal_purchase_price_set", recordId: deal.id });
-  };
-  const onBuyerRateBlur = () => {
+  }, [form.purchasePrice, deal.id, emitOnboardingEvent]);
+  useEffect(() => {
     const rateSet =
       form.buyer.feeKind === "percent"
         ? parseDecimal(form.buyer.rate) !== null
         : parseDecimal(form.buyer.amount) !== null;
     if (rateSet) emitOnboardingEvent({ type: "commission_deal_buyer_rate_set", recordId: deal.id });
-  };
+  }, [form.buyer.feeKind, form.buyer.rate, form.buyer.amount, deal.id, emitOnboardingEvent]);
   useEffect(() => {
     if (form.buyer.parties.some((party) => party.customerId))
       emitOnboardingEvent({ type: "commission_deal_buyer_payer_set", recordId: deal.id });
@@ -798,40 +800,6 @@ function DealEditor({ deal }: { deal: Deal }) {
         </div>
       )}
 
-      {/* A gentle nudge, not a warning: nothing here blocks saving or approving, and the whole
-          point of the payment-due-date rule (briefing §4.3) is "don't chase anyone without a
-          date" — so this reads calmly, the same way the direct-debit note on the invoice detail
-          page does, not with the red/amber treatment reserved for something that needs fixing
-          before the record can move on. */}
-      {reviewLines.length > 0 && (
-        <div className="mt-4 flex items-start gap-3 rounded-xl border border-border bg-muted/40 p-4 text-base text-foreground">
-          <Info className="mt-0.5 size-5 shrink-0 text-brand" />
-          <div className="min-w-0 flex-1">
-            <p className="font-medium">{t("commissionDeals.review.title")}</p>
-            <ul className="mt-1 space-y-1">
-              {reviewLines.map((line) => (
-                <li
-                  key={line.field}
-                  className="flex flex-wrap items-center gap-x-1.5 text-sm text-muted-foreground"
-                >
-                  {line.title && <span className="font-medium text-foreground">{line.title}:</span>}
-                  <span>{line.text}</span>
-                  {line.target && mayEditFinancials && (
-                    <button
-                      type="button"
-                      onClick={() => jumpToAnchor(line.target!.tab, line.target!.anchor)}
-                      className="text-xs font-medium text-brand underline-offset-4 hover:underline"
-                    >
-                      {t("commissionDeals.review.fix")}
-                    </button>
-                  )}
-                </li>
-              ))}
-            </ul>
-          </div>
-        </div>
-      )}
-
       {deal.status === "approved" && deal.approved_at && (
         <div className="mt-4 rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-900">
           {t("commissionDeals.actions.approvedNote", {
@@ -923,7 +891,6 @@ function DealEditor({ deal }: { deal: Deal }) {
                     onChange={(event) =>
                       set({ purchasePrice: sanitizeAmountInput(event.target.value) })
                     }
-                    onBlur={onPurchasePriceBlur}
                     placeholder="610.000"
                     disabled={!mayEditFinancials}
                   />
@@ -1010,7 +977,6 @@ function DealEditor({ deal }: { deal: Deal }) {
                         side={side}
                         value={form[side]}
                         onChange={(next) => set({ [side]: next })}
-                        onRateBlur={side === "buyer" ? onBuyerRateBlur : undefined}
                         customerOptions={customerOptions}
                         createCustomer={addCustomer}
                         disabled={!mayEditFinancials}
@@ -1080,6 +1046,7 @@ function DealEditor({ deal }: { deal: Deal }) {
               customerName={customerName}
               onJumpToField={mayEditFinancials ? jumpToAnchor : undefined}
               invoiced={deal.status === "invoiced"}
+              reviewLines={mayEditFinancials ? reviewLines : EMPTY_REVIEW_LINES}
             />
           )}
           {suggestsBonuses && deal.status !== "settled" && (

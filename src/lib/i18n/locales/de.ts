@@ -5271,6 +5271,7 @@ const de = {
     },
     review: {
       title: "Was muss noch ausgefüllt werden?",
+      notBlockingTitle: "Noch zu ergänzen. Das blockiert die Abrechnung nicht.",
       fix: "Zum Feld springen",
       missingFee: "Provisionssatz oder -betrag fehlt",
       missingDueDate: "Zahlungsziel eingeben oder erklären, wann die Zahlung erwartet wird",
