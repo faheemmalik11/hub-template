@@ -1703,6 +1703,12 @@ const en = {
       asc: "Ascending",
       desc: "Descending",
     },
+    unsavedChanges: {
+      title: "Discard changes?",
+      body: "Your changes have not been saved yet. Leaving this page loses them.",
+      continueEditing: "Keep editing",
+      discard: "Discard changes",
+    },
   },
 
   // Browser tab titles, one per page. The page name comes first, then the product name.
@@ -5317,6 +5323,10 @@ const en = {
       openInPropstack: "Open in PropStack",
       savedAndSynced: "Saved and sent to PropStack.",
       savedButNotInCrm: "Saved. Not yet sent to PropStack: {{reason}}",
+      savedButDueDateFailed:
+        "The deal was saved. The payment due date could not be saved: {{error}}. Your entry is still in the field. Please save again.",
+      changedElsewhere:
+        "This deal was changed somewhere else. Your entries were kept and not overwritten. Save them, or reload the page to see the new data.",
       approve: "Approve deal",
       approving: "Approving …",
       approved: "Approved.",

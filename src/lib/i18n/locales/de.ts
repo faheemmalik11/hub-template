@@ -743,6 +743,12 @@ const de = {
       asc: "Aufsteigend",
       desc: "Absteigend",
     },
+    unsavedChanges: {
+      title: "Änderungen verwerfen?",
+      body: "Ihre Änderungen sind noch nicht gespeichert. Beim Verlassen der Seite gehen sie verloren.",
+      continueEditing: "Weiter bearbeiten",
+      discard: "Änderungen verwerfen",
+    },
   },
 
   access: {
@@ -5509,6 +5515,10 @@ const de = {
       openInPropstack: "In PropStack öffnen",
       savedAndSynced: "Gespeichert und an PropStack gesendet.",
       savedButNotInCrm: "Gespeichert. Noch nicht an PropStack gesendet: {{reason}}",
+      savedButDueDateFailed:
+        "Das Geschäft wurde gespeichert. Das Zahlungsziel konnte nicht gespeichert werden: {{error}}. Ihre Eingabe steht noch im Feld. Bitte speichern Sie erneut.",
+      changedElsewhere:
+        "Dieses Geschäft wurde an anderer Stelle geändert. Ihre Eingaben wurden behalten und nicht überschrieben. Speichern Sie sie, oder laden Sie die Seite neu, um die neuen Daten zu sehen.",
       approve: "Verkauf genehmigen",
       approving: "Wird freigegeben …",
       approved: "Freigegeben.",
