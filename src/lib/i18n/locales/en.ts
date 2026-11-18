@@ -1419,11 +1419,17 @@ const en = {
       createDealInstruction: "Create the sale.",
       createDealOutcome:
         "The sale now exists, but it is still incomplete. Next you fill in its details.",
-      financialsInstruction:
-        "Enter the notary date and the purchase price. Then set the buyer side's commission and pick TEST Buyer as the paying party.",
-      financialsOutcome:
-        "A sale can only be approved once it has a notary date, a purchase price and one fully filled-in commission side.",
-      financialsHelp: "Switch off the seller side if only the buyer side pays.",
+      notaryDateInstruction: "Enter the notary date.",
+      notaryDateOutcome:
+        "This is the date the purchase contract was notarised. A sale needs one before it can be approved.",
+      purchasePriceInstruction: "Enter the purchase price.",
+      purchasePriceOutcome: "This is the agreed price the commission is calculated from.",
+      buyerRateInstruction: "Set the buyer side's commission.",
+      buyerRateOutcome:
+        "Every commission side needs a fee, either a percentage of the purchase price or a fixed amount.",
+      buyerRateHelp: "Switch off the seller side if only the buyer side pays.",
+      buyerPayerInstruction: "Pick TEST Buyer as the paying party.",
+      buyerPayerOutcome: "A commission side also needs at least one party who actually pays it.",
       viewCalculationInstruction: 'Open the "Calculation" tab.',
       viewCalculationOutcome:
         "This shows the full commission math: each side's fee, VAT, and the total, line by line.",

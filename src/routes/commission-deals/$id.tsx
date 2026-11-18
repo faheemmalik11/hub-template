@@ -57,6 +57,7 @@ import {
   calculateDealForm,
   dealFormOf,
   invoiceInputsOf,
+  parseDecimal,
   saveInputOf,
   type DealForm,
 } from "@/components/commission/deal-form";
@@ -231,9 +232,24 @@ function DealEditor({ deal }: { deal: Deal }) {
 
   const result = useMemo(() => calculateDealForm(form), [form]);
   useEffect(() => {
-    if (result.ok)
-      emitOnboardingEvent({ type: "commission_deal_financials_ready", recordId: deal.id });
-  }, [result.ok, deal.id, emitOnboardingEvent]);
+    if (form.notarisedOn.trim() !== "")
+      emitOnboardingEvent({ type: "commission_deal_notary_date_set", recordId: deal.id });
+  }, [form.notarisedOn, deal.id, emitOnboardingEvent]);
+  useEffect(() => {
+    if (parseDecimal(form.purchasePrice) !== null)
+      emitOnboardingEvent({ type: "commission_deal_purchase_price_set", recordId: deal.id });
+  }, [form.purchasePrice, deal.id, emitOnboardingEvent]);
+  useEffect(() => {
+    const rateSet =
+      form.buyer.feeKind === "percent"
+        ? parseDecimal(form.buyer.rate) !== null
+        : parseDecimal(form.buyer.amount) !== null;
+    if (rateSet) emitOnboardingEvent({ type: "commission_deal_buyer_rate_set", recordId: deal.id });
+  }, [form.buyer.feeKind, form.buyer.rate, form.buyer.amount, deal.id, emitOnboardingEvent]);
+  useEffect(() => {
+    if (form.buyer.parties.some((party) => party.customerId))
+      emitOnboardingEvent({ type: "commission_deal_buyer_payer_set", recordId: deal.id });
+  }, [form.buyer.parties, deal.id, emitOnboardingEvent]);
   useEffect(() => {
     if (!form.ownLead && form.handledBy && form.acquiredBy && form.acquiredBy !== form.handledBy) {
       emitOnboardingEvent({ type: "commission_deal_ownership_split", recordId: deal.id });
@@ -871,11 +887,7 @@ function DealEditor({ deal }: { deal: Deal }) {
 
               <div className="@container grid gap-4 @lg:grid-cols-2">
                 {SIDES.map((side) => (
-                  <div
-                    key={side}
-                    data-tour={side === "buyer" ? "commission-side-buyer" : undefined}
-                    className="rounded-xl border border-border bg-card p-5"
-                  >
+                  <div key={side} className="rounded-xl border border-border bg-card p-5">
                     <div className="flex items-center gap-2">
                       <div className="flex size-7 shrink-0 items-center justify-center rounded-lg bg-brand-tint text-brand">
                         <Users aria-hidden className="size-4" />

@@ -140,7 +140,11 @@ export function SideCard({
 
       {value.enabled && (
         <div className="mt-4 space-y-4">
-          <div id={`side-${side}-fee`} className="grid gap-3 sm:grid-cols-2">
+          <div
+            id={`side-${side}-fee`}
+            data-tour={side === "buyer" ? "commission-buyer-rate" : undefined}
+            className="grid gap-3 sm:grid-cols-2"
+          >
             <Field className="space-y-1.5">
               <Label>{t("commissionDeals.side.feeKind")}</Label>
               <Select
@@ -184,7 +188,11 @@ export function SideCard({
             )}
           </div>
 
-          <div id={`side-${side}-payers`} className="@container">
+          <div
+            id={`side-${side}-payers`}
+            data-tour={side === "buyer" ? "commission-buyer-payer" : undefined}
+            className="@container"
+          >
             <div className="space-y-3">
               <div className="space-y-0.5">
                 <Label>{t("commissionDeals.side.whoPaysTitle")}</Label>
