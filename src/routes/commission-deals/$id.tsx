@@ -234,17 +234,17 @@ function DealEditor({ deal }: { deal: Deal }) {
     if (form.notarisedOn.trim() !== "")
       emitOnboardingEvent({ type: "commission_deal_notary_date_set", recordId: deal.id });
   }, [form.notarisedOn, deal.id, emitOnboardingEvent]);
-  useEffect(() => {
+  const onPurchasePriceBlur = () => {
     if (parseDecimal(form.purchasePrice) !== null)
       emitOnboardingEvent({ type: "commission_deal_purchase_price_set", recordId: deal.id });
-  }, [form.purchasePrice, deal.id, emitOnboardingEvent]);
-  useEffect(() => {
+  };
+  const onBuyerRateBlur = () => {
     const rateSet =
       form.buyer.feeKind === "percent"
         ? parseDecimal(form.buyer.rate) !== null
         : parseDecimal(form.buyer.amount) !== null;
     if (rateSet) emitOnboardingEvent({ type: "commission_deal_buyer_rate_set", recordId: deal.id });
-  }, [form.buyer.feeKind, form.buyer.rate, form.buyer.amount, deal.id, emitOnboardingEvent]);
+  };
   useEffect(() => {
     if (form.buyer.parties.some((party) => party.customerId))
       emitOnboardingEvent({ type: "commission_deal_buyer_payer_set", recordId: deal.id });
@@ -814,6 +814,7 @@ function DealEditor({ deal }: { deal: Deal }) {
                     onChange={(event) =>
                       set({ purchasePrice: sanitizeAmountInput(event.target.value) })
                     }
+                    onBlur={onPurchasePriceBlur}
                     placeholder="610.000"
                     disabled={!mayEditFinancials}
                   />
@@ -900,6 +901,7 @@ function DealEditor({ deal }: { deal: Deal }) {
                         side={side}
                         value={form[side]}
                         onChange={(next) => set({ [side]: next })}
+                        onRateBlur={side === "buyer" ? onBuyerRateBlur : undefined}
                         customerOptions={customerOptions}
                         createCustomer={addCustomer}
                         disabled={!mayEditFinancials}

@@ -64,6 +64,7 @@ export function SideCard({
   side,
   value,
   onChange,
+  onRateBlur,
   customerOptions,
   createCustomer,
   disabled,
@@ -72,6 +73,7 @@ export function SideCard({
   side: CommissionSide;
   value: SideForm;
   onChange: (next: SideForm) => void;
+  onRateBlur?: () => void;
   customerOptions: ComboboxOption[];
   createCustomer: (name: string) => Promise<string>;
   disabled: boolean;
@@ -171,6 +173,7 @@ export function SideCard({
                   inputMode="decimal"
                   value={value.rate}
                   onChange={(event) => set({ rate: sanitizeAmountInput(event.target.value) })}
+                  onBlur={onRateBlur}
                   placeholder={t("commissionDeals.side.ratePlaceholder")}
                   disabled={disabled}
                 />
@@ -182,6 +185,7 @@ export function SideCard({
                   inputMode="decimal"
                   value={value.amount}
                   onChange={(event) => set({ amount: sanitizeAmountInput(event.target.value) })}
+                  onBlur={onRateBlur}
                   disabled={disabled}
                 />
               </Field>
