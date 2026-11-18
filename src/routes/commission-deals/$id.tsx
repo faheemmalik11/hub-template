@@ -1,5 +1,5 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
-import { useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import {
   ArrowLeft,
   Check,
@@ -21,7 +21,7 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
-import { Button } from "@/components/ui/button";
+import { Button, buttonVariants } from "@/components/ui/button";
 import { Combobox, type ComboboxOption } from "@/components/ui/combobox";
 import { DatePicker } from "@/components/ui/date-picker";
 import {
@@ -39,6 +39,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import type { ReviewLine } from "@/kit/ui";
 import { useEmitOnboardingEvent } from "@/kit/components/onboarding";
 import { ErrorState, TableSkeleton } from "@/components/documents/query-states";
+import { UnsavedChangesGuard } from "@/components/records/unsaved-changes-guard";
 import { DealStatusStepper } from "@/components/commission/deal-status-stepper";
 import { BonusSuggestionsCard } from "@/components/commission/bonus-suggestions-card";
 import { DealCommissionOverviewCard } from "@/components/commission/deal-commission-overview-card";
@@ -85,6 +86,7 @@ import { propstackUnitUrl } from "@/lib/crm/propstack";
 import { edgeFunctionErrorText, errorText, formatDateTime } from "@/lib/data/format";
 import { useTranslation } from "@/lib/i18n";
 import { tabSearch, useTabParam } from "@/lib/use-tab-param";
+import { useUnsavedChangesGuard } from "@/lib/use-unsaved-changes-guard";
 import { cn } from "@/lib/utils";
 
 function sanitizeAmountInput(raw: string): string {
@@ -209,7 +211,13 @@ function DealEditor({ deal }: { deal: Deal }) {
     deal.property?.payment_due_date_note ?? "",
   );
   const [isSaving, setIsSaving] = useState(false);
+  const [changedElsewhere, setChangedElsewhere] = useState(false);
   const [createInvoicesConfirmOpen, setCreateInvoicesConfirmOpen] = useState(false);
+  const [discardConfirmOpen, setDiscardConfirmOpen] = useState(false);
+  const formUnsaved = JSON.stringify(form) !== savedForm;
+  const dueDateUnsaved = dueDate !== savedDueDate || dueDateNote !== savedDueDateNote;
+  const unsaved = formUnsaved || dueDateUnsaved;
+  const unsavedGuard = useUnsavedChangesGuard(unsaved);
   const customersQ = useCustomers();
   const companiesQ = useCompanies();
   const employeesQ = useEmployees();
@@ -219,15 +227,41 @@ function DealEditor({ deal }: { deal: Deal }) {
   const createInvoices = useCreateDealInvoices(deal.id);
   const updateDueDate = useUpdateProperty(deal.property_id ?? "");
 
+  const formUnsavedRef = useRef(formUnsaved);
+  const dueDateUnsavedRef = useRef(dueDateUnsaved);
+  const savingRef = useRef(false);
+  const syncedDealIdRef = useRef(deal.id);
   useEffect(() => {
+    formUnsavedRef.current = formUnsaved;
+    dueDateUnsavedRef.current = dueDateUnsaved;
+  }, [formUnsaved, dueDateUnsaved]);
+
+  const resetFormToDeal = useCallback(() => {
     const fresh = dealFormOf(deal);
     setForm(fresh);
     setSavedForm(JSON.stringify(fresh));
+  }, [deal]);
+
+  const resetDueDateToDeal = useCallback(() => {
     setDueDate(deal.property?.payment_due_date ?? "");
     setDueDateNote(deal.property?.payment_due_date_note ?? "");
     setSavedDueDate(deal.property?.payment_due_date ?? "");
     setSavedDueDateNote(deal.property?.payment_due_date_note ?? "");
   }, [deal]);
+
+  useEffect(() => {
+    const isAnotherDeal = deal.id !== syncedDealIdRef.current;
+    syncedDealIdRef.current = deal.id;
+    let keptEdits = false;
+
+    if (isAnotherDeal || !formUnsavedRef.current) resetFormToDeal();
+    else keptEdits = true;
+
+    if (isAnotherDeal || !dueDateUnsavedRef.current) resetDueDateToDeal();
+    else keptEdits = true;
+
+    setChangedElsewhere(keptEdits && !savingRef.current);
+  }, [deal, resetFormToDeal, resetDueDateToDeal]);
 
   const result = useMemo(() => calculateDealForm(form), [form]);
   useEffect(() => {
@@ -261,8 +295,6 @@ function DealEditor({ deal }: { deal: Deal }) {
         problem.side === side &&
         (problem.problem === "shares_do_not_add_up" || problem.problem === "shares_incomplete"),
     );
-  const dueDateUnsaved = dueDate !== savedDueDate || dueDateNote !== savedDueDateNote;
-  const unsaved = JSON.stringify(form) !== savedForm || dueDateUnsaved;
   const dealValuesUnsaved = useMemo(() => {
     const saved = JSON.parse(savedForm) as DealForm;
     return (
@@ -376,14 +408,23 @@ function DealEditor({ deal }: { deal: Deal }) {
     const needsDueDateSave = dueDateUnsaved && !!propertyId;
     const needsDealValuesPush =
       dealValuesUnsaved && syncsDealValues && !!deal.property?.external_id;
-    // Captured now, synchronously: `await save.mutateAsync` below gives the deal query time to
-    // refetch and re-render, which resets the dueDate/dueDateNote state via the effect watching
-    // `deal` — reading the state again after that await would send whatever it was reset to.
-    const dueDateToSave = dueDate;
-    const dueDateNoteToSave = dueDateNote;
+    const formToSave = form;
+    const dueDateToSave = dueDate.trim() === "" ? "" : dueDate;
+    const dueDateNoteToSave = dueDateNote.trim();
+    const savedFormBeforeSave = savedForm;
+    const dealIdAtSave = deal.id;
+    const stillOnTheSameDeal = () => syncedDealIdRef.current === dealIdAtSave;
+
+    savingRef.current = true;
+    setSavedForm(JSON.stringify(formToSave));
 
     const sequence = (async () => {
-      await save.mutateAsync({ ...saveInputOf(form), complete: result.ok });
+      try {
+        await save.mutateAsync({ ...saveInputOf(formToSave), complete: result.ok });
+      } catch (error) {
+        if (stillOnTheSameDeal()) setSavedForm(savedFormBeforeSave);
+        throw error;
+      }
       emitOnboardingEvent({
         type: "commission_deal_saved",
         recordId: deal.id,
@@ -392,17 +433,26 @@ function DealEditor({ deal }: { deal: Deal }) {
 
       let pushedToCrm: boolean | null = null;
       let reason = "";
+      let dueDateError = "";
 
       if (needsDueDateSave) {
-        await updateDueDate.mutateAsync({
-          payment_due_date: dueDateToSave.trim() === "" ? null : dueDateToSave,
-          payment_due_date_note: dueDateNoteToSave.trim() === "" ? null : dueDateNoteToSave.trim(),
-          payment_due_date_source: "hub",
-        });
-        setSavedDueDate(dueDateToSave);
-        setSavedDueDateNote(dueDateNoteToSave);
+        try {
+          await updateDueDate.mutateAsync({
+            payment_due_date: dueDateToSave === "" ? null : dueDateToSave,
+            payment_due_date_note: dueDateNoteToSave === "" ? null : dueDateNoteToSave,
+            payment_due_date_source: "hub",
+          });
+          if (stillOnTheSameDeal()) {
+            setDueDate(dueDateToSave);
+            setDueDateNote(dueDateNoteToSave);
+            setSavedDueDate(dueDateToSave);
+            setSavedDueDateNote(dueDateNoteToSave);
+          }
+        } catch (error) {
+          dueDateError = error instanceof Error ? error.message : String(error);
+        }
 
-        if (syncsPaymentDueDate) {
+        if (dueDateError === "" && syncsPaymentDueDate) {
           try {
             await pushDueDateToCrm(propertyId);
             pushedToCrm = true;
@@ -424,7 +474,7 @@ function DealEditor({ deal }: { deal: Deal }) {
         }
       }
 
-      return { pushedToCrm, reason };
+      return { pushedToCrm, reason, dueDateError };
     })();
 
     const willSyncToCrm = (needsDueDateSave && syncsPaymentDueDate) || needsDealValuesPush;
@@ -436,6 +486,11 @@ function DealEditor({ deal }: { deal: Deal }) {
           : "commissionDeals.actions.saving",
       ),
       success: (outcome) => {
+        if (outcome.dueDateError !== "") {
+          return t("commissionDeals.actions.savedButDueDateFailed", {
+            error: outcome.dueDateError,
+          });
+        }
         if (outcome.pushedToCrm === true) return t("commissionDeals.actions.savedAndSynced");
         if (outcome.pushedToCrm === false) {
           return t("commissionDeals.actions.savedButNotInCrm", { reason: outcome.reason });
@@ -444,7 +499,10 @@ function DealEditor({ deal }: { deal: Deal }) {
       },
       error: (error) => t("commissionDeals.actions.saveFailed", { error: errorText(error) }),
     });
-    sequence.finally(() => setIsSaving(false));
+    sequence.finally(() => {
+      savingRef.current = false;
+      setIsSaving(false);
+    });
   };
 
   const runApprove = () => {
@@ -485,6 +543,13 @@ function DealEditor({ deal }: { deal: Deal }) {
     });
   };
 
+  const runDiscard = () => {
+    setDiscardConfirmOpen(false);
+    resetFormToDeal();
+    resetDueDateToDeal();
+    setChangedElsewhere(false);
+  };
+
   const showSave = mayEdit;
   const showApprove =
     mayApprove &&
@@ -493,13 +558,14 @@ function DealEditor({ deal }: { deal: Deal }) {
     deal.status !== "settled";
   const showCreateInvoices = mayApprove && deal.status === "approved" && result.ok;
   const saveDisabled = isSaving || !unsaved;
+  const discardDisabled = isSaving || createCustomer.isPending;
   const approveDisabled = isSaving || approve.isPending || unsaved || deal.status !== "ready";
   const createInvoicesDisabled = isSaving || createInvoices.isPending || unsaved;
 
   const primaryAction =
     deal.status === "incomplete" && showSave
       ? "save"
-      : unsaved && showSave
+      : (unsaved || isSaving) && showSave
         ? "save"
         : showCreateInvoices
           ? "createInvoices"
@@ -553,6 +619,16 @@ function DealEditor({ deal }: { deal: Deal }) {
           )}
         </div>
         <div className="flex flex-wrap items-center gap-3">
+          {unsaved && (
+            <Button
+              variant="outline"
+              className="shadow-none"
+              onClick={() => setDiscardConfirmOpen(true)}
+              disabled={discardDisabled}
+            >
+              {t("common.unsavedChanges.discard")}
+            </Button>
+          )}
           {showMoreMenu && (
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
@@ -649,6 +725,28 @@ function DealEditor({ deal }: { deal: Deal }) {
           )}
         </div>
       </div>
+      <AlertDialog
+        open={discardConfirmOpen && unsaved && !discardDisabled}
+        onOpenChange={setDiscardConfirmOpen}
+      >
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>{t("common.unsavedChanges.title")}</AlertDialogTitle>
+            <AlertDialogDescription>
+              {t("commissionDeals.actions.discardConfirmBody")}
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>{t("common.unsavedChanges.continueEditing")}</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={runDiscard}
+              className={buttonVariants({ variant: "destructive" })}
+            >
+              {t("common.unsavedChanges.discard")}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
       <AlertDialog open={createInvoicesConfirmOpen} onOpenChange={setCreateInvoicesConfirmOpen}>
         <AlertDialogContent>
           <AlertDialogHeader>
@@ -688,6 +786,13 @@ function DealEditor({ deal }: { deal: Deal }) {
       <div className="mt-4">
         <CrmChangesCard deal={deal} />
       </div>
+
+      {changedElsewhere && (
+        <div className="mt-4 flex items-start gap-3 rounded-xl border border-border bg-muted/40 p-4 text-sm text-foreground">
+          <Info className="mt-0.5 size-5 shrink-0 text-brand" />
+          <p className="min-w-0 flex-1">{t("commissionDeals.actions.changedElsewhere")}</p>
+        </div>
+      )}
 
       {/* A gentle nudge, not a warning: nothing here blocks saving or approving, and the whole
           point of the payment-due-date rule (briefing §4.3) is "don't chase anyone without a
@@ -973,17 +1078,22 @@ function DealEditor({ deal }: { deal: Deal }) {
               invoiced={deal.status === "invoiced"}
             />
           )}
-          {suggestsBonuses && !unsaved && deal.status !== "settled" && (
-            <BonusSuggestionsCard deal={deal} onJumpToField={jumpToAnchor} />
+          {suggestsBonuses && deal.status !== "settled" && (
+            <BonusSuggestionsCard
+              deal={deal}
+              unsavedChanges={unsaved}
+              onJumpToField={jumpToAnchor}
+            />
           )}
-          {suggestsReferrerBonuses && !unsaved && deal.status !== "settled" && (
-            <DealReferrerBonusCard deal={deal} />
+          {suggestsReferrerBonuses && deal.status !== "settled" && (
+            <DealReferrerBonusCard deal={deal} unsavedChanges={unsaved} />
           )}
-          {managesDonations && !unsaved && deal.status !== "settled" && (
-            <DealDonationCard deal={deal} />
+          {managesDonations && deal.status !== "settled" && (
+            <DealDonationCard deal={deal} unsavedChanges={unsaved} />
           )}
         </aside>
       </div>
+      <UnsavedChangesGuard guard={unsavedGuard} />
     </>
   );
 }

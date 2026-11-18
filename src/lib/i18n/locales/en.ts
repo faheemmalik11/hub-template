@@ -1703,6 +1703,12 @@ const en = {
       asc: "Ascending",
       desc: "Descending",
     },
+    unsavedChanges: {
+      title: "Discard changes?",
+      body: "Your changes have not been saved yet. Leaving this page loses them.",
+      continueEditing: "Keep editing",
+      discard: "Discard changes",
+    },
   },
 
   // Browser tab titles, one per page. The page name comes first, then the product name.
@@ -5317,6 +5323,10 @@ const en = {
       openInPropstack: "Open in PropStack",
       savedAndSynced: "Saved and sent to PropStack.",
       savedButNotInCrm: "Saved. Not yet sent to PropStack: {{reason}}",
+      savedButDueDateFailed:
+        "The deal was saved. The payment due date could not be saved: {{error}}. Your entry is still in the field. Please save again.",
+      changedElsewhere:
+        "This deal was changed somewhere else. Your entries were kept and not overwritten. Save them, or reload the page to see the new data.",
       approve: "Approve deal",
       approving: "Approving …",
       approved: "Approved.",
@@ -5324,6 +5334,8 @@ const en = {
       unsaved: "Not saved",
       saveFirst: "Save first, then approve.",
       saveFirstBeforeInvoices: "Save your changes before creating invoices.",
+      unsavedCardNote:
+        "This card uses the last saved version of the sale. Save your changes to use the buttons here.",
       approvedNote: "This deal was approved by {{name}} on {{when}}.",
       createInvoices: "Create invoices",
       creatingInvoices: "Creating invoices …",
@@ -5337,6 +5349,8 @@ const en = {
         "This creates the invoices and sends them to Lexware right away, with no extra step. Once an invoice exists in Lexware, it cannot be deleted. It can only be cancelled, which stays visible there forever. Make sure the numbers are correct before you continue.",
       createInvoicesConfirmCancel: "Not yet",
       createInvoicesConfirmAction: "Create invoices",
+      discardConfirmBody:
+        "All your entries on every tab go back to the last saved state. This cannot be undone.",
       more: "More actions",
     },
   },

@@ -5,6 +5,7 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
+import { UnsavedDealChangesNote } from "./unsaved-deal-changes-note";
 import {
   useBonusSettings,
   useCancelReferrerBonus,
@@ -50,7 +51,13 @@ function dealStageReached(deal: Deal, invoices: OutgoingInvoice[], stage: DealSt
 
 const CREDIT_NOTE_CREATION_ENABLED = false;
 
-export function DealReferrerBonusCard({ deal }: { deal: Deal }) {
+export function DealReferrerBonusCard({
+  deal,
+  unsavedChanges,
+}: {
+  deal: Deal;
+  unsavedChanges: boolean;
+}) {
   const { t } = useTranslation();
   const referrerCustomerId = deal.referrer_customer_id;
   const earnedOn = deal.notarised_on ?? new Date().toISOString().slice(0, 10);
@@ -119,10 +126,11 @@ export function DealReferrerBonusCard({ deal }: { deal: Deal }) {
               placeholder={t("commissionDeals.referrerBonus.amount")}
               aria-label={t("commissionDeals.referrerBonus.amount")}
             />
-            <Button size="sm" disabled={suggest.isPending} onClick={create}>
+            <Button size="sm" disabled={suggest.isPending || unsavedChanges} onClick={create}>
               {t("commissionDeals.referrerBonus.create")}
             </Button>
           </div>
+          {unsavedChanges && <UnsavedDealChangesNote />}
         </div>
       ) : (
         <div className="mt-3 rounded-lg border border-border/60 p-3">
