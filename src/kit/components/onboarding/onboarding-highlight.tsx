@@ -8,6 +8,7 @@ import {
   englishOnboardingHighlightLabels,
   type OnboardingHighlightLabels,
 } from "./onboarding-highlight-labels";
+import { resolvedStepPath } from "@/kit/onboarding/resolve-practice-task";
 import type { OnboardingTaskRunner } from "./use-onboarding-task-runner";
 import { useOnboardingTargetTracking } from "./use-onboarding-target-tracking";
 import {
@@ -44,9 +45,10 @@ export function OnboardingHighlight({
     goNext,
     goBack,
     canGoBack,
+    canGoNext,
   } = runner;
   const target = isFinished ? null : currentStep.target;
-  const stepPath = isFinished ? null : (currentStep.path ?? null);
+  const stepPath = isFinished ? null : resolvedStepPath(currentStep.path);
   const { rect, visibleArea, onWrongPage, targetOffScreen } = useOnboardingTargetTracking(
     target,
     stepPath,
@@ -125,6 +127,7 @@ export function OnboardingHighlight({
       onNext={goNext}
       onBack={goBack}
       canGoBack={canGoBack}
+      canGoNext={canGoNext}
       pathname={pathname}
     />
   );

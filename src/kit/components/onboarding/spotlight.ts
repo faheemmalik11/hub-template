@@ -183,6 +183,10 @@ export function makeRoomForSpotlightCard(
   container.scrollBy({ top: box.top - desiredTop, behavior: "smooth" });
 }
 
+function spansFullVisibleHeight(rect: DOMRect, area: SpotlightVisibleArea): boolean {
+  return rect.top <= area.top && rect.bottom >= area.top + area.height;
+}
+
 export function stickyBarBottomAboveSpotlight(overlayRoot: HTMLElement | null): number {
   const area = readSpotlightVisibleArea();
   const probes = document.elementsFromPoint(area.left + area.width / 2, area.top + 4);
@@ -193,9 +197,7 @@ export function stickyBarBottomAboveSpotlight(overlayRoot: HTMLElement | null): 
       const position = getComputedStyle(node).position;
       if (position === "sticky" || position === "fixed") {
         const rect = node.getBoundingClientRect();
-        // A full-screen backdrop (a modal's own overlay) is fixed too, but it isn't a bar
-        // sitting above the content, so it must not be read as one.
-        if (rect.top <= area.top && rect.bottom >= area.top + area.height) {
+        if (spansFullVisibleHeight(rect, area)) {
           node = node.parentElement;
           continue;
         }

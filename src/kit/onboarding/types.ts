@@ -36,6 +36,8 @@ export interface OnboardingStep {
   path?: string;
   pageLabel?: string;
   placement?: "top" | "bottom" | "left" | "right";
+  irreversible?: boolean;
+  requiresNextClick?: boolean;
   role?: string;
   sampleFileUrl?: string;
   sampleFileName?: string;
