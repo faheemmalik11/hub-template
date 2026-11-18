@@ -5347,6 +5347,8 @@ const en = {
         "This creates the invoices and sends them to Lexware right away, with no extra step. Once an invoice exists in Lexware, it cannot be deleted. It can only be cancelled, which stays visible there forever. Make sure the numbers are correct before you continue.",
       createInvoicesConfirmCancel: "Not yet",
       createInvoicesConfirmAction: "Create invoices",
+      discardConfirmBody:
+        "All your entries on every tab go back to the last saved state. This cannot be undone.",
       more: "More actions",
     },
   },

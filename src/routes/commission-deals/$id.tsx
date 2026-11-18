@@ -1,5 +1,5 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import {
   ArrowLeft,
   Check,
@@ -21,7 +21,7 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
-import { Button } from "@/components/ui/button";
+import { Button, buttonVariants } from "@/components/ui/button";
 import { Combobox, type ComboboxOption } from "@/components/ui/combobox";
 import { DatePicker } from "@/components/ui/date-picker";
 import {
@@ -213,6 +213,7 @@ function DealEditor({ deal }: { deal: Deal }) {
   const [isSaving, setIsSaving] = useState(false);
   const [changedElsewhere, setChangedElsewhere] = useState(false);
   const [createInvoicesConfirmOpen, setCreateInvoicesConfirmOpen] = useState(false);
+  const [discardConfirmOpen, setDiscardConfirmOpen] = useState(false);
   const formUnsaved = JSON.stringify(form) !== savedForm;
   const dueDateUnsaved = dueDate !== savedDueDate || dueDateNote !== savedDueDateNote;
   const unsaved = formUnsaved || dueDateUnsaved;
@@ -235,30 +236,32 @@ function DealEditor({ deal }: { deal: Deal }) {
     dueDateUnsavedRef.current = dueDateUnsaved;
   }, [formUnsaved, dueDateUnsaved]);
 
+  const resetFormToDeal = useCallback(() => {
+    const fresh = dealFormOf(deal);
+    setForm(fresh);
+    setSavedForm(JSON.stringify(fresh));
+  }, [deal]);
+
+  const resetDueDateToDeal = useCallback(() => {
+    setDueDate(deal.property?.payment_due_date ?? "");
+    setDueDateNote(deal.property?.payment_due_date_note ?? "");
+    setSavedDueDate(deal.property?.payment_due_date ?? "");
+    setSavedDueDateNote(deal.property?.payment_due_date_note ?? "");
+  }, [deal]);
+
   useEffect(() => {
     const isAnotherDeal = deal.id !== syncedDealIdRef.current;
     syncedDealIdRef.current = deal.id;
     let keptEdits = false;
 
-    if (isAnotherDeal || !formUnsavedRef.current) {
-      const fresh = dealFormOf(deal);
-      setForm(fresh);
-      setSavedForm(JSON.stringify(fresh));
-    } else {
-      keptEdits = true;
-    }
+    if (isAnotherDeal || !formUnsavedRef.current) resetFormToDeal();
+    else keptEdits = true;
 
-    if (isAnotherDeal || !dueDateUnsavedRef.current) {
-      setDueDate(deal.property?.payment_due_date ?? "");
-      setDueDateNote(deal.property?.payment_due_date_note ?? "");
-      setSavedDueDate(deal.property?.payment_due_date ?? "");
-      setSavedDueDateNote(deal.property?.payment_due_date_note ?? "");
-    } else {
-      keptEdits = true;
-    }
+    if (isAnotherDeal || !dueDateUnsavedRef.current) resetDueDateToDeal();
+    else keptEdits = true;
 
     setChangedElsewhere(keptEdits && !savingRef.current);
-  }, [deal]);
+  }, [deal, resetFormToDeal, resetDueDateToDeal]);
 
   const result = useMemo(() => calculateDealForm(form), [form]);
   useEffect(() => {
@@ -540,6 +543,13 @@ function DealEditor({ deal }: { deal: Deal }) {
     });
   };
 
+  const runDiscard = () => {
+    setDiscardConfirmOpen(false);
+    resetFormToDeal();
+    resetDueDateToDeal();
+    setChangedElsewhere(false);
+  };
+
   const showSave = mayEdit;
   const showApprove =
     mayApprove &&
@@ -548,6 +558,7 @@ function DealEditor({ deal }: { deal: Deal }) {
     deal.status !== "settled";
   const showCreateInvoices = mayApprove && deal.status === "approved" && result.ok;
   const saveDisabled = isSaving || !unsaved;
+  const discardDisabled = isSaving || createCustomer.isPending;
   const approveDisabled = isSaving || approve.isPending || unsaved || deal.status !== "ready";
   const createInvoicesDisabled = isSaving || createInvoices.isPending || unsaved;
 
@@ -608,6 +619,16 @@ function DealEditor({ deal }: { deal: Deal }) {
           )}
         </div>
         <div className="flex flex-wrap items-center gap-3">
+          {unsaved && (
+            <Button
+              variant="outline"
+              className="shadow-none"
+              onClick={() => setDiscardConfirmOpen(true)}
+              disabled={discardDisabled}
+            >
+              {t("common.unsavedChanges.discard")}
+            </Button>
+          )}
           {showMoreMenu && (
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
@@ -704,6 +725,28 @@ function DealEditor({ deal }: { deal: Deal }) {
           )}
         </div>
       </div>
+      <AlertDialog
+        open={discardConfirmOpen && unsaved && !discardDisabled}
+        onOpenChange={setDiscardConfirmOpen}
+      >
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>{t("common.unsavedChanges.title")}</AlertDialogTitle>
+            <AlertDialogDescription>
+              {t("commissionDeals.actions.discardConfirmBody")}
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>{t("common.unsavedChanges.continueEditing")}</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={runDiscard}
+              className={buttonVariants({ variant: "destructive" })}
+            >
+              {t("common.unsavedChanges.discard")}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
       <AlertDialog open={createInvoicesConfirmOpen} onOpenChange={setCreateInvoicesConfirmOpen}>
         <AlertDialogContent>
           <AlertDialogHeader>

@@ -5539,6 +5539,8 @@ const de = {
         "Dies erstellt die Rechnungen und sendet sie sofort an Lexware, ohne weiteren Schritt. Sobald eine Rechnung in Lexware existiert, kann sie nicht mehr gelöscht werden. Sie kann nur noch storniert werden, und das bleibt dort für immer sichtbar. Prüfen Sie die Zahlen, bevor Sie fortfahren.",
       createInvoicesConfirmCancel: "Noch nicht",
       createInvoicesConfirmAction: "Rechnungen erstellen",
+      discardConfirmBody:
+        "Alle Ihre Eingaben in allen Tabs gehen zurück auf den letzten gespeicherten Stand. Das kann nicht rückgängig gemacht werden.",
       more: "Weitere Aktionen",
     },
   },
