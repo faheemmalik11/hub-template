@@ -1078,14 +1078,18 @@ function DealEditor({ deal }: { deal: Deal }) {
               invoiced={deal.status === "invoiced"}
             />
           )}
-          {suggestsBonuses && !unsaved && deal.status !== "settled" && (
-            <BonusSuggestionsCard deal={deal} onJumpToField={jumpToAnchor} />
+          {suggestsBonuses && deal.status !== "settled" && (
+            <BonusSuggestionsCard
+              deal={deal}
+              unsavedChanges={unsaved}
+              onJumpToField={jumpToAnchor}
+            />
           )}
-          {suggestsReferrerBonuses && !unsaved && deal.status !== "settled" && (
-            <DealReferrerBonusCard deal={deal} />
+          {suggestsReferrerBonuses && deal.status !== "settled" && (
+            <DealReferrerBonusCard deal={deal} unsavedChanges={unsaved} />
           )}
-          {managesDonations && !unsaved && deal.status !== "settled" && (
-            <DealDonationCard deal={deal} />
+          {managesDonations && deal.status !== "settled" && (
+            <DealDonationCard deal={deal} unsavedChanges={unsaved} />
           )}
         </aside>
       </div>

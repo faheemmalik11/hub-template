@@ -5,6 +5,7 @@ import { Button } from "@/components/ui/button";
 import { dealFormOf, calculateDealForm } from "./deal-form";
 import type { DealAnchor, DealTab } from "./deal-tabs";
 import { FixLink } from "./fix-link";
+import { UnsavedDealChangesNote } from "./unsaved-deal-changes-note";
 import {
   useBonusSettings,
   useDealBonuses,
@@ -34,9 +35,11 @@ const ANCHOR_FOR_WAITING_REASON: Partial<Record<BonusWaitingFor, DealAnchor>> = 
 
 export function BonusSuggestionsCard({
   deal,
+  unsavedChanges,
   onJumpToField,
 }: {
   deal: Deal;
+  unsavedChanges: boolean;
   onJumpToField?: (tab: DealTab, id: string) => void;
 }) {
   const { t } = useTranslation();
@@ -124,6 +127,7 @@ export function BonusSuggestionsCard({
         {t("commissionDeals.bonuses.title")}
       </h2>
       <p className="mt-1 text-xs text-muted-foreground">{t("commissionDeals.bonuses.hint")}</p>
+      {unsavedChanges && <UnsavedDealChangesNote />}
       <ul className="mt-3 space-y-3">
         {suggestions.map((suggestion) => {
           const done = existing.get(suggestion.type as BonusType);
@@ -153,7 +157,7 @@ export function BonusSuggestionsCard({
                     <div>
                       <Button
                         size="sm"
-                        disabled={create.isPending}
+                        disabled={create.isPending || unsavedChanges}
                         onClick={() => createOne(suggestion)}
                       >
                         {t("commissionDeals.bonuses.create")}

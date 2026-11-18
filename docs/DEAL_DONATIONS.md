@@ -27,7 +27,11 @@ are not known in advance — they vary per sale.
   `src/components/commission/deal-donation-card.tsx`), shown when `deals.purchase_price` reaches
   `threshold_amount`. An administrator fills in the organisation's details and an amount (defaults to
   `donation_amount`, editable) to create the suggestion; from there, "Mark as paid" or "Cancel" with
-  an optional reason. Hooks in `src/data/deal-donations/`.
+  an optional reason. Hooks in `src/data/deal-donations/`. While the deal form has unsaved edits the
+  card stays mounted so a half-typed suggestion is not lost; "Create" is disabled with
+  `commissionDeals.actions.unsavedCardNote` under it, because the threshold that shows the card is
+  read from the saved `purchase_price`. "Mark as paid" and "Cancel" act on an existing row by id and
+  stay usable.
 - **Notification:** `notify_donation_suggested` writes a bell entry for every active administering
   role when a donation is created, the same shape as `notify_bonus_submitted`.
 

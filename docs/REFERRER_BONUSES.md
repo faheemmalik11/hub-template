@@ -48,7 +48,10 @@ rather than an assumption.
 - **Screen**: `src/components/commission/deal-referrer-bonus-card.tsx`, shown on the deal page when
   `deal.referrer_customer_id` is set. Shows the referrer's name (`useCustomer`), the computed tier
   and its default amount, an editable amount field, then "Mark as paid" / "Cancel" once created.
-  Hooks in `src/data/deal-referrer-bonuses/`.
+  Hooks in `src/data/deal-referrer-bonuses/`. While the deal form has unsaved edits the card stays
+  mounted so a typed amount is not lost; creating is disabled with
+  `commissionDeals.actions.unsavedCardNote`, because the referrer, the tier and `earned_on` all come
+  from the saved deal. "Mark as paid" and "Cancel" act on an existing row by id and stay usable.
 - **Notification**: `notify_referrer_bonus_suggested`, same shape as `notify_donation_suggested` and
   `notify_bonus_submitted`.
 

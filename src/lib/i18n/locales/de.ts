@@ -5526,6 +5526,8 @@ const de = {
       unsaved: "Nicht gespeichert",
       saveFirst: "Erst speichern, dann freigeben.",
       saveFirstBeforeInvoices: "Speichern Sie Ihre Änderungen, bevor Sie Rechnungen erstellen.",
+      unsavedCardNote:
+        "Diese Karte nutzt den zuletzt gespeicherten Stand des Verkaufs. Speichern Sie Ihre Änderungen, um die Schaltflächen hier zu nutzen.",
       approvedNote: "Dieses Geschäft wurde am {{when}} von {{name}} freigegeben.",
       createInvoices: "Rechnungen erstellen",
       creatingInvoices: "Rechnungen werden erstellt …",

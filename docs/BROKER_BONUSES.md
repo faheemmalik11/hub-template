@@ -80,7 +80,9 @@ database and ends with the line that switches it on. Run `deal-details-for-an-ex
   `docs/LEXOFFICE_SYNC.md`.
 - **Flow:** on the deal page ("Boni für diesen Verkauf", `src/components/commission/bonus-suggestions-card.tsx`)
   an administrator creates a suggestion. It is a `broker_bonuses` row with status `suggested`, `deal_id` set and
-  the calculation as its note, one per deal and type. The broker is notified, confirms it (status `submitted`,
+  the calculation as its note, one per deal and type. Every figure in the card is computed from the
+  saved deal, so while the deal form has unsaved edits the card stays visible but each "Create" is
+  disabled, with `commissionDeals.actions.unsavedCardNote` explaining it. The broker is notified, confirms it (status `submitted`,
   the administrators are notified) or declines it (the row is deleted), and the usual review follows.
 - **Who is "handled by" and "lead won by":** `deals.handled_by` and `deals.acquired_by`, set on the deal page
   by whoever may edit any deal. A sale opened from the CRM sets both to the CRM's broker.

@@ -5334,6 +5334,8 @@ const en = {
       unsaved: "Not saved",
       saveFirst: "Save first, then approve.",
       saveFirstBeforeInvoices: "Save your changes before creating invoices.",
+      unsavedCardNote:
+        "This card uses the last saved version of the sale. Save your changes to use the buttons here.",
       approvedNote: "This deal was approved by {{name}} on {{when}}.",
       createInvoices: "Create invoices",
       creatingInvoices: "Creating invoices …",

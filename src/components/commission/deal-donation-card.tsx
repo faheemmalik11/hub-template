@@ -4,6 +4,7 @@ import { toast } from "sonner";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { UnsavedDealChangesNote } from "./unsaved-deal-changes-note";
 import {
   useCancelDonation,
   useDealDonation,
@@ -25,7 +26,13 @@ function sanitizeAmountInput(raw: string): string {
   );
 }
 
-export function DealDonationCard({ deal }: { deal: Deal }) {
+export function DealDonationCard({
+  deal,
+  unsavedChanges,
+}: {
+  deal: Deal;
+  unsavedChanges: boolean;
+}) {
   const { t } = useTranslation();
   const settingsQ = useDonationSettings();
   const donationQ = useDealDonation(deal.id);
@@ -126,9 +133,10 @@ export function DealDonationCard({ deal }: { deal: Deal }) {
               aria-label={t("commissionDeals.donation.handoverDate")}
             />
           </div>
-          <Button size="sm" disabled={suggest.isPending} onClick={create}>
+          <Button size="sm" disabled={suggest.isPending || unsavedChanges} onClick={create}>
             {t("commissionDeals.donation.create")}
           </Button>
+          {unsavedChanges && <UnsavedDealChangesNote />}
         </div>
       ) : (
         <div className="mt-3 rounded-lg border border-border/60 p-3">
