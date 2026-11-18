@@ -889,6 +889,8 @@ const de = {
     onboardingTour: "Onboarding-Übung",
     onboardingTourProcessInvoice: "Rechnung bearbeiten",
     onboardingTourStopCases: "Wann hält das System an?",
+    onboardingTourPaymentFile: "Eine Zahlungsdatei erstellen",
+    onboardingTourCommissionDeal: "Einen Verkauf samt Provision abrechnen",
     overview: "Übersicht",
     invoices: "Rechnungen",
     incomingInvoices: "Eingangsrechnungen",
@@ -1484,11 +1486,18 @@ const de = {
       createDealInstruction: "Legen Sie den Verkauf an.",
       createDealOutcome:
         "Der Verkauf existiert jetzt, ist aber noch unvollständig. Als Nächstes füllen Sie die Eckdaten aus.",
-      financialsInstruction:
-        "Tragen Sie Notartermin und Kaufpreis ein. Legen Sie außerdem die Provision der Käuferseite fest und wählen Sie TEST Buyer als zahlende Partei.",
-      financialsOutcome:
-        "Erst mit Notartermin, Kaufpreis und einer vollständig ausgefüllten Provisionsseite kann der Verkauf freigegeben werden.",
-      financialsHelp: "Schalten Sie die Verkäuferseite aus, wenn nur die Käuferseite zahlt.",
+      notaryDateInstruction: "Tragen Sie den Notartermin ein.",
+      notaryDateOutcome:
+        "Das ist das Datum der notariellen Beurkundung. Ohne dieses Datum kann der Verkauf nicht freigegeben werden.",
+      purchasePriceInstruction: "Tragen Sie den Kaufpreis ein.",
+      purchasePriceOutcome: "Das ist der vereinbarte Preis, aus dem die Provision berechnet wird.",
+      buyerRateInstruction: "Legen Sie die Provision der Käuferseite fest.",
+      buyerRateOutcome:
+        "Jede Provisionsseite braucht eine Gebühr, entweder als Prozentsatz vom Kaufpreis oder als Festbetrag.",
+      buyerRateHelp: "Schalten Sie die Verkäuferseite aus, wenn nur die Käuferseite zahlt.",
+      buyerPayerInstruction: "Wählen Sie TEST Buyer als zahlende Partei.",
+      buyerPayerOutcome:
+        "Eine Provisionsseite braucht außerdem mindestens eine Partei, die sie tatsächlich zahlt.",
       viewCalculationInstruction: "Öffnen Sie den Tab „Berechnung“.",
       viewCalculationOutcome:
         "Hier sehen Sie die vollständige Provisionsrechnung: Gebühr je Seite, Steuer und Summe, Zeile für Zeile.",
