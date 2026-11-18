@@ -3,6 +3,8 @@ import { toast } from "sonner";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { dealFormOf, calculateDealForm } from "./deal-form";
+import type { DealAnchor, DealTab } from "./deal-tabs";
+import { FixLink } from "./fix-link";
 import {
   useBonusSettings,
   useDealBonuses,
@@ -25,7 +27,7 @@ function cents(euros: number): number {
   return Math.round(euros * 100);
 }
 
-const ANCHOR_FOR_WAITING_REASON: Partial<Record<BonusWaitingFor, { tab: string; id: string }>> = {
+const ANCHOR_FOR_WAITING_REASON: Partial<Record<BonusWaitingFor, DealAnchor>> = {
   broker: { tab: "ownership", id: "field-handled-by" },
   costs_closed: { tab: "ownership", id: "field-costs-closed" },
 };
@@ -35,7 +37,7 @@ export function BonusSuggestionsCard({
   onJumpToField,
 }: {
   deal: Deal;
-  onJumpToField?: (tab: string, id: string) => void;
+  onJumpToField?: (tab: DealTab, id: string) => void;
 }) {
   const { t } = useTranslation();
   const settingsQ = useBonusSettings();
@@ -187,13 +189,7 @@ export function BonusSuggestionsCard({
                         >
                           <span>• {t(`commissionDeals.bonuses.waitingFor.${reason}`)}</span>
                           {anchor && onJumpToField && (
-                            <button
-                              type="button"
-                              onClick={() => onJumpToField(anchor.tab, anchor.id)}
-                              className="text-xs font-medium text-brand-dark underline-offset-4 hover:underline"
-                            >
-                              {t("commissionDeals.review.fix")}
-                            </button>
+                            <FixLink onClick={() => onJumpToField(anchor.tab, anchor.id)} />
                           )}
                         </li>
                       );

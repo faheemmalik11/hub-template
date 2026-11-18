@@ -47,6 +47,7 @@ import { DealReferrerBonusCard } from "@/components/commission/deal-referrer-bon
 import { DealCostsCard } from "@/components/commission/deal-costs-card";
 import { DealFactsCard } from "@/components/commission/deal-facts-card";
 import { CrmChangesCard } from "@/components/commission/crm-changes-card";
+import { DEAL_TABS, type DealTab } from "@/components/commission/deal-tabs";
 import { DealInvoicesCard } from "@/components/commission/deal-invoices-card";
 import { DraftInvoices } from "@/components/commission/draft-invoices";
 import { DraftInvoicePreviewTeaser } from "@/components/commission/draft-invoice-preview-teaser";
@@ -96,9 +97,7 @@ function sanitizeAmountInput(raw: string): string {
   );
 }
 
-const DEAL_TABS = ["dealDetails", "ownership", "calculation", "invoices"] as const;
-
-const DEAL_TAB_LABEL_KEY: Record<(typeof DEAL_TABS)[number], string> = {
+const DEAL_TAB_LABEL_KEY: Record<DealTab, string> = {
   dealDetails: "commissionDeals.tabs.dealDetails",
   ownership: "commissionDeals.tabs.ownership",
   calculation: "commissionDeals.tabs.calculation",
