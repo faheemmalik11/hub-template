@@ -1,10 +1,4 @@
--- deals and customers have no is_demo column of their own (0010_access.sql's practice-mode
--- policies only cover tables that do: documents, suppliers, companies, properties,
--- bank_transactions). A practice deal's property is marked is_demo, but the deal row itself was
--- never checked against that, so a demo deal stayed visible on the real commission-deals list
--- after practice mode ended, and a real deal would equally have stayed visible while practicing.
--- deal_demo_visible/customer_demo_visible mirror company_demo_visible (0010_access.sql, written
--- for the same gap on payment_settings) via the property/company each row already points at.
+-- Mirrors company_demo_visible (0010_access.sql), for deals and customers, which have no is_demo column of their own.
 
 begin;
 
