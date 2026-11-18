@@ -234,6 +234,17 @@ const onboardingTourNav: NavGroup = {
       to: "/onboarding-tour/when-does-it-stop",
       icon: Compass,
     },
+    {
+      labelKey: "nav.onboardingTourPaymentFile",
+      to: "/onboarding-tour/payment-file",
+      icon: Compass,
+      permission: PERMISSIONS.pagePaymentFile,
+    },
+    {
+      labelKey: "nav.onboardingTourCommissionDeal",
+      to: "/onboarding-tour/commission-deal",
+      icon: Compass,
+    },
   ],
 };
 
@@ -378,7 +389,12 @@ export function AppShell({ children }: { children: ReactNode }) {
 
   const onboardingTourItems = useMemo(
     () =>
-      onboardingTourNav.items.filter((child) => linkVisible(child, can, permissionsUnavailable)),
+      onboardingTourNav.items
+        .filter((child) => linkVisible(child, can, permissionsUnavailable))
+        .filter(
+          (child) =>
+            child.to !== "/onboarding-tour/commission-deal" || !can(PERMISSIONS.pagePaymentFile),
+        ),
     [can, permissionsUnavailable],
   );
   const onboardingTourActive = onboardingTourItems.some((child) => pathname.startsWith(child.to));

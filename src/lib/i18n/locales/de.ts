@@ -889,6 +889,8 @@ const de = {
     onboardingTour: "Onboarding-Übung",
     onboardingTourProcessInvoice: "Rechnung bearbeiten",
     onboardingTourStopCases: "Wann hält das System an?",
+    onboardingTourPaymentFile: "Eine Zahlungsdatei erstellen",
+    onboardingTourCommissionDeal: "Einen Verkauf samt Provision abrechnen",
     overview: "Übersicht",
     invoices: "Rechnungen",
     incomingInvoices: "Eingangsrechnungen",

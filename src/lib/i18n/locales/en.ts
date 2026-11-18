@@ -839,6 +839,8 @@ const en = {
     onboardingTour: "Onboarding practice",
     onboardingTourProcessInvoice: "Process an invoice",
     onboardingTourStopCases: "When does the system stop?",
+    onboardingTourPaymentFile: "Build a payment file",
+    onboardingTourCommissionDeal: "Record a sale and its commission",
     overview: "Overview",
     invoices: "Invoices",
     incomingInvoices: "Incoming invoices",
