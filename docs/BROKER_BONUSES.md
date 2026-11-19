@@ -48,14 +48,15 @@ administering roles). `supabase/presets/bonus-suggestions-for-an-existing-client
 database and ends with the line that switches it on. Run `deal-details-for-an-existing-client.sql` first.
 
 - **Calculation:** `src/kit/lib/commission/bonuses.ts` (`suggestBonuses`, tests beside it), run on the saved
-  deal. Rules: notary bonus 500 for the person who handled the sale, unless the sale is an own lead;
+  deal. Rules: handover bonus 500 for the person who handled the sale, unless the sale is an own lead;
   follow-up 500 when the sale came from a viewing; own lead gives 50 % of (net commission after discounts
-  minus the deal's costs minus the 1,500 personnel flat rate), no notary bonus; a lead won by another broker
+  minus the deal's costs minus the 1,500 personnel flat rate), no handover bonus; a lead won by another broker
   than the one who handled it gives that broker 10 % of the commission, costs not deducted
   (`bonus_settings.company_lead_deducts_costs`, corrected to `false` by
   `supabase/schema/0067_company_lead_bonus_no_cost_deduction.sql` — the own-lead share always deducts
-  costs, hardcoded, never controlled by this flag). The notary and follow-up bonuses become a ready
-  suggestion once the deal is invoiced (`deals.status = 'invoiced'`). The two shares wait until every
+  costs, hardcoded, never controlled by this flag). The follow-up bonus becomes a ready suggestion
+  once the deal is invoiced (`deals.status = 'invoiced'`). The handover bonus and the two shares wait
+  until every
   commission invoice of the deal is paid — `useDealCommissionPaid` asks
   `deal_stage_reached(deal_id, 'commission_received')` (`supabase/schema/0043_referrer_bonus_stage_timing.sql`),
   the same SQL function the mark-paid gate below uses, so the suggestion gate and the payout gate can never
@@ -66,8 +67,8 @@ database and ends with the line that switches it on. Run `deal-details-for-an-ex
 - **Payout gate:** marking an approved bonus paid calls the RPC `mark_broker_bonus_paid`
   (`supabase/schema/0069_broker_bonus_payout_gate.sql`), not a plain update — it raises rather than
   succeeding if the bonus isn't `approved`, or if its deal hasn't reached the stage that bonus type is due
-  at (`invoiced` for notary/follow-up, `commission_received` for the two percentage shares; bonus types with
-  no `deal_id` skip the check). `useMarkBrokerBonusPaid` (`src/data/broker-bonuses/broker-bonuses.ts`) calls
+  at (`invoiced` for the follow-up bonus, `commission_received` for the handover bonus and the two
+  percentage shares; bonus types with no `deal_id` skip the check). `useMarkBrokerBonusPaid` (`src/data/broker-bonuses/broker-bonuses.ts`) calls
   it; the "Als bezahlt markieren" button on `/broker-bonuses` no longer goes through the generic
   `useReviewBrokerBonus` update the way approve/reject still do. This is the same pattern
   `mark_referrer_bonus_paid` already uses for referrer bonuses, extended here rather than left as the one
@@ -97,11 +98,14 @@ database and ends with the line that switches it on. Run `deal-details-for-an-ex
 ## Open
 
 - Without the `bonuses.suggest` switch, bonuses are typed in by the broker and nothing checks the amount.
-- Questions to the client: the rule for "Empfehlung Finanzierung", and whether the notary bonus is
+- Questions to the client: the rule for "Empfehlung Finanzierung", and whether the handover bonus is
   now 500 euro (the 2025 list shows 300) — §5.2, separate from the §5.1 corrections below.
 - **§5.1's two corrections are both done**, confirmed against the briefing, not assumed: the cost
-  deduction direction (company lead without, own lead with) and the two payout triggers (notary bonus
-  due on invoice issue, percentage shares due once Lexware confirms the commission invoice paid) — see
+  deduction direction (company lead without, own lead with) and the separation of the payout triggers.
+  The 500 euro bonus on a notarised sale first moved from the notary date to invoice issue, then on
+  18.11.2026 the client moved it again, to the moment every commission invoice on the deal is paid, and
+  renamed it the handover bonus (Übergabebonus) — `supabase/migrations/20261119150000_handover_bonus_waits_for_paid_commission.sql`.
+  The follow-up bonus out of a viewing stays on invoice issue, so the two no longer share a stage — see
   "Suggested from a sale" above, "Payout gate" and "Commission-invoice payment sync".
 - **The two percentage shares carry a meaningless `earned_on`.** `suggestBonuses` returns
   `earnedOn: null` for `own_job_share` and `company_lead_share`, because neither is due until the costs

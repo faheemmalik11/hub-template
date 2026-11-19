@@ -1517,7 +1517,7 @@ const de = {
       ownershipInstruction:
         "Öffnen Sie den Reiter „Status & Beteiligte“. Tragen Sie bei „Betreut von“ und „Lead gewonnen von“ zwei unterschiedliche Personen ein.",
       ownershipOutcome:
-        "Weil die Person, die den Lead gewonnen hat, nicht dieselbe ist wie die betreuende Person, entsteht später neben dem Notarbonus auch der Unternehmens-Lead-Bonus.",
+        "Weil die Person, die den Lead gewonnen hat, nicht dieselbe ist wie die betreuende Person, entsteht später neben dem Übergabebonus auch der Unternehmens-Lead-Bonus.",
       ownershipHelp: "Lassen Sie dabei den Haken bei „Eigener Lead“ ausgeschaltet.",
       saveOwnershipInstruction: "Speichern Sie die Änderungen noch einmal.",
       saveOwnershipOutcome: "Erst nach dem Speichern ist der Verkauf wieder bereit zur Freigabe.",
@@ -1526,7 +1526,7 @@ const de = {
         "Mit der Freigabe steht die Provision fest, und die Rechnungen können erstellt werden.",
       createInvoicesInstruction: "Klicken Sie auf „Rechnungen erstellen“.",
       createInvoicesOutcome:
-        "Die Rechnungen sind jetzt angelegt, und der Notarbonus wird in der Bonus-Übersicht sichtbar.",
+        "Die Rechnungen sind jetzt angelegt. Der Übergabebonus steht in der Bonus-Übersicht und wartet darauf, dass beide Provisionsrechnungen bezahlt sind.",
       createInvoicesHelp:
         "In der Übung wird keine Rechnung wirklich an Lexware oder eine Bank übertragen.",
       restartHint:
@@ -5029,7 +5029,7 @@ const de = {
       button: "Regeln",
       title: "Bonusregeln",
       desc: "Diese Werte nutzt der Bonusvorschlag auf der Verkaufsseite.",
-      notary_amount: "Notarbonus (€)",
+      notary_amount: "Übergabebonus (€)",
       follow_up_amount: "Folgeauftrag aus Besichtigung (€)",
       own_lead_share_percent: "Anteil eigener Auftrag (%)",
       company_lead_share_percent: "Anteil Firmenlead (%)",
@@ -5098,7 +5098,7 @@ const de = {
       paid: "Ausgezahlt",
     },
     types: {
-      notary: "Notarbonus",
+      notary: "Übergabebonus",
       google_review: "Google-Bewertung",
       viewing_new_job: "Neuer Auftrag aus Besichtigung",
       company_lead_share: "Anteil (Firmenlead)",
@@ -5394,7 +5394,7 @@ const de = {
         "Persönliche Bestätigung, dass für diesen Verkauf keine weiteren Kosten mehr dazukommen. Das System prüft das nicht gegen die Kostenliste im Tab Berechnung. Sie bestätigen es von Hand.",
       viewCostList: "Kostenliste ansehen",
       costsClosedNoEffectHint:
-        "Das wirkt sich nur auf den Zeitpunkt der Auszahlung bei Lead-basierten Boni aus. Auf den Notarbonus und den Besichtigungs-Folgebonus für diesen Verkauf hat es keine Auswirkung.",
+        "Das wirkt sich nur auf den Zeitpunkt der Auszahlung bei Lead-basierten Boni aus. Auf den Übergabebonus und den Besichtigungs-Folgebonus für diesen Verkauf hat es keine Auswirkung.",
       readyForBookkeeping: "Bereit für die Buchhaltung",
       readyForBookkeepingHint:
         "Nur eine interne Notiz für die Buchhaltung. Hat <strong>keine</strong> Auswirkung auf Berechnung, Freigabe oder Boni dieses Verkaufs.",

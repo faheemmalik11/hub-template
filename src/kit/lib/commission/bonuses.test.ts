@@ -27,11 +27,8 @@ const facts: BonusDealFacts = {
 };
 
 describe("bonus suggestions", () => {
-  test("a notarised sale earns the notary bonus at once, whatever has been paid", () => {
-    const [bonus] = suggestBonuses(
-      { ...facts, costsClosed: false, allCommissionInvoicesPaid: false },
-      settings,
-    );
+  test("a notarised sale earns the handover bonus once the commission is paid", () => {
+    const [bonus] = suggestBonuses({ ...facts, costsClosed: false }, settings);
     assert.equal(bonus.type, "notary");
     assert.equal(bonus.state, "ready");
     assert.equal(bonus.amountCents, 500_00);
@@ -39,12 +36,17 @@ describe("bonus suggestions", () => {
     assert.equal(bonus.brokerUserId, "broker-1");
   });
 
-  test("the notary bonus waits for the commission invoices to be created", () => {
-    const [bonus] = suggestBonuses({ ...facts, invoicesCreated: false }, settings);
-    assert.deepEqual(bonus.state === "waiting" && bonus.waitingFor, ["invoices_created"]);
+  test("the handover bonus waits for every commission invoice to be paid", () => {
+    const [bonus] = suggestBonuses({ ...facts, allCommissionInvoicesPaid: false }, settings);
+    assert.deepEqual(bonus.state === "waiting" && bonus.waitingFor, ["invoices_paid"]);
   });
 
-  test("an own lead earns half of what is left, and no notary bonus", () => {
+  test("the handover bonus does not wait on closed costs", () => {
+    const [bonus] = suggestBonuses({ ...facts, costsClosed: false }, settings);
+    assert.equal(bonus.state, "ready");
+  });
+
+  test("an own lead earns half of what is left, and no handover bonus", () => {
     const bonuses = suggestBonuses({ ...facts, ownLead: true }, settings);
     assert.deepEqual(
       bonuses.map((bonus) => bonus.type),

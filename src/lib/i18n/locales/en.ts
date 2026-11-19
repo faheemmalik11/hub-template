@@ -1445,7 +1445,7 @@ const en = {
       ownershipInstruction:
         'Open the "Ownership & Status" tab. Set "Handled by" and "Lead won by" to two different people.',
       ownershipOutcome:
-        "Because the person who won the lead is not the same as the one handling it, the company-lead bonus applies later, on top of the notary bonus.",
+        "Because the person who won the lead is not the same as the one handling it, the company-lead bonus applies later, on top of the handover bonus.",
       ownershipHelp: 'Leave "Own lead" switched off while you do this.',
       saveOwnershipInstruction: "Save the changes again.",
       saveOwnershipOutcome: "Only once saved is the sale ready to be approved again.",
@@ -1453,7 +1453,7 @@ const en = {
       approveOutcome: "Approving fixes the commission, so the invoices can now be created.",
       createInvoicesInstruction: 'Click "Create invoices".',
       createInvoicesOutcome:
-        "The invoices now exist, and the notary bonus becomes visible in the bonus overview.",
+        "The invoices now exist. The handover bonus is listed in the bonus overview, waiting for both commission invoices to be paid.",
       createInvoicesHelp: "In the practice, no invoice is ever really sent to Lexware or a bank.",
       restartHint: 'Stuck? Use "{{button}}" in the steps panel to get fresh practice data.',
     },
@@ -4849,7 +4849,7 @@ const en = {
       button: "Rules",
       title: "Bonus rules",
       desc: "The bonus suggestion on the sale page uses these values.",
-      notary_amount: "Notary bonus (€)",
+      notary_amount: "Handover bonus (€)",
       follow_up_amount: "Follow-up job from a viewing (€)",
       own_lead_share_percent: "Share for an own lead (%)",
       company_lead_share_percent: "Share for a company lead (%)",
@@ -4918,7 +4918,7 @@ const en = {
       paid: "Paid",
     },
     types: {
-      notary: "Notary bonus",
+      notary: "Handover bonus",
       google_review: "Google review",
       viewing_new_job: "New job from a viewing",
       company_lead_share: "Share (company lead)",
@@ -5203,7 +5203,7 @@ const en = {
         "Your own confirmation that no more costs will come in for this sale. The system does not check this against the itemized cost list on the Calculation tab. You are confirming it by hand.",
       viewCostList: "View cost list",
       costsClosedNoEffectHint:
-        "This only affects the payout timing of lead-based bonuses. It has no effect on the notary bonus or the viewing follow-up bonus for this sale.",
+        "This only affects the payout timing of lead-based bonuses. It has no effect on the handover bonus or the viewing follow-up bonus for this sale.",
       readyForBookkeeping: "Ready for bookkeeping",
       readyForBookkeepingHint:
         "An internal note for bookkeeping only. It has <strong>no</strong> effect on this sale's calculation, approval, or bonuses.",

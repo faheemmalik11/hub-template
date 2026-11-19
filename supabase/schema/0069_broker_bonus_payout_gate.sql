@@ -3,11 +3,12 @@
 -- the moment it was approved, regardless of whether the deal had actually reached the stage its
 -- bonus type is due at. An RPC, not a plain update, so the check runs where it cannot be skipped.
 --
--- Unlike referrer bonuses, the two triggers here are fixed per bonus type rather than configurable
--- in bonus_settings: the flat notary/follow-up bonuses are due once the deal is invoiced, the
--- percentage-share bonuses (company-lead, own-lead) only once every commission invoice on the deal
--- is paid. Bonus types with no deal_id (google_review, other, financing_referral, predating the
--- deal_id column added in 0022_bonus_suggestions.sql) have no stage to check and are left alone.
+-- Unlike referrer bonuses, the triggers here are fixed per bonus type rather than configurable in
+-- bonus_settings: the flat follow-up bonus is due once the deal is invoiced, while the handover
+-- bonus and the percentage-share bonuses (company-lead, own-lead) are due only once every
+-- commission invoice on the deal is paid. Bonus types with no deal_id (google_review, other,
+-- financing_referral, predating the deal_id column added in 0022_bonus_suggestions.sql) have no
+-- stage to check and are left alone.
 
 begin;
 
@@ -29,6 +30,7 @@ begin
 
   if v_bonus.deal_id is not null then
     v_stage := case v_bonus.bonus_type
+      when 'notary' then 'commission_received'
       when 'company_lead_share' then 'commission_received'
       when 'own_job_share' then 'commission_received'
       else 'invoiced'
