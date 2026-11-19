@@ -28,18 +28,24 @@ rather than an assumption.
 - **Tier counting**: `referrer_bonus_tier(referrer_customer_id, earned_on)` counts, plus one. Four
   rules that shape that count are configurable on `bonus_settings`
   (`supabase/schema/0036_referrer_bonus_rules_configurable.sql`), not hard-coded, per Fabian's 11
-  November briefing (§13.1): `referrer_tier_counts_status` (`suggested` default — count as soon as
-  a bonus is suggested, or `paid` to only count once actually paid), `referrer_tier_reset` (`yearly`
-  default — count resets each calendar year, or `never` for a lifetime count), `referrer_tier_scope`
-  (`per_referrer` default, or `company_wide` to pool every referrer into one shared scale), and
-  `referrer_payout_timing` (`on_suggestion` default, or `after_commission_paid`). All four are
-  editable from the existing "Bonus rules" dialog, same as the tier amounts. The client calls this
-  to default the amount field; it does not gate what gets saved — same trust model `save_deal` and
-  `create_deal_invoices` already use for client-submitted amounts.
-  **`referrer_payout_timing` is stored and counted, but not yet enforced** — setting it to
-  `after_commission_paid` does not currently stop `DealReferrerBonusCard`'s "Create bonus" button
-  from being usable before the deal's commission is actually paid; wiring that check in is still
-  open.
+  November briefing (§13.1). `referrer_tier_counts_status` and `referrer_payout_timing` both pick
+  one of the three stages a deal passes through — `notarised`, `invoiced`, `commission_received`,
+  both defaulting to `invoiced` since
+  `supabase/schema/0043_referrer_bonus_stage_timing.sql` replaced their earlier two-value sets
+  (`suggested`/`paid` and `on_suggestion`/`after_commission_paid`). `referrer_tier_reset` (`yearly`
+  default — count resets each calendar year, or `never` for a lifetime count) and
+  `referrer_tier_scope` (`per_referrer` default, or `company_wide` to pool every referrer into one
+  shared scale) complete the four. All are editable from the existing "Bonus rules" dialog, same as
+  the tier amounts. `referrer_payout_timing` is enforced: `mark_referrer_bonus_paid` raises unless
+  `deal_stage_reached` agrees, and the card's "Mark as paid" button is disabled until then.
+- **The year a referral falls in is the deal's notary date.** `referrer_bonus_tier` windows the
+  yearly reset on `deal_referrer_bonuses.earned_on`, and the trigger
+  `referrer_bonus_earned_on` (`supabase/schema/0073_referrer_bonus_earned_on_from_the_deal.sql`)
+  takes that straight from `deals.notarised_on` rather than from the client, refusing the insert
+  when the deal has no notary date yet. `DealReferrerBonusCard` matches it: the amount field and
+  "Create bonus" only appear once the deal is notarised. Before the trigger the card fell back to
+  the current date, so a referral suggested in January on a sale notarised the previous December
+  counted in the wrong year, permanently.
 - **Permission**: reuses `bonuses.review` (no new permission key) — a referrer bonus is managed by
   the same role that reviews broker bonuses, and the card is shown under the same `suggestsBonuses`
   gate (`bonuses.suggest` feature + `bonuses.review` permission) as `BonusSuggestionsCard`.

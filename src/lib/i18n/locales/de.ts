@@ -5333,6 +5333,8 @@ const de = {
     },
     referrerBonus: {
       title: "Tippgeber-Bonus",
+      needsNotaryDate:
+        "Tragen Sie zuerst den Notartermin ein. Eine Empfehlung zählt ab dem beurkundeten Verkauf, und der Notartermin entscheidet, in welches Jahr sie fällt.",
       hint: "Dieser Verkauf kam über {{name}} zustande.",
       tierNote: "Das wäre die {{tier}}. Empfehlung in diesem Jahr: {{amount}}.",
       tierLabel: "{{tier}}. Empfehlung in diesem Jahr",
