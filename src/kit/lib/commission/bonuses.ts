@@ -71,6 +71,9 @@ export function suggestBonuses(
   settings: BonusRuleSettings,
 ): BonusSuggestion[] {
   const atInvoicesCreated: BonusWaitingFor[] = facts.invoicesCreated ? [] : ["invoices_created"];
+  const atCommissionPaid: BonusWaitingFor[] = facts.allCommissionInvoicesPaid
+    ? []
+    : ["invoices_paid"];
   const result: BonusSuggestion[] = [];
   const handler = facts.handledBy ?? facts.acquiredBy;
 
@@ -123,7 +126,7 @@ export function suggestBonuses(
           amountCents: settings.notaryAmountCents,
           breakdown: [{ label: "fixed", cents: settings.notaryAmountCents }],
         },
-        atInvoicesCreated,
+        atCommissionPaid,
       ),
     );
   }
