@@ -4527,7 +4527,7 @@ const en = {
       "Appended to the company code with a fixed underscore (e.g. IMKO_UST), regardless of the separator above.",
     title: "Filename convention",
     subtitle:
-      "Uniform naming scheme for receipts: date, company, supplier, description, amount, and property. The receipt type is deliberately not part of the name. It comes from the folder.",
+      "One naming scheme for every filed document. Pick the scheme below, then set which parts the name contains.",
     card: {
       structure: {
         title: "Structure",
@@ -4556,15 +4556,19 @@ const en = {
       none: "No description",
     },
     preview: {
-      fall: {
-        vollstaendig: "Complete receipt",
-        ohneObjekt: "No property or description",
-        minimal: "Date and company only",
+      case: {
+        complete: "Complete document",
+        withoutProperty: "No property or description",
+        minimal: "Hardly any data",
       },
       title: "Preview",
       desc: "Example based on a sample receipt.",
       empty: "No preview possible: data is missing.",
-      typeHint: "The receipt type is never part of the filename.",
+      typeHint: {
+        code_and_amount: "The document type is never part of the filename.",
+        date_type_issuer:
+          "The document type stands second. A document with no issuer gets no name of this shape.",
+      },
     },
     save: "Save",
     saving: "Saving …",
