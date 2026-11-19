@@ -38,8 +38,10 @@ create table if not exists public.feature_settings_history (
 create index if not exists feature_settings_history_changed
     on public.feature_settings_history (changed_at desc);
 
+-- Definer, because feature_settings_history has RLS on and no policy: as invoker the trigger's own
+-- insert is refused and the feature toggle fails. Keeps the trail append-only by trigger alone.
 create or replace function public.feature_settings_audit() returns trigger
-language plpgsql set search_path to 'public'
+language plpgsql security definer set search_path to 'public'
 as $$
 begin
     if tg_op = 'UPDATE' and new.enabled is not distinct from old.enabled then
@@ -99,5 +101,10 @@ $$;
 
 revoke execute on function public.feature_tree() from public, anon;
 grant execute on function public.feature_tree() to authenticated;
+
+-- No policy on purpose: nothing that respects RLS reads this trail, and the trigger above is
+-- definer, so it stays append-only by trigger and unreadable over REST.
+revoke all on public.feature_settings_history from anon;
+alter table public.feature_settings_history enable row level security;
 
 commit;

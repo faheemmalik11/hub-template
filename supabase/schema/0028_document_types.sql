@@ -40,4 +40,15 @@ comment on function public.document_type_canonical(text) is
 revoke all on function public.document_type_canonical(text) from public;
 grant execute on function public.document_type_canonical(text) to authenticated;
 
+revoke all on public.document_types from anon;
+alter table public.document_types enable row level security;
+drop policy if exists document_types_read on public.document_types;
+create policy document_types_read on public.document_types
+    for select to authenticated using (public.may_read('master_data.read'));
+drop policy if exists document_types_write on public.document_types;
+create policy document_types_write on public.document_types
+    for all to authenticated
+    using (public.may_write('master_data.write'))
+    with check (public.may_write('master_data.write'));
+
 commit;
