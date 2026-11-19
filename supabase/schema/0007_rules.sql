@@ -190,4 +190,16 @@ create table if not exists public.review_confidence_bands (
 
 insert into public.review_confidence_bands (id) values (true) on conflict (id) do nothing;
 
+revoke all on public.review_score_rules from anon;
+alter table public.review_score_rules enable row level security;
+drop policy if exists review_score_rules_read on public.review_score_rules;
+create policy review_score_rules_read on public.review_score_rules
+    for select to authenticated using (public.may_read('documents.read'));
+
+revoke all on public.review_confidence_bands from anon;
+alter table public.review_confidence_bands enable row level security;
+drop policy if exists review_confidence_bands_read on public.review_confidence_bands;
+create policy review_confidence_bands_read on public.review_confidence_bands
+    for select to authenticated using (public.may_read('documents.read'));
+
 commit;
