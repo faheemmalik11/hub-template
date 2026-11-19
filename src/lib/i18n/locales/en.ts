@@ -5143,6 +5143,8 @@ const en = {
     },
     referrerBonus: {
       title: "Referrer bonus",
+      needsNotaryDate:
+        "Enter the notary date first. A referral counts from the notarised sale, and the notary date decides which year it falls in.",
       hint: "This sale came through {{name}}.",
       tierNote: "This would be their referral number {{tier}} this year: {{amount}}.",
       tierLabel: "Referral number {{tier}} this year",

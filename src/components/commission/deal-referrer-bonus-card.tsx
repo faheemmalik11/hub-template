@@ -60,7 +60,7 @@ export function DealReferrerBonusCard({
 }) {
   const { t } = useTranslation();
   const referrerCustomerId = deal.referrer_customer_id;
-  const earnedOn = deal.notarised_on ?? new Date().toISOString().slice(0, 10);
+  const earnedOn = deal.notarised_on;
   const settingsQ = useBonusSettings();
   const referrerQ = useCustomer(referrerCustomerId ?? "");
   const bonusQ = useDealReferrerBonus(deal.id);
@@ -76,10 +76,12 @@ export function DealReferrerBonusCard({
   const [cancelling, setCancelling] = useState(false);
 
   if (!referrerCustomerId) return null;
-  if (!settingsQ.data || bonusQ.data === undefined || tierQ.data === undefined) return null;
+  if (!settingsQ.data || bonusQ.data === undefined) return null;
 
   const bonus = bonusQ.data;
-  const suggestedAmount = tierAmountOf(settingsQ.data, tierQ.data);
+  const tier = tierQ.data;
+  if (!bonus && earnedOn && tier === undefined) return null;
+  const suggestedAmount = tierAmountOf(settingsQ.data, tier ?? 1);
   const creditNote = (invoicesQ.data ?? []).find((invoice) => invoice.kind === "referral_credit");
   const payoutStageReached = dealStageReached(
     deal,
@@ -89,9 +91,10 @@ export function DealReferrerBonusCard({
 
   const create = () => {
     const parsedAmount = Number((amount || String(suggestedAmount)).replace(",", "."));
-    if (!Number.isFinite(parsedAmount) || parsedAmount <= 0) return;
+    if (!Number.isFinite(parsedAmount) || parsedAmount <= 0 || !earnedOn || tier === undefined)
+      return;
     suggest.mutate(
-      { referrerCustomerId, tier: tierQ.data, amount: parsedAmount, earnedOn },
+      { referrerCustomerId, tier, amount: parsedAmount, earnedOn },
       {
         onSuccess: () => toast.success(t("commissionDeals.referrerBonus.created")),
         onError: (error) =>
@@ -111,25 +114,33 @@ export function DealReferrerBonusCard({
 
       {!bonus ? (
         <div className="mt-3 space-y-2">
-          <p className="text-sm text-muted-foreground">
-            {t("commissionDeals.referrerBonus.tierNote", {
-              tier: tierQ.data,
-              amount: formatEUR(suggestedAmount),
-            })}
-          </p>
-          <div className="flex flex-wrap gap-2">
-            <Input
-              className="w-32"
-              inputMode="decimal"
-              value={amount || String(suggestedAmount)}
-              onChange={(event) => setAmount(sanitizeAmountInput(event.target.value))}
-              placeholder={t("commissionDeals.referrerBonus.amount")}
-              aria-label={t("commissionDeals.referrerBonus.amount")}
-            />
-            <Button size="sm" disabled={suggest.isPending || unsavedChanges} onClick={create}>
-              {t("commissionDeals.referrerBonus.create")}
-            </Button>
-          </div>
+          {!earnedOn ? (
+            <p className="text-sm text-muted-foreground">
+              {t("commissionDeals.referrerBonus.needsNotaryDate")}
+            </p>
+          ) : (
+            <>
+              <p className="text-sm text-muted-foreground">
+                {t("commissionDeals.referrerBonus.tierNote", {
+                  tier,
+                  amount: formatEUR(suggestedAmount),
+                })}
+              </p>
+              <div className="flex flex-wrap gap-2">
+                <Input
+                  className="w-32"
+                  inputMode="decimal"
+                  value={amount || String(suggestedAmount)}
+                  onChange={(event) => setAmount(sanitizeAmountInput(event.target.value))}
+                  placeholder={t("commissionDeals.referrerBonus.amount")}
+                  aria-label={t("commissionDeals.referrerBonus.amount")}
+                />
+                <Button size="sm" disabled={suggest.isPending || unsavedChanges} onClick={create}>
+                  {t("commissionDeals.referrerBonus.create")}
+                </Button>
+              </div>
+            </>
+          )}
           {unsavedChanges && <UnsavedDealChangesNote />}
         </div>
       ) : (

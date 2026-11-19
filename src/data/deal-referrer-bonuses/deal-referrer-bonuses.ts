@@ -40,10 +40,10 @@ export function useDealReferrerBonus(dealId: string, enabled = true) {
 }
 
 /** Which referral number this would be for that referrer this calendar year, for defaulting the amount field. */
-export function useReferrerBonusTier(referrerCustomerId: string | null, earnedOn: string) {
+export function useReferrerBonusTier(referrerCustomerId: string | null, earnedOn: string | null) {
   return useQuery({
-    queryKey: queryKeys.dealReferrerBonuses.tier(referrerCustomerId ?? "", earnedOn),
-    enabled: !!referrerCustomerId,
+    queryKey: queryKeys.dealReferrerBonuses.tier(referrerCustomerId ?? "", earnedOn ?? ""),
+    enabled: !!referrerCustomerId && !!earnedOn,
     staleTime: STALE,
     queryFn: async (): Promise<number> => {
       const { data, error } = await sb.rpc("referrer_bonus_tier", {
