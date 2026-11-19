@@ -386,4 +386,19 @@ begin
 end
 $$;
 
+revoke execute on function public.payment_file_document_set_company() from public;
+revoke execute on function public.payment_file_document_set_company() from anon;
+
+revoke execute on function public.payment_file_item_prevent_double_queue() from public;
+revoke execute on function public.payment_file_item_prevent_double_queue() from anon;
+
+revoke execute on function public.payment_file_item_set_company() from public;
+revoke execute on function public.payment_file_item_set_company() from anon;
+
+revoke execute on function public.payment_settings_ensure_default() from public;
+revoke execute on function public.payment_settings_ensure_default() from anon;
+
+revoke execute on function public.payment_settings_promote_next_default() from public;
+revoke execute on function public.payment_settings_promote_next_default() from anon;
+
 commit;

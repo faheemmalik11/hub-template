@@ -30,4 +30,7 @@ begin
 end;
 $$;
 
+revoke execute on function public.lexoffice_document_push_now() from public;
+revoke execute on function public.lexoffice_document_push_now() from anon;
+
 commit;

@@ -116,4 +116,7 @@ create trigger deal_referrer_bonuses_notify_suggested after insert on public.dea
     for each row when (new.status = 'suggested')
     execute function public.notify_referrer_bonus_suggested();
 
+revoke execute on function public.notify_referrer_bonus_suggested() from public;
+revoke execute on function public.notify_referrer_bonus_suggested() from anon;
+
 commit;

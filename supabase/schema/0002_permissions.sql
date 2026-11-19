@@ -292,4 +292,10 @@ drop policy if exists user_company_access_read on public.user_company_access;
 create policy user_company_access_read on public.user_company_access for select to authenticated
     using (public.is_admin() or public.has_permission('users.read') or user_id = public.current_app_user_id());
 
+revoke execute on function public.guard_locked_feature() from public;
+revoke execute on function public.guard_locked_feature() from anon;
+
+revoke execute on function public.guard_protected_role_permissions() from public;
+revoke execute on function public.guard_protected_role_permissions() from anon;
+
 commit;

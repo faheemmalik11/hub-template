@@ -166,4 +166,7 @@ revoke execute on function public.run_scheduled_job(text) from public, anon, aut
 revoke execute on function public.apply_scheduled_jobs() from public, anon;
 grant execute on function public.apply_scheduled_jobs() to authenticated;
 
+revoke execute on function public.scheduled_jobs_apply() from public;
+revoke execute on function public.scheduled_jobs_apply() from anon;
+
 commit;

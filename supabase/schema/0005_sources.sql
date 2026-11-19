@@ -332,4 +332,7 @@ create unique index if not exists ingest_exclusions_term_scope_uniq
 
 
 
+revoke execute on function public.forget_credentials_of_removed_channel() from public;
+revoke execute on function public.forget_credentials_of_removed_channel() from anon;
+
 commit;
