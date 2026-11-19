@@ -91,6 +91,40 @@ const PREVIEW_MINIMAL = {
 
 const CONVENTIONS: FilenameConvention[] = ["code_and_amount", "date_type_issuer"];
 
+// What DocumentPreview passes for a real document under date_type_issuer: the property's address,
+// not its code, so the preview shows the name that will actually be downloaded.
+const PREVIEW_PROPERTY_ADDRESS = "Steinmetzstraße 2";
+
+// Each convention's own separators, so picking one does not leave the previous scheme's joiner
+// behind and quietly produce a name that matches neither.
+const CONVENTION_SEPARATORS: Record<FilenameConvention, { separator: string; date: string }> = {
+  code_and_amount: { separator: " ", date: "_" },
+  date_type_issuer: { separator: "_", date: "_" },
+};
+
+const CONVENTION_STANDARD = {
+  code_and_amount: {
+    convention: "code_and_amount" as FilenameConvention,
+    default_type_label: "Beleg",
+    vat_suffix: "",
+    include_vat_suffix: false,
+    include_amount: true,
+    include_property: true,
+    description_source: "service_description" as FilenameDescriptionSource,
+    transliterate_accents: true,
+  },
+  date_type_issuer: {
+    convention: "date_type_issuer" as FilenameConvention,
+    default_type_label: "Beleg",
+    vat_suffix: "UST",
+    include_vat_suffix: false,
+    include_amount: false,
+    include_property: true,
+    description_source: "none" as FilenameDescriptionSource,
+    transliterate_accents: true,
+  },
+};
+
 const DESCRIPTION_SOURCES: FilenameDescriptionSource[] = [
   "service_description",
   "cost_category",
@@ -169,8 +203,11 @@ function SettingsForm({ settings, canEdit }: { settings: FilenameSettings; canEd
     };
     // #6: three shapes, not one — the settings' effect on incomplete data was invisible.
     return [
-      { key: "vollstaendig", name: buildSuggestedFilename(PREVIEW_DOCUMENT, draft) },
-      { key: "ohneObjekt", name: buildSuggestedFilename(PREVIEW_WITHOUT_PROPERTY, draft) },
+      {
+        key: "complete",
+        name: buildSuggestedFilename(PREVIEW_DOCUMENT, draft, "pdf", PREVIEW_PROPERTY_ADDRESS),
+      },
+      { key: "withoutProperty", name: buildSuggestedFilename(PREVIEW_WITHOUT_PROPERTY, draft) },
       { key: "minimal", name: buildSuggestedFilename(PREVIEW_MINIMAL, draft) },
     ];
   }, [
@@ -187,28 +224,34 @@ function SettingsForm({ settings, canEdit }: { settings: FilenameSettings; canEd
     transliterateUmlauts,
   ]);
 
-  // The convention the briefing specifies, mirrored from the migration's own column defaults.
+  // Each convention's own standard, so a client who deliberately picks one is not told forever
+  // that they deviate from the other one's defaults. Only the fields a convention actually uses
+  // are compared, for the same reason.
   const STANDARD = {
-    convention: "code_and_amount" as FilenameConvention,
-    separator: " ",
-    date_separator: "_",
-    default_type_label: "Beleg",
-    vat_suffix: "UST",
-    include_vat_suffix: true,
-    include_amount: true,
-    include_property: true,
-    description_source: "service_description" as FilenameDescriptionSource,
-    transliterate_accents: true,
+    ...CONVENTION_STANDARD[settings.convention],
+    separator: CONVENTION_SEPARATORS[settings.convention].separator,
+    date_separator: CONVENTION_SEPARATORS[settings.convention].date,
   };
-  const differsFromStandard =
-    settings.convention !== STANDARD.convention ||
+  const sharedDiffers =
     settings.separator !== STANDARD.separator ||
-    settings.vat_suffix !== STANDARD.vat_suffix ||
-    settings.include_vat_suffix !== STANDARD.include_vat_suffix ||
-    settings.include_amount !== STANDARD.include_amount ||
     settings.include_property !== STANDARD.include_property ||
-    settings.description_source !== STANDARD.description_source ||
     settings.transliterate_accents !== STANDARD.transliterate_accents;
+  const differsFromStandard =
+    settings.convention === "date_type_issuer"
+      ? sharedDiffers ||
+        settings.date_separator !== STANDARD.date_separator ||
+        settings.default_type_label !== STANDARD.default_type_label
+      : sharedDiffers ||
+        settings.vat_suffix !== STANDARD.vat_suffix ||
+        settings.include_vat_suffix !== STANDARD.include_vat_suffix ||
+        settings.include_amount !== STANDARD.include_amount ||
+        settings.description_source !== STANDARD.description_source;
+
+  function pickConvention(next: FilenameConvention) {
+    setConvention(next);
+    setSeparator(CONVENTION_SEPARATORS[next].separator);
+    setDateSeparator(CONVENTION_SEPARATORS[next].date);
+  }
 
   function resetToDefault() {
     setConvention(STANDARD.convention);
@@ -336,7 +379,7 @@ function SettingsForm({ settings, canEdit }: { settings: FilenameSettings; canEd
               <Select
                 value={convention}
                 disabled={!canEdit}
-                onValueChange={(v) => setConvention(v as FilenameConvention)}
+                onValueChange={(v) => pickConvention(v as FilenameConvention)}
               >
                 <SelectTrigger>
                   <SelectValue />
@@ -506,7 +549,7 @@ function SettingsForm({ settings, canEdit }: { settings: FilenameSettings; canEd
             {previews.slice(1).map((p) => (
               <div key={p.key} className="space-y-1">
                 <p className="text-xs text-muted-foreground">
-                  {t(`fileNaming.preview.fall.${p.key}`)}
+                  {t(`fileNaming.preview.case.${p.key}`)}
                 </p>
                 <p className="break-all rounded-md border border-border bg-muted/40 px-3 py-2 font-mono text-sm text-foreground">
                   {p.name ?? t("fileNaming.preview.empty")}
@@ -514,7 +557,9 @@ function SettingsForm({ settings, canEdit }: { settings: FilenameSettings; canEd
               </div>
             ))}
           </div>
-          <p className="mt-3 text-xs text-muted-foreground">{t("fileNaming.preview.typeHint")}</p>
+          <p className="mt-3 text-xs text-muted-foreground">
+            {t(`fileNaming.preview.typeHint.${convention}`)}
+          </p>
         </CardContent>
       </Card>
     </div>

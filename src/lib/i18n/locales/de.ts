@@ -4691,7 +4691,7 @@ const de = {
       "Wird mit einem festen Unterstrich an die Gesellschaft gehängt (z. B. IMKO_UST), unabhängig vom Trennzeichen oben.",
     title: "Dateibenennung",
     subtitle:
-      "Einheitliches Namensschema für Belege: Datum, Gesellschaft, Rechnungssteller, Beschreibung, Betrag und Objekt. Die Belegart ist bewusst nicht Teil des Namens, sie ergibt sich aus dem Ordner.",
+      "Ein Namensschema für alle abgelegten Belege. Wählen Sie unten das Schema und danach, welche Teile im Namen stehen.",
     card: {
       structure: {
         title: "Struktur",
@@ -4720,15 +4720,19 @@ const de = {
       none: "Keine Beschreibung",
     },
     preview: {
-      fall: {
-        vollstaendig: "Vollständiger Beleg",
-        ohneObjekt: "Ohne Objekt und Beschreibung",
-        minimal: "Nur Datum und Gesellschaft",
+      case: {
+        complete: "Vollständiger Beleg",
+        withoutProperty: "Ohne Objekt und Beschreibung",
+        minimal: "Kaum Daten vorhanden",
       },
       title: "Vorschau",
       desc: "Beispiel anhand eines Musterbelegs.",
       empty: "Keine Vorschau möglich, es fehlen Daten.",
-      typeHint: "Die Belegart ist nie Teil des Dateinamens.",
+      typeHint: {
+        code_and_amount: "Die Belegart ist nie Teil des Dateinamens.",
+        date_type_issuer:
+          "Die Belegart steht an zweiter Stelle. Ohne Rechnungssteller entsteht kein Name dieser Form.",
+      },
     },
     save: "Speichern",
     saving: "Speichere …",
