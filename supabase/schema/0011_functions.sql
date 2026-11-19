@@ -791,6 +791,10 @@ begin
 end;
 $$;
 
+revoke execute on function public.channel_secret_present(text) from public;
+revoke execute on function public.channel_secret_present(text) from anon;
+grant execute on function public.channel_secret_present(text) to authenticated;
+
 CREATE OR REPLACE FUNCTION public.check_match_allocation() RETURNS trigger
     LANGUAGE plpgsql SECURITY DEFINER
     SET search_path TO 'public'
@@ -1072,6 +1076,12 @@ begin
   return v_secret;
 end;
 $$;
+
+-- Returns a decrypted vault secret and checks nothing itself, so it must never be reachable with
+-- the anon key that ships in the browser bundle. notify-dispatch calls it as the service role.
+revoke execute on function public.get_channel_secret(text) from public;
+revoke execute on function public.get_channel_secret(text) from anon;
+revoke execute on function public.get_channel_secret(text) from authenticated;
 
 CREATE OR REPLACE FUNCTION public.guard_permission_grants() RETURNS trigger
     LANGUAGE plpgsql SECURITY DEFINER
@@ -3654,6 +3664,10 @@ begin
   end if;
 end;
 $$;
+
+revoke execute on function public.set_channel_secret(text, text) from public;
+revoke execute on function public.set_channel_secret(text, text) from anon;
+grant execute on function public.set_channel_secret(text, text) to authenticated;
 
 CREATE OR REPLACE FUNCTION public.set_datev_route(p_company_id uuid, p_direction text, p_address text, p_is_enabled boolean, p_note text, p_updated_by text) RETURNS void
     LANGUAGE plpgsql SECURITY DEFINER
