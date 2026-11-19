@@ -125,4 +125,10 @@ create trigger broker_bonuses_notify_decided after update of status on public.br
     for each row when (old.status is distinct from new.status and new.status in ('approved', 'rejected', 'paid'))
     execute function public.notify_bonus_decided();
 
+revoke execute on function public.notify_bonus_decided() from public;
+revoke execute on function public.notify_bonus_decided() from anon;
+
+revoke execute on function public.notify_deal_status_changed() from public;
+revoke execute on function public.notify_deal_status_changed() from anon;
+
 commit;

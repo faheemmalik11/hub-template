@@ -234,4 +234,28 @@ drop policy if exists user_company_access_write on public.user_company_access;
 create policy user_company_access_write on public.user_company_access for all to authenticated
     using (public.is_admin()) with check (public.is_admin());
 
+revoke execute on function public.guard_protected_role_insert() from public;
+revoke execute on function public.guard_protected_role_insert() from anon;
+
+revoke execute on function public.guard_protected_role_row() from public;
+revoke execute on function public.guard_protected_role_row() from anon;
+
+-- is_admin, current_app_user_id, current_role_name and practice_mode_active are called inside RLS
+-- policies for authenticated, so authenticated must keep execute or every policy stops evaluating.
+revoke execute on function public.is_admin() from public;
+revoke execute on function public.is_admin() from anon;
+grant execute on function public.is_admin() to authenticated;
+
+revoke execute on function public.current_app_user_id() from public;
+revoke execute on function public.current_app_user_id() from anon;
+grant execute on function public.current_app_user_id() to authenticated;
+
+revoke execute on function public.current_role_name() from public;
+revoke execute on function public.current_role_name() from anon;
+grant execute on function public.current_role_name() to authenticated;
+
+revoke execute on function public.practice_mode_active() from public;
+revoke execute on function public.practice_mode_active() from anon;
+grant execute on function public.practice_mode_active() to authenticated;
+
 commit;

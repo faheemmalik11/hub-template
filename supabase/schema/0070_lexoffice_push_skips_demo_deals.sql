@@ -35,4 +35,7 @@ begin
 end;
 $$;
 
+revoke execute on function public.lexoffice_invoice_push_now() from public;
+revoke execute on function public.lexoffice_invoice_push_now() from anon;
+
 commit;

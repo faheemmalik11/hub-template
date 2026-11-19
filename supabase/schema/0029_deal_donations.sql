@@ -105,4 +105,7 @@ create trigger deal_donations_notify_suggested after insert on public.deal_donat
     for each row when (new.status = 'suggested')
     execute function public.notify_donation_suggested();
 
+revoke execute on function public.notify_donation_suggested() from public;
+revoke execute on function public.notify_donation_suggested() from anon;
+
 commit;

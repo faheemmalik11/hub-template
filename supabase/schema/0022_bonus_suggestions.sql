@@ -100,4 +100,10 @@ create trigger broker_bonuses_notify_suggested after insert on public.broker_bon
     for each row when (new.status = 'suggested')
     execute function public.notify_bonus_suggested();
 
+revoke execute on function public.notify_bonus_submitted() from public;
+revoke execute on function public.notify_bonus_submitted() from anon;
+
+revoke execute on function public.notify_bonus_suggested() from public;
+revoke execute on function public.notify_bonus_suggested() from anon;
+
 commit;
