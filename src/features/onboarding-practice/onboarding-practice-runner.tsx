@@ -456,6 +456,53 @@ function ActivePracticeTask({ task }: { task: OnboardingTask }) {
   );
 }
 
+function OrphanedPracticeModeBanner() {
+  const { t } = useTranslation();
+  const queryClient = useQueryClient();
+  const [active, setActive] = useState(false);
+  const [ending, setEnding] = useState(false);
+
+  useEffect(() => {
+    let cancelled = false;
+    void readPracticeModeActive().then((isActive) => {
+      if (!cancelled) setActive(isActive);
+    });
+    return () => {
+      cancelled = true;
+    };
+  }, []);
+
+  if (!active) return null;
+
+  const endPracticeMode = async () => {
+    setEnding(true);
+    try {
+      await setPracticeMode(false);
+      setActive(false);
+      await queryClient.invalidateQueries();
+    } finally {
+      setEnding(false);
+    }
+  };
+
+  return (
+    <div className="fixed inset-x-0 top-0 z-[70] flex justify-center px-4">
+      <div className="mt-2 flex flex-wrap items-center gap-3 rounded-xl bg-amber-50 py-2 pl-4 pr-3 text-sm text-amber-900 shadow-lg">
+        {t("onboarding.practice.staleNotice")}
+        <Button
+          type="button"
+          variant="outline"
+          size="sm"
+          disabled={ending}
+          onClick={() => void endPracticeMode()}
+        >
+          {t("onboarding.practice.endModeButton")}
+        </Button>
+      </div>
+    </div>
+  );
+}
+
 export function OnboardingPracticeRunner() {
   const { activeTaskId } = useOnboardingPractice();
   const { t } = useTranslation();
@@ -464,6 +511,6 @@ export function OnboardingPracticeRunner() {
     () => (activeTaskId ? findPracticeTask(activeTaskId, t, can) : null),
     [activeTaskId, t, can],
   );
-  if (!task) return null;
+  if (!task) return <OrphanedPracticeModeBanner />;
   return <ActivePracticeTask key={task.id} task={task} />;
 }
