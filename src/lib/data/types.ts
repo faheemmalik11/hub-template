@@ -231,10 +231,14 @@ export interface Exclusion {
 // pattern "YYYYMMDD COM[_VAT] Issuer Description [Amount] [Property]" — see
 // docs/FILENAME_CONVENTION.md and src/lib/filename.ts (the builder that consumes this).
 export type FilenameDescriptionSource = "service_description" | "cost_category" | "none";
+export type FilenameConvention = "code_and_amount" | "date_type_issuer";
 
 export interface FilenameSettings {
   id: true;
+  convention: FilenameConvention;
   separator: string;
+  date_separator: string;
+  default_type_label: string;
   vat_suffix: string;
   include_vat_suffix: boolean;
   include_amount: boolean;

@@ -2,7 +2,10 @@
 export const filenameSettings = [
   {
     id: true,
+    convention: "code_and_amount",
     separator: " ",
+    date_separator: "_",
+    default_type_label: "Beleg",
     include_amount: true,
     include_property: true,
     include_vat_suffix: false,

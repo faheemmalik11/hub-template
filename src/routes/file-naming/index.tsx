@@ -22,7 +22,12 @@ import { buildSuggestedFilename } from "@/lib/filename";
 import { useAuth } from "@/lib/auth";
 import { PERMISSIONS } from "@/config/permissions";
 import { useTranslation } from "@/lib/i18n";
-import type { Document, FilenameDescriptionSource, FilenameSettings } from "@/lib/data/types";
+import type {
+  Document,
+  FilenameConvention,
+  FilenameDescriptionSource,
+  FilenameSettings,
+} from "@/lib/data/types";
 import { pageTitle } from "@/config/brand";
 import { errorText, formatDateTime } from "@/lib/data/format";
 
@@ -84,6 +89,8 @@ const PREVIEW_MINIMAL = {
   company_code: "IMKO",
 } as unknown as Document;
 
+const CONVENTIONS: FilenameConvention[] = ["code_and_amount", "date_type_issuer"];
+
 const DESCRIPTION_SOURCES: FilenameDescriptionSource[] = [
   "service_description",
   "cost_category",
@@ -121,7 +128,10 @@ function SettingsForm({ settings, canEdit }: { settings: FilenameSettings; canEd
   const { t } = useTranslation();
   const update = useUpdateFilenameSettings();
 
+  const [convention, setConvention] = useState(settings.convention);
   const [separator, setSeparator] = useState(settings.separator);
+  const [dateSeparator, setDateSeparator] = useState(settings.date_separator);
+  const [defaultTypeLabel, setDefaultTypeLabel] = useState(settings.default_type_label);
   const [vatSuffix, setVatSuffix] = useState(settings.vat_suffix);
   const [includeVatSuffix, setIncludeVatSuffix] = useState(settings.include_vat_suffix);
   const [includeAmount, setIncludeAmount] = useState(settings.include_amount);
@@ -131,7 +141,10 @@ function SettingsForm({ settings, canEdit }: { settings: FilenameSettings; canEd
 
   // Re-sync local state whenever the server row changes underneath us (e.g. another admin saved).
   useEffect(() => {
+    setConvention(settings.convention);
     setSeparator(settings.separator);
+    setDateSeparator(settings.date_separator);
+    setDefaultTypeLabel(settings.default_type_label);
     setVatSuffix(settings.vat_suffix);
     setIncludeVatSuffix(settings.include_vat_suffix);
     setIncludeAmount(settings.include_amount);
@@ -143,7 +156,10 @@ function SettingsForm({ settings, canEdit }: { settings: FilenameSettings; canEd
   const previews = useMemo(() => {
     const draft: FilenameSettings = {
       ...settings,
+      convention,
       separator,
+      date_separator: dateSeparator,
+      default_type_label: defaultTypeLabel,
       vat_suffix: vatSuffix,
       include_vat_suffix: includeVatSuffix,
       include_amount: includeAmount,
@@ -159,7 +175,10 @@ function SettingsForm({ settings, canEdit }: { settings: FilenameSettings; canEd
     ];
   }, [
     settings,
+    convention,
     separator,
+    dateSeparator,
+    defaultTypeLabel,
     vatSuffix,
     includeVatSuffix,
     includeAmount,
@@ -170,7 +189,10 @@ function SettingsForm({ settings, canEdit }: { settings: FilenameSettings; canEd
 
   // The convention the briefing specifies, mirrored from the migration's own column defaults.
   const STANDARD = {
+    convention: "code_and_amount" as FilenameConvention,
     separator: " ",
+    date_separator: "_",
+    default_type_label: "Beleg",
     vat_suffix: "UST",
     include_vat_suffix: true,
     include_amount: true,
@@ -179,6 +201,7 @@ function SettingsForm({ settings, canEdit }: { settings: FilenameSettings; canEd
     transliterate_accents: true,
   };
   const differsFromStandard =
+    settings.convention !== STANDARD.convention ||
     settings.separator !== STANDARD.separator ||
     settings.vat_suffix !== STANDARD.vat_suffix ||
     settings.include_vat_suffix !== STANDARD.include_vat_suffix ||
@@ -188,7 +211,10 @@ function SettingsForm({ settings, canEdit }: { settings: FilenameSettings; canEd
     settings.transliterate_accents !== STANDARD.transliterate_accents;
 
   function resetToDefault() {
+    setConvention(STANDARD.convention);
     setSeparator(STANDARD.separator);
+    setDateSeparator(STANDARD.date_separator);
+    setDefaultTypeLabel(STANDARD.default_type_label);
     setVatSuffix(STANDARD.vat_suffix);
     setIncludeVatSuffix(STANDARD.include_vat_suffix);
     setIncludeAmount(STANDARD.include_amount);
@@ -207,10 +233,15 @@ function SettingsForm({ settings, canEdit }: { settings: FilenameSettings; canEd
     SHOW_VAT_MARKER &&
     includeVatSuffix &&
     (vatSuffix.trim().length === 0 || UNSAFE_FILENAME_CHARS.test(vatSuffix));
-  const invalid = separatorInvalid || vatSuffixInvalid;
+  const isDateTypeIssuer = convention === "date_type_issuer";
+  const dateSeparatorInvalid = UNSAFE_FILENAME_CHARS.test(dateSeparator);
+  const invalid = separatorInvalid || vatSuffixInvalid || dateSeparatorInvalid;
 
   const dirty =
+    convention !== settings.convention ||
     separator !== settings.separator ||
+    dateSeparator !== settings.date_separator ||
+    defaultTypeLabel !== settings.default_type_label ||
     vatSuffix !== settings.vat_suffix ||
     includeVatSuffix !== settings.include_vat_suffix ||
     includeAmount !== settings.include_amount ||
@@ -233,7 +264,10 @@ function SettingsForm({ settings, canEdit }: { settings: FilenameSettings; canEd
   function save() {
     update.mutate(
       {
+        convention,
         separator,
+        date_separator: dateSeparator,
+        default_type_label: defaultTypeLabel,
         vat_suffix: vatSuffix,
         include_vat_suffix: includeVatSuffix,
         include_amount: includeAmount,
@@ -295,6 +329,30 @@ function SettingsForm({ settings, canEdit }: { settings: FilenameSettings; canEd
             <CardDescription>{t("fileNaming.card.structure.desc")}</CardDescription>
           </CardHeader>
           <CardContent className="grid gap-4 sm:grid-cols-2">
+            <div className="space-y-1 sm:col-span-2">
+              <Label className="text-xs text-muted-foreground">
+                {t("fileNaming.field.convention")}
+              </Label>
+              <Select
+                value={convention}
+                disabled={!canEdit}
+                onValueChange={(v) => setConvention(v as FilenameConvention)}
+              >
+                <SelectTrigger>
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  {CONVENTIONS.map((name) => (
+                    <SelectItem key={name} value={name}>
+                      {t(`fileNaming.convention.${name}`)}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+              <p className="text-xs text-muted-foreground">
+                {t(`fileNaming.conventionHint.${convention}`)}
+              </p>
+            </div>
             <div className="space-y-1">
               <Label className="text-xs text-muted-foreground">
                 {t("fileNaming.field.separator")}
@@ -338,12 +396,47 @@ function SettingsForm({ settings, canEdit }: { settings: FilenameSettings; canEd
                 onCheckedChange={setIncludeVatSuffix}
               />
             )}
-            <ToggleRow
-              label={t("fileNaming.field.includeAmount")}
-              checked={includeAmount}
-              disabled={!canEdit}
-              onCheckedChange={setIncludeAmount}
-            />
+            {isDateTypeIssuer && (
+              <div className="space-y-1">
+                <Label className="text-xs text-muted-foreground">
+                  {t("fileNaming.field.dateSeparator")}
+                </Label>
+                <Input
+                  value={dateSeparator}
+                  disabled={!canEdit}
+                  onChange={(e) => setDateSeparator(e.target.value)}
+                  maxLength={3}
+                  aria-invalid={dateSeparatorInvalid}
+                />
+                {dateSeparatorInvalid && (
+                  <p className="text-xs text-amber-700">{t("fileNaming.separatorInvalid")}</p>
+                )}
+              </div>
+            )}
+            {isDateTypeIssuer && (
+              <div className="space-y-1">
+                <Label className="text-xs text-muted-foreground">
+                  {t("fileNaming.field.defaultTypeLabel")}
+                </Label>
+                <Input
+                  value={defaultTypeLabel}
+                  disabled={!canEdit}
+                  onChange={(e) => setDefaultTypeLabel(e.target.value)}
+                  maxLength={40}
+                />
+                <p className="text-xs text-muted-foreground">
+                  {t("fileNaming.defaultTypeLabelHint")}
+                </p>
+              </div>
+            )}
+            {!isDateTypeIssuer && (
+              <ToggleRow
+                label={t("fileNaming.field.includeAmount")}
+                checked={includeAmount}
+                disabled={!canEdit}
+                onCheckedChange={setIncludeAmount}
+              />
+            )}
             <ToggleRow
               label={t("fileNaming.field.includeProperty")}
               checked={includeProperty}
@@ -359,35 +452,37 @@ function SettingsForm({ settings, canEdit }: { settings: FilenameSettings; canEd
           </CardContent>
         </Card>
 
-        <Card data-tour="filename-description">
-          <CardHeader>
-            <CardTitle>{t("fileNaming.card.description.title")}</CardTitle>
-            <CardDescription>{t("fileNaming.card.description.desc")}</CardDescription>
-          </CardHeader>
-          <CardContent>
-            <div className="space-y-1 sm:max-w-xs">
-              <Label className="text-xs text-muted-foreground">
-                {t("fileNaming.field.descriptionSource")}
-              </Label>
-              <Select
-                value={descriptionSource}
-                disabled={!canEdit}
-                onValueChange={(v) => setDescriptionSource(v as FilenameDescriptionSource)}
-              >
-                <SelectTrigger>
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  {DESCRIPTION_SOURCES.map((s) => (
-                    <SelectItem key={s} value={s}>
-                      {t(`fileNaming.descriptionSource.${s}`)}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
-          </CardContent>
-        </Card>
+        {!isDateTypeIssuer && (
+          <Card data-tour="filename-description">
+            <CardHeader>
+              <CardTitle>{t("fileNaming.card.description.title")}</CardTitle>
+              <CardDescription>{t("fileNaming.card.description.desc")}</CardDescription>
+            </CardHeader>
+            <CardContent>
+              <div className="space-y-1 sm:max-w-xs">
+                <Label className="text-xs text-muted-foreground">
+                  {t("fileNaming.field.descriptionSource")}
+                </Label>
+                <Select
+                  value={descriptionSource}
+                  disabled={!canEdit}
+                  onValueChange={(v) => setDescriptionSource(v as FilenameDescriptionSource)}
+                >
+                  <SelectTrigger>
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {DESCRIPTION_SOURCES.map((s) => (
+                      <SelectItem key={s} value={s}>
+                        {t(`fileNaming.descriptionSource.${s}`)}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+            </CardContent>
+          </Card>
+        )}
 
         {canEdit && (
           <div className="flex justify-end">

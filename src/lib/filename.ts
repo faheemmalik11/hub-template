@@ -1,9 +1,10 @@
-// Builds the client's uniform filename pattern for a Beleg (invoice/receipt):
-//   YYYYMMDD COM[_VAT] Issuer Description [Amount] [Property]
-//   e.g. "20260315 STAY_UST Sanitär Müller Sanitärinstallation 4.850,00 P-01.pdf"
-// The receipt type (document_type) is deliberately never included — per the briefing it's
-// implied by the folder the file lives in, not by its name. See docs/FILENAME_CONVENTION.md
-// for the full spec and what this does/doesn't cover.
+// Builds a document's filename under whichever convention the client has picked.
+//   code_and_amount:  YYYYMMDD COM[_VAT] Issuer Description [Amount] [Property]
+//                     e.g. "20260315 STAY_UST Sanitär Müller Sanitärinstallation 4.850,00 P-01.pdf"
+//   date_type_issuer: YYYY_MM_DD_Type_Issuer[_Property]
+//                     e.g. "2026_11_16_Rechnung_ContentWerkRuhr_Steinmetzstraße_2.pdf"
+// The two disagree on the document type on purpose: the older convention leaves it out because the
+// folder implies it, the newer one puts it second. See docs/FILENAME_CONVENTION.md.
 
 import type { Document, FilenameSettings } from "@/lib/data/types";
 
@@ -66,7 +67,56 @@ export function buildSuggestedFilename(
   doc: Document,
   settings: FilenameSettings,
   extension = "pdf",
+  propertyLabel?: string | null,
 ): string | null {
+  const parts =
+    settings.convention === "date_type_issuer"
+      ? dateTypeIssuerParts(doc, settings, propertyLabel)
+      : codeAndAmountParts(doc, settings);
+
+  if (parts.length === 0) return null;
+
+  let name = parts.join(settings.separator);
+  if (settings.transliterate_accents) name = transliterate(name);
+  name = sanitizeSegment(name);
+
+  // Truncate the NAME, never the extension — a cut-off ".pdf" breaks the download entirely,
+  // whereas a shortened description is still a usable, human-readable filename.
+  const maxNameLength = MAX_FILENAME_LENGTH - extension.length - 1; // -1 for the "."
+  if (name.length > maxNameLength) {
+    name = sanitizeSegment(name.slice(0, maxNameLength));
+  }
+
+  return `${name}.${extension}`;
+}
+
+// Each word joined by the separator too, so the whole name reads in one alphabet:
+// "Stadt Bottrop" under an underscore separator becomes "Stadt_Bottrop", as the client wrote it.
+function words(input: string, separator: string): string {
+  return sanitizeSegment(input).split(/\s+/).filter(Boolean).join(separator);
+}
+
+function dateTypeIssuerParts(
+  doc: Document,
+  settings: FilenameSettings,
+  propertyLabel?: string | null,
+): string[] {
+  const date = formatDateSegment(doc.document_date);
+  const issuer = doc.issuer ? words(doc.issuer, "-") : "";
+  if (!date || !issuer) return [];
+
+  const day = `${date.slice(0, 4)}${settings.date_separator}${date.slice(4, 6)}${settings.date_separator}${date.slice(6, 8)}`;
+  const type = words(doc.document_type || settings.default_type_label, "-");
+  const parts = [day, type, issuer];
+
+  if (settings.include_property) {
+    const property = propertyLabel ?? doc.property_code;
+    if (property) parts.push(words(property, settings.separator));
+  }
+  return parts;
+}
+
+function codeAndAmountParts(doc: Document, settings: FilenameSettings): string[] {
   const parts: string[] = [];
 
   const date = formatDateSegment(doc.document_date);
@@ -92,18 +142,5 @@ export function buildSuggestedFilename(
     parts.push(sanitizeSegment(doc.property_code));
   }
 
-  if (parts.length === 0) return null;
-
-  let name = parts.join(settings.separator);
-  if (settings.transliterate_accents) name = transliterate(name);
-  name = sanitizeSegment(name);
-
-  // Truncate the NAME, never the extension — a cut-off ".pdf" breaks the download entirely,
-  // whereas a shortened description is still a usable, human-readable filename.
-  const maxNameLength = MAX_FILENAME_LENGTH - extension.length - 1; // -1 for the "."
-  if (name.length > maxNameLength) {
-    name = sanitizeSegment(name.slice(0, maxNameLength));
-  }
-
-  return `${name}.${extension}`;
+  return parts;
 }
