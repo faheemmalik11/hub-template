@@ -18,26 +18,50 @@ implementation follows:
 
 ### Hub (this repo)
 
-- **`supabase/migrations/20260804090000_filename_settings.sql`** — a singleton config table
-  `public.filename_settings` (`id boolean primary key default true check (id)`, so at most one row
-  can ever exist). Columns: `separator`, `vat_suffix`, `include_vat_suffix`, `include_amount`,
-  `include_property`, `description_source` (`service_description` | `cost_category` | `none`),
-  `transliterate_umlauts`. RLS: any authenticated user can `select`; only `is_admin()` can
-  `update` (same admin gate as the rest of the admin screens, migration 0046).
-- **`src/lib/data/types.ts`** — `FilenameSettings`, `FilenameDescriptionSource`.
-- **`src/lib/data/queries.ts`** — `useFilenameSettings()` (read), `useUpdateFilenameSettings()`
-  (admin write). Both go through the untyped `sb` cast since `filename_settings` postdates the
-  generated `Database` type, same convention as every other table added since.
-- **`src/lib/filename.ts`** — `buildSuggestedFilename(beleg, settings, extension?)`, the pure
-  builder function. Order is fixed to match the briefing's pattern; `FilenameSettings` controls
-  which optional parts appear and where the description text comes from. Returns `null` when
-  there isn't enough data yet (e.g. a receipt still awaiting AI extraction) so callers can fall
-  back to the original filename.
-- **`src/routes/dateibenennung/index.tsx`** — the admin screen (nav: Verwaltung → Dateibenennung,
-  admin-role-gated in the nav same as Team/Papierkorb — real enforcement is the RLS `update`
-  policy above, the nav entry is just UX). Structural fields (separator, which optional parts are
-  on) + descriptive field (what feeds the description slot), with a live preview built from the
-  client's own example values.
+- **`supabase/schema/0005_sources.sql:257-273`** — a singleton config table
+  `public.filename_settings` (`id boolean primary key default true`, constraint
+  `filename_settings_one_row`, so at most one row can ever exist). Columns: `separator`,
+  `vat_suffix`, `include_vat_suffix`, `include_amount`, `include_property`, `description_source`
+  (`service_description` | `cost_category` | `none`), `transliterate_accents`, plus `convention`,
+  `date_separator` and `default_type_label` from
+  `supabase/schema/0074_filename_convention_date_type_issuer.sql`. RLS is granted generically in
+  `supabase/schema/0010_access.sql:155-161`: read under `documents.read`, write under
+  `settings.manage`.
+- **`src/lib/data/types.ts`** — `FilenameSettings`, `FilenameDescriptionSource`,
+  `FilenameConvention`.
+- **`src/data/settings/settings.ts`** — `useFilenameSettings()` (read),
+  `useUpdateFilenameSettings()` (write, which also records a `change_history` row). Both go through
+  the untyped `sb` cast since `filename_settings` postdates the generated `Database` type.
+- **`src/lib/filename.ts`** — `buildSuggestedFilename(doc, settings, extension?, propertyLabel?)`,
+  the pure builder, with one part-list function per convention. Returns `null` when there isn't
+  enough data yet (e.g. a document still awaiting AI extraction) so callers can fall back to the
+  original filename. Tests: `src/lib/filename.test.ts`.
+- **`src/routes/file-naming/index.tsx`** — the admin screen, gated by
+  `PERMISSIONS.pageFileNaming`. Picks the convention, then shows only the fields that convention
+  uses, with a live preview over three fixtures (complete, no property, minimal).
+
+### The two conventions
+
+| `convention` | Pattern | Where it came from |
+|---|---|---|
+| `code_and_amount` (default) | `YYYYMMDD COM[_VAT] Issuer Description [Amount] [Property]` | the original briefing, quoted above |
+| `date_type_issuer` | `YYYY_MM_DD_Type_Issuer[_Property]` | the client, 18.11.2026 |
+
+They disagree about the document type on purpose: the first leaves it out because the folder
+implies it, the second puts it second. The default is unchanged, so no existing client's filenames
+move until someone picks the other one.
+
+`date_type_issuer` names the property by its address rather than its code, which is why
+`DocumentPreview` looks the property up and passes `propertyLabel`; `code_and_amount` ignores that
+argument and keeps using `property_code`. The matching convention in the ingestion pipeline is
+`by_date_type_issuer` (`src/adapters/storage/naming/by_date_type_issuer.py` in the `book-keeping`
+repo), selected per tenant by `storage.naming`.
+
+**Open, and it matters:** the pipeline reads this same row through `_CONVENTION_FIELDS` in
+`src/adapters/db/filename_settings.py`, which does not list `convention` and still looks for
+`transliterate_umlauts` where the Hub's column is now `transliterate_accents`. Until that list is
+updated in the `book-keeping` repo, picking a convention here changes the Hub's own preview and
+download name but not the name the pipeline actually files under.
 
 ### The USt-Kennzeichen is off for this Hub
 

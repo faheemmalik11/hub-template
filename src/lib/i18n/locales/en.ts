@@ -4508,6 +4508,17 @@ const en = {
     lastChangedBy: "Last changed by {{who}} on {{when}}.",
     unknown: "unknown",
     deviation: "These settings differ from the specified naming convention.",
+    convention: {
+      code_and_amount: "Date, company, issuer, description, amount",
+      date_type_issuer: "Date, document type, issuer, property",
+    },
+    conventionHint: {
+      code_and_amount:
+        "Example: 20260315 IMKO Sanitär Müller Sanitärinstallation 4.850,00 P-01. The document type is not in the name; the folder shows it.",
+      date_type_issuer:
+        "Example: 2026_11_16_Rechnung_ContentWerkRuhr_Steinmetzstraße_2. The property is only in the name when the document belongs to one.",
+    },
+    defaultTypeLabelHint: "Used when the document type has not been recognised yet.",
     restoreDefaults: "Restore defaults",
     separatorInvalid:
       'Not allowed: \\ / : * ? " < > | or empty. These characters are stripped from the filename, which would run the parts together.',
@@ -4529,6 +4540,9 @@ const en = {
     },
     field: {
       separator: "Separator",
+      convention: "Naming scheme",
+      dateSeparator: "Separator inside the date",
+      defaultTypeLabel: "Label for an unknown document type",
       vatSuffix: "VAT suffix",
       includeVatSuffix: "Append VAT suffix (for VAT-relevant receipts)",
       includeAmount: "Include amount",

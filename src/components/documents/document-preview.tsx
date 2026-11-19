@@ -18,6 +18,7 @@ import {
   useDocumentFile,
   useFilenameSettings,
   useInvoiceFileUrl,
+  useProperty,
 } from "@/data";
 import { buildSuggestedFilename } from "@/lib/filename";
 import { cn } from "@/lib/utils";
@@ -82,9 +83,21 @@ export function DocumentPreview({ documentId, doc }: { documentId: string; doc?:
 
   const originalFilename = file?.filename ?? `beleg-${documentId}`;
   const extension = originalFilename.includes(".") ? originalFilename.split(".").pop()! : "pdf";
+  // The newer convention names the property by its address, the way the ingestion pipeline does,
+  // so the downloaded copy and the filed copy agree. The older one uses property_code and ignores
+  // this, which is why the lookup only runs for the convention that needs it.
+  const needsPropertyAddress =
+    filenameSettingsQ.data?.convention === "date_type_issuer" &&
+    filenameSettingsQ.data.include_property;
+  const propertyQ = useProperty(needsPropertyAddress ? (doc?.property_id ?? "") : "");
   const suggestedFilename =
     doc && filenameSettingsQ.data
-      ? buildSuggestedFilename(doc, filenameSettingsQ.data, extension)
+      ? buildSuggestedFilename(
+          doc,
+          filenameSettingsQ.data,
+          extension,
+          propertyQ.data?.address ?? propertyQ.data?.name ?? null,
+        )
       : null;
 
   const usingStorage = !!file?.storage_bucket && !!file?.storage_path;

@@ -4672,6 +4672,17 @@ const de = {
     lastChangedBy: "Zuletzt geändert von {{who}} am {{when}}.",
     unknown: "unbekannt",
     deviation: "Diese Einstellungen weichen vom vorgegebenen Namensschema ab.",
+    convention: {
+      code_and_amount: "Datum, Gesellschaft, Aussteller, Beschreibung, Betrag",
+      date_type_issuer: "Datum, Belegart, Rechnungssteller, Objekt",
+    },
+    conventionHint: {
+      code_and_amount:
+        "Beispiel: 20260315 IMKO Sanitär Müller Sanitärinstallation 4.850,00 P-01. Die Belegart steht nicht im Namen, sie ergibt sich aus dem Ordner.",
+      date_type_issuer:
+        "Beispiel: 2026_11_16_Rechnung_ContentWerkRuhr_Steinmetzstraße_2. Das Objekt steht nur dann im Namen, wenn der Beleg zu einer Immobilie gehört.",
+    },
+    defaultTypeLabelHint: "Wird genutzt, wenn die Belegart beim Beleg noch nicht erkannt wurde.",
     restoreDefaults: "Standard wiederherstellen",
     separatorInvalid:
       'Nicht erlaubt: \\ / : * ? " < > | und leer. Diese Zeichen werden aus dem Dateinamen entfernt, die Bestandteile würden zusammenkleben.',
@@ -4693,6 +4704,9 @@ const de = {
     },
     field: {
       separator: "Trennzeichen",
+      convention: "Namensschema",
+      dateSeparator: "Trennzeichen im Datum",
+      defaultTypeLabel: "Bezeichnung für unbekannte Belegart",
       vatSuffix: "USt-Kennzeichen",
       includeVatSuffix: "USt-Kennzeichen anhängen (bei USt-relevanten Belegen)",
       includeAmount: "Betrag einfügen",
