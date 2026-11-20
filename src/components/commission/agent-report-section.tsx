@@ -8,6 +8,7 @@ import { DateRangeCalendar } from "@/components/data-table/date-range-picker";
 import { AgentReportTable } from "@/components/commission/agent-report-table";
 import { AgentReportTiles } from "@/components/commission/agent-report-tiles";
 import { useAgentCommissionReport, useBonusSettings } from "@/data";
+import type { AgentCommissionReportRow, AgentCommissionReportSort } from "@/data";
 import { PERMISSIONS } from "@/config/permissions";
 import { useAuth } from "@/lib/auth";
 import { useTranslation } from "@/lib/i18n";
@@ -68,48 +69,67 @@ export function AgentReportSection() {
   const { can, appUserId } = useAuth();
   const seesAllAgents = can(PERMISSIONS.dealsReportAll);
   const [cutoff, setCutoff] = useState(todayIso);
+  const [search, setSearch] = useState("");
+  const [sort, setSort] = useState<AgentCommissionReportSort>("closings");
+  const [ascending, setAscending] = useState(false);
+  const [page, setPage] = useState(1);
+  const [pageSize, setPageSize] = useState(25);
 
-  const reportQ = useAgentCommissionReport(cutoff);
+  const pageQ = useAgentCommissionReport({ cutoff, search, sort, ascending, page, pageSize });
   const canReadBonusSettings = can(PERMISSIONS.bonusesReview) || can(PERMISSIONS.bonusesSubmit);
   const settingsQ = useBonusSettings(canReadBonusSettings);
   const showApprovedBonuses = settingsQ.data?.broker_bonus_counts_status === "separate";
-  const rows = reportQ.data ?? [];
+  const pageRows = pageQ.data?.rows ?? [];
   const year = Number(cutoff.slice(0, 4));
 
-  const grandTotal = rows.reduce(
-    (sum, row) => ({
-      agent_user_id: "total",
-      agent_name: "",
-      closings_current: sum.closings_current + row.closings_current,
-      closings_previous: sum.closings_previous + row.closings_previous,
-      volume_current: sum.volume_current + row.volume_current,
-      volume_previous: sum.volume_previous + row.volume_previous,
-      commission_current: sum.commission_current + row.commission_current,
-      commission_previous: sum.commission_previous + row.commission_previous,
-      bonuses_current: sum.bonuses_current + row.bonuses_current,
-      bonuses_previous: sum.bonuses_previous + row.bonuses_previous,
-      bonuses_approved_current: sum.bonuses_approved_current + row.bonuses_approved_current,
-      bonuses_approved_previous: sum.bonuses_approved_previous + row.bonuses_approved_previous,
-    }),
-    {
-      agent_user_id: "total",
-      agent_name: "",
-      closings_current: 0,
-      closings_previous: 0,
-      volume_current: 0,
-      volume_previous: 0,
-      commission_current: 0,
-      commission_previous: 0,
-      bonuses_current: 0,
-      bonuses_previous: 0,
-      bonuses_approved_current: 0,
-      bonuses_approved_previous: 0,
-    },
-  );
-  const ownRow = rows.find((row) => row.agent_user_id === appUserId) ?? null;
+  const changeCutoff = (value: string) => {
+    setCutoff(value);
+    setPage(1);
+  };
+
+  const changeSearch = (value: string) => {
+    setSearch(value);
+    setPage(1);
+  };
+
+  const sortBy = (column: string) => {
+    const key = column as AgentCommissionReportSort;
+    if (key === sort) {
+      setAscending(!ascending);
+    } else {
+      setSort(key);
+      setAscending(true);
+    }
+    setPage(1);
+  };
+
+  const changePageSize = (size: number) => {
+    setPageSize(size);
+    setPage(1);
+  };
+
+  const firstRow = pageRows[0];
+  const grandTotal: AgentCommissionReportRow | null = firstRow
+    ? {
+        ...firstRow,
+        agent_user_id: "total",
+        agent_name: "",
+        closings_current: firstRow.all_closings_current,
+        closings_previous: firstRow.all_closings_previous,
+        volume_current: firstRow.all_volume_current,
+        volume_previous: firstRow.all_volume_previous,
+        commission_current: firstRow.all_commission_current,
+        commission_previous: firstRow.all_commission_previous,
+        bonuses_current: firstRow.all_bonuses_current,
+        bonuses_previous: firstRow.all_bonuses_previous,
+        bonuses_approved_current: firstRow.all_bonuses_approved_current,
+        bonuses_approved_previous: firstRow.all_bonuses_approved_previous,
+      }
+    : null;
+  const ownRow = pageRows.find((row) => row.agent_user_id === appUserId) ?? null;
 
   return (
-    <section className="mt-8 rounded-xl border border-border bg-card p-4">
+    <section>
       <div className="flex flex-wrap items-end justify-between gap-4">
         <div>
           <h2 className="text-lg font-semibold text-foreground">
@@ -123,20 +143,34 @@ export function AgentReportSection() {
           <Label className="text-xs text-muted-foreground">
             {t("commissionDeals.report.cutoff")}
           </Label>
-          <CutoffDatePicker value={cutoff} onChange={setCutoff} max={todayIso()} />
+          <CutoffDatePicker value={cutoff} onChange={changeCutoff} max={todayIso()} />
         </div>
       </div>
 
-      {reportQ.isLoading ? (
+      {pageQ.isLoading ? (
         <p className="mt-4 text-sm text-muted-foreground">{t("commissionDeals.report.loading")}</p>
       ) : seesAllAgents ? (
         <div className="mt-4 space-y-6">
           <AgentReportTiles
-            row={rows.length > 0 ? grandTotal : null}
+            row={grandTotal}
             cutoff={cutoff}
             showApprovedBonuses={showApprovedBonuses}
           />
-          <AgentReportTable rows={rows} year={year} showApprovedBonuses={showApprovedBonuses} />
+          <AgentReportTable
+            rows={pageRows}
+            total={pageQ.data?.total ?? 0}
+            year={year}
+            showApprovedBonuses={showApprovedBonuses}
+            search={search}
+            onSearch={changeSearch}
+            sort={sort}
+            ascending={ascending}
+            onSort={sortBy}
+            page={page}
+            pageSize={pageSize}
+            onPage={setPage}
+            onPageSize={changePageSize}
+          />
         </div>
       ) : (
         <div className="mt-4">

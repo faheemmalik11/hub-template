@@ -20,7 +20,12 @@ export type {
   UnmaintainedFieldsSort,
 } from "./unmaintained-fields";
 export { useAgentCommissionReport } from "./agent-report";
-export type { AgentCommissionReportRow } from "./agent-report";
+export type {
+  AgentCommissionReportRow,
+  AgentCommissionReportSort,
+  AgentCommissionReportQuery,
+  AgentCommissionReportPage,
+} from "./agent-report";
 export type {
   ActivePropertyDeal,
   Deal,

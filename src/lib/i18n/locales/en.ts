@@ -5019,6 +5019,8 @@ const en = {
       },
       table: {
         agent: "Agent",
+        search: "Search by person",
+        noMatch: "Nothing matches this search.",
       },
     },
     title: "Commissions",

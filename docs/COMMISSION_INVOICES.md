@@ -201,8 +201,10 @@ here prevents that, it only decides what a fresh client starts with.
 A reporting tab on `/commission-deals` (`AgentReportSection`, gated by the new `deals.report`
 catalogue key, off by default) shows closings, property volume, commission and bonuses up to a
 chosen cut-off date, compared with the same window a year earlier. The figures come from a single
-Postgres function, `agent_commission_report(p_cutoff date)`
-(`supabase/schema/0049_agent_commission_report.sql`), deliberately **not** security definer: it
+Postgres function, `agent_commission_report(p_cutoff date, p_search text, p_sort text,
+p_ascending boolean, p_limit integer, p_offset integer)`
+(`supabase/schema/0049_agent_commission_report.sql`, re-created in
+`0082_agent_report_paged.sql`), deliberately **not** security definer: it
 inherits whichever of `deals`/`broker_bonuses`' existing row level security applies to the caller,
 so a broker sees only their own row and an administrator with the new `deals.report_all` key sees
 every agent, with no new policy written for either case. Commission is summed over every `deal_sides`
@@ -236,6 +238,23 @@ populated under all three modes so the function's shape is stable; the other two
 render them. The default is `approved_and_paid`, which is what the report did before the setting
 existed, so no existing client's figures move. Because the function gained output columns it is
 dropped and re-created in `0054`, not replaced in `0049`.
+
+**The table is searched, sorted and paged in the database, the tiles are not.**
+`0082_agent_report_paged.sql` (migration `20261120090000_agent_report_paged.sql`) drops and
+re-creates the function with `p_search` (case-insensitive on the agent name, blank means no
+filter), `p_sort` (`agent`, `closings`, `volume`, `commission`, `bonuses`, anything else falling
+back to `closings`), `p_ascending`, `p_limit` and `p_offset`, and appends one column,
+`total_count`, from `count(*) over ()` so a page and its match count arrive in one round trip.
+`useAgentCommissionReport` (`src/data/deals/agent-report.ts`) takes that whole query as an object
+and returns `{ rows, total }`; `AgentReportSection` owns the state and `AgentReportTable` only
+renders what it is handed, including `TablePagination`.
+
+The tiles above the table still show the grand total across **every** agent, which no single page
+can produce, so the section issues a second call to the same function with no search and a page
+size of `TILE_TOTALS_PAGE_SIZE` (1000) and sums those rows in the browser, exactly as it did
+before. That query is also what supplies a broker's own row when they lack `deals.report_all`. A
+client with more than 1000 reportable agents would under-count the tiles, and the honest fix then
+is an aggregate in SQL rather than a larger number here.
 
 The period is still dated by `earned_on`, and that part remains an implementer's choice: briefing §3.5
 names no date, `src/components/commission/broker-numbers.ts:26-29` dates only the paid figure, and the

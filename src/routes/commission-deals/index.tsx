@@ -112,7 +112,7 @@ function CommissionDealsPage() {
 
   const salesContent = (
     <>
-      <div className="mt-6 flex flex-wrap items-end gap-3">
+      <div className="mt-4 flex flex-wrap items-end gap-3">
         <div className="relative w-full max-w-sm">
           <Search className="absolute left-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
           <Input
@@ -267,8 +267,8 @@ function CommissionDealsPage() {
       </div>
 
       {seesReporting ? (
-        <Tabs value={tab} onValueChange={setTab} className="mt-6">
-          <TabsList className="flex h-auto w-auto flex-wrap justify-start gap-1">
+        <Tabs value={tab} onValueChange={setTab} className="mt-4">
+          <TabsList>
             <TabsTrigger value="sales">{t("commissionDeals.listTabs.sales")}</TabsTrigger>
             <TabsTrigger value="reporting">{t("commissionDeals.listTabs.reporting")}</TabsTrigger>
           </TabsList>
@@ -277,7 +277,7 @@ function CommissionDealsPage() {
             {salesContent}
           </TabsContent>
 
-          <TabsContent value="reporting" className="mt-0">
+          <TabsContent value="reporting" className="mt-4">
             {can(PERMISSIONS.dealsSubmit) && !can(PERMISSIONS.documentsWrite) && (
               <BrokerNumbersCard />
             )}

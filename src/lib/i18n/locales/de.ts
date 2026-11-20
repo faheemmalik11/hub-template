@@ -5201,6 +5201,8 @@ const de = {
       },
       table: {
         agent: "Makler",
+        search: "Nach Person suchen",
+        noMatch: "Keine Treffer für diese Suche.",
       },
     },
     title: "Provisionen",
