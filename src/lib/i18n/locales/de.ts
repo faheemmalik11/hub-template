@@ -5383,6 +5383,18 @@ const de = {
         cancelled: "Abgesagt",
       },
     },
+    unmaintainedFields: {
+      title: "Diese Felder fehlen in PropStack",
+      explain:
+        "Der Hub rechnet mit diesen Werten. Bitte tragen Sie sie in PropStack beim Objekt nach.",
+      field: {
+        purchase_price: "Realisierter Preis",
+        notarised_on: "Verkaufsdatum",
+        buyer_rate: "Courtage Käuferseite in Prozent",
+        seller_rate: "Courtage Verkäuferseite in Prozent",
+      },
+      openProperty: "Objekt in PropStack öffnen",
+    },
     crmChanges: {
       title: "Das CRM hat sich geändert, nachdem dieser Verkauf angelegt wurde",
       explain:

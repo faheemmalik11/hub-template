@@ -5192,6 +5192,18 @@ const en = {
         cancelled: "Cancelled",
       },
     },
+    unmaintainedFields: {
+      title: "These fields are missing in PropStack",
+      explain:
+        "The Hub calculates with these values. Please add them to the property in PropStack.",
+      field: {
+        purchase_price: "Realised price",
+        notarised_on: "Sale date",
+        buyer_rate: "Commission rate on the buyer side",
+        seller_rate: "Commission rate on the seller side",
+      },
+      openProperty: "Open the property in PropStack",
+    },
     crmChanges: {
       title: "The CRM changed after this sale was opened",
       explain:

@@ -48,6 +48,7 @@ import { DealReferrerBonusCard } from "@/components/commission/deal-referrer-bon
 import { DealCostsCard } from "@/components/commission/deal-costs-card";
 import { DealFactsCard } from "@/components/commission/deal-facts-card";
 import { CrmChangesCard } from "@/components/commission/crm-changes-card";
+import { UnmaintainedCrmFieldsCard } from "@/components/commission/unmaintained-crm-fields-card";
 import { DEAL_TABS, type DealTab } from "@/components/commission/deal-tabs";
 import { DealInvoicesCard } from "@/components/commission/deal-invoices-card";
 import { DraftInvoices } from "@/components/commission/draft-invoices";
@@ -203,6 +204,7 @@ function DealEditor({ deal }: { deal: Deal }) {
   const seesCommission = can(PERMISSIONS.dealsCommissionRead);
   const syncsPaymentDueDate = useFeature(PERMISSIONS.propstackPaymentDueDateSync);
   const syncsDealValues = useFeature(PERMISSIONS.propstackDealValuesSync);
+  const showsUnmaintainedFields = useFeature(PERMISSIONS.propstackUnmaintainedFields);
   const [activeTab, setActiveTab] = useTabParam(DEAL_TABS, "dealDetails");
   const [form, setForm] = useState<DealForm>(() => dealFormOf(deal));
   const [savedForm, setSavedForm] = useState(() => JSON.stringify(dealFormOf(deal)));
@@ -791,6 +793,7 @@ function DealEditor({ deal }: { deal: Deal }) {
 
       <div className="mt-4">
         <CrmChangesCard deal={deal} />
+        {showsUnmaintainedFields && <UnmaintainedCrmFieldsCard deal={deal} />}
       </div>
 
       {changedElsewhere && (
