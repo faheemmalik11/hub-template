@@ -400,6 +400,15 @@ on conflict do nothing;
 --
 -- A client that needs a job the template does not list adds a row. It does not need a migration,
 -- and the Edge Function it names is deployed like any other.
+insert into public.scheduled_jobs (key, sql_function, schedule, enabled, description) values
+  ('overdue_payments', 'public.notify_overdue_payments', '0 6 * * *', false,
+   'Tells administrators which commission invoices are past the moment the money was expected. Daily at 6am.'),
+  ('purge_stale_demo_data', 'public.purge_stale_demo_data', '0 3 * * *', false,
+   'Removes practice data nobody came back to. Daily at 3am.')
+on conflict (key) do update
+   set sql_function = excluded.sql_function, schedule = excluded.schedule,
+       description = excluded.description;
+
 insert into public.scheduled_jobs (key, edge_function, schedule, enabled, description) values
   ('ingest', 'ingest', '0 * * * *', false,
    'Reads the document sources and files what arrived. Hourly.'),
