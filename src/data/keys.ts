@@ -39,6 +39,7 @@ export const queryKeys = {
     one: (id: string) => ["deals", id] as const,
     list: (params: unknown) => ["deals", "list", params] as const,
     agentReport: (params: unknown) => ["deals", "agent-report", params] as const,
+    agentReportDeals: (params: unknown) => ["deals", "agent-report-deals", params] as const,
     crmChanges: (id: string) => ["deals", id, "crm-changes"] as const,
     dealsWithCrmChanges: ["deals", "with-crm-changes"] as const,
     activeForProperty: (propertyId: string) =>
