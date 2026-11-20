@@ -240,7 +240,8 @@ on conflict (key) do update
        default_enabled = excluded.default_enabled, sort_order = excluded.sort_order;
 
 insert into public.permissions (key, kind, parent_key, category, label_de, label_en, default_enabled, sort_order) values
-  ('propstack.deal_values_sync', 'section', 'page.commission_deals', 'documents', 'Kaufpreis, Notartermin und Courtage an PropStack zurückmelden', 'Send the purchase price, notary date and commission rates back to PropStack', false, 941)
+  ('propstack.deal_values_sync', 'section', 'page.commission_deals', 'documents', 'Kaufpreis, Notartermin und Courtage an PropStack zurückmelden', 'Send the purchase price, notary date and commission rates back to PropStack', false, 941),
+  ('propstack.unmaintained_fields', 'section', 'page.commission_deals', 'documents', 'Auf nicht gepflegte PropStack-Felder hinweisen', 'Point at PropStack fields that are not maintained', false, 942)
 on conflict (key) do update
    set kind = excluded.kind, parent_key = excluded.parent_key, category = excluded.category,
        label_de = excluded.label_de, label_en = excluded.label_en,

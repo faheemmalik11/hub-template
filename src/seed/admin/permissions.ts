@@ -68,6 +68,7 @@ export const permissions: string[] = [
   "page.trash",
   "page.vat_rules",
   "payments.write",
+  "propstack.unmaintained_fields",
   "properties.crm_sync",
   "rules.write",
   "settings.manage",
