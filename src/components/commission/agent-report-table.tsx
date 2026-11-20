@@ -106,19 +106,21 @@ function AgentDeals({
                 </TableBody>
               </Table>
             </div>
-            <TablePagination
-              page={page}
-              totalPages={totalPages}
-              pageSize={pageSize}
-              total={total}
-              from={from}
-              to={to}
-              onPage={setPage}
-              onPageSize={(size) => {
-                setPageSize(size);
-                setPage(1);
-              }}
-            />
+            {total > pageSize && (
+              <TablePagination
+                page={page}
+                totalPages={totalPages}
+                pageSize={pageSize}
+                total={total}
+                from={from}
+                to={to}
+                onPage={setPage}
+                onPageSize={(size) => {
+                  setPageSize(size);
+                  setPage(1);
+                }}
+              />
+            )}
           </>
         )}
       </TableCell>
@@ -309,16 +311,18 @@ export function AgentReportTable({
               </TableBody>
             </Table>
           </div>
-          <TablePagination
-            page={page}
-            totalPages={totalPages}
-            pageSize={pageSize}
-            total={total}
-            from={from}
-            to={to}
-            onPage={onPage}
-            onPageSize={onPageSize}
-          />
+          {total > pageSize && (
+            <TablePagination
+              page={page}
+              totalPages={totalPages}
+              pageSize={pageSize}
+              total={total}
+              from={from}
+              to={to}
+              onPage={onPage}
+              onPageSize={onPageSize}
+            />
+          )}
         </>
       )}
     </div>
