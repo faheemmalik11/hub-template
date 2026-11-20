@@ -4671,7 +4671,9 @@ const de = {
     subtitle: "Verkäufe, bei denen Felder aus PropStack fehlen. Der Hub rechnet mit diesen Werten.",
     empty: "Alle Verkäufe haben die vier Felder.",
     noMatch: "Keine Treffer für diese Suche.",
-    searchPlaceholder: "Nach Objekt oder fehlendem Feld suchen",
+    searchPlaceholder: "Nach Objekt suchen",
+    filterByField: "Nach fehlendem Feld filtern",
+    allFields: "Alle fehlenden Felder",
     noLabel: "Ohne Objektname",
     openInPropstack: "In PropStack öffnen",
     column: {
