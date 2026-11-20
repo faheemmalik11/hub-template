@@ -5253,6 +5253,10 @@ const de = {
       crmChanged:
         "Das CRM hat sich geändert, nachdem dieser Verkauf angelegt wurde. Verkauf öffnen und prüfen.",
     },
+    listTabs: {
+      sales: "Verkäufe",
+      reporting: "Auswertung",
+    },
     back: "Provisionen",
     notFound: "Diesen Verkauf gibt es nicht mehr.",
     tabs: {

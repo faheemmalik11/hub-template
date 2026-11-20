@@ -5069,6 +5069,10 @@ const en = {
       empty: "No sales match these filters.",
       crmChanged: "The CRM changed after this sale was opened. Open the sale to check it.",
     },
+    listTabs: {
+      sales: "Sales",
+      reporting: "Reporting",
+    },
     back: "Commissions",
     notFound: "This sale no longer exists.",
     tabs: {
