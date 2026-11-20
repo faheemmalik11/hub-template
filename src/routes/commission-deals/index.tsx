@@ -23,6 +23,7 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import { useEmitOnboardingEvent } from "@/kit/components/onboarding";
 import { EmptyState, ErrorState, TableSkeleton } from "@/components/documents/query-states";
@@ -48,14 +49,20 @@ import { useAuth } from "@/lib/auth";
 import { usePaginationLabels } from "@/lib/use-pagination-labels";
 import { errorText, formatDate, formatEUR } from "@/lib/data/format";
 import { useTranslation } from "@/lib/i18n";
+import { tabSearch, useTabParam } from "@/lib/use-tab-param";
 
 const ALL_STATUSES = "__all";
 const SEARCH_DELAY_MS = 250;
 const DEFAULT_PAGE_SIZE = 25;
+const SALES_ONLY_TABS = ["sales"] as const;
+const SALES_AND_REPORTING_TABS = ["sales", "reporting"] as const;
+
+type CommissionDealsTab = (typeof SALES_AND_REPORTING_TABS)[number];
 
 export const Route = createFileRoute("/commission-deals/")({
   head: () => ({ meta: [{ title: pageTitle("Provisionen") }] }),
   staticData: { titleKey: "commissions" },
+  validateSearch: (input: Record<string, unknown>) => tabSearch(input),
   component: CommissionDealsPage,
 });
 
@@ -97,24 +104,14 @@ function CommissionDealsPage() {
   const paginationLabels = usePaginationLabels();
   const seesCommission = can(PERMISSIONS.dealsCommissionRead);
   const columnCount = seesCommission ? 5 : 4;
+  const seesReporting = can(PERMISSIONS.dealsReport);
+  const [tab, setTab] = useTabParam<CommissionDealsTab>(
+    seesReporting ? SALES_AND_REPORTING_TABS : SALES_ONLY_TABS,
+    "sales",
+  );
 
-  return (
-    <div>
-      <div className="mt-2 flex flex-wrap items-start justify-between gap-4">
-        <div>
-          <h1 className="text-2xl font-semibold tracking-tight text-foreground">
-            {t("commissionDeals.title")}
-          </h1>
-          <p className="mt-1 max-w-2xl text-sm text-muted-foreground">
-            {t("commissionDeals.subtitle")}
-          </p>
-        </div>
-        {(can(PERMISSIONS.documentsWrite) || can(PERMISSIONS.dealsSubmit)) && <NewDealDialog />}
-      </div>
-
-      {can(PERMISSIONS.dealsSubmit) && !can(PERMISSIONS.documentsWrite) && <BrokerNumbersCard />}
-      {can(PERMISSIONS.dealsReport) && <AgentReportSection />}
-
+  const salesContent = (
+    <>
       <div className="mt-6 flex flex-wrap items-end gap-3">
         <div className="relative w-full max-w-sm">
           <Search className="absolute left-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
@@ -252,6 +249,44 @@ function CommissionDealsPage() {
           </>
         )}
       </div>
+    </>
+  );
+
+  return (
+    <div>
+      <div className="mt-2 flex flex-wrap items-start justify-between gap-4">
+        <div>
+          <h1 className="text-2xl font-semibold tracking-tight text-foreground">
+            {t("commissionDeals.title")}
+          </h1>
+          <p className="mt-1 max-w-2xl text-sm text-muted-foreground">
+            {t("commissionDeals.subtitle")}
+          </p>
+        </div>
+        {(can(PERMISSIONS.documentsWrite) || can(PERMISSIONS.dealsSubmit)) && <NewDealDialog />}
+      </div>
+
+      {seesReporting ? (
+        <Tabs value={tab} onValueChange={setTab} className="mt-6">
+          <TabsList className="flex h-auto w-auto flex-wrap justify-start gap-1">
+            <TabsTrigger value="sales">{t("commissionDeals.listTabs.sales")}</TabsTrigger>
+            <TabsTrigger value="reporting">{t("commissionDeals.listTabs.reporting")}</TabsTrigger>
+          </TabsList>
+
+          <TabsContent value="sales" className="mt-0">
+            {salesContent}
+          </TabsContent>
+
+          <TabsContent value="reporting" className="mt-0">
+            {can(PERMISSIONS.dealsSubmit) && !can(PERMISSIONS.documentsWrite) && (
+              <BrokerNumbersCard />
+            )}
+            <AgentReportSection />
+          </TabsContent>
+        </Tabs>
+      ) : (
+        salesContent
+      )}
     </div>
   );
 }
