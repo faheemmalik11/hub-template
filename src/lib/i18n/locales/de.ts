@@ -1767,6 +1767,7 @@ const de = {
     excludedPayments: "Ausgeschlossene Zahlungen",
     exclusionRules: "Ausschlussregeln",
     fileNaming: "Dateibenennung",
+    unmaintainedFields: "Nicht gepflegte Felder",
     inbox: "Postfach & Ablage",
     incomingInvoices: "Eingangsrechnungen",
     invoiceSettings: "Rechnungsvorgaben",
@@ -4667,9 +4668,10 @@ const de = {
   },
   unmaintainedFields: {
     title: "Nicht gepflegte Felder",
-    subtitle:
-      "Verkäufe, bei denen Felder aus PropStack fehlen. Der Hub rechnet mit diesen Werten.",
+    subtitle: "Verkäufe, bei denen Felder aus PropStack fehlen. Der Hub rechnet mit diesen Werten.",
     empty: "Alle Verkäufe haben die vier Felder.",
+    noMatch: "Keine Treffer für diese Suche.",
+    searchPlaceholder: "Nach Objekt oder fehlendem Feld suchen",
     noLabel: "Ohne Objektname",
     openInPropstack: "In PropStack öffnen",
     column: {
