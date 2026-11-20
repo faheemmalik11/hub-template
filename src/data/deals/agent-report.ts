@@ -72,3 +72,44 @@ export function percentChange(now: number, before: number): number | null {
   if (before === 0) return null;
   return ((now - before) / before) * 100;
 }
+
+export interface AgentReportDealRow {
+  deal_id: string;
+  property_label: string | null;
+  notarised_on: string | null;
+  status: string;
+  commission_amount: number;
+  total_count: number;
+}
+
+export interface AgentReportDealsQuery {
+  agentUserId: string;
+  cutoff: string;
+  page: number;
+  pageSize: number;
+}
+
+export interface AgentReportDealsPage {
+  rows: AgentReportDealRow[];
+  total: number;
+}
+
+export function useAgentReportDeals(query: AgentReportDealsQuery, enabled: boolean) {
+  return useQuery({
+    queryKey: queryKeys.deals.agentReportDeals(query),
+    enabled,
+    staleTime: STALE,
+    placeholderData: keepPreviousData,
+    queryFn: async (): Promise<AgentReportDealsPage> => {
+      const { data, error } = await sb.rpc("agent_report_deals", {
+        p_agent_user_id: query.agentUserId,
+        p_cutoff: query.cutoff,
+        p_limit: query.pageSize,
+        p_offset: (query.page - 1) * query.pageSize,
+      });
+      if (error) throw error;
+      const rows = (data ?? []) as AgentReportDealRow[];
+      return { rows, total: rows[0]?.total_count ?? 0 };
+    },
+  });
+}

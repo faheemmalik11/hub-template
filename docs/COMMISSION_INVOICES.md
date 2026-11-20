@@ -249,6 +249,28 @@ back to `closings`), `p_ascending`, `p_limit` and `p_offset`, and appends one co
 and returns `{ rows, total }`; `AgentReportSection` owns the state and `AgentReportTable` only
 renders what it is handed, including `TablePagination`.
 
+**Each agent row expands to the deals behind its number, and the number and the list cannot
+drift.** `0083_agent_report_deals.sql` (migration `20261120100000_agent_report_deals.sql`) lifts the
+report's `deal_commission` CTE into the view `public.v_deal_commission` (`security_invoker = true`,
+select to `authenticated` only), which carries `deal_id`, `agent_user_id`, `notarised_on`,
+`purchase_price`, `property_label`, `status` and the summed `commission_amount`. The attribution
+`coalesce(handled_by, acquired_by, property_broker_user_id(property_id))`, the `deal_sides` sum, the
+`deleted_at is null` / `status not in ('cancelled', 'settled')` / `notarised_on is not null` filter
+and the per-deal grouping now live in exactly one place. `agent_commission_report` is re-created
+with its signature and behaviour unchanged, its `deal_commission` CTE reduced to a read of that
+view, and `agent_report_deals(p_agent_user_id uuid, p_cutoff date, p_limit integer default 10,
+p_offset integer default 0)` returns `deal_id, property_label, notarised_on, status,
+commission_amount, total_count` from the same view over the same current-year window
+(`date_trunc('year', p_cutoff)` to `p_cutoff`) that feeds `closings_current`, ordered by
+`notarised_on desc, deal_id`, with `count(*) over ()` taken before limit/offset. It repeats the
+report's guard — `p_agent_user_id = current_app_user_id() or has_permission('deals.report_all')` —
+so a broker cannot read another agent's deals by passing their id. `useAgentReportDeals`
+(`src/data/deals/agent-report.ts`) is `enabled`-gated so a collapsed row issues no query, and
+`AgentReportTable` holds a single `expandedAgentId`, so only one row is open at a time. Verified on
+a scratch Postgres 17 against seeded deals: `closings_current` and the list's `total_count` both
+returned 3, the two commission figures matched to the cent, and the cancelled, undated and
+previous-year deals were absent from both.
+
 The tiles above the table still show the grand total across **every** agent, which no single page
 can produce, so the section issues a second call to the same function with no search and a page
 size of `TILE_TOTALS_PAGE_SIZE` (1000) and sums those rows in the browser, exactly as it did

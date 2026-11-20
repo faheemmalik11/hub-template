@@ -5203,6 +5203,15 @@ const de = {
         search: "Nach Person suchen",
         noMatch: "Keine Treffer für diese Suche.",
       },
+      deals: {
+        toggle: "Verkäufe von {{name}} zeigen",
+        property: "Objekt",
+        notarisedOn: "Notartermin",
+        status: "Status",
+        commission: "Provision",
+        noProperty: "Ohne Objekt",
+        empty: "In diesem Jahr zählt noch kein Verkauf für diese Person.",
+      },
     },
     title: "Provisionen",
     subtitle:

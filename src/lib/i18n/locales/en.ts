@@ -5021,6 +5021,15 @@ const en = {
         search: "Search by person",
         noMatch: "Nothing matches this search.",
       },
+      deals: {
+        toggle: "Show the sales of {{name}}",
+        property: "Property",
+        notarisedOn: "Notary date",
+        status: "Status",
+        commission: "Commission",
+        noProperty: "No property",
+        empty: "No sale is counted for this person this year yet.",
+      },
     },
     title: "Commissions",
     subtitle:

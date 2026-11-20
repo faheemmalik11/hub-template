@@ -164,6 +164,7 @@ export function AgentReportSection() {
             rows={pageRows}
             total={pageQ.data?.total ?? 0}
             year={year}
+            cutoff={cutoff}
             showApprovedBonuses={showApprovedBonuses}
             search={search}
             onSearch={changeSearch}
