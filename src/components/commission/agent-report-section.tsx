@@ -11,6 +11,7 @@ import { useAgentCommissionReport, useBonusSettings } from "@/data";
 import type { AgentCommissionReportRow, AgentCommissionReportSort } from "@/data";
 import { PERMISSIONS } from "@/config/permissions";
 import { useAuth } from "@/lib/auth";
+import { CardsSkeleton, TableSkeleton } from "@/components/documents/query-states";
 import { useTranslation } from "@/lib/i18n";
 import { dateLocale, formatDate } from "@/lib/data/format";
 
@@ -148,7 +149,10 @@ export function AgentReportSection() {
       </div>
 
       {pageQ.isLoading ? (
-        <p className="mt-4 text-sm text-muted-foreground">{t("commissionDeals.report.loading")}</p>
+        <div className="mt-4 space-y-6">
+          <CardsSkeleton count={showApprovedBonuses ? 5 : 4} />
+          {seesAllAgents && <TableSkeleton rows={4} cols={showApprovedBonuses ? 6 : 5} />}
+        </div>
       ) : seesAllAgents ? (
         <div className="mt-4 space-y-6">
           <AgentReportTiles

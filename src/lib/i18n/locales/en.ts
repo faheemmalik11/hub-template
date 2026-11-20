@@ -5001,7 +5001,6 @@ const en = {
       title: "Reporting",
       subtitle: "Closings, volume, commission and bonuses, compared with the previous year.",
       cutoff: "Up to",
-      loading: "Loading…",
       empty: "No agent has a notarised sale in either year.",
       tiles: {
         closings: "Closings",
