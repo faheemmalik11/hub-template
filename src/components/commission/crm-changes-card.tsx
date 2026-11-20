@@ -2,7 +2,7 @@ import { AlertTriangle, Loader2 } from "lucide-react";
 import { toast } from "sonner";
 
 import { Button } from "@/components/ui/button";
-import { useAcknowledgeDealCrmChanges, useDealCrmChanges } from "@/data";
+import { useAcknowledgeDealCrmChanges, useDealCrmChanges, useOutgoingInvoices } from "@/data";
 import type { Deal, DealCrmChange } from "@/data";
 import { errorText, formatDate, formatEUR } from "@/lib/data/format";
 import { useTranslation } from "@/lib/i18n";
@@ -36,7 +36,16 @@ export function CrmChangesCard({ deal }: { deal: Deal }) {
   const { t } = useTranslation();
   const changesQ = useDealCrmChanges(deal.id);
   const accept = useAcknowledgeDealCrmChanges(deal.id);
+  const invoicesQ = useOutgoingInvoices({ dealId: deal.id });
   const changes = changesQ.data ?? [];
+
+  const invoicesAreKnown = invoicesQ.data !== undefined;
+  const hasCommissionInvoice = (invoicesQ.data ?? []).some(
+    (invoice) => invoice.kind === "commission",
+  );
+  const lockedByInvoices = invoicesAreKnown
+    ? hasCommissionInvoice
+    : deal.status === "invoiced" || deal.status === "settled";
 
   if (changes.length === 0) return null;
 
@@ -80,26 +89,32 @@ export function CrmChangesCard({ deal }: { deal: Deal }) {
             })}
           </dl>
 
-          <Button
-            variant="outline"
-            size="sm"
-            className="mt-2 h-7 gap-2 px-2 text-xs shadow-none"
-            disabled={accept.isPending}
-            onClick={() =>
-              accept.mutate(undefined, {
-                onSuccess: () => toast.success(t("commissionDeals.crmChanges.accepted")),
-                onError: (error) =>
-                  toast.error(t("commissionDeals.crmChanges.acceptFailed"), {
-                    description: errorText(error),
-                  }),
-              })
-            }
-          >
-            {accept.isPending && <Loader2 aria-hidden className="size-3.5 animate-spin" />}
-            {accept.isPending
-              ? t("commissionDeals.crmChanges.accepting")
-              : t("commissionDeals.crmChanges.accept")}
-          </Button>
+          {lockedByInvoices ? (
+            <p className="mt-2 text-xs text-destructive">
+              {t("commissionDeals.crmChanges.lockedByInvoices")}
+            </p>
+          ) : (
+            <Button
+              variant="outline"
+              size="sm"
+              className="mt-2 h-7 gap-2 px-2 text-xs shadow-none"
+              disabled={accept.isPending}
+              onClick={() =>
+                accept.mutate(undefined, {
+                  onSuccess: () => toast.success(t("commissionDeals.crmChanges.accepted")),
+                  onError: (error) =>
+                    toast.error(t("commissionDeals.crmChanges.acceptFailed"), {
+                      description: errorText(error),
+                    }),
+                })
+              }
+            >
+              {accept.isPending && <Loader2 aria-hidden className="size-3.5 animate-spin" />}
+              {accept.isPending
+                ? t("commissionDeals.crmChanges.accepting")
+                : t("commissionDeals.crmChanges.accept")}
+            </Button>
+          )}
         </div>
       </div>
     </div>
