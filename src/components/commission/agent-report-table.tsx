@@ -81,90 +81,92 @@ export function AgentReportTable({
         <p className="text-sm text-muted-foreground">{t("commissionDeals.report.table.noMatch")}</p>
       ) : (
         <>
-          <Table>
-            <TableHeader>
-              <TableRow>
-                <SortableColumnHeader column="agent" sort={sort} dir={dir} onSort={onSort}>
-                  {t("commissionDeals.report.table.agent")}
-                </SortableColumnHeader>
-                <SortableColumnHeader
-                  column="closings"
-                  sort={sort}
-                  dir={dir}
-                  onSort={onSort}
-                  align="right"
-                >
-                  {t("commissionDeals.report.tiles.closings")}
-                </SortableColumnHeader>
-                <SortableColumnHeader
-                  column="volume"
-                  sort={sort}
-                  dir={dir}
-                  onSort={onSort}
-                  align="right"
-                >
-                  {t("commissionDeals.report.tiles.volume")}
-                </SortableColumnHeader>
-                <SortableColumnHeader
-                  column="commission"
-                  sort={sort}
-                  dir={dir}
-                  onSort={onSort}
-                  align="right"
-                >
-                  {t("commissionDeals.report.tiles.commission")}
-                </SortableColumnHeader>
-                <SortableColumnHeader
-                  column="bonuses"
-                  sort={sort}
-                  dir={dir}
-                  onSort={onSort}
-                  align="right"
-                >
-                  {t("commissionDeals.report.tiles.bonuses")}
-                </SortableColumnHeader>
-                {showApprovedBonuses && (
-                  <TableHead className="text-right">
-                    {t("commissionDeals.report.tiles.bonusesApproved")}
-                  </TableHead>
-                )}
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {rows.map((row) => (
-                <TableRow key={row.agent_user_id}>
-                  <TableCell className="font-medium text-foreground">{row.agent_name}</TableCell>
-                  <Cell
-                    current={String(row.closings_current)}
-                    previous={String(row.closings_previous)}
-                    year={prevYear}
-                  />
-                  <Cell
-                    current={formatEUR(row.volume_current)}
-                    previous={formatEUR(row.volume_previous)}
-                    year={prevYear}
-                  />
-                  <Cell
-                    current={formatEUR(row.commission_current)}
-                    previous={formatEUR(row.commission_previous)}
-                    year={prevYear}
-                  />
-                  <Cell
-                    current={formatEUR(row.bonuses_current)}
-                    previous={formatEUR(row.bonuses_previous)}
-                    year={prevYear}
-                  />
+          <div className="overflow-x-auto rounded-xl border border-border bg-card">
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <SortableColumnHeader column="agent" sort={sort} dir={dir} onSort={onSort}>
+                    {t("commissionDeals.report.table.agent")}
+                  </SortableColumnHeader>
+                  <SortableColumnHeader
+                    column="closings"
+                    sort={sort}
+                    dir={dir}
+                    onSort={onSort}
+                    align="right"
+                  >
+                    {t("commissionDeals.report.tiles.closings")}
+                  </SortableColumnHeader>
+                  <SortableColumnHeader
+                    column="volume"
+                    sort={sort}
+                    dir={dir}
+                    onSort={onSort}
+                    align="right"
+                  >
+                    {t("commissionDeals.report.tiles.volume")}
+                  </SortableColumnHeader>
+                  <SortableColumnHeader
+                    column="commission"
+                    sort={sort}
+                    dir={dir}
+                    onSort={onSort}
+                    align="right"
+                  >
+                    {t("commissionDeals.report.tiles.commission")}
+                  </SortableColumnHeader>
+                  <SortableColumnHeader
+                    column="bonuses"
+                    sort={sort}
+                    dir={dir}
+                    onSort={onSort}
+                    align="right"
+                  >
+                    {t("commissionDeals.report.tiles.bonuses")}
+                  </SortableColumnHeader>
                   {showApprovedBonuses && (
-                    <Cell
-                      current={formatEUR(row.bonuses_approved_current)}
-                      previous={formatEUR(row.bonuses_approved_previous)}
-                      year={prevYear}
-                    />
+                    <TableHead className="text-right">
+                      {t("commissionDeals.report.tiles.bonusesApproved")}
+                    </TableHead>
                   )}
                 </TableRow>
-              ))}
-            </TableBody>
-          </Table>
+              </TableHeader>
+              <TableBody>
+                {rows.map((row) => (
+                  <TableRow key={row.agent_user_id}>
+                    <TableCell className="font-medium text-foreground">{row.agent_name}</TableCell>
+                    <Cell
+                      current={String(row.closings_current)}
+                      previous={String(row.closings_previous)}
+                      year={prevYear}
+                    />
+                    <Cell
+                      current={formatEUR(row.volume_current)}
+                      previous={formatEUR(row.volume_previous)}
+                      year={prevYear}
+                    />
+                    <Cell
+                      current={formatEUR(row.commission_current)}
+                      previous={formatEUR(row.commission_previous)}
+                      year={prevYear}
+                    />
+                    <Cell
+                      current={formatEUR(row.bonuses_current)}
+                      previous={formatEUR(row.bonuses_previous)}
+                      year={prevYear}
+                    />
+                    {showApprovedBonuses && (
+                      <Cell
+                        current={formatEUR(row.bonuses_approved_current)}
+                        previous={formatEUR(row.bonuses_approved_previous)}
+                        year={prevYear}
+                      />
+                    )}
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table>
+          </div>
           <TablePagination
             page={page}
             totalPages={totalPages}
