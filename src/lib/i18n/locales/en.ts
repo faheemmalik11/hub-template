@@ -1735,6 +1735,7 @@ const en = {
     excludedPayments: "Excluded payments",
     exclusionRules: "Exclusion rules",
     fileNaming: "File naming",
+    unmaintainedFields: "Fields that are not maintained",
     inbox: "Inbox & filing",
     incomingInvoices: "Incoming invoices",
     invoiceSettings: "Invoice defaults",
@@ -4505,6 +4506,8 @@ const en = {
     title: "Fields that are not maintained",
     subtitle: "Sales with fields missing in PropStack. The Hub calculates with these values.",
     empty: "Every sale has the four fields.",
+    noMatch: "Nothing matches this search.",
+    searchPlaceholder: "Search by property or missing field",
     noLabel: "No property name",
     openInPropstack: "Open in PropStack",
     column: {
