@@ -1,6 +1,7 @@
 begin;
 
 drop function if exists public.agent_commission_report(date);
+drop function if exists public.agent_commission_report(date, text, text, boolean, integer, integer);
 
 create function public.agent_commission_report(
     p_cutoff date,
