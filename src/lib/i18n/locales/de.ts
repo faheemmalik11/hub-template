@@ -5181,7 +5181,6 @@ const de = {
       title: "Auswertung",
       subtitle: "Abschlüsse, Volumen, Provision und Boni im Vergleich zum Vorjahr.",
       cutoff: "Bis",
-      loading: "Wird geladen…",
       empty: "Kein Makler hat einen beurkundeten Verkauf in einem der beiden Jahre.",
       tiles: {
         closings: "Abschlüsse",
