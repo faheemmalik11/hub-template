@@ -6,7 +6,7 @@ Goal: production-ready i18n. **German stays the default**; **English is selectab
 every environment** (no localhost gate). Only UI display strings are translated — DB values, OCR/PDF
 content, and persisted audit text stay German.
 
-Library: **i18next + react-i18next** (added with bun). Locale persisted in `localStorage`
+Library: **i18next + react-i18next**. Locale persisted in `localStorage`
 (`this client.locale`), default `de`.
 
 ---
