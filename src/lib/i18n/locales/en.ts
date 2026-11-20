@@ -5197,6 +5197,8 @@ const en = {
       explain:
         "Check these before approving. Accepting copies these new values into this sale's calculation.",
       wasNow: "was {{was}}, now {{became}}",
+      lockedByInvoices:
+        "Commission invoices already exist for this sale. The new values cannot be accepted while those invoices stand, because they were created from the current figures. Cancel or delete the invoices first.",
       yourInvoice: "This value will be used: {{value}}",
       empty: "empty",
       accept: "Accept the new values",

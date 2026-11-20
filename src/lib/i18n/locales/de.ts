@@ -5388,6 +5388,8 @@ const de = {
       explain:
         "Bitte vor der Freigabe prüfen. Übernehmen trägt diese neuen Werte in die Berechnung dieses Verkaufs ein.",
       wasNow: "vorher {{was}}, jetzt {{became}}",
+      lockedByInvoices:
+        "Für diesen Verkauf gibt es bereits Provisionsrechnungen. Die neuen Werte können nicht übernommen werden, solange diese Rechnungen bestehen, weil sie mit den bisherigen Zahlen erstellt wurden. Stornieren oder löschen Sie die Rechnungen zuerst.",
       yourInvoice: "Dieser Wert wird verwendet: {{value}}",
       empty: "leer",
       accept: "Neue Werte übernehmen",
