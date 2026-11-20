@@ -4507,7 +4507,9 @@ const en = {
     subtitle: "Sales with fields missing in PropStack. The Hub calculates with these values.",
     empty: "Every sale has the four fields.",
     noMatch: "Nothing matches this search.",
-    searchPlaceholder: "Search by property or missing field",
+    searchPlaceholder: "Search by property",
+    filterByField: "Filter by missing field",
+    allFields: "All missing fields",
     noLabel: "No property name",
     openInPropstack: "Open in PropStack",
     column: {

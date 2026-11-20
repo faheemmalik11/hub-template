@@ -14,7 +14,11 @@ export {
   useSaveDeal,
 } from "./deals";
 export { useDealsWithUnmaintainedFields } from "./unmaintained-fields";
-export type { DealWithUnmaintainedFields } from "./unmaintained-fields";
+export type {
+  DealWithUnmaintainedFields,
+  UnmaintainedFieldsQuery,
+  UnmaintainedFieldsSort,
+} from "./unmaintained-fields";
 export { useAgentCommissionReport } from "./agent-report";
 export type { AgentCommissionReportRow } from "./agent-report";
 export type {

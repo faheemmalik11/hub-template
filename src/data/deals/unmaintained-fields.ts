@@ -1,4 +1,4 @@
-import { useQuery } from "@tanstack/react-query";
+import { keepPreviousData, useQuery } from "@tanstack/react-query";
 
 import { TABLE } from "@/config/tables";
 import { STALE, sb } from "@/data/client";
@@ -12,19 +12,46 @@ export interface DealWithUnmaintainedFields {
   notarised_on: string | null;
   status: string;
   missing_fields: UnmaintainedCrmField[];
+  missing_count: number;
 }
 
-export function useDealsWithUnmaintainedFields() {
+export type UnmaintainedFieldsSort = "property_label" | "notarised_on" | "missing_count";
+
+export interface UnmaintainedFieldsQuery {
+  search: string;
+  missingField: UnmaintainedCrmField | null;
+  sort: UnmaintainedFieldsSort;
+  ascending: boolean;
+  page: number;
+  pageSize: number;
+}
+
+export interface UnmaintainedFieldsPage {
+  rows: DealWithUnmaintainedFields[];
+  total: number;
+}
+
+export function useDealsWithUnmaintainedFields(query: UnmaintainedFieldsQuery) {
   return useQuery({
-    queryKey: ["deals-with-unmaintained-fields"],
+    queryKey: ["deals-with-unmaintained-fields", query],
     staleTime: STALE,
-    queryFn: async (): Promise<DealWithUnmaintainedFields[]> => {
-      const { data, error } = await sb
-        .from(TABLE.vDealsWithUnmaintainedFields)
-        .select("*")
-        .order("notarised_on", { ascending: false, nullsFirst: true });
+    placeholderData: keepPreviousData,
+    queryFn: async (): Promise<UnmaintainedFieldsPage> => {
+      const from = (query.page - 1) * query.pageSize;
+      let request = sb.from(TABLE.vDealsWithUnmaintainedFields).select("*", { count: "exact" });
+
+      const term = query.search.trim();
+      if (term) request = request.ilike("property_label", `%${term}%`);
+      if (query.missingField) request = request.contains("missing_fields", [query.missingField]);
+
+      const { data, error, count } = await request
+        .order(query.sort, { ascending: query.ascending, nullsFirst: false })
+        .range(from, from + query.pageSize - 1);
       if (error) throw error;
-      return (data ?? []) as DealWithUnmaintainedFields[];
+      return {
+        rows: (data ?? []) as DealWithUnmaintainedFields[],
+        total: count ?? 0,
+      };
     },
   });
 }
