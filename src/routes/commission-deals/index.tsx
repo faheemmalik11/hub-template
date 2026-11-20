@@ -55,9 +55,9 @@ const ALL_STATUSES = "__all";
 const SEARCH_DELAY_MS = 250;
 const DEFAULT_PAGE_SIZE = 25;
 const SALES_ONLY_TABS = ["sales"] as const;
-const SALES_AND_REPORTING_TABS = ["sales", "reporting"] as const;
+const REPORTING_AND_SALES_TABS = ["reporting", "sales"] as const;
 
-type CommissionDealsTab = (typeof SALES_AND_REPORTING_TABS)[number];
+type CommissionDealsTab = (typeof REPORTING_AND_SALES_TABS)[number];
 
 export const Route = createFileRoute("/commission-deals/")({
   head: () => ({ meta: [{ title: pageTitle("Provisionen") }] }),
@@ -106,8 +106,8 @@ function CommissionDealsPage() {
   const columnCount = seesCommission ? 5 : 4;
   const seesReporting = can(PERMISSIONS.dealsReport);
   const [tab, setTab] = useTabParam<CommissionDealsTab>(
-    seesReporting ? SALES_AND_REPORTING_TABS : SALES_ONLY_TABS,
-    "sales",
+    seesReporting ? REPORTING_AND_SALES_TABS : SALES_ONLY_TABS,
+    seesReporting ? "reporting" : "sales",
   );
 
   const salesContent = (
@@ -269,8 +269,8 @@ function CommissionDealsPage() {
       {seesReporting ? (
         <Tabs value={tab} onValueChange={setTab} className="mt-4">
           <TabsList>
-            <TabsTrigger value="sales">{t("commissionDeals.listTabs.sales")}</TabsTrigger>
             <TabsTrigger value="reporting">{t("commissionDeals.listTabs.reporting")}</TabsTrigger>
+            <TabsTrigger value="sales">{t("commissionDeals.listTabs.sales")}</TabsTrigger>
           </TabsList>
 
           <TabsContent value="sales" className="mt-0">
