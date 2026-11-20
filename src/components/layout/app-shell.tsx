@@ -118,6 +118,12 @@ const nav: NavEntry[] = [
         permission: PERMISSIONS.pageCommissionDeals,
       },
       {
+        labelKey: "nav.unmaintainedFields",
+        to: "/unmaintained-fields",
+        icon: TriangleAlert,
+        permission: PERMISSIONS.pageUnmaintainedFields,
+      },
+      {
         labelKey: "nav.brokerBonuses",
         to: "/broker-bonuses",
         icon: Award,

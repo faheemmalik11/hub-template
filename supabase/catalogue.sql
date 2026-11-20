@@ -241,7 +241,8 @@ on conflict (key) do update
 
 insert into public.permissions (key, kind, parent_key, category, label_de, label_en, default_enabled, sort_order) values
   ('propstack.deal_values_sync', 'section', 'page.commission_deals', 'documents', 'Kaufpreis, Notartermin und Courtage an PropStack zurückmelden', 'Send the purchase price, notary date and commission rates back to PropStack', false, 941),
-  ('propstack.unmaintained_fields', 'section', 'page.commission_deals', 'documents', 'Auf nicht gepflegte PropStack-Felder hinweisen', 'Point at PropStack fields that are not maintained', false, 942)
+  ('propstack.unmaintained_fields', 'section', 'page.commission_deals', 'documents', 'Auf nicht gepflegte PropStack-Felder hinweisen', 'Point at PropStack fields that are not maintained', false, 942),
+  ('page.unmaintained_fields', 'page', 'module.invoices', 'menu', 'Nicht gepflegte Felder', 'Fields that are not maintained', false, 943)
 on conflict (key) do update
    set kind = excluded.kind, parent_key = excluded.parent_key, category = excluded.category,
        label_de = excluded.label_de, label_en = excluded.label_en,
@@ -410,6 +411,8 @@ insert into public.scheduled_jobs (key, edge_function, schedule, enabled, descri
    'Pulls the properties from the CRM and links brokers to their accounts. Hourly.'),
   ('payment_due_date_reminder', 'payment-due-date-reminder', '0 6 * * *', false,
    'Reminds administrators about a deal whose property still has no payment due date, six weeks after the notary date. Daily at 6am.'),
+  ('unmaintained_crm_fields_reminder', 'unmaintained-crm-fields-reminder', '0 7 * * 1', false,
+   'Reminds administrators about sales whose property is missing the realised price, the sale date or either commission rate. Mondays at 7am.'),
   ('lexoffice_payment_sync', 'lexoffice-payment-sync', '*/15 * * * *', false,
    'Reads payment status back from Lexware and marks a document or commission invoice paid once it is settled there. Every fifteen minutes.')
 on conflict (key) do update

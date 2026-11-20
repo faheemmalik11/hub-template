@@ -1,43 +1,48 @@
-import { describe, expect, it } from "bun:test";
+import assert from "node:assert/strict";
+import { describe, it } from "node:test";
 
-import { eventMeetsCompletionCondition } from "./completion";
-import { createOnboardingEventBus } from "./event-bus";
-import { watchForCompletion } from "./watch-for-completion";
+import { eventMeetsCompletionCondition } from "./completion.ts";
+import { createOnboardingEventBus } from "./event-bus.ts";
+import { watchForCompletion } from "./watch-for-completion.ts";
 
 describe("eventMeetsCompletionCondition", () => {
   const event = { type: "document_uploaded", recordId: "doc-1", at: 1 };
 
   it("matches on the event type alone when nothing else is asked", () => {
-    expect(eventMeetsCompletionCondition({ eventType: "document_uploaded" }, event)).toBe(true);
+    assert.equal(eventMeetsCompletionCondition({ eventType: "document_uploaded" }, event), true);
   });
 
   it("refuses a different event type", () => {
-    expect(eventMeetsCompletionCondition({ eventType: "document_opened" }, event)).toBe(false);
+    assert.equal(eventMeetsCompletionCondition({ eventType: "document_opened" }, event), false);
   });
 
   it("checks the record id when one is asked for", () => {
-    expect(
+    assert.equal(
       eventMeetsCompletionCondition({ eventType: "document_uploaded", recordId: "doc-1" }, event),
-    ).toBe(true);
-    expect(
+      true,
+    );
+    assert.equal(
       eventMeetsCompletionCondition({ eventType: "document_uploaded", recordId: "doc-2" }, event),
-    ).toBe(false);
+      false,
+    );
   });
 
   it("checks every key asked for in data", () => {
     const withData = { ...event, data: { actionId: "approve", nextStatus: "approved_final" } };
-    expect(
+    assert.equal(
       eventMeetsCompletionCondition(
         { eventType: "document_uploaded", data: { actionId: "approve" } },
         withData,
       ),
-    ).toBe(true);
-    expect(
+      true,
+    );
+    assert.equal(
       eventMeetsCompletionCondition(
         { eventType: "document_uploaded", data: { actionId: "reject" } },
         withData,
       ),
-    ).toBe(false);
+      false,
+    );
   });
 });
 
@@ -47,9 +52,9 @@ describe("createOnboardingEventBus", () => {
     const received: unknown[] = [];
     bus.subscribe((event) => received.push(event));
     bus.emit({ type: "document_uploaded", recordId: "doc-1" });
-    expect(received).toHaveLength(1);
-    expect((received[0] as { type: string }).type).toBe("document_uploaded");
-    expect(typeof (received[0] as { at: number }).at).toBe("number");
+    assert.equal(received.length, 1);
+    assert.equal((received[0] as { type: string }).type, "document_uploaded");
+    assert.equal(typeof (received[0] as { at: number }).at, "number");
   });
 
   it("stops delivering once a subscriber unsubscribes", () => {
@@ -58,7 +63,7 @@ describe("createOnboardingEventBus", () => {
     const unsubscribe = bus.subscribe((event) => received.push(event));
     unsubscribe();
     bus.emit({ type: "document_uploaded", recordId: "doc-1" });
-    expect(received).toHaveLength(0);
+    assert.equal(received.length, 0);
   });
 });
 
@@ -70,8 +75,8 @@ describe("watchForCompletion", () => {
       completed += 1;
     });
     bus.emit({ type: "document_opened", recordId: "doc-1" });
-    expect(completed).toBe(0);
+    assert.equal(completed, 0);
     bus.emit({ type: "document_uploaded", recordId: "doc-1" });
-    expect(completed).toBe(1);
+    assert.equal(completed, 1);
   });
 });

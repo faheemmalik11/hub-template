@@ -87,6 +87,7 @@ export const PERMISSIONS = {
   propstackPaymentDueDateSync: "propstack.payment_due_date_sync",
   propstackDealValuesSync: "propstack.deal_values_sync",
   propstackUnmaintainedFields: "propstack.unmaintained_fields",
+  pageUnmaintainedFields: "page.unmaintained_fields",
   pageBankConnections: "page.bank_connections",
   pageDataExport: "page.data_export",
   pageConfidenceThresholds: "page.confidence_thresholds",
