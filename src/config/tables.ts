@@ -110,6 +110,7 @@ export const TABLE = {
   vBankTransactionsList: "v_bank_transactions_list",
   vCompanyDocumentTotals: "v_company_document_totals",
   vCustomerInvoiceTotals: "v_customer_invoice_totals",
+  vDealsWithUnmaintainedFields: "v_deals_with_unmaintained_fields",
   vDocumentsList: "v_documents_list",
   vDocumentsReview: "v_documents_review",
   vDocumentsSearch: "v_documents_search",

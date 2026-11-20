@@ -1,12 +1,13 @@
-import { describe, expect, it } from "bun:test";
+import assert from "node:assert/strict";
+import { describe, it } from "node:test";
 
-import { decidePracticeStartOptions } from "./practice-start-state";
+import { decidePracticeStartOptions } from "./practice-start-state.ts";
 
 const progress = { stepIndex: 3, uploadedIds: ["a", "b"] };
 
 describe("decidePracticeStartOptions", () => {
   it("offers only the start when nothing is stored and the mode is off", () => {
-    expect(decidePracticeStartOptions({ practiceModeActive: false, progress: null })).toEqual({
+    assert.deepEqual(decidePracticeStartOptions({ practiceModeActive: false, progress: null }), {
       canStart: true,
       canResume: false,
       canRestart: false,
@@ -17,21 +18,21 @@ describe("decidePracticeStartOptions", () => {
 
   it("offers resume and restart instead of the start when progress is stored", () => {
     const options = decidePracticeStartOptions({ practiceModeActive: false, progress });
-    expect(options.canStart).toBe(false);
-    expect(options.canResume).toBe(true);
-    expect(options.canRestart).toBe(true);
+    assert.equal(options.canStart, false);
+    assert.equal(options.canResume, true);
+    assert.equal(options.canRestart, true);
   });
 
   it("flags a stale session when the mode is on but no progress is stored", () => {
     const options = decidePracticeStartOptions({ practiceModeActive: true, progress: null });
-    expect(options.sessionIsStale).toBe(true);
-    expect(options.canEndPracticeMode).toBe(true);
-    expect(options.canStart).toBe(true);
+    assert.equal(options.sessionIsStale, true);
+    assert.equal(options.canEndPracticeMode, true);
+    assert.equal(options.canStart, true);
   });
 
   it("does not call a session stale when progress is stored", () => {
     const options = decidePracticeStartOptions({ practiceModeActive: true, progress });
-    expect(options.sessionIsStale).toBe(false);
-    expect(options.canEndPracticeMode).toBe(true);
+    assert.equal(options.sessionIsStale, false);
+    assert.equal(options.canEndPracticeMode, true);
   });
 });

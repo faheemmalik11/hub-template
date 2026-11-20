@@ -890,6 +890,7 @@ const de = {
 
   nav: {
     commissionDeals: "Provisionen",
+    unmaintainedFields: "Nicht gepflegte Felder",
     brokerBonuses: "Boni",
     onboarding: "Onboarding-Checkliste",
     onboardingTour: "Onboarding-Übung",
@@ -4662,6 +4663,20 @@ const de = {
     toast: {
       saved: "Die Rechnungsvorgaben wurden gespeichert.",
       failed: "Speichern fehlgeschlagen: {{error}}",
+    },
+  },
+  unmaintainedFields: {
+    title: "Nicht gepflegte Felder",
+    subtitle:
+      "Verkäufe, bei denen Felder aus PropStack fehlen. Der Hub rechnet mit diesen Werten.",
+    empty: "Alle Verkäufe haben die vier Felder.",
+    noLabel: "Ohne Objektname",
+    openInPropstack: "In PropStack öffnen",
+    column: {
+      property: "Objekt",
+      notarisedOn: "Notartermin",
+      missing: "Fehlende Felder",
+      open: "PropStack",
     },
   },
   fileNaming: {

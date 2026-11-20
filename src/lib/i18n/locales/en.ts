@@ -834,6 +834,7 @@ const en = {
 
   nav: {
     commissionDeals: "Commissions",
+    unmaintainedFields: "Fields not maintained",
     brokerBonuses: "Bonuses",
     onboarding: "Onboarding checklist",
     onboardingTour: "Onboarding practice",
@@ -4498,6 +4499,19 @@ const en = {
     toast: {
       saved: "The invoice defaults have been saved.",
       failed: "Could not save: {{error}}",
+    },
+  },
+  unmaintainedFields: {
+    title: "Fields that are not maintained",
+    subtitle: "Sales with fields missing in PropStack. The Hub calculates with these values.",
+    empty: "Every sale has the four fields.",
+    noLabel: "No property name",
+    openInPropstack: "Open in PropStack",
+    column: {
+      property: "Property",
+      notarisedOn: "Notary date",
+      missing: "Missing fields",
+      open: "PropStack",
     },
   },
   fileNaming: {
