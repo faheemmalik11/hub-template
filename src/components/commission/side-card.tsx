@@ -143,7 +143,7 @@ export function SideCard({
         <div className="mt-4 space-y-4">
           <div
             id={`side-${side}-fee`}
-            data-tour={side === "buyer" ? "commission-buyer-rate" : undefined}
+            data-tour={side === "buyer" ? "commission-buyer-rate" : "commission-seller-rate"}
             className="grid gap-3 sm:grid-cols-2"
           >
             <Field className="space-y-1.5">
@@ -191,7 +191,7 @@ export function SideCard({
 
           <div
             id={`side-${side}-payers`}
-            data-tour={side === "buyer" ? "commission-buyer-payer" : undefined}
+            data-tour={side === "buyer" ? "commission-buyer-payer" : "commission-seller-payer"}
             className="@container"
           >
             <div className="space-y-3">

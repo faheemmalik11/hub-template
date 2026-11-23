@@ -268,6 +268,13 @@ function DealEditor({ deal }: { deal: Deal }) {
   }, [deal, resetFormToDeal, resetDueDateToDeal]);
 
   const result = useMemo(() => calculateDealForm(form), [form]);
+  const sideShareInvalid = (side: CommissionSide) =>
+    !result.ok &&
+    result.problems.some(
+      (problem) =>
+        problem.side === side &&
+        (problem.problem === "shares_do_not_add_up" || problem.problem === "shares_incomplete"),
+    );
   useEffect(() => {
     if (form.notarisedOn.trim() !== "")
       emitOnboardingEvent({ type: "commission_deal_notary_date_set", recordId: deal.id });
@@ -292,17 +299,44 @@ function DealEditor({ deal }: { deal: Deal }) {
       emitOnboardingEvent({ type: "commission_deal_buyer_payer_set", recordId: deal.id });
   }, [form.buyer.parties, deal.id, emitOnboardingEvent]);
   useEffect(() => {
+    const buyerSharesExplicit =
+      form.buyer.parties.length > 1 &&
+      form.buyer.parties.every((party) => party.customerId && party.share.trim() !== "");
+    const buyerShareInvalid = result.problems.some(
+      (problem) =>
+        problem.side === "buyer" &&
+        (problem.problem === "shares_do_not_add_up" || problem.problem === "shares_incomplete"),
+    );
+    if (buyerSharesExplicit && !buyerShareInvalid)
+      emitOnboardingEvent({ type: "commission_deal_buyer_share_set", recordId: deal.id });
+  }, [form.buyer.parties, result, deal.id, emitOnboardingEvent]);
+  useEffect(() => {
+    const firstBuyerParty = form.buyer.parties[0];
+    if (
+      firstBuyerParty &&
+      parseDecimal(firstBuyerParty.discount) !== null &&
+      firstBuyerParty.discountReason.trim() !== ""
+    ) {
+      emitOnboardingEvent({ type: "commission_deal_buyer_discount_set", recordId: deal.id });
+    }
+  }, [form.buyer.parties, deal.id, emitOnboardingEvent]);
+  useEffect(() => {
+    const rateSet =
+      form.seller.feeKind === "percent"
+        ? parseDecimal(form.seller.rate) !== null
+        : parseDecimal(form.seller.amount) !== null;
+    if (rateSet)
+      emitOnboardingEvent({ type: "commission_deal_seller_rate_set", recordId: deal.id });
+  }, [form.seller.feeKind, form.seller.rate, form.seller.amount, deal.id, emitOnboardingEvent]);
+  useEffect(() => {
+    if (form.seller.parties.some((party) => party.customerId))
+      emitOnboardingEvent({ type: "commission_deal_seller_payer_set", recordId: deal.id });
+  }, [form.seller.parties, deal.id, emitOnboardingEvent]);
+  useEffect(() => {
     if (!form.ownLead && form.handledBy && form.acquiredBy && form.acquiredBy !== form.handledBy) {
       emitOnboardingEvent({ type: "commission_deal_ownership_split", recordId: deal.id });
     }
   }, [form.ownLead, form.handledBy, form.acquiredBy, deal.id, emitOnboardingEvent]);
-  const sideShareInvalid = (side: CommissionSide) =>
-    !result.ok &&
-    result.problems.some(
-      (problem) =>
-        problem.side === side &&
-        (problem.problem === "shares_do_not_add_up" || problem.problem === "shares_incomplete"),
-    );
   const dealValuesUnsaved = useMemo(() => {
     const saved = JSON.parse(savedForm) as DealForm;
     return (
