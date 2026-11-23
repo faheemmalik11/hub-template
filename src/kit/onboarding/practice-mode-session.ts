@@ -2,6 +2,8 @@ import { sb } from "@/data/client";
 
 export const PRACTICE_MODE_HEARTBEAT_MS = 5 * 60 * 1000;
 
+export const PRACTICE_MODE_ACTIVE_QUERY_KEY = ["practice-mode-active"] as const;
+
 export async function setPracticeMode(active: boolean): Promise<void> {
   const { error } = await sb.rpc("set_practice_mode", { p_active: active });
   if (error) throw error;
