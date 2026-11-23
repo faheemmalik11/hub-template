@@ -1,12 +1,3 @@
--- The AI search prompt also hand-listed the values of its low-cardinality columns, so a client
--- whose rows still hold a pre-rename value was invisible to any question about it: the prompt
--- offered status = 'needs_review' while the rows said 'zu_pruefen', and the model has no way to
--- know. These are read from the data now and merged with the documented ones, so both the
--- canonical value and whatever a client actually stores reach the model.
---
--- Plain invoker rights on purpose: v_documents_search is security_invoker, so a person only ever
--- learns the values present in rows they may already read.
-
 begin;
 
 create or replace function public.nl_search_column_values()

@@ -1,11 +1,3 @@
--- The intent classifier recognises "what did we spend in total" and composeQuery() even builds the
--- aggregate SQL, but nothing ever ran it: searchInvoicesByQuestion returned ids only, so a total
--- question narrowed the table and left the person to add the column up themselves. The summing
--- lived in the parallel askInvoiceQuestion implementation, which no component renders.
---
--- Same where clause, same scope and same refusals as invoices_search_ids, so the number can never
--- describe a different set of rows than the list below it.
-
 begin;
 
 create or replace function public.invoices_search_totals(
