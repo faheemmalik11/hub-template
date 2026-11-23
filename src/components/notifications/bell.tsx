@@ -86,30 +86,32 @@ export function NotificationBell({
         {items.length === 0 ? (
           <div className="px-2 py-3 text-sm text-muted-foreground">{emptyText}</div>
         ) : (
-          items.map((item) => (
-            <DropdownMenuItem key={item.key} asChild className="cursor-pointer">
-              <Link
-                to={item.link.to}
-                search={item.link.search as never}
-                onClick={() => onItemClick?.(item)}
-              >
-                <span
-                  className="min-w-0 flex-1 truncate text-sm"
-                  title={item.message ?? item.label}
+          <div className="max-h-80 overflow-y-auto">
+            {items.map((item) => (
+              <DropdownMenuItem key={item.key} asChild className="cursor-pointer">
+                <Link
+                  to={item.link.to}
+                  search={item.link.search as never}
+                  onClick={() => onItemClick?.(item)}
                 >
-                  {item.message ?? item.label}
-                </span>
-                <span
-                  className={cn(
-                    "ml-2 inline-flex h-5 min-w-5 shrink-0 items-center justify-center rounded-full px-1.5 text-xs font-medium tabular-nums",
-                    TONE_CLS[item.tone ?? "default"],
-                  )}
-                >
-                  {item.count}
-                </span>
-              </Link>
-            </DropdownMenuItem>
-          ))
+                  <span
+                    className="min-w-0 flex-1 truncate text-sm"
+                    title={item.message ?? item.label}
+                  >
+                    {item.message ?? item.label}
+                  </span>
+                  <span
+                    className={cn(
+                      "ml-2 inline-flex h-5 min-w-5 shrink-0 items-center justify-center rounded-full px-1.5 text-xs font-medium tabular-nums",
+                      TONE_CLS[item.tone ?? "default"],
+                    )}
+                  >
+                    {item.count}
+                  </span>
+                </Link>
+              </DropdownMenuItem>
+            ))}
+          </div>
         )}
         {seeAllLabel && seeAllTo && (
           <>
