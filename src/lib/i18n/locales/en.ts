@@ -2144,6 +2144,7 @@ const en = {
         normalSearch: "Normal search",
         treffer: "Showing {{count}} matching invoices below.",
         total: "Total: {{gross}} gross · {{net}} net · {{vat}} VAT",
+        ranking: "Highest first:",
         keineTreffer: "No invoices match your search.",
         nichtAngewendet: "Not applied: {{aspects}}",
         applied: "Showing {{count}} matching invoices below: invoices that {{clauses}}.",

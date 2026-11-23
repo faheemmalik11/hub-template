@@ -56,6 +56,7 @@ export interface IntentConsolePanelLabels {
   found(count: number): string;
   noResults: string;
   total(gross: string, net: string, vat: string): string;
+  ranking: string;
   notApplied(aspects: string): string;
   clear: string;
 }
@@ -222,6 +223,20 @@ export function IntentConsolePanel({
                 formatEUR(outcome.totals.vat),
               )}
             </p>
+          )}
+          {outcome && !offTopic && outcome.breakdown && outcome.breakdown.length > 0 && (
+            <div className="mt-1.5">
+              <p className="font-medium text-foreground">{labels.ranking}</p>
+              <ol className="mt-1 space-y-0.5">
+                {outcome.breakdown.map((group, index) => (
+                  <li key={group.key} className="flex gap-2 text-foreground">
+                    <span className="text-muted-foreground">{index + 1}.</span>
+                    <span className="flex-1">{group.key}</span>
+                    <span className="font-medium">{formatEUR(group.gross)}</span>
+                  </li>
+                ))}
+              </ol>
+            </div>
           )}
           {outcome && !offTopic && outcome.preview.unsupportedAspects.length > 0 && (
             <p className="mt-1.5 text-xs text-amber-700">
