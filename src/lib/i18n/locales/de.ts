@@ -2213,6 +2213,7 @@ const de = {
         aiButton: "KI-Suche",
         normalSearch: "Normale Suche",
         treffer: "{{count}} passende Belege werden unten angezeigt.",
+        total: "Summe: {{gross}} brutto · {{net}} netto · {{vat}} MwSt.",
         keineTreffer: "Keine Belege passen zu Ihrer Suche.",
         nichtAngewendet: "Nicht berücksichtigt: {{aspects}}",
         applied: "{{count}} passende Belege werden unten angezeigt: Belege, die {{clauses}}.",

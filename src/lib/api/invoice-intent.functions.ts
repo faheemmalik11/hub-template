@@ -21,6 +21,14 @@ const InputSchema = z.object({
 export interface InvoiceSearchOutcome {
   preview: SqlPreview;
   ids: string[] | null;
+  totals: InvoiceSearchTotals | null;
+}
+
+export interface InvoiceSearchTotals {
+  invoiceCount: number;
+  gross: number;
+  net: number;
+  vat: number;
 }
 
 async function recordAiSearchUsage(
@@ -76,12 +84,36 @@ export const searchInvoicesByQuestion = createServerFn({ method: "POST" })
     );
 
     if (preview.classification.intent === "off_topic") {
-      return { preview, ids: null };
+      return { preview, ids: null, totals: null };
     }
     const { data: idRows, error } = await db.rpc("invoices_search_ids", {
       p_where: preview.whereClause,
       p_archived: preview.classification.entities.archived,
     });
     if (error) throw new AppError(String(error.message ?? error), 500, "DB_ERROR");
-    return { preview, ids: (idRows ?? []) as string[] };
+
+    // Asked for a sum or a count, not a list. Same clause and same archived flag as the ids above,
+    // so the number always describes exactly the rows shown underneath it.
+    const wantsATotal =
+      preview.classification.intent === "total_amount" ||
+      preview.classification.intent === "count_invoices";
+    let totals: InvoiceSearchTotals | null = null;
+    if (wantsATotal) {
+      const { data: totalRows, error: totalsError } = await db.rpc("invoices_search_totals", {
+        p_where: preview.whereClause,
+        p_archived: preview.classification.entities.archived,
+      });
+      if (totalsError)
+        throw new AppError(String(totalsError.message ?? totalsError), 500, "DB_ERROR");
+      const row = (totalRows ?? [])[0];
+      if (row) {
+        totals = {
+          invoiceCount: Number(row.invoice_count ?? 0),
+          gross: Number(row.total_gross ?? 0),
+          net: Number(row.total_net ?? 0),
+          vat: Number(row.total_vat ?? 0),
+        };
+      }
+    }
+    return { preview, ids: (idRows ?? []) as string[], totals };
   });
