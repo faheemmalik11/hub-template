@@ -8,7 +8,7 @@ import type {
   QueryColumnSpec,
   QueryScopeSpec,
 } from "./types";
-import { validateWhereClause, WhereClauseError } from "./where-parser";
+import { validateWhereClause, WhereClauseError } from "./where-parser.ts";
 
 export interface SqlGenerationConfig extends IntentClassifierConfig {
   columns: QueryColumnSpec[];
@@ -234,7 +234,11 @@ function dateClauseFragment(
   to: string | null,
   month: number | null,
 ): string | null {
-  if (month !== null) return `extract(month from ${column}) = ${month}`;
+  // The model may leave the field out rather than send null, and the number lands in the SQL
+  // text unquoted, so anything but a real month is dropped instead of interpolated.
+  if (typeof month === "number" && Number.isInteger(month) && month >= 1 && month <= 12) {
+    return `extract(month from ${column}) = ${month}`;
+  }
   if (from && to) return `${column} between '${from}' and '${to}'`;
   if (from) return `${column} >= '${from}'`;
   if (to) return `${column} <= '${to}'`;
