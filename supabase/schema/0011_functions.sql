@@ -3323,7 +3323,7 @@ begin
       is_demo, demo_owner_user_id
     )
     values (
-      'rechnung', true, 'upload', 'manual', 'needs_review', 'received',
+      'rechnung', true, 'manual', 'manual', 'needs_review', 'received',
       'Stadtwerke Nord GmbH', v_supplier_id, 'STOP-IBAN-1', current_date - 10, current_date + 20,
       150.00, 19, 28.50, 178.50, 'EUR',
       true, v_user_id
@@ -3356,7 +3356,7 @@ begin
       is_demo, demo_owner_user_id
     )
     values (
-      'rechnung', true, 'upload', 'manual', 'needs_review', 'received',
+      'rechnung', true, 'manual', 'manual', 'needs_review', 'received',
       'Gebäudereinigung Blitz GmbH', 'STOP-AI-1', current_date - 5, current_date + 25,
       1200.00, 19, 235.60, 1475.60, 'EUR',
       true, v_user_id
@@ -3380,7 +3380,7 @@ begin
       is_demo, demo_owner_user_id
     )
     values (
-      'werbung', false, 'upload', 'manual', 'needs_review', 'received',
+      'werbung', false, 'manual', 'manual', 'needs_review', 'received',
       'Büromöbel Profi Werbung', 'STOP-FLYER-1', current_date - 2,
       true, v_user_id
     )
