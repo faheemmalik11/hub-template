@@ -2214,6 +2214,7 @@ const de = {
         normalSearch: "Normale Suche",
         treffer: "{{count}} passende Belege werden unten angezeigt.",
         total: "Summe: {{gross}} brutto · {{net}} netto · {{vat}} MwSt.",
+        ranking: "Die höchsten zuerst:",
         keineTreffer: "Keine Belege passen zu Ihrer Suche.",
         nichtAngewendet: "Nicht berücksichtigt: {{aspects}}",
         applied: "{{count}} passende Belege werden unten angezeigt: Belege, die {{clauses}}.",
