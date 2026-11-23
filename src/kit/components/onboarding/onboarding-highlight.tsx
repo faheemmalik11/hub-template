@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 
+import { cn } from "@/kit/lib/class-names";
 import { Popover, PopoverAnchor, PopoverArrow, PopoverContent } from "@/kit/ui/popover";
 
 import { findOnboardingTarget } from "./find-onboarding-target";
@@ -49,11 +50,8 @@ export function OnboardingHighlight({
   } = runner;
   const target = isFinished ? null : currentStep.target;
   const stepPath = isFinished ? null : resolvedStepPath(currentStep.path);
-  const { rect, visibleArea, onWrongPage, targetOffScreen } = useOnboardingTargetTracking(
-    target,
-    stepPath,
-    pathname,
-  );
+  const { rect, visibleArea, onWrongPage, targetOffScreen, targetInDialog } =
+    useOnboardingTargetTracking(target, stepPath, pathname);
   const [topObstruction, setTopObstruction] = useState(0);
   const [cardElement, setCardElement] = useState<HTMLDivElement | null>(null);
   const [cardHeight, setCardHeight] = useState(0);
@@ -96,14 +94,17 @@ export function OnboardingHighlight({
     return () => cancelAnimationFrame(frame);
   }, [showSpotlight]);
 
-  const attachCard = useCallback((node: HTMLDivElement | null) => {
-    setCardElement(node);
-    const wrapper = node?.closest<HTMLElement>("[data-radix-popper-content-wrapper]");
-    if (wrapper) {
-      wrapper.style.zIndex = "60";
-      wrapper.style.transition = `transform ${SPOTLIGHT_MOVE_DURATION} ease`;
-    }
-  }, []);
+  const attachCard = useCallback(
+    (node: HTMLDivElement | null) => {
+      setCardElement(node);
+      const wrapper = node?.closest<HTMLElement>("[data-radix-popper-content-wrapper]");
+      if (wrapper) {
+        wrapper.style.zIndex = targetInDialog ? "68" : "60";
+        wrapper.style.transition = `transform ${SPOTLIGHT_MOVE_DURATION} ease`;
+      }
+    },
+    [targetInDialog],
+  );
 
   if (!showSpotlight || !rect) return null;
 
@@ -133,7 +134,11 @@ export function OnboardingHighlight({
   );
 
   return (
-    <div ref={overlayRoot} className="pointer-events-none fixed inset-0 z-[55]" role="presentation">
+    <div
+      ref={overlayRoot}
+      className={cn("pointer-events-none fixed inset-0", targetInDialog ? "z-[68]" : "z-[55]")}
+      role="presentation"
+    >
       <div
         className="pointer-events-none absolute"
         style={{
@@ -194,7 +199,10 @@ export function OnboardingHighlight({
               bottom: SPOTLIGHT_SCREEN_EDGE,
               left: SPOTLIGHT_SCREEN_EDGE,
             }}
-            className="pointer-events-auto z-[60] w-[min(var(--onboarding-card-width,22rem),calc(100vw-2rem))] rounded-2xl border-2 border-[var(--onboarding-accent,var(--primary))] px-4 pt-4 pb-2.5 shadow-2xl ring-4 ring-[var(--onboarding-accent,var(--primary))]/20 sm:px-5 sm:pt-5 sm:pb-3.5"
+            className={cn(
+              "pointer-events-auto w-[min(var(--onboarding-card-width,22rem),calc(100vw-2rem))] rounded-2xl border-2 border-[var(--onboarding-accent,var(--primary))] px-4 pt-4 pb-2.5 shadow-2xl ring-4 ring-[var(--onboarding-accent,var(--primary))]/20 sm:px-5 sm:pt-5 sm:pb-3.5",
+              targetInDialog ? "z-[68]" : "z-[60]",
+            )}
             onOpenAutoFocus={(event) => event.preventDefault()}
             onEscapeKeyDown={(event) => event.preventDefault()}
           >

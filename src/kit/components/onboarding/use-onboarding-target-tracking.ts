@@ -16,6 +16,9 @@ export interface OnboardingTargetTracking {
   visibleArea: SpotlightVisibleArea;
   onWrongPage: boolean;
   targetOffScreen: boolean;
+  /** Whether the current target sits inside an open Dialog/AlertDialog, so the caller can draw
+   *  itself above that dialog instead of underneath it. */
+  targetInDialog: boolean;
 }
 
 export function useOnboardingTargetTracking(
@@ -25,6 +28,7 @@ export function useOnboardingTargetTracking(
 ): OnboardingTargetTracking {
   const onWrongPage = Boolean(target && stepPath && !pathname.startsWith(stepPath));
   const [rect, setRect] = useState<SpotlightRect | null>(null);
+  const [targetInDialog, setTargetInDialog] = useState(false);
   const [visibleArea, setVisibleArea] = useState<SpotlightVisibleArea>(initialSpotlightVisibleArea);
 
   useEffect(() => {
@@ -43,6 +47,7 @@ export function useOnboardingTargetTracking(
   useEffect(() => {
     if (!target || onWrongPage) {
       setRect(null);
+      setTargetInDialog(false);
       return;
     }
 
@@ -93,8 +98,10 @@ export function useOnboardingTargetTracking(
             ? current
             : { top: box.top, left: box.left, width: box.width, height: box.height },
         );
+        setTargetInDialog(!!element.closest('[role="dialog"], [role="alertdialog"]'));
       } else {
         setRect(null);
+        setTargetInDialog(false);
       }
       frame = requestAnimationFrame(measure);
     };
@@ -129,5 +136,5 @@ export function useOnboardingTargetTracking(
       rect.left > visibleArea.left + visibleArea.width + 1),
   );
 
-  return { rect, visibleArea, onWrongPage, targetOffScreen };
+  return { rect, visibleArea, onWrongPage, targetOffScreen, targetInDialog };
 }
