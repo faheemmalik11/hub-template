@@ -216,7 +216,7 @@ const entityMappings: EntityMappingSpec[] = [
   },
   {
     entity: "entities.reviewState",
-    rule: "'needed' -> (review_problem_count > 0 OR (review_unchecked = true AND status = 'needs_review')); 'clear' -> review_problem_count = 0 AND NOT (review_unchecked = true AND status = 'needs_review'). Never use review_score for this.",
+    rule: "'needed' -> (workflow_status IN ('received','in_review','query') OR traffic_light IN ('yellow','red')); 'clear' -> (workflow_status NOT IN ('received','in_review','query') AND (traffic_light IS NULL OR traffic_light = 'green')). review_score is a priority weighting, not a count of problems, so never use it here. There is no column counting failed checks -- do not invent one.",
   },
   {
     entity: "entities.bankMatch",
@@ -262,8 +262,10 @@ async function columnsTheSearchActuallyHas(db: Db): Promise<QueryColumnSpec[]> {
     db.rpc("nl_search_columns"),
     db.rpc("nl_search_column_values"),
   ]);
-  if (schema.error) throw new AppError(String(schema.error.message ?? schema.error), 500, "DB_ERROR");
-  if (stored.error) throw new AppError(String(stored.error.message ?? stored.error), 500, "DB_ERROR");
+  if (schema.error)
+    throw new AppError(String(schema.error.message ?? schema.error), 500, "DB_ERROR");
+  if (stored.error)
+    throw new AppError(String(stored.error.message ?? stored.error), 500, "DB_ERROR");
 
   const present = new Set(
     (schema.data ?? []).map((row: { column_name: string }) => row.column_name),
