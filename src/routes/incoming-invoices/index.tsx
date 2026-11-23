@@ -861,6 +861,8 @@ function IncomingInvoicesPage() {
   ];
 
   const activeFurtherFilter = furtherFilter.filter((f) => !!f.value);
+  const hasFilterChips =
+    !!search.company || activeFurtherFilter.length > 0 || search.period !== ALL;
   const furtherFilterLabel = (f: FurtherFilter) =>
     f.options.find((o) => o.value === f.value)?.label ?? f.value ?? "";
 
@@ -1195,13 +1197,23 @@ function IncomingInvoicesPage() {
             <LayoutGrid className="size-4" /> {t("documents.list.view.kanban")}
           </button>
         </div>
+
+        {activeFilter && (
+          <button
+            type="button"
+            onClick={resetFilter}
+            className="text-xs font-medium text-muted-foreground underline-offset-4 hover:text-foreground hover:underline"
+          >
+            {t("documents.list.filter.reset")}
+          </button>
+        )}
       </div>
 
       {/* Aktive Filter-Chips — derived from the same weitereFilter array the popover renders, so a
           chip can never go missing for an axis the popover offers (the old hand-written block here
           had no chip for `ampel` at all). Gesellschaft and Zeitraum keep their own chip logic since
           they're not part of the popover. */}
-      {activeFilter && (
+      {hasFilterChips && (
         <div className="mt-3 flex flex-wrap items-center gap-2">
           {search.company && (
             <FilterChip
@@ -1228,13 +1240,6 @@ function IncomingInvoicesPage() {
               onClear={() => setSearch({ period: ALL, fromDate: undefined, toDate: undefined })}
             />
           )}
-          <button
-            type="button"
-            onClick={resetFilter}
-            className="text-xs font-medium text-muted-foreground underline-offset-4 hover:text-foreground hover:underline"
-          >
-            {t("documents.list.filter.reset")}
-          </button>
         </div>
       )}
 
