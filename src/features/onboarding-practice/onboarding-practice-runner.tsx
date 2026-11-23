@@ -1,6 +1,6 @@
 import { ChevronDown, ChevronUp } from "lucide-react";
 import { useNavigate, useRouterState } from "@tanstack/react-router";
-import { useQueryClient } from "@tanstack/react-query";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 
@@ -12,6 +12,7 @@ import {
   useOnboardingEvents,
 } from "@/kit/components/onboarding";
 import {
+  PRACTICE_MODE_ACTIVE_QUERY_KEY,
   PRACTICE_MODE_HEARTBEAT_MS,
   extendPracticeModeIfActive,
   readPracticeModeActive,
@@ -459,23 +460,15 @@ function ActivePracticeTask({ task }: { task: OnboardingTask }) {
 function OrphanedPracticeModeBanner() {
   const { t } = useTranslation();
   const queryClient = useQueryClient();
-  const pathname = useRouterState({ select: (state) => state.location.pathname });
-  const [active, setActive] = useState(false);
   const [ending, setEnding] = useState(false);
 
-  useEffect(() => {
-    let cancelled = false;
-    void readPracticeModeActive().then((isActive) => {
-      if (!cancelled) setActive(isActive);
-    });
-    return () => {
-      cancelled = true;
-    };
-    // Re-checks on every navigation, not only once on mount: practice mode can end elsewhere
-    // (its own 30-minute expiry, another tab, the start screen's own end button) while this
-    // banner, which lives in the app shell and survives SPA navigation, would otherwise keep
-    // showing whatever it found the first time it mounted.
-  }, [pathname]);
+  const { data: active } = useQuery({
+    queryKey: PRACTICE_MODE_ACTIVE_QUERY_KEY,
+    queryFn: readPracticeModeActive,
+    staleTime: 0,
+    refetchInterval: PRACTICE_MODE_HEARTBEAT_MS,
+    refetchOnWindowFocus: true,
+  });
 
   if (!active) return null;
 
@@ -483,7 +476,6 @@ function OrphanedPracticeModeBanner() {
     setEnding(true);
     try {
       await setPracticeMode(false);
-      setActive(false);
       await queryClient.invalidateQueries();
     } finally {
       setEnding(false);
