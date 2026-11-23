@@ -118,10 +118,13 @@ class Parser {
   private position = 0;
   comparisonCount = 0;
 
-  constructor(
-    private tokens: Token[],
-    private columns: Map<string, QueryColumnSpec>,
-  ) {}
+  private tokens: Token[];
+  private columns: Map<string, QueryColumnSpec>;
+
+  constructor(tokens: Token[], columns: Map<string, QueryColumnSpec>) {
+    this.tokens = tokens;
+    this.columns = columns;
+  }
 
   private peek(): Token | undefined {
     return this.tokens[this.position];
