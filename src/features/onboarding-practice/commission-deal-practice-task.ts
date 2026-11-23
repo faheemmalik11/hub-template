@@ -123,6 +123,7 @@ export function buildCommissionDealPracticeTask(t: PracticeTranslate): Onboardin
         placement: "top",
         path: COMMISSION_DEAL_DETAIL_PATH,
         pageLabel: pageCommission,
+        requiresNextClick: true,
         completionCondition: { eventType: "commission_deal_buyer_share_set" },
       },
       {
@@ -136,6 +137,7 @@ export function buildCommissionDealPracticeTask(t: PracticeTranslate): Onboardin
         placement: "top",
         path: COMMISSION_DEAL_DETAIL_PATH,
         pageLabel: pageCommission,
+        requiresNextClick: true,
         completionCondition: { eventType: "commission_deal_buyer_discount_set" },
       },
       {
