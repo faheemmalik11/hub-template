@@ -2131,6 +2131,7 @@ const en = {
       nlSearch: {
         titel: "Ask about your invoices",
         desc: "Type a question in your own words, or speak it.",
+        descTypeOnly: "Type a question in your own words.",
         v1: "What did we pay for repairs this month?",
         v2: "Show unpaid invoices above 10.000 €",
         v3: "Find all invoices from Apaleo",

@@ -257,10 +257,25 @@ const queryScope = {
   archived: ["archived_at is not null", "not_relevant_at is null"],
 };
 
-export async function buildSqlPreviewConfig(): Promise<SqlGenerationConfig> {
+async function columnsTheSearchActuallyHas(db: Db): Promise<QueryColumnSpec[]> {
+  const { data, error } = await db.rpc("nl_search_columns");
+  if (error) throw new AppError(String(error.message ?? error), 500, "DB_ERROR");
+  const present = new Set((data ?? []).map((row: { column_name: string }) => row.column_name));
+  const usable = queryColumns.filter((column) => present.has(column.name));
+  if (usable.length === 0) {
+    throw new AppError(
+      "The invoice search view exposes none of the described columns.",
+      500,
+      "DB_ERROR",
+    );
+  }
+  return usable;
+}
+
+export async function buildSqlPreviewConfig(db: Db): Promise<SqlGenerationConfig> {
   return {
     ...(await buildIntentClassifierConfig()),
-    columns: queryColumns,
+    columns: await columnsTheSearchActuallyHas(db),
     entityMappings,
     scope: queryScope,
     dateColumns: { document: "document_date", due: "due_date" },
@@ -279,7 +294,7 @@ export async function buildSqlPreviewConfig(): Promise<SqlGenerationConfig> {
       vat: "vat_amount",
       paidAt: "paid_at",
     },
-    sqlTable: "v_invoices_review",
+    sqlTable: TABLE.vDocumentsSearch,
   };
 }
 
