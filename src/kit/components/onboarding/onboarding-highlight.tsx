@@ -106,17 +106,8 @@ export function OnboardingHighlight({
     [targetInDialog],
   );
 
-  if (!showSpotlight || !rect) return null;
+  if (!target || onWrongPage) return null;
 
-  const measuredCardHeight = cardHeight || SPOTLIGHT_CARD_HEIGHT_FALLBACK;
-  const placement = pickSpotlightPlacement(
-    currentStep.placement,
-    rect,
-    visibleArea,
-    measuredCardHeight,
-    topObstruction,
-  );
-  const spotlight = spotlightBox(rect, spotlightScreenBand(visibleArea, topObstruction));
   const card = (
     <OnboardingLearningCard
       step={currentStep}
@@ -132,6 +123,49 @@ export function OnboardingHighlight({
       pathname={pathname}
     />
   );
+
+  if (!rect) {
+    return (
+      <div
+        ref={overlayRoot}
+        className={cn("pointer-events-none fixed inset-0", targetInDialog ? "z-[68]" : "z-[55]")}
+        role="presentation"
+      >
+        <div
+          className="pointer-events-none absolute flex justify-center"
+          style={{
+            top: visibleArea.top,
+            left: visibleArea.left,
+            width: visibleArea.width,
+            height: visibleArea.height,
+            alignItems: "flex-end",
+            paddingBottom: SPOTLIGHT_SCREEN_EDGE,
+          }}
+        >
+          <div
+            ref={attachCard}
+            data-onboarding-card=""
+            className="pointer-events-auto rounded-2xl bg-popover px-4 pt-4 pb-2.5 text-popover-foreground shadow-xl sm:px-5 sm:pt-5 sm:pb-3.5"
+            style={spotlightDockedCardStyle(visibleArea, topObstruction)}
+          >
+            {card}
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  if (!showSpotlight) return null;
+
+  const measuredCardHeight = cardHeight || SPOTLIGHT_CARD_HEIGHT_FALLBACK;
+  const placement = pickSpotlightPlacement(
+    currentStep.placement,
+    rect,
+    visibleArea,
+    measuredCardHeight,
+    topObstruction,
+  );
+  const spotlight = spotlightBox(rect, spotlightScreenBand(visibleArea, topObstruction));
 
   return (
     <div
