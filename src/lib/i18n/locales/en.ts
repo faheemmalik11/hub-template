@@ -1439,9 +1439,10 @@ const en = {
       buyerShareOutcome:
         "When more than one party pays a side, each one's share of that side's commission has to be set by hand.",
       buyerShareHelp: "Try 50% each, or any two numbers that add up to 100.",
-      buyerDiscountInstruction: "Give TEST Buyer a discount, with a reason.",
-      buyerDiscountOutcome:
-        "A discount lowers what this one payer owes. The reason is kept with the sale for later reference.",
+      buyerDiscountInstruction: "Give TEST Buyer a discount.",
+      buyerDiscountOutcome: "A discount lowers what this one payer owes.",
+      buyerDiscountReasonInstruction: "Give a reason for the discount.",
+      buyerDiscountReasonOutcome: "The reason is kept with the sale for later reference.",
       sellerRateInstruction: "Set the seller side's commission.",
       sellerRateOutcome:
         "Both sides of this sale pay a commission, so the seller side needs its own fee too.",
@@ -1453,11 +1454,15 @@ const en = {
       viewCalculationHelp: "This is the same breakdown the created invoices will use.",
       saveDetailsInstruction: 'Click "Save".',
       saveDetailsOutcome: "The sale is now complete and ready to be approved.",
-      ownershipInstruction:
-        'Open the "Ownership & Status" tab. Set "Handled by" and "Lead won by" to two different people.',
-      ownershipOutcome:
+      openOwnershipInstruction: 'Open the "Ownership & Status" tab.',
+      openOwnershipOutcome:
+        "This is where you set who handled the sale and who brought the lead in.",
+      handledByInstruction: 'Set "Handled by" to the person who worked this sale.',
+      handledByOutcome: 'The handover bonus for this sale goes to whoever is set as "Handled by".',
+      leadWonByInstruction: 'Set "Lead won by" to a different person than "Handled by".',
+      leadWonByOutcome:
         "Because the person who won the lead is not the same as the one handling it, the company-lead bonus applies later, on top of the handover bonus.",
-      ownershipHelp: 'Leave "Own lead" switched off while you do this.',
+      leadWonByHelp: 'Leave "Own lead" switched off while you do this.',
       saveOwnershipInstruction: "Save the changes again.",
       saveOwnershipOutcome: "Only once saved is the sale ready to be approved again.",
       approveInstruction: 'Click "Approve deal".',

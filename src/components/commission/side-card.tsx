@@ -241,7 +241,10 @@ export function SideCard({
                 <TableBody>
                   {value.parties.map((party, index) => (
                     <TableRow key={index}>
-                      <TableCell className="align-top">
+                      <TableCell
+                        className="align-top"
+                        data-tour={index === 0 ? `commission-${side}-payer-customer` : undefined}
+                      >
                         <Combobox
                           value={party.customerId || null}
                           onValueChange={(customerId) =>
@@ -272,7 +275,12 @@ export function SideCard({
                           disabled={disabled || value.parties.length <= 1}
                         />
                       </TableCell>
-                      <TableCell className="align-top">
+                      <TableCell
+                        className="align-top"
+                        data-tour={
+                          side === "buyer" && index === 0 ? "commission-buyer-discount" : undefined
+                        }
+                      >
                         <Input
                           inputMode="decimal"
                           value={party.discount}
@@ -284,7 +292,14 @@ export function SideCard({
                           disabled={disabled}
                         />
                       </TableCell>
-                      <TableCell className="align-top">
+                      <TableCell
+                        className="align-top"
+                        data-tour={
+                          side === "buyer" && index === 0
+                            ? "commission-buyer-discount-reason"
+                            : undefined
+                        }
+                      >
                         <Input
                           value={party.discountReason}
                           onChange={(event) =>
