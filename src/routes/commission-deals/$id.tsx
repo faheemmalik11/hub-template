@@ -844,7 +844,13 @@ function DealEditor({ deal }: { deal: Deal }) {
               <TabsTrigger
                 key={tab}
                 value={tab}
-                data-tour={tab === "calculation" ? "commission-calculation-tab" : undefined}
+                data-tour={
+                  tab === "calculation"
+                    ? "commission-calculation-tab"
+                    : tab === "ownership"
+                      ? "commission-ownership-tab"
+                      : undefined
+                }
                 className="w-full justify-start rounded-lg px-3 py-2 text-sm font-medium text-muted-foreground data-[state=active]:bg-brand-tint data-[state=active]:text-brand-dark data-[state=active]:shadow-none"
               >
                 {t(DEAL_TAB_LABEL_KEY[tab])}
