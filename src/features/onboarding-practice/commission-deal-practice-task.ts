@@ -157,7 +157,7 @@ export function buildCommissionDealPracticeTask(t: PracticeTranslate): Onboardin
         instruction: text("ownershipInstruction"),
         expectedOutcome: text("ownershipOutcome"),
         helpText: text("ownershipHelp"),
-        target: "commission-handled-by|commission-acquired-by",
+        target: "commission-handled-by|commission-acquired-by|commission-ownership-tab",
         placement: "top",
         path: COMMISSION_DEAL_DETAIL_PATH,
         pageLabel: pageCommission,
