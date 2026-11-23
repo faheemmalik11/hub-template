@@ -10,6 +10,7 @@ import {
   searchInvoicesByQuestion,
   type InvoiceSearchOutcome,
 } from "@/lib/api/invoice-intent.functions";
+import { formatEUR } from "@/lib/data/format";
 import { cn } from "@/lib/utils";
 
 const AI_SEARCH_STORAGE_KEY = "documents.aiSearch";
@@ -54,6 +55,7 @@ export interface IntentConsolePanelLabels {
   offTopic: string;
   found(count: number): string;
   noResults: string;
+  total(gross: string, net: string, vat: string): string;
   notApplied(aspects: string): string;
   clear: string;
 }
@@ -211,6 +213,15 @@ export function IntentConsolePanel({
                 ? (appliedLine ?? labels.found(outcome.ids.length))
                 : labels.noResults}
             </span>
+          )}
+          {outcome && !offTopic && outcome.totals && outcome.totals.invoiceCount > 0 && (
+            <p className="mt-1.5 font-medium text-foreground">
+              {labels.total(
+                formatEUR(outcome.totals.gross),
+                formatEUR(outcome.totals.net),
+                formatEUR(outcome.totals.vat),
+              )}
+            </p>
           )}
           {outcome && !offTopic && outcome.preview.unsupportedAspects.length > 0 && (
             <p className="mt-1.5 text-xs text-amber-700">

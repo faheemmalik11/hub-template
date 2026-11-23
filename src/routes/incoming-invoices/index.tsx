@@ -999,6 +999,7 @@ function IncomingInvoicesPage() {
             offTopic: t("documents.list.nlSearch.offTopic"),
             found: (count) => t("documents.list.nlSearch.treffer", { count }),
             noResults: t("documents.list.nlSearch.keineTreffer"),
+            total: (gross, net, vat) => t("documents.list.nlSearch.total", { gross, net, vat }),
             notApplied: (aspects) => t("documents.list.nlSearch.nichtAngewendet", { aspects }),
             clear: t("documents.list.nlSearch.clear"),
           }}
