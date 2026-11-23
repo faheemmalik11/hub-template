@@ -95,6 +95,7 @@ export const PERMISSIONS = {
   pageDocumentIntakeLog: "page.document_intake_log",
   sourcesSharepoint: "sources.sharepoint",
   documentsVoiceDictation: "documents.voice_dictation",
+  documentsVoiceSearch: "documents.voice_search",
   pageInvoiceSettings: "page.invoice_settings",
 
   // Menu groups. Switching one off takes its pages with it.

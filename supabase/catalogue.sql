@@ -491,6 +491,16 @@ on conflict (key) do update
        label_de = excluded.label_de, label_en = excluded.label_en,
        default_enabled = excluded.default_enabled, sort_order = excluded.sort_order;
 
+-- On by default: the microphone already existed for every client before it had a key of its own,
+-- so a client who never switches it keeps it. Needs ELEVENLABS_API_KEY in that client's
+-- credentials; switch it off for a client who has none.
+insert into public.permissions (key, kind, parent_key, category, label_de, label_en, default_enabled, sort_order) values
+  ('documents.voice_search', 'section', 'page.incoming_invoices', 'menu', 'Frage diktieren', 'Voice question', true, 216)
+on conflict (key) do update
+   set kind = excluded.kind, parent_key = excluded.parent_key, category = excluded.category,
+       label_de = excluded.label_de, label_en = excluded.label_en,
+       default_enabled = excluded.default_enabled, sort_order = excluded.sort_order;
+
 insert into public.permissions (key, kind, parent_key, category, label_de, label_en, default_enabled, sort_order) values
   ('page.invoice_settings', 'page', 'module.invoices', 'menu', 'Rechnungsvorgaben', 'Invoice defaults', false, 245)
 on conflict (key) do update
