@@ -1431,12 +1431,22 @@ const en = {
       buyerRateInstruction: "Set the buyer side's commission.",
       buyerRateOutcome:
         "Every commission side needs a fee, either a percentage of the purchase price or a fixed amount.",
-      buyerRateHelp: "Switch off the seller side if only the buyer side pays.",
+      buyerRateHelp: "Both sides pay a commission on this sale, so set each one separately.",
       buyerPayerInstruction: "Pick TEST Buyer as the paying party.",
       buyerPayerOutcome: "A commission side also needs at least one party who actually pays it.",
-      resolveSellerInstruction: 'Switch off "Seller pays commission".',
-      resolveSellerOutcome:
-        "Only the buyer side is set up in this practice. A commission side with no fee and no payer blocks saving, so the seller side needs to be switched off.",
+      buyerShareInstruction:
+        'Add "TEST Co-Buyer" as a second payer, then split the share between the two so they add up to 100%.',
+      buyerShareOutcome:
+        "When more than one party pays a side, each one's share of that side's commission has to be set by hand.",
+      buyerShareHelp: "Try 50% each, or any two numbers that add up to 100.",
+      buyerDiscountInstruction: "Give TEST Buyer a discount, with a reason.",
+      buyerDiscountOutcome:
+        "A discount lowers what this one payer owes. The reason is kept with the sale for later reference.",
+      sellerRateInstruction: "Set the seller side's commission.",
+      sellerRateOutcome:
+        "Both sides of this sale pay a commission, so the seller side needs its own fee too.",
+      sellerPayerInstruction: "Pick TEST Seller as the paying party.",
+      sellerPayerOutcome: "The seller side also needs at least one party who actually pays it.",
       viewCalculationInstruction: 'Open the "Calculation" tab.',
       viewCalculationOutcome:
         "This shows the full commission math: each side's fee, VAT, and the total, line by line.",

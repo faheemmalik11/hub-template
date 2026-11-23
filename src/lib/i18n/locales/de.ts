@@ -1502,13 +1502,25 @@ const de = {
       buyerRateInstruction: "Legen Sie die Provision der Käuferseite fest.",
       buyerRateOutcome:
         "Jede Provisionsseite braucht eine Gebühr, entweder als Prozentsatz vom Kaufpreis oder als Festbetrag.",
-      buyerRateHelp: "Schalten Sie die Verkäuferseite aus, wenn nur die Käuferseite zahlt.",
+      buyerRateHelp:
+        "Beide Seiten zahlen bei diesem Verkauf eine Provision, legen Sie also jede einzeln fest.",
       buyerPayerInstruction: "Wählen Sie TEST Buyer als zahlende Partei.",
       buyerPayerOutcome:
         "Eine Provisionsseite braucht außerdem mindestens eine Partei, die sie tatsächlich zahlt.",
-      resolveSellerInstruction: "Schalten Sie „Verkäufer zahlt Provision“ aus.",
-      resolveSellerOutcome:
-        "In dieser Übung ist nur die Käuferseite eingerichtet. Eine Provisionsseite ohne Gebühr und ohne zahlende Partei blockiert das Speichern, daher muss die Verkäuferseite ausgeschaltet werden.",
+      buyerShareInstruction:
+        "Fügen Sie „TEST Co-Buyer“ als zweite zahlende Partei hinzu und teilen Sie den Anteil zwischen beiden auf, sodass sie zusammen 100 % ergeben.",
+      buyerShareOutcome:
+        "Zahlt mehr als eine Partei eine Seite, muss der Anteil jeder Partei an dieser Provision von Hand festgelegt werden.",
+      buyerShareHelp: "Zum Beispiel je 50 %, oder zwei beliebige Zahlen, die zusammen 100 ergeben.",
+      buyerDiscountInstruction: "Gewähren Sie TEST Buyer einen Rabatt mit Grund.",
+      buyerDiscountOutcome:
+        "Ein Rabatt verringert, was diese eine zahlende Partei schuldet. Der Grund wird beim Verkauf gespeichert.",
+      sellerRateInstruction: "Legen Sie die Provision der Verkäuferseite fest.",
+      sellerRateOutcome:
+        "Beide Seiten dieses Verkaufs zahlen eine Provision, deshalb braucht auch die Verkäuferseite eine eigene Gebühr.",
+      sellerPayerInstruction: "Wählen Sie TEST Seller als zahlende Partei.",
+      sellerPayerOutcome:
+        "Auch die Verkäuferseite braucht mindestens eine Partei, die sie tatsächlich zahlt.",
       viewCalculationInstruction: "Öffnen Sie den Tab „Berechnung“.",
       viewCalculationOutcome:
         "Hier sehen Sie die vollständige Provisionsrechnung: Gebühr je Seite, Steuer und Summe, Zeile für Zeile.",
