@@ -258,10 +258,28 @@ const queryScope = {
 };
 
 async function columnsTheSearchActuallyHas(db: Db): Promise<QueryColumnSpec[]> {
-  const { data, error } = await db.rpc("nl_search_columns");
-  if (error) throw new AppError(String(error.message ?? error), 500, "DB_ERROR");
-  const present = new Set((data ?? []).map((row: { column_name: string }) => row.column_name));
-  const usable = queryColumns.filter((column) => present.has(column.name));
+  const [schema, stored] = await Promise.all([
+    db.rpc("nl_search_columns"),
+    db.rpc("nl_search_column_values"),
+  ]);
+  if (schema.error) throw new AppError(String(schema.error.message ?? schema.error), 500, "DB_ERROR");
+  if (stored.error) throw new AppError(String(stored.error.message ?? stored.error), 500, "DB_ERROR");
+
+  const present = new Set(
+    (schema.data ?? []).map((row: { column_name: string }) => row.column_name),
+  );
+  const storedValues = new Map<string, string[]>();
+  for (const row of (stored.data ?? []) as { column_name: string; value: string }[]) {
+    storedValues.set(row.column_name, [...(storedValues.get(row.column_name) ?? []), row.value]);
+  }
+
+  const usable = queryColumns
+    .filter((column) => present.has(column.name))
+    .map((column) => {
+      const live = storedValues.get(column.name);
+      if (!live || !column.values) return column;
+      return { ...column, values: [...new Set([...column.values, ...live])] };
+    });
   if (usable.length === 0) {
     throw new AppError(
       "The invoice search view exposes none of the described columns.",
