@@ -75,7 +75,7 @@ export function NotificationBell({
         sideOffset={10}
         collisionPadding={12}
         className={cn(
-          "min-w-72 max-w-[calc(100vw-2rem)] overflow-visible border-t-4 border-t-primary shadow-xl",
+          "w-96 max-w-[calc(100vw-2rem)] overflow-visible border-t-4 border-t-primary shadow-xl",
           "relative before:absolute before:right-5 before:h-0 before:w-0 before:content-['']",
           "data-[side=bottom]:before:-top-2 data-[side=bottom]:before:border-x-8 data-[side=bottom]:before:border-b-8 data-[side=bottom]:before:border-x-transparent data-[side=bottom]:before:border-b-primary",
           "data-[side=top]:before:-bottom-2 data-[side=top]:before:border-x-8 data-[side=top]:before:border-t-8 data-[side=top]:before:border-x-transparent data-[side=top]:before:border-t-primary",

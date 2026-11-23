@@ -2,6 +2,8 @@ import { useMutation } from "@tanstack/react-query";
 import { Loader2, Send, Sparkles, X } from "lucide-react";
 import { useRef, useState, type ReactNode } from "react";
 
+import { PERMISSIONS } from "@/config/permissions";
+import { useFeature } from "@/data/use-feature";
 import { Input } from "@/components/ui/input";
 import { VoiceSearchButton } from "@/components/documents/voice-search-button";
 import {
@@ -70,6 +72,7 @@ export function IntentConsolePanel({
   onResults(ids: string[] | null): void;
   onClose(): void;
 }) {
+  const speaksQuestions = useFeature(PERMISSIONS.documentsVoiceSearch);
   const [stored] = useState(() => readStoredAiSearch());
   const [question, setQuestion] = useState(stored?.question ?? "");
   const [restoredOutcome, setRestoredOutcome] = useState(stored?.outcome ?? null);
@@ -150,12 +153,14 @@ export function IntentConsolePanel({
               <X className="size-4" />
             </button>
           )}
-          <VoiceSearchButton
-            onTranscribed={(text) => {
-              setQuestion(text);
-              inputRef.current?.focus();
-            }}
-          />
+          {speaksQuestions && (
+            <VoiceSearchButton
+              onTranscribed={(text) => {
+                setQuestion(text);
+                inputRef.current?.focus();
+              }}
+            />
+          )}
           <button
             type="submit"
             disabled={!question.trim() || search.isPending}
