@@ -1512,9 +1512,10 @@ const de = {
       buyerShareOutcome:
         "Zahlt mehr als eine Partei eine Seite, muss der Anteil jeder Partei an dieser Provision von Hand festgelegt werden.",
       buyerShareHelp: "Zum Beispiel je 50 %, oder zwei beliebige Zahlen, die zusammen 100 ergeben.",
-      buyerDiscountInstruction: "Gewähren Sie TEST Buyer einen Rabatt mit Grund.",
-      buyerDiscountOutcome:
-        "Ein Rabatt verringert, was diese eine zahlende Partei schuldet. Der Grund wird beim Verkauf gespeichert.",
+      buyerDiscountInstruction: "Gewähren Sie TEST Buyer einen Rabatt.",
+      buyerDiscountOutcome: "Ein Rabatt verringert, was diese eine zahlende Partei schuldet.",
+      buyerDiscountReasonInstruction: "Geben Sie einen Grund für den Rabatt an.",
+      buyerDiscountReasonOutcome: "Der Grund wird beim Verkauf gespeichert.",
       sellerRateInstruction: "Legen Sie die Provision der Verkäuferseite fest.",
       sellerRateOutcome:
         "Beide Seiten dieses Verkaufs zahlen eine Provision, deshalb braucht auch die Verkäuferseite eine eigene Gebühr.",
@@ -1527,11 +1528,18 @@ const de = {
       viewCalculationHelp: "Das ist dieselbe Aufstellung, die die erstellten Rechnungen verwenden.",
       saveDetailsInstruction: "Klicken Sie auf „Speichern“.",
       saveDetailsOutcome: "Der Verkauf ist jetzt vollständig und bereit zur Freigabe.",
-      ownershipInstruction:
-        "Öffnen Sie den Reiter „Status & Beteiligte“. Tragen Sie bei „Betreut von“ und „Lead gewonnen von“ zwei unterschiedliche Personen ein.",
-      ownershipOutcome:
+      openOwnershipInstruction: "Öffnen Sie den Reiter „Status & Beteiligte“.",
+      openOwnershipOutcome:
+        "Hier legen Sie fest, wer den Verkauf betreut hat und wer den Lead gewonnen hat.",
+      handledByInstruction:
+        "Legen Sie bei „Betreut von“ die Person fest, die diesen Verkauf betreut hat.",
+      handledByOutcome:
+        "Der Übergabebonus für diesen Verkauf geht an die Person, die bei „Betreut von“ steht.",
+      leadWonByInstruction:
+        "Legen Sie bei „Lead gewonnen von“ eine andere Person fest als bei „Betreut von“.",
+      leadWonByOutcome:
         "Weil die Person, die den Lead gewonnen hat, nicht dieselbe ist wie die betreuende Person, entsteht später neben dem Übergabebonus auch der Unternehmens-Lead-Bonus.",
-      ownershipHelp: "Lassen Sie dabei den Haken bei „Eigener Lead“ ausgeschaltet.",
+      leadWonByHelp: "Lassen Sie dabei den Haken bei „Eigener Lead“ ausgeschaltet.",
       saveOwnershipInstruction: "Speichern Sie die Änderungen noch einmal.",
       saveOwnershipOutcome: "Erst nach dem Speichern ist der Verkauf wieder bereit zur Freigabe.",
       approveInstruction: "Klicken Sie auf „Verkauf genehmigen“.",

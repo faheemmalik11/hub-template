@@ -12,7 +12,7 @@ export type {
 export { createOnboardingEventBus } from "./event-bus";
 export type { OnboardingEventBus } from "./event-bus";
 export { eventMeetsCompletionCondition } from "./completion";
-export { watchForCompletion } from "./watch-for-completion";
+export { watchForCompletion, type OnboardingCompletionInfo } from "./watch-for-completion";
 export { OnboardingPracticeProvider, useOnboardingPractice } from "./practice-context";
 export {
   PRACTICE_MODE_HEARTBEAT_MS,

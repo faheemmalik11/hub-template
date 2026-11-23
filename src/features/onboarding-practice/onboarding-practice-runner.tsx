@@ -103,6 +103,7 @@ function ActivePracticeTask({ task }: { task: OnboardingTask }) {
   };
   const { stopTask, setAllowedPath } = useOnboardingPractice();
   const pathname = useRouterState({ select: (state) => state.location.pathname });
+  const dealIdFromPath = pathname.match(/^\/commission-deals\/([^/]+)$/)?.[1] ?? null;
   const navigate = useNavigate();
   const navigateToOnboardingStepPath = (path: string) => {
     void navigate({ to: path } as never);
@@ -175,7 +176,9 @@ function ActivePracticeTask({ task }: { task: OnboardingTask }) {
           values: {
             ...demoCompanyAndPropertyCodes(appUserId),
             ...seededRecordIds,
-            ...(lastCreatedDealId ? { dealId: lastCreatedDealId } : {}),
+            ...((lastCreatedDealId ?? dealIdFromPath)
+              ? { dealId: (lastCreatedDealId ?? dealIdFromPath) as string }
+              : {}),
           },
         },
         {
@@ -188,7 +191,16 @@ function ActivePracticeTask({ task }: { task: OnboardingTask }) {
           },
         },
       ),
-    [task, lastUploadedId, lastCreatedDealId, seededRecordIds, appUserId, userRoles.join(","), t],
+    [
+      task,
+      lastUploadedId,
+      lastCreatedDealId,
+      dealIdFromPath,
+      seededRecordIds,
+      appUserId,
+      userRoles.join(","),
+      t,
+    ],
   );
   const runner = useOnboardingTaskRunner(resolvedTask, {
     initialStepIndex: storedProgress?.stepIndex ?? 0,

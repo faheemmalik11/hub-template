@@ -312,6 +312,12 @@ function DealEditor({ deal }: { deal: Deal }) {
   }, [form.buyer.parties, result, deal.id, emitOnboardingEvent]);
   useEffect(() => {
     const firstBuyerParty = form.buyer.parties[0];
+    if (firstBuyerParty && parseDecimal(firstBuyerParty.discount) !== null) {
+      emitOnboardingEvent({ type: "commission_deal_buyer_discount_amount_set", recordId: deal.id });
+    }
+  }, [form.buyer.parties, deal.id, emitOnboardingEvent]);
+  useEffect(() => {
+    const firstBuyerParty = form.buyer.parties[0];
     if (
       firstBuyerParty &&
       parseDecimal(firstBuyerParty.discount) !== null &&
@@ -333,10 +339,20 @@ function DealEditor({ deal }: { deal: Deal }) {
       emitOnboardingEvent({ type: "commission_deal_seller_payer_set", recordId: deal.id });
   }, [form.seller.parties, deal.id, emitOnboardingEvent]);
   useEffect(() => {
+    if (form.handledBy)
+      emitOnboardingEvent({ type: "commission_deal_handled_by_set", recordId: deal.id });
+  }, [form.handledBy, deal.id, emitOnboardingEvent]);
+  useEffect(() => {
     if (!form.ownLead && form.handledBy && form.acquiredBy && form.acquiredBy !== form.handledBy) {
       emitOnboardingEvent({ type: "commission_deal_ownership_split", recordId: deal.id });
     }
   }, [form.ownLead, form.handledBy, form.acquiredBy, deal.id, emitOnboardingEvent]);
+  useEffect(() => {
+    if (activeTab === "calculation")
+      emitOnboardingEvent({ type: "commission_deal_calculation_viewed", recordId: deal.id });
+    if (activeTab === "ownership")
+      emitOnboardingEvent({ type: "commission_deal_ownership_viewed", recordId: deal.id });
+  }, [activeTab, deal.id, emitOnboardingEvent]);
   const dealValuesUnsaved = useMemo(() => {
     const saved = JSON.parse(savedForm) as DealForm;
     return (
@@ -861,15 +877,7 @@ function DealEditor({ deal }: { deal: Deal }) {
       <div className="mt-6 grid gap-6 lg:grid-cols-[minmax(0,1fr)_400px]">
         <Tabs
           value={activeTab}
-          onValueChange={(tab) => {
-            setActiveTab(tab);
-            if (tab === "calculation") {
-              emitOnboardingEvent({
-                type: "commission_deal_calculation_viewed",
-                recordId: deal.id,
-              });
-            }
-          }}
+          onValueChange={setActiveTab}
           orientation="vertical"
           className="rounded-xl border border-border bg-card lg:flex"
         >
@@ -1057,7 +1065,7 @@ function DealEditor({ deal }: { deal: Deal }) {
                 onJumpToField={jumpToAnchor}
               />
               {seesCommission && (
-                <div>
+                <div data-tour="commission-calculation-content">
                   <h2 className="text-base font-semibold text-foreground">
                     {t("commissionDeals.drafts.title")}
                   </h2>

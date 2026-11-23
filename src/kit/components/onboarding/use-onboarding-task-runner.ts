@@ -58,9 +58,9 @@ export function useOnboardingTaskRunner(
 
   useOnboardingCompletion(
     !isFinished && currentStep.type !== "info" ? currentStep.completionCondition : null,
-    () => {
+    ({ fromReplay }) => {
       setStepsReadyToAdvance((steps) => new Set(steps).add(currentStepIndex));
-      if (!currentStep.requiresNextClick) advanceFrom(currentStepIndex);
+      if (!currentStep.requiresNextClick && !fromReplay) advanceFrom(currentStepIndex);
     },
   );
   useOnboardingWrongAttempt(
