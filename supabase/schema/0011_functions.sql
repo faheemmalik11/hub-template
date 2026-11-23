@@ -1468,7 +1468,7 @@ CREATE OR REPLACE FUNCTION public.invoices_filtered_aggregate(p_company_code tex
         or (p_payment_state = 'overdue' and paid_at is null and due_date is not null and due_date < current_date)
         or p_payment_state not in ('paid', 'open', 'overdue')
       ) as matches_payment_filter
-    from public.v_documents_review
+    from public.v_documents_search
     where archived_at is null
       and not_relevant_at is null
       and (
@@ -1510,7 +1510,7 @@ CREATE OR REPLACE FUNCTION public.invoices_filtered_search(p_query_embedding pub
     id, invoice_number, issuer, document_date, amount_gross, company_code, property_code,
     cost_category, service_description, paid_at,
     case when p_query_embedding is not null then 1 - (embedding <=> p_query_embedding) end as similarity
-  from public.v_documents_review
+  from public.v_documents_search
   where archived_at is null
     and not_relevant_at is null
     and (
@@ -1619,7 +1619,7 @@ begin
     raise exception 'invalid where clause';
   end if;
   return query execute
-    'select id from public.v_documents_review where archived_at ' || v_scope ||
+    'select id from public.v_documents_search where archived_at ' || v_scope ||
     ' and not_relevant_at is null' ||
     case
       when p_where is not null and btrim(p_where) <> '' then ' and (' || p_where || ')'

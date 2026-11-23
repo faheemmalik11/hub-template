@@ -2199,6 +2199,7 @@ const de = {
       nlSearch: {
         titel: "Fragen Sie nach Ihren Rechnungen",
         desc: "Stellen Sie Ihre Frage in eigenen Worten, getippt oder gesprochen.",
+        descTypeOnly: "Stellen Sie Ihre Frage in eigenen Worten.",
         v1: "Was haben wir diesen Monat für Reparaturen bezahlt?",
         v2: "Offene Rechnungen über 10.000 € anzeigen",
         v3: "Alle Rechnungen von Apaleo finden",

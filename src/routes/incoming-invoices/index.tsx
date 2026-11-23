@@ -991,6 +991,7 @@ function IncomingInvoicesPage() {
           labels={{
             title: t("documents.list.nlSearch.titel"),
             description: t("documents.list.nlSearch.desc"),
+            descriptionTypeOnly: t("documents.list.nlSearch.descTypeOnly"),
             placeholder: t("documents.list.nlSearch.placeholder"),
             close: t("documents.list.nlSearch.normalSearch"),
             searching: t("documents.list.nlSearch.searching"),

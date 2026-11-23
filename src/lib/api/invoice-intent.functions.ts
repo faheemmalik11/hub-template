@@ -56,7 +56,7 @@ export const searchInvoicesByQuestion = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .validator(InputSchema)
   .handler(async ({ data, context }): Promise<InvoiceSearchOutcome> => {
-    const config = await buildSqlPreviewConfig();
+    const config = await buildSqlPreviewConfig(context.supabase);
     const usageEvents: { usage: ModelUsage; context: ModelUsageContext }[] = [];
     config.onModelUsage = (usage, usageContext) =>
       usageEvents.push({ usage, context: usageContext });

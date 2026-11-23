@@ -46,6 +46,7 @@ function storeAiSearch(value: StoredAiSearch | null) {
 export interface IntentConsolePanelLabels {
   title: string;
   description: string;
+  descriptionTypeOnly: string;
   placeholder: string;
   close: string;
   searching: string;
@@ -113,7 +114,9 @@ export function IntentConsolePanel({
         </span>
         <div className="min-w-0">
           <h2 className="text-sm font-semibold text-foreground">{labels.title}</h2>
-          <p className="text-xs text-muted-foreground">{labels.description}</p>
+          <p className="text-xs text-muted-foreground">
+            {speaksQuestions ? labels.description : labels.descriptionTypeOnly}
+          </p>
         </div>
         <button
           type="button"
