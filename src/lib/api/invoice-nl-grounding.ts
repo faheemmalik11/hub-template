@@ -1,9 +1,9 @@
 import { TABLE } from "@/config/tables";
-// Shared "real tenant vocabulary" used by invoice-nl-retrieval.functions.ts (constrains
+// Shared "real tenant vocabulary" used by the AI search (constrains
 // Text-to-SQL filter values to real codes/categories via a JSON-schema enum) and
 // voice-transcription.functions.ts / voice-entity-resolution.ts (bias speech transcription toward
 // the same real company/property/supplier names, so a spoken/misheard company name resolves to
-// the real one). Extracted out of invoice-nl-retrieval.functions.ts (ported from immonetz's
+// the real one). Extracted out of the retrieval module since deleted (ported from immonetz's
 // invoice-grounding.ts) so voice input doesn't need its own duplicate copy of this query set.
 //
 // Read fresh via the caller's own RLS-scoped client each call, never cached — a company-restricted

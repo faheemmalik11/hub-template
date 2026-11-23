@@ -1251,7 +1251,7 @@ export interface DocumentListRow extends Document {
 // range already derived from the period selection.
 export interface DocumentsListParams {
   q?: string;
-  // Ids matched by the AI natural-language search (askInvoiceQuestion). Undefined = no AI search
+  // Ids matched by the AI natural-language search (searchInvoicesByQuestion). Undefined = no AI search
   // active. An empty array is deliberately NOT "no filter" — it means the AI search found nothing,
   // so the list must show nothing, not silently fall back to the unfiltered set.
   ids?: string[];

@@ -16,7 +16,7 @@
 // with an actual mishearing of that category's German name, rewriting it to e.g.
 // "Umsatzsteuerzahlung" or "Reparatur / Instandhaltung" — wrong, and actively harmful, since it
 // would feed a hard-coded, possibly wrong category into extractIntent()
-// (invoice-nl-retrieval.functions.ts) before that call's own full-question-context category
+// before the search's own full-question-context category
 // matching (already more reliable, and defaults to null when unsure) even gets to run. Tightening
 // the instructions and setting temperature 0 both helped but did NOT make the confusion go away —
 // it still flipped on repeated identical runs even at temperature 0. Categories are simply too
@@ -28,7 +28,7 @@
 // not a required step. Any error here (missing API key, request failure, bad response) falls back
 // to the original, uncorrected text rather than failing the whole voice search over a best-effort
 // correction pass.
-import { callOpenAiJsonSchema } from "./invoice-nl-retrieval.functions";
+import { callOpenAiJsonSchema } from "./openai-json-schema.server";
 import type { Grounding } from "./invoice-nl-grounding";
 import { tenantCredentialOrNull } from "@/lib/inbox/channel-credentials.server";
 
