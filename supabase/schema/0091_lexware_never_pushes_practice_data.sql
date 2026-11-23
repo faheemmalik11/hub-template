@@ -1,18 +1,3 @@
--- Three triggers push to the client's real Lexware account, and none of them asked whether the row
--- was practice data:
---   documents_lexoffice_push_insert / _update  fire the moment workflow_status reaches
---     approved_final or paid. The stop-cases practice starts its three invoices at 'received', so
---     approving one during the exercise sent a practice document to the real accounts.
---   outgoing_invoices_lexoffice_push           fires on every commission invoice the app writes,
---     including the ones the commission practice creates.
--- A Lexware invoice cannot be deleted once it exists, only voided, so this is not a tidy-up job
--- afterwards -- it has to not happen.
---
--- documents carries is_demo, so those two can refuse in the trigger's own WHEN clause. Neither
--- outgoing_invoices nor deals has the column: a commission invoice is practice data because the
--- deal's property is, which needs a lookup, and a WHEN clause cannot do one -- so that guard sits
--- at the top of the function instead.
-
 begin;
 
 drop trigger if exists documents_lexoffice_push_insert on public.documents;

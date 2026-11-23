@@ -1,11 +1,3 @@
--- "Welcher Lieferant hat uns am meisten gekostet?" classifies as rank_breakdown and composeQuery
--- even writes the grouped SQL, but nothing ran it: the search returned ids only, so the question
--- that asks WHICH supplier got back a list and no ranking. Same where clause, same scope and the
--- same refusals as invoices_search_ids, so the ranking always describes the rows listed with it.
---
--- The dimension is matched against a fixed set rather than interpolated: it reaches here from a
--- language model, and this function builds SQL text.
-
 begin;
 
 create or replace function public.invoices_search_breakdown(
