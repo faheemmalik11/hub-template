@@ -482,6 +482,7 @@ async function digestFigures(db: Db, today: string): Promise<Record<string, numb
       .from(TABLE.vOpenItems)
       .select("id", head)
       .eq("is_open", true)
+      .eq("is_demo", false)
       .not("due_date", "is", null)
       .lt("due_date", today)
       .then((q: Db) => ({ key: "faellig", q })),
@@ -491,11 +492,13 @@ async function digestFigures(db: Db, today: string): Promise<Record<string, numb
       .is("deleted_at", null)
       .is("archived_at", null)
       .is("not_relevant_at", null)
+      .eq("is_demo", false)
       .eq("status", "zu_pruefen")
       .then((q: Db) => ({ key: "zuPruefen", q })),
     db
       .from(TABLE.vBankTransactionsList)
       .select("id", head)
+      .eq("is_demo", false)
       .eq("has_suggested_match", true)
       .then((q: Db) => ({ key: "vorschlaege", q })),
   ]);
