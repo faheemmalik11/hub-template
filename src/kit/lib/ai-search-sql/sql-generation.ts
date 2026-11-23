@@ -228,15 +228,17 @@ A column appearing in WORDING MATCHES above is NOT the same as being covered by 
 Return only JSON in the shape { "whereClause": string | null, "unsupportedAspects": string[], "extraClauseDescription": string | null }.`;
 }
 
+function isARealMonth(month: number | null): boolean {
+  return typeof month === "number" && Number.isInteger(month) && month >= 1 && month <= 12;
+}
+
 function dateClauseFragment(
   column: string,
   from: string | null,
   to: string | null,
   month: number | null,
 ): string | null {
-  // The model may leave the field out rather than send null, and the number lands in the SQL
-  // text unquoted, so anything but a real month is dropped instead of interpolated.
-  if (typeof month === "number" && Number.isInteger(month) && month >= 1 && month <= 12) {
+  if (isARealMonth(month)) {
     return `extract(month from ${column}) = ${month}`;
   }
   if (from && to) return `${column} between '${from}' and '${to}'`;

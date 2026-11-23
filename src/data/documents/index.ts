@@ -5,7 +5,6 @@ export {
   hexToUint8Array,
   resolveMime,
   useAddNote,
-  useAskInvoiceQuestion,
   useDocument,
   useDocumentFile,
   useDocumentHistory,

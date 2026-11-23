@@ -34,10 +34,6 @@ import {
 } from "@/features/onboarding-practice/practice-invoice-task";
 import { readActivePracticeTaskId } from "@/kit/onboarding/practice-context";
 import { getInvoiceFileUrl } from "@/lib/api/invoice-files.functions";
-import {
-  askInvoiceQuestion,
-  type AskInvoiceQuestionResult,
-} from "@/lib/api/invoice-nl-ask.functions";
 import { createUploadedInvoices } from "@/lib/api/invoice-upload.functions";
 import { getTransactionFileUrls } from "@/lib/api/transaction-files.functions";
 import type { VoiceRecordingMime } from "@/lib/api/voice-transcription-shared";
@@ -804,7 +800,7 @@ const SORT_COLUMN: Record<DocumentSortKey, string> = {
 // Apply the shared filters to a v_belege_list query builder (server-side).
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 function applyDocumentsFilter(query: any, f: DocumentsFilter) {
-  // AI search result set (askInvoiceQuestion). An empty array must still narrow to zero rows —
+  // AI search result set (searchInvoicesByQuestion). An empty array must still narrow to zero rows —
   // see the `ids` field's own comment in types.ts.
   if (f.ids) query = f.ids.length > 0 ? query.in("id", f.ids) : query.is("id", null);
   if (f.q) {
@@ -1263,18 +1259,7 @@ export function useDocumentsKanbanColumn(
   });
 }
 
-// AI natural-language search (askInvoiceQuestion). A mutation, not a query: it's an explicit
-// per-question submit (an LLM round trip is too slow/costly to run on every keystroke), and its
-// result (the matched ids) is fed back into BelegeFilter.ids to narrow the existing list/kanban
-// queries above, rather than rendering its own result view.
-export function useAskInvoiceQuestion() {
-  return useMutation({
-    mutationFn: async (args: { query: string }): Promise<AskInvoiceQuestionResult> =>
-      askInvoiceQuestion({ data: args }),
-  });
-}
-
-// Voice input for the AI search above — transcribes browser-recorded audio, returning plain text
+// Voice input for the AI search — transcribes browser-recorded audio, returning plain text
 // that the caller drops into the same aiQuery state the typed search box uses. See
 // voice-search-button.tsx.
 export function useTranscribeVoiceQuery() {

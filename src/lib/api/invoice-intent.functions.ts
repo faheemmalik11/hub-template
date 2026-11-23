@@ -116,13 +116,11 @@ export const searchInvoicesByQuestion = createServerFn({ method: "POST" })
     const ids = (idRows ?? []) as string[];
     await record(ids.length);
 
-    // Asked for a sum or a count, not a list. Same clause and same archived flag as the ids above,
-    // so the number always describes exactly the rows shown underneath it.
-    const wantsATotal =
+    const questionAsksForATotal =
       preview.classification.intent === "total_amount" ||
       preview.classification.intent === "count_invoices";
     let totals: InvoiceSearchTotals | null = null;
-    if (wantsATotal) {
+    if (questionAsksForATotal) {
       const { data: totalRows, error: totalsError } = await db.rpc("invoices_search_totals", {
         p_where: preview.whereClause,
         p_archived: preview.classification.entities.archived,
@@ -139,8 +137,6 @@ export const searchInvoicesByQuestion = createServerFn({ method: "POST" })
         };
       }
     }
-    // "Which supplier cost us the most" names a dimension, not a filter: the rows are right but
-    // the answer is the ranking over them.
     let breakdown: InvoiceSearchGroup[] | null = null;
     if (preview.classification.intent === "rank_breakdown") {
       const { data: groupRows, error: groupError } = await db.rpc("invoices_search_breakdown", {
