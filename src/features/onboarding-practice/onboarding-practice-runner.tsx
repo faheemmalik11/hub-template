@@ -459,6 +459,7 @@ function ActivePracticeTask({ task }: { task: OnboardingTask }) {
 function OrphanedPracticeModeBanner() {
   const { t } = useTranslation();
   const queryClient = useQueryClient();
+  const pathname = useRouterState({ select: (state) => state.location.pathname });
   const [active, setActive] = useState(false);
   const [ending, setEnding] = useState(false);
 
@@ -470,7 +471,11 @@ function OrphanedPracticeModeBanner() {
     return () => {
       cancelled = true;
     };
-  }, []);
+    // Re-checks on every navigation, not only once on mount: practice mode can end elsewhere
+    // (its own 30-minute expiry, another tab, the start screen's own end button) while this
+    // banner, which lives in the app shell and survives SPA navigation, would otherwise keep
+    // showing whatever it found the first time it mounted.
+  }, [pathname]);
 
   if (!active) return null;
 

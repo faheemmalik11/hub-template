@@ -27,7 +27,7 @@ const AlertDialogOverlay = React.forwardRef<
       // pointer-events-auto is what makes the overlay click reachable at all. DismissableLayer
       // puts `pointer-events: none` on the body and re-enables it only on the content, so the
       // overlay inherits none and every click on it lands on nothing.
-      "pointer-events-auto fixed inset-0 z-50 bg-black/50 backdrop-blur-[2px] data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0",
+      "pointer-events-auto fixed inset-0 z-[65] bg-black/50 backdrop-blur-[2px] data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0",
       className,
     )}
     {...props}
@@ -57,7 +57,7 @@ const AlertDialogContent = React.forwardRef<
         // rounded-lg unconditionally, not sm:rounded-lg — see DialogContent's identical fix.
         // max-h-[calc(100dvh-2rem)] + overflow-y-auto gives the same 1rem gutter vertically that
         // w-[calc(100%-2rem)] gives horizontally — see DialogContent's identical fix.
-        "fixed left-[50%] top-[50%] z-50 grid max-h-[calc(100dvh-2rem)] w-[calc(100%-2rem)] max-w-lg grid-cols-[minmax(0,1fr)] translate-x-[-50%] translate-y-[-50%] gap-4 overflow-y-auto rounded-lg border bg-background p-6 shadow-lg duration-200 data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0 data-[state=closed]:zoom-out-95 data-[state=open]:zoom-in-95",
+        "fixed left-[50%] top-[50%] z-[65] grid max-h-[calc(100dvh-2rem)] w-[calc(100%-2rem)] max-w-lg grid-cols-[minmax(0,1fr)] translate-x-[-50%] translate-y-[-50%] gap-4 overflow-y-auto rounded-lg border bg-background p-6 shadow-lg duration-200 data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0 data-[state=closed]:zoom-out-95 data-[state=open]:zoom-in-95",
         className,
       )}
       {...props}
