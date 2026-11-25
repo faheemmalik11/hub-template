@@ -21,16 +21,23 @@ create table if not exists public.deal_referrer_bonuses (
     id uuid primary key default gen_random_uuid(),
     deal_id uuid not null references public.deals(id),
     referrer_customer_id uuid not null references public.customers(id),
-    tier integer not null check (tier > 0),
+    tier integer check (tier > 0),
     amount numeric(12, 2) not null check (amount > 0),
     earned_on date not null,
     status text not null default 'suggested' check (status in ('suggested', 'paid', 'cancelled')),
     cancel_reason text,
+    -- Paid under the percentage model this table's tiers replaced (until 27 October). Real money,
+    -- kept for the record, but excluded from referrer_bonus_tier()'s count below: it was never a
+    -- tier in this system, so it must not push a referrer's next real referral to tier 2.
+    is_legacy_payout boolean not null default false,
+    note text,
     created_by uuid references public.app_users(id),
     created_at timestamptz not null default now(),
     paid_by uuid references public.app_users(id),
     paid_at timestamptz,
-    updated_at timestamptz not null default now()
+    updated_at timestamptz not null default now(),
+    constraint deal_referrer_bonuses_tier_unless_legacy
+        check (is_legacy_payout or tier is not null)
 );
 
 -- A cancelled bonus does not block a fresh suggestion for the same deal; a suggested or paid one
@@ -54,6 +61,7 @@ as $$
     from public.deal_referrer_bonuses
    where referrer_customer_id = p_referrer_customer_id
      and status <> 'cancelled'
+     and not is_legacy_payout
      and extract(year from earned_on) = extract(year from p_earned_on);
 $$;
 
