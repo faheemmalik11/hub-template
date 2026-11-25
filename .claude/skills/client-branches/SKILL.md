@@ -151,7 +151,13 @@ The first one, and the worked example everything above is grounded in.
 - **The live site**: deployed from the separate `vanoepen` repository
   (`git@github.com:fabiantscheu-ship-it/vanoepen.git`, `main` branch), not from this branch yet.
   `scripts/client/client-repos.json` has the `van-oepen` entry already configured to mirror there via
-  `scripts/client/push-client-repo.sh van-oepen`, currently `"enabled": true`.
+  `scripts/client/push-client-repo.sh van-oepen`, currently `"enabled": true` — but it's gitignored
+  local config, so it lives wherever it was created, not automatically in every checkout. On this
+  machine it's in the main `hub-template` checkout, not copied into `.worktrees/van-oepen` (a git
+  worktree shares branch history but not untracked/gitignored files with the checkout it was made
+  from). Run `scripts/client/push-client-repo.sh van-oepen` from whichever checkout actually has the
+  file — check with `ls scripts/client/client-repos.json` first rather than assuming it's missing
+  just because one checkout doesn't have it.
 - **Database state, as of this writing**: the live project has been brought fully up to date with
   what this branch's code expects — `supabase/catalogue.sql` and all three
   `*-for-an-existing-client.sql` presets (practice mode, document privacy/classification,
