@@ -37,12 +37,14 @@ import {
   previousPeriodRange,
   rowKeyForCategoryCode,
   signForRowKey,
+  useAuth,
   useBankAccounts,
   useCostAnalysisCategories,
   useCostAnalysisScope,
   useCompanies,
   useProperties,
   useTranslation,
+  PERMISSIONS,
 } from "./adapter";
 import type {
   CostAnalysisAmountBasis,
@@ -79,6 +81,8 @@ export function CostAnalysis({
   onSearchChange: (patch: Partial<CostAnalysisSearch>) => void;
 }) {
   const { t } = useTranslation();
+  const { can } = useAuth();
+  const canSeeRevenue = can(PERMISSIONS.reportsRevenueRead);
 
   const companiesQ = useCompanies();
   const propertiesQ = useProperties();
@@ -645,17 +649,21 @@ export function CostAnalysis({
             onChange={(b) => setSearch({ basis: b === "gross" ? "gross" : "" })}
           />
           {/* Disabled until there is something to export. An empty CSV is worse than no button,
-              because it looks like the export ran and the period was genuinely empty. */}
-          <Button
-            variant="outline"
-            size="sm"
-            className="gap-2"
-            onClick={exportCsv}
-            disabled={isLoading || !hatData}
-          >
-            <Download className="size-4" />
-            {t("reports.export.csv")}
-          </Button>
+              because it looks like the export ran and the period was genuinely empty. Absent
+              entirely without revenue access: the export writes the full BWA skeleton line for
+              line, revenue rows included, so there is no partial version of it to offer. */}
+          {canSeeRevenue && (
+            <Button
+              variant="outline"
+              size="sm"
+              className="gap-2"
+              onClick={exportCsv}
+              disabled={isLoading || !hatData}
+            >
+              <Download className="size-4" />
+              {t("reports.export.csv")}
+            </Button>
+          )}
           <FilterPopover
             fields={filterFields}
             labels={{
@@ -758,8 +766,10 @@ export function CostAnalysis({
             laden={isLoading}
             // Explains the dashes rather than leaving four of them unaccounted for. Only raised
             // when margins were actually withheld, so it disappears the moment revenue exists.
+            // Never raised for a reader who cannot see revenue at all: the hint itself talks about
+            // margins, which would be a non sequitur next to a screen that has no margin card.
             marginsHint={
-              !isLoading && report.revenue === 0
+              canSeeRevenue && !isLoading && report.revenue === 0
                 ? {
                     title: t("reports.total.marginHintTitle"),
                     text: t("reports.total.marginHintText"),
@@ -767,29 +777,36 @@ export function CostAnalysis({
                 : null
             }
             fields={[
-              {
-                key: "revenue",
-                label: t("reports.total.revenue"),
-                description: t("reports.total.explainRevenue"),
-                icon: Wallet,
-                ton: "revenue" as const,
-                value: report.revenue,
-                // No margin row: revenue as a share of revenue is 100 % by definition, so the
-                // card would print either a truism or, worse, a "—" implying something failed.
-                comparison: delta(report.revenue, comparisonReport?.revenue ?? 0),
-              },
-              {
-                key: "grossProfit",
-                label: t("reports.row.gross_profit"),
-                description: t("reports.rowHint.gross_profit"),
-                icon: Layers,
-                ton: "grossProfit" as const,
-                value: grossProfit,
-                marge: marge(grossProfit),
-                margeLabel: t("reports.total.margin"),
-                margeExplanation: margeExplanation(grossProfit, "reports.total.marginExplain"),
-                comparison: delta(grossProfit, grossProfitComparison),
-              },
+              ...(canSeeRevenue
+                ? [
+                    {
+                      key: "revenue",
+                      label: t("reports.total.revenue"),
+                      description: t("reports.total.explainRevenue"),
+                      icon: Wallet,
+                      ton: "revenue" as const,
+                      value: report.revenue,
+                      // No margin row: revenue as a share of revenue is 100 % by definition, so the
+                      // card would print either a truism or, worse, a "—" implying something failed.
+                      comparison: delta(report.revenue, comparisonReport?.revenue ?? 0),
+                    },
+                    {
+                      key: "grossProfit",
+                      label: t("reports.row.gross_profit"),
+                      description: t("reports.rowHint.gross_profit"),
+                      icon: Layers,
+                      ton: "grossProfit" as const,
+                      value: grossProfit,
+                      marge: marge(grossProfit),
+                      margeLabel: t("reports.total.margin"),
+                      margeExplanation: margeExplanation(
+                        grossProfit,
+                        "reports.total.marginExplain",
+                      ),
+                      comparison: delta(grossProfit, grossProfitComparison),
+                    },
+                  ]
+                : []),
               {
                 key: "cost",
                 label: t("reports.total.totalCosts"),
@@ -800,32 +817,46 @@ export function CostAnalysis({
                 // "-37.688,98 €" under the word "Gesamtkosten" is a double negative that reads
                 // as money gained. The subtraction is shown where it belongs, in the report.
                 value: report.totalCosts,
-                marge: marge(report.totalCosts),
-                margeLabel: t("reports.total.ofRevenue"),
-                margeExplanation: margeExplanation(
-                  report.totalCosts,
-                  "reports.total.costShareExplain",
-                ),
+                // Omitted without revenue access: cost ÷ margin% recomputes revenue exactly, so a
+                // reader who may not see the revenue card must not see this card's share of it
+                // either. The euro figure itself stays, since that's the bookkeeping she needs.
+                ...(canSeeRevenue
+                  ? {
+                      marge: marge(report.totalCosts),
+                      margeLabel: t("reports.total.ofRevenue"),
+                      margeExplanation: margeExplanation(
+                        report.totalCosts,
+                        "reports.total.costShareExplain",
+                      ),
+                    }
+                  : {}),
                 comparison: delta(report.totalCosts, comparisonReport?.totalCosts ?? 0),
                 // The one figure on this screen where a rise is bad news.
                 direction: "upIsBad",
               },
-              {
-                key: "result",
-                label: t("reports.total.operatingResult"),
-                description: t("reports.total.explainOperatingResult"),
-                icon: PieChart,
-                ton: "result" as const,
-                value: report.operatingResult,
-                marge: marge(report.operatingResult),
-                margeLabel: t("reports.total.margin"),
-                margeExplanation: margeExplanation(
-                  report.operatingResult,
-                  "reports.total.marginExplain",
-                ),
-                comparison: delta(report.operatingResult, comparisonReport?.operatingResult ?? 0),
-                emphasis: true,
-              },
+              ...(canSeeRevenue
+                ? [
+                    {
+                      key: "result",
+                      label: t("reports.total.operatingResult"),
+                      description: t("reports.total.explainOperatingResult"),
+                      icon: PieChart,
+                      ton: "result" as const,
+                      value: report.operatingResult,
+                      marge: marge(report.operatingResult),
+                      margeLabel: t("reports.total.margin"),
+                      margeExplanation: margeExplanation(
+                        report.operatingResult,
+                        "reports.total.marginExplain",
+                      ),
+                      comparison: delta(
+                        report.operatingResult,
+                        comparisonReport?.operatingResult ?? 0,
+                      ),
+                      emphasis: true,
+                    },
+                  ]
+                : []),
             ]}
           />
         </div>
@@ -885,7 +916,7 @@ export function CostAnalysis({
                   charts disappear and read as a bug rather than as a deliberate substitution. A
                   one-period bar is still a cost breakdown; the line chart marks its single point
                   with dots instead of drawing a line through nothing. */}
-            {isLoading ? (
+            {!canSeeRevenue ? null : isLoading ? (
               <section className="mt-8 rounded-xl bg-muted/30 p-4">
                 <h2 className="text-base font-semibold tracking-tight text-foreground">
                   {t("reports.chart.historyTitle")}

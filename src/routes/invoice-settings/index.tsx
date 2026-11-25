@@ -130,6 +130,9 @@ function SettingsForm({
   );
   const [timezone, setTimezone] = useState(settings.timezone);
   const [paymentTermDays, setPaymentTermDays] = useState(String(settings.payment_term_days));
+  const [buyerPaymentTermDays, setBuyerPaymentTermDays] = useState(
+    settings.buyer_payment_term_days === null ? "" : String(settings.buyer_payment_term_days),
+  );
   const [finaliseInLexware, setFinaliseInLexware] = useState(settings.finalise_in_lexware);
   const [labels, setLabels] = useState<InvoiceKindLabel[]>(kindLabels);
   const [isSaving, setIsSaving] = useState(false);
@@ -143,6 +146,9 @@ function SettingsForm({
     setDocumentFallbackLabel(settings.document_fallback_label);
     setTimezone(settings.timezone);
     setPaymentTermDays(String(settings.payment_term_days));
+    setBuyerPaymentTermDays(
+      settings.buyer_payment_term_days === null ? "" : String(settings.buyer_payment_term_days),
+    );
     setFinaliseInLexware(settings.finalise_in_lexware);
     setLabels(kindLabels);
   }
@@ -163,6 +169,15 @@ function SettingsForm({
     !Number.isInteger(parsedPaymentTermDays) ||
     parsedPaymentTermDays < 0 ||
     parsedPaymentTermDays > 365;
+  const parsedBuyerPaymentTermDays =
+    buyerPaymentTermDays.trim() === "" ? null : parseDecimalInput(buyerPaymentTermDays);
+  const buyerPaymentTermDaysInvalid =
+    buyerPaymentTermDays.trim() !== "" &&
+    (parsedBuyerPaymentTermDays === null ||
+      Number.isNaN(parsedBuyerPaymentTermDays) ||
+      !Number.isInteger(parsedBuyerPaymentTermDays) ||
+      parsedBuyerPaymentTermDays < 0 ||
+      parsedBuyerPaymentTermDays > 365);
   const textInvalid =
     invoiceFallbackLabel.trim() === "" ||
     invoiceUnitName.trim() === "" ||
@@ -181,6 +196,7 @@ function SettingsForm({
     vatRateInvalid ||
     countryCodeInvalid ||
     paymentTermDaysInvalid ||
+    buyerPaymentTermDaysInvalid ||
     textInvalid ||
     timezoneInvalid ||
     labelsInvalid;
@@ -199,6 +215,7 @@ function SettingsForm({
     documentFallbackLabel !== settings.document_fallback_label ||
     timezone !== settings.timezone ||
     parsedPaymentTermDays !== Number(settings.payment_term_days) ||
+    parsedBuyerPaymentTermDays !== settings.buyer_payment_term_days ||
     finaliseInLexware !== settings.finalise_in_lexware ||
     labelsChanged;
 
@@ -211,7 +228,13 @@ function SettingsForm({
   });
 
   async function save() {
-    if (parsedVatRate === null || parsedPaymentTermDays === null || isSaving) return;
+    if (
+      parsedVatRate === null ||
+      parsedPaymentTermDays === null ||
+      buyerPaymentTermDaysInvalid ||
+      isSaving
+    )
+      return;
     setIsSaving(true);
     try {
       await updateSettings.mutateAsync({
@@ -223,6 +246,7 @@ function SettingsForm({
         document_fallback_label: documentFallbackLabel,
         timezone,
         payment_term_days: parsedPaymentTermDays,
+        buyer_payment_term_days: parsedBuyerPaymentTermDays,
         finalise_in_lexware: finaliseInLexware,
       });
       await saveKindLabels.mutateAsync(labels);
@@ -374,6 +398,19 @@ function SettingsForm({
               invalid={paymentTermDaysInvalid}
               errorText={t("invoiceSettings.paymentTermDaysInvalid")}
             />
+            <div className="space-y-1">
+              <Field
+                label={t("invoiceSettings.field.buyerPaymentTermDays")}
+                value={buyerPaymentTermDays}
+                onChange={(value) => setBuyerPaymentTermDays(sanitizeAmountInput(value))}
+                disabled={editingDisabled}
+                invalid={buyerPaymentTermDaysInvalid}
+                errorText={t("invoiceSettings.buyerPaymentTermDaysInvalid")}
+              />
+              <p className="text-xs text-muted-foreground">
+                {t("invoiceSettings.buyerPaymentTermDaysHint")}
+              </p>
+            </div>
             <label className="flex items-start gap-2 text-sm sm:col-span-2">
               <Checkbox
                 className="mt-0.5"

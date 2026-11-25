@@ -293,6 +293,30 @@ drop policy if exists user_company_access_write on public.user_company_access;
 create policy user_company_access_write on public.user_company_access for all to authenticated
     using (public.is_admin()) with check (public.is_admin());
 
+revoke execute on function public.guard_protected_role_insert() from public;
+revoke execute on function public.guard_protected_role_insert() from anon;
+
+revoke execute on function public.guard_protected_role_row() from public;
+revoke execute on function public.guard_protected_role_row() from anon;
+
+-- is_admin, current_app_user_id, current_role_name and practice_mode_active are called inside RLS
+-- policies for authenticated, so authenticated must keep execute or every policy stops evaluating.
+revoke execute on function public.is_admin() from public;
+revoke execute on function public.is_admin() from anon;
+grant execute on function public.is_admin() to authenticated;
+
+revoke execute on function public.current_app_user_id() from public;
+revoke execute on function public.current_app_user_id() from anon;
+grant execute on function public.current_app_user_id() to authenticated;
+
+revoke execute on function public.current_role_name() from public;
+revoke execute on function public.current_role_name() from anon;
+grant execute on function public.current_role_name() to authenticated;
+
+revoke execute on function public.practice_mode_active() from public;
+revoke execute on function public.practice_mode_active() from anon;
+grant execute on function public.practice_mode_active() to authenticated;
+
 commit;
 
 -- ===================================================================== 0002_permissions.sql
@@ -590,6 +614,12 @@ create policy app_users_admin_read on public.app_users for select to authenticat
 drop policy if exists user_company_access_read on public.user_company_access;
 create policy user_company_access_read on public.user_company_access for select to authenticated
     using (public.is_admin() or public.has_permission('users.read') or user_id = public.current_app_user_id());
+
+revoke execute on function public.guard_locked_feature() from public;
+revoke execute on function public.guard_locked_feature() from anon;
+
+revoke execute on function public.guard_protected_role_permissions() from public;
+revoke execute on function public.guard_protected_role_permissions() from anon;
 
 commit;
 
@@ -1558,6 +1588,9 @@ create unique index if not exists ingest_exclusions_term_scope_uniq
 
 
 
+revoke execute on function public.forget_credentials_of_removed_channel() from public;
+revoke execute on function public.forget_credentials_of_removed_channel() from anon;
+
 commit;
 
 -- ===================================================================== 0006_bank.sql
@@ -2038,6 +2071,18 @@ create table if not exists public.review_confidence_bands (
 );
 
 insert into public.review_confidence_bands (id) values (true) on conflict (id) do nothing;
+
+revoke all on public.review_score_rules from anon;
+alter table public.review_score_rules enable row level security;
+drop policy if exists review_score_rules_read on public.review_score_rules;
+create policy review_score_rules_read on public.review_score_rules
+    for select to authenticated using (public.may_read('documents.read'));
+
+revoke all on public.review_confidence_bands from anon;
+alter table public.review_confidence_bands enable row level security;
+drop policy if exists review_confidence_bands_read on public.review_confidence_bands;
+create policy review_confidence_bands_read on public.review_confidence_bands
+    for select to authenticated using (public.may_read('documents.read'));
 
 commit;
 
@@ -3341,8 +3386,12 @@ CREATE OR REPLACE FUNCTION public.create_deal_invoices(p_deal_id uuid, p_invoice
     AS $$
 declare
   v_deal public.deals;
-  v_due_date date;
+  v_invoice_date date;
+  v_property_due_date date;
+  v_buyer_payment_term_days integer;
   v_item jsonb;
+  v_side text;
+  v_due_date date;
 begin
   select * into v_deal from public.deals where id = p_deal_id and deleted_at is null;
   if not found then
@@ -3353,10 +3402,26 @@ begin
       using errcode = 'check_violation';
   end if;
 
-  select p.payment_due_date into v_due_date
+  select p.payment_due_date into v_property_due_date
     from public.properties p where p.id = v_deal.property_id;
 
+  select buyer_payment_term_days into v_buyer_payment_term_days
+    from public.invoice_settings where id = true;
+
+  v_invoice_date := coalesce(v_deal.notarised_on, current_date);
+
   for v_item in select * from jsonb_array_elements(p_invoices) loop
+    select ds.side into v_side
+      from public.deal_parties dp
+      join public.deal_sides ds on ds.id = dp.deal_side_id
+      where dp.id = (v_item ->> 'deal_party_id')::uuid;
+
+    v_due_date := case
+      when v_side = 'buyer' and v_buyer_payment_term_days is not null
+        then v_invoice_date + v_buyer_payment_term_days
+      else v_property_due_date
+    end;
+
     insert into public.outgoing_invoices (
       company_id, customer_id, deal_party_id, kind, deal_id,
       status, invoice_date, due_date, amount_net, amount_gross
@@ -3367,7 +3432,7 @@ begin
       'commission',
       p_deal_id,
       'draft',
-      coalesce(v_deal.notarised_on, current_date),
+      v_invoice_date,
       v_due_date,
       (v_item ->> 'amount_net')::numeric,
       (v_item ->> 'amount_gross')::numeric
@@ -3647,6 +3712,10 @@ begin
   );
 end;
 $$;
+
+revoke execute on function public.channel_secret_present(text) from public;
+revoke execute on function public.channel_secret_present(text) from anon;
+grant execute on function public.channel_secret_present(text) to authenticated;
 
 CREATE OR REPLACE FUNCTION public.check_match_allocation() RETURNS trigger
     LANGUAGE plpgsql SECURITY DEFINER
@@ -3929,6 +3998,12 @@ begin
   return v_secret;
 end;
 $$;
+
+-- Returns a decrypted vault secret and checks nothing itself, so it must never be reachable with
+-- the anon key that ships in the browser bundle. notify-dispatch calls it as the service role.
+revoke execute on function public.get_channel_secret(text) from public;
+revoke execute on function public.get_channel_secret(text) from anon;
+revoke execute on function public.get_channel_secret(text) from authenticated;
 
 CREATE OR REPLACE FUNCTION public.guard_permission_grants() RETURNS trigger
     LANGUAGE plpgsql SECURITY DEFINER
@@ -4302,91 +4377,7 @@ CREATE OR REPLACE FUNCTION public.invoices_facets() RETURNS jsonb
   where deleted_at is null;
 $$;
 
-CREATE OR REPLACE FUNCTION public.invoices_filtered_aggregate(p_company_code text DEFAULT NULL::text, p_property_code text DEFAULT NULL::text, p_cost_category text DEFAULT NULL::text, p_issuer_like text DEFAULT NULL::text, p_date_from date DEFAULT NULL::date, p_date_to date DEFAULT NULL::date, p_status text DEFAULT NULL::text, p_payment_state text DEFAULT NULL::text, p_amount_min numeric DEFAULT NULL::numeric, p_amount_max numeric DEFAULT NULL::numeric) RETURNS TABLE(total_count bigint, total_gross numeric, total_net numeric, total_vat numeric, all_paid_count bigint, all_paid_gross numeric, all_paid_net numeric, all_paid_vat numeric, all_open_count bigint, all_open_gross numeric, all_open_net numeric, all_open_vat numeric)
-    LANGUAGE sql STABLE
-    SET search_path TO 'public'
-    AS $$
-  with scope as (
-    select amount_gross, amount_net, vat_amount, paid_at,
-      (
-        p_payment_state is null
-        or (p_payment_state = 'paid'    and paid_at is not null)
-        or (p_payment_state = 'open'    and paid_at is null)
-        or (p_payment_state = 'overdue' and paid_at is null and due_date is not null and due_date < current_date)
-        or p_payment_state not in ('paid', 'open', 'overdue')
-      ) as matches_payment_filter
-    from public.v_documents_review
-    where archived_at is null
-      and not_relevant_at is null
-      and (
-        p_company_code is null
-        or company_code = p_company_code
-        or (p_company_code = 'NZO' and company_code is null)
-      )
-      and (p_property_code is null or property_code = p_property_code)
-      and (p_cost_category is null or lower(cost_category) = lower(p_cost_category))
-      and (p_issuer_like   is null
-           or issuer ilike '%' || replace(replace(p_issuer_like, '%', '\%'), '_', '\_') || '%' escape '\')
-      and (p_date_from     is null or document_date >= p_date_from)
-      and (p_date_to       is null or document_date <= p_date_to)
-      and (p_status        is null or status = p_status)
-      and (p_amount_min    is null or amount_gross >= p_amount_min)
-      and (p_amount_max    is null or amount_gross <= p_amount_max)
-  )
-  select
-    count(*)                   filter (where matches_payment_filter),
-    coalesce(sum(amount_gross) filter (where matches_payment_filter), 0),
-    coalesce(sum(amount_net)   filter (where matches_payment_filter), 0),
-    coalesce(sum(vat_amount)   filter (where matches_payment_filter), 0),
-    count(*)                   filter (where paid_at is not null),
-    coalesce(sum(amount_gross) filter (where paid_at is not null), 0),
-    coalesce(sum(amount_net)   filter (where paid_at is not null), 0),
-    coalesce(sum(vat_amount)   filter (where paid_at is not null), 0),
-    count(*)                   filter (where paid_at is null),
-    coalesce(sum(amount_gross) filter (where paid_at is null), 0),
-    coalesce(sum(amount_net)   filter (where paid_at is null), 0),
-    coalesce(sum(vat_amount)   filter (where paid_at is null), 0)
-  from scope;
-$$;
 
-CREATE OR REPLACE FUNCTION public.invoices_filtered_search(p_query_embedding public.vector DEFAULT NULL::public.vector, p_company_code text DEFAULT NULL::text, p_property_code text DEFAULT NULL::text, p_cost_category text DEFAULT NULL::text, p_issuer_like text DEFAULT NULL::text, p_date_from date DEFAULT NULL::date, p_date_to date DEFAULT NULL::date, p_status text DEFAULT NULL::text, p_limit integer DEFAULT 15, p_payment_state text DEFAULT NULL::text, p_amount_min numeric DEFAULT NULL::numeric, p_amount_max numeric DEFAULT NULL::numeric) RETURNS TABLE(id uuid, invoice_number text, issuer text, document_date date, amount_gross numeric, company_code text, property_code text, cost_category text, service_description text, paid_at timestamp with time zone, similarity double precision)
-    LANGUAGE sql STABLE
-    SET search_path TO 'public'
-    AS $$
-  select
-    id, invoice_number, issuer, document_date, amount_gross, company_code, property_code,
-    cost_category, service_description, paid_at,
-    case when p_query_embedding is not null then 1 - (embedding <=> p_query_embedding) end as similarity
-  from public.v_documents_review
-  where archived_at is null
-    and not_relevant_at is null
-    and (
-      p_company_code is null
-      or company_code = p_company_code
-      or (p_company_code = 'NZO' and company_code is null)
-    )
-    and (p_property_code is null or property_code = p_property_code)
-    and (p_cost_category is null or lower(cost_category) = lower(p_cost_category))
-    and (p_issuer_like   is null
-         or issuer ilike '%' || replace(replace(p_issuer_like, '%', '\%'), '_', '\_') || '%' escape '\')
-    and (p_date_from     is null or document_date >= p_date_from)
-    and (p_date_to       is null or document_date <= p_date_to)
-    and (p_status        is null or status = p_status)
-    and (p_amount_min    is null or amount_gross >= p_amount_min)
-    and (p_amount_max    is null or amount_gross <= p_amount_max)
-    and (p_query_embedding is null or embedding is not null)
-    and (
-      p_payment_state is null
-      or (p_payment_state = 'paid'    and paid_at is not null)
-      or (p_payment_state = 'open'    and paid_at is null)
-      or (p_payment_state = 'overdue' and paid_at is null and due_date is not null and due_date < current_date)
-      or p_payment_state not in ('paid', 'open', 'overdue')
-    )
-  order by
-    (case when p_query_embedding is not null then embedding <=> p_query_embedding end) asc nulls last,
-    document_date desc nulls last
-  limit least(greatest(coalesce(p_limit, 15), 1), 50);
-$$;
 
 CREATE OR REPLACE FUNCTION public.invoices_kpis(p_q text DEFAULT NULL::text, p_gesellschaft text DEFAULT NULL::text, p_objekt text DEFAULT NULL::text, p_belegart text DEFAULT NULL::text, p_zahlung text DEFAULT NULL::text, p_von date DEFAULT NULL::date, p_bis date DEFAULT NULL::date, p_datev text DEFAULT NULL::text, p_workflow text DEFAULT NULL::text, p_bank_match text DEFAULT NULL::text, p_ampel text DEFAULT NULL::text, p_archiv text DEFAULT NULL::text, p_ids uuid[] DEFAULT NULL::uuid[], p_faellig_von date DEFAULT NULL::date, p_faellig_bis date DEFAULT NULL::date, p_faellig_unbekannt boolean DEFAULT false, p_direct_debit boolean DEFAULT NULL::boolean) RETURNS TABLE(total bigint, erkannt bigint, zu_pruefen bigint, volumen numeric, offen numeric)
     LANGUAGE sql STABLE
@@ -4466,7 +4457,7 @@ begin
     raise exception 'invalid where clause';
   end if;
   return query execute
-    'select id from public.v_documents_review where archived_at ' || v_scope ||
+    'select id from public.v_documents_search where archived_at ' || v_scope ||
     ' and not_relevant_at is null' ||
     case
       when p_where is not null and btrim(p_where) <> '' then ' and (' || p_where || ')'
@@ -6170,7 +6161,7 @@ begin
       is_demo, demo_owner_user_id
     )
     values (
-      'rechnung', true, 'upload', 'manual', 'needs_review', 'received',
+      'rechnung', true, 'manual', 'manual', 'needs_review', 'received',
       'Stadtwerke Nord GmbH', v_supplier_id, 'STOP-IBAN-1', current_date - 10, current_date + 20,
       150.00, 19, 28.50, 178.50, 'EUR',
       true, v_user_id
@@ -6203,7 +6194,7 @@ begin
       is_demo, demo_owner_user_id
     )
     values (
-      'rechnung', true, 'upload', 'manual', 'needs_review', 'received',
+      'rechnung', true, 'manual', 'manual', 'needs_review', 'received',
       'Gebäudereinigung Blitz GmbH', 'STOP-AI-1', current_date - 5, current_date + 25,
       1200.00, 19, 235.60, 1475.60, 'EUR',
       true, v_user_id
@@ -6227,7 +6218,7 @@ begin
       is_demo, demo_owner_user_id
     )
     values (
-      'werbung', false, 'upload', 'manual', 'needs_review', 'received',
+      'werbung', false, 'manual', 'manual', 'needs_review', 'received',
       'Büromöbel Profi Werbung', 'STOP-FLYER-1', current_date - 2,
       true, v_user_id
     )
@@ -6263,11 +6254,15 @@ begin
   end if;
 
   select status into v_current_status from public.deals where id = p_deal_id;
-  if v_current_status not in ('incomplete', 'ready') then
+  if v_current_status not in ('incomplete', 'ready', 'approved', 'invoiced') then
     raise exception 'save_deal: deal % is % and can no longer be edited this way', p_deal_id, v_current_status
       using errcode = 'check_violation';
   end if;
 
+  -- Once invoiced, deal_sides/deal_parties are left untouched below (outgoing_invoices already
+  -- references those exact rows), and status/approval stay as they are rather than being
+  -- recomputed from p_status — but the deal's own facts (ownership, costs_closed, the note) and
+  -- the cost list still save normally, since those have no bearing on what was already invoiced.
   update public.deals
      set company_id = nullif(p_deal->>'company_id', '')::uuid,
          notarised_on = nullif(p_deal->>'notarised_on', '')::date,
@@ -6283,39 +6278,41 @@ begin
                                 then coalesce(costs_closed_at, now()) end,
          ready_for_bookkeeping_at = case when coalesce((p_deal->>'ready_for_bookkeeping')::boolean, false)
                                          then coalesce(ready_for_bookkeeping_at, now()) end,
-         status = p_status,
-         approved_by = null,
-         approved_at = null
+         status = case when v_current_status = 'invoiced' then status else p_status end,
+         approved_by = case when v_current_status = 'invoiced' then approved_by else null end,
+         approved_at = case when v_current_status = 'invoiced' then approved_at else null end
    where id = p_deal_id and deleted_at is null;
   if not found then
     raise exception 'save_deal: deal % not found', p_deal_id using errcode = 'no_data_found';
   end if;
 
-  delete from public.deal_sides
-   where deal_id = p_deal_id
-     and side not in (select value->>'side' from jsonb_array_elements(p_sides));
+  if v_current_status <> 'invoiced' then
+    delete from public.deal_sides
+     where deal_id = p_deal_id
+       and side not in (select value->>'side' from jsonb_array_elements(p_sides));
 
-  for v_side in select value from jsonb_array_elements(p_sides) loop
-    insert into public.deal_sides (deal_id, side, fee_kind, fee_net_rate, fee_net_amount)
-    values (p_deal_id, v_side->>'side', v_side->>'fee_kind', (v_side->>'fee_net_rate')::numeric,
-            (v_side->>'fee_net_amount')::numeric)
-    on conflict (deal_id, side) do update
-       set fee_kind = excluded.fee_kind,
-           fee_net_rate = excluded.fee_net_rate,
-           fee_net_amount = excluded.fee_net_amount
-    returning id into v_side_id;
+    for v_side in select value from jsonb_array_elements(p_sides) loop
+      insert into public.deal_sides (deal_id, side, fee_kind, fee_net_rate, fee_net_amount)
+      values (p_deal_id, v_side->>'side', v_side->>'fee_kind', (v_side->>'fee_net_rate')::numeric,
+              (v_side->>'fee_net_amount')::numeric)
+      on conflict (deal_id, side) do update
+         set fee_kind = excluded.fee_kind,
+             fee_net_rate = excluded.fee_net_rate,
+             fee_net_amount = excluded.fee_net_amount
+      returning id into v_side_id;
 
-    delete from public.deal_parties where deal_side_id = v_side_id;
-    v_position := 0;
-    for v_party in select value from jsonb_array_elements(coalesce(v_side->'parties', '[]'::jsonb)) loop
-      insert into public.deal_parties
-          (deal_side_id, customer_id, share_percent, discount_gross, discount_reason, position)
-      values (v_side_id, (v_party->>'customer_id')::uuid, (v_party->>'share_percent')::numeric,
-              coalesce((v_party->>'discount_gross')::numeric, 0),
-              nullif(v_party->>'discount_reason', ''), v_position);
-      v_position := v_position + 1;
+      delete from public.deal_parties where deal_side_id = v_side_id;
+      v_position := 0;
+      for v_party in select value from jsonb_array_elements(coalesce(v_side->'parties', '[]'::jsonb)) loop
+        insert into public.deal_parties
+            (deal_side_id, customer_id, share_percent, discount_gross, discount_reason, position)
+        values (v_side_id, (v_party->>'customer_id')::uuid, (v_party->>'share_percent')::numeric,
+                coalesce((v_party->>'discount_gross')::numeric, 0),
+                nullif(v_party->>'discount_reason', ''), v_position);
+        v_position := v_position + 1;
+      end loop;
     end loop;
-  end loop;
+  end if;
 
   delete from public.deal_costs where deal_id = p_deal_id;
   for v_cost in select value from jsonb_array_elements(coalesce(p_costs, '[]'::jsonb)) loop
@@ -6505,6 +6502,10 @@ begin
   end if;
 end;
 $$;
+
+revoke execute on function public.set_channel_secret(text, text) from public;
+revoke execute on function public.set_channel_secret(text, text) from anon;
+grant execute on function public.set_channel_secret(text, text) to authenticated;
 
 CREATE OR REPLACE FUNCTION public.set_datev_route(p_company_id uuid, p_direction text, p_address text, p_is_enabled boolean, p_note text, p_updated_by text) RETURNS void
     LANGUAGE plpgsql SECURITY DEFINER
@@ -7268,6 +7269,244 @@ CREATE OR REPLACE FUNCTION public.vat_reserve(p_company uuid, p_von date DEFAULT
     from input, output;
 $$;
 
+-- Each of these carries a PUBLIC execute grant alongside the explicit anon one, so revoking anon
+-- alone leaves the anon key in the browser bundle still able to call them through PUBLIC.
+
+revoke execute on function public.advance_workflow_on_datev_handover() from public;
+revoke execute on function public.advance_workflow_on_datev_handover() from anon;
+
+revoke execute on function public.advance_workflow_on_payment() from public;
+revoke execute on function public.advance_workflow_on_payment() from anon;
+
+revoke execute on function public.apply_opos_whitelist() from public;
+revoke execute on function public.apply_opos_whitelist() from anon;
+
+revoke execute on function public.capture_supplier_iban_history() from public;
+revoke execute on function public.capture_supplier_iban_history() from anon;
+
+revoke execute on function public.cascade_company_code_rename() from public;
+revoke execute on function public.cascade_company_code_rename() from anon;
+
+revoke execute on function public.cascade_property_code_rename() from public;
+revoke execute on function public.cascade_property_code_rename() from anon;
+
+revoke execute on function public.check_match_allocation() from public;
+revoke execute on function public.check_match_allocation() from anon;
+
+revoke execute on function public.check_match_same_world() from public;
+revoke execute on function public.check_match_same_world() from anon;
+
+revoke execute on function public.check_outgoing_match_allocation() from public;
+revoke execute on function public.check_outgoing_match_allocation() from anon;
+
+revoke execute on function public.enforce_invoice_write_permissions() from public;
+revoke execute on function public.enforce_invoice_write_permissions() from anon;
+
+revoke execute on function public.enforce_match_payment_permission() from public;
+revoke execute on function public.enforce_match_payment_permission() from anon;
+
+revoke execute on function public.guard_permission_grants() from public;
+revoke execute on function public.guard_permission_grants() from anon;
+
+revoke execute on function public.guard_role_permission_grants() from public;
+revoke execute on function public.guard_role_permission_grants() from anon;
+
+revoke execute on function public.link_uploaded_invoice_when_extracted() from public;
+revoke execute on function public.link_uploaded_invoice_when_extracted() from anon;
+
+revoke execute on function public.log_supplier_bank_account_event() from public;
+revoke execute on function public.log_supplier_bank_account_event() from anon;
+
+revoke execute on function public.notify_dispatch_now() from public;
+revoke execute on function public.notify_dispatch_now() from anon;
+
+revoke execute on function public.notify_event_from_history() from public;
+revoke execute on function public.notify_event_from_history() from anon;
+
+revoke execute on function public.propagate_account_company() from public;
+revoke execute on function public.propagate_account_company() from anon;
+
+revoke execute on function public.set_bank_transaction_company() from public;
+revoke execute on function public.set_bank_transaction_company() from anon;
+
+revoke execute on function public.sync_invoice_paid_from_matches() from public;
+revoke execute on function public.sync_invoice_paid_from_matches() from anon;
+
+revoke execute on function public.sync_transaction_matching_status() from public;
+revoke execute on function public.sync_transaction_matching_status() from anon;
+
+revoke execute on function public.sync_uploaded_outgoing_invoice_status_from_matches() from public;
+revoke execute on function public.sync_uploaded_outgoing_invoice_status_from_matches() from anon;
+
+revoke execute on function public.trg_fn_bank_transactions_categorize() from public;
+revoke execute on function public.trg_fn_bank_transactions_categorize() from anon;
+
+revoke execute on function public.trg_fn_invoices_apply_rules_on_insert() from public;
+revoke execute on function public.trg_fn_invoices_apply_rules_on_insert() from anon;
+
+revoke execute on function public.request_approval_ping(uuid, uuid, text, uuid) from public;
+revoke execute on function public.request_approval_ping(uuid, uuid, text, uuid) from anon;
+
+revoke execute on function public.chain_people() from public;
+revoke execute on function public.chain_people() from anon;
+grant execute on function public.chain_people() to authenticated;
+
+revoke execute on function public.upsert_external_transactions(jsonb, uuid) from public;
+revoke execute on function public.upsert_external_transactions(jsonb, uuid) from anon;
+grant execute on function public.upsert_external_transactions(jsonb, uuid) to authenticated;
+
+revoke execute on function public.merge_suppliers(uuid, uuid, text, text) from public;
+revoke execute on function public.merge_suppliers(uuid, uuid, text, text) from anon;
+grant execute on function public.merge_suppliers(uuid, uuid, text, text) to authenticated;
+
+revoke execute on function public.clear_must_change_password() from public;
+revoke execute on function public.clear_must_change_password() from anon;
+grant execute on function public.clear_must_change_password() to authenticated;
+
+revoke execute on function public.set_practice_mode(boolean) from public;
+revoke execute on function public.set_practice_mode(boolean) from anon;
+grant execute on function public.set_practice_mode(boolean) to authenticated;
+
+revoke execute on function public.seed_onboarding_demo_data() from public;
+revoke execute on function public.seed_onboarding_demo_data() from anon;
+grant execute on function public.seed_onboarding_demo_data() to authenticated;
+
+revoke execute on function public.link_invoice_transaction(uuid, uuid, numeric, jsonb, numeric, text) from public;
+revoke execute on function public.link_invoice_transaction(uuid, uuid, numeric, jsonb, numeric, text) from anon;
+grant execute on function public.link_invoice_transaction(uuid, uuid, numeric, jsonb, numeric, text) to authenticated;
+
+revoke execute on function public.link_outgoing_invoice_transaction(uuid, uuid, numeric, jsonb, numeric) from public;
+revoke execute on function public.link_outgoing_invoice_transaction(uuid, uuid, numeric, jsonb, numeric) from anon;
+grant execute on function public.link_outgoing_invoice_transaction(uuid, uuid, numeric, jsonb, numeric) to authenticated;
+
+revoke execute on function public.set_uploaded_outgoing_invoice_status(uuid, text, text) from public;
+revoke execute on function public.set_uploaded_outgoing_invoice_status(uuid, text, text) from anon;
+grant execute on function public.set_uploaded_outgoing_invoice_status(uuid, text, text) to authenticated;
+
+revoke execute on function public.learn_assignment_rule_from_match(uuid, text) from public;
+revoke execute on function public.learn_assignment_rule_from_match(uuid, text) from anon;
+grant execute on function public.learn_assignment_rule_from_match(uuid, text) to authenticated;
+
+revoke execute on function public.apply_assignment_rule_bulk(uuid, text) from public;
+revoke execute on function public.apply_assignment_rule_bulk(uuid, text) from anon;
+grant execute on function public.apply_assignment_rule_bulk(uuid, text) to authenticated;
+
+revoke execute on function public.apply_assignment_rules(uuid, text) from public;
+revoke execute on function public.apply_assignment_rules(uuid, text) from anon;
+grant execute on function public.apply_assignment_rules(uuid, text) to authenticated;
+
+revoke execute on function public.set_transaction_fully_used(uuid, text) from public;
+revoke execute on function public.set_transaction_fully_used(uuid, text) from anon;
+grant execute on function public.set_transaction_fully_used(uuid, text) to authenticated;
+
+revoke execute on function public.clear_transaction_fully_used(uuid) from public;
+revoke execute on function public.clear_transaction_fully_used(uuid) from anon;
+grant execute on function public.clear_transaction_fully_used(uuid) to authenticated;
+
+revoke execute on function public.opos_set_no_receipt(uuid, text) from public;
+revoke execute on function public.opos_set_no_receipt(uuid, text) from anon;
+grant execute on function public.opos_set_no_receipt(uuid, text) to authenticated;
+
+revoke execute on function public.opos_clear_no_receipt(uuid) from public;
+revoke execute on function public.opos_clear_no_receipt(uuid) from anon;
+grant execute on function public.opos_clear_no_receipt(uuid) to authenticated;
+
+revoke execute on function public.opos_set_category(uuid, uuid) from public;
+revoke execute on function public.opos_set_category(uuid, uuid) from anon;
+grant execute on function public.opos_set_category(uuid, uuid) to authenticated;
+
+revoke execute on function public.opos_reapply_whitelist(uuid) from public;
+revoke execute on function public.opos_reapply_whitelist(uuid) from anon;
+grant execute on function public.opos_reapply_whitelist(uuid) to authenticated;
+
+revoke execute on function public.send_notification(uuid, text, text, text, text) from public;
+revoke execute on function public.send_notification(uuid, text, text, text, text) from anon;
+grant execute on function public.send_notification(uuid, text, text, text, text) to authenticated;
+
+revoke execute on function public.acknowledge_notification(bigint) from public;
+revoke execute on function public.acknowledge_notification(bigint) from anon;
+grant execute on function public.acknowledge_notification(bigint) to authenticated;
+
+revoke execute on function public.acknowledge_datev_batch(uuid, text) from public;
+revoke execute on function public.acknowledge_datev_batch(uuid, text) from anon;
+grant execute on function public.acknowledge_datev_batch(uuid, text) to authenticated;
+
+revoke execute on function public.purge_record(text, uuid) from public;
+revoke execute on function public.purge_record(text, uuid) from anon;
+grant execute on function public.purge_record(text, uuid) to authenticated;
+
+revoke execute on function public.restore_record(text, uuid, text) from public;
+revoke execute on function public.restore_record(text, uuid, text) from anon;
+grant execute on function public.restore_record(text, uuid, text) to authenticated;
+
+revoke execute on function public.set_user_slack_id(uuid, text) from public;
+revoke execute on function public.set_user_slack_id(uuid, text) from anon;
+grant execute on function public.set_user_slack_id(uuid, text) to authenticated;
+
+revoke execute on function public.my_profile() from public;
+revoke execute on function public.my_profile() from anon;
+grant execute on function public.my_profile() to authenticated;
+
+revoke execute on function public.set_my_name(text) from public;
+revoke execute on function public.set_my_name(text) from anon;
+grant execute on function public.set_my_name(text) to authenticated;
+
+revoke execute on function public.set_my_picture_url(text) from public;
+revoke execute on function public.set_my_picture_url(text) from anon;
+grant execute on function public.set_my_picture_url(text) to authenticated;
+
+revoke execute on function public.mark_notifications_seen() from public;
+revoke execute on function public.mark_notifications_seen() from anon;
+grant execute on function public.mark_notifications_seen() to authenticated;
+
+revoke execute on function public.seed_stop_cases_practice_data(boolean) from public;
+revoke execute on function public.seed_stop_cases_practice_data(boolean) from anon;
+grant execute on function public.seed_stop_cases_practice_data(boolean) to authenticated;
+
+revoke execute on function public.run_bank_sync(text) from public;
+revoke execute on function public.run_bank_sync(text) from anon;
+revoke execute on function public.run_bank_sync(text) from authenticated;
+
+revoke execute on function public.mark_datev_batch_bounced(uuid, text) from public;
+revoke execute on function public.mark_datev_batch_bounced(uuid, text) from anon;
+revoke execute on function public.mark_datev_batch_bounced(uuid, text) from authenticated;
+
+revoke execute on function public.pending_receipt_count() from public;
+revoke execute on function public.pending_receipt_count() from anon;
+revoke execute on function public.pending_receipt_count() from authenticated;
+
+revoke execute on function public.pending_receipt_downloads(integer) from public;
+revoke execute on function public.pending_receipt_downloads(integer) from anon;
+revoke execute on function public.pending_receipt_downloads(integer) from authenticated;
+
+revoke execute on function public.match_opos_whitelist(text, text, text, text) from public;
+revoke execute on function public.match_opos_whitelist(text, text, text, text) from anon;
+revoke execute on function public.match_opos_whitelist(text, text, text, text) from authenticated;
+
+revoke execute on function public.is_invoice_reconciled(uuid) from public;
+revoke execute on function public.is_invoice_reconciled(uuid) from anon;
+revoke execute on function public.is_invoice_reconciled(uuid) from authenticated;
+
+revoke execute on function public.tenant_banking_provider() from public;
+revoke execute on function public.tenant_banking_provider() from anon;
+revoke execute on function public.tenant_banking_provider() from authenticated;
+
+revoke execute on function public.tenant_card_provider() from public;
+revoke execute on function public.tenant_card_provider() from anon;
+revoke execute on function public.tenant_card_provider() from authenticated;
+
+revoke execute on function public.tenant_locale_settings() from public;
+revoke execute on function public.tenant_locale_settings() from anon;
+revoke execute on function public.tenant_locale_settings() from authenticated;
+
+revoke execute on function public.tenant_tax_regime() from public;
+revoke execute on function public.tenant_tax_regime() from anon;
+revoke execute on function public.tenant_tax_regime() from authenticated;
+
+revoke execute on function public.reset_onboarding_demo_data() from public;
+revoke execute on function public.reset_onboarding_demo_data() from anon;
+revoke execute on function public.reset_onboarding_demo_data() from authenticated;
+
 commit;
 
 -- ===================================================================== 0012_views.sql
@@ -7694,6 +7933,9 @@ revoke execute on function public.deployment_secret(text) from public, anon, aut
 revoke execute on function public.run_scheduled_job(text) from public, anon, authenticated;
 revoke execute on function public.apply_scheduled_jobs() from public, anon;
 grant execute on function public.apply_scheduled_jobs() to authenticated;
+
+revoke execute on function public.scheduled_jobs_apply() from public;
+revoke execute on function public.scheduled_jobs_apply() from anon;
 
 commit;
 
@@ -8538,6 +8780,12 @@ create trigger broker_bonuses_notify_decided after update of status on public.br
     for each row when (old.status is distinct from new.status and new.status in ('approved', 'rejected', 'paid'))
     execute function public.notify_bonus_decided();
 
+revoke execute on function public.notify_bonus_decided() from public;
+revoke execute on function public.notify_bonus_decided() from anon;
+
+revoke execute on function public.notify_deal_status_changed() from public;
+revoke execute on function public.notify_deal_status_changed() from anon;
+
 commit;
 
 -- ===================================================================== 0021_deal_costs.sql
@@ -8687,6 +8935,12 @@ drop trigger if exists broker_bonuses_notify_suggested on public.broker_bonuses;
 create trigger broker_bonuses_notify_suggested after insert on public.broker_bonuses
     for each row when (new.status = 'suggested')
     execute function public.notify_bonus_suggested();
+
+revoke execute on function public.notify_bonus_submitted() from public;
+revoke execute on function public.notify_bonus_submitted() from anon;
+
+revoke execute on function public.notify_bonus_suggested() from public;
+revoke execute on function public.notify_bonus_suggested() from anon;
 
 commit;
 
@@ -9155,6 +9409,21 @@ begin
 end
 $$;
 
+revoke execute on function public.payment_file_document_set_company() from public;
+revoke execute on function public.payment_file_document_set_company() from anon;
+
+revoke execute on function public.payment_file_item_prevent_double_queue() from public;
+revoke execute on function public.payment_file_item_prevent_double_queue() from anon;
+
+revoke execute on function public.payment_file_item_set_company() from public;
+revoke execute on function public.payment_file_item_set_company() from anon;
+
+revoke execute on function public.payment_settings_ensure_default() from public;
+revoke execute on function public.payment_settings_ensure_default() from anon;
+
+revoke execute on function public.payment_settings_promote_next_default() from public;
+revoke execute on function public.payment_settings_promote_next_default() from anon;
+
 commit;
 
 -- ===================================================================== 0025_client_error_log.sql
@@ -9354,6 +9623,17 @@ comment on function public.document_type_canonical(text) is
 revoke all on function public.document_type_canonical(text) from public;
 grant execute on function public.document_type_canonical(text) to authenticated;
 
+revoke all on public.document_types from anon;
+alter table public.document_types enable row level security;
+drop policy if exists document_types_read on public.document_types;
+create policy document_types_read on public.document_types
+    for select to authenticated using (public.may_read('master_data.read'));
+drop policy if exists document_types_write on public.document_types;
+create policy document_types_write on public.document_types
+    for all to authenticated
+    using (public.may_write('master_data.write'))
+    with check (public.may_write('master_data.write'));
+
 commit;
 
 -- ===================================================================== 0029_deal_donations.sql
@@ -9464,6 +9744,9 @@ drop trigger if exists deal_donations_notify_suggested on public.deal_donations;
 create trigger deal_donations_notify_suggested after insert on public.deal_donations
     for each row when (new.status = 'suggested')
     execute function public.notify_donation_suggested();
+
+revoke execute on function public.notify_donation_suggested() from public;
+revoke execute on function public.notify_donation_suggested() from anon;
 
 commit;
 
@@ -9667,6 +9950,9 @@ drop trigger if exists deal_referrer_bonuses_notify_suggested on public.deal_ref
 create trigger deal_referrer_bonuses_notify_suggested after insert on public.deal_referrer_bonuses
     for each row when (new.status = 'suggested')
     execute function public.notify_referrer_bonus_suggested();
+
+revoke execute on function public.notify_referrer_bonus_suggested() from public;
+revoke execute on function public.notify_referrer_bonus_suggested() from anon;
 
 commit;
 
@@ -10257,8 +10543,10 @@ create table if not exists public.feature_settings_history (
 create index if not exists feature_settings_history_changed
     on public.feature_settings_history (changed_at desc);
 
+-- Definer, because feature_settings_history has RLS on and no policy: as invoker the trigger's own
+-- insert is refused and the feature toggle fails. Keeps the trail append-only by trigger alone.
 create or replace function public.feature_settings_audit() returns trigger
-language plpgsql set search_path to 'public'
+language plpgsql security definer set search_path to 'public'
 as $$
 begin
     if tg_op = 'UPDATE' and new.enabled is not distinct from old.enabled then
@@ -10318,6 +10606,11 @@ $$;
 
 revoke execute on function public.feature_tree() from public, anon;
 grant execute on function public.feature_tree() to authenticated;
+
+-- No policy on purpose: nothing that respects RLS reads this trail, and the trigger above is
+-- definer, so it stays append-only by trigger and unreadable over REST.
+revoke all on public.feature_settings_history from anon;
+alter table public.feature_settings_history enable row level security;
 
 commit;
 
@@ -10481,6 +10774,9 @@ begin
   return null;
 end;
 $$;
+
+revoke execute on function public.lexoffice_document_push_now() from public;
+revoke execute on function public.lexoffice_document_push_now() from anon;
 
 commit;
 
@@ -11946,11 +12242,12 @@ commit;
 -- the moment it was approved, regardless of whether the deal had actually reached the stage its
 -- bonus type is due at. An RPC, not a plain update, so the check runs where it cannot be skipped.
 --
--- Unlike referrer bonuses, the two triggers here are fixed per bonus type rather than configurable
--- in bonus_settings: the flat notary/follow-up bonuses are due once the deal is invoiced, the
--- percentage-share bonuses (company-lead, own-lead) only once every commission invoice on the deal
--- is paid. Bonus types with no deal_id (google_review, other, financing_referral, predating the
--- deal_id column added in 0022_bonus_suggestions.sql) have no stage to check and are left alone.
+-- Unlike referrer bonuses, the triggers here are fixed per bonus type rather than configurable in
+-- bonus_settings: the flat follow-up bonus is due once the deal is invoiced, while the handover
+-- bonus and the percentage-share bonuses (company-lead, own-lead) are due only once every
+-- commission invoice on the deal is paid. Bonus types with no deal_id (google_review, other,
+-- financing_referral, predating the deal_id column added in 0022_bonus_suggestions.sql) have no
+-- stage to check and are left alone.
 
 begin;
 
@@ -11972,6 +12269,7 @@ begin
 
   if v_bonus.deal_id is not null then
     v_stage := case v_bonus.bonus_type
+      when 'notary' then 'commission_received'
       when 'company_lead_share' then 'commission_received'
       when 'own_job_share' then 'commission_received'
       else 'invoiced'
@@ -11988,5 +12286,1644 @@ $$;
 
 revoke execute on function public.mark_broker_bonus_paid(uuid) from public, anon;
 grant execute on function public.mark_broker_bonus_paid(uuid) to authenticated;
+
+commit;
+
+-- ===================================================================== 0070_lexoffice_push_skips_demo_deals.sql
+
+begin;
+
+create or replace function public.lexoffice_invoice_push_now() returns trigger
+    language plpgsql security definer set search_path to 'public'
+    as $$
+declare
+  v_key text;
+  v_url text;
+  v_is_demo boolean;
+begin
+  -- A practice deal's invoice must never reach the client's real Lexware account.
+  select p.is_demo into v_is_demo
+    from public.deals d join public.properties p on p.id = d.property_id
+   where d.id = new.deal_id;
+  if v_is_demo then
+    return null;
+  end if;
+
+  v_key := public.deployment_secret('service_role_key');
+  v_url := public.deployment_secret('project_url');
+  if v_key is null or v_url is null then
+    return null;
+  end if;
+
+  perform net.http_post(
+    url := rtrim(v_url, '/') || '/functions/v1/lexoffice-invoice-push',
+    headers := jsonb_build_object(
+      'Content-Type', 'application/json',
+      'Authorization', 'Bearer ' || v_key
+    ),
+    body := jsonb_build_object('outgoing_invoice_id', new.id),
+    timeout_milliseconds := 30000
+  );
+  return null;
+end;
+$$;
+
+revoke execute on function public.lexoffice_invoice_push_now() from public;
+revoke execute on function public.lexoffice_invoice_push_now() from anon;
+
+commit;
+
+-- ===================================================================== 0071_commission_deal_practice_seed.sql
+
+-- Finishes the commission-deal practice tour (commission-deal-practice-task.ts): the task a client
+-- with page.payment_file switched off sees instead of "Build a payment file", walking the same demo
+-- property through a sale instead of a payment run.
+--
+-- seedPracticeData() (seed_onboarding_demo_data) always runs before this one, per
+-- OnboardingPracticeStart's own start/resume/restart sequence, so the demo company and property
+-- already exist by the time this runs -- this reads them, it does not create its own.
+--
+-- Returns the two demo customers' ids (buyer, seller), the shape seedCommissionDealPracticeData's
+-- caller expects for restart/resume through findLiveCommissionDealPracticeRecordIds/
+-- discardCommissionDealPracticeRecords. The deal itself is created live by the practice through the
+-- real useCreateDeal hook, not seeded here -- but a deal a PREVIOUS run left behind on the demo
+-- property would block useActiveDealForProperty's one-active-deal-per-property guard, so any such
+-- deal is cancelled on every call.
+
+begin;
+
+create or replace function public.seed_commission_deal_practice_data() returns uuid[]
+    language plpgsql security definer set search_path to 'public'
+    as $$
+declare
+  v_user_id uuid := public.current_app_user_id();
+  v_tag text;
+  v_company_id uuid;
+  v_property_id uuid;
+  v_buyer_id uuid;
+  v_seller_id uuid;
+begin
+  if v_user_id is null then
+    raise exception 'seed_commission_deal_practice_data: no signed-in app user';
+  end if;
+
+  v_tag := substr(replace(v_user_id::text, '-', ''), 1, 8);
+
+  select id into v_company_id from public.companies
+   where is_demo and demo_owner_user_id = v_user_id and code = 'DEMO-' || v_tag;
+  if v_company_id is null then
+    raise exception 'seed_commission_deal_practice_data: no demo company for user %, seedPracticeData should have run first', v_user_id;
+  end if;
+
+  select id into v_property_id from public.properties
+   where is_demo and demo_owner_user_id = v_user_id and code = 'DEMO-' || v_tag || '-P1';
+  if v_property_id is null then
+    raise exception 'seed_commission_deal_practice_data: no demo property for user %, seedPracticeData should have run first', v_user_id;
+  end if;
+
+  select id into v_buyer_id from public.customers
+   where company_id = v_company_id and name = 'TEST Buyer';
+  if v_buyer_id is not null then
+    update public.customers set deleted_at = null where id = v_buyer_id and deleted_at is not null;
+  else
+    insert into public.customers (company_id, is_company, name)
+    values (v_company_id, false, 'TEST Buyer')
+    returning id into v_buyer_id;
+  end if;
+
+  select id into v_seller_id from public.customers
+   where company_id = v_company_id and name = 'TEST Seller';
+  if v_seller_id is not null then
+    update public.customers set deleted_at = null where id = v_seller_id and deleted_at is not null;
+  else
+    insert into public.customers (company_id, is_company, name)
+    values (v_company_id, false, 'TEST Seller')
+    returning id into v_seller_id;
+  end if;
+
+  update public.deals
+     set status = 'cancelled'
+   where property_id = v_property_id
+     and deleted_at is null
+     and status not in ('cancelled', 'settled');
+
+  return array[v_buyer_id, v_seller_id];
+end $$;
+
+revoke execute on function public.seed_commission_deal_practice_data() from public, anon;
+grant execute on function public.seed_commission_deal_practice_data() to authenticated;
+
+commit;
+
+-- ===================================================================== 0072_deal_customer_demo_isolation.sql
+
+-- Mirrors company_demo_visible (0010_access.sql), for deals and customers, which have no is_demo column of their own.
+
+begin;
+
+create or replace function public.deal_demo_visible(p_property_id uuid) returns boolean
+language sql stable security definer set search_path to 'public'
+as $$
+  select case when public.practice_mode_active()
+              then exists (
+                  select 1 from public.properties p
+                   where p.id = p_property_id and p.is_demo
+                     and p.demo_owner_user_id = public.current_app_user_id()
+              )
+              else not exists (
+                  select 1 from public.properties p where p.id = p_property_id and p.is_demo
+              )
+         end;
+$$;
+
+revoke execute on function public.deal_demo_visible(uuid) from public, anon;
+grant execute on function public.deal_demo_visible(uuid) to authenticated;
+
+create or replace function public.customer_demo_visible(p_company_id uuid) returns boolean
+language sql stable security definer set search_path to 'public'
+as $$
+  select case when public.practice_mode_active()
+              then exists (
+                  select 1 from public.companies c
+                   where c.id = p_company_id and c.is_demo
+                     and c.demo_owner_user_id = public.current_app_user_id()
+              )
+              else not exists (
+                  select 1 from public.companies c where c.id = p_company_id and c.is_demo
+              )
+         end;
+$$;
+
+revoke execute on function public.customer_demo_visible(uuid) from public, anon;
+grant execute on function public.customer_demo_visible(uuid) to authenticated;
+
+drop policy if exists deals_demo_owner_read on public.deals;
+create policy deals_demo_owner_read on public.deals as restrictive for select to authenticated
+    using (public.deal_demo_visible(property_id));
+drop policy if exists deals_demo_owner_write on public.deals;
+create policy deals_demo_owner_write on public.deals as restrictive for insert to authenticated
+    with check (public.deal_demo_visible(property_id));
+drop policy if exists deals_demo_owner_write_update on public.deals;
+create policy deals_demo_owner_write_update on public.deals as restrictive for update to authenticated
+    using (public.deal_demo_visible(property_id))
+    with check (public.deal_demo_visible(property_id));
+
+drop policy if exists customers_demo_owner_read on public.customers;
+create policy customers_demo_owner_read on public.customers as restrictive for select to authenticated
+    using (public.customer_demo_visible(company_id));
+drop policy if exists customers_demo_owner_write on public.customers;
+create policy customers_demo_owner_write on public.customers as restrictive for insert to authenticated
+    with check (public.customer_demo_visible(company_id));
+drop policy if exists customers_demo_owner_write_update on public.customers;
+create policy customers_demo_owner_write_update on public.customers as restrictive for update to authenticated
+    using (public.customer_demo_visible(company_id))
+    with check (public.customer_demo_visible(company_id));
+
+commit;
+
+-- ===================================================================== 0073_referrer_bonus_earned_on_from_the_deal.sql
+
+-- deal_referrer_bonuses is written by a plain insert from the browser, so earned_on was whatever the
+-- client sent. The card fell back to the current date when the deal had no notary date yet, and that
+-- date is what referrer_bonus_tier() windows the yearly tier reset on -- a referral suggested in
+-- January on a sale notarised the previous December counted in the wrong year, permanently.
+--
+-- The deal's own notarised_on is the only right answer, so the database takes it from there rather
+-- than trusting the caller.
+
+begin;
+
+create or replace function public.referrer_bonus_earned_on() returns trigger
+language plpgsql security definer set search_path to 'public'
+as $$
+declare
+  v_notarised_on date;
+begin
+  select notarised_on into v_notarised_on from public.deals where id = new.deal_id;
+  if v_notarised_on is null then
+    raise exception 'referrer bonus: deal % has no notary date yet', new.deal_id
+      using errcode = 'check_violation';
+  end if;
+  new.earned_on := v_notarised_on;
+  return new;
+end;
+$$;
+
+drop trigger if exists referrer_bonus_earned_on on public.deal_referrer_bonuses;
+create trigger referrer_bonus_earned_on before insert on public.deal_referrer_bonuses
+    for each row execute function public.referrer_bonus_earned_on();
+
+commit;
+
+-- ===================================================================== 0074_filename_convention_date_type_issuer.sql
+
+-- A second naming convention, the one a client asked for in November 2026:
+-- 2026_11_16_Rechnung_ContentWerkRuhr_Steinmetzstrasse_2 -- date, what the document is, who sent
+-- it, and the property when there is one. It reverses the earlier rule that kept the document type
+-- out of the name because the folder implied it.
+--
+-- Named conventions rather than more booleans, because the ingestion pipeline already models it
+-- that way (one module per convention, picked by name) and reads this same row. date_separator is
+-- a field that pipeline already looks for and the Hub never had.
+--
+-- Default stays the convention every existing client already files under, so nobody's names change
+-- until they pick the new one.
+
+begin;
+
+alter table public.filename_settings
+    add column if not exists convention text not null default 'code_and_amount',
+    add column if not exists date_separator text not null default '_',
+    add column if not exists default_type_label text not null default 'Beleg';
+
+alter table public.filename_settings
+    drop constraint if exists filename_settings_convention_known;
+
+alter table public.filename_settings
+    add constraint filename_settings_convention_known
+        check (convention in ('code_and_amount', 'date_type_issuer'));
+
+commit;
+
+-- ===================================================================== 0075_close_the_two_functions_added_since_the_audit.sql
+
+-- 20261119120000 closed the anon surface as a list of the functions that existed that day, not as a
+-- standing rule, so every function created since carries Postgres's default PUBLIC execute again.
+-- Two already do. Both return trigger, which PostgREST does not expose as an RPC endpoint, so
+-- neither is reachable today -- but the next definer function that returns something else would be.
+
+begin;
+
+revoke execute on function public.feature_settings_audit() from public, anon;
+revoke execute on function public.referrer_bonus_earned_on() from public, anon;
+
+commit;
+
+-- ===================================================================== 0076_crm_changes_cannot_rewrite_invoiced_deals.sql
+
+-- This writes purchase_price and fee_net_rate directly, so it bypassed save_deal's own refusal to
+-- touch them once a deal is invoiced, and rewrote the figures issued invoices were built from.
+
+begin;
+
+create or replace function public.acknowledge_deal_crm_changes(p_deal_id uuid) returns void
+    language plpgsql security definer set search_path to 'public'
+as $$
+declare
+  v_deal public.deals;
+  v_change record;
+  v_invoices text;
+begin
+  if not public.owns_deal(p_deal_id) and not public.has_permission('invoices.approve') then
+    raise exception 'not allowed to acknowledge this deal' using errcode = '42501';
+  end if;
+
+  select * into v_deal from public.deals where id = p_deal_id and property_id is not null;
+  if not found then
+    return;
+  end if;
+
+  select string_agg(coalesce(invoice_number, id::text), ', ' order by invoice_number)
+    into v_invoices
+    from public.outgoing_invoices
+   where deal_id = p_deal_id and kind = 'commission' and deleted_at is null;
+
+  if v_invoices is not null then
+    raise exception
+      'acknowledge_deal_crm_changes: commission invoices % already exist for this deal', v_invoices
+      using errcode = 'check_violation';
+  end if;
+
+  for v_change in select * from public.deal_crm_changes(p_deal_id) loop
+    if v_change.field = 'sold_on' then
+      update public.deals set notarised_on = nullif(v_change.became, '')::date
+       where id = p_deal_id;
+    elsif v_change.field = 'sold_price' then
+      update public.deals set purchase_price = nullif(v_change.became, '')::numeric
+       where id = p_deal_id;
+    elsif v_change.field in ('buyer_rate', 'seller_rate') then
+      update public.deal_sides
+         set fee_net_rate = public.crm_net_rate(nullif(v_change.became, '')::numeric, v_deal.vat_rate)
+       where deal_id = p_deal_id
+         and side = (case v_change.field when 'buyer_rate' then 'buyer' else 'seller' end)
+         and fee_kind = 'percent';
+    end if;
+  end loop;
+
+  update public.deals
+     set crm_snapshot = public.crm_facts_of(property_id),
+         crm_changes_acknowledged_at = now()
+   where id = p_deal_id
+     and property_id is not null;
+end;
+$$;
+
+revoke execute on function public.acknowledge_deal_crm_changes(uuid) from public, anon;
+grant execute on function public.acknowledge_deal_crm_changes(uuid) to authenticated;
+
+commit;
+
+-- ===================================================================== 0077_unmaintained_crm_fields.sql
+
+-- The four fields section 4.4 names: the realised price, the sale date and either commission rate.
+-- One list, read by the overview screen as the caller and by the reminder as the service role, so
+-- the screen and the reminder can never disagree about what counts as unmaintained.
+
+begin;
+
+alter table public.deals
+    add column if not exists crm_fields_notified_at timestamptz;
+
+create or replace function public.deal_unmaintained_fields(p_deal_id uuid) returns text[]
+language sql stable security invoker set search_path to 'public'
+as $$
+  select coalesce(array_agg(field order by field), '{}')
+    from (
+      select 'purchase_price' as field
+        from public.deals d where d.id = p_deal_id and d.purchase_price is null
+      union all
+      select 'notarised_on'
+        from public.deals d where d.id = p_deal_id and d.notarised_on is null
+      union all
+      select case s.side when 'buyer' then 'buyer_rate' else 'seller_rate' end
+        from public.deal_sides s
+       where s.deal_id = p_deal_id and s.fee_kind = 'percent' and s.fee_net_rate is null
+    ) missing;
+$$;
+
+revoke execute on function public.deal_unmaintained_fields(uuid) from public, anon;
+grant execute on function public.deal_unmaintained_fields(uuid) to authenticated;
+
+create or replace view public.v_deals_with_unmaintained_fields
+with (security_invoker = true) as
+  select d.id as deal_id,
+         d.property_id,
+         d.property_label,
+         p.external_id as property_external_id,
+         d.notarised_on,
+         d.status,
+         public.deal_unmaintained_fields(d.id) as missing_fields
+    from public.deals d
+    left join public.properties p on p.id = d.property_id
+   where d.deleted_at is null
+     and cardinality(public.deal_unmaintained_fields(d.id)) > 0;
+
+revoke all on public.v_deals_with_unmaintained_fields from anon;
+grant select on public.v_deals_with_unmaintained_fields to authenticated;
+
+create or replace function public.notify_unmaintained_crm_fields() returns integer
+language plpgsql security definer set search_path to 'public'
+as $$
+declare
+  v_ids uuid[];
+  v_count integer;
+begin
+  select array_agg(d.id) into v_ids
+    from public.deals d
+   where d.deleted_at is null
+     and d.crm_fields_notified_at is null
+     and cardinality(public.deal_unmaintained_fields(d.id)) > 0;
+  v_count := coalesce(cardinality(v_ids), 0);
+  if v_count = 0 then
+    return 0;
+  end if;
+
+  perform public.notify_administrators(
+    case when v_count = 1 then 'Bei einem Verkauf fehlen Felder aus PropStack'
+         else 'Bei ' || v_count || ' Verkäufen fehlen Felder aus PropStack' end,
+    '/unmaintained-fields', 'reminder');
+
+  update public.deals set crm_fields_notified_at = now() where id = any (v_ids);
+
+  return v_count;
+end;
+$$;
+
+revoke execute on function public.notify_unmaintained_crm_fields() from public, anon, authenticated;
+grant execute on function public.notify_unmaintained_crm_fields() to service_role;
+
+commit;
+
+-- ===================================================================== 0078_crm_rate_change_needs_a_percentage_side.sql
+
+-- A rate change the CRM reports cannot be applied to a side billed as a fixed amount: there is no
+-- percentage on that side to overwrite. It used to be skipped silently while the deal was still
+-- stamped as reconciled, so the change left the screen without ever being applied.
+
+begin;
+
+create or replace function public.acknowledge_deal_crm_changes(p_deal_id uuid) returns void
+    language plpgsql security definer set search_path to 'public'
+as $$
+declare
+  v_deal public.deals;
+  v_change record;
+  v_invoices text;
+begin
+  if not public.owns_deal(p_deal_id) and not public.has_permission('invoices.approve') then
+    raise exception 'not allowed to acknowledge this deal' using errcode = '42501';
+  end if;
+
+  select * into v_deal from public.deals where id = p_deal_id and property_id is not null;
+  if not found then
+    return;
+  end if;
+
+  select string_agg(coalesce(invoice_number, id::text), ', ' order by invoice_number)
+    into v_invoices
+    from public.outgoing_invoices
+   where deal_id = p_deal_id and kind = 'commission' and deleted_at is null;
+
+  if v_invoices is not null then
+    raise exception
+      'acknowledge_deal_crm_changes: commission invoices % already exist for this deal', v_invoices
+      using errcode = 'check_violation';
+  end if;
+
+  for v_change in select * from public.deal_crm_changes(p_deal_id) loop
+    if v_change.field in ('buyer_rate', 'seller_rate')
+       and exists (
+         select 1 from public.deal_sides s
+          where s.deal_id = p_deal_id
+            and s.side = (case v_change.field when 'buyer_rate' then 'buyer' else 'seller' end)
+            and s.fee_kind <> 'percent'
+       ) then
+      raise exception
+        'acknowledge_deal_crm_changes: the % side is billed as a fixed amount, so the new rate cannot be applied', 
+        (case v_change.field when 'buyer_rate' then 'buyer' else 'seller' end)
+        using errcode = 'check_violation';
+    end if;
+  end loop;
+
+  for v_change in select * from public.deal_crm_changes(p_deal_id) loop
+    if v_change.field = 'sold_on' then
+      update public.deals set notarised_on = nullif(v_change.became, '')::date
+       where id = p_deal_id;
+    elsif v_change.field = 'sold_price' then
+      update public.deals set purchase_price = nullif(v_change.became, '')::numeric
+       where id = p_deal_id;
+    elsif v_change.field in ('buyer_rate', 'seller_rate') then
+      update public.deal_sides
+         set fee_net_rate = public.crm_net_rate(nullif(v_change.became, '')::numeric, v_deal.vat_rate)
+       where deal_id = p_deal_id
+         and side = (case v_change.field when 'buyer_rate' then 'buyer' else 'seller' end)
+         and fee_kind = 'percent';
+    end if;
+  end loop;
+
+  update public.deals
+     set crm_snapshot = public.crm_facts_of(property_id),
+         crm_changes_acknowledged_at = now()
+   where id = p_deal_id
+     and property_id is not null;
+end;
+$$;
+
+revoke execute on function public.acknowledge_deal_crm_changes(uuid) from public, anon;
+grant execute on function public.acknowledge_deal_crm_changes(uuid) to authenticated;
+
+commit;
+
+-- ===================================================================== 0079_unmaintained_fields_count_for_sorting.sql
+
+-- The list is searched, sorted and paged in the database, so the number of missing fields has to be
+-- a column that can be ordered on rather than something the browser counts after fetching.
+
+begin;
+
+create or replace view public.v_deals_with_unmaintained_fields
+with (security_invoker = true) as
+  select d.id as deal_id,
+         d.property_id,
+         d.property_label,
+         p.external_id as property_external_id,
+         d.notarised_on,
+         d.status,
+         public.deal_unmaintained_fields(d.id) as missing_fields,
+         cardinality(public.deal_unmaintained_fields(d.id)) as missing_count
+    from public.deals d
+    left join public.properties p on p.id = d.property_id
+   where d.deleted_at is null
+     and cardinality(public.deal_unmaintained_fields(d.id)) > 0;
+
+revoke all on public.v_deals_with_unmaintained_fields from anon;
+grant select on public.v_deals_with_unmaintained_fields to authenticated;
+
+commit;
+
+-- ===================================================================== 0080_scheduled_jobs_can_call_sql.sql
+
+-- Three jobs were scheduled straight into pg_cron instead of as rows here, so nobody could see them
+-- run or switch them off from the Hub, and one of them wrote this project's own host into the cron
+-- line -- the exact thing 0013's header forbids, because a clone then calls another client's
+-- project. Two of the three call a Postgres function rather than an Edge Function, which this table
+-- could not express until now.
+
+begin;
+
+alter table public.scheduled_jobs
+    add column if not exists sql_function text;
+
+alter table public.scheduled_jobs
+    alter column edge_function drop not null;
+
+alter table public.scheduled_jobs
+    drop constraint if exists scheduled_jobs_one_target;
+
+alter table public.scheduled_jobs
+    add constraint scheduled_jobs_one_target
+        check (num_nonnulls(edge_function, sql_function) = 1);
+
+create or replace function public.run_scheduled_job(p_key text) returns void
+language plpgsql security definer set search_path to 'public'
+as $$
+declare
+  v_job public.scheduled_jobs;
+  v_url text;
+  v_key text;
+begin
+  select * into v_job from public.scheduled_jobs where key = p_key and enabled;
+  if not found then
+    return;
+  end if;
+
+  if v_job.sql_function is not null then
+    execute format('select %s()', v_job.sql_function);
+    update public.scheduled_jobs
+       set last_run_at = now(), last_status = 'ran', last_message = null
+     where key = p_key;
+    return;
+  end if;
+
+  v_url := public.deployment_secret('project_url');
+  v_key := public.deployment_secret('service_role_key');
+  if v_url is null or v_key is null then
+    update public.scheduled_jobs
+       set last_run_at = now(), last_status = 'skipped',
+           last_message = 'project_url or service_role_key is missing from the vault'
+     where key = p_key;
+    return;
+  end if;
+
+  perform net.http_post(
+    url := rtrim(v_url, '/') || '/functions/v1/' || v_job.edge_function,
+    headers := jsonb_build_object('Content-Type', 'application/json',
+                                  'Authorization', 'Bearer ' || v_key),
+    body := '{}'::jsonb,
+    timeout_milliseconds := 60000);
+
+  update public.scheduled_jobs
+     set last_run_at = now(), last_status = 'sent', last_message = null
+   where key = p_key;
+end;
+$$;
+
+revoke execute on function public.run_scheduled_job(text) from public, anon, authenticated;
+
+commit;
+
+-- ===================================================================== 0081_two_definer_functions_check_permission.sql
+
+-- merge_suppliers is reachable by any signed-in user and checked nothing: it merges supplier master
+-- data and cannot be undone. upsert_external_transactions writes bank transactions and checked
+-- nothing either; it only ever runs as the service role, so it loses the grant instead of gaining a
+-- check. Closing anon in 20261119120000 left both of these open to everyone who can log in.
+--
+-- New functions start life with execute granted to PUBLIC, which is how two definer functions were
+-- reopened within a day of that audit. The default is changed here so the next one does not.
+
+begin;
+
+CREATE OR REPLACE FUNCTION public.merge_suppliers(p_keep_id uuid, p_merge_id uuid, p_merged_by text, p_reason text DEFAULT NULL::text)
+ RETURNS suppliers
+ LANGUAGE plpgsql
+ SECURITY DEFINER
+ SET search_path TO 'public'
+AS $function$
+declare
+  v_keep    public.suppliers;
+  v_merge   public.suppliers;
+  v_fk      record;
+  v_result  public.suppliers;
+begin
+  if not public.may_write('master_data.write') then
+    raise exception 'merge_suppliers: not allowed to change master data'
+      using errcode = '42501';
+  end if;
+
+  if p_keep_id = p_merge_id then
+    raise exception 'merge_suppliers: p_keep_id and p_merge_id must differ';
+  end if;
+
+  select * into v_keep from public.suppliers where id = p_keep_id;
+  if not found then
+    raise exception 'merge_suppliers: keep supplier % not found', p_keep_id;
+  end if;
+  if v_keep.deleted_at is not null then
+    raise exception 'merge_suppliers: keep supplier % is already deleted', p_keep_id;
+  end if;
+
+  select * into v_merge from public.suppliers where id = p_merge_id;
+  if not found then
+    raise exception 'merge_suppliers: merge-away supplier % not found', p_merge_id;
+  end if;
+  if v_merge.deleted_at is not null then
+    raise exception 'merge_suppliers: merge-away supplier % is already deleted', p_merge_id;
+  end if;
+  if v_keep.is_demo is distinct from v_merge.is_demo then
+    raise exception 'merge_suppliers: a practice supplier cannot be merged with a real supplier';
+  end if;
+
+  -- Reassign every FK column pointing at suppliers(id), across every table in `public`. Discovered
+  -- dynamically rather than hardcoded: suppliers/documents predate this repo's tracked migration
+  -- history (renamed from German outside any versioned migration), so a hardcoded table list could
+  -- silently miss a real FK. This also future-proofs the function against tables added later.
+  for v_fk in
+    select kcu.table_name, kcu.column_name
+      from information_schema.table_constraints tc
+      join information_schema.key_column_usage kcu
+        on tc.constraint_name = kcu.constraint_name and tc.table_schema = kcu.table_schema
+      join information_schema.constraint_column_usage ccu
+        on tc.constraint_name = ccu.constraint_name and tc.table_schema = ccu.table_schema
+     where tc.constraint_type = 'FOREIGN KEY'
+       and tc.table_schema = 'public'
+       and ccu.table_name = 'suppliers'
+       and ccu.column_name = 'id'
+       and kcu.table_name not in ('supplier_iban_history', 'supplier_bank_accounts') -- reassigned explicitly below instead
+  loop
+    execute format(
+      'update public.%I set %I = $1 where %I = $2',
+      v_fk.table_name, v_fk.column_name, v_fk.column_name
+    ) using p_keep_id, p_merge_id;
+  end loop;
+
+  -- Preserve the merged-away supplier's bank details if they differ from the survivor's, so
+  -- nothing is silently lost even though only one IBAN can be "current" going forward.
+  if v_merge.iban is not null and v_merge.iban is distinct from v_keep.iban then
+    insert into public.supplier_iban_history (supplier_id, old_iban, new_iban, changed_by, note)
+    values (p_keep_id, v_merge.iban, v_keep.iban, p_merged_by, 'supplier_merged');
+  end if;
+
+  -- Also carry the merged-away supplier's own history rows forward, so "IBAN-Verlauf" on the
+  -- survivor stays complete.
+  update public.supplier_iban_history set supplier_id = p_keep_id where supplier_id = p_merge_id;
+
+  -- Move every account the merged-away supplier held onto the survivor. Where both already hold
+  -- the same IBAN the survivor's own row wins and the duplicate is simply dropped afterwards, never
+  -- overwritten, since a name or verification somebody already checked must not be replaced blind.
+  insert into public.supplier_bank_accounts (supplier_id, iban, bic, bank_name, source, is_active, created_by)
+  select p_keep_id, iban, bic, bank_name, source, is_active, created_by
+    from public.supplier_bank_accounts
+   where supplier_id = p_merge_id
+  on conflict (supplier_id, iban) do nothing;
+
+  delete from public.supplier_bank_accounts where supplier_id = p_merge_id;
+
+  -- Carry the merged-away supplier's aliases across. A move changes entity_code and nothing else,
+  -- and entity_aliases_one_owner_uniq is keyed on (entity_type, folded(alias)), so it is indifferent
+  -- to the move: the only index a move can violate is entity_aliases_uniq, and the guard below is
+  -- exactly its columns. It deliberately does not test is_active -- that index is partial on three
+  -- of the Hubs and plain on the rest, and ignoring is_active is the correct guard under both.
+  update public.entity_aliases a
+     set entity_code = p_keep_id::text,
+         updated_at = now()
+   where a.entity_type = 'supplier'
+     and a.entity_code = p_merge_id::text
+     and a.is_active
+     and not exists (
+       select 1 from public.entity_aliases k
+        where k.entity_type = 'supplier'
+          and k.entity_code = p_keep_id::text
+          and k.alias = a.alias);
+
+  -- Whatever could not move is a spelling the survivor already has. Deactivated rather than deleted,
+  -- so the record survives (GoBD) and the one-owner slot the dead row would keep is released.
+  update public.entity_aliases
+     set is_active = false,
+         updated_at = now(),
+         note = coalesce(note || ' | ', '') || 'deactivated by merge into ' || p_keep_id::text
+   where entity_type = 'supplier'
+     and entity_code = p_merge_id::text
+     and is_active;
+
+  -- Remember the merged-away name as a known spelling of the survivor.
+  --
+  -- ON CONFLICT carries no target on purpose. A target has to repeat the predicate of the index it
+  -- names, and entity_aliases_uniq is partial here but plain elsewhere -- and naming either one
+  -- leaves a clash on entity_aliases_one_owner_uniq unswallowed, which would roll back the entire
+  -- merge to avoid losing a single alias. Untargeted, it takes DO NOTHING on any unique index.
+  --
+  -- The blank test is separate because ON CONFLICT does not swallow a CHECK violation, and
+  -- entity_aliases_alias_not_blank refuses an empty alias.
+  if btrim(coalesce(v_merge.name, '')) <> '' then
+    insert into public.entity_aliases (entity_type, entity_code, alias, note)
+    values ('supplier', p_keep_id::text, v_merge.name, 'merged from ' || p_merge_id::text)
+    on conflict do nothing;
+  end if;
+
+  update public.suppliers
+     set deleted_at = now(),
+         deleted_by = p_merged_by,
+         delete_reason = coalesce(p_reason, 'merged into ' || p_keep_id::text)
+   where id = p_merge_id;
+
+  select * into v_result from public.suppliers where id = p_keep_id;
+  return v_result;
+end;
+$function$;
+
+revoke execute on function public.merge_suppliers(uuid, uuid, text, text) from public, anon;
+grant execute on function public.merge_suppliers(uuid, uuid, text, text) to authenticated;
+
+revoke execute on function public.upsert_external_transactions(jsonb, uuid) from public, anon, authenticated;
+
+alter default privileges in schema public revoke execute on functions from public;
+
+commit;
+
+-- ===================================================================== 0082_agent_report_paged.sql
+
+begin;
+
+drop function if exists public.agent_commission_report(date);
+drop function if exists public.agent_commission_report(date, text, text, boolean, integer, integer);
+
+create function public.agent_commission_report(
+    p_cutoff date,
+    p_search text default '',
+    p_sort text default 'closings',
+    p_ascending boolean default false,
+    p_limit integer default 25,
+    p_offset integer default 0
+)
+returns table (
+    agent_user_id uuid,
+    agent_name text,
+    closings_current integer,
+    closings_previous integer,
+    volume_current numeric,
+    volume_previous numeric,
+    commission_current numeric,
+    commission_previous numeric,
+    bonuses_current numeric,
+    bonuses_previous numeric,
+    bonuses_approved_current numeric,
+    bonuses_approved_previous numeric,
+    total_count bigint,
+    all_closings_current integer,
+    all_closings_previous integer,
+    all_volume_current numeric,
+    all_volume_previous numeric,
+    all_commission_current numeric,
+    all_commission_previous numeric,
+    all_bonuses_current numeric,
+    all_bonuses_previous numeric,
+    all_bonuses_approved_current numeric,
+    all_bonuses_approved_previous numeric
+)
+language sql stable
+set search_path to 'public'
+as $$
+  with window_bounds as (
+    select p_cutoff as cutoff_current,
+           (p_cutoff - interval '1 year')::date as cutoff_previous,
+           date_trunc('year', p_cutoff)::date as year_start_current,
+           (date_trunc('year', p_cutoff) - interval '1 year')::date as year_start_previous
+  ),
+  bonus_counting as (
+    select public.broker_bonus_counting_rule() as counts_status
+  ),
+  -- A deal can carry a buyer side, a seller side, or both (unique(deal_id, side)). Every side that
+  -- exists is the agency's own earned commission on that deal, so all of them count, summed once
+  -- per deal rather than counting the closing twice if both sides belong to the same agent.
+  deal_commission as (
+    select
+      d.id as deal_id,
+      coalesce(d.handled_by, d.acquired_by, public.property_broker_user_id(d.property_id))
+        as agent_user_id,
+      d.notarised_on,
+      d.purchase_price,
+      sum(
+        case
+          when s.fee_kind = 'percent' and s.fee_net_rate is not null and d.purchase_price is not null
+            then d.purchase_price * s.fee_net_rate / 100
+          when s.fee_kind = 'fixed' then s.fee_net_amount
+          else 0
+        end
+      ) as commission_amount
+    from public.deals d
+    join public.deal_sides s on s.deal_id = d.id
+    where d.deleted_at is null
+      and d.status not in ('cancelled', 'settled')
+      and d.notarised_on is not null
+    group by d.id, d.handled_by, d.acquired_by, d.property_id, d.notarised_on, d.purchase_price
+  ),
+  -- An agent qualifies by having a deal OR a bonus inside either window -- a bonus with no deal
+  -- attached (e.g. a Google-review bonus) must not silently drop that agent's whole row, bonus
+  -- figures included.
+  relevant_agents as (
+    select distinct dc.agent_user_id
+      from deal_commission dc, window_bounds wb
+     where dc.agent_user_id is not null
+       and ((dc.notarised_on >= wb.year_start_current and dc.notarised_on <= wb.cutoff_current)
+         or (dc.notarised_on >= wb.year_start_previous and dc.notarised_on <= wb.cutoff_previous))
+    union
+    select distinct b.broker_user_id
+      from public.broker_bonuses b, window_bounds wb, bonus_counting bc
+     where (case bc.counts_status
+              when 'paid' then b.status = 'paid'
+              else b.status in ('approved', 'paid')
+            end)
+       and ((b.earned_on >= wb.year_start_current and b.earned_on <= wb.cutoff_current)
+         or (b.earned_on >= wb.year_start_previous and b.earned_on <= wb.cutoff_previous))
+  ),
+  agent_totals as (
+    select
+      au.id as agent_user_id,
+      coalesce(au.name, au.email) as agent_name,
+      count(*) filter (
+        where dc.notarised_on >= wb.year_start_current and dc.notarised_on <= wb.cutoff_current
+      )::integer as closings_current,
+      count(*) filter (
+        where dc.notarised_on >= wb.year_start_previous and dc.notarised_on <= wb.cutoff_previous
+      )::integer as closings_previous,
+      coalesce(sum(dc.purchase_price) filter (
+        where dc.notarised_on >= wb.year_start_current and dc.notarised_on <= wb.cutoff_current
+      ), 0) as volume_current,
+      coalesce(sum(dc.purchase_price) filter (
+        where dc.notarised_on >= wb.year_start_previous and dc.notarised_on <= wb.cutoff_previous
+      ), 0) as volume_previous,
+      coalesce(sum(dc.commission_amount) filter (
+        where dc.notarised_on >= wb.year_start_current and dc.notarised_on <= wb.cutoff_current
+      ), 0) as commission_current,
+      coalesce(sum(dc.commission_amount) filter (
+        where dc.notarised_on >= wb.year_start_previous and dc.notarised_on <= wb.cutoff_previous
+      ), 0) as commission_previous,
+      coalesce((
+        select sum(b.amount) from public.broker_bonuses b
+         where b.broker_user_id = au.id
+           and (case bc.counts_status
+                  when 'approved_and_paid' then b.status in ('approved', 'paid')
+                  else b.status = 'paid'
+                end)
+           and b.earned_on >= date_trunc('year', p_cutoff)::date and b.earned_on <= p_cutoff
+      ), 0) as bonuses_current,
+      coalesce((
+        select sum(b.amount) from public.broker_bonuses b
+         where b.broker_user_id = au.id
+           and (case bc.counts_status
+                  when 'approved_and_paid' then b.status in ('approved', 'paid')
+                  else b.status = 'paid'
+                end)
+           and b.earned_on >= (date_trunc('year', p_cutoff) - interval '1 year')::date
+           and b.earned_on <= (p_cutoff - interval '1 year')::date
+      ), 0) as bonuses_previous,
+      coalesce((
+        select sum(b.amount) from public.broker_bonuses b
+         where b.broker_user_id = au.id and b.status = 'approved'
+           and b.earned_on >= date_trunc('year', p_cutoff)::date and b.earned_on <= p_cutoff
+      ), 0) as bonuses_approved_current,
+      coalesce((
+        select sum(b.amount) from public.broker_bonuses b
+         where b.broker_user_id = au.id and b.status = 'approved'
+           and b.earned_on >= (date_trunc('year', p_cutoff) - interval '1 year')::date
+           and b.earned_on <= (p_cutoff - interval '1 year')::date
+      ), 0) as bonuses_approved_previous
+    from public.app_users au
+    join relevant_agents ra on ra.agent_user_id = au.id
+    cross join window_bounds wb
+    cross join bonus_counting bc
+    left join deal_commission dc on dc.agent_user_id = au.id
+    where au.id = public.current_app_user_id() or public.has_permission('deals.report_all')
+    group by au.id, au.name, au.email, bc.counts_status
+  ),
+  everyone as (
+    select sum(closings_current)::integer as all_closings_current,
+           sum(closings_previous)::integer as all_closings_previous,
+           sum(volume_current) as all_volume_current,
+           sum(volume_previous) as all_volume_previous,
+           sum(commission_current) as all_commission_current,
+           sum(commission_previous) as all_commission_previous,
+           sum(bonuses_current) as all_bonuses_current,
+           sum(bonuses_previous) as all_bonuses_previous,
+           sum(bonuses_approved_current) as all_bonuses_approved_current,
+           sum(bonuses_approved_previous) as all_bonuses_approved_previous
+      from agent_totals
+  ),
+  searched as (
+    select t.*,
+           case when p_sort = 'agent' then t.agent_name end as sort_text,
+           case p_sort
+             when 'agent' then null::numeric
+             when 'volume' then t.volume_current
+             when 'commission' then t.commission_current
+             when 'bonuses' then t.bonuses_current
+             else t.closings_current::numeric
+           end as sort_number
+      from agent_totals t
+     where btrim(coalesce(p_search, '')) = ''
+        or t.agent_name ilike '%' || btrim(p_search) || '%'
+  )
+  select
+    agent_user_id,
+    agent_name,
+    closings_current,
+    closings_previous,
+    volume_current,
+    volume_previous,
+    commission_current,
+    commission_previous,
+    bonuses_current,
+    bonuses_previous,
+    bonuses_approved_current,
+    bonuses_approved_previous,
+    count(*) over () as total_count,
+    coalesce(e.all_closings_current, 0),
+    coalesce(e.all_closings_previous, 0),
+    coalesce(e.all_volume_current, 0),
+    coalesce(e.all_volume_previous, 0),
+    coalesce(e.all_commission_current, 0),
+    coalesce(e.all_commission_previous, 0),
+    coalesce(e.all_bonuses_current, 0),
+    coalesce(e.all_bonuses_previous, 0),
+    coalesce(e.all_bonuses_approved_current, 0),
+    coalesce(e.all_bonuses_approved_previous, 0)
+  from searched
+  cross join everyone e
+  order by
+    case when p_ascending then sort_text end asc nulls last,
+    case when not p_ascending then sort_text end desc nulls last,
+    case when p_ascending then sort_number end asc nulls last,
+    case when not p_ascending then sort_number end desc nulls last,
+    agent_user_id
+  limit greatest(p_limit, 0) offset greatest(p_offset, 0);
+$$;
+
+revoke all on function public.agent_commission_report(date, text, text, boolean, integer, integer) from public, anon;
+grant execute on function public.agent_commission_report(date, text, text, boolean, integer, integer) to authenticated;
+
+commit;
+
+-- ===================================================================== 0083_agent_report_deals.sql
+
+begin;
+
+-- A deal can carry a buyer side, a seller side, or both (unique(deal_id, side)). Every side that
+-- exists is the agency's own earned commission on that deal, so all of them count, summed once
+-- per deal rather than counting the closing twice if both sides belong to the same agent.
+create or replace view public.v_deal_commission
+with (security_invoker = true) as
+  select
+    d.id as deal_id,
+    coalesce(d.handled_by, d.acquired_by, public.property_broker_user_id(d.property_id))
+      as agent_user_id,
+    d.notarised_on,
+    d.purchase_price,
+    d.property_label,
+    d.status,
+    sum(
+      case
+        when s.fee_kind = 'percent' and s.fee_net_rate is not null and d.purchase_price is not null
+          then d.purchase_price * s.fee_net_rate / 100
+        when s.fee_kind = 'fixed' then s.fee_net_amount
+        else 0
+      end
+    ) as commission_amount
+  from public.deals d
+  join public.deal_sides s on s.deal_id = d.id
+  where d.deleted_at is null
+    and d.status not in ('cancelled', 'settled')
+    and d.notarised_on is not null
+  group by d.id, d.handled_by, d.acquired_by, d.property_id, d.notarised_on, d.purchase_price,
+           d.property_label, d.status;
+
+revoke all on public.v_deal_commission from anon;
+grant select on public.v_deal_commission to authenticated;
+
+create or replace function public.agent_commission_report(
+    p_cutoff date,
+    p_search text default '',
+    p_sort text default 'closings',
+    p_ascending boolean default false,
+    p_limit integer default 25,
+    p_offset integer default 0
+)
+returns table (
+    agent_user_id uuid,
+    agent_name text,
+    closings_current integer,
+    closings_previous integer,
+    volume_current numeric,
+    volume_previous numeric,
+    commission_current numeric,
+    commission_previous numeric,
+    bonuses_current numeric,
+    bonuses_previous numeric,
+    bonuses_approved_current numeric,
+    bonuses_approved_previous numeric,
+    total_count bigint,
+    all_closings_current integer,
+    all_closings_previous integer,
+    all_volume_current numeric,
+    all_volume_previous numeric,
+    all_commission_current numeric,
+    all_commission_previous numeric,
+    all_bonuses_current numeric,
+    all_bonuses_previous numeric,
+    all_bonuses_approved_current numeric,
+    all_bonuses_approved_previous numeric
+)
+language sql stable
+set search_path to 'public'
+as $$
+  with window_bounds as (
+    select p_cutoff as cutoff_current,
+           (p_cutoff - interval '1 year')::date as cutoff_previous,
+           date_trunc('year', p_cutoff)::date as year_start_current,
+           (date_trunc('year', p_cutoff) - interval '1 year')::date as year_start_previous
+  ),
+  bonus_counting as (
+    select public.broker_bonus_counting_rule() as counts_status
+  ),
+  deal_commission as (
+    select v.deal_id,
+           v.agent_user_id,
+           v.notarised_on,
+           v.purchase_price,
+           v.commission_amount
+      from public.v_deal_commission v
+  ),
+  -- An agent qualifies by having a deal OR a bonus inside either window -- a bonus with no deal
+  -- attached (e.g. a Google-review bonus) must not silently drop that agent's whole row, bonus
+  -- figures included.
+  relevant_agents as (
+    select distinct dc.agent_user_id
+      from deal_commission dc, window_bounds wb
+     where dc.agent_user_id is not null
+       and ((dc.notarised_on >= wb.year_start_current and dc.notarised_on <= wb.cutoff_current)
+         or (dc.notarised_on >= wb.year_start_previous and dc.notarised_on <= wb.cutoff_previous))
+    union
+    select distinct b.broker_user_id
+      from public.broker_bonuses b, window_bounds wb, bonus_counting bc
+     where (case bc.counts_status
+              when 'paid' then b.status = 'paid'
+              else b.status in ('approved', 'paid')
+            end)
+       and ((b.earned_on >= wb.year_start_current and b.earned_on <= wb.cutoff_current)
+         or (b.earned_on >= wb.year_start_previous and b.earned_on <= wb.cutoff_previous))
+  ),
+  agent_totals as (
+    select
+      au.id as agent_user_id,
+      coalesce(au.name, au.email) as agent_name,
+      count(*) filter (
+        where dc.notarised_on >= wb.year_start_current and dc.notarised_on <= wb.cutoff_current
+      )::integer as closings_current,
+      count(*) filter (
+        where dc.notarised_on >= wb.year_start_previous and dc.notarised_on <= wb.cutoff_previous
+      )::integer as closings_previous,
+      coalesce(sum(dc.purchase_price) filter (
+        where dc.notarised_on >= wb.year_start_current and dc.notarised_on <= wb.cutoff_current
+      ), 0) as volume_current,
+      coalesce(sum(dc.purchase_price) filter (
+        where dc.notarised_on >= wb.year_start_previous and dc.notarised_on <= wb.cutoff_previous
+      ), 0) as volume_previous,
+      coalesce(sum(dc.commission_amount) filter (
+        where dc.notarised_on >= wb.year_start_current and dc.notarised_on <= wb.cutoff_current
+      ), 0) as commission_current,
+      coalesce(sum(dc.commission_amount) filter (
+        where dc.notarised_on >= wb.year_start_previous and dc.notarised_on <= wb.cutoff_previous
+      ), 0) as commission_previous,
+      coalesce((
+        select sum(b.amount) from public.broker_bonuses b
+         where b.broker_user_id = au.id
+           and (case bc.counts_status
+                  when 'approved_and_paid' then b.status in ('approved', 'paid')
+                  else b.status = 'paid'
+                end)
+           and b.earned_on >= date_trunc('year', p_cutoff)::date and b.earned_on <= p_cutoff
+      ), 0) as bonuses_current,
+      coalesce((
+        select sum(b.amount) from public.broker_bonuses b
+         where b.broker_user_id = au.id
+           and (case bc.counts_status
+                  when 'approved_and_paid' then b.status in ('approved', 'paid')
+                  else b.status = 'paid'
+                end)
+           and b.earned_on >= (date_trunc('year', p_cutoff) - interval '1 year')::date
+           and b.earned_on <= (p_cutoff - interval '1 year')::date
+      ), 0) as bonuses_previous,
+      coalesce((
+        select sum(b.amount) from public.broker_bonuses b
+         where b.broker_user_id = au.id and b.status = 'approved'
+           and b.earned_on >= date_trunc('year', p_cutoff)::date and b.earned_on <= p_cutoff
+      ), 0) as bonuses_approved_current,
+      coalesce((
+        select sum(b.amount) from public.broker_bonuses b
+         where b.broker_user_id = au.id and b.status = 'approved'
+           and b.earned_on >= (date_trunc('year', p_cutoff) - interval '1 year')::date
+           and b.earned_on <= (p_cutoff - interval '1 year')::date
+      ), 0) as bonuses_approved_previous
+    from public.app_users au
+    join relevant_agents ra on ra.agent_user_id = au.id
+    cross join window_bounds wb
+    cross join bonus_counting bc
+    left join deal_commission dc on dc.agent_user_id = au.id
+    where au.id = public.current_app_user_id() or public.has_permission('deals.report_all')
+    group by au.id, au.name, au.email, bc.counts_status
+  ),
+  everyone as (
+    select sum(closings_current)::integer as all_closings_current,
+           sum(closings_previous)::integer as all_closings_previous,
+           sum(volume_current) as all_volume_current,
+           sum(volume_previous) as all_volume_previous,
+           sum(commission_current) as all_commission_current,
+           sum(commission_previous) as all_commission_previous,
+           sum(bonuses_current) as all_bonuses_current,
+           sum(bonuses_previous) as all_bonuses_previous,
+           sum(bonuses_approved_current) as all_bonuses_approved_current,
+           sum(bonuses_approved_previous) as all_bonuses_approved_previous
+      from agent_totals
+  ),
+  searched as (
+    select t.*,
+           case when p_sort = 'agent' then t.agent_name end as sort_text,
+           case p_sort
+             when 'agent' then null::numeric
+             when 'volume' then t.volume_current
+             when 'commission' then t.commission_current
+             when 'bonuses' then t.bonuses_current
+             else t.closings_current::numeric
+           end as sort_number
+      from agent_totals t
+     where btrim(coalesce(p_search, '')) = ''
+        or t.agent_name ilike '%' || btrim(p_search) || '%'
+  )
+  select
+    agent_user_id,
+    agent_name,
+    closings_current,
+    closings_previous,
+    volume_current,
+    volume_previous,
+    commission_current,
+    commission_previous,
+    bonuses_current,
+    bonuses_previous,
+    bonuses_approved_current,
+    bonuses_approved_previous,
+    count(*) over () as total_count,
+    coalesce(e.all_closings_current, 0),
+    coalesce(e.all_closings_previous, 0),
+    coalesce(e.all_volume_current, 0),
+    coalesce(e.all_volume_previous, 0),
+    coalesce(e.all_commission_current, 0),
+    coalesce(e.all_commission_previous, 0),
+    coalesce(e.all_bonuses_current, 0),
+    coalesce(e.all_bonuses_previous, 0),
+    coalesce(e.all_bonuses_approved_current, 0),
+    coalesce(e.all_bonuses_approved_previous, 0)
+  from searched
+  cross join everyone e
+  order by
+    case when p_ascending then sort_text end asc nulls last,
+    case when not p_ascending then sort_text end desc nulls last,
+    case when p_ascending then sort_number end asc nulls last,
+    case when not p_ascending then sort_number end desc nulls last,
+    agent_user_id
+  limit greatest(p_limit, 0) offset greatest(p_offset, 0);
+$$;
+
+revoke all on function public.agent_commission_report(date, text, text, boolean, integer, integer) from public, anon;
+grant execute on function public.agent_commission_report(date, text, text, boolean, integer, integer) to authenticated;
+
+create or replace function public.agent_report_deals(
+    p_agent_user_id uuid,
+    p_cutoff date,
+    p_limit integer default 10,
+    p_offset integer default 0
+)
+returns table (
+    deal_id uuid,
+    property_label text,
+    notarised_on date,
+    status text,
+    commission_amount numeric,
+    total_count bigint
+)
+language sql stable security invoker
+set search_path to 'public'
+as $$
+  select
+    v.deal_id,
+    v.property_label,
+    v.notarised_on,
+    v.status,
+    v.commission_amount,
+    count(*) over () as total_count
+  from public.v_deal_commission v
+  where v.agent_user_id = p_agent_user_id
+    and v.notarised_on >= date_trunc('year', p_cutoff)::date
+    and v.notarised_on <= p_cutoff
+    and (p_agent_user_id = public.current_app_user_id()
+         or public.has_permission('deals.report_all'))
+  order by v.notarised_on desc, v.deal_id
+  limit greatest(p_limit, 0) offset greatest(p_offset, 0);
+$$;
+
+revoke all on function public.agent_report_deals(uuid, date, integer, integer) from public, anon;
+grant execute on function public.agent_report_deals(uuid, date, integer, integer) to authenticated;
+
+commit;
+
+-- ===================================================================== 0084_nl_search_reads_every_document.sql
+
+
+begin;
+
+
+
+CREATE OR REPLACE FUNCTION public.invoices_search_ids(p_where text DEFAULT NULL::text, p_archived boolean DEFAULT false) RETURNS SETOF uuid
+    LANGUAGE plpgsql STABLE
+    SET search_path TO 'public'
+    SET statement_timeout TO '8s'
+    AS $$
+declare
+  v_scope text := case when p_archived then 'is not null' else 'is null' end;
+begin
+  if p_where is not null and (p_where ~ ';' or p_where like '%--%' or p_where like '%/*%') then
+    raise exception 'invalid where clause';
+  end if;
+  return query execute
+    'select id from public.v_documents_search where archived_at ' || v_scope ||
+    ' and not_relevant_at is null' ||
+    case
+      when p_where is not null and btrim(p_where) <> '' then ' and (' || p_where || ')'
+      else ''
+    end;
+end;
+$$;
+create or replace function public.nl_search_columns()
+    returns table(column_name text, data_type text)
+    language sql stable
+    set search_path to 'public'
+as $fn$
+  select c.column_name::text, c.data_type::text
+    from information_schema.columns c
+   where c.table_schema = 'public'
+     and c.table_name = 'v_documents_search'
+   order by c.ordinal_position;
+$fn$;
+
+revoke execute on function public.nl_search_columns() from public, anon;
+grant execute on function public.nl_search_columns() to authenticated;
+
+commit;
+
+-- ===================================================================== 0085_nl_search_column_values.sql
+
+begin;
+
+create or replace function public.nl_search_column_values()
+    returns table(column_name text, value text)
+    language sql stable
+    set search_path to 'public'
+as $fn$
+  with listed as (
+    select 'status' as column_name, status as value from public.v_documents_search
+    union all
+    select 'workflow_status', workflow_status from public.v_documents_search
+    union all
+    select 'document_type', document_type from public.v_documents_search
+    union all
+    select 'traffic_light', traffic_light from public.v_documents_search
+    union all
+    select 'currency', currency from public.v_documents_search
+  ),
+  ranked as (
+    select column_name, value,
+           row_number() over (partition by column_name order by count(*) desc, value) as rank
+      from listed
+     where value is not null and btrim(value) <> ''
+     group by column_name, value
+  )
+  select column_name, value from ranked where rank <= 25 order by column_name, value;
+$fn$;
+
+revoke execute on function public.nl_search_column_values() from public, anon;
+grant execute on function public.nl_search_column_values() to authenticated;
+
+commit;
+
+-- ===================================================================== 0086_nl_search_totals.sql
+
+begin;
+
+create or replace function public.invoices_search_totals(
+    p_where text default null,
+    p_archived boolean default false
+)
+    returns table(invoice_count bigint, total_gross numeric, total_net numeric, total_vat numeric)
+    language plpgsql stable
+    set search_path to 'public'
+    set statement_timeout to '8s'
+as $fn$
+declare
+  v_scope text := case when p_archived then 'is not null' else 'is null' end;
+begin
+  if p_where is not null and (p_where ~ ';' or p_where like '%--%' or p_where like '%/*%') then
+    raise exception 'invalid where clause';
+  end if;
+  return query execute
+    'select count(*)::bigint,
+            coalesce(sum(amount_gross), 0)::numeric,
+            coalesce(sum(amount_net), 0)::numeric,
+            coalesce(sum(vat_amount), 0)::numeric
+       from public.v_documents_search
+      where archived_at ' || v_scope ||
+    ' and not_relevant_at is null' ||
+    case
+      when p_where is not null and btrim(p_where) <> '' then ' and (' || p_where || ')'
+      else ''
+    end;
+end;
+$fn$;
+
+revoke execute on function public.invoices_search_totals(text, boolean) from public, anon;
+grant execute on function public.invoices_search_totals(text, boolean) to authenticated;
+
+commit;
+
+-- ===================================================================== 0087_commission_deal_practice_seed_co_buyer.sql
+
+-- Adds a third demo customer, "TEST Co-Buyer", so the buyer side of the practice deal can have two
+-- payers and the Share % field has something real to split, instead of staying locked at 100%.
+
+begin;
+
+create or replace function public.seed_commission_deal_practice_data() returns uuid[]
+    language plpgsql security definer set search_path to 'public'
+    as $$
+declare
+  v_user_id uuid := public.current_app_user_id();
+  v_tag text;
+  v_company_id uuid;
+  v_property_id uuid;
+  v_buyer_id uuid;
+  v_co_buyer_id uuid;
+  v_seller_id uuid;
+begin
+  if v_user_id is null then
+    raise exception 'seed_commission_deal_practice_data: no signed-in app user';
+  end if;
+
+  v_tag := substr(replace(v_user_id::text, '-', ''), 1, 8);
+
+  select id into v_company_id from public.companies
+   where is_demo and demo_owner_user_id = v_user_id and code = 'DEMO-' || v_tag;
+  if v_company_id is null then
+    raise exception 'seed_commission_deal_practice_data: no demo company for user %, seedPracticeData should have run first', v_user_id;
+  end if;
+
+  select id into v_property_id from public.properties
+   where is_demo and demo_owner_user_id = v_user_id and code = 'DEMO-' || v_tag || '-P1';
+  if v_property_id is null then
+    raise exception 'seed_commission_deal_practice_data: no demo property for user %, seedPracticeData should have run first', v_user_id;
+  end if;
+
+  select id into v_buyer_id from public.customers
+   where company_id = v_company_id and name = 'TEST Buyer';
+  if v_buyer_id is not null then
+    update public.customers set deleted_at = null where id = v_buyer_id and deleted_at is not null;
+  else
+    insert into public.customers (company_id, is_company, name)
+    values (v_company_id, false, 'TEST Buyer')
+    returning id into v_buyer_id;
+  end if;
+
+  select id into v_co_buyer_id from public.customers
+   where company_id = v_company_id and name = 'TEST Co-Buyer';
+  if v_co_buyer_id is not null then
+    update public.customers set deleted_at = null where id = v_co_buyer_id and deleted_at is not null;
+  else
+    insert into public.customers (company_id, is_company, name)
+    values (v_company_id, false, 'TEST Co-Buyer')
+    returning id into v_co_buyer_id;
+  end if;
+
+  select id into v_seller_id from public.customers
+   where company_id = v_company_id and name = 'TEST Seller';
+  if v_seller_id is not null then
+    update public.customers set deleted_at = null where id = v_seller_id and deleted_at is not null;
+  else
+    insert into public.customers (company_id, is_company, name)
+    values (v_company_id, false, 'TEST Seller')
+    returning id into v_seller_id;
+  end if;
+
+  update public.deals
+     set status = 'cancelled'
+   where property_id = v_property_id
+     and deleted_at is null
+     and status not in ('cancelled', 'settled');
+
+  return array[v_buyer_id, v_seller_id, v_co_buyer_id];
+end $$;
+
+revoke execute on function public.seed_commission_deal_practice_data() from public, anon;
+grant execute on function public.seed_commission_deal_practice_data() to authenticated;
+
+commit;
+
+-- ===================================================================== 0088_assistant_usage_records_the_clause.sql
+
+begin;
+
+alter table public.assistant_usage
+    add column if not exists where_clause text,
+    add column if not exists rejected_where_clause text,
+    add column if not exists match_count integer;
+
+commit;
+
+-- ===================================================================== 0089_nl_search_breakdown.sql
+
+begin;
+
+create or replace function public.invoices_search_breakdown(
+    p_where text default null,
+    p_archived boolean default false,
+    p_group_by text default 'issuer'
+)
+    returns table(group_key text, invoice_count bigint, total_gross numeric)
+    language plpgsql stable
+    set search_path to 'public'
+    set statement_timeout to '8s'
+as $fn$
+declare
+  v_scope text := case when p_archived then 'is not null' else 'is null' end;
+  v_key text := case p_group_by
+                  when 'company'  then 'coalesce(company_code, ''NZO'')'
+                  when 'property' then 'property_code'
+                  when 'category' then 'cost_category'
+                  else 'issuer'
+                end;
+begin
+  if p_where is not null and (p_where ~ ';' or p_where like '%--%' or p_where like '%/*%') then
+    raise exception 'invalid where clause';
+  end if;
+  return query execute
+    'select ' || v_key || '::text as group_key,
+            count(*)::bigint,
+            coalesce(sum(amount_gross), 0)::numeric
+       from public.v_documents_search
+      where archived_at ' || v_scope ||
+    ' and not_relevant_at is null' ||
+    case
+      when p_where is not null and btrim(p_where) <> '' then ' and (' || p_where || ')'
+      else ''
+    end ||
+    ' group by 1 having ' || v_key || ' is not null
+      order by 3 desc
+      limit 5';
+end;
+$fn$;
+
+revoke execute on function public.invoices_search_breakdown(text, boolean, text) from public, anon;
+grant execute on function public.invoices_search_breakdown(text, boolean, text) to authenticated;
+
+commit;
+
+-- ===================================================================== 0090_practice_invoices_are_not_uploads.sql
+
+begin;
+
+update public.documents
+   set intake_channel = 'manual'
+ where is_demo
+   and intake_channel = 'upload';
+
+commit;
+
+-- ===================================================================== 0091_lexware_never_pushes_practice_data.sql
+
+begin;
+
+drop trigger if exists documents_lexoffice_push_insert on public.documents;
+create trigger documents_lexoffice_push_insert after insert on public.documents
+    for each row
+    when (new.workflow_status in ('approved_final', 'paid')
+        and coalesce(new.is_demo, false) = false)
+    execute function public.lexoffice_document_push_now();
+
+drop trigger if exists documents_lexoffice_push_update on public.documents;
+create trigger documents_lexoffice_push_update after update of workflow_status on public.documents
+    for each row
+    when (new.workflow_status in ('approved_final', 'paid')
+        and old.workflow_status is distinct from new.workflow_status
+        and coalesce(new.is_demo, false) = false)
+    execute function public.lexoffice_document_push_now();
+
+create or replace function public.lexoffice_invoice_push_now() returns trigger
+    language plpgsql security definer set search_path to 'public'
+    as $$
+declare
+  v_key text;
+  v_url text;
+begin
+  if exists (
+    select 1
+      from public.deals d
+      join public.properties p on p.id = d.property_id
+     where d.id = new.deal_id and p.is_demo
+  ) then
+    return null;
+  end if;
+
+  v_key := public.deployment_secret('service_role_key');
+  v_url := public.deployment_secret('project_url');
+  if v_key is null or v_url is null then
+    return null;
+  end if;
+
+  perform net.http_post(
+    url := rtrim(v_url, '/') || '/functions/v1/lexoffice-invoice-push',
+    headers := jsonb_build_object(
+      'Content-Type', 'application/json',
+      'Authorization', 'Bearer ' || v_key
+    ),
+    body := jsonb_build_object('outgoing_invoice_id', new.id),
+    timeout_milliseconds := 30000
+  );
+  return null;
+end;
+$$;
+
+commit;
+
+-- ===================================================================== 0092_digest_counts_exclude_practice_data.sql
+
+begin;
+
+drop view if exists public.v_bank_transactions_list;
+create view public.v_bank_transactions_list with (security_invoker = true) as
+select t.*,
+       a.account_name,
+       a.iban as account_iban,
+       a.bank_name as account_bank_name,
+       exists (
+         select 1 from public.document_transaction_matches m
+          where m.transaction_id = t.id and m.status in ('candidate', 'auto')
+       ) as has_suggested_match,
+       exists (
+         select 1 from public.document_transaction_matches m
+          where m.transaction_id = t.id and m.status = 'confirmed'
+       ) as has_confirmed_match
+  from public.bank_transactions t
+  left join public.bank_accounts a on a.id = t.account_id
+ where t.deleted_at is null;
+
+do $$
+begin
+  if not exists (
+    select 1 from information_schema.columns
+     where table_schema = 'public' and table_name = 'v_bank_transactions_list'
+       and column_name = 'is_demo'
+  ) then
+    raise exception '0092 self-check failed: v_bank_transactions_list still hides is_demo';
+  end if;
+end
+$$;
+
+commit;
+
+-- ===================================================================== 0093_drop_the_unused_search_functions.sql
+
+begin;
+
+drop function if exists public.invoices_filtered_search(public.vector, text, text, text, text, date, date, text, integer, text, numeric, numeric);
+drop function if exists public.invoices_filtered_aggregate(text, text, text, text, date, date, text, text, numeric, numeric);
+
+commit;
+
+-- ===================================================================== 0094_buyer_payment_term_days.sql
+
+-- Null: create_deal_invoices() keeps giving the buyer side the property's own due date, as before.
+
+begin;
+
+alter table public.invoice_settings
+    add column if not exists buyer_payment_term_days integer;
+
+alter table public.invoice_settings
+    drop constraint if exists invoice_settings_buyer_payment_term_days_sane;
+
+alter table public.invoice_settings
+    add constraint invoice_settings_buyer_payment_term_days_sane
+    check (buyer_payment_term_days is null
+        or (buyer_payment_term_days >= 0 and buyer_payment_term_days <= 365));
+
+comment on column public.invoice_settings.buyer_payment_term_days is
+    'How many days after the invoice date the buyer side is due. Null means the same due date as the seller side.';
 
 commit;

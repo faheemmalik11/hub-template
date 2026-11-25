@@ -67,6 +67,9 @@ export type { CostAnalysisCategory } from "@/lib/data/types";
 export { useTranslation } from "@/lib/i18n";
 export { cn } from "@/lib/utils";
 
+export { useAuth } from "@/lib/auth";
+export { PERMISSIONS } from "@/config/permissions";
+
 // ---------------------------------------------------------------------------
 // Query hooks. Same names in every Hub; only the module path can differ.
 // ---------------------------------------------------------------------------

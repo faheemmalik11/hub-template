@@ -484,8 +484,12 @@ CREATE OR REPLACE FUNCTION public.create_deal_invoices(p_deal_id uuid, p_invoice
     AS $$
 declare
   v_deal public.deals;
-  v_due_date date;
+  v_invoice_date date;
+  v_property_due_date date;
+  v_buyer_payment_term_days integer;
   v_item jsonb;
+  v_side text;
+  v_due_date date;
 begin
   select * into v_deal from public.deals where id = p_deal_id and deleted_at is null;
   if not found then
@@ -496,10 +500,26 @@ begin
       using errcode = 'check_violation';
   end if;
 
-  select p.payment_due_date into v_due_date
+  select p.payment_due_date into v_property_due_date
     from public.properties p where p.id = v_deal.property_id;
 
+  select buyer_payment_term_days into v_buyer_payment_term_days
+    from public.invoice_settings where id = true;
+
+  v_invoice_date := coalesce(v_deal.notarised_on, current_date);
+
   for v_item in select * from jsonb_array_elements(p_invoices) loop
+    select ds.side into v_side
+      from public.deal_parties dp
+      join public.deal_sides ds on ds.id = dp.deal_side_id
+      where dp.id = (v_item ->> 'deal_party_id')::uuid;
+
+    v_due_date := case
+      when v_side = 'buyer' and v_buyer_payment_term_days is not null
+        then v_invoice_date + v_buyer_payment_term_days
+      else v_property_due_date
+    end;
+
     insert into public.outgoing_invoices (
       company_id, customer_id, deal_party_id, kind, deal_id,
       status, invoice_date, due_date, amount_net, amount_gross
@@ -510,7 +530,7 @@ begin
       'commission',
       p_deal_id,
       'draft',
-      coalesce(v_deal.notarised_on, current_date),
+      v_invoice_date,
       v_due_date,
       (v_item ->> 'amount_net')::numeric,
       (v_item ->> 'amount_gross')::numeric

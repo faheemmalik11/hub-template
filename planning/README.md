@@ -23,6 +23,7 @@ what they do not use, without touching their code.
 | `13-kit-modularity-and-stories.md` | Making `src/kit` (42,766 lines, 45 primitives, 96 components, 148 page files) granular enough for Storybook |
 | `14-setting-up-a-new-client.md` | Setting up a new client start to finish, as it was actually run for `dev-tenant` on 21 Sept 2026 |
 | `15-feature-portability-audit-1/` | The first per-client feature-portability audit: what a real client's Hub has that this template doesn't, and a port-or-not call for each |
+| `client-communication-log.md` | One-line pointers to client messages filed on their own branches — never the content itself |
 
 `06-phases.md` is kept current against the actual code, not written once and left — check its
 "updated" line before trusting a checkbox in it.

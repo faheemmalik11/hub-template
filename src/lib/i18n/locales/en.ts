@@ -4459,6 +4459,10 @@ const en = {
     defaultVatRateInvalid: "Please enter a number between 0 and 100.",
     countryCodeInvalid: "Please enter a two-letter country code in capitals, for example DE.",
     paymentTermDaysInvalid: "Please enter a whole number between 0 and 365.",
+    buyerPaymentTermDaysInvalid:
+      "Please enter a whole number between 0 and 365, or leave it empty.",
+    buyerPaymentTermDaysHint:
+      "Leave empty for the buyer side to get the same due date as the seller side, from the property.",
     finaliseInLexwareHint:
       "Off: the invoice is left as a draft in Lexware for someone to check and release there.",
     kindInvalid:
@@ -4507,6 +4511,7 @@ const en = {
       kindLabel: "Wording",
       timezone: "Time zone",
       paymentTermDays: "Payment term (days)",
+      buyerPaymentTermDays: "Buyer side payment term (days)",
       finaliseInLexware: "Finalize the invoice in Lexware",
     },
     timezoneInvalid: "Please select a time zone.",

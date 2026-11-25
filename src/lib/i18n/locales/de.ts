@@ -4627,6 +4627,10 @@ const de = {
     countryCodeInvalid:
       "Bitte ein Länderkürzel aus zwei Großbuchstaben eintragen, zum Beispiel DE.",
     paymentTermDaysInvalid: "Bitte eine ganze Zahl zwischen 0 und 365 eintragen.",
+    buyerPaymentTermDaysInvalid:
+      "Bitte eine ganze Zahl zwischen 0 und 365 eintragen, oder das Feld leer lassen.",
+    buyerPaymentTermDaysHint:
+      "Leer lassen, damit die Käuferseite dasselbe Zahlungsziel wie die Verkäuferseite bekommt, aus der Immobilie.",
     finaliseInLexwareHint:
       "Aus: Die Rechnung bleibt in Lexware als Entwurf stehen, bis jemand sie dort prüft und freigibt.",
     kindInvalid:
@@ -4676,6 +4680,7 @@ const de = {
       kindLabel: "Bezeichnung",
       timezone: "Zeitzone",
       paymentTermDays: "Zahlungsfrist in Tagen",
+      buyerPaymentTermDays: "Zahlungsfrist Käuferseite in Tagen",
       finaliseInLexware: "Rechnung in Lexware abschließen",
     },
     timezoneInvalid: "Bitte eine Zeitzone auswählen.",
