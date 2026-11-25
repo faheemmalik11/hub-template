@@ -4,7 +4,7 @@ import { TABLE } from "@/config/tables";
 import { STALE, sb } from "@/data/client";
 import { queryKeys } from "@/data/keys";
 
-export type ReferrerBonusStatus = "suggested" | "paid" | "cancelled";
+export type ReferrerBonusStatus = "suggested" | "awaiting_bank_details" | "paid" | "cancelled";
 
 export interface DealReferrerBonus {
   id: string;
@@ -79,6 +79,20 @@ export function useSuggestReferrerBonus(dealId: string) {
       qc.invalidateQueries({ queryKey: queryKeys.dealReferrerBonuses.forDeal(dealId) });
       qc.invalidateQueries({ queryKey: ["deal-referrer-bonuses", "tier"] });
     },
+  });
+}
+
+export function useMarkReferrerBonusAwaitingBankDetails(dealId: string) {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async (id: string) => {
+      const { error } = await sb.rpc("mark_referrer_bonus_awaiting_bank_details", {
+        p_bonus_id: id,
+      });
+      if (error) throw error;
+    },
+    onSuccess: () =>
+      qc.invalidateQueries({ queryKey: queryKeys.dealReferrerBonuses.forDeal(dealId) }),
   });
 }
 

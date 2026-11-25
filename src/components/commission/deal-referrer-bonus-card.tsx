@@ -12,6 +12,7 @@ import {
   useCreateReferrerCreditNote,
   useCustomer,
   useDealReferrerBonus,
+  useMarkReferrerBonusAwaitingBankDetails,
   useMarkReferrerBonusPaid,
   useOutgoingInvoices,
   useReferrerBonusTier,
@@ -66,6 +67,7 @@ export function DealReferrerBonusCard({
   const bonusQ = useDealReferrerBonus(deal.id);
   const tierQ = useReferrerBonusTier(referrerCustomerId, earnedOn);
   const suggest = useSuggestReferrerBonus(deal.id);
+  const markAwaitingBankDetails = useMarkReferrerBonusAwaitingBankDetails(deal.id);
   const markPaid = useMarkReferrerBonusPaid(deal.id);
   const cancel = useCancelReferrerBonus(deal.id);
   const invoicesQ = useOutgoingInvoices({ dealId: deal.id });
@@ -161,6 +163,29 @@ export function DealReferrerBonusCard({
           </div>
           {bonus.status === "suggested" && !cancelling && (
             <div className="mt-3 flex flex-wrap items-center gap-2">
+              <Button
+                size="sm"
+                disabled={markAwaitingBankDetails.isPending}
+                onClick={() =>
+                  markAwaitingBankDetails.mutate(bonus.id, {
+                    onSuccess: () =>
+                      toast.success(t("commissionDeals.referrerBonus.markedAwaitingBankDetails")),
+                    onError: (error) =>
+                      toast.error(t("commissionDeals.referrerBonus.failed"), {
+                        description: errorText(error),
+                      }),
+                  })
+                }
+              >
+                {t("commissionDeals.referrerBonus.markAwaitingBankDetails")}
+              </Button>
+              <Button size="sm" variant="outline" onClick={() => setCancelling(true)}>
+                {t("commissionDeals.referrerBonus.cancel")}
+              </Button>
+            </div>
+          )}
+          {bonus.status === "awaiting_bank_details" && !cancelling && (
+            <div className="mt-3 flex flex-wrap items-center gap-2">
               <Tooltip>
                 <TooltipTrigger asChild>
                   <span>
@@ -195,39 +220,40 @@ export function DealReferrerBonusCard({
               </Button>
             </div>
           )}
-          {bonus.status === "suggested" && cancelling && (
-            <div className="mt-3 flex flex-wrap items-center gap-2">
-              <Input
-                className="min-w-48 flex-1"
-                value={cancelReason}
-                onChange={(event) => setCancelReason(event.target.value)}
-                placeholder={t("commissionDeals.referrerBonus.cancelReason")}
-                aria-label={t("commissionDeals.referrerBonus.cancelReason")}
-              />
-              <Button
-                size="sm"
-                variant="destructive"
-                disabled={cancel.isPending}
-                onClick={() =>
-                  cancel.mutate(
-                    { id: bonus.id, reason: cancelReason.trim() || null },
-                    {
-                      onSuccess: () => setCancelling(false),
-                      onError: (error) =>
-                        toast.error(t("commissionDeals.referrerBonus.failed"), {
-                          description: errorText(error),
-                        }),
-                    },
-                  )
-                }
-              >
-                {t("commissionDeals.referrerBonus.confirmCancel")}
-              </Button>
-              <Button size="sm" variant="ghost" onClick={() => setCancelling(false)}>
-                {t("commissionDeals.referrerBonus.keepCancel")}
-              </Button>
-            </div>
-          )}
+          {(bonus.status === "suggested" || bonus.status === "awaiting_bank_details") &&
+            cancelling && (
+              <div className="mt-3 flex flex-wrap items-center gap-2">
+                <Input
+                  className="min-w-48 flex-1"
+                  value={cancelReason}
+                  onChange={(event) => setCancelReason(event.target.value)}
+                  placeholder={t("commissionDeals.referrerBonus.cancelReason")}
+                  aria-label={t("commissionDeals.referrerBonus.cancelReason")}
+                />
+                <Button
+                  size="sm"
+                  variant="destructive"
+                  disabled={cancel.isPending}
+                  onClick={() =>
+                    cancel.mutate(
+                      { id: bonus.id, reason: cancelReason.trim() || null },
+                      {
+                        onSuccess: () => setCancelling(false),
+                        onError: (error) =>
+                          toast.error(t("commissionDeals.referrerBonus.failed"), {
+                            description: errorText(error),
+                          }),
+                      },
+                    )
+                  }
+                >
+                  {t("commissionDeals.referrerBonus.confirmCancel")}
+                </Button>
+                <Button size="sm" variant="ghost" onClick={() => setCancelling(false)}>
+                  {t("commissionDeals.referrerBonus.keepCancel")}
+                </Button>
+              </div>
+            )}
           {bonus.status === "paid" && !creditNote && (
             <div className="mt-3">
               <Button

@@ -68,6 +68,7 @@ export const TABLE = {
   importedItems: "imported_items",
   ingestExclusions: "ingest_exclusions",
   invoiceKindLabels: "invoice_kind_labels",
+  invoiceMailTemplates: "invoice_mail_templates",
   invoiceSettings: "invoice_settings",
   manualBookings: "manual_bookings",
   matchingSettings: "matching_settings",

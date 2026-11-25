@@ -4506,6 +4506,20 @@ const en = {
         title: "Reminders",
         desc: "When to remind administrators about a sale that still needs attention.",
       },
+      mailTemplates: {
+        title: "Invoice mail texts",
+        desc: "The text for sending a commission invoice. The right one is picked automatically: buyer, or seller under {{amount}}, or seller at {{amount}} and above. Sending itself stays manual, outside the Hub.",
+        descNoAmount:
+          "The text for sending a commission invoice. The right one is picked automatically by side and the realised price. Sending itself stays manual, outside the Hub.",
+        subject: "Subject",
+        body: "Text",
+        saved: "Saved.",
+        case: {
+          buyer: "Buyer",
+          seller_under_threshold: "Seller, under the threshold",
+          seller_over_threshold: "Seller, at or above the threshold",
+        },
+      },
     },
     field: {
       defaultVatRate: "Default tax rate in percent",
@@ -5234,6 +5248,8 @@ const en = {
       create: "Create bonus",
       created: "Bonus created",
       failed: "That did not work.",
+      markAwaitingBankDetails: "Credit note sent",
+      markedAwaitingBankDetails: "Marked as sent, now waiting on their bank details",
       markPaid: "Mark as paid",
       markedPaid: "Marked as paid",
       payoutStageNotReached: {
@@ -5252,6 +5268,7 @@ const en = {
         "Credit notes are turned off for now. They don't reach Lexware yet, so creating one would leave a draft that never gets sent.",
       status: {
         suggested: "Suggested",
+        awaiting_bank_details: "Awaiting bank details",
         paid: "Paid",
         cancelled: "Cancelled",
       },
@@ -6467,6 +6484,14 @@ const en = {
         title: "Invoice {{number}}",
         titleDraft: "Invoice (draft)",
         cannotDisplay: "This file cannot be shown here.",
+      },
+      mailText: {
+        button: "Email text",
+        title: "Email text for invoice {{number}}",
+        titleDraft: "Email text for this invoice (draft)",
+        empty: "No email text set up for this case yet. Add one under Invoice defaults.",
+        subject: "Subject",
+        body: "Text",
       },
       statusFailed: "Status could not be changed: {{error}}",
       lexoffice: {

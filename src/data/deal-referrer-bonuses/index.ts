@@ -2,6 +2,7 @@ export {
   useCancelReferrerBonus,
   useCreateReferrerCreditNote,
   useDealReferrerBonus,
+  useMarkReferrerBonusAwaitingBankDetails,
   useMarkReferrerBonusPaid,
   useReferrerBonusTier,
   useSuggestReferrerBonus,
