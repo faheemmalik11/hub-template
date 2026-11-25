@@ -440,7 +440,7 @@ insert into public.scheduled_jobs (key, edge_function, schedule, enabled, descri
   ('propstack_sync', 'propstack-sync', '0 * * * *', false,
    'Pulls the properties from the CRM and links brokers to their accounts. Hourly.'),
   ('payment_due_date_reminder', 'payment-due-date-reminder', '0 6 * * *', false,
-   'Reminds administrators about a deal whose property still has no payment due date, six weeks after the notary date. Daily at 6am.'),
+   'Reminds administrators about a deal whose property still has no payment due date, once the configured number of days after the notary date has passed. Daily at 6am.'),
   ('unmaintained_crm_fields_reminder', 'unmaintained-crm-fields-reminder', '0 7 * * 1', false,
    'Reminds administrators about sales whose property is missing the realised price, the sale date or either commission rate. Mondays at 7am.'),
   ('lexoffice_payment_sync', 'lexoffice-payment-sync', '*/15 * * * *', false,
