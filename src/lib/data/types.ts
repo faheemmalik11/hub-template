@@ -260,6 +260,7 @@ export interface InvoiceSettings {
   timezone: string;
   payment_term_days: number;
   buyer_payment_term_days: number | null;
+  payment_due_date_reminder_days: number;
   finalise_in_lexware: boolean;
   updated_at: string;
   updated_by: string | null;

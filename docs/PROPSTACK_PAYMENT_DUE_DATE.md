@@ -78,20 +78,28 @@ Lexware accounts, with disposable test deals ("TEST Buyer"/"TEST Seller", remove
 3. **Without a date, no invented term** — found broken first (Lexware showed a 14-day maturity with
    no due date set at all), fixed as described above, deployed, then re-tested: a fresh no-date
    invoice now shows Lexware's own 7-day organisation default instead, confirming the fix.
-4. **Six-week admin reminder** — **not tested.** `payment_due_date_reminder` is still off and has
-   never fired against a real deal. Still open.
+4. **Six-week admin reminder** — the threshold, originally proposed as six weeks but never meant as
+   a fixed law, is now `invoice_settings.payment_due_date_reminder_days`
+   (`supabase/schema/0095_payment_due_date_reminder_days.sql`, integer, 0-365, default 42), read by
+   `notify_missing_payment_dates()` instead of a hardcoded 42. Tested against a disposable local
+   database: fires at the configured threshold, not before; re-firing a second run finds nothing
+   (the `notified_at` stamp holds); changing the setting changes what fires on the next run; a deal
+   with no `notarised_on` is correctly never matched. The `payment_due_date_reminder` scheduled job
+   itself is switched on for this Hub (`scheduled_jobs.enabled`); still off by default for every
+   other client, per the usual rule.
 
 ## Status
 
-**The six-week notary reminder (§4.3) is built and does not need to wait** — it only needed the new
+**The notary reminder (§4.3) is built and no longer waits on anything** — it only needed the new
 column, not the real PropStack field, since it fires on "still null" regardless of why:
 `public.notify_missing_payment_dates()` (`supabase/schema/0041_propstack_payment_due_date.sql`),
 modelled directly on the existing `notify_overdue_payments()` (`0023_expected_payment.sql`): scans
-deals six weeks past their notary date whose property has neither a due date nor a note yet, notifies
-administrators once, stamps `properties.payment_due_date_notified_at` so it never re-fires. Wired
-through the template's own `scheduled_jobs` mechanism (`payment_due_date_reminder` in
-`supabase/catalogue.sql`, Edge Function `payment-due-date-reminder`), off by default like every
-other scheduled job, rather than the one-off `cron.schedule` shortcut the overdue-payment job used.
+deals past the configured threshold past their notary date whose property has neither a due date
+nor a note yet, notifies administrators once, stamps `properties.payment_due_date_notified_at` so
+it never re-fires. Wired through the template's own `scheduled_jobs` mechanism
+(`payment_due_date_reminder` in `supabase/catalogue.sql`, Edge Function
+`payment-due-date-reminder`), off by default like every other scheduled job for a new client, rather
+than the one-off `cron.schedule` shortcut the overdue-payment job used.
 
 **Reading the two fields into the Hub (item 1 above) is also done.** Deriving the invoice due date
 and the two-way sync are not started, but are no longer blocked — the fields exist and their real
