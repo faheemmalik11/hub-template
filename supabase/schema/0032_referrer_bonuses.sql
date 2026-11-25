@@ -41,10 +41,12 @@ create table if not exists public.deal_referrer_bonuses (
 );
 
 -- A cancelled bonus does not block a fresh suggestion for the same deal; a suggested or paid one
--- does, since a deal earns its referrer one bonus, not several.
+-- does, since a deal earns its referrer one bonus, not several. Legacy payouts are exempt: at
+-- least one historical deal (EFH Memelstraße 19) genuinely paid two referrers 5% each on the same
+-- sale under the old percentage model, before this one-referrer rule existed.
 create unique index if not exists deal_referrer_bonuses_one_active_per_deal
     on public.deal_referrer_bonuses (deal_id)
-    where status <> 'cancelled';
+    where status <> 'cancelled' and not is_legacy_payout;
 
 create index if not exists deal_referrer_bonuses_referrer_year
     on public.deal_referrer_bonuses (referrer_customer_id, earned_on)
