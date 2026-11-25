@@ -117,6 +117,26 @@ second, near-duplicate sync, both tables now go through the same code:
 - **Known, accepted limitation**, same for both tables: once a row's `paid_at` is set it's never
   re-checked, so a payment Lexware later reverses wouldn't be noticed automatically.
 
+### Verifying a webhook actually came from Lexware
+
+`lexoffice-webhook` originally checked a shared secret in a header it invented itself
+(`X-Lexware-Webhook-Secret`), which Lexware never sends — every real call would have been rejected.
+Lexware's real mechanism (confirmed against its published sample payload/signature, see
+`https://developers.lexware.io/docs/#event-subscriptions-endpoint-verify-authenticity`): every call
+carries an RSA-SHA512 signature of the exact raw request body in a base64-encoded header,
+`X-Lxo-Signature`, verified against Lexware's own published public key (the same for every
+integration, not a tenant secret — embedded in the function as `LEXWARE_SIGNING_PUBLIC_KEY_PEM`,
+not stored in `credentials`). The function reads the body once as raw text, verifies the signature
+against those exact bytes, then `JSON.parse`s the same string — never a re-serialized copy, which
+could disagree with Lexware on whitespace and fail a genuine signature.
+
+The body is read through `readBodyWithLimit()` under a 16 KB cap (a real payload is under 200
+bytes) rather than `request.text()` directly, so a request to this public URL can't make the
+function hold an unbounded body in memory; the cap is enforced against the bytes actually read; it
+never trusts a declared `Content-Length` on its own.
+
+The `LEXWARE_WEBHOOK_SECRET` credential this replaced is dead; nothing in code reads it.
+
 ## Taking the invoice number and PDF back into the Hub
 
 Briefing §3.2 also asks for "the number and the PDF" to come back into the Hub once Lexware has
