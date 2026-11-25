@@ -134,6 +134,9 @@ function SettingsForm({
     settings.buyer_payment_term_days === null ? "" : String(settings.buyer_payment_term_days),
   );
   const [finaliseInLexware, setFinaliseInLexware] = useState(settings.finalise_in_lexware);
+  const [paymentDueDateReminderDays, setPaymentDueDateReminderDays] = useState(
+    String(settings.payment_due_date_reminder_days),
+  );
   const [labels, setLabels] = useState<InvoiceKindLabel[]>(kindLabels);
   const [isSaving, setIsSaving] = useState(false);
 
@@ -150,6 +153,7 @@ function SettingsForm({
       settings.buyer_payment_term_days === null ? "" : String(settings.buyer_payment_term_days),
     );
     setFinaliseInLexware(settings.finalise_in_lexware);
+    setPaymentDueDateReminderDays(String(settings.payment_due_date_reminder_days));
     setLabels(kindLabels);
   }
 
@@ -178,6 +182,13 @@ function SettingsForm({
       !Number.isInteger(parsedBuyerPaymentTermDays) ||
       parsedBuyerPaymentTermDays < 0 ||
       parsedBuyerPaymentTermDays > 365);
+  const parsedPaymentDueDateReminderDays = parseDecimalInput(paymentDueDateReminderDays);
+  const paymentDueDateReminderDaysInvalid =
+    parsedPaymentDueDateReminderDays === null ||
+    Number.isNaN(parsedPaymentDueDateReminderDays) ||
+    !Number.isInteger(parsedPaymentDueDateReminderDays) ||
+    parsedPaymentDueDateReminderDays < 0 ||
+    parsedPaymentDueDateReminderDays > 365;
   const textInvalid =
     invoiceFallbackLabel.trim() === "" ||
     invoiceUnitName.trim() === "" ||
@@ -197,6 +208,7 @@ function SettingsForm({
     countryCodeInvalid ||
     paymentTermDaysInvalid ||
     buyerPaymentTermDaysInvalid ||
+    paymentDueDateReminderDaysInvalid ||
     textInvalid ||
     timezoneInvalid ||
     labelsInvalid;
@@ -217,6 +229,7 @@ function SettingsForm({
     parsedPaymentTermDays !== Number(settings.payment_term_days) ||
     parsedBuyerPaymentTermDays !== settings.buyer_payment_term_days ||
     finaliseInLexware !== settings.finalise_in_lexware ||
+    parsedPaymentDueDateReminderDays !== Number(settings.payment_due_date_reminder_days) ||
     labelsChanged;
 
   const editingDisabled = !canEdit || isSaving;
@@ -232,6 +245,7 @@ function SettingsForm({
       parsedVatRate === null ||
       parsedPaymentTermDays === null ||
       buyerPaymentTermDaysInvalid ||
+      parsedPaymentDueDateReminderDays === null ||
       isSaving
     )
       return;
@@ -248,6 +262,7 @@ function SettingsForm({
         payment_term_days: parsedPaymentTermDays,
         buyer_payment_term_days: parsedBuyerPaymentTermDays,
         finalise_in_lexware: finaliseInLexware,
+        payment_due_date_reminder_days: parsedPaymentDueDateReminderDays,
       });
       await saveKindLabels.mutateAsync(labels);
       toast.success(t("invoiceSettings.toast.saved"));
@@ -428,6 +443,28 @@ function SettingsForm({
           </CardContent>
         </Card>
       </div>
+
+      <Card className="flex flex-col shadow-none">
+        <CardHeader>
+          <CardTitle>{t("invoiceSettings.card.reminders.title")}</CardTitle>
+          <CardDescription>{t("invoiceSettings.card.reminders.desc")}</CardDescription>
+        </CardHeader>
+        <CardContent className="grid gap-4 sm:grid-cols-2">
+          <div className="space-y-1">
+            <Field
+              label={t("invoiceSettings.field.paymentDueDateReminderDays")}
+              value={paymentDueDateReminderDays}
+              onChange={(value) => setPaymentDueDateReminderDays(sanitizeAmountInput(value))}
+              disabled={editingDisabled}
+              invalid={paymentDueDateReminderDaysInvalid}
+              errorText={t("invoiceSettings.paymentDueDateReminderDaysInvalid")}
+            />
+            <p className="text-xs text-muted-foreground">
+              {t("invoiceSettings.paymentDueDateReminderDaysHint")}
+            </p>
+          </div>
+        </CardContent>
+      </Card>
 
       <Card className="flex flex-col shadow-none">
         <CardHeader>

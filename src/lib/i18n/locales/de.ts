@@ -4633,6 +4633,9 @@ const de = {
       "Leer lassen, damit die Käuferseite dasselbe Zahlungsziel wie die Verkäuferseite bekommt, aus der Immobilie.",
     finaliseInLexwareHint:
       "Aus: Die Rechnung bleibt in Lexware als Entwurf stehen, bis jemand sie dort prüft und freigibt.",
+    paymentDueDateReminderDaysInvalid: "Bitte eine ganze Zahl zwischen 0 und 365 eintragen.",
+    paymentDueDateReminderDaysHint:
+      "Nach so vielen Tagen ohne Zahlungsziel werden die Administratoren einmal daran erinnert.",
     kindInvalid:
       "Bitte nur Kleinbuchstaben, Ziffern und Unterstriche verwenden. Das erste Zeichen muss ein Buchstabe sein.",
     kindDuplicate:
@@ -4668,6 +4671,10 @@ const de = {
         title: "Übergabe an Lexware",
         desc: "Zahlungsfrist und Verhalten beim Anlegen einer neuen Rechnung in Lexware.",
       },
+      reminders: {
+        title: "Erinnerungen",
+        desc: "Wann die Administratoren an einen Verkauf erinnert werden, der noch Aufmerksamkeit braucht.",
+      },
     },
     field: {
       defaultVatRate: "Standard-Steuersatz in Prozent",
@@ -4682,6 +4689,7 @@ const de = {
       paymentTermDays: "Zahlungsfrist in Tagen",
       buyerPaymentTermDays: "Zahlungsfrist Käuferseite in Tagen",
       finaliseInLexware: "Rechnung in Lexware abschließen",
+      paymentDueDateReminderDays: "Nach so vielen Tagen erinnern (kein Zahlungsziel gesetzt)",
     },
     timezoneInvalid: "Bitte eine Zeitzone auswählen.",
     kindLabels: {

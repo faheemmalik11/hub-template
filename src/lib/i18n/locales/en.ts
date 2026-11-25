@@ -4465,6 +4465,9 @@ const en = {
       "Leave empty for the buyer side to get the same due date as the seller side, from the property.",
     finaliseInLexwareHint:
       "Off: the invoice is left as a draft in Lexware for someone to check and release there.",
+    paymentDueDateReminderDaysInvalid: "Please enter a whole number between 0 and 365.",
+    paymentDueDateReminderDaysHint:
+      "After this many days with no payment due date, administrators get reminded once.",
     kindInvalid:
       "Lower-case letters, digits and underscores only, and the first character must be a letter.",
     kindDuplicate: "This invoice type is already in the list. Each one may appear only once.",
@@ -4499,6 +4502,10 @@ const en = {
         title: "Lexware handover",
         desc: "Payment term and behavior when a new invoice is created in Lexware.",
       },
+      reminders: {
+        title: "Reminders",
+        desc: "When to remind administrators about a sale that still needs attention.",
+      },
     },
     field: {
       defaultVatRate: "Default tax rate in percent",
@@ -4513,6 +4520,7 @@ const en = {
       paymentTermDays: "Payment term (days)",
       buyerPaymentTermDays: "Buyer side payment term (days)",
       finaliseInLexware: "Finalize the invoice in Lexware",
+      paymentDueDateReminderDays: "Remind after this many days (no payment due date set)",
     },
     timezoneInvalid: "Please select a time zone.",
     kindLabels: {
