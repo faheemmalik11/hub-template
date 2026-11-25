@@ -656,11 +656,14 @@ null`, unique where non-null, backfilled by exact case-insensitive name match. S
    because it doesn't exist yet.~~ **Resolved:** built (see
    `docs/NATURAL_LANGUAGE_SEARCH.md`), ahead of Fabian's stated "do not build yet"
    priority — worth flagging to the client for that reason, not for access rights.
-   It does respect access rights: `invoices_filtered_search`/`invoices_filtered_aggregate`
-   are `security invoker` on `v_invoices_review`, and the grounding queries
-   (candidate companies/properties/categories) run through the caller's own
-   RLS-scoped client — a restricted employee's AI search results, and even the
-   candidate lists the model can pick from, are already scoped to what they can see.
+   It does respect access rights: `invoices_search_ids` is `security invoker` on
+   `v_documents_search`, and the grounding queries (candidate
+   companies/properties/categories) run through the caller's own RLS-scoped client —
+   a restricted employee's AI search results, and even the candidate lists the model
+   can pick from, are already scoped to what they can see. The functions this
+   paragraph used to name, `invoices_filtered_search`/`invoices_filtered_aggregate`
+   on `v_invoices_review`, belonged to a second implementation no component reached;
+   both were dropped on 23.11.2026. See the `ai-invoice-search` skill.
 6. **Menu order** doesn't yet match Fabian's specified order (Overview → Incoming
    invoices → Suppliers → Properties → Outgoing invoices → Customers → Evaluations,
    admin areas below) — worth a pass once the nav stabilizes; not a security gap,

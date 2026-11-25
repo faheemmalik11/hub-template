@@ -191,6 +191,10 @@ as the key itself.
 
 ## What is worth knowing
 
+The AI search box on the incoming-invoices list has its own skill: **`ai-invoice-search`**. Load it
+before touching the prompt, the where-clause validator or any `invoices_search_*` function — a
+column added here is not searchable until that catalogue knows about it.
+
 **The largest module by far: 89 files of its own.** The invoice detail screen and the invoice
 list are both built from `src/kit/widgets/`, so a client who wants a different column set or a
 different action bar changes a widget, not a page.
