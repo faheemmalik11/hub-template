@@ -15,42 +15,21 @@ verify against the code without re-deriving it), and what is still open.
 > stated priority) at the developer's explicit request. Not a silent scope addition — flagging it
 > here the same way the sister Hub's doc flagged it there, so the client can be told.
 
-## Read this first: two implementations exist, and this document describes the dormant one (2026-11-23)
+## Read this first: this document is history, not the current design (2026-11-23)
 
-Everything below the next heading describes `askInvoiceQuestion`
-(`src/lib/api/invoice-nl-ask.functions.ts` + `invoice-nl-retrieval.functions.ts`): OpenAI
-embeddings, pgvector ranking, the `invoices_filtered_search` / `invoices_filtered_aggregate` RPCs,
-and a second model call that writes the answer sentence. Its hook `useAskInvoiceQuestion`
-(`src/data/documents/documents.ts`) is exported and called by **no component**. None of it runs.
+Everything from "TL;DR" down describes `askInvoiceQuestion` — OpenAI embeddings, pgvector ranking,
+the `invoices_filtered_search` / `invoices_filtered_aggregate` RPCs, and a second model call that
+wrote the answer sentence. **None of it exists any more.** Its hook was exported and rendered by no
+component, so it never ran; the two files were deleted and the two RPCs dropped on 23.11.2026.
 
-What the AI search box actually runs is `searchInvoicesByQuestion`
-(`src/lib/api/invoice-intent.functions.ts`), reached from
-`src/components/documents/intent-console-panel.tsx`. It classifies the question, generates a WHERE
-clause, validates it (`src/kit/lib/ai-search-sql/where-parser.ts`) and passes it to the
-`invoices_search_ids` RPC. It returns matching ids only -- it does not sum, and it does not rank by
-embedding.
+What the AI search box actually runs is `searchInvoicesByQuestion`, and it is described in the
+**`ai-invoice-search` skill**, which is the place to look. This file is kept because the rounds
+below record real bugs and the reasoning behind decisions the live path inherited — the
+language-symmetric payment rule in particular, which lives in
+`src/kit/lib/ai-search-sql/intent-classification.ts` and is the reason a German and an English
+question must classify the same way.
 
-Three things were wrong in the live path and are fixed (`0084`, `0085`):
-
-- All three RPCs read `v_documents_review`, the review queue, which drops a document once it is
-  settled. The list beside the search reads `v_documents_search`, so a person could see an invoice
-  in the table, ask about it, and be told it does not exist. A client whose invoices are all paid
-  got "no match" for every question. They read `v_documents_search` now.
-- The prompt carried a hand-written column list naming `review_problem_count` and
-  `review_unchecked`, which exist in no table or view here -- they came with the port. An unknown
-  column is rejected by the validator, so those questions failed outright. The list now comes from
-  `nl_search_columns()`.
-- The prompt also hand-listed each low-cardinality column's values, so a client still storing a
-  pre-rename value (`status = 'zu_pruefen'` rather than `needs_review`) could not be asked about
-  it. Values now come from `nl_search_column_values()` and are merged with the documented ones.
-
-Still open: the dormant implementation has not been deleted, and the live path answers no
-aggregate question -- "what did we spend in total" narrows the list but shows no sum.
-
-The tests that this feature had in the project it was ported from did not come across. There are
-now tests for the validator (`src/kit/lib/ai-search-sql/where-parser.test.ts`); the file had to
-drop its TypeScript parameter properties first, because Node's strip-only mode cannot load them
-and the repo's runner is `node --test`.
+Read any file path below as historical. Several no longer exist.
 
 ## TL;DR
 
