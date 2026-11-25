@@ -13,7 +13,8 @@ also reach PropStack, and the Hub should point out when any of them is still mis
    null, so the realised-price half of this item is unbuilt. `notarised_on` cannot be null in
    practice, because the view coalesces `sold_on` to `became_sold_at`.
 2. **Writing back to PropStack as soon as a value is added or corrected in the Hub.** New, and only
-   three of the four fields actually work — see Status below:
+   three of the four fields are actually sent — see Status below for why the fourth is a deliberate
+   scope decision now, not a technical limitation:
    - `supabase/functions/_shared/propstack-client.ts`'s `updateUnitFields()` — a sibling to the
      existing `updateUnitCustomFields()`, for plain top-level unit attributes (`PUT /units/:id`
      with `{"property": {...}}`, no `partial_custom_fields` wrapper).
@@ -61,35 +62,20 @@ commission-rate changes landed correctly in PropStack (`sold_date`, `external_co
 `internal_commission_percentage`), confirmed by reading the raw `crm_data` PropStack returns after
 a fresh `propstack_sync` pull, not just the Hub's own assumption.
 
-**`purchase_price` (PropStack's "Realisierter Preis") does not work, confirmed by repeated,
-varied testing, not a single failed attempt:**
-- A bare number silently no-ops: the call succeeds, but the field stays empty.
-- `{ value: <number> }` (the shape PropStack's own API returns this field in on *read*) fails
-  outright with a real 500 from PropStack (`{"errors":["Leider ist etwas schief gelaufen. Bitte
-  versuche es später erneut."]}`) — every time, including alone, combined with the other three
-  fields, and again after a 15-second wait to rule out rate-limiting.
-- The property's own "Deals" tab (PropStack's `client_properties` concept — prospects at various
-  sales-funnel stages) was checked directly as a possible source of a linked price; none of this
-  property's 57 prospect records have a price set either, so "Realisierter Preis" isn't being
-  rolled up from one of those.
-- The field **is** genuinely editable directly in PropStack's own UI (confirmed by typing a value
-  there and watching it save and read back correctly) — the limitation is specifically the public
-  `PUT /units/:id` API, not the field itself.
+**Correction, 25 November 2026: the 17 November finding above was wrong, re-tested against a
+disposable test property (id 6572690, "ZZZ-TEST-CLAUDE-PROBE") rather than trusted as still true.**
+A bare-number `PUT /units/:id` body (`{"property": {"sold_price": 445500}}`, no wrapper object)
+does write `sold_price` — confirmed by a fresh `GET` immediately after reading back
+`{"label": "Realisierter Preis", "value": 445500}`, then confirmed again with a second, different
+value (333000) on a later write to rule out a fluke. Whatever caused the 17 November no-op
+(a since-fixed PropStack-side issue, most likely, since the request shape that failed then is the
+one that now succeeds) no longer applies. The `{ value: <number> }` wrapper shape is still wrong
+and still 500s — that part of the original finding holds.
 
-**Confirmed for good reason, not just the attempts above.** A second client's codebase
-(`alba-homes`, a separate production integration, unrelated to Living Immo) has its own PropStack
-field binding with this exact note, written after confirming it against a real PropStack account:
-PropStack holds a price in two places — `price` (the asking price, genuinely writable, the one
-their own code pushes) and `sold_price` (labelled "Realisierter Preis" in German, read-only,
-PropStack fills it in itself once a sale closes through its own internal process). Writing `price`
-instead was tried here too: it succeeds, but it changes the asking price, not "Realisierter Preis"
-— confirmed live, the two fields stayed independent after the write. So there is no field this
-Hub can write to that actually updates "Realisierter Preis".
-
-**Decision: not building a manual nudge for this either.** §4.1's own Data Maintenance Assistant
-already blocks a deal from reaching "Notartermin stattgefunden" in PropStack until "Realisierter
-Preis" is filled in there — the value is correct by the time a deal exists in the Hub at all.
-The only case this gap could matter is someone correcting the price in the Hub *after* the deal
-exists, which for a notarised purchase price is rare. `purchase_price` is deliberately left out of
-the push: not a thing to fix, a confirmed, permanent limitation of PropStack's public API, not
-worth a workaround for how rarely it would ever come up.
+**Not building the push anyway, but for a different reason than "it's impossible."** Fabian's 23
+November reply (decision 9) explicitly does not want the Hub writing into `sold_price` even though
+it now works: "create a separate custom field for the realised price and write it there" instead,
+so PropStack's own native field stays under PropStack's own control. That still needs Nik
+consulted on how Living Immo shapes its equivalent custom field before building it — unblocked on
+the writability question, still blocked on that conversation. `purchase_price` stays out of
+`propstack-deal-values-push` until the new custom field exists.
