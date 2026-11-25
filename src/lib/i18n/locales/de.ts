@@ -4675,6 +4675,20 @@ const de = {
         title: "Erinnerungen",
         desc: "Wann die Administratoren an einen Verkauf erinnert werden, der noch Aufmerksamkeit braucht.",
       },
+      mailTemplates: {
+        title: "Rechnungs-Mailtexte",
+        desc: "Der Text zum Verschicken einer Provisionsrechnung. Der richtige wird automatisch gewählt: Käufer, oder Verkäufer unter {{amount}}, oder Verkäufer ab {{amount}}. Der Versand selbst bleibt manuell, außerhalb des Hubs.",
+        descNoAmount:
+          "Der Text zum Verschicken einer Provisionsrechnung. Der richtige wird automatisch nach Seite und realisiertem Preis gewählt. Der Versand selbst bleibt manuell, außerhalb des Hubs.",
+        subject: "Betreff",
+        body: "Text",
+        saved: "Gespeichert.",
+        case: {
+          buyer: "Käufer",
+          seller_under_threshold: "Verkäufer, unter der Schwelle",
+          seller_over_threshold: "Verkäufer, ab der Schwelle",
+        },
+      },
     },
     field: {
       defaultVatRate: "Standard-Steuersatz in Prozent",
@@ -6726,6 +6740,15 @@ const de = {
         title: "Rechnung {{number}}",
         titleDraft: "Rechnung (Entwurf)",
         cannotDisplay: "Diese Datei kann hier nicht angezeigt werden.",
+      },
+      mailText: {
+        button: "Mailtext",
+        title: "Mailtext für Rechnung {{number}}",
+        titleDraft: "Mailtext für diese Rechnung (Entwurf)",
+        empty:
+          "Für diesen Fall ist noch kein Mailtext hinterlegt. Unter Rechnungsvorgaben eintragen.",
+        subject: "Betreff",
+        body: "Text",
       },
       statusFailed: "Status konnte nicht geändert werden: {{error}}",
       lexoffice: {

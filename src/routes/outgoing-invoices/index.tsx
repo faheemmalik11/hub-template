@@ -14,6 +14,7 @@ import {
   ExternalLink,
   FileText,
   Loader2,
+  Mail,
   Search,
   Send,
   Trash2,
@@ -61,6 +62,7 @@ import {
 import {
   useCompanies,
   useOutgoingInvoiceFileUrl,
+  useOutgoingInvoiceMailText,
   useOutgoingInvoices,
   useSetUploadedOutgoingInvoiceStatus,
   useSoftDeleteOutgoingInvoice,
@@ -495,6 +497,12 @@ function OutgoingInvoicesPage() {
                         invoiceId={inv.id}
                         invoiceNumber={inv.invoice_number}
                       />
+                      {inv.kind === "commission" && (
+                        <InvoiceMailTextButton
+                          invoiceId={inv.id}
+                          invoiceNumber={inv.invoice_number}
+                        />
+                      )}
                       <DeleteInvoiceButton invoice={inv} />
                     </div>
                   </TableCell>
@@ -862,6 +870,66 @@ function OutgoingInvoiceFileButton({
             <p className="rounded-lg border border-dashed border-border bg-muted/30 px-4 py-10 text-center text-sm text-muted-foreground">
               {t("outgoingInvoices.list.fileDialog.cannotDisplay")}
             </p>
+          )}
+        </DialogContent>
+      </Dialog>
+    </>
+  );
+}
+
+// Shows which of the three invoice mail texts belongs to this commission invoice, resolved
+// server-side from its side and the deal's realised price (see invoice-settings for the texts
+// themselves). Sending stays manual, outside the Hub -- this is only a reference to copy from.
+function InvoiceMailTextButton({
+  invoiceId,
+  invoiceNumber,
+}: {
+  invoiceId: string;
+  invoiceNumber: string | null;
+}) {
+  const { t } = useTranslation();
+  const [open, setOpen] = useState(false);
+  const mailTextQ = useOutgoingInvoiceMailText(invoiceId, open);
+
+  const title = invoiceNumber
+    ? t("outgoingInvoices.list.mailText.title", { number: invoiceNumber })
+    : t("outgoingInvoices.list.mailText.titleDraft");
+
+  return (
+    <>
+      <RowIconAction
+        onClick={() => setOpen(true)}
+        className="text-muted-foreground"
+        label={t("outgoingInvoices.list.mailText.button")}
+      >
+        <Mail className="size-4" />
+      </RowIconAction>
+      <Dialog open={open} onOpenChange={setOpen}>
+        <DialogContent className="max-w-2xl">
+          <DialogHeader>
+            <DialogTitle className="font-semibold tracking-tight">{title}</DialogTitle>
+          </DialogHeader>
+          {mailTextQ.isLoading ? (
+            <Skeleton className="h-48 w-full" />
+          ) : !mailTextQ.data ? (
+            <p className="rounded-lg border border-dashed border-border bg-muted/30 px-4 py-10 text-center text-sm text-muted-foreground">
+              {t("outgoingInvoices.list.mailText.empty")}
+            </p>
+          ) : (
+            <div className="space-y-3">
+              <div>
+                <Label>{t("outgoingInvoices.list.mailText.subject")}</Label>
+                <p className="mt-1 rounded-md border border-border bg-muted/30 px-3 py-2 text-sm">
+                  {mailTextQ.data.subject}
+                </p>
+              </div>
+              <div>
+                <Label>{t("outgoingInvoices.list.mailText.body")}</Label>
+                <pre className="mt-1 max-h-[50vh] overflow-auto whitespace-pre-wrap rounded-md border border-border bg-muted/30 px-3 py-2 font-sans text-sm">
+                  {mailTextQ.data.body}
+                </pre>
+              </div>
+            </div>
           )}
         </DialogContent>
       </Dialog>

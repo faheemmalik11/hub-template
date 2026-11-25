@@ -22,6 +22,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Skeleton } from "@/components/ui/skeleton";
 import { ErrorState } from "@/components/documents/query-states";
+import { InvoiceMailTemplatesCard } from "@/components/invoice-settings/invoice-mail-templates-card";
 import {
   useInvoiceKindLabels,
   useInvoiceSettings,
@@ -96,11 +97,16 @@ function InvoiceSettingsPage() {
         ) : !settingsQuery.data || !labelsQuery.data ? (
           <Skeleton className="h-96 w-full" />
         ) : (
-          <SettingsForm
-            settings={settingsQuery.data}
-            kindLabels={labelsQuery.data}
-            canEdit={can(PERMISSIONS.settingsManage)}
-          />
+          <>
+            <SettingsForm
+              settings={settingsQuery.data}
+              kindLabels={labelsQuery.data}
+              canEdit={can(PERMISSIONS.settingsManage)}
+            />
+            <div className="mt-6">
+              <InvoiceMailTemplatesCard canEdit={can(PERMISSIONS.settingsManage)} />
+            </div>
+          </>
         )}
       </div>
     </div>

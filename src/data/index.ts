@@ -29,6 +29,7 @@ export * from "./deals";
 export * from "./broker-bonuses";
 export * from "./deal-donations";
 export * from "./deal-referrer-bonuses";
+export * from "./invoice-mail-templates";
 
 export { useFeature, useFeatureGate } from "./use-feature";
 export { searchTokens, searchWasDropped } from "./shared";

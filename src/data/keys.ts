@@ -34,6 +34,10 @@ export const queryKeys = {
     tier: (customerId: string, earnedOn: string) =>
       ["deal-referrer-bonuses", "tier", customerId, earnedOn] as const,
   },
+  invoiceMailTemplates: {
+    all: ["invoice-mail-templates"] as const,
+    forInvoice: (invoiceId: string) => ["invoice-mail-templates", "invoice", invoiceId] as const,
+  },
   deals: {
     all: ["deals"] as const,
     one: (id: string) => ["deals", id] as const,
