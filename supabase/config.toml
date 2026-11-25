@@ -20,8 +20,8 @@ verify_jwt = false
 [functions.propstack-webhook]
 verify_jwt = false
 
-# Lexware posts here with no JWT attached. It carries no signature of its own, so the function
-# checks X-Lexware-Webhook-Secret against LEXWARE_WEBHOOK_SECRET, verifies the organization the
-# payload claims against this Hub's own, and never trusts the payload for data.
+# Lexware posts here with no JWT attached. The function verifies Lexware's own RSA-SHA512
+# signature (X-Lxo-Signature) instead, then checks the organization the payload claims against
+# this Hub's own, and never trusts the payload for data.
 [functions.lexoffice-webhook]
 verify_jwt = false
