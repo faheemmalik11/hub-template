@@ -14,6 +14,8 @@ import {
 } from "@/lib/data/format";
 import { useOutgoingInvoices, useOverviewInvoices } from "@/data";
 import { COSTANALYSIS_SCOPE_ALL, useCostAnalysisScope } from "@/lib/data/use-bwa-scope";
+import { PERMISSIONS } from "@/config/permissions";
+import { useAuth } from "@/lib/auth";
 import { useTranslation } from "@/lib/i18n";
 import { cn } from "@/lib/utils";
 
@@ -65,9 +67,12 @@ const CARDS: {
 ];
 
 export function MoneyCards() {
+  const { can } = useAuth();
+  const canSeeRevenue = can(PERMISSIONS.reportsRevenueRead);
+  const cards = CARDS.filter((c) => c.key !== "grossProfit" || canSeeRevenue);
   return (
     <div className="grid h-full gap-3 sm:grid-cols-2 xl:grid-cols-3">
-      {CARDS.map((c) => (
+      {cards.map((c) => (
         <MoneyCard key={c.key} config={c} />
       ))}
     </div>

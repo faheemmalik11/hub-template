@@ -288,6 +288,19 @@ on conflict (key) do update
        description_de = excluded.description_de, description_en = excluded.description_en,
        sort_order = excluded.sort_order;
 
+-- The company's own revenue and profit, on the reports screen and the overview cards, shown to a
+-- role that already does the bookkeeping but should not see what the agency takes in or keeps.
+-- Costs stay visible either way: that half is the bookkeeping itself.
+insert into public.permissions (key, kind, parent_key, category, label_de, label_en, description_de, description_en, sort_order) values
+  ('reports.revenue_read', 'action', 'page.reports', 'reports', 'Umsatz und Ergebnis sehen', 'See revenue and result',
+   'Umsatz, Rohertrag und Betriebsergebnis in der Auswertung und auf der Übersicht sehen, nicht nur die Kosten.',
+   'See revenue, gross profit and the operating result in reports and on the overview, not only the cost side.', 715)
+on conflict (key) do update
+   set kind = excluded.kind, parent_key = excluded.parent_key, category = excluded.category,
+       label_de = excluded.label_de, label_en = excluded.label_en,
+       description_de = excluded.description_de, description_en = excluded.description_en,
+       sort_order = excluded.sort_order;
+
 -- -------------------------------------------------------------- the actions
 --
 -- The ten area capabilities the schema's own policies ask for are declared here, because a policy
@@ -370,7 +383,7 @@ select r.id, k
           'master_data.read', 'master_data.write',
           'bank.read', 'bank.write', 'payments.write',
           'rules.write', 'settings.manage', 'bonuses.review', 'bonuses.suggest',
-          'deals.report_all', 'deals.commission_read']
+          'deals.report_all', 'deals.commission_read', 'reports.revenue_read']
         when r.name = 'supervisor' then array[
           'documents.read', 'documents.write',
           'invoices.approve', 'invoices.approve_final',
@@ -388,6 +401,14 @@ on conflict do nothing;
 -- to book the figures rather than earn or approve them does not get this by name.
 insert into public.role_permissions (role_id, permission_key)
 select r.id, 'deals.commission_read' from public.roles r
+ where not r.administers
+   and r.name in ('supervisor', 'broker', 'assistant', 'tax_advisor', 'managing_director')
+on conflict do nothing;
+
+-- Same split, for the company's own revenue and result: every role that already works deals or
+-- approves money keeps seeing it, a role built to book the figures does not get it by name.
+insert into public.role_permissions (role_id, permission_key)
+select r.id, 'reports.revenue_read' from public.roles r
  where not r.administers
    and r.name in ('supervisor', 'broker', 'assistant', 'tax_advisor', 'managing_director')
 on conflict do nothing;
