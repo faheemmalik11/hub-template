@@ -103,8 +103,8 @@ begin
   if not found then
     raise exception 'mark_referrer_bonus_paid: bonus % not found', p_bonus_id;
   end if;
-  if v_bonus.status <> 'suggested' then
-    raise exception 'mark_referrer_bonus_paid: bonus % is not suggested', p_bonus_id
+  if v_bonus.status <> 'awaiting_bank_details' then
+    raise exception 'mark_referrer_bonus_paid: bonus % is not awaiting bank details', p_bonus_id
       using errcode = 'check_violation';
   end if;
 

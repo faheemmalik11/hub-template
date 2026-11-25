@@ -24,7 +24,8 @@ create table if not exists public.deal_referrer_bonuses (
     tier integer check (tier > 0),
     amount numeric(12, 2) not null check (amount > 0),
     earned_on date not null,
-    status text not null default 'suggested' check (status in ('suggested', 'paid', 'cancelled')),
+    status text not null default 'suggested'
+        check (status in ('suggested', 'awaiting_bank_details', 'paid', 'cancelled')),
     cancel_reason text,
     -- Paid under the percentage model this table's tiers replaced (until 27 October). Real money,
     -- kept for the record, but excluded from referrer_bonus_tier()'s count below: it was never a

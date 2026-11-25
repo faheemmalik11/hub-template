@@ -5429,6 +5429,8 @@ const de = {
       create: "Bonus anlegen",
       created: "Bonus angelegt",
       failed: "Das hat nicht geklappt.",
+      markAwaitingBankDetails: "Gutschrift verschickt",
+      markedAwaitingBankDetails: "Als verschickt markiert, wartet jetzt auf die Bankdaten",
       markPaid: "Als ausgezahlt markieren",
       markedPaid: "Als ausgezahlt markiert",
       payoutStageNotReached: {
@@ -5448,6 +5450,7 @@ const de = {
         "Gutschriften sind aktuell deaktiviert. Sie erreichen Lexware noch nicht, daher würde eine erstellte Gutschrift als Entwurf hängen bleiben.",
       status: {
         suggested: "Vorgeschlagen",
+        awaiting_bank_details: "Wartet auf Bankdaten",
         paid: "Ausgezahlt",
         cancelled: "Abgesagt",
       },

@@ -5234,6 +5234,8 @@ const en = {
       create: "Create bonus",
       created: "Bonus created",
       failed: "That did not work.",
+      markAwaitingBankDetails: "Credit note sent",
+      markedAwaitingBankDetails: "Marked as sent, now waiting on their bank details",
       markPaid: "Mark as paid",
       markedPaid: "Marked as paid",
       payoutStageNotReached: {
@@ -5252,6 +5254,7 @@ const en = {
         "Credit notes are turned off for now. They don't reach Lexware yet, so creating one would leave a draft that never gets sent.",
       status: {
         suggested: "Suggested",
+        awaiting_bank_details: "Awaiting bank details",
         paid: "Paid",
         cancelled: "Cancelled",
       },
