@@ -23,6 +23,7 @@ what they do not use, without touching their code.
 | `13-kit-modularity-and-stories.md` | Breaking `src/kit` into pieces that can be looked at, tested and storied one at a time |
 | `14-setting-up-a-new-client.md` | Every step of standing up a brand-new client, as it actually happened, start to finish |
 | `15-feature-portability-audit-1/` | The first per-client feature-portability audit: what a real client's Hub has that this template doesn't, and a port-or-not call for each |
+| `client-communication-log.md` | One-line pointers to client messages filed on their own branches — never the content itself |
 
 ## The one-paragraph version
 
