@@ -1,7 +1,6 @@
 import { serviceClient } from "../_shared/supabase.ts";
 import { jsonResponse } from "../_shared/cors.ts";
 import { TABLE } from "../_shared/tables.ts";
-import { looksSealed, openSealed } from "../_shared/sealed.ts";
 import {
   applyLexwarePayment,
   featureIsLive,
@@ -12,14 +11,33 @@ import {
 // deno-lint-ignore no-explicit-any
 type Db = any;
 
-const TENANT_CHANNEL = "";
 const WEBHOOK_FEATURE_KEY = "lexoffice.webhook";
-const SECRET_HEADER = "X-Lexware-Webhook-Secret";
+const SIGNATURE_HEADER = "X-Lxo-Signature";
+// Lexware's own payload carries four short fields and runs under 200 bytes; this only bounds how
+// much an untrusted sender hitting this public URL can make the function hold in memory.
+const MAX_BODY_BYTES = 16 * 1024;
 const LEXWARE_API_URL = "https://api.lexware.io/v1";
 const PROFILE_TIMEOUT_MS = 15_000;
 const HANDLED_EVENT_TYPES = ["payment.changed", "voucher.changed", "voucher.deleted"];
 const CANCELLED_NOTE = "Lexware shows this voucher as cancelled.";
 const UNIQUE_VIOLATION = "23505";
+
+// Lexware's own published signing key, the same for every integration -- not a tenant secret, so
+// it lives in code rather than the credentials table. https://developers.lexware.io/docs/#event-subscriptions-endpoint-verify-authenticity
+const LEXWARE_SIGNING_PUBLIC_KEY_PEM = `-----BEGIN PUBLIC KEY-----
+MIICIjANBgkqhkiG9w0BAQEFAAOCAg8AMIICCgKCAgEAtCkZXZqT2zFRmA83KsBC
+tQSv9t+AaWiZpRWvzE4wiQEh0aHzNYkT/DlP419pngqoLxnqW9SsgWfKOG3utoEV
+z+Lru9odZntW/n/yaRK3f0AcMtuWs/Z1PZ4BbN/RlFYyqlPg0VfuAvZMAa+J9WAl
+Fuy0T4Y0EdO0d+EL8BpzSLqj3XLI+YuK4hUhlTOxHmdDtNUkugnT9b9khb+oPDmB
+3yxRP6Rmo2qo6waSc+pihCdOiZKzwA4fA1HT8DM54OaNQ4qd9NRf5uECijFlpQu6
+vZdW7Z+LZ8HTgGQVSsJdCzUtM1wiWOERrHvd8IpBMvUAvGM/qaJnAmwsEr4J/El4
+yCmur8wwYBtSUH0Xue42YysdmSS0pOMMUAAvr70HQMDHagYkErMtu6FAyAmPz8p/
+tAqJJpwAhxITbnc5WsmZOu0Ke255nXQ/2Go1TKv+45mSb7RLsvpmhVZ4nFByFt24
+vG6IwNReuLhJJL468jrdTpxyZRn0QqkxiQV7jDd9Dp1NVd/W3+n86Aos9LnJa+ut
+kN+jOOWmJdJjnQetJlbDVg3ex+XHVmCjiRYggCGPlpXVJwdEUNGzxhPGKjxmeiQT
+ahwFA9iHtwBw7yK5VfM/hA+JeF2FXYhTdehfClAQt1YCYXkgUEFxm9idRdBoCY6U
+bmFUXQLdi7tZyDor8Rxoq2MCAwEAAQ==
+-----END PUBLIC KEY-----`;
 
 interface WebhookPayload {
   organizationId?: unknown;
@@ -42,31 +60,83 @@ function messageOf(error: unknown): string {
   return String(error);
 }
 
-async function readCredential(db: Db, name: string): Promise<string> {
-  const { data, error } = await db
-    .from(TABLE.credentials)
-    .select("value")
-    .eq("channel_key", TENANT_CHANNEL)
-    .eq("name", name)
-    .maybeSingle();
-  if (error) throw error;
-  const stored = (data as { value: string | null } | null)?.value;
-  if (!stored) throw new Error(`${name} is not stored in the admin panel`);
-  if (!looksSealed(stored)) return stored;
-  const tenantKey = Deno.env.get("TENANT_SECRET_KEY");
-  if (!tenantKey) throw new Error("TENANT_SECRET_KEY is not set as a secret of this function");
-  return await openSealed(stored, tenantKey, TENANT_CHANNEL, name);
+// Reads the body under a hard cap rather than trusting Content-Length -- a sender can omit that
+// header (chunked transfer) or lie about it, so the running total is what actually enforces this.
+// Returns null when the body exceeds maxBytes, "" when there is no body at all.
+async function readBodyWithLimit(request: Request, maxBytes: number): Promise<string | null> {
+  const declared = request.headers.get("content-length");
+  if (declared && Number(declared) > maxBytes) return null;
+
+  const reader = request.body?.getReader();
+  if (!reader) return "";
+
+  const chunks: Uint8Array[] = [];
+  let total = 0;
+  while (true) {
+    const { done, value } = await reader.read();
+    if (done) break;
+    if (!value) continue;
+    total += value.byteLength;
+    if (total > maxBytes) {
+      await reader.cancel();
+      return null;
+    }
+    chunks.push(value);
+  }
+
+  const combined = new Uint8Array(total);
+  let offset = 0;
+  for (const chunk of chunks) {
+    combined.set(chunk, offset);
+    offset += chunk.byteLength;
+  }
+  return new TextDecoder().decode(combined);
 }
 
-function webhookSecret(db: Db): Promise<string> {
-  return readCredential(db, "LEXWARE_WEBHOOK_SECRET");
+function pemToDer(pem: string): ArrayBuffer {
+  const base64 = pem
+    .replace(/-----BEGIN PUBLIC KEY-----/, "")
+    .replace(/-----END PUBLIC KEY-----/, "")
+    .replace(/\s/g, "");
+  const binary = atob(base64);
+  const bytes = new Uint8Array(binary.length);
+  for (let i = 0; i < binary.length; i++) bytes[i] = binary.charCodeAt(i);
+  return bytes.buffer;
 }
 
-function timingSafeEqual(a: string, b: string): boolean {
-  if (a.length !== b.length) return false;
-  let diff = 0;
-  for (let i = 0; i < a.length; i++) diff |= a.charCodeAt(i) ^ b.charCodeAt(i);
-  return diff === 0;
+let lexwareSigningKey: Promise<CryptoKey> | null = null;
+
+function importLexwareSigningKey(): Promise<CryptoKey> {
+  lexwareSigningKey ??= crypto.subtle.importKey(
+    "spki",
+    pemToDer(LEXWARE_SIGNING_PUBLIC_KEY_PEM),
+    { name: "RSASSA-PKCS1-v1_5", hash: "SHA-512" },
+    false,
+    ["verify"],
+  );
+  return lexwareSigningKey;
+}
+
+// Verifies against the EXACT bytes Lexware sent, never a reparsed/reserialized copy of the JSON --
+// re-serializing risks disagreeing with Lexware on whitespace or key order and failing a signature
+// that was genuinely theirs.
+async function verifyLexwareSignature(rawBody: string, signatureBase64: string): Promise<boolean> {
+  if (!signatureBase64) return false;
+  let signatureBytes: Uint8Array<ArrayBuffer>;
+  try {
+    const binary = atob(signatureBase64);
+    signatureBytes = new Uint8Array(binary.length);
+    for (let i = 0; i < binary.length; i++) signatureBytes[i] = binary.charCodeAt(i);
+  } catch {
+    return false;
+  }
+  const key = await importLexwareSigningKey();
+  return await crypto.subtle.verify(
+    { name: "RSASSA-PKCS1-v1_5" },
+    key,
+    signatureBytes,
+    new TextEncoder().encode(rawBody),
+  );
 }
 
 async function cachedOrganizationId(db: Db): Promise<string | null> {
@@ -160,18 +230,22 @@ Deno.serve(async (request) => {
 
   const db: Db = serviceClient();
 
-  let secret: string;
+  const rawBody = await readBodyWithLimit(request, MAX_BODY_BYTES);
+  if (rawBody === null) {
+    console.error("lexoffice-webhook: body exceeds the size limit");
+    return jsonResponse({ error: "payload too large" }, 413);
+  }
+  const signature = request.headers.get(SIGNATURE_HEADER) ?? "";
+  let signatureValid: boolean;
   try {
-    secret = await webhookSecret(db);
+    signatureValid = await verifyLexwareSignature(rawBody, signature);
   } catch (error) {
-    console.error("lexoffice-webhook: webhook secret not available:", messageOf(error));
+    console.error("lexoffice-webhook: could not verify the signature:", messageOf(error));
     return jsonResponse({ error: "webhook not configured" }, 500);
   }
-
-  const presented = request.headers.get(SECRET_HEADER) ?? "";
-  if (!presented || !timingSafeEqual(presented, secret)) {
-    console.error("lexoffice-webhook: shared secret mismatch");
-    return jsonResponse({ error: "invalid secret" }, 401);
+  if (!signatureValid) {
+    console.error("lexoffice-webhook: signature invalid");
+    return jsonResponse({ error: "invalid signature" }, 401);
   }
 
   try {
@@ -185,7 +259,7 @@ Deno.serve(async (request) => {
 
   let payload: WebhookPayload;
   try {
-    payload = (await request.json()) as WebhookPayload;
+    payload = JSON.parse(rawBody) as WebhookPayload;
   } catch {
     console.error("lexoffice-webhook: body is not valid JSON");
     return jsonResponse({ error: "invalid payload" }, 400);
