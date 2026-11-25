@@ -9856,23 +9856,32 @@ create table if not exists public.deal_referrer_bonuses (
     id uuid primary key default gen_random_uuid(),
     deal_id uuid not null references public.deals(id),
     referrer_customer_id uuid not null references public.customers(id),
-    tier integer not null check (tier > 0),
+    tier integer check (tier > 0),
     amount numeric(12, 2) not null check (amount > 0),
     earned_on date not null,
     status text not null default 'suggested' check (status in ('suggested', 'paid', 'cancelled')),
     cancel_reason text,
+    -- Paid under the percentage model this table's tiers replaced (until 27 October). Real money,
+    -- kept for the record, but excluded from referrer_bonus_tier()'s count below: it was never a
+    -- tier in this system, so it must not push a referrer's next real referral to tier 2.
+    is_legacy_payout boolean not null default false,
+    note text,
     created_by uuid references public.app_users(id),
     created_at timestamptz not null default now(),
     paid_by uuid references public.app_users(id),
     paid_at timestamptz,
-    updated_at timestamptz not null default now()
+    updated_at timestamptz not null default now(),
+    constraint deal_referrer_bonuses_tier_unless_legacy
+        check (is_legacy_payout or tier is not null)
 );
 
 -- A cancelled bonus does not block a fresh suggestion for the same deal; a suggested or paid one
--- does, since a deal earns its referrer one bonus, not several.
+-- does, since a deal earns its referrer one bonus, not several. Legacy payouts are exempt: at
+-- least one historical deal (EFH Memelstraße 19) genuinely paid two referrers 5% each on the same
+-- sale under the old percentage model, before this one-referrer rule existed.
 create unique index if not exists deal_referrer_bonuses_one_active_per_deal
     on public.deal_referrer_bonuses (deal_id)
-    where status <> 'cancelled';
+    where status <> 'cancelled' and not is_legacy_payout;
 
 create index if not exists deal_referrer_bonuses_referrer_year
     on public.deal_referrer_bonuses (referrer_customer_id, earned_on)
@@ -9889,6 +9898,7 @@ as $$
     from public.deal_referrer_bonuses
    where referrer_customer_id = p_referrer_customer_id
      and status <> 'cancelled'
+     and not is_legacy_payout
      and extract(year from earned_on) = extract(year from p_earned_on);
 $$;
 
@@ -10459,7 +10469,8 @@ alter table public.properties
     add column if not exists payment_due_date_note text,
     add column if not exists payment_due_date_notified_at timestamptz;
 
--- Six weeks after the notary date, if a deal still has no payment due date on its property,
+-- A switchable number of days after the notary date (invoice_settings.payment_due_date_reminder_days,
+-- 0095_payment_due_date_reminder_days.sql), if a deal still has no payment due date on its property,
 -- someone should be asked to chase it or enter the note explaining why there is none. Modelled
 -- directly on notify_overdue_payments() (0023_expected_payment.sql): date math, a scan for the
 -- still-missing case, one notification, a stamp column so it never fires twice for the same deal.
@@ -10469,12 +10480,16 @@ create or replace function public.notify_missing_payment_dates() returns integer
 declare
   v_ids uuid[];
   v_count integer;
+  v_reminder_days integer;
 begin
+  select payment_due_date_reminder_days into v_reminder_days
+    from public.invoice_settings where id = true;
+
   select array_agg(d.id) into v_ids
     from public.deals d
     join public.properties p on p.id = d.property_id
    where d.deleted_at is null
-     and d.notarised_on < current_date - 42
+     and d.notarised_on < current_date - v_reminder_days
      and p.payment_due_date is null
      and p.payment_due_date_note is null
      and p.payment_due_date_notified_at is null;
@@ -10484,8 +10499,10 @@ begin
   end if;
 
   perform public.notify_administrators(
-    case when v_count = 1 then 'Eine Provision wartet seit über sechs Wochen auf ein Zahlungsziel'
-         else v_count || ' Provisionen warten seit über sechs Wochen auf ein Zahlungsziel' end,
+    case when v_count = 1
+           then format('Eine Provision wartet seit mehr als %s Tagen auf ein Zahlungsziel', v_reminder_days)
+         else format('%s Provisionen warten seit mehr als %s Tagen auf ein Zahlungsziel', v_count, v_reminder_days)
+    end,
     '/commission-deals', 'reminder');
 
   update public.properties
@@ -13925,5 +13942,27 @@ alter table public.invoice_settings
 
 comment on column public.invoice_settings.buyer_payment_term_days is
     'How many days after the invoice date the buyer side is due. Null means the same due date as the seller side.';
+
+commit;
+
+-- ===================================================================== 0095_payment_due_date_reminder_days.sql
+
+-- How many days after notarisation a missing payment due date gets reminded about. See
+-- notify_missing_payment_dates(), 0041_propstack_payment_due_date.sql.
+
+begin;
+
+alter table public.invoice_settings
+    add column if not exists payment_due_date_reminder_days integer not null default 42;
+
+alter table public.invoice_settings
+    drop constraint if exists invoice_settings_payment_due_date_reminder_days_sane;
+
+alter table public.invoice_settings
+    add constraint invoice_settings_payment_due_date_reminder_days_sane
+    check (payment_due_date_reminder_days >= 0 and payment_due_date_reminder_days <= 365);
+
+comment on column public.invoice_settings.payment_due_date_reminder_days is
+    'Days after notarisation before administrators are reminded that a property still has no payment due date.';
 
 commit;
