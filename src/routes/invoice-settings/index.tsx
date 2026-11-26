@@ -552,7 +552,7 @@ function SettingsForm({
           {canEdit && (
             <Button
               variant="outline"
-              disabled={editingDisabled}
+              disabled={editingDisabled || labelsInvalid}
               onClick={() => setLabels([...labels, { kind: "", label: "" }])}
             >
               <Plus /> {t("invoiceSettings.kindLabels.add")}
