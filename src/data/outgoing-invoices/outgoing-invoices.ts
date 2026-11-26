@@ -235,6 +235,24 @@ export function useSyncInvoiceToLexoffice() {
   });
 }
 
+export function useMarkOutgoingInvoiceAccountingChecked() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async (outgoingInvoiceId: string) => {
+      const actor = await actorEmail();
+      const { error } = await sb
+        .from(TABLE.outgoingInvoices)
+        .update({
+          accounting_checked_at: new Date().toISOString(),
+          accounting_checked_by: actor,
+        })
+        .eq("id", outgoingInvoiceId);
+      if (error) throw error;
+    },
+    onSuccess: () => qc.invalidateQueries({ queryKey: ["outgoing_invoices"] }),
+  });
+}
+
 export interface OpenOutgoingInvoicesInfiniteFilter {
   q?: string;
   /** invoice_date range — the outgoing equivalent of document_date. */

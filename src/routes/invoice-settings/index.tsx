@@ -178,6 +178,9 @@ function SettingsForm({
     settings.buyer_payment_term_days === null ? "" : String(settings.buyer_payment_term_days),
   );
   const [finaliseInLexware, setFinaliseInLexware] = useState(settings.finalise_in_lexware);
+  const [requireAccountingCheck, setRequireAccountingCheck] = useState(
+    settings.require_accounting_check,
+  );
   const [paymentDueDateReminderDays, setPaymentDueDateReminderDays] = useState(
     String(settings.payment_due_date_reminder_days),
   );
@@ -201,6 +204,7 @@ function SettingsForm({
       settings.buyer_payment_term_days === null ? "" : String(settings.buyer_payment_term_days),
     );
     setFinaliseInLexware(settings.finalise_in_lexware);
+    setRequireAccountingCheck(settings.require_accounting_check);
     setPaymentDueDateReminderDays(String(settings.payment_due_date_reminder_days));
     setLabels(kindLabels);
   }
@@ -277,6 +281,7 @@ function SettingsForm({
     parsedPaymentTermDays !== Number(settings.payment_term_days) ||
     parsedBuyerPaymentTermDays !== settings.buyer_payment_term_days ||
     finaliseInLexware !== settings.finalise_in_lexware ||
+    requireAccountingCheck !== settings.require_accounting_check ||
     parsedPaymentDueDateReminderDays !== Number(settings.payment_due_date_reminder_days) ||
     labelsChanged;
 
@@ -310,6 +315,7 @@ function SettingsForm({
         payment_term_days: parsedPaymentTermDays,
         buyer_payment_term_days: parsedBuyerPaymentTermDays,
         finalise_in_lexware: finaliseInLexware,
+        require_accounting_check: requireAccountingCheck,
         payment_due_date_reminder_days: parsedPaymentDueDateReminderDays,
       });
       await saveKindLabels.mutateAsync(labels);
@@ -465,6 +471,26 @@ function SettingsForm({
               {t("invoiceSettings.field.finaliseInLexware")}
               <span className="block text-xs text-muted-foreground">
                 {t("invoiceSettings.finaliseInLexwareHint")}
+              </span>
+            </span>
+          </label>
+        </SettingsRow>
+
+        <SettingsRow
+          title={t("invoiceSettings.card.accountingCheck.title")}
+          desc={t("invoiceSettings.card.accountingCheck.desc")}
+        >
+          <label className="flex items-start gap-2 text-sm sm:col-span-2">
+            <Checkbox
+              className="mt-0.5"
+              checked={requireAccountingCheck}
+              onCheckedChange={(checked) => setRequireAccountingCheck(checked === true)}
+              disabled={editingDisabled}
+            />
+            <span>
+              {t("invoiceSettings.field.requireAccountingCheck")}
+              <span className="block text-xs text-muted-foreground">
+                {t("invoiceSettings.requireAccountingCheckHint")}
               </span>
             </span>
           </label>

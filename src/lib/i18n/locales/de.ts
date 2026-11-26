@@ -4633,6 +4633,8 @@ const de = {
       "Leer lassen, damit die Käuferseite dasselbe Zahlungsziel wie die Verkäuferseite bekommt, aus der Immobilie.",
     finaliseInLexwareHint:
       "Aus: Die Rechnung bleibt in Lexware als Entwurf stehen, bis jemand sie dort prüft und freigibt.",
+    requireAccountingCheckHint:
+      "Aus: Eine neue Provisionsrechnung geht sofort an Lexware. An: Jemand muss sie vorher als geprüft markieren.",
     paymentDueDateReminderDaysInvalid: "Bitte eine ganze Zahl zwischen 0 und 365 eintragen.",
     paymentDueDateReminderDaysHint:
       "Nach so vielen Tagen ohne Zahlungsziel werden die Administratoren einmal daran erinnert.",
@@ -4670,6 +4672,10 @@ const de = {
       lexware: {
         title: "Übergabe an Lexware",
         desc: "Zahlungsfrist und Verhalten beim Anlegen einer neuen Rechnung in Lexware.",
+      },
+      accountingCheck: {
+        title: "Prüfung der Ausgangsrechnung",
+        desc: "Ob eine Provisionsrechnung vor der Übergabe an Lexware geprüft werden muss.",
       },
       reminders: {
         title: "Erinnerungen",
@@ -4726,6 +4732,7 @@ const de = {
       paymentTermDays: "Zahlungsfrist in Tagen",
       buyerPaymentTermDays: "Zahlungsfrist Käuferseite in Tagen",
       finaliseInLexware: "Rechnung in Lexware abschließen",
+      requireAccountingCheck: "Prüfung durch die Buchhaltung vor Lexware verlangen",
       paymentDueDateReminderDays: "Nach so vielen Tagen erinnern (kein Zahlungsziel gesetzt)",
       donationThresholdAmount: "Schwelle (Kaufpreis)",
       donationAmount: "Spendenbetrag",
@@ -6787,6 +6794,13 @@ const de = {
         timedOut: "Das hat zu lange gedauert. Bitte erneut versuchen.",
         success: "Rechnung an Lexoffice gesendet.",
         failed: "Konnte nicht an Lexoffice gesendet werden: {{error}}",
+      },
+      accountingCheck: {
+        needsCheck: "Muss geprüft werden",
+        markChecked: "Als geprüft markieren",
+        checkedBy: "Geprüft von {{who}} am {{when}}",
+        success: "Als geprüft markiert.",
+        failed: "Konnte nicht als geprüft markiert werden: {{error}}",
       },
       bulk: {
         selectAll: "Alle Zeilen auf dieser Seite auswählen",
