@@ -61,6 +61,8 @@ import {
 } from "@/components/ui/table";
 import {
   useCompanies,
+  useInvoiceSettings,
+  useMarkOutgoingInvoiceAccountingChecked,
   useOutgoingInvoiceFileUrl,
   useOutgoingInvoiceMailText,
   useOutgoingInvoices,
@@ -107,6 +109,17 @@ function paymentDueOn(invoice: OutgoingInvoice) {
   return invoice.due_date ?? invoice.expected_payment_on ?? null;
 }
 
+function needsAccountingCheck(invoice: OutgoingInvoice, requireAccountingCheck: boolean) {
+  return (
+    requireAccountingCheck &&
+    !invoice.accounting_checked_at &&
+    invoice.status === "draft" &&
+    invoice.source === "app" &&
+    invoice.kind !== "referral_credit" &&
+    !invoice.accounting_external_id
+  );
+}
+
 function effectiveStatus(status: OutgoingInvoiceStatus, dueDate: string | null): StatusFilter {
   if (status === "paidoff" || status === "paid") return "paid";
   if (status === "voided" || status === "cancelled") return "voided";
@@ -139,6 +152,8 @@ function OutgoingInvoicesPage() {
     companyId: companyId === ALL ? undefined : companyId,
   });
   const bulkSync = useSyncInvoiceToLexoffice();
+  const invoiceSettingsQ = useInvoiceSettings();
+  const requireAccountingCheck = invoiceSettingsQ.data?.require_accounting_check ?? false;
 
   useEffect(() => {
     setSelectedIds(new Set());
@@ -274,7 +289,9 @@ function OutgoingInvoicesPage() {
     { value: "due", label: t("outgoingInvoices.list.col.due") },
   ];
 
-  const pageRowIds = view.pageRows.map((inv) => inv.id);
+  const pageRowIds = view.pageRows
+    .filter((inv) => !needsAccountingCheck(inv, requireAccountingCheck))
+    .map((inv) => inv.id);
   const allOnPageSelected = pageRowIds.length > 0 && pageRowIds.every((id) => selectedIds.has(id));
   const someOnPageSelected = pageRowIds.some((id) => selectedIds.has(id));
 
@@ -297,7 +314,11 @@ function OutgoingInvoicesPage() {
   }
 
   async function sendSelectedToLexoffice() {
-    const ids = [...selectedIds];
+    const byId = new Map((invoicesQ.data ?? []).map((inv) => [inv.id, inv]));
+    const ids = [...selectedIds].filter((id) => {
+      const inv = byId.get(id);
+      return !inv || !needsAccountingCheck(inv, requireAccountingCheck);
+    });
     setBulkSending(true);
     let succeeded = 0;
     let failed = 0;
@@ -458,6 +479,7 @@ function OutgoingInvoicesPage() {
                     <Checkbox
                       checked={selectedIds.has(inv.id)}
                       onCheckedChange={() => toggleRow(inv.id)}
+                      disabled={needsAccountingCheck(inv, requireAccountingCheck)}
                       aria-label={t("outgoingInvoices.list.bulk.selectRow")}
                     />
                   </TableCell>
@@ -492,7 +514,10 @@ function OutgoingInvoicesPage() {
                   </TableCell>
                   <TableCell>
                     <div className="flex items-center justify-end gap-1">
-                      <LexofficeSyncButton invoice={inv} />
+                      <LexofficeSyncButton
+                        invoice={inv}
+                        requireAccountingCheck={requireAccountingCheck}
+                      />
                       <OutgoingInvoiceFileButton
                         invoiceId={inv.id}
                         invoiceNumber={inv.invoice_number}
@@ -711,13 +736,29 @@ function PropertyCell({
   );
 }
 
-function LexofficeSyncButton({ invoice }: { invoice: OutgoingInvoice }) {
+function LexofficeSyncButton({
+  invoice,
+  requireAccountingCheck,
+}: {
+  invoice: OutgoingInvoice;
+  requireAccountingCheck: boolean;
+}) {
   const { t } = useTranslation();
   const canSync = useFeature(PERMISSIONS.lexofficeSync);
+  const canMarkChecked = useFeature(PERMISSIONS.outgoingInvoicesAccountingCheck);
   const fetchesFile = useFeature(PERMISSIONS.lexofficeInvoiceFileFetch);
   const sync = useSyncInvoiceToLexoffice();
+  const markChecked = useMarkOutgoingInvoiceAccountingChecked();
 
   if (!canSync || invoice.source !== "app" || invoice.kind === "referral_credit") return null;
+
+  function requestAccountingCheck() {
+    markChecked.mutate(invoice.id, {
+      onSuccess: () => toast.success(t("outgoingInvoices.list.accountingCheck.success")),
+      onError: (e: Error) =>
+        toast.error(t("outgoingInvoices.list.accountingCheck.failed", { error: errorText(e) })),
+    });
+  }
 
   const fileDone = !fetchesFile || !!invoice.lexoffice_file_fetched_at;
   const stuck = lexofficeSyncIsStuck(invoice.lexoffice_sync_requested_at);
@@ -776,6 +817,33 @@ function LexofficeSyncButton({ invoice }: { invoice: OutgoingInvoice }) {
   }
 
   if (invoice.status !== "draft") return null;
+
+  if (needsAccountingCheck(invoice, requireAccountingCheck)) {
+    if (!canMarkChecked) {
+      return (
+        <RowIconStatus
+          label={t("outgoingInvoices.list.accountingCheck.needsCheck")}
+          className="text-muted-foreground"
+        >
+          <Clock className="size-4" />
+        </RowIconStatus>
+      );
+    }
+    return (
+      <RowIconAction
+        onClick={requestAccountingCheck}
+        disabled={markChecked.isPending}
+        className="text-muted-foreground"
+        label={t("outgoingInvoices.list.accountingCheck.markChecked")}
+      >
+        {markChecked.isPending ? (
+          <Loader2 className="size-4 animate-spin" />
+        ) : (
+          <CheckCircle2 className="size-4" />
+        )}
+      </RowIconAction>
+    );
+  }
 
   return (
     <RowIconAction

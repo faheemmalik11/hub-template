@@ -262,6 +262,7 @@ export interface InvoiceSettings {
   buyer_payment_term_days: number | null;
   payment_due_date_reminder_days: number;
   finalise_in_lexware: boolean;
+  require_accounting_check: boolean;
   updated_at: string;
   updated_by: string | null;
 }
@@ -1791,6 +1792,8 @@ export interface OutgoingInvoice {
   lexoffice_sync_requested_at?: string | null;
   lexoffice_file_fetched_at?: string | null;
   lexoffice_sync_error?: string | null;
+  accounting_checked_at?: string | null;
+  accounting_checked_by?: string | null;
   // Optional PostgREST-embedded relation (select "*, customers(*)").
   customers?: Customer | null;
   // Optional PostgREST-embedded relation (select "*, deal:deals(...)").

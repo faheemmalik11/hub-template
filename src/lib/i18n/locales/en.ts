@@ -4465,6 +4465,8 @@ const en = {
       "Leave empty for the buyer side to get the same due date as the seller side, from the property.",
     finaliseInLexwareHint:
       "Off: the invoice is left as a draft in Lexware for someone to check and release there.",
+    requireAccountingCheckHint:
+      "Off: a new commission invoice goes to Lexware right away. On: someone must mark it checked first.",
     paymentDueDateReminderDaysInvalid: "Please enter a whole number between 0 and 365.",
     paymentDueDateReminderDaysHint:
       "After this many days with no payment due date, administrators get reminded once.",
@@ -4501,6 +4503,10 @@ const en = {
       lexware: {
         title: "Lexware handover",
         desc: "Payment term and behavior when a new invoice is created in Lexware.",
+      },
+      accountingCheck: {
+        title: "Outgoing invoice review",
+        desc: "Whether a commission invoice needs a check before it goes to Lexware.",
       },
       reminders: {
         title: "Reminders",
@@ -4556,6 +4562,7 @@ const en = {
       paymentTermDays: "Payment term (days)",
       buyerPaymentTermDays: "Buyer side payment term (days)",
       finaliseInLexware: "Finalize the invoice in Lexware",
+      requireAccountingCheck: "Require an accounting check before Lexware",
       paymentDueDateReminderDays: "Remind after this many days (no payment due date set)",
       donationThresholdAmount: "Threshold (purchase price)",
       donationAmount: "Donation amount",
@@ -6529,6 +6536,13 @@ const en = {
         timedOut: "This took too long. Try again.",
         success: "Invoice sent to Lexoffice.",
         failed: "Could not send to Lexoffice: {{error}}",
+      },
+      accountingCheck: {
+        needsCheck: "Needs a check",
+        markChecked: "Mark as checked",
+        checkedBy: "Checked by {{who}} on {{when}}",
+        success: "Marked as checked.",
+        failed: "Could not mark as checked: {{error}}",
       },
       bulk: {
         selectAll: "Select all rows on this page",

@@ -4,6 +4,7 @@ export {
   useCustomer,
   useCustomers,
   useExtractOutgoingInvoiceFields,
+  useMarkOutgoingInvoiceAccountingChecked,
   useOpenOutgoingInvoicesInfinite,
   useOutgoingInvoice,
   useOutgoingInvoiceFileUrl,
