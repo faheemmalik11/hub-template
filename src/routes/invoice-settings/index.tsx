@@ -1,5 +1,5 @@
 import { createFileRoute, useBlocker } from "@tanstack/react-router";
-import { useEffect, useState } from "react";
+import { useEffect, useState, type ReactNode } from "react";
 import { Plus, X } from "lucide-react";
 import { toast } from "sonner";
 
@@ -15,14 +15,14 @@ import {
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Combobox } from "@/components/ui/combobox";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Skeleton } from "@/components/ui/skeleton";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { ErrorState } from "@/components/documents/query-states";
-import { InvoiceMailTemplatesCard } from "@/components/invoice-settings/invoice-mail-templates-card";
+import { InvoiceMailTemplatesPanel } from "@/components/invoice-settings/invoice-mail-templates-panel";
 import {
   useInvoiceKindLabels,
   useInvoiceSettings,
@@ -73,6 +73,7 @@ function InvoiceSettingsPage() {
   const labelsQuery = useInvoiceKindLabels();
 
   const failed = settingsQuery.isError ? settingsQuery : labelsQuery.isError ? labelsQuery : null;
+  const canEdit = can(PERMISSIONS.settingsManage);
 
   return (
     <div>
@@ -97,18 +98,48 @@ function InvoiceSettingsPage() {
         ) : !settingsQuery.data || !labelsQuery.data ? (
           <Skeleton className="h-96 w-full" />
         ) : (
-          <>
-            <SettingsForm
-              settings={settingsQuery.data}
-              kindLabels={labelsQuery.data}
-              canEdit={can(PERMISSIONS.settingsManage)}
-            />
-            <div className="mt-6">
-              <InvoiceMailTemplatesCard canEdit={can(PERMISSIONS.settingsManage)} />
-            </div>
-          </>
+          <Tabs defaultValue="defaults">
+            <TabsList>
+              <TabsTrigger value="defaults">{t("invoiceSettings.tabs.defaults")}</TabsTrigger>
+              <TabsTrigger value="mailTemplates">
+                {t("invoiceSettings.tabs.mailTemplates")}
+              </TabsTrigger>
+            </TabsList>
+            <TabsContent value="defaults" className="mt-4">
+              <SettingsForm
+                settings={settingsQuery.data}
+                kindLabels={labelsQuery.data}
+                canEdit={canEdit}
+              />
+            </TabsContent>
+            <TabsContent value="mailTemplates" className="mt-4">
+              <InvoiceMailTemplatesPanel canEdit={canEdit} />
+            </TabsContent>
+          </Tabs>
         )}
       </div>
+    </div>
+  );
+}
+
+function SettingsRow({
+  title,
+  desc,
+  children,
+  wide,
+}: {
+  title: string;
+  desc?: string;
+  children: ReactNode;
+  wide?: boolean;
+}) {
+  return (
+    <div className="grid gap-4 border-b border-border/60 px-5 py-5 last:border-b-0 sm:grid-cols-[minmax(0,240px)_1fr] sm:gap-8">
+      <div>
+        <h3 className="text-sm font-semibold text-foreground">{title}</h3>
+        {desc && <p className="mt-1 text-xs text-muted-foreground">{desc}</p>}
+      </div>
+      <div className={wide ? "space-y-3" : "grid gap-4 sm:grid-cols-2"}>{children}</div>
     </div>
   );
 }
@@ -280,7 +311,7 @@ function SettingsForm({
   }
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-4">
       {!canEdit && (
         <p className="rounded-md border border-border bg-muted/40 px-3 py-2 text-xs text-muted-foreground">
           {t("invoiceSettings.readOnlyHint")}
@@ -300,162 +331,140 @@ function SettingsForm({
         </p>
       )}
 
-      <div className="grid gap-4 lg:grid-cols-2">
-        <Card className="flex flex-col shadow-none">
-          <CardHeader>
-            <CardTitle>{t("invoiceSettings.card.tax.title")}</CardTitle>
-            <CardDescription>{t("invoiceSettings.card.tax.desc")}</CardDescription>
-          </CardHeader>
-          <CardContent className="grid gap-4 sm:grid-cols-2">
-            <Field
-              label={t("invoiceSettings.field.defaultVatRate")}
-              value={defaultVatRate}
-              onChange={(value) => setDefaultVatRate(sanitizeAmountInput(value))}
-              disabled={editingDisabled}
-              invalid={vatRateInvalid}
-              errorText={t("invoiceSettings.defaultVatRateInvalid")}
-            />
-            <Field
-              label={t("invoiceSettings.field.countryCode")}
-              value={countryCode}
-              onChange={(value) => setCountryCode(value.toUpperCase())}
-              disabled={editingDisabled}
-              invalid={countryCodeInvalid}
-              errorText={t("invoiceSettings.countryCodeInvalid")}
-              maxLength={2}
-            />
-          </CardContent>
-        </Card>
+      <div className="rounded-xl border border-border bg-card">
+        <SettingsRow
+          title={t("invoiceSettings.card.tax.title")}
+          desc={t("invoiceSettings.card.tax.desc")}
+        >
+          <Field
+            label={t("invoiceSettings.field.defaultVatRate")}
+            value={defaultVatRate}
+            onChange={(value) => setDefaultVatRate(sanitizeAmountInput(value))}
+            disabled={editingDisabled}
+            invalid={vatRateInvalid}
+            errorText={t("invoiceSettings.defaultVatRateInvalid")}
+          />
+          <Field
+            label={t("invoiceSettings.field.countryCode")}
+            value={countryCode}
+            onChange={(value) => setCountryCode(value.toUpperCase())}
+            disabled={editingDisabled}
+            invalid={countryCodeInvalid}
+            errorText={t("invoiceSettings.countryCodeInvalid")}
+            maxLength={2}
+          />
+        </SettingsRow>
 
-        <Card className="flex flex-col shadow-none">
-          <CardHeader>
-            <CardTitle>{t("invoiceSettings.card.wording.title")}</CardTitle>
-            <CardDescription>{t("invoiceSettings.card.wording.desc")}</CardDescription>
-          </CardHeader>
-          <CardContent className="grid gap-4 sm:grid-cols-2">
-            <Field
-              label={t("invoiceSettings.field.invoiceFallbackLabel")}
-              value={invoiceFallbackLabel}
-              onChange={setInvoiceFallbackLabel}
-              disabled={editingDisabled}
-              invalid={invoiceFallbackLabel.trim() === ""}
-              errorText={t("invoiceSettings.textRequired")}
-            />
-            <Field
-              label={t("invoiceSettings.field.invoiceUnitName")}
-              value={invoiceUnitName}
-              onChange={setInvoiceUnitName}
-              disabled={editingDisabled}
-              invalid={invoiceUnitName.trim() === ""}
-              errorText={t("invoiceSettings.textRequired")}
-            />
-          </CardContent>
-        </Card>
-      </div>
+        <SettingsRow
+          title={t("invoiceSettings.card.wording.title")}
+          desc={t("invoiceSettings.card.wording.desc")}
+        >
+          <Field
+            label={t("invoiceSettings.field.invoiceFallbackLabel")}
+            value={invoiceFallbackLabel}
+            onChange={setInvoiceFallbackLabel}
+            disabled={editingDisabled}
+            invalid={invoiceFallbackLabel.trim() === ""}
+            errorText={t("invoiceSettings.textRequired")}
+          />
+          <Field
+            label={t("invoiceSettings.field.invoiceUnitName")}
+            value={invoiceUnitName}
+            onChange={setInvoiceUnitName}
+            disabled={editingDisabled}
+            invalid={invoiceUnitName.trim() === ""}
+            errorText={t("invoiceSettings.textRequired")}
+          />
+        </SettingsRow>
 
-      <div className="grid gap-4 lg:grid-cols-2">
-        <Card className="flex flex-col shadow-none">
-          <CardHeader>
-            <CardTitle>{t("invoiceSettings.card.voucherRemark.title")}</CardTitle>
-            <CardDescription>{t("invoiceSettings.card.voucherRemark.desc")}</CardDescription>
-          </CardHeader>
-          <CardContent className="grid gap-4 sm:grid-cols-2">
-            <Field
-              label={t("invoiceSettings.field.defaultPaymentMethod")}
-              value={defaultPaymentMethod}
-              onChange={setDefaultPaymentMethod}
-              disabled={editingDisabled}
-              invalid={defaultPaymentMethod.trim() === ""}
-              errorText={t("invoiceSettings.textRequired")}
-            />
-            <Field
-              label={t("invoiceSettings.field.documentFallbackLabel")}
-              value={documentFallbackLabel}
-              onChange={setDocumentFallbackLabel}
-              disabled={editingDisabled}
-              invalid={documentFallbackLabel.trim() === ""}
-              errorText={t("invoiceSettings.textRequired")}
-            />
-          </CardContent>
-        </Card>
+        <SettingsRow
+          title={t("invoiceSettings.card.voucherRemark.title")}
+          desc={t("invoiceSettings.card.voucherRemark.desc")}
+        >
+          <Field
+            label={t("invoiceSettings.field.defaultPaymentMethod")}
+            value={defaultPaymentMethod}
+            onChange={setDefaultPaymentMethod}
+            disabled={editingDisabled}
+            invalid={defaultPaymentMethod.trim() === ""}
+            errorText={t("invoiceSettings.textRequired")}
+          />
+          <Field
+            label={t("invoiceSettings.field.documentFallbackLabel")}
+            value={documentFallbackLabel}
+            onChange={setDocumentFallbackLabel}
+            disabled={editingDisabled}
+            invalid={documentFallbackLabel.trim() === ""}
+            errorText={t("invoiceSettings.textRequired")}
+          />
+        </SettingsRow>
 
-        <Card className="flex flex-col shadow-none">
-          <CardHeader>
-            <CardTitle>{t("invoiceSettings.card.timezone.title")}</CardTitle>
-            <CardDescription>{t("invoiceSettings.card.timezone.desc")}</CardDescription>
-          </CardHeader>
-          <CardContent>
-            <div className="space-y-1.5">
-              <Label className="text-xs text-muted-foreground">
-                {t("invoiceSettings.field.timezone")}
-              </Label>
-              <Combobox
-                value={timezone}
-                onValueChange={setTimezone}
-                options={TIMEZONE_OPTIONS}
-                disabled={editingDisabled}
-                invalid={timezoneInvalid}
-              />
-              {timezoneInvalid && (
-                <p className="text-xs text-amber-700">{t("invoiceSettings.timezoneInvalid")}</p>
-              )}
-            </div>
-          </CardContent>
-        </Card>
-      </div>
-
-      <div className="grid gap-4 lg:grid-cols-2">
-        <Card className="flex flex-col shadow-none">
-          <CardHeader>
-            <CardTitle>{t("invoiceSettings.card.lexware.title")}</CardTitle>
-            <CardDescription>{t("invoiceSettings.card.lexware.desc")}</CardDescription>
-          </CardHeader>
-          <CardContent className="grid gap-4 sm:grid-cols-2">
-            <Field
-              label={t("invoiceSettings.field.paymentTermDays")}
-              value={paymentTermDays}
-              onChange={(value) => setPaymentTermDays(sanitizeAmountInput(value))}
+        <SettingsRow
+          title={t("invoiceSettings.card.timezone.title")}
+          desc={t("invoiceSettings.card.timezone.desc")}
+        >
+          <div className="space-y-1.5">
+            <Label className="text-xs text-muted-foreground">
+              {t("invoiceSettings.field.timezone")}
+            </Label>
+            <Combobox
+              value={timezone}
+              onValueChange={setTimezone}
+              options={TIMEZONE_OPTIONS}
               disabled={editingDisabled}
-              invalid={paymentTermDaysInvalid}
-              errorText={t("invoiceSettings.paymentTermDaysInvalid")}
+              invalid={timezoneInvalid}
             />
-            <div className="space-y-1">
-              <Field
-                label={t("invoiceSettings.field.buyerPaymentTermDays")}
-                value={buyerPaymentTermDays}
-                onChange={(value) => setBuyerPaymentTermDays(sanitizeAmountInput(value))}
-                disabled={editingDisabled}
-                invalid={buyerPaymentTermDaysInvalid}
-                errorText={t("invoiceSettings.buyerPaymentTermDaysInvalid")}
-              />
-              <p className="text-xs text-muted-foreground">
-                {t("invoiceSettings.buyerPaymentTermDaysHint")}
-              </p>
-            </div>
-            <label className="flex items-start gap-2 text-sm sm:col-span-2">
-              <Checkbox
-                className="mt-0.5"
-                checked={finaliseInLexware}
-                onCheckedChange={(checked) => setFinaliseInLexware(checked === true)}
-                disabled={editingDisabled}
-              />
-              <span>
-                {t("invoiceSettings.field.finaliseInLexware")}
-                <span className="block text-xs text-muted-foreground">
-                  {t("invoiceSettings.finaliseInLexwareHint")}
-                </span>
+            {timezoneInvalid && (
+              <p className="text-xs text-amber-700">{t("invoiceSettings.timezoneInvalid")}</p>
+            )}
+          </div>
+        </SettingsRow>
+
+        <SettingsRow
+          title={t("invoiceSettings.card.lexware.title")}
+          desc={t("invoiceSettings.card.lexware.desc")}
+        >
+          <Field
+            label={t("invoiceSettings.field.paymentTermDays")}
+            value={paymentTermDays}
+            onChange={(value) => setPaymentTermDays(sanitizeAmountInput(value))}
+            disabled={editingDisabled}
+            invalid={paymentTermDaysInvalid}
+            errorText={t("invoiceSettings.paymentTermDaysInvalid")}
+          />
+          <div className="space-y-1">
+            <Field
+              label={t("invoiceSettings.field.buyerPaymentTermDays")}
+              value={buyerPaymentTermDays}
+              onChange={(value) => setBuyerPaymentTermDays(sanitizeAmountInput(value))}
+              disabled={editingDisabled}
+              invalid={buyerPaymentTermDaysInvalid}
+              errorText={t("invoiceSettings.buyerPaymentTermDaysInvalid")}
+            />
+            <p className="text-xs text-muted-foreground">
+              {t("invoiceSettings.buyerPaymentTermDaysHint")}
+            </p>
+          </div>
+          <label className="flex items-start gap-2 text-sm sm:col-span-2">
+            <Checkbox
+              className="mt-0.5"
+              checked={finaliseInLexware}
+              onCheckedChange={(checked) => setFinaliseInLexware(checked === true)}
+              disabled={editingDisabled}
+            />
+            <span>
+              {t("invoiceSettings.field.finaliseInLexware")}
+              <span className="block text-xs text-muted-foreground">
+                {t("invoiceSettings.finaliseInLexwareHint")}
               </span>
-            </label>
-          </CardContent>
-        </Card>
-      </div>
+            </span>
+          </label>
+        </SettingsRow>
 
-      <Card className="flex flex-col shadow-none">
-        <CardHeader>
-          <CardTitle>{t("invoiceSettings.card.reminders.title")}</CardTitle>
-          <CardDescription>{t("invoiceSettings.card.reminders.desc")}</CardDescription>
-        </CardHeader>
-        <CardContent className="grid gap-4 sm:grid-cols-2">
+        <SettingsRow
+          title={t("invoiceSettings.card.reminders.title")}
+          desc={t("invoiceSettings.card.reminders.desc")}
+        >
           <div className="space-y-1">
             <Field
               label={t("invoiceSettings.field.paymentDueDateReminderDays")}
@@ -469,15 +478,13 @@ function SettingsForm({
               {t("invoiceSettings.paymentDueDateReminderDaysHint")}
             </p>
           </div>
-        </CardContent>
-      </Card>
+        </SettingsRow>
 
-      <Card className="flex flex-col shadow-none">
-        <CardHeader>
-          <CardTitle>{t("invoiceSettings.card.kindLabels.title")}</CardTitle>
-          <CardDescription>{t("invoiceSettings.card.kindLabels.desc")}</CardDescription>
-        </CardHeader>
-        <CardContent className="space-y-3">
+        <SettingsRow
+          title={t("invoiceSettings.card.kindLabels.title")}
+          desc={t("invoiceSettings.card.kindLabels.desc")}
+          wide
+        >
           {labels.length === 0 && (
             <p className="text-sm text-muted-foreground">{t("invoiceSettings.kindLabels.empty")}</p>
           )}
@@ -551,8 +558,8 @@ function SettingsForm({
               <Plus /> {t("invoiceSettings.kindLabels.add")}
             </Button>
           )}
-        </CardContent>
-      </Card>
+        </SettingsRow>
+      </div>
 
       {canEdit && (
         <div className="flex items-center justify-end gap-2">
