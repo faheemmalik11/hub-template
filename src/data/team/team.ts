@@ -3,6 +3,7 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { SEED_MODE } from "@/config/seed";
 import { TABLE } from "@/config/tables";
 import { SINGLETON_ROW_ID, STALE, actorEmail, insertChangeHistory, sb } from "@/data/client";
+import { queryKeys } from "@/data/keys";
 import { fetchAllRows, invalidateMatchState, requiredReason } from "@/data/shared";
 import { useAuth } from "@/lib/auth";
 import { useFeatureGate } from "@/data/use-feature";
@@ -193,6 +194,26 @@ function effectivePermissions(
   const own = new Map(overrides.map((o) => [o.permission_key, o.granted]));
   const keys = new Set<string>([...roleDefaults, ...own.keys()]);
   return [...keys].filter((k) => own.get(k) ?? roleDefaults.has(k));
+}
+
+/** A person's display name for an email stamped by actorEmail() on an audit column (an
+ * "updated_by"/"created_by" text field, not a foreign key) -- null if nobody with that email is
+ * found, or they have no name set, so the caller can fall back to showing the email itself. */
+export function useAppUserNameByEmail(email: string | null) {
+  return useQuery({
+    queryKey: queryKeys.appUsers.byEmail(email ?? ""),
+    enabled: !!email,
+    staleTime: STALE,
+    queryFn: async (): Promise<string | null> => {
+      const { data, error } = await sb
+        .from(TABLE.appUsers)
+        .select("name")
+        .eq("email", (email ?? "").trim().toLowerCase())
+        .maybeSingle();
+      if (error) throw error;
+      return (data as { name: string | null } | null)?.name ?? null;
+    },
+  });
 }
 
 // Returns every employee including super_admin; consumers that must exclude it filter on role_name themselves.

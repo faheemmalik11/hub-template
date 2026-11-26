@@ -5,6 +5,9 @@
  * shows up as a screen that will not refresh after a save rather than as an error.
  */
 export const queryKeys = {
+  appUsers: {
+    byEmail: (email: string) => ["app_users", "by-email", email] as const,
+  },
   documents: {
     all: ["documents"] as const,
     list: (filters: unknown) => ["documents", "list", filters] as const,

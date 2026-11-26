@@ -19,6 +19,7 @@ import {
   Files,
   Folder,
   FolderTree,
+  Inbox,
   Landmark,
   LayoutDashboard,
   ListChecks,
@@ -142,7 +143,7 @@ const nav: NavEntry[] = [
         icon: Settings2,
         permission: PERMISSIONS.pageInvoiceSettings,
       },
-      { labelKey: "nav.mailbox", to: "/inbox", icon: Settings },
+      { labelKey: "nav.mailbox", to: "/inbox", icon: Inbox },
     ],
   },
   {
