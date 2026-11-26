@@ -4506,6 +4506,10 @@ const en = {
         title: "Reminders",
         desc: "When to remind administrators about a sale that still needs attention.",
       },
+      donationThreshold: {
+        title: "Donation threshold",
+        desc: "Sales at or above this purchase price set aside a donation amount.",
+      },
       mailTemplates: {
         title: "Invoice email templates",
         desc: "The text for sending a commission invoice. The right one is picked automatically: buyer, or seller under {{amount}}, or seller at {{amount}} and above. Sending itself stays manual, outside the Hub.",
@@ -4553,8 +4557,12 @@ const en = {
       buyerPaymentTermDays: "Buyer side payment term (days)",
       finaliseInLexware: "Finalize the invoice in Lexware",
       paymentDueDateReminderDays: "Remind after this many days (no payment due date set)",
+      donationThresholdAmount: "Threshold (purchase price)",
+      donationAmount: "Donation amount",
     },
     timezoneInvalid: "Please select a time zone.",
+    donationThresholdAmountInvalid: "Please enter a number greater than 0.",
+    donationAmountInvalid: "Please enter a number greater than 0.",
     kindLabels: {
       add: "Add an invoice type",
       remove: "Remove this invoice type",
