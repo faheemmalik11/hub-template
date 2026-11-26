@@ -104,6 +104,13 @@ function TemplateDrawer({
   const pending = create.isPending || update.isPending;
   const textInvalid =
     draft.name.trim() === "" || draft.subject.trim() === "" || draft.body.trim() === "";
+  const original = existing ?? EMPTY_DRAFT;
+  const dirty =
+    draft.name !== original.name ||
+    draft.side !== original.side ||
+    draft.condition !== original.condition ||
+    draft.subject !== original.subject ||
+    draft.body !== original.body;
 
   function insertVariable(name: string) {
     const token = `{{${name}}}`;
@@ -129,7 +136,7 @@ function TemplateDrawer({
   }
 
   function save() {
-    if (textInvalid || pending) return;
+    if (textInvalid || !dirty || pending) return;
     const onSettled = {
       onSuccess: () => {
         toast.success(t("invoiceSettings.card.mailTemplates.saved"));
@@ -147,7 +154,7 @@ function TemplateDrawer({
 
   return (
     <Sheet open={isOpen} onOpenChange={(open) => !open && onClose()}>
-      <SheetContent className="flex w-full flex-col gap-0 overflow-y-auto sm:max-w-md">
+      <SheetContent className="flex w-full flex-col gap-0 overflow-y-auto sm:max-w-xl">
         <SheetHeader>
           <SheetTitle>
             {mode.kind === "create"
@@ -274,7 +281,7 @@ function TemplateDrawer({
               <Button variant="outline" onClick={onClose} disabled={pending}>
                 {t("invoiceSettings.discard")}
               </Button>
-              <Button onClick={save} disabled={!canEdit || textInvalid || pending}>
+              <Button onClick={save} disabled={!canEdit || textInvalid || !dirty || pending}>
                 {pending ? t("invoiceSettings.saving") : t("invoiceSettings.save")}
               </Button>
             </>
