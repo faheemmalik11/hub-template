@@ -86,7 +86,7 @@ function InvoiceSettingsPage() {
         </p>
       </div>
 
-      <div className="mt-6 max-w-4xl">
+      <div className="mt-6">
         {failed ? (
           <ErrorState
             error={failed.error}
