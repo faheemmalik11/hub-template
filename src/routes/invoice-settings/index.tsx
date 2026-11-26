@@ -24,6 +24,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { ErrorState } from "@/components/documents/query-states";
 import { InvoiceMailTemplatesPanel } from "@/components/invoice-settings/invoice-mail-templates-panel";
 import {
+  useAppUserNameByEmail,
   useInvoiceKindLabels,
   useInvoiceSettings,
   useSaveInvoiceKindLabels,
@@ -31,7 +32,7 @@ import {
 } from "@/data";
 import { useAuth } from "@/lib/auth";
 import { PERMISSIONS } from "@/config/permissions";
-import { useTranslation } from "@/lib/i18n";
+import { Trans, useTranslation } from "@/lib/i18n";
 import type { InvoiceKindLabel, InvoiceSettings } from "@/lib/data/types";
 import { pageTitle } from "@/config/brand";
 import { errorText, formatDateTime, parseDecimalInput } from "@/lib/data/format";
@@ -54,7 +55,7 @@ const TIMEZONE_OPTIONS = Intl.supportedValuesOf("timeZone").map((zone) => ({
 }));
 
 export const Route = createFileRoute("/invoice-settings/")({
-  head: () => ({ meta: [{ title: pageTitle("Rechnungsvorgaben") }] }),
+  head: () => ({ meta: [{ title: pageTitle("Rechnungseinstellungen") }] }),
   staticData: { titleKey: "invoiceSettings" },
   component: InvoiceSettingsGuard,
 });
@@ -176,6 +177,10 @@ function SettingsForm({
   );
   const [labels, setLabels] = useState<InvoiceKindLabel[]>(kindLabels);
   const [isSaving, setIsSaving] = useState(false);
+
+  const lastChangedByNameQ = useAppUserNameByEmail(settings.updated_by);
+  const lastChangedByName =
+    lastChangedByNameQ.data ?? settings.updated_by ?? t("invoiceSettings.unknown");
 
   function resetToSaved() {
     setDefaultVatRate(String(settings.default_vat_rate));
@@ -318,18 +323,16 @@ function SettingsForm({
         </p>
       )}
 
-      <p className="rounded-md border border-border bg-muted/40 px-3 py-2 text-xs text-muted-foreground">
+      <p className="text-xs text-muted-foreground">
         {t("invoiceSettings.effectHint")}
+        {settings.updated_at && (
+          <Trans
+            i18nKey="invoiceSettings.lastChangedBySuffix"
+            values={{ who: lastChangedByName, when: formatDateTime(settings.updated_at) }}
+            components={{ strong: <strong className="font-medium text-foreground" /> }}
+          />
+        )}
       </p>
-
-      {settings.updated_at && (
-        <p className="text-xs text-muted-foreground">
-          {t("invoiceSettings.lastChangedBy", {
-            who: settings.updated_by ?? t("invoiceSettings.unknown"),
-            when: formatDateTime(settings.updated_at),
-          })}
-        </p>
-      )}
 
       <div className="rounded-xl border border-border bg-card">
         <SettingsRow

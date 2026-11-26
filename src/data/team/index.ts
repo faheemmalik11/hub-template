@@ -1,6 +1,7 @@
 export {
   NOTIFICATION_EVENT_TYPES,
   useAcknowledgeNotification,
+  useAppUserNameByEmail,
   useBankMatchingCounts,
   useChannelSecretPresent,
   useCreateEmployee,

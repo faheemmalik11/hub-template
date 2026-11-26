@@ -937,7 +937,7 @@ const de = {
     documentTypes: "Belegarten",
     documentIntakeLog: "Posteingangs-Protokoll",
     fileNaming: "Dateibenennung",
-    invoiceSettings: "Rechnungsvorgaben",
+    invoiceSettings: "Rechnungseinstellungen",
     toOverview: "Zur Übersicht",
     menu: "Menü",
     myProfile: "Mein Profil",
@@ -1790,7 +1790,7 @@ const de = {
     unmaintainedFields: "Nicht gepflegte Felder",
     inbox: "Postfach & Ablage",
     incomingInvoices: "Eingangsrechnungen",
-    invoiceSettings: "Rechnungsvorgaben",
+    invoiceSettings: "Rechnungseinstellungen",
     manualBookings: "Manuelle Buchungen",
     overview: "Übersicht",
     notifications: "Benachrichtigungen",
@@ -4610,14 +4610,14 @@ const de = {
     },
   },
   invoiceSettings: {
-    title: "Rechnungsvorgaben",
-    subtitle:
-      "Das sind die Standardwerte für Steuersatz, Land und Texte bei Rechnungen und Belegen.",
+    title: "Rechnungseinstellungen",
+    subtitle: "Standardwerte für Rechnungen und Belege sowie die E-Mail-Texte zum Versenden.",
     readOnlyHint:
       "Nur Administratoren können diese Vorgaben ändern. Wer das darf, steht unter Verwaltung › Team.",
     effectHint:
       "Die Änderung gilt nur für neue Rechnungen und Belege, nicht für bereits versendete.",
-    lastChangedBy: "Zuletzt geändert von {{who}} am {{when}}.",
+    lastChangedBySuffix:
+      " Zuletzt geändert von <strong>{{who}}</strong> am <strong>{{when}}</strong>.",
     unknown: "unbekannt",
     save: "Speichern",
     saving: "Wird gespeichert …",
