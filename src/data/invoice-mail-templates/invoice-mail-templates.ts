@@ -52,9 +52,14 @@ export type InvoiceMailTemplateDraft = Pick<
 export function useCreateInvoiceMailTemplate() {
   const qc = useQueryClient();
   return useMutation({
-    mutationFn: async (draft: InvoiceMailTemplateDraft) => {
-      const { error } = await sb.from(TABLE.invoiceMailTemplates).insert(draft);
+    mutationFn: async (draft: InvoiceMailTemplateDraft): Promise<string> => {
+      const { data, error } = await sb
+        .from(TABLE.invoiceMailTemplates)
+        .insert(draft)
+        .select("id")
+        .single();
       if (error) throw error;
+      return (data as { id: string }).id;
     },
     onSuccess: () => qc.invalidateQueries({ queryKey: queryKeys.invoiceMailTemplates.all }),
   });
