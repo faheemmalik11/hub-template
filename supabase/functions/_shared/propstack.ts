@@ -3,11 +3,34 @@ export const PROPSTACK_SOURCE = "propstack";
 export const PROPSTACK_API_URL = "https://api.propstack.de/v1";
 export const PROPSTACK_PAGE_SIZE = 100;
 
-// The two custom fields added in PropStack's own interface for the payment due date (Fabian's 11
-// November briefing, §4.2). Keys are fixed once created there; confirmed live against the real
-// PropStack API on 11 November 2026.
+// The two custom fields added in PropStack's own interface for the payment due date. Keys are
+// fixed once created there; confirmed live against the real PropStack API.
 export const PROPSTACK_PAYMENT_DUE_DATE_FIELD = "zahlungsziel";
 export const PROPSTACK_PAYMENT_DUE_DATE_NOTE_FIELD = "zahlungsziel_hinweis";
+
+// The four custom fields added in PropStack's own interface (group "Provisionsbeteiligung") for
+// who gets an internal commission share or a handover bonus. Keys are fixed once created there;
+// confirmed live against the real PropStack admin UI on 26 November 2026. referrer_contact (a
+// fifth field the design called for) has no dedicated contact-picker type in PropStack and is
+// resolved by hand instead -- see propstack-seven-fields-design-plan.md, section 2.
+export const PROPSTACK_REFERRER_TIER_FIELD = "tippgeberbonus_stufe";
+export const PROPSTACK_COMMISSION_SHARE_USER_FIELD = "interne_provisionsbeteiligung_mitarbeiter";
+export const PROPSTACK_COMMISSION_SHARE_MODEL_FIELD = "interne_provisionsbeteiligung_modell";
+export const PROPSTACK_HANDOVER_BONUS_USER_FIELD = "ubergabebonus_empfanger";
+
+const COMMISSION_SHARE_MODEL_BY_CRM_VALUE: Record<
+  string,
+  SyncedProperty["commission_share_model"]
+> = {
+  "10 % ohne Kostenabzug": "ten_percent_no_cost_deduction",
+  "50 % nach Kosten": "fifty_percent_after_costs",
+};
+
+// PropStack's own web app, not the REST API: confirmed live by opening a real unit there and
+// reading the address bar.
+export function propstackUnitUrl(externalId: string): string {
+  return `https://crm.propstack.de/app/portfolio/properties/${externalId}`;
+}
 
 type LabelledValue<T> = { label?: string | null; value?: T | null } | null | undefined;
 
@@ -71,6 +94,10 @@ export interface SyncedProperty {
   commission_note: string | null;
   payment_due_date: string | null;
   payment_due_date_note: string | null;
+  referrer_tier_from_crm: number | null;
+  commission_share_user_external_id: string | null;
+  commission_share_model: "ten_percent_no_cost_deduction" | "fifty_percent_after_costs" | null;
+  handover_bonus_user_external_id: string | null;
   broker_external_id: string | null;
   broker_name: string | null;
   broker_email: string | null;
@@ -109,6 +136,16 @@ function customField(unit: PropstackUnit, key: string): string | null {
   return text(unit.custom_fields?.[key]?.value);
 }
 
+function referrerTier(unit: PropstackUnit): number | null {
+  const match = customField(unit, PROPSTACK_REFERRER_TIER_FIELD)?.match(/^(\d+)/);
+  return match ? Number(match[1]) : null;
+}
+
+function commissionShareModel(unit: PropstackUnit): SyncedProperty["commission_share_model"] {
+  const raw = customField(unit, PROPSTACK_COMMISSION_SHARE_MODEL_FIELD);
+  return raw ? (COMMISSION_SHARE_MODEL_BY_CRM_VALUE[raw] ?? null) : null;
+}
+
 function brokerName(unit: PropstackUnit): string | null {
   const broker = unit.broker;
   if (!broker) return null;
@@ -138,6 +175,10 @@ export function toSyncedProperty(unit: PropstackUnit): SyncedProperty {
     commission_note: text(unit.courtage?.value),
     payment_due_date: customField(unit, PROPSTACK_PAYMENT_DUE_DATE_FIELD)?.slice(0, 10) ?? null,
     payment_due_date_note: customField(unit, PROPSTACK_PAYMENT_DUE_DATE_NOTE_FIELD),
+    referrer_tier_from_crm: referrerTier(unit),
+    commission_share_user_external_id: customField(unit, PROPSTACK_COMMISSION_SHARE_USER_FIELD),
+    commission_share_model: commissionShareModel(unit),
+    handover_bonus_user_external_id: customField(unit, PROPSTACK_HANDOVER_BONUS_USER_FIELD),
     broker_external_id: unit.broker_id ? String(unit.broker_id) : null,
     broker_name: brokerName(unit),
     broker_email: text(unit.broker?.email),
