@@ -46,6 +46,8 @@ alter table public.invoice_mail_templates
 
 grant insert, delete on public.invoice_mail_templates to authenticated;
 
+drop function if exists public.outgoing_invoice_mail_text(uuid);
+
 create or replace function public.outgoing_invoice_mail_text(p_invoice_id uuid)
 returns table (id uuid, name text, subject text, body text)
 language plpgsql stable security invoker set search_path to 'public'
