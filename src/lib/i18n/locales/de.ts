@@ -915,7 +915,7 @@ const de = {
     customers: "Kunden",
     companies: "Gesellschaften",
     properties: "Objekte",
-    mailbox: "Einstellungen",
+    mailbox: "Postfach",
     assignmentRules: "Zuordnungsregeln",
     vatRules: "USt-Regeln",
     approvalRules: "Freigabe-Regeln",

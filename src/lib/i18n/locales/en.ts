@@ -859,7 +859,7 @@ const en = {
     customers: "Customers",
     companies: "Companies",
     properties: "Properties",
-    mailbox: "Settings",
+    mailbox: "Mailbox",
     assignmentRules: "Assignment rules",
     vatRules: "VAT rules",
     approvalRules: "Approval rules",
