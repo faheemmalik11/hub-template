@@ -25,8 +25,10 @@ import { ErrorState } from "@/components/documents/query-states";
 import { InvoiceMailTemplatesPanel } from "@/components/invoice-settings/invoice-mail-templates-panel";
 import {
   useAppUserNameByEmail,
+  useDonationSettings,
   useInvoiceKindLabels,
   useInvoiceSettings,
+  useSaveDonationSettings,
   useSaveInvoiceKindLabels,
   useUpdateInvoiceSettings,
 } from "@/data";
@@ -75,6 +77,7 @@ function InvoiceSettingsPage() {
 
   const failed = settingsQuery.isError ? settingsQuery : labelsQuery.isError ? labelsQuery : null;
   const canEdit = can(PERMISSIONS.settingsManage);
+  const canManageDonations = can(PERMISSIONS.donationsManage);
 
   return (
     <div>
@@ -111,6 +114,7 @@ function InvoiceSettingsPage() {
                 settings={settingsQuery.data}
                 kindLabels={labelsQuery.data}
                 canEdit={canEdit}
+                canManageDonations={canManageDonations}
               />
             </TabsContent>
             <TabsContent value="mailTemplates" className="mt-4">
@@ -149,10 +153,12 @@ function SettingsForm({
   settings,
   kindLabels,
   canEdit,
+  canManageDonations,
 }: {
   settings: InvoiceSettings;
   kindLabels: InvoiceKindLabel[];
   canEdit: boolean;
+  canManageDonations: boolean;
 }) {
   const { t } = useTranslation();
   const updateSettings = useUpdateInvoiceSettings();
@@ -483,6 +489,8 @@ function SettingsForm({
           </div>
         </SettingsRow>
 
+        {canManageDonations && <DonationThresholdRow />}
+
         <SettingsRow
           title={t("invoiceSettings.card.kindLabels.title")}
           desc={t("invoiceSettings.card.kindLabels.desc")}
@@ -604,6 +612,91 @@ function SettingsForm({
         </AlertDialogContent>
       </AlertDialog>
     </div>
+  );
+}
+
+function DonationThresholdRow() {
+  const { t } = useTranslation();
+  const settingsQuery = useDonationSettings();
+  const saveSettings = useSaveDonationSettings();
+
+  const [thresholdAmount, setThresholdAmount] = useState("");
+  const [donationAmount, setDonationAmount] = useState("");
+  const [seededFor, setSeededFor] = useState<string | null>(null);
+
+  const settings = settingsQuery.data;
+  const seedKey = settings ? `${settings.threshold_amount}:${settings.donation_amount}` : null;
+  if (settings && seedKey !== seededFor) {
+    setThresholdAmount(String(settings.threshold_amount));
+    setDonationAmount(String(settings.donation_amount));
+    setSeededFor(seedKey);
+  }
+
+  if (!settings) return null;
+
+  const parsedThresholdAmount = parseDecimalInput(thresholdAmount);
+  const thresholdAmountInvalid =
+    parsedThresholdAmount === null ||
+    Number.isNaN(parsedThresholdAmount) ||
+    parsedThresholdAmount <= 0;
+  const parsedDonationAmount = parseDecimalInput(donationAmount);
+  const donationAmountInvalid =
+    parsedDonationAmount === null ||
+    Number.isNaN(parsedDonationAmount) ||
+    parsedDonationAmount <= 0;
+  const invalid = thresholdAmountInvalid || donationAmountInvalid;
+  const dirty =
+    parsedThresholdAmount !== settings.threshold_amount ||
+    parsedDonationAmount !== settings.donation_amount;
+  const disabled = saveSettings.isPending;
+
+  function discard() {
+    setThresholdAmount(String(settings!.threshold_amount));
+    setDonationAmount(String(settings!.donation_amount));
+  }
+
+  function save() {
+    if (invalid || !dirty || saveSettings.isPending) return;
+    saveSettings.mutate(
+      { threshold_amount: parsedThresholdAmount!, donation_amount: parsedDonationAmount! },
+      {
+        onSuccess: () => toast.success(t("invoiceSettings.toast.saved")),
+        onError: (error) =>
+          toast.error(t("invoiceSettings.toast.failed", { error: errorText(error) })),
+      },
+    );
+  }
+
+  return (
+    <SettingsRow
+      title={t("invoiceSettings.card.donationThreshold.title")}
+      desc={t("invoiceSettings.card.donationThreshold.desc")}
+    >
+      <Field
+        label={t("invoiceSettings.field.donationThresholdAmount")}
+        value={thresholdAmount}
+        onChange={(value) => setThresholdAmount(sanitizeAmountInput(value))}
+        disabled={disabled}
+        invalid={thresholdAmountInvalid}
+        errorText={t("invoiceSettings.donationThresholdAmountInvalid")}
+      />
+      <Field
+        label={t("invoiceSettings.field.donationAmount")}
+        value={donationAmount}
+        onChange={(value) => setDonationAmount(sanitizeAmountInput(value))}
+        disabled={disabled}
+        invalid={donationAmountInvalid}
+        errorText={t("invoiceSettings.donationAmountInvalid")}
+      />
+      <div className="flex justify-end gap-2 sm:col-span-2">
+        <Button type="button" variant="outline" disabled={!dirty || disabled} onClick={discard}>
+          {t("invoiceSettings.discard")}
+        </Button>
+        <Button type="button" disabled={invalid || !dirty || disabled} onClick={save}>
+          {saveSettings.isPending ? t("invoiceSettings.saving") : t("invoiceSettings.save")}
+        </Button>
+      </div>
+    </SettingsRow>
   );
 }
 

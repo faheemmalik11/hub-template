@@ -4675,6 +4675,10 @@ const de = {
         title: "Erinnerungen",
         desc: "Wann die Administratoren an einen Verkauf erinnert werden, der noch Aufmerksamkeit braucht.",
       },
+      donationThreshold: {
+        title: "Spendenschwelle",
+        desc: "Ab diesem Kaufpreis wird ein Spendenbetrag zurückgelegt.",
+      },
       mailTemplates: {
         title: "Rechnungs-Mailvorlagen",
         desc: "Der Text zum Verschicken einer Provisionsrechnung. Der richtige wird automatisch gewählt: Käufer, oder Verkäufer unter {{amount}}, oder Verkäufer ab {{amount}}. Der Versand selbst bleibt manuell, außerhalb des Hubs.",
@@ -4723,8 +4727,12 @@ const de = {
       buyerPaymentTermDays: "Zahlungsfrist Käuferseite in Tagen",
       finaliseInLexware: "Rechnung in Lexware abschließen",
       paymentDueDateReminderDays: "Nach so vielen Tagen erinnern (kein Zahlungsziel gesetzt)",
+      donationThresholdAmount: "Schwelle (Kaufpreis)",
+      donationAmount: "Spendenbetrag",
     },
     timezoneInvalid: "Bitte eine Zeitzone auswählen.",
+    donationThresholdAmountInvalid: "Bitte eine Zahl größer als 0 eingeben.",
+    donationAmountInvalid: "Bitte eine Zahl größer als 0 eingeben.",
     kindLabels: {
       add: "Rechnungsart hinzufügen",
       remove: "Rechnungsart entfernen",
