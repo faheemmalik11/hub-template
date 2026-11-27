@@ -69,6 +69,7 @@ export function AgentReportSection() {
   const { t } = useTranslation();
   const { can, appUserId } = useAuth();
   const seesAllAgents = can(PERMISSIONS.dealsReportAll);
+  const seesCommission = can(PERMISSIONS.dealsCommissionRead);
   const [cutoff, setCutoff] = useState(todayIso);
   const [search, setSearch] = useState("");
   const [sort, setSort] = useState<AgentCommissionReportSort>("closings");
@@ -151,13 +152,19 @@ export function AgentReportSection() {
       {pageQ.isLoading ? (
         <div className="mt-4 space-y-6">
           <CardsSkeleton count={showApprovedBonuses ? 5 : 4} />
-          {seesAllAgents && <TableSkeleton rows={4} cols={showApprovedBonuses ? 6 : 5} />}
+          {seesAllAgents && (
+            <TableSkeleton
+              rows={4}
+              cols={4 + (seesCommission ? 1 : 0) + (showApprovedBonuses ? 1 : 0)}
+            />
+          )}
         </div>
       ) : seesAllAgents ? (
         <div className="mt-4 space-y-6">
           <AgentReportTiles
             row={grandTotal}
             cutoff={cutoff}
+            showCommission={seesCommission}
             showApprovedBonuses={showApprovedBonuses}
           />
           <AgentReportTable
@@ -165,6 +172,7 @@ export function AgentReportSection() {
             total={pageQ.data?.total ?? 0}
             year={year}
             cutoff={cutoff}
+            showCommission={seesCommission}
             showApprovedBonuses={showApprovedBonuses}
             search={search}
             onSearch={changeSearch}
@@ -182,6 +190,7 @@ export function AgentReportSection() {
           <AgentReportTiles
             row={ownRow}
             cutoff={cutoff}
+            showCommission={seesCommission}
             showApprovedBonuses={showApprovedBonuses}
           />
         </div>
