@@ -38,11 +38,13 @@ function AgentDeals({
   cutoff,
   colSpan,
   open,
+  showCommission,
 }: {
   agentUserId: string;
   cutoff: string;
   colSpan: number;
   open: boolean;
+  showCommission: boolean;
 }) {
   const { t } = useTranslation();
   const [page, setPage] = useState(1);
@@ -77,9 +79,11 @@ function AgentDeals({
                     <TableHead>{t("commissionDeals.report.deals.property")}</TableHead>
                     <TableHead>{t("commissionDeals.report.deals.notarisedOn")}</TableHead>
                     <TableHead>{t("commissionDeals.report.deals.status")}</TableHead>
-                    <TableHead className="text-right">
-                      {t("commissionDeals.report.deals.commission")}
-                    </TableHead>
+                    {showCommission && (
+                      <TableHead className="text-right">
+                        {t("commissionDeals.report.deals.commission")}
+                      </TableHead>
+                    )}
                   </TableRow>
                 </TableHeader>
                 <TableBody>
@@ -98,9 +102,11 @@ function AgentDeals({
                         {formatDate(deal.notarised_on)}
                       </TableCell>
                       <TableCell>{t(`commissionDeals.status.${deal.status}`)}</TableCell>
-                      <TableCell className="text-right tabular-nums">
-                        {formatEUR(deal.commission_amount)}
-                      </TableCell>
+                      {showCommission && (
+                        <TableCell className="text-right tabular-nums">
+                          {formatEUR(deal.commission_amount)}
+                        </TableCell>
+                      )}
                     </TableRow>
                   ))}
                 </TableBody>
@@ -133,6 +139,7 @@ export function AgentReportTable({
   total,
   year,
   cutoff,
+  showCommission,
   showApprovedBonuses,
   search,
   onSearch,
@@ -148,6 +155,7 @@ export function AgentReportTable({
   total: number;
   year: number;
   cutoff: string;
+  showCommission: boolean;
   showApprovedBonuses: boolean;
   search: string;
   onSearch: (value: string) => void;
@@ -174,7 +182,7 @@ export function AgentReportTable({
   const totalPages = Math.max(1, Math.ceil(total / pageSize));
   const from = total === 0 ? 0 : (page - 1) * pageSize + 1;
   const to = Math.min(page * pageSize, total);
-  const columns = showApprovedBonuses ? 6 : 5;
+  const columns = 4 + (showCommission ? 1 : 0) + (showApprovedBonuses ? 1 : 0);
 
   return (
     <div className="mt-4 space-y-3">
@@ -214,15 +222,17 @@ export function AgentReportTable({
                   >
                     {t("commissionDeals.report.tiles.volume")}
                   </SortableColumnHeader>
-                  <SortableColumnHeader
-                    column="commission"
-                    sort={sort}
-                    dir={dir}
-                    onSort={onSort}
-                    align="right"
-                  >
-                    {t("commissionDeals.report.tiles.commission")}
-                  </SortableColumnHeader>
+                  {showCommission && (
+                    <SortableColumnHeader
+                      column="commission"
+                      sort={sort}
+                      dir={dir}
+                      onSort={onSort}
+                      align="right"
+                    >
+                      {t("commissionDeals.report.tiles.commission")}
+                    </SortableColumnHeader>
+                  )}
                   <SortableColumnHeader
                     column="bonuses"
                     sort={sort}
@@ -281,11 +291,13 @@ export function AgentReportTable({
                           previous={formatEUR(row.volume_previous)}
                           year={prevYear}
                         />
-                        <Cell
-                          current={formatEUR(row.commission_current)}
-                          previous={formatEUR(row.commission_previous)}
-                          year={prevYear}
-                        />
+                        {showCommission && (
+                          <Cell
+                            current={formatEUR(row.commission_current)}
+                            previous={formatEUR(row.commission_previous)}
+                            year={prevYear}
+                          />
+                        )}
                         <Cell
                           current={formatEUR(row.bonuses_current)}
                           previous={formatEUR(row.bonuses_previous)}
@@ -304,6 +316,7 @@ export function AgentReportTable({
                         cutoff={cutoff}
                         colSpan={columns}
                         open={open}
+                        showCommission={showCommission}
                       />
                     </Fragment>
                   );

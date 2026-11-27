@@ -61,10 +61,12 @@ function previousYearRange(cutoff: string): { from: string; to: string } {
 export function AgentReportTiles({
   row,
   cutoff,
+  showCommission,
   showApprovedBonuses,
 }: {
   row: AgentCommissionReportRow | null;
   cutoff: string;
+  showCommission: boolean;
   showApprovedBonuses: boolean;
 }) {
   const { t } = useTranslation();
@@ -101,14 +103,18 @@ export function AgentReportTiles({
       icon: Building2,
       iconTint: CHIP.neutral,
     },
-    {
-      label: t("commissionDeals.report.tiles.commission"),
-      info: t("commissionDeals.report.tiles.commissionInfo"),
-      value: formatEUR(numbers.commission_current),
-      hint: lastYearHint(formatEUR(numbers.commission_previous)),
-      icon: HandCoins,
-      iconTint: CHIP.brand,
-    },
+    ...(showCommission
+      ? [
+          {
+            label: t("commissionDeals.report.tiles.commission"),
+            info: t("commissionDeals.report.tiles.commissionInfo"),
+            value: formatEUR(numbers.commission_current),
+            hint: lastYearHint(formatEUR(numbers.commission_previous)),
+            icon: HandCoins,
+            iconTint: CHIP.brand,
+          },
+        ]
+      : []),
     {
       label: t("commissionDeals.report.tiles.bonuses"),
       info: t("commissionDeals.report.tiles.bonusesInfo"),
@@ -131,10 +137,16 @@ export function AgentReportTiles({
       : []),
   ];
 
+  const gridColsClass = showCommission
+    ? showApprovedBonuses
+      ? "lg:grid-cols-5"
+      : "lg:grid-cols-4"
+    : showApprovedBonuses
+      ? "lg:grid-cols-4"
+      : "lg:grid-cols-3";
+
   return (
-    <div
-      className={`grid gap-3 sm:grid-cols-2 ${showApprovedBonuses ? "lg:grid-cols-5" : "lg:grid-cols-4"}`}
-    >
+    <div className={`grid gap-3 sm:grid-cols-2 ${gridColsClass}`}>
       {tiles.map((tile) => (
         <KpiCard
           key={tile.label}
