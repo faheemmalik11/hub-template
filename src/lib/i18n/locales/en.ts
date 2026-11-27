@@ -3569,6 +3569,8 @@ const en = {
         updated: "Updated",
         name: "Name",
         company: "Company",
+        salutation: "Salutation",
+        salutationPlaceholder: "e.g. Herr Mueller, Frau Schmidt",
         contact: "Contact",
         address: "Address",
         street: "Street",

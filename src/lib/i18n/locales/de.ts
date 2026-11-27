@@ -3699,6 +3699,8 @@ const de = {
         updated: "Aktualisiert",
         name: "Name",
         company: "Gesellschaft",
+        salutation: "Anrede",
+        salutationPlaceholder: "z. B. Herr Mueller, Frau Schmidt",
         contact: "Ansprechpartner",
         address: "Adresse",
         street: "Straße",

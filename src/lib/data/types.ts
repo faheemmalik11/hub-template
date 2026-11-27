@@ -1724,6 +1724,7 @@ export interface Customer {
   company_id: string;
   is_company: boolean;
   name: string;
+  salutation: string | null;
   contact_person: string | null;
   email: string | null;
   phone: string | null;

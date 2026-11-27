@@ -104,6 +104,7 @@ export function useUpdateCustomer(customerId: string) {
   return useMutation({
     mutationFn: async (args: {
       name: string;
+      salutation?: string | null;
       contactPerson?: string | null;
       email?: string | null;
       phone?: string | null;
@@ -117,6 +118,7 @@ export function useUpdateCustomer(customerId: string) {
         .from(TABLE.customers)
         .update({
           name: args.name,
+          salutation: args.salutation ?? null,
           contact_person: args.contactPerson ?? null,
           email: args.email ?? null,
           phone: args.phone ?? null,
