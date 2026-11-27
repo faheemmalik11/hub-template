@@ -47,7 +47,7 @@ type NumberKey = Exclude<
 >;
 
 const NUMBER_FIELDS: NumberKey[] = [
-  "notary_amount",
+  "handover_bonus_amount",
   "follow_up_amount",
   "own_lead_share_percent",
   "company_lead_share_percent",

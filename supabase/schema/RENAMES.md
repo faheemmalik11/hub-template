@@ -36,6 +36,7 @@ query, and before migrating a client who is on the old schema.
 | `documents.datev_handed_over_at`, `datev_batch_id` | `handed_over_at`, `handover_batch_id` |
 | `approvers.role` | `step`, with values `first` and `final` rather than `assistant` and `manager` |
 | `approvers.payment_handler` | `pays` |
+| `bonus_settings.notary_amount` | `handover_bonus_amount`, because the bonus triggers when both invoices are paid, not at notarisation |
 
 ## Values renamed
 

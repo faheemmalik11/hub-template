@@ -4964,7 +4964,7 @@ const en = {
       button: "Rules",
       title: "Bonus rules",
       desc: "The bonus suggestion on the sale page uses these values.",
-      notary_amount: "Handover bonus (€)",
+      handover_bonus_amount: "Handover bonus (€)",
       follow_up_amount: "Follow-up job from a viewing (€)",
       own_lead_share_percent: "Share for an own lead (%)",
       company_lead_share_percent: "Share for a company lead (%)",
