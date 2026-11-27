@@ -73,21 +73,13 @@ $$;
 
 revoke execute on function public.purge_stale_demo_data() from public, anon, authenticated;
 
--- Direct pg_cron, not the scheduled_jobs/Edge Function pattern (0013_scheduled_jobs.sql): this is
--- pure database work with no external call to make and no vault credential to resolve, so routing
--- it through an Edge Function would only add a network hop for nothing. Shipped on for every
--- client, unlike that table's own rows -- there is no client who would want abandoned practice
--- data kept forever, so this is not a per-tenant choice.
-do $$
-begin
-  if to_regclass('cron.job') is not null then
-    if exists (select 1 from cron.job where jobname = 'purge-stale-demo-data') then
-      perform cron.unschedule('purge-stale-demo-data');
-    end if;
-    perform cron.schedule('purge-stale-demo-data', '0 3 * * *',
-                          'select public.purge_stale_demo_data()');
-  end if;
-end
-$$;
+-- Scheduling lives in scheduled_jobs (0013_scheduled_jobs.sql, extended by
+-- 0080_scheduled_jobs_can_call_sql.sql to call a Postgres function directly, not only an Edge
+-- Function), not here. An earlier version of this file scheduled it straight into pg_cron instead
+-- -- exactly the pattern 0080 retired, because a direct cron.schedule line can end up carrying
+-- this project's own host, which is how a clone calls another client's project. The catalogue
+-- seed (supabase/catalogue.sql) ships this one row enabled by default, unlike every other
+-- scheduled_jobs row: it is pure internal hygiene with nothing to call out to, so there is no
+-- client who would want abandoned practice data kept forever.
 
 commit;
