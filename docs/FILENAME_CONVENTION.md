@@ -57,11 +57,17 @@ argument and keeps using `property_code`. The matching convention in the ingesti
 `by_date_type_issuer` (`src/adapters/storage/naming/by_date_type_issuer.py` in the `book-keeping`
 repo), selected per tenant by `storage.naming`.
 
-**Open, and it matters:** the pipeline reads this same row through `_CONVENTION_FIELDS` in
-`src/adapters/db/filename_settings.py`, which does not list `convention` and still looks for
-`transliterate_umlauts` where the Hub's column is now `transliterate_accents`. Until that list is
-updated in the `book-keeping` repo, picking a convention here changes the Hub's own preview and
-download name but not the name the pipeline actually files under.
+**Open, and it matters:** `_CONVENTION_FIELDS` in `src/adapters/db/filename_settings.py`
+(`book-keeping`) does not list `convention` — confirmed still true as of 27 Nov 2026. The
+`transliterate_accents`/`transliterate_umlauts` naming mismatch this section used to flag is
+already resolved there (`_FIELD_ALIASES` maps one to the other), so that part of this note was
+stale and has been corrected.
+
+Picking a convention in the Hub's screen changes the Hub's own preview and download name, but which
+naming module the pipeline actually runs is a **separate, per-tenant switch** (`storage.naming`,
+resolved in `src/composition/registry/naming.py`) that lives in book-keeping's own admin-registry
+database, not in any file in either repo. Confirming or changing it needs that registry's own
+access, which this Hub-side session does not have.
 
 ### The USt-Kennzeichen is off for this Hub
 
