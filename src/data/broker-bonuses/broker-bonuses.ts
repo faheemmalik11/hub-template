@@ -142,7 +142,7 @@ export type ReferrerPayoutTiming = DealStage;
 export type BrokerBonusCountsStatus = "paid" | "approved_and_paid" | "separate";
 
 export interface BonusSettings {
-  notary_amount: number;
+  handover_bonus_amount: number;
   follow_up_amount: number;
   own_lead_share_percent: number;
   company_lead_share_percent: number;
@@ -160,7 +160,7 @@ export interface BonusSettings {
 }
 
 const SETTINGS_SELECT =
-  "notary_amount, follow_up_amount, own_lead_share_percent, company_lead_share_percent, " +
+  "handover_bonus_amount, follow_up_amount, own_lead_share_percent, company_lead_share_percent, " +
   "personnel_flat_amount, company_lead_deducts_costs, referrer_tier1_amount, " +
   "referrer_tier2_amount, referrer_tier3_amount, referrer_tier4plus_amount, " +
   "referrer_tier_counts_status, referrer_tier_reset, referrer_tier_scope, referrer_payout_timing, " +

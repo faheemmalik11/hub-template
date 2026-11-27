@@ -2,7 +2,7 @@ export type SuggestedBonusType =
   "notary" | "viewing_new_job" | "company_lead_share" | "own_job_share";
 
 export interface BonusRuleSettings {
-  notaryAmountCents: number;
+  handoverBonusAmountCents: number;
   followUpAmountCents: number;
   ownLeadSharePercent: number;
   companyLeadSharePercent: number;
@@ -123,8 +123,8 @@ export function suggestBonuses(
           type: "notary",
           brokerUserId: handler,
           earnedOn: facts.notarisedOn,
-          amountCents: settings.notaryAmountCents,
-          breakdown: [{ label: "fixed", cents: settings.notaryAmountCents }],
+          amountCents: settings.handoverBonusAmountCents,
+          breakdown: [{ label: "fixed", cents: settings.handoverBonusAmountCents }],
         },
         atCommissionPaid,
       ),

@@ -38,6 +38,7 @@ interface OutgoingInvoiceRow {
   status: string;
   accounting_external_id: string | null;
   due_date: string | null;
+  deal_party: { deal_side: { side: string } | null } | null;
 }
 
 interface CustomerRow {
@@ -72,7 +73,8 @@ async function claimInvoice(db: Db, id: string): Promise<OutgoingInvoiceRow | nu
     .is("lexoffice_sync_requested_at", null)
     .is("deleted_at", null)
     .select(
-      "id, customer_id, deal_id, kind, amount_net, amount_gross, currency, source, status, accounting_external_id, due_date",
+      "id, customer_id, deal_id, kind, amount_net, amount_gross, currency, source, status, accounting_external_id, due_date, " +
+        `deal_party:${TABLE.dealParties}(deal_side:${TABLE.dealSides}(side))`,
     )
     .maybeSingle();
   if (error) throw new Error(`claim failed: ${error.message}`);
@@ -271,12 +273,19 @@ async function buildInvoicePayload(
 
   const voucherDate = lexofficeTimestamp(null);
   const days = invoice.due_date ? paymentTermDays(invoice.due_date) : null;
+  const side = invoice.deal_party?.deal_side?.side;
+  const perSideLabel = side === "buyer"
+    ? wording.paymentTermLabelBuyer
+    : side === "seller"
+    ? wording.paymentTermLabelSeller
+    : null;
+  const paymentTermLabelTemplate = perSideLabel?.trim() || wording.paymentTermLabelTemplate;
 
   return {
     voucherDate,
     paymentConditions: days === null ? undefined : {
       paymentTermDuration: days,
-      paymentTermLabel: wording.paymentTermLabelTemplate.replace("{{days}}", String(days)),
+      paymentTermLabel: paymentTermLabelTemplate.replace("{{days}}", String(days)),
     },
     shippingConditions: { shippingDate: voucherDate, shippingType: "service" },
     address: buildAddress(customer, contactId, tax.country),

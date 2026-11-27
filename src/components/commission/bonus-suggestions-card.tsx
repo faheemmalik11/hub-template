@@ -51,7 +51,7 @@ export function BonusSuggestionsCard({
 
   if (!settingsQ.data || !existingQ.data || paidQ.data === undefined) return null;
   const settings: BonusRuleSettings = {
-    notaryAmountCents: cents(settingsQ.data.notary_amount),
+    handoverBonusAmountCents: cents(settingsQ.data.handover_bonus_amount),
     followUpAmountCents: cents(settingsQ.data.follow_up_amount),
     ownLeadSharePercent: settingsQ.data.own_lead_share_percent,
     companyLeadSharePercent: settingsQ.data.company_lead_share_percent,

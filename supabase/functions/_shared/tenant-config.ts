@@ -24,6 +24,8 @@ export interface InvoiceWording {
   defaultPaymentMethod: string;
   documentFallbackLabel: string;
   paymentTermLabelTemplate: string;
+  paymentTermLabelBuyer: string | null;
+  paymentTermLabelSeller: string | null;
 }
 
 interface InvoiceSettingsRow {
@@ -36,6 +38,8 @@ interface InvoiceSettingsRow {
   default_payment_method: string;
   document_fallback_label: string;
   payment_term_label_template: string;
+  payment_term_label_buyer: string | null;
+  payment_term_label_seller: string | null;
 }
 
 const DEFAULT_LOCALE_SETTINGS: LocaleSettings = {
@@ -54,6 +58,8 @@ const DEFAULT_INVOICE_SETTINGS: InvoiceSettingsRow = {
   default_payment_method: "Überweisung",
   document_fallback_label: "Beleg",
   payment_term_label_template: "Zahlbar innerhalb von {{days}} Tagen, ohne Abzug.",
+  payment_term_label_buyer: null,
+  payment_term_label_seller: null,
 };
 
 const DEFAULT_KIND_LABELS: Record<string, string> = {
@@ -94,7 +100,7 @@ async function invoiceSettings(): Promise<{
   const { data, error } = await db
     .from(TABLE.invoiceSettings)
     .select(
-      "default_vat_rate, payment_term_days, finalise_in_lexware, country_code, invoice_fallback_label, invoice_unit_name, default_payment_method, document_fallback_label, payment_term_label_template",
+      "default_vat_rate, payment_term_days, finalise_in_lexware, country_code, invoice_fallback_label, invoice_unit_name, default_payment_method, document_fallback_label, payment_term_label_template, payment_term_label_buyer, payment_term_label_seller",
     )
     .eq("id", true)
     .maybeSingle();
@@ -139,6 +145,8 @@ export async function invoiceWording(): Promise<InvoiceWording> {
     defaultPaymentMethod: settings.default_payment_method,
     documentFallbackLabel: settings.document_fallback_label,
     paymentTermLabelTemplate: settings.payment_term_label_template,
+    paymentTermLabelBuyer: settings.payment_term_label_buyer,
+    paymentTermLabelSeller: settings.payment_term_label_seller,
   };
 }
 

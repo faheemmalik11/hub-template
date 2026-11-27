@@ -428,10 +428,16 @@ on conflict do nothing;
 --
 -- A client that needs a job the template does not list adds a row. It does not need a migration,
 -- and the Edge Function it names is deployed like any other.
+--
+-- purge_stale_demo_data is the one exception, enabled here unlike every row around it: a
+-- sql_function job calls a Postgres function directly (run_scheduled_job(), 0080), with no vault
+-- credential to resolve and no external host to call out to, so the "all off" reasoning above does
+-- not apply to it. There is no client who would want abandoned practice data kept forever -- see
+-- 0046_purge_demo_data.sql.
 insert into public.scheduled_jobs (key, sql_function, schedule, enabled, description) values
   ('overdue_payments', 'public.notify_overdue_payments', '0 6 * * *', false,
    'Tells administrators which commission invoices are past the moment the money was expected. Daily at 6am.'),
-  ('purge_stale_demo_data', 'public.purge_stale_demo_data', '0 3 * * *', false,
+  ('purge_stale_demo_data', 'public.purge_stale_demo_data', '0 3 * * *', true,
    'Removes practice data nobody came back to. Daily at 3am.')
 on conflict (key) do update
    set sql_function = excluded.sql_function, schedule = excluded.schedule,

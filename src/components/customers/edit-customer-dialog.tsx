@@ -44,6 +44,7 @@ export function EditCustomerDialog({
   const update = useUpdateCustomer(customer.id);
 
   const [name, setName] = useState(customer.name);
+  const [salutation, setSalutation] = useState(customer.salutation ?? "");
   const [contactPerson, setContactPerson] = useState(customer.contact_person ?? "");
   const [email, setEmail] = useState(customer.email ?? "");
   const [phone, setPhone] = useState(customer.phone ?? "");
@@ -60,6 +61,7 @@ export function EditCustomerDialog({
   if (open && syncedFrom !== customer.updated_at) {
     setSyncedFrom(customer.updated_at);
     setName(customer.name);
+    setSalutation(customer.salutation ?? "");
     setContactPerson(customer.contact_person ?? "");
     setEmail(customer.email ?? "");
     setPhone(customer.phone ?? "");
@@ -80,6 +82,7 @@ export function EditCustomerDialog({
     update.mutate(
       {
         name: name.trim(),
+        salutation: salutation.trim() || null,
         contactPerson: contactPerson.trim() || null,
         email: email.trim() || null,
         phone: phone.trim() || null,
@@ -130,16 +133,26 @@ export function EditCustomerDialog({
           <div className="grid gap-3 sm:grid-cols-2">
             <div className="space-y-1">
               <Label className="text-xs text-muted-foreground">
+                {t("customers.detail.field.salutation")}
+              </Label>
+              <Input
+                value={salutation}
+                onChange={(e) => setSalutation(e.target.value)}
+                placeholder={t("customers.detail.field.salutationPlaceholder")}
+              />
+            </div>
+            <div className="space-y-1">
+              <Label className="text-xs text-muted-foreground">
                 {t("customers.detail.field.contact")}
               </Label>
               <Input value={contactPerson} onChange={(e) => setContactPerson(e.target.value)} />
             </div>
-            <div className="space-y-1">
-              <Label className="text-xs text-muted-foreground">
-                {t("customers.detail.field.customerNumber")}
-              </Label>
-              <Input value={customerNumber} onChange={(e) => setCustomerNumber(e.target.value)} />
-            </div>
+          </div>
+          <div className="space-y-1">
+            <Label className="text-xs text-muted-foreground">
+              {t("customers.detail.field.customerNumber")}
+            </Label>
+            <Input value={customerNumber} onChange={(e) => setCustomerNumber(e.target.value)} />
           </div>
           <div className="space-y-1">
             <Label className="text-xs text-muted-foreground">

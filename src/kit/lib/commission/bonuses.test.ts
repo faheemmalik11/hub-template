@@ -5,7 +5,7 @@ import { suggestBonuses } from "./bonuses.ts";
 import type { BonusDealFacts, BonusRuleSettings } from "./bonuses.ts";
 
 const settings: BonusRuleSettings = {
-  notaryAmountCents: 500_00,
+  handoverBonusAmountCents: 500_00,
   followUpAmountCents: 300_00,
   ownLeadSharePercent: 50,
   companyLeadSharePercent: 10,
